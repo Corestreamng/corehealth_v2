@@ -47,6 +47,46 @@ class HmoHelper
     }
 
     /**
+     * Get the display name for a product/service in HMO context.
+     *
+     * If the HMO tariff has a custom display_name, use that;
+     * otherwise fall back to the original product_name / service_name.
+     *
+     * @param \App\Models\ProductOrServiceRequest $request  Must have product/service eager-loaded
+     * @param \App\Models\HmoTariff|null          $tariff   Optionally pass a pre-loaded tariff to avoid extra query
+     * @return string
+     */
+    public static function getDisplayName($request, $tariff = null)
+    {
+        // Try the pre-loaded tariff first
+        if ($tariff && !empty($tariff->display_name)) {
+            return $tariff->display_name;
+        }
+
+        // If no tariff passed, look it up (only when HMO context exists)
+        if (!$tariff && $request->hmo_id) {
+            $lookedUp = HmoTariff::where('hmo_id', $request->hmo_id)
+                ->when($request->product_id, fn($q) => $q->where('product_id', $request->product_id)->whereNull('service_id'))
+                ->when($request->service_id, fn($q) => $q->where('service_id', $request->service_id)->whereNull('product_id'))
+                ->value('display_name');
+
+            if ($lookedUp) {
+                return $lookedUp;
+            }
+        }
+
+        // Fallback to original product/service name
+        if ($request->product_id && $request->product) {
+            return $request->product->product_name ?? 'N/A';
+        }
+        if ($request->service_id && $request->service) {
+            return $request->service->service_name ?? 'N/A';
+        }
+
+        return 'N/A';
+    }
+
+    /**
      * Check if a patient can access a service based on HMO validation status
      *
      * @param \App\Models\ProductOrServiceRequest $request

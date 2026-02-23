@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HmoHelper;
 use App\Models\Hmo;
 use App\Models\HmoRemittance;
 use App\Models\ProductOrServiceRequest;
@@ -133,9 +134,7 @@ class HmoReportsController extends Controller
                 return 'N/A';
             })
             ->addColumn('item_name', function ($claim) {
-                if ($claim->product_id && $claim->product) return $claim->product->product_name;
-                if ($claim->service_id && $claim->service) return $claim->service->service_name;
-                return 'N/A';
+                return HmoHelper::getDisplayName($claim);
             })
             ->addColumn('auth_code_display', function ($claim) {
                 return $claim->auth_code ?? '-';
@@ -286,7 +285,7 @@ class HmoReportsController extends Controller
                     'id' => $claim->id,
                     'date' => $claim->created_at ? Carbon::parse($claim->created_at)->format('M d, Y H:i') : 'N/A',
                     'type' => $claim->product_id ? 'Product' : 'Service',
-                    'item' => $claim->product ? $claim->product->product_name : ($claim->service ? $claim->service->service_name : 'N/A'),
+                    'item' => HmoHelper::getDisplayName($claim),
                     'qty' => $claim->qty,
                     'auth_code' => $claim->auth_code ?? '-',
                     'claim_amount' => number_format($claim->claims_amount, 2),
@@ -502,7 +501,7 @@ class HmoReportsController extends Controller
                 return [
                     'id' => $claim->id,
                     'patient' => userfullname($claim->user_id),
-                    'item' => $claim->product ? $claim->product->product_name : ($claim->service ? $claim->service->service_name : 'N/A'),
+                    'item' => HmoHelper::getDisplayName($claim),
                     'amount' => number_format($claim->claims_amount, 2),
                 ];
             }),
@@ -680,7 +679,7 @@ class HmoReportsController extends Controller
                     'file_no' => $claim->user->patient_profile->file_no ?? 'N/A',
                     'hmo_no' => $claim->user->patient_profile->hmo_no ?? 'N/A',
                     'service_date' => $claim->created_at ? Carbon::parse($claim->created_at)->format('M d, Y') : 'N/A',
-                    'item' => $claim->product ? $claim->product->product_name : ($claim->service ? $claim->service->service_name : 'N/A'),
+                    'item' => HmoHelper::getDisplayName($claim),
                     'type' => $claim->product_id ? 'Product' : 'Service',
                     'qty' => $claim->qty ?? 1,
                     'auth_code' => $claim->auth_code ?? '-',
@@ -773,7 +772,7 @@ class HmoReportsController extends Controller
                     $claim->user->patient_profile->hmo->name ?? 'N/A',
                     $claim->created_at ? Carbon::parse($claim->created_at)->format('Y-m-d') : '',
                     $claim->product_id ? 'Product' : 'Service',
-                    $claim->product ? $claim->product->product_name : ($claim->service ? $claim->service->service_name : 'N/A'),
+                    HmoHelper::getDisplayName($claim),
                     $claim->qty ?? 1,
                     $claim->auth_code ?? '',
                     $claim->claims_amount,
@@ -978,9 +977,7 @@ class HmoReportsController extends Controller
                 return $claim->created_at ? Carbon::parse($claim->created_at)->format('M d, Y H:i') : 'N/A';
             })
             ->addColumn('item_name', function ($claim) {
-                if ($claim->product_id && $claim->product) return $claim->product->product_name;
-                if ($claim->service_id && $claim->service) return $claim->service->service_name;
-                return 'N/A';
+                return HmoHelper::getDisplayName($claim);
             })
             ->addColumn('auth_code_display', function ($claim) {
                 if ($claim->auth_code) {
@@ -1118,7 +1115,7 @@ class HmoReportsController extends Controller
                     'sn' => $index + 1,
                     'date' => $claim->created_at ? Carbon::parse($claim->created_at)->format('M d, Y') : 'N/A',
                     'type' => $claim->product_id ? 'Product' : 'Service',
-                    'item' => $claim->product ? $claim->product->product_name : ($claim->service ? $claim->service->service_name : 'N/A'),
+                    'item' => HmoHelper::getDisplayName($claim),
                     'qty' => $claim->qty ?? 1,
                     'auth_code' => $claim->auth_code ?? '-',
                     'claim_amount' => number_format($claim->claims_amount, 2),

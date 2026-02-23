@@ -15,6 +15,7 @@ use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\HmoController;
 use App\Http\Controllers\HmoWorkbenchController;
+use App\Http\Controllers\ClinicalContextController;
 use App\Http\Controllers\HmoReportsController;
 use App\Http\Controllers\Admin\TariffManagementController;
 use App\Http\Controllers\HospitalConfigController;
@@ -706,6 +707,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('hmo/requests/{id}/reject', [HmoWorkbenchController::class, 'rejectRequest'])->name('hmo.requests.reject');
         Route::post('hmo/requests/{id}/reverse', [HmoWorkbenchController::class, 'reverseApproval'])->name('hmo.requests.reverse');
         Route::post('hmo/requests/{id}/reapprove', [HmoWorkbenchController::class, 'reapproveRequest'])->name('hmo.requests.reapprove');
+        Route::get('hmo/requests/{id}/tariff-details', [HmoWorkbenchController::class, 'getTariffDetails'])->name('hmo.requests.tariff-details');
+        Route::post('hmo/requests/{id}/update-tariff', [HmoWorkbenchController::class, 'updateTariffInline'])->name('hmo.requests.update-tariff');
         Route::post('hmo/batch-approve', [HmoWorkbenchController::class, 'batchApprove'])->name('hmo.batch-approve');
         Route::post('hmo/batch-reject', [HmoWorkbenchController::class, 'batchReject'])->name('hmo.batch-reject');
         Route::get('hmo/queue-counts', [HmoWorkbenchController::class, 'getQueueCounts'])->name('hmo.queue-counts');
@@ -715,6 +718,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('hmo/patient/{patientId}/vitals', [HmoWorkbenchController::class, 'getPatientVitals'])->name('hmo.patient.vitals');
         Route::get('hmo/patient/{patientId}/notes', [HmoWorkbenchController::class, 'getPatientNotes'])->name('hmo.patient.notes');
         Route::get('hmo/patient/{patientId}/medications', [HmoWorkbenchController::class, 'getPatientMedications'])->name('hmo.patient.medications');
+        Route::get('hmo/patient/{patientId}/allergies', [HmoWorkbenchController::class, 'getPatientAllergies'])->name('hmo.patient.allergies');
+
+        // Shared Clinical Context endpoints (used by all workbenches via clinical-context.js)
+        Route::get('clinical-context/patient/{patientId}/vitals', [ClinicalContextController::class, 'getVitals'])->name('clinical-context.vitals');
+        Route::get('clinical-context/patient/{patientId}/notes', [ClinicalContextController::class, 'getNotes'])->name('clinical-context.notes');
+        Route::get('clinical-context/patient/{patientId}/medications', [ClinicalContextController::class, 'getMedications'])->name('clinical-context.medications');
+        Route::get('clinical-context/patient/{patientId}/allergies', [ClinicalContextController::class, 'getAllergies'])->name('clinical-context.allergies');
 
         // HMO Reports
         Route::get('hmo/reports', [HmoReportsController::class, 'index'])->name('hmo.reports');

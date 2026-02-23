@@ -114,4 +114,12 @@ protected $fillable = [
     {
         return $this->hasOne(Procedure::class, 'product_or_service_request_id', 'id');
     }
+
+    /**
+     * Get the HMO associated with this request.
+     */
+    public function hmo()
+    {
+        return $this->belongsTo(Hmo::class, 'hmo_id');
+    }
 }

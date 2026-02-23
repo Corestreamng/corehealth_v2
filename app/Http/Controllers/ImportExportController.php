@@ -1276,14 +1276,41 @@ class ImportExportController extends Controller
                     foreach ($batch as $index => $row) {
                         $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
 
-                        // Required fields validation
-                        if (empty($row['surname']) || empty($row['firstname']) || empty($row['email'])) {
-                            $report['errors'][] = "Row {$rowNum}: Missing required fields (surname, firstname, email)";
+                        // Support full_name / name column as fallback
+                        $rawSurname = trim($row['surname'] ?? $row['full_name'] ?? $row['name'] ?? '');
+                        $rawFirstname = trim($row['firstname'] ?? '');
+                        $rawOthername = trim($row['othername'] ?? '');
+
+                        // If firstname is empty but surname contains spaces → parse full name
+                        if (empty($rawFirstname) && !empty($rawSurname) && str_contains($rawSurname, ' ')) {
+                            $parsed = $this->parseFullName($rawSurname);
+                            $rawSurname = $parsed['surname'];
+                            $rawFirstname = $parsed['firstname'];
+                            if (empty($rawOthername) && !empty($parsed['othername'])) {
+                                $rawOthername = $parsed['othername'];
+                            }
+                        }
+
+                        if (empty($rawSurname) && empty($rawFirstname)) {
+                            $report['errors'][] = "Row {$rowNum}: Missing name (provide surname + firstname columns, or put full name in surname column)";
                             $report['skipped']++;
                             continue;
                         }
 
-                        $email = strtolower(trim($row['email']));
+                        // If still no firstname (single-word surname), duplicate into firstname
+                        if (empty($rawFirstname)) {
+                            $rawFirstname = $rawSurname;
+                        }
+
+                        // Handle email — auto-generate if not provided (like patient import)
+                        $email = strtolower(trim($row['email'] ?? ''));
+                        if (empty($email)) {
+                            $slug = strtolower(Str::slug($rawSurname . '.' . $rawFirstname));
+                            $email = $slug . '.' . Str::random(4) . '@staff.local';
+                            while (isset($existingUsers[$email])) {
+                                $email = $slug . '.' . Str::random(4) . '@staff.local';
+                            }
+                        }
 
                         // Validate gender
                         $gender = trim($row['gender'] ?? '');
@@ -1324,9 +1351,9 @@ class ImportExportController extends Controller
                             $userId = $existingUsers[$email];
 
                             User::where('id', $userId)->update([
-                                'surname' => trim($row['surname']),
-                                'firstname' => trim($row['firstname']),
-                                'othername' => trim($row['othername'] ?? ''),
+                                'surname' => $rawSurname,
+                                'firstname' => $rawFirstname,
+                                'othername' => $rawOthername ?: '',
                             ]);
 
                             Staff::updateOrCreate(
@@ -1364,9 +1391,9 @@ class ImportExportController extends Controller
                         } else {
                             // CREATE new staff
                             $user = User::create([
-                                'surname' => trim($row['surname']),
-                                'firstname' => trim($row['firstname']),
-                                'othername' => trim($row['othername'] ?? ''),
+                                'surname' => $rawSurname,
+                                'firstname' => $rawFirstname,
+                                'othername' => $rawOthername ?: '',
                                 'email' => $email,
                                 'password' => Hash::make($defaultPassword),
                                 'is_admin' => 2,
@@ -1863,6 +1890,54 @@ class ImportExportController extends Controller
     // ========================================
     // HELPER METHODS
     // ========================================
+
+    /**
+     * Parse a full name string into surname, firstname, othername components.
+     * Handles titles like Dr., Prof., Engr. etc.
+     *   "Dr. David Pinmo Olarewaju" → firstname: David, othername: Pinmo, surname: Olarewaju
+     *   "Dr. Peter Mballe"          → firstname: Peter, surname: Mballe
+     *   "Ringkwat Nanwul Shemu"     → firstname: Ringkwat, othername: Nanwul, surname: Shemu
+     *   "Mary Markus"               → firstname: Mary, surname: Markus
+     */
+    private function parseFullName(string $fullName): array
+    {
+        $titles = [
+            'dr.', 'dr', 'prof.', 'prof', 'engr.', 'engr', 'mr.', 'mr', 'mrs.', 'mrs',
+            'ms.', 'ms', 'rev.', 'rev', 'pastor', 'chief', 'alhaji', 'hajia', 'sir', 'lady',
+            'hon.', 'hon', 'barr.', 'barr', 'pharm.', 'pharm', 'arc.', 'arc', 'bldr.', 'bldr',
+            'capt.', 'capt', 'maj.', 'maj', 'gen.', 'gen', 'col.', 'col', 'lt.', 'lt',
+            'sgt.', 'sgt', 'cpl.', 'cpl', 'nurse', 'matron',
+        ];
+
+        $parts = preg_split('/\s+/', trim($fullName));
+        $parts = array_values(array_filter($parts, fn($p) => $p !== ''));
+
+        // Strip leading title(s)
+        while (count($parts) > 1 && in_array(strtolower(rtrim($parts[0], '.,;')), $titles)) {
+            array_shift($parts);
+        }
+
+        $surname = '';
+        $firstname = '';
+        $othername = '';
+
+        if (count($parts) === 1) {
+            $surname = $parts[0];
+        } elseif (count($parts) === 2) {
+            $firstname = $parts[0];
+            $surname = $parts[1];
+        } else {
+            $firstname = array_shift($parts);
+            $surname = array_pop($parts);
+            $othername = implode(' ', $parts);
+        }
+
+        return [
+            'surname' => $surname,
+            'firstname' => $firstname,
+            'othername' => $othername,
+        ];
+    }
 
     /**
      * Parse file (CSV or XLSX) into array

@@ -5,74 +5,140 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
+
     public function up()
     {
-        // Make product_or_service_request_id nullable (direct entries have no POSR)
-        // Drop FK first, modify, re-add FK
-        try {
-            Schema::table('medication_schedules', function ($table) {
-                $table->dropForeign(['product_or_service_request_id']);
-            });
-        } catch (\Exception $e) {
-            // FK may not exist
+        if (!Schema::hasTable('medication_schedules')) {
+            return;
         }
 
-        DB::statement('ALTER TABLE medication_schedules MODIFY product_or_service_request_id BIGINT UNSIGNED NULL');
+        $table = 'medication_schedules';
+        $fkName = 'medication_schedules_product_or_service_request_id_foreign';
 
-        Schema::table('medication_schedules', function ($table) {
-            $table->foreign('product_or_service_request_id')
+        // Step 1: Drop existing FK on product_or_service_request_id (if present)
+        if ($this->foreignKeyExists($table, $fkName)) {
+            Schema::table($table, function ($t) {
+                $t->dropForeign(['product_or_service_request_id']);
+            });
+        }
+
+        // Step 2: Make product_or_service_request_id nullable
+        if (Schema::hasColumn($table, 'product_or_service_request_id')) {
+            DB::statement("ALTER TABLE `{$table}` MODIFY `product_or_service_request_id` BIGINT UNSIGNED NULL");
+        }
+
+        // Step 3: Null out orphaned references
+        if (Schema::hasTable('product_or_service_requests') && Schema::hasColumn($table, 'product_or_service_request_id')) {
+            DB::statement("
+                UPDATE `{$table}`
+                SET product_or_service_request_id = NULL
+                WHERE product_or_service_request_id IS NOT NULL
+                  AND product_or_service_request_id NOT IN (SELECT id FROM product_or_service_requests)
+            ");
+        }
+
+        // Step 4: Re-add FK with nullOnDelete (only if not already present)
+        if (Schema::hasColumn($table, 'product_or_service_request_id') && !$this->foreignKeyExists($table, $fkName)) {
+            Schema::table($table, function ($t) {
+                $t->foreign('product_or_service_request_id')
                   ->references('id')->on('product_or_service_requests')
                   ->nullOnDelete();
-        });
-
-        // Add new columns for direct entry scheduling
-        if (!Schema::hasColumn('medication_schedules', 'product_id')) {
-            Schema::table('medication_schedules', function ($table) {
-                $table->unsignedBigInteger('product_id')->nullable()->after('product_or_service_request_id');
-                $table->foreign('product_id')->references('id')->on('products')->nullOnDelete();
             });
         }
 
-        if (!Schema::hasColumn('medication_schedules', 'drug_source')) {
-            Schema::table('medication_schedules', function ($table) {
-                $table->string('drug_source', 30)->default('pharmacy_dispensed')->after('product_id');
+        // Step 5: Add product_id column + FK
+        if (!Schema::hasColumn($table, 'product_id')) {
+            Schema::table($table, function ($t) {
+                $t->unsignedBigInteger('product_id')->nullable()->after('product_or_service_request_id');
+                $t->foreign('product_id')->references('id')->on('products')->nullOnDelete();
+            });
+        } elseif (!$this->foreignKeyExists($table, 'medication_schedules_product_id_foreign')) {
+            Schema::table($table, function ($t) {
+                $t->foreign('product_id')->references('id')->on('products')->nullOnDelete();
             });
         }
 
-        if (!Schema::hasColumn('medication_schedules', 'external_drug_name')) {
-            Schema::table('medication_schedules', function ($table) {
-                $table->string('external_drug_name', 255)->nullable()->after('drug_source');
+        // Step 6: Add drug_source column
+        if (!Schema::hasColumn($table, 'drug_source')) {
+            Schema::table($table, function ($t) {
+                $t->string('drug_source', 30)->default('pharmacy_dispensed')->after('product_id');
+            });
+        }
+
+        // Step 7: Add external_drug_name column
+        if (!Schema::hasColumn($table, 'external_drug_name')) {
+            Schema::table($table, function ($t) {
+                $t->string('external_drug_name', 255)->nullable()->after('drug_source');
             });
         }
     }
 
     public function down()
     {
-        Schema::table('medication_schedules', function ($table) {
-            if (Schema::hasColumn('medication_schedules', 'external_drug_name')) {
-                $table->dropColumn('external_drug_name');
-            }
-            if (Schema::hasColumn('medication_schedules', 'drug_source')) {
-                $table->dropColumn('drug_source');
-            }
-            if (Schema::hasColumn('medication_schedules', 'product_id')) {
-                $table->dropForeign(['product_id']);
-                $table->dropColumn('product_id');
-            }
-        });
+        if (!Schema::hasTable('medication_schedules')) {
+            return;
+        }
 
-        // Revert nullable
-        try {
-            Schema::table('medication_schedules', function ($table) {
-                $table->dropForeign(['product_or_service_request_id']);
+        $table = 'medication_schedules';
+
+        if (Schema::hasColumn($table, 'external_drug_name')) {
+            Schema::table($table, function ($t) {
+                $t->dropColumn('external_drug_name');
             });
-        } catch (\Exception $e) {}
+        }
+        if (Schema::hasColumn($table, 'drug_source')) {
+            Schema::table($table, function ($t) {
+                $t->dropColumn('drug_source');
+            });
+        }
+        if (Schema::hasColumn($table, 'product_id')) {
+            if ($this->foreignKeyExists($table, 'medication_schedules_product_id_foreign')) {
+                Schema::table($table, function ($t) {
+                    $t->dropForeign(['product_id']);
+                });
+            }
+            Schema::table($table, function ($t) {
+                $t->dropColumn('product_id');
+            });
+        }
 
-        DB::statement('ALTER TABLE medication_schedules MODIFY product_or_service_request_id BIGINT UNSIGNED NOT NULL');
+        // Revert product_or_service_request_id to NOT NULL with plain FK
+        $fkName = 'medication_schedules_product_or_service_request_id_foreign';
 
-        Schema::table('medication_schedules', function ($table) {
-            $table->foreign('product_or_service_request_id')
+        if ($this->foreignKeyExists($table, $fkName)) {
+            Schema::table($table, function ($t) {
+                $t->dropForeign(['product_or_service_request_id']);
+            });
+        }
+
+        if (Schema::hasColumn($table, 'product_or_service_request_id')) {
+            DB::statement("DELETE FROM `{$table}` WHERE product_or_service_request_id IS NULL");
+            DB::statement("ALTER TABLE `{$table}` MODIFY `product_or_service_request_id` BIGINT UNSIGNED NOT NULL");
+        }
+
+        if (!$this->foreignKeyExists($table, $fkName) && Schema::hasColumn($table, 'product_or_service_request_id')) {
+            Schema::table($table, function ($t) {
+                $t->foreign('product_or_service_request_id')
                   ->references('id')->on('product_or_service_requests');
-        });
+            });
+        }
+    }
+
+    /**
+     * Check if a foreign key constraint exists on a table.
+     */
+    private function foreignKeyExists(string $table, string $foreignKey): bool
+    {
+        $db = config('database.connections.mysql.database', env('DB_DATABASE'));
+        $result = DB::select("
+            SELECT COUNT(*) AS cnt
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE CONSTRAINT_SCHEMA = ?
+              AND TABLE_NAME = ?
+              AND CONSTRAINT_NAME = ?
+              AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+        ", [$db, $table, $foreignKey]);
+
+        return $result[0]->cnt > 0;
     }
 };

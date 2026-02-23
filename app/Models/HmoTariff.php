@@ -18,6 +18,7 @@ class HmoTariff extends Model
         'claims_amount',
         'payable_amount',
         'coverage_mode',
+        'display_name',
     ];
 
     protected $casts = [
