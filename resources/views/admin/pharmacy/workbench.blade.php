@@ -6128,6 +6128,7 @@
 @section('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+<script src="{{ asset('js/clinical-context.js') }}"></script>
 <!-- Chart.js for transaction analytics -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- SheetJS for Excel export -->
@@ -6256,10 +6257,8 @@ function initializeEventListeners() {
             toastr.warning('Please select a patient first');
             return;
         }
-        // Open clinical context modal
-        $('#clinical-context-modal').modal('show');
-        // Load clinical data
-        loadClinicalContext(currentPatient);
+        // Open clinical context modal with shared module
+        ClinicalContext.load(currentPatient);
     });
 
     // Clinical modal refresh buttons
@@ -8184,12 +8183,7 @@ function formatDate(dateString) {
     return date.toLocaleDateString('en-US', options);
 }
 
-function formatDateTime(dateString) {
-    const date = new Date(dateString);
-    const dateOptions = { month: 'short', day: 'numeric' };
-    const timeOptions = { hour: '2-digit', minute: '2-digit' };
-    return date.toLocaleDateString('en-US', dateOptions) + ', ' + date.toLocaleTimeString('en-US', timeOptions);
-}
+// formatDateTime is now provided by ClinicalContext module (clinical-context.js)
 
 function setDefaultReceiptDates() {
     const now = new Date();
@@ -13524,211 +13518,10 @@ window.dismissPrescItemsConfirmed = function(type) {
 
 // ===========================================
 // CLINICAL CONTEXT FUNCTIONS
+// Now handled by shared ClinicalContext module (clinical-context.js)
+// Vitals, medications, allergies are loaded by ClinicalContext.load()
+// Notes, injections, procedures are lazy-loaded by the shared modal IIFEs
 // ===========================================
-
-function loadClinicalContext(patientId) {
-    // Load vitals - use nursing workbench endpoint
-    $.get(`/nursing-workbench/patient/${patientId}/vitals?limit=10`, function(vitals) {
-        displayVitals(vitals);
-    }).fail(function() {
-        $('#vitals-panel-body').html('<p class="text-muted text-center py-3">Could not load vitals</p>');
-    });
-
-    // Load notes
-    $.get(`/nursing-workbench/patient/${patientId}/nursing-notes?limit=10`, function(notes) {
-        displayNotes(notes);
-    }).fail(function() {
-        $('#enc-notes-panel-body').html('<p class="text-muted text-center py-3">Could not load notes</p>');
-    });
-
-    // Load medications/prescriptions
-    $.get(`/prescHistoryList/${patientId}?length=10`, function(response) {
-        displayMedications(response.data || []);
-    }).fail(function() {
-        $('#medications-panel-body').html('<p class="text-muted text-center py-3">Could not load medications</p>');
-    });
-
-    // Load allergies
-    $.get(`/patient/${patientId}/allergies`, function(allergies) {
-        displayAllergies(allergies);
-    }).fail(function() {
-        $('#allergies-panel-body').html('<p class="text-muted text-center py-3">Could not load allergies</p>');
-    });
-}
-
-function displayVitals(vitals) {
-    if (!vitals || vitals.length === 0) {
-        $('#vitals-panel-body').html('<p class="text-muted text-center py-3">No recent vitals recorded</p>');
-        return;
-    }
-
-    // Destroy existing DataTable if present
-    if ($.fn.DataTable.isDataTable('#vitals-table')) {
-        $('#vitals-table').DataTable().destroy();
-    }
-
-    $('#vitals-table').DataTable({
-        data: vitals,
-        paging: false,
-        searching: false,
-        info: false,
-        ordering: false,
-        dom: 't',
-        columns: [{
-            data: null,
-            render: function(data, type, row) {
-                const vitalDate = formatDateTimePharmacy(row.time_taken || row.created_at);
-                const temp = row.temp || 'N/A';
-                const heartRate = row.heart_rate || 'N/A';
-                const bp = row.blood_pressure || 'N/A';
-                const respRate = row.resp_rate || 'N/A';
-                const weight = row.weight || 'N/A';
-
-                return `
-                    <div class="vital-entry p-2 border-bottom">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted small">${vitalDate}</span>
-                        </div>
-                        <div class="row g-2">
-                            <div class="col-4 col-md-2 text-center">
-                                <i class="mdi mdi-thermometer text-danger"></i>
-                                <div class="fw-bold">${temp}°C</div>
-                                <small class="text-muted">Temp</small>
-                            </div>
-                            <div class="col-4 col-md-2 text-center">
-                                <i class="mdi mdi-heart-pulse text-success"></i>
-                                <div class="fw-bold">${heartRate}</div>
-                                <small class="text-muted">HR</small>
-                            </div>
-                            <div class="col-4 col-md-2 text-center">
-                                <i class="mdi mdi-water text-primary"></i>
-                                <div class="fw-bold">${bp}</div>
-                                <small class="text-muted">BP</small>
-                            </div>
-                            <div class="col-4 col-md-2 text-center">
-                                <i class="mdi mdi-lungs text-info"></i>
-                                <div class="fw-bold">${respRate}</div>
-                                <small class="text-muted">RR</small>
-                            </div>
-                            <div class="col-4 col-md-2 text-center">
-                                <i class="mdi mdi-weight-kilogram text-secondary"></i>
-                                <div class="fw-bold">${weight}</div>
-                                <small class="text-muted">Wt(kg)</small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }]
-    });
-}
-
-function displayNotes(notes) {
-    if (!notes || notes.length === 0) {
-        $('#clinical-enc-notes-container').html('<p class="text-muted text-center py-3">No recent notes</p>');
-        return;
-    }
-
-    let html = '';
-    notes.forEach(function(note) {
-        const noteDate = formatDateTimePharmacy(note.created_at);
-        const noteText = note.note || note.content || 'No content';
-        html += `
-            <div class="note-item p-3 border-bottom">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">${noteDate}</span>
-                    <span class="badge bg-secondary">${note.created_by_name || 'Staff'}</span>
-                </div>
-                <p class="mb-0">${noteText}</p>
-            </div>
-        `;
-    });
-    $('#clinical-enc-notes-container').html(html);
-}
-
-function displayMedications(meds) {
-    if (!meds || meds.length === 0) {
-        $('#clinical-meds-container').html('<p class="text-muted text-center py-3">No prescription history</p>');
-        return;
-    }
-
-    let html = '';
-    meds.forEach(function(med) {
-        const medDate = formatDateTimePharmacy(med.created_at);
-        const statusBadge = med.status == 3 ? '<span class="badge bg-success">Dispensed</span>' :
-                           med.status == 2 ? '<span class="badge bg-info">Ready</span>' :
-                           med.status == 1 ? '<span class="badge bg-warning">Unbilled</span>' :
-                           '<span class="badge bg-secondary">Dismissed</span>';
-        html += `
-            <div class="med-item p-3 border-bottom">
-                <div class="d-flex justify-content-between mb-1">
-                    <strong>${med.product_name || 'Unknown'}</strong>
-                    ${statusBadge}
-                </div>
-                <div class="d-flex justify-content-between text-muted small">
-                    <span>Qty: ${med.qty || 1} | ${med.dose || 'N/A'}</span>
-                    <span>${medDate}</span>
-                </div>
-            </div>
-        `;
-    });
-    $('#clinical-meds-container').html(html);
-}
-
-function displayAllergies(allergies) {
-    const $container = $('#allergies-panel-body, #clinical-allergies-container');
-    if (!$container.length) return;
-
-    if (!allergies || allergies.length === 0) {
-        $container.html('<p class="text-muted text-center py-3">No known allergies recorded</p>');
-        return;
-    }
-
-    let html = '<div class="p-3"><div class="row g-2">';
-    allergies.forEach(function(allergy) {
-        const name = typeof allergy === 'string' ? allergy : (allergy.name || allergy.allergen || allergy);
-        html += `
-            <div class="col-auto">
-                <span class="badge bg-danger p-2"><i class="mdi mdi-alert-circle me-1"></i>${name}</span>
-            </div>
-        `;
-    });
-    html += '</div></div>';
-    $container.html(html);
-}
-
-function refreshClinicalPanel(panel) {
-    if (!currentPatient) return;
-
-    switch(panel) {
-        case 'vitals':
-            $('#vitals-panel-body').html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin mdi-24px"></i></div>');
-            $.get(`/nursing-workbench/patient/${currentPatient}/vitals?limit=10`, displayVitals);
-            break;
-        case 'enc-notes':
-            $('#clinical-enc-notes-container').html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin mdi-24px"></i></div>');
-            $.get(`/nursing-workbench/patient/${currentPatient}/nursing-notes?limit=10`, displayNotes);
-            break;
-        case 'medications':
-            $('#clinical-meds-container').html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin mdi-24px"></i></div>');
-            $.get(`/prescHistoryList/${currentPatient}?length=10`, function(response) {
-                displayMedications(response.data || []);
-            });
-            break;
-    }
-}
-
-function formatDateTimePharmacy(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
 
 // ===========================================
 // DISPENSE CART MANAGEMENT (MODAL-BASED)

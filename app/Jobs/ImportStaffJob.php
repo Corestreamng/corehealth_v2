@@ -243,15 +243,45 @@ class ImportStaffJob implements ShouldQueue
                 $row = $item['row'];
                 $rowNum = $item['rowNum'];
 
-                if (empty($row['email']) || empty($row['surname']) || empty($row['firstname'])) {
-                    $errors[] = "Row {$rowNum}: Missing email, surname, or firstname";
+                // Support full_name / name column as fallback
+                $rawSurname = trim($row['surname'] ?? $row['full_name'] ?? $row['name'] ?? '');
+                $rawFirstname = trim($row['firstname'] ?? '');
+                $rawOthername = trim($row['othername'] ?? '');
+
+                // If firstname is empty but surname contains spaces → parse full name
+                if (empty($rawFirstname) && !empty($rawSurname) && str_contains($rawSurname, ' ')) {
+                    $parsed = $this->parseFullName($rawSurname);
+                    $surname = $parsed['surname'];
+                    $firstname = $parsed['firstname'];
+                    // Only override othername from parsing if not explicitly provided
+                    if (empty($rawOthername) && !empty($parsed['othername'])) {
+                        $rawOthername = $parsed['othername'];
+                    }
+                } else {
+                    $surname = $rawSurname;
+                    $firstname = $rawFirstname;
+                }
+
+                if (empty($surname) && empty($firstname)) {
+                    $errors[] = "Row {$rowNum}: Missing surname and firstname (provide both columns, or put full name in surname column)";
                     $skipped++;
                     continue;
                 }
 
-                $email = strtolower(trim($row['email']));
-                $surname = trim($row['surname']);
-                $firstname = trim($row['firstname']);
+                // If still no firstname (single-word surname), duplicate into firstname
+                if (empty($firstname)) {
+                    $firstname = $surname;
+                }
+
+                // Handle email — auto-generate if not provided (like patient import)
+                $email = strtolower(trim($row['email'] ?? ''));
+                if (empty($email)) {
+                    $slug = strtolower(Str::slug($surname . '.' . $firstname));
+                    $email = $slug . '.' . Str::random(4) . '@staff.local';
+                    while (isset($existingUsers[$email])) {
+                        $email = $slug . '.' . Str::random(4) . '@staff.local';
+                    }
+                }
 
                 // Validate role
                 $roleName = trim($row['role'] ?? $row['roles'] ?? '');
@@ -312,7 +342,7 @@ class ImportStaffJob implements ShouldQueue
                     User::where('id', $userId)->update([
                         'surname' => $surname,
                         'firstname' => $firstname,
-                        'othername' => $row['othername'] ?? null,
+                        'othername' => $rawOthername ?: null,
                     ]);
 
                     $user = User::find($userId);
@@ -337,7 +367,7 @@ class ImportStaffJob implements ShouldQueue
                     $user = User::create([
                         'surname' => $surname,
                         'firstname' => $firstname,
-                        'othername' => $row['othername'] ?? null,
+                        'othername' => $rawOthername ?: null,
                         'email' => $email,
                         'password' => Hash::make($this->defaultPassword),
                         'is_admin' => 2, // Staff
@@ -391,6 +421,56 @@ class ImportStaffJob implements ShouldQueue
             'skipped' => $skipped,
             'errors' => $errors,
             'new_users' => $newUsers,
+        ];
+    }
+
+    /**
+     * Parse a full name string into surname, firstname, othername components.
+     * Handles titles like Dr., Prof., Engr. etc. and splits:
+     *   "Dr. David Pinmo Olarewaju" → firstname: David, othername: Pinmo, surname: Olarewaju
+     *   "Dr. Peter Mballe"          → firstname: Peter, surname: Mballe
+     *   "Ringkwat Nanwul Shemu"     → firstname: Ringkwat, othername: Nanwul, surname: Shemu
+     *   "Mary Markus"               → firstname: Mary, surname: Markus
+     */
+    private function parseFullName(string $fullName): array
+    {
+        $titles = [
+            'dr.', 'dr', 'prof.', 'prof', 'engr.', 'engr', 'mr.', 'mr', 'mrs.', 'mrs',
+            'ms.', 'ms', 'rev.', 'rev', 'pastor', 'chief', 'alhaji', 'hajia', 'sir', 'lady',
+            'hon.', 'hon', 'barr.', 'barr', 'pharm.', 'pharm', 'arc.', 'arc', 'bldr.', 'bldr',
+            'capt.', 'capt', 'maj.', 'maj', 'gen.', 'gen', 'col.', 'col', 'lt.', 'lt',
+            'sgt.', 'sgt', 'cpl.', 'cpl', 'nurse', 'matron',
+        ];
+
+        $parts = preg_split('/\s+/', trim($fullName));
+        $parts = array_values(array_filter($parts, fn($p) => $p !== ''));
+
+        // Strip leading title(s)
+        while (count($parts) > 1 && in_array(strtolower(rtrim($parts[0], '.,;')), $titles)) {
+            array_shift($parts);
+        }
+
+        $surname = '';
+        $firstname = '';
+        $othername = '';
+
+        if (count($parts) === 1) {
+            // Single word — treat as surname
+            $surname = $parts[0];
+        } elseif (count($parts) === 2) {
+            $firstname = $parts[0];
+            $surname = $parts[1];
+        } else {
+            // 3+ parts: first = firstname, last = surname, everything in between = othername
+            $firstname = array_shift($parts);
+            $surname = array_pop($parts);
+            $othername = implode(' ', $parts);
+        }
+
+        return [
+            'surname' => $surname,
+            'firstname' => $firstname,
+            'othername' => $othername,
         ];
     }
 

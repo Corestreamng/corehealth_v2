@@ -630,6 +630,17 @@
                             <input type="date" class="form-control form-control-sm" id="filter_date_to" style="border-radius: 6px;">
                         </div>
                     </div>
+                    <div class="col-md-2">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted">Validated By</label>
+                            <select class="form-control form-control-sm select2" id="filter_validated_by" style="border-radius: 6px;">
+                                <option value="">All Validators</option>
+                                @foreach($validators as $v)
+                                    <option value="{{ $v->id }}">{{ $v->firstname }} {{ $v->surname }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                     <div class="col-md-1">
                         <div class="form-group mb-2">
                             <label class="small">&nbsp;</label>
@@ -801,7 +812,7 @@
 
 <!-- Approve Modal -->
 <div class="modal fade" id="approveModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-check-circle mr-2"></i>Approve Request</h5>
@@ -817,6 +828,70 @@
                     <div class="alert alert-success" style="border-radius: 8px; border-left: 4px solid #28a745;">
                         <i class="mdi mdi-information mr-1"></i>
                         <strong>Confirm Approval:</strong> You are about to approve this HMO request.
+                    </div>
+                    <!-- Tariff Edit Section -->
+                    <div class="tariff-edit-section mb-3">
+                        <div class="card mb-0" style="border-radius: 8px; border: 1px dashed #adb5bd;">
+                            <div class="card-header px-3 py-2 tariff-toggle cursor-pointer" style="background: #f8f9fa; border-radius: 8px;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span style="font-size: 0.85rem;">
+                                        <i class="mdi mdi-tune-vertical mr-1 text-info"></i>
+                                        <strong>Tariff Settings</strong>
+                                        <span class="tariff-summary-text text-muted small ml-1"></span>
+                                    </span>
+                                    <i class="mdi mdi-chevron-down tariff-chevron" style="transition: transform 0.3s;"></i>
+                                </div>
+                            </div>
+                            <div class="tariff-panel" style="display: none;">
+                                <div class="card-body px-3 pt-2 pb-3" style="border-top: 1px solid #dee2e6;">
+                                    <div class="tariff-loading text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                        <span class="ml-2 small text-muted">Loading tariff details...</span>
+                                    </div>
+                                    <div class="tariff-fields" style="display:none;">
+                                        <div class="form-group mb-2">
+                                            <label class="small font-weight-bold mb-1">Display Name</label>
+                                            <input type="text" class="form-control form-control-sm tariff-display-name" style="border-radius: 6px;">
+                                            <small class="form-text text-muted" style="font-size: 0.7rem;">Overrides item name in claims/reports. Leave blank for original.</small>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Coverage Mode</label>
+                                                <select class="form-control form-control-sm tariff-coverage-mode" style="border-radius: 6px;">
+                                                    <option value="express">Express</option>
+                                                    <option value="primary">Primary</option>
+                                                    <option value="secondary">Secondary</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Claims Amount</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm tariff-claims-amount" style="border-radius: 6px;">
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Payable Amount</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm tariff-payable-amount" style="border-radius: 6px;">
+                                            </div>
+                                        </div>
+                                        <div class="tariff-scheme-option mt-1" style="display:none;">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input tariff-apply-scheme" id="approve_apply_scheme">
+                                                <label class="custom-control-label small" for="approve_apply_scheme">
+                                                    Apply to all HMOs under <strong class="tariff-scheme-name"></strong>
+                                                    (<span class="tariff-scheme-count">0</span> HMOs)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="tariff-current-info mt-2 p-2 small" style="border-radius: 6px; font-size: 0.75rem; background: #eef2ff;">
+                                            <i class="mdi mdi-information-outline mr-1 text-info"></i>
+                                            <strong>This request:</strong>
+                                            Qty: <span class="tariff-current-qty">-</span> |
+                                            Claims: ₦<span class="tariff-current-claims">-</span> |
+                                            Payable: ₦<span class="tariff-current-payable">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group" id="auth_code_div" style="display:none;">
                         <label class="font-weight-bold">Authorization Code <span class="text-danger">*</span></label>
@@ -843,7 +918,7 @@
 
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle mr-2"></i>Reject Request</h5>
@@ -858,6 +933,70 @@
                     <div class="alert alert-warning" style="border-radius: 8px; border-left: 4px solid #ffc107;">
                         <i class="mdi mdi-alert mr-1"></i>
                         <strong>Confirm Rejection:</strong> You are about to reject this HMO request.
+                    </div>
+                    <!-- Tariff Edit Section -->
+                    <div class="tariff-edit-section mb-3">
+                        <div class="card mb-0" style="border-radius: 8px; border: 1px dashed #adb5bd;">
+                            <div class="card-header px-3 py-2 tariff-toggle cursor-pointer" style="background: #f8f9fa; border-radius: 8px;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span style="font-size: 0.85rem;">
+                                        <i class="mdi mdi-tune-vertical mr-1 text-info"></i>
+                                        <strong>Tariff Settings</strong>
+                                        <span class="tariff-summary-text text-muted small ml-1"></span>
+                                    </span>
+                                    <i class="mdi mdi-chevron-down tariff-chevron" style="transition: transform 0.3s;"></i>
+                                </div>
+                            </div>
+                            <div class="tariff-panel" style="display: none;">
+                                <div class="card-body px-3 pt-2 pb-3" style="border-top: 1px solid #dee2e6;">
+                                    <div class="tariff-loading text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                        <span class="ml-2 small text-muted">Loading tariff details...</span>
+                                    </div>
+                                    <div class="tariff-fields" style="display:none;">
+                                        <div class="form-group mb-2">
+                                            <label class="small font-weight-bold mb-1">Display Name</label>
+                                            <input type="text" class="form-control form-control-sm tariff-display-name" style="border-radius: 6px;">
+                                            <small class="form-text text-muted" style="font-size: 0.7rem;">Overrides item name in claims/reports. Leave blank for original.</small>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Coverage Mode</label>
+                                                <select class="form-control form-control-sm tariff-coverage-mode" style="border-radius: 6px;">
+                                                    <option value="express">Express</option>
+                                                    <option value="primary">Primary</option>
+                                                    <option value="secondary">Secondary</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Claims Amount</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm tariff-claims-amount" style="border-radius: 6px;">
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Payable Amount</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm tariff-payable-amount" style="border-radius: 6px;">
+                                            </div>
+                                        </div>
+                                        <div class="tariff-scheme-option mt-1" style="display:none;">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input tariff-apply-scheme" id="reject_apply_scheme">
+                                                <label class="custom-control-label small" for="reject_apply_scheme">
+                                                    Apply to all HMOs under <strong class="tariff-scheme-name"></strong>
+                                                    (<span class="tariff-scheme-count">0</span> HMOs)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="tariff-current-info mt-2 p-2 small" style="border-radius: 6px; font-size: 0.75rem; background: #eef2ff;">
+                                            <i class="mdi mdi-information-outline mr-1 text-info"></i>
+                                            <strong>This request:</strong>
+                                            Qty: <span class="tariff-current-qty">-</span> |
+                                            Claims: ₦<span class="tariff-current-claims">-</span> |
+                                            Payable: ₦<span class="tariff-current-payable">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="font-weight-bold">Rejection Reason <span class="text-danger">*</span></label>
@@ -923,7 +1062,7 @@
 
 <!-- Re-approve Modal -->
 <div class="modal fade" id="reapproveModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-check-decagram mr-2"></i>Re-approve Request</h5>
@@ -939,6 +1078,70 @@
                     <div class="alert alert-success" style="border-radius: 8px; border-left: 4px solid #28a745;">
                         <i class="mdi mdi-information mr-1"></i>
                         <strong>Re-approve:</strong> You are about to re-approve a previously rejected request.
+                    </div>
+                    <!-- Tariff Edit Section -->
+                    <div class="tariff-edit-section mb-3">
+                        <div class="card mb-0" style="border-radius: 8px; border: 1px dashed #adb5bd;">
+                            <div class="card-header px-3 py-2 tariff-toggle cursor-pointer" style="background: #f8f9fa; border-radius: 8px;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span style="font-size: 0.85rem;">
+                                        <i class="mdi mdi-tune-vertical mr-1 text-info"></i>
+                                        <strong>Tariff Settings</strong>
+                                        <span class="tariff-summary-text text-muted small ml-1"></span>
+                                    </span>
+                                    <i class="mdi mdi-chevron-down tariff-chevron" style="transition: transform 0.3s;"></i>
+                                </div>
+                            </div>
+                            <div class="tariff-panel" style="display: none;">
+                                <div class="card-body px-3 pt-2 pb-3" style="border-top: 1px solid #dee2e6;">
+                                    <div class="tariff-loading text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                        <span class="ml-2 small text-muted">Loading tariff details...</span>
+                                    </div>
+                                    <div class="tariff-fields" style="display:none;">
+                                        <div class="form-group mb-2">
+                                            <label class="small font-weight-bold mb-1">Display Name</label>
+                                            <input type="text" class="form-control form-control-sm tariff-display-name" style="border-radius: 6px;">
+                                            <small class="form-text text-muted" style="font-size: 0.7rem;">Overrides item name in claims/reports. Leave blank for original.</small>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Coverage Mode</label>
+                                                <select class="form-control form-control-sm tariff-coverage-mode" style="border-radius: 6px;">
+                                                    <option value="express">Express</option>
+                                                    <option value="primary">Primary</option>
+                                                    <option value="secondary">Secondary</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Claims Amount</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm tariff-claims-amount" style="border-radius: 6px;">
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="small font-weight-bold mb-1">Payable Amount</label>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm tariff-payable-amount" style="border-radius: 6px;">
+                                            </div>
+                                        </div>
+                                        <div class="tariff-scheme-option mt-1" style="display:none;">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input tariff-apply-scheme" id="reapprove_apply_scheme">
+                                                <label class="custom-control-label small" for="reapprove_apply_scheme">
+                                                    Apply to all HMOs under <strong class="tariff-scheme-name"></strong>
+                                                    (<span class="tariff-scheme-count">0</span> HMOs)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="tariff-current-info mt-2 p-2 small" style="border-radius: 6px; font-size: 0.75rem; background: #eef2ff;">
+                                            <i class="mdi mdi-information-outline mr-1 text-info"></i>
+                                            <strong>This request:</strong>
+                                            Qty: <span class="tariff-current-qty">-</span> |
+                                            Claims: ₦<span class="tariff-current-claims">-</span> |
+                                            Payable: ₦<span class="tariff-current-payable">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group" id="reapprove_auth_code_div" style="display:none;">
                         <label class="font-weight-bold">Authorization Code <span class="text-danger">*</span></label>
@@ -1106,6 +1309,7 @@
 
 @section('scripts')
 <script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
+<script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
 $(function() {
     let currentTab = 'pending';
@@ -1137,6 +1341,7 @@ $(function() {
                     d.service_type = $('#filter_service_type').val();
                     d.date_from = $('#filter_date_from').val();
                     d.date_to = $('#filter_date_to').val();
+                    d.validated_by = $('#filter_validated_by').val();
                     d.search = $('#search_input').val();
                 }
             },
@@ -1348,152 +1553,14 @@ $(function() {
         });
     });
 
-    // Clinical context button
+    // Clinical context button — uses shared ClinicalContext module
     $(document).on('click', '.clinical-context-btn', function() {
         let patientId = $(this).data('patient-id');
-        loadClinicalContext(patientId);
-    });
-
-    function loadClinicalContext(patientId) {
-        // Store patient ID for see more buttons
-        window.currentClinicalPatientId = patientId;
-
-        // Show modal first with loading state
-        $('#clinical-context-modal').modal('show');
-
-        // Load vitals into vitals panel
-        $('#vitals-panel-body').html('<div class="text-center py-5"><i class="fa fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading vitals...</p></div>');
-        $.get("{{ url('hmo/patient') }}/" + patientId + "/vitals", function(vitals) {
-            let vitalsHtml = '';
-            if (vitals.length > 0) {
-                vitals.forEach(function(v) {
-                    vitalsHtml += `
-                        <div class="vital-entry">
-                            <div class="vital-entry-header">
-                                <span class="vital-date"><i class="mdi mdi-calendar-clock"></i> ${new Date(v.created_at).toLocaleString()}</span>
-                            </div>
-                            <div class="vital-entry-grid">
-                                <div class="vital-item" title="Blood Pressure">
-                                    <i class="mdi mdi-heart-pulse"></i>
-                                    <span class="vital-value">${v.blood_pressure || 'N/A'}</span>
-                                    <span class="vital-label">Blood Pressure</span>
-                                </div>
-                                <div class="vital-item" title="Temperature">
-                                    <i class="mdi mdi-thermometer"></i>
-                                    <span class="vital-value">${v.temp || 'N/A'}°C</span>
-                                    <span class="vital-label">Temperature</span>
-                                </div>
-                                <div class="vital-item" title="Heart Rate">
-                                    <i class="mdi mdi-heart"></i>
-                                    <span class="vital-value">${v.heart_rate || 'N/A'}</span>
-                                    <span class="vital-label">Heart Rate</span>
-                                </div>
-                                <div class="vital-item" title="Respiratory Rate">
-                                    <i class="mdi mdi-lungs"></i>
-                                    <span class="vital-value">${v.resp_rate || 'N/A'}</span>
-                                    <span class="vital-label">Resp. Rate</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                vitalsHtml += `<div class="text-center mt-3"><a href="{{ url('patient') }}/${patientId}?section=vitalsCardBody" class="btn btn-primary btn-sm" target="_blank"><i class="fa fa-external-link"></i> See More in Patient Profile</a></div>`;
-            } else {
-                vitalsHtml = '<div class="alert alert-info text-center"><i class="mdi mdi-information"></i> No vitals recorded for this patient</div>';
-            }
-            $('#vitals-panel-body').html(vitalsHtml);
-        }).fail(function() {
-            $('#vitals-panel-body').html('<div class="alert alert-danger">Failed to load vitals</div>');
-        });
-
-        // Load clinical notes
-        $('#notes-panel-body').html('<div class="text-center py-5"><i class="fa fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading notes...</p></div>');
-        $.get("{{ url('hmo/patient') }}/" + patientId + "/notes", function(notes) {
-            let notesHtml = '';
-            if (notes.length > 0) {
-                notes.forEach(function(n) {
-                    notesHtml += `
-                        <div class="note-entry">
-                            <div class="note-header">
-                                <div>
-                                    <span class="note-doctor">${n.doctor}</span>
-                                    <span class="specialty-tag">${n.specialty}</span>
-                                </div>
-                                <span class="note-date">${n.date_formatted}</span>
-                            </div>
-                            ${n.reasons_for_encounter ? (function(){
-                                try {
-                                    let parsed = JSON.parse(n.reasons_for_encounter);
-                                    if (Array.isArray(parsed) && parsed.length && parsed[0].code) {
-                                        let tbl = '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;"><thead><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th></tr></thead><tbody>';
-                                        parsed.forEach(dx => {
-                                            let c1 = dx.comment_1 && dx.comment_1 !== 'NA' ? `<span class="badge bg-secondary">${dx.comment_1}</span>` : '<span class="text-muted">-</span>';
-                                            let c2 = dx.comment_2 && dx.comment_2 !== 'NA' ? `<span class="badge bg-secondary">${dx.comment_2}</span>` : '<span class="text-muted">-</span>';
-                                            tbl += `<tr><td><code>${dx.code}</code></td><td>${dx.name}</td><td>${c1}</td><td>${c2}</td></tr>`;
-                                        });
-                                        tbl += '</tbody></table>';
-                                        return '<div class="note-diagnosis">' + tbl + '</div>';
-                                    }
-                                } catch(e) {}
-                                return `<div class="note-diagnosis"><span class="diagnosis-badge">${n.reasons_for_encounter}</span></div>`;
-                            })() : ''}
-                            <div class="note-content">${n.notes}</div>
-                        </div>
-                    `;
-                });
-                notesHtml += `<div class="text-center mt-3"><a href="{{ url('patient') }}/${patientId}?section=encountersCardBody" class="btn btn-primary btn-sm" target="_blank"><i class="fa fa-external-link"></i> See More in Patient Profile</a></div>`;
-            } else {
-                notesHtml = '<div class="alert alert-info text-center"><i class="mdi mdi-information"></i> No clinical notes found for this patient</div>';
-            }
-            $('#notes-panel-body').html(notesHtml);
-        }).fail(function() {
-            $('#notes-panel-body').html('<div class="alert alert-danger">Failed to load notes</div>');
-        });
-
-        // Load medications
-        $('#medications-panel-body').html('<div class="text-center py-5"><i class="fa fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading medications...</p></div>');
-        $.get("{{ url('hmo/patient') }}/" + patientId + "/medications", function(meds) {
-            let medsHtml = '';
-            if (meds.length > 0) {
-                meds.forEach(function(m) {
-                    let statusClass = m.status === 'dispensed' ? 'status-completed' : 'status-active';
-                    medsHtml += `
-                        <div class="medication-card">
-                            <div class="medication-header">
-                                <span class="medication-name"><i class="mdi mdi-pill"></i> ${m.drug_name}</span>
-                                <span class="medication-status ${statusClass}">${m.status.toUpperCase()}</span>
-                            </div>
-                            <div class="medication-details">
-                                <div class="medication-detail-item"><strong>Dose:</strong> ${m.dose}</div>
-                                <div class="medication-detail-item"><strong>Frequency:</strong> ${m.freq}</div>
-                                <div class="medication-detail-item"><strong>Duration:</strong> ${m.duration}</div>
-                                <div class="medication-detail-item"><strong>Prescribed:</strong> ${m.requested_date}</div>
-                                <div class="medication-detail-item"><strong>By:</strong> ${m.doctor}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-                medsHtml += `<div class="text-center mt-3"><a href="{{ url('patient') }}/${patientId}?section=prescriptionsNotesCardBody" class="btn btn-primary btn-sm" target="_blank"><i class="fa fa-external-link"></i> See More in Patient Profile</a></div>`;
-            } else {
-                medsHtml = '<div class="alert alert-info text-center"><i class="mdi mdi-information"></i> No medications found for this patient</div>';
-            }
-            $('#medications-panel-body').html(medsHtml);
-        }).fail(function() {
-            $('#medications-panel-body').html('<div class="alert alert-danger">Failed to load medications</div>');
-        });
-
-        // Allergies placeholder (can be extended later)
-        $('#allergies-panel-body').html('<div class="alert alert-info text-center"><i class="mdi mdi-information"></i> Allergy information not available</div>');
-    }
-
-    // Refresh clinical panel
-    $(document).on('click', '.refresh-clinical-btn', function() {
-        // Refresh current patient's data
-        if (window.currentClinicalPatientId) {
-            loadClinicalContext(window.currentClinicalPatientId);
-        } else {
-            swal('Info', 'Click the Clinical button on a patient row to refresh data', 'info');
+        if (!patientId) {
+            toastr.warning('Please select a patient first');
+            return;
         }
+        ClinicalContext.load(patientId);
     });
 
     // Patient history button
@@ -1529,6 +1596,186 @@ $(function() {
         });
     });
 
+    // ════════════════════════════════════════════════════════════
+    // Tariff inline-edit helpers (shared across approve / reject / re-approve)
+    // ════════════════════════════════════════════════════════════
+
+    // Toggle tariff panel expand / collapse
+    $(document).on('click', '.tariff-toggle', function() {
+        let $panel = $(this).closest('.tariff-edit-section').find('.tariff-panel');
+        let $chevron = $(this).find('.tariff-chevron');
+        $panel.slideToggle(200);
+        let isOpen = $panel.is(':visible');
+        $chevron.css('transform', isOpen ? 'rotate(180deg)' : 'rotate(0deg)');
+    });
+
+    // Load tariff details into a modal's tariff section
+    function loadTariffForModal(modalSel, requestId) {
+        let $modal   = $(modalSel);
+        let $section = $modal.find('.tariff-edit-section');
+
+        // Reset
+        $section.find('.tariff-panel').hide();
+        $section.find('.tariff-chevron').css('transform', 'rotate(0deg)');
+        $section.find('.tariff-loading').show();
+        $section.find('.tariff-fields').hide();
+        $section.find('.tariff-summary-text').text('');
+        $section.find('.tariff-apply-scheme').prop('checked', false);
+        $section.data('request-id', requestId);
+        $section.data('tariff-loaded', false);
+        $section.data('original-values', null);
+
+        $.ajax({
+            url: "{{ url('hmo/requests') }}/" + requestId + "/tariff-details",
+            type: 'GET',
+            success: function(data) {
+                let tariff  = data.tariff;
+                let current = data.current;
+
+                // Summary text on collapsed header
+                let parts = [];
+                if (data.original_name) parts.push(data.original_name);
+                if (data.hmo_name)      parts.push(data.hmo_name);
+                $section.find('.tariff-summary-text')
+                    .text(parts.length ? '— ' + parts.join(' | ') : '');
+
+                // Display name
+                $section.find('.tariff-display-name')
+                    .val(tariff ? tariff.display_name || '' : '')
+                    .attr('placeholder', data.original_name || 'Original item name');
+
+                // Coverage mode (tariff → current POSR fallback)
+                let mode = tariff ? tariff.coverage_mode
+                         : (current ? current.coverage_mode : 'primary');
+                $section.find('.tariff-coverage-mode').val(mode);
+
+                // Per-unit amounts
+                let unitClaims  = tariff ? tariff.claims_amount  : 0;
+                let unitPayable = tariff ? tariff.payable_amount : 0;
+                if (!tariff && current) {
+                    let qty = parseInt(current.qty) || 1;
+                    unitClaims  = parseFloat(current.claims_amount)  / qty;
+                    unitPayable = parseFloat(current.payable_amount) / qty;
+                }
+                $section.find('.tariff-claims-amount').val(unitClaims ? parseFloat(unitClaims).toFixed(2) : '');
+                $section.find('.tariff-payable-amount').val(unitPayable ? parseFloat(unitPayable).toFixed(2) : '');
+
+                // Scheme checkbox
+                if (data.scheme) {
+                    $section.find('.tariff-scheme-option').show();
+                    $section.find('.tariff-scheme-name').text(data.scheme.name);
+                    $section.find('.tariff-scheme-count').text(data.scheme.hmo_count);
+                } else {
+                    $section.find('.tariff-scheme-option').hide();
+                }
+
+                // Current POSR reference
+                if (current) {
+                    $section.find('.tariff-current-qty').text(current.qty || 1);
+                    $section.find('.tariff-current-claims').text(
+                        parseFloat(current.claims_amount || 0).toLocaleString('en-NG', {minimumFractionDigits: 2})
+                    );
+                    $section.find('.tariff-current-payable').text(
+                        parseFloat(current.payable_amount || 0).toLocaleString('en-NG', {minimumFractionDigits: 2})
+                    );
+                }
+
+                // Store originals for change detection
+                $section.data('original-values', {
+                    display_name:   tariff ? (tariff.display_name || '') : '',
+                    coverage_mode:  mode,
+                    claims_amount:  parseFloat(unitClaims)  || 0,
+                    payable_amount: parseFloat(unitPayable) || 0
+                });
+
+                $section.data('tariff-loaded', true);
+                $section.find('.tariff-loading').hide();
+                $section.find('.tariff-fields').show();
+            },
+            error: function() {
+                $section.find('.tariff-loading').html(
+                    '<span class="text-danger small"><i class="mdi mdi-alert-circle mr-1"></i>Could not load tariff details</span>'
+                );
+            }
+        });
+    }
+
+    // Detect if tariff was edited
+    function hasTariffChanges(modalSel) {
+        let $section = $(modalSel).find('.tariff-edit-section');
+        let original = $section.data('original-values');
+        if (!original || !$section.data('tariff-loaded')) return false;
+
+        return ($section.find('.tariff-display-name').val() || '') !== original.display_name
+            || $section.find('.tariff-coverage-mode').val()        !== original.coverage_mode
+            || (parseFloat($section.find('.tariff-claims-amount').val())  || 0) !== original.claims_amount
+            || (parseFloat($section.find('.tariff-payable-amount').val()) || 0) !== original.payable_amount
+            || $section.find('.tariff-apply-scheme').is(':checked');
+    }
+
+    // Save tariff changes (returns jQuery Deferred / Promise)
+    function saveTariffChanges(modalSel) {
+        let deferred = $.Deferred();
+        if (!hasTariffChanges(modalSel)) {
+            deferred.resolve();
+            return deferred.promise();
+        }
+
+        let $section  = $(modalSel).find('.tariff-edit-section');
+        let requestId = $section.data('request-id');
+
+        $.ajax({
+            url: "{{ url('hmo/requests') }}/" + requestId + "/update-tariff",
+            type: 'POST',
+            data: {
+                _token:          '{{ csrf_token() }}',
+                coverage_mode:   $section.find('.tariff-coverage-mode').val(),
+                claims_amount:   $section.find('.tariff-claims-amount').val(),
+                payable_amount:  $section.find('.tariff-payable-amount').val(),
+                display_name:    $section.find('.tariff-display-name').val() || '',
+                apply_to_scheme: $section.find('.tariff-apply-scheme').is(':checked') ? 1 : 0
+            },
+            success: function(resp) { deferred.resolve(resp); },
+            error: function(xhr) {
+                let msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to update tariff';
+                swal('Tariff Update Error', msg, 'error');
+                deferred.reject(msg);
+            }
+        });
+        return deferred.promise();
+    }
+
+    // When coverage mode changes in the tariff section, sync the modal's auth code visibility
+    $(document).on('change', '.tariff-coverage-mode', function() {
+        let $modal = $(this).closest('.modal');
+        let newMode = $(this).val();
+
+        // Approve modal
+        if ($modal.attr('id') === 'approveModal') {
+            $('#approve_coverage_mode').val(newMode);
+            if (newMode === 'secondary') {
+                $('#auth_code_div').show();
+                $('#auth_code').prop('required', true);
+            } else {
+                $('#auth_code_div').hide();
+                $('#auth_code').prop('required', false).val('');
+            }
+        }
+        // Re-approve modal
+        if ($modal.attr('id') === 'reapproveModal') {
+            $('#reapprove_coverage_mode').val(newMode);
+            if (newMode === 'secondary') {
+                $('#reapprove_auth_code_div').show();
+                $('#reapprove_auth_code').prop('required', true);
+            } else {
+                $('#reapprove_auth_code_div').hide();
+                $('#reapprove_auth_code').prop('required', false).val('');
+            }
+        }
+    });
+
+    // ════════════════════════════════════════════════════════════
+
     // Show approve modal
     $(document).on('click', '.approve-btn', function() {
         let id = $(this).data('id');
@@ -1548,37 +1795,46 @@ $(function() {
             $('#auth_code').prop('required', false);
         }
 
+        loadTariffForModal('#approveModal', id);
         $('#approveModal').modal('show');
     });
 
-    // Submit approve form
+    // Submit approve form (save tariff first if changed)
     $('#approveForm').submit(function(e) {
         e.preventDefault();
         $('.text-danger').text('');
 
-        let id = $('#approve_request_id').val();
+        let id    = $('#approve_request_id').val();
+        let $form = $(this);
+        let $btn  = $form.find('[type="submit"]').prop('disabled', true);
 
-        $.ajax({
-            url: "{{ url('hmo/requests') }}/" + id + "/approve",
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function(response) {
-                $('#approveModal').modal('hide');
-                table.ajax.reload();
-                loadQueueCounts();
-                loadFinancialSummary();
-                swal('Success', response.message, 'success');
-            },
-            error: function(xhr) {
-                if (xhr.status === 422) {
-                    let errors = xhr.responseJSON.errors;
-                    $.each(errors, function(key, value) {
-                        $('#error_' + key).text(value[0]);
-                    });
-                } else {
-                    swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+        saveTariffChanges('#approveModal').then(function() {
+            $.ajax({
+                url: "{{ url('hmo/requests') }}/" + id + "/approve",
+                type: 'POST',
+                data: $form.serialize(),
+                success: function(response) {
+                    $btn.prop('disabled', false);
+                    $('#approveModal').modal('hide');
+                    table.ajax.reload();
+                    loadQueueCounts();
+                    loadFinancialSummary();
+                    swal('Success', response.message, 'success');
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false);
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function(key, value) {
+                            $('#error_' + key).text(value[0]);
+                        });
+                    } else {
+                        swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                    }
                 }
-            }
+            });
+        }).fail(function() {
+            $btn.prop('disabled', false);
         });
     });
 
@@ -1591,34 +1847,43 @@ $(function() {
         $('#reject_notes').val('');
         $('.text-danger').text('');
 
+        loadTariffForModal('#rejectModal', id);
         $('#rejectModal').modal('show');
     });
 
-    // Submit reject form
+    // Submit reject form (save tariff first if changed)
     $('#rejectForm').submit(function(e) {
         e.preventDefault();
         $('.text-danger').text('');
 
-        let id = $('#reject_request_id').val();
+        let id    = $('#reject_request_id').val();
+        let $form = $(this);
+        let $btn  = $form.find('[type="submit"]').prop('disabled', true);
 
-        $.ajax({
-            url: "{{ url('hmo/requests') }}/" + id + "/reject",
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function(response) {
-                $('#rejectModal').modal('hide');
-                table.ajax.reload();
-                loadQueueCounts();
-                loadFinancialSummary();
-                swal('Success', response.message, 'success');
-            },
-            error: function(xhr) {
-                if (xhr.status === 422) {
-                    $('#error_rejection_reason').text(xhr.responseJSON.message);
-                } else {
-                    swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+        saveTariffChanges('#rejectModal').then(function() {
+            $.ajax({
+                url: "{{ url('hmo/requests') }}/" + id + "/reject",
+                type: 'POST',
+                data: $form.serialize(),
+                success: function(response) {
+                    $btn.prop('disabled', false);
+                    $('#rejectModal').modal('hide');
+                    table.ajax.reload();
+                    loadQueueCounts();
+                    loadFinancialSummary();
+                    swal('Success', response.message, 'success');
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false);
+                    if (xhr.status === 422) {
+                        $('#error_rejection_reason').text(xhr.responseJSON.message);
+                    } else {
+                        swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                    }
                 }
-            }
+            });
+        }).fail(function() {
+            $btn.prop('disabled', false);
         });
     });
 
@@ -1670,28 +1935,38 @@ $(function() {
             $('#reapprove_auth_code').prop('required', false);
         }
 
+        loadTariffForModal('#reapproveModal', id);
         $('#reapproveModal').modal('show');
     });
 
-    // Submit re-approve form
+    // Submit re-approve form (save tariff first if changed)
     $('#reapproveForm').submit(function(e) {
         e.preventDefault();
-        let id = $('#reapprove_request_id').val();
 
-        $.ajax({
-            url: "{{ url('hmo/requests') }}/" + id + "/reapprove",
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function(response) {
-                $('#reapproveModal').modal('hide');
-                table.ajax.reload();
-                loadQueueCounts();
-                loadFinancialSummary();
-                swal('Success', response.message, 'success');
-            },
-            error: function(xhr) {
-                swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
-            }
+        let id    = $('#reapprove_request_id').val();
+        let $form = $(this);
+        let $btn  = $form.find('[type="submit"]').prop('disabled', true);
+
+        saveTariffChanges('#reapproveModal').then(function() {
+            $.ajax({
+                url: "{{ url('hmo/requests') }}/" + id + "/reapprove",
+                type: 'POST',
+                data: $form.serialize(),
+                success: function(response) {
+                    $btn.prop('disabled', false);
+                    $('#reapproveModal').modal('hide');
+                    table.ajax.reload();
+                    loadQueueCounts();
+                    loadFinancialSummary();
+                    swal('Success', response.message, 'success');
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false);
+                    swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                }
+            });
+        }).fail(function() {
+            $btn.prop('disabled', false);
         });
     });
 
@@ -1780,6 +2055,9 @@ $(function() {
 <style>
     .cursor-pointer { cursor: pointer; }
     .preset-card:hover { opacity: 0.9; transform: scale(1.02); transition: all 0.2s; }
+    .tariff-edit-section .card-header.tariff-toggle:hover { background: #edf2f7 !important; }
+    .tariff-edit-section .tariff-chevron { transition: transform 0.3s ease; }
+    .tariff-edit-section .tariff-fields .form-control-sm { font-size: 0.82rem; }
 </style>
 
 {{-- Emergency Intake Modal --}}
