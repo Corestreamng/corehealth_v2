@@ -178,23 +178,51 @@ class LabServiceRequestController extends Controller
 
             DB::beginTransaction();
 
-            $updateData = [
-                'result' => $resultHtml,
-                'result_data' => $resultData,
-                'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
-                'status' => 4
-            ];
+            $requiresApproval = appsettings('lab_results_require_approval');
 
-            // Only update result_date and result_by if this is not an edit
-            if (!$isEdit) {
-                $updateData['result_date'] = date('Y-m-d H:i:s');
-                $updateData['result_by'] = Auth::id();
+            if ($requiresApproval && !$isEdit) {
+                // Save to pending columns — result not visible until approved
+                $updateData = [
+                    'pending_result' => $resultHtml,
+                    'pending_result_data' => $resultData,
+                    'pending_attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
+                    'status' => 5, // Pending Approval
+                    'result_date' => date('Y-m-d H:i:s'),
+                    'result_by' => Auth::id(),
+                    'rejected_by' => null,
+                    'rejected_at' => null,
+                    'rejection_reason' => null,
+                ];
+            } else {
+                // Original behavior — save directly to live columns
+                $updateData = [
+                    'result' => $resultHtml,
+                    'result_data' => $resultData,
+                    'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
+                    'status' => 4
+                ];
+
+                // Only update result_date and result_by if this is not an edit
+                if (!$isEdit) {
+                    $updateData['result_date'] = date('Y-m-d H:i:s');
+                    $updateData['result_by'] = Auth::id();
+                }
+
+                // If re-submitting after rejection, clear pending columns
+                if ($labRequest->status == 6) {
+                    $updateData['pending_result'] = null;
+                    $updateData['pending_result_data'] = null;
+                    $updateData['pending_attachments'] = null;
+                    $updateData['rejected_by'] = null;
+                    $updateData['rejected_at'] = null;
+                    $updateData['rejection_reason'] = null;
+                }
             }
 
             $req = LabServiceRequest::where('id', $request->invest_res_entry_id)->update($updateData);
             DB::commit();
 
-            $message = $isEdit ? "Results Updated Successfully" : "Results Saved Successfully";
+            $message = $isEdit ? "Results Updated Successfully" : ($requiresApproval ? "Results saved — pending approval" : "Results Saved Successfully");
             return redirect()->back()->with(['message' => $message, 'message_type' => 'success']);
         } catch (\Exception $e) {
             DB::rollBack();

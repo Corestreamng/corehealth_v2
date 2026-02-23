@@ -402,7 +402,11 @@ class EncounterController extends Controller
                 // Status badges
                 $str .= '<div>';
                 $statusBadge = '';
-                if ($his->result) {
+                if ($his->status == 5) {
+                    $statusBadge = "<span class='badge' style='background-color: #6f42c1; color: #fff;'>Pending Approval</span>";
+                } elseif ($his->status == 6) {
+                    $statusBadge = "<span class='badge bg-danger'><i class='mdi mdi-close-circle'></i> Rejected</span>";
+                } elseif ($his->result) {
                     $statusBadge = "<span class='badge bg-info'>Result Available</span>";
                 } elseif ($his->sample_taken_by) {
                     $statusBadge = "<span class='badge bg-warning'>Sample Taken</span>";
@@ -441,8 +445,16 @@ class EncounterController extends Controller
                 $str .= '</div>';
                 $str .= '</small></div>';
 
-                // Results section
-                if ($his->result) {
+                // Results section — hide for pending approval / rejected status
+                if ($his->status == 5) {
+                    $str .= '<div class="alert alert-warning mb-2"><small><i class="mdi mdi-clock-outline"></i> <b>Result is pending approval by a supervisor.</b></small></div>';
+                } elseif ($his->status == 6) {
+                    $str .= '<div class="alert alert-danger mb-2"><small><i class="mdi mdi-close-circle"></i> <b>Result was rejected and sent back for revision.</b>';
+                    if ($his->rejection_reason) {
+                        $str .= '<br>Reason: ' . e($his->rejection_reason);
+                    }
+                    $str .= '</small></div>';
+                } elseif ($his->result) {
                     $str .= '<div class="alert alert-light mb-2"><small><b>Result:</b><br>' . $his->result . '</small></div>';
                 }
 
@@ -622,7 +634,11 @@ class EncounterController extends Controller
                 // Status badges
                 $str .= '<div>';
                 $statusBadge = '';
-                if ($his->result) {
+                if ($his->status == 5) {
+                    $statusBadge = "<span class='badge' style='background-color: #6f42c1; color: #fff;'>Pending Approval</span>";
+                } elseif ($his->status == 6) {
+                    $statusBadge = "<span class='badge bg-danger'><i class='mdi mdi-close-circle'></i> Rejected</span>";
+                } elseif ($his->result) {
                     $statusBadge = "<span class='badge bg-info'>Result Available</span>";
                 } elseif ($his->billed_by) {
                     $statusBadge = "<span class='badge bg-primary'>Billed</span>";
@@ -655,8 +671,16 @@ class EncounterController extends Controller
                 $str .= '</div>';
                 $str .= '</small></div>';
 
-                // Results section
-                if ($his->result) {
+                // Results section — hide for pending approval / rejected status
+                if ($his->status == 5) {
+                    $str .= '<div class="alert alert-warning mb-2"><small><i class="mdi mdi-clock-outline"></i> <b>Result is pending approval by a supervisor.</b></small></div>';
+                } elseif ($his->status == 6) {
+                    $str .= '<div class="alert alert-danger mb-2"><small><i class="mdi mdi-close-circle"></i> <b>Result was rejected and sent back for revision.</b>';
+                    if ($his->rejection_reason) {
+                        $str .= '<br>Reason: ' . e($his->rejection_reason);
+                    }
+                    $str .= '</small></div>';
+                } elseif ($his->result) {
                     $str .= '<div class="alert alert-light mb-2"><small><b>Result:</b><br>' . $his->result . '</small></div>';
                 }
 

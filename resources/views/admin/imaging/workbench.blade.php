@@ -2712,6 +2712,74 @@
         border-top: 1px solid #e9ecef;
     }
 
+    /* Approval Workflow Styles */
+    .text-purple { color: #6f42c1 !important; }
+    .badge-purple { background: #6f42c1; color: #fff; }
+    .request-status-badge.status-approval { background: #f3f0ff; color: #6f42c1; border: 1px solid #6f42c1; font-weight: 600; }
+    .request-status-badge.status-rejected { background: #fff5f5; color: #dc3545; border: 1px solid #dc3545; font-weight: 600; }
+
+    .approval-result-preview {
+        border: 2px solid #6f42c1;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        background: #faf9ff;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .approval-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .approval-meta-item {
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #6f42c1;
+    }
+
+    .approval-meta-item label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .approval-meta-item span { font-weight: 600; color: #212529; }
+
+    .approval-attachments { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .approval-attachment-item { padding: 0.5rem 0.75rem; background: #e9ecef; border-radius: 4px; font-size: 0.85rem; }
+    .approval-rejection-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+
+    .floating-approval-btn {
+        position: fixed;
+        right: 30px;
+        bottom: 170px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(111, 66, 193, 0.4);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: all 0.3s;
+        z-index: 1000;
+    }
+
+    .floating-approval-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(111, 66, 193, 0.6); }
+    .floating-approval-btn .badge { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+
 </style>
 
 <div class="imaging-workbench-container">
@@ -2747,6 +2815,12 @@
                 <span class="queue-item-label">🔴 Result Entry</span>
                 <span class="queue-count results" id="queue-results-count">0</span>
             </div>
+            @if(($isApprover ?? false) && ($requiresApproval ?? false))
+            <div class="queue-item" data-filter="approval" style="background: #f3f0ff; border-left: 3px solid #6f42c1;">
+                <span class="queue-item-label">🟣 <strong class="text-purple">Awaiting Approval</strong></span>
+                <span class="queue-count" id="queue-approval-count" style="background: #6f42c1; color: #fff;">0</span>
+            </div>
+            @endif
             <button class="btn-queue-all" id="show-all-queue-btn">
                 📋 Show All Queue →
             </button>
@@ -3132,6 +3206,13 @@
                         <span>Awaiting Results</span>
                         <span class="subtab-badge" id="results-subtab-badge">0</span>
                     </button>
+                    @if(($requiresApproval ?? false))
+                    <button class="pending-subtab" data-status="approval">
+                        <i class="mdi mdi-check-decagram"></i>
+                        <span>Pending Approval</span>
+                        <span class="subtab-badge" id="approval-subtab-badge" style="background: #6f42c1;">0</span>
+                    </button>
+                    @endif
                 </div>
                 <div class="pending-subtab-content" id="pending-subtab-container">
                     <h5>Loading...</h5>
@@ -3507,6 +3588,110 @@
 
 @include('admin.partials.invest_res_modal', ['save_route' => 'imaging.saveResult'])
 
+<!-- Result Approval Review Modal -->
+@if(($isApprover ?? false) && ($requiresApproval ?? false))
+<div class="modal fade" id="approvalReviewModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #6f42c1, #5a32a3); color: white;">
+                <h5 class="modal-title"><i class="mdi mdi-check-decagram"></i> Result Approval Review</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="approval-review-body">
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Loading result details...</p>
+                </div>
+            </div>
+            <div class="modal-footer" id="approval-review-footer" style="display: none;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Close
+                </button>
+                <button type="button" class="btn btn-danger" id="btn-reject-result">
+                    <i class="mdi mdi-close-circle"></i> Reject Result
+                </button>
+                <button type="button" class="btn btn-success" id="btn-approve-result">
+                    <i class="mdi mdi-check-circle"></i> Approve Result
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectionReasonModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="mdi mdi-close-circle"></i> Reject Result</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectionReasonForm">
+                <div class="modal-body">
+                    <p class="text-muted">Please provide a reason for rejecting this result. The technician will be able to see this feedback.</p>
+                    <div class="form-group">
+                        <label for="rejection_reason"><strong>Rejection Reason <span class="text-danger">*</span></strong></label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="4" required
+                                  placeholder="E.g., Image quality is poor, please re-capture..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="btn-confirm-reject">
+                        <i class="mdi mdi-close-circle"></i> Confirm Rejection
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Confirmation Modal -->
+<div class="modal fade" id="approveConfirmModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: #fff; border: none;">
+                <h5 class="modal-title"><i class="mdi mdi-check-decagram"></i> Confirm Approval</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div style="font-size: 3rem; color: #28a745;"><i class="mdi mdi-clipboard-check-outline"></i></div>
+                <h5 class="mt-2 mb-1">Approve this result?</h5>
+                <p class="text-muted mb-0">This will make the result visible to doctors and patients. You can reverse this later if needed.</p>
+            </div>
+            <div class="modal-footer justify-content-center" style="border-top: 1px solid #eee;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="mdi mdi-close"></i> Cancel</button>
+                <button type="button" class="btn btn-success" id="btn-confirm-approve">
+                    <i class="mdi mdi-check-bold"></i> Yes, Approve
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reverse Approval Confirmation Modal -->
+<div class="modal fade" id="reverseApprovalModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #e67e22, #f39c12); color: #fff; border: none;">
+                <h5 class="modal-title"><i class="mdi mdi-undo-variant"></i> Reverse Approval</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div style="font-size: 3rem; color: #e67e22;"><i class="mdi mdi-undo-variant"></i></div>
+                <h5 class="mt-2 mb-1">Reverse this approval?</h5>
+                <p class="text-muted mb-0">The result will be removed from the patient's record and sent back to the pending approval queue.</p>
+            </div>
+            <div class="modal-footer justify-content-center" style="border-top: 1px solid #eee;">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="mdi mdi-close"></i> Cancel</button>
+                <button type="button" class="btn btn-warning text-white" id="btn-confirm-reverse">
+                    <i class="mdi mdi-undo-variant"></i> Yes, Reverse
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @include('admin.partials.clinical_context_modal')
 
 <!-- Delete Reason Modal -->
@@ -3856,6 +4041,13 @@
     <i class="fa fa-clipboard-list"></i>
 </button>
 
+@if(($isApprover ?? false) && ($requiresApproval ?? false))
+<button class="floating-approval-btn" id="openApprovalQueue" title="View Results Pending Approval">
+    <i class="mdi mdi-check-decagram"></i>
+    <span class="badge" id="approval-float-count">0</span>
+</button>
+@endif
+
 <!-- Floating Cart Button -->
 <div class="floating-cart" id="floating-cart">
     <button class="floating-cart-btn" onclick="openCartReviewModal()">
@@ -3903,6 +4095,9 @@ let currentPatientData = null; // Store full patient data including allergies
 let queueRefreshInterval = null;
 let patientSearchTimeout = null;
 let vitalTooltip = null;
+const isApprover = @json($isApprover ?? false);
+const requiresApproval = @json($requiresApproval ?? false);
+let currentApprovalId = null;
 
 $(document).ready(function() {
     // Initialize
@@ -4543,7 +4738,8 @@ let currentPendingFilter = 'all';
 function displayPendingRequests(requests) {
     currentPendingRequests = requests;
     // No sample stage for imaging
-    const totalPending = requests.billing.length + requests.results.length;
+    const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
+    const totalPending = requests.billing.length + requests.results.length + approvalItems;
     $('#pending-badge').text(totalPending);
 
     updatePendingSubtabBadges(requests);
@@ -4552,10 +4748,12 @@ function displayPendingRequests(requests) {
 
 function updatePendingSubtabBadges(requests) {
     // No sample stage for imaging
-    const totalPending = requests.billing.length + requests.results.length;
+    const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
+    const totalPending = requests.billing.length + requests.results.length + approvalItems;
     $('#all-pending-badge').text(totalPending);
     $('#billing-subtab-badge').text(requests.billing.length);
     $('#results-subtab-badge').text(requests.results.length);
+    $('#approval-subtab-badge').text(approvalItems);
 }
 
 function renderPendingSubtabContent(filter) {
@@ -4564,7 +4762,8 @@ function renderPendingSubtabContent(filter) {
     currentPendingFilter = filter;
     const requests = currentPendingRequests;
     // No sample stage for imaging
-    const totalPending = requests.billing.length + requests.results.length;
+    const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
+    const totalPending = requests.billing.length + requests.results.length + approvalItems;
 
     const $container = $('#pending-subtab-container');
     $container.empty();
@@ -4630,6 +4829,48 @@ function renderPendingSubtabContent(filter) {
         });
     }
 
+    // Pending Approval Section (Status 5)
+    const pendingApproval = requests.pending_approval || [];
+    if ((filter === 'all' || filter === 'approval') && pendingApproval.length > 0) {
+        const approvalHtml = `
+            <div class="request-section" data-section="approval">
+                <div class="request-section-header">
+                    <h5>
+                        <i class="mdi mdi-check-decagram" style="color: #6f42c1;"></i>
+                        <span style="color: #6f42c1;">Pending Approval (${pendingApproval.length})</span>
+                    </h5>
+                </div>
+                <div class="request-cards-container" id="approval-cards"></div>
+            </div>
+        `;
+        $container.append(approvalHtml);
+
+        pendingApproval.forEach(request => {
+            $('#approval-cards').append(createRequestCard(request, 'approval'));
+        });
+    }
+
+    // Rejected Section (Status 6)
+    const rejectedItems = requests.rejected || [];
+    if ((filter === 'all' || filter === 'approval') && rejectedItems.length > 0) {
+        const rejectedHtml = `
+            <div class="request-section" data-section="rejected">
+                <div class="request-section-header">
+                    <h5>
+                        <i class="mdi mdi-close-circle" style="color: #dc3545;"></i>
+                        <span style="color: #dc3545;">Rejected - Needs Correction (${rejectedItems.length})</span>
+                    </h5>
+                </div>
+                <div class="request-cards-container" id="rejected-cards"></div>
+            </div>
+        `;
+        $container.append(rejectedHtml);
+
+        rejectedItems.forEach(request => {
+            $('#rejected-cards').append(createRequestCard(request, 'rejected'));
+        });
+    }
+
     // Initialize event handlers
     initializeRequestHandlers();
 }
@@ -4679,6 +4920,16 @@ function createRequestCard(request, section) {
             statusBadges += ' <span class="badge bg-danger"><i class="mdi mdi-close"></i> HMO Rejected</span>';
         } else if (claimsAmount > 0 && isValidated) {
             statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> HMO OK</span>';
+        }
+    } else if (section === 'approval') {
+        statusBadges = '<span class="request-status-badge status-approval"><i class="mdi mdi-check-decagram"></i> Pending Approval</span>';
+        borderStyle = 'border-left: 4px solid #6f42c1;';
+    } else if (section === 'rejected') {
+        statusBadges = '<span class="request-status-badge status-rejected"><i class="mdi mdi-close-circle"></i> Rejected</span>';
+        borderStyle = 'border-left: 4px solid #dc3545;';
+        if (request.rejection_reason) {
+            pendingAlerts += `<div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
+                <i class="mdi mdi-message-alert"></i> <strong>Rejection Reason:</strong> ${request.rejection_reason}</div>`;
         }
     }
 
@@ -4734,19 +4985,40 @@ function createRequestCard(request, section) {
     }
 
     // Results section has individual action button instead of checkbox
-    const checkboxOrAction = section === 'results' ? `
-        <button class="btn btn-sm btn-primary enter-result-btn"
-                data-request-id="${request.id}"
-                ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
-            <i class="mdi mdi-file-document-edit"></i>
-            Enter Result
-        </button>
-    ` : `
-        <div class="request-card-checkbox">
-            <input type="checkbox" class="request-checkbox" data-request-id="${request.id}" data-section="${section}"
-                   data-price="${price}">
-        </div>
-    `;
+    let checkboxOrAction = '';
+    if (section === 'results') {
+        checkboxOrAction = `
+            <button class="btn btn-sm btn-primary enter-result-btn"
+                    data-request-id="${request.id}"
+                    ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
+                <i class="mdi mdi-file-document-edit"></i>
+                Enter Result
+            </button>
+        `;
+    } else if (section === 'approval') {
+        checkboxOrAction = isApprover ? `
+            <button class="btn btn-sm btn-outline-primary review-approval-btn"
+                    data-request-id="${request.id}">
+                <i class="mdi mdi-eye"></i>
+                Review
+            </button>
+        ` : `<span class="badge badge-purple"><i class="mdi mdi-clock"></i> Pending</span>`;
+    } else if (section === 'rejected') {
+        checkboxOrAction = `
+            <button class="btn btn-sm btn-warning enter-result-btn"
+                    data-request-id="${request.id}">
+                <i class="mdi mdi-pencil"></i>
+                Re-enter
+            </button>
+        `;
+    } else {
+        checkboxOrAction = `
+            <div class="request-card-checkbox">
+                <input type="checkbox" class="request-checkbox" data-request-id="${request.id}" data-section="${section}"
+                       data-price="${price}">
+            </div>
+        `;
+    }
 
     return `
         <div class="request-card" data-request-id="${request.id}" style="${borderStyle}">
@@ -4992,6 +5264,13 @@ function loadQueueCounts() {
             $('#queue-emergency-count').closest('.queue-item').addClass('emergency-pulse');
         } else {
             $('#queue-emergency-count').closest('.queue-item').removeClass('emergency-pulse');
+        }
+        // Approval counts
+        var approvalCount = counts.approval || 0;
+        $('#queue-approval-count').text(approvalCount);
+        $('#approval-float-count').text(approvalCount);
+        if (approvalCount > 0) {
+            $('#openApprovalQueue').show();
         }
         updateSyncIndicator();
     });
@@ -6440,6 +6719,7 @@ function showQueue(filter) {
     const titles = {
         'billing': '🟢 Awaiting Billing',
         'results': '🔴 Awaiting Result Entry',
+        'approval': '🟣 Awaiting Approval',
         'all': '📋 All Pending Requests'
     };
     $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['all']}`);
@@ -6493,9 +6773,13 @@ function initializeQueueDataTable(filter) {
     }
 
     // Map filter to status
-    let status = '1,2';
-    if (filter === 'billing') status = '1';
-    else if (filter === 'results') status = '2';
+    let filterMap = {
+        'all': '1,2',
+        'billing': '1',
+        'results': '2',
+        'approval': 'approval'
+    };
+    let status = filterMap[filter] || '1,2';
 
     // Initialize DataTable for imaging queue
     queueDataTable = $('#queue-datatable').DataTable({
@@ -6515,10 +6799,18 @@ function initializeQueueDataTable(filter) {
 
                     // Status badge
                     let statusBadge = '';
+                    let reverseBtn = '';
                     if (row.status == 1) {
                         statusBadge = '<span class="badge badge-warning">Awaiting Billing</span>';
                     } else if (row.status == 2) {
                         statusBadge = '<span class="badge badge-danger">Awaiting Results</span>';
+                    } else if (row.status == 4 && card.approved_by) {
+                        statusBadge = '<span class="badge badge-success"><i class="mdi mdi-check-circle"></i> Approved</span>';
+                        reverseBtn = `<button class="btn btn-sm btn-outline-warning reverse-approval-btn" data-request-id="${card.id}" style="margin-left: auto; font-size: 0.75rem; padding: 2px 8px;" title="Reverse this approval"><i class="mdi mdi-undo-variant"></i> Reverse</button>`;
+                    } else if (row.status == 5) {
+                        statusBadge = '<span class="badge badge-purple">Pending Approval</span>';
+                    } else if (row.status == 6) {
+                        statusBadge = '<span class="badge badge-danger"><i class="mdi mdi-close-circle"></i> Rejected</span>';
                     }
 
                     // Format Date
@@ -6532,9 +6824,11 @@ function initializeQueueDataTable(filter) {
                                 <div style="font-weight: 600; font-size: 1rem; color: #212529;">${card.patient_name}</div>
                                 <span class="badge badge-primary">${card.file_no}</span>
                                 ${statusBadge}
+                                ${reverseBtn}
                             </div>
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
                                 <i class="mdi mdi-radioactive"></i> ${serviceName}
+                                ${card.approved_at ? `<br><small class="text-muted"><i class="mdi mdi-clock-check-outline"></i> Approved: ${card.approved_at}</small>` : ''}
                                 ${hmoText}
                             </div>
                             <div style="margin-top: 0.25rem; font-size: 0.8rem; color: #adb5bd;">
@@ -7372,9 +7666,11 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
     // Map status IDs to names and colors
     const statusMap = {
         1: { name: 'Awaiting Billing', color: '#ffc107' },
-        2: { name: 'Awaiting Sample', color: '#17a2b8' },
+        2: { name: 'Awaiting Results', color: '#17a2b8' },
         3: { name: 'Awaiting Results', color: '#007bff' },
-        4: { name: 'Completed', color: '#28a745' }
+        4: { name: 'Completed', color: '#28a745' },
+        5: { name: 'Pending Approval', color: '#6f42c1' },
+        6: { name: 'Rejected', color: '#dc3545' }
     };
 
     if (byStatus && byStatus.length > 0) {
@@ -7455,6 +7751,272 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         }
     });
 }
+
+// =============================================
+// RESULT APPROVAL WORKFLOW
+// =============================================
+
+function openApprovalReview(requestId) {
+    currentApprovalId = requestId;
+    $('#approval-review-footer').hide();
+    $('#approval-review-body').html(`
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2">Loading result details...</p>
+        </div>
+    `);
+    $('#approvalReviewModal').modal('show');
+
+    $.get(`/imaging-workbench/approval/${requestId}`, function(response) {
+        if (!response.success) {
+            $('#approval-review-body').html(`<div class="alert alert-danger">${response.message}</div>`);
+            return;
+        }
+
+        const d = response.data;
+        let rejectionBanner = '';
+        if (d.status === 6) {
+            rejectionBanner = `
+                <div class="approval-rejection-banner">
+                    <strong><i class="mdi mdi-alert"></i> Previously Rejected</strong><br>
+                    <small>By: ${d.rejected_by_name || 'N/A'} on ${d.rejected_at || 'N/A'}</small><br>
+                    <strong>Reason:</strong> ${d.rejection_reason || 'No reason provided'}
+                </div>
+            `;
+        }
+
+        let attachmentsHtml = '';
+        if (d.attachments && d.attachments.length > 0) {
+            const items = d.attachments.map(att => {
+                const fileName = typeof att === 'string' ? att.split('/').pop() : (att.name || 'File');
+                const filePath = typeof att === 'string' ? att : att.path;
+                return `<a href="${filePath}" target="_blank" class="approval-attachment-item">
+                    <i class="mdi mdi-file"></i> ${fileName}
+                </a>`;
+            }).join('');
+            attachmentsHtml = `
+                <h6 class="mt-3"><i class="mdi mdi-paperclip"></i> Attachments</h6>
+                <div class="approval-attachments">${items}</div>
+            `;
+        }
+
+        let resultDataHtml = '';
+        if (d.result_data && typeof d.result_data === 'object') {
+            const rows = Object.entries(d.result_data).map(([key, val]) => {
+                if (typeof val === 'object' && val !== null) {
+                    return `<tr>
+                        <td><strong>${val.parameter || key}</strong></td>
+                        <td>${val.value || ''}</td>
+                        <td>${val.unit || ''}</td>
+                        <td>${val.reference_range || val.range || ''}</td>
+                        <td>${val.flag || ''}</td>
+                    </tr>`;
+                }
+                return `<tr><td><strong>${key}</strong></td><td colspan="4">${val}</td></tr>`;
+            }).join('');
+
+            if (rows) {
+                resultDataHtml = `
+                    <h6 class="mt-3"><i class="mdi mdi-table"></i> Structured Results</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Reference Range</th><th>Flag</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        }
+
+        $('#approval-review-body').html(`
+            ${rejectionBanner}
+            <div class="approval-meta-grid">
+                <div class="approval-meta-item">
+                    <label>Service</label>
+                    <span>${d.service_name}</span>
+                </div>
+                <div class="approval-meta-item">
+                    <label>Patient</label>
+                    <span>${d.patient_name}</span>
+                </div>
+                <div class="approval-meta-item">
+                    <label>Entered By</label>
+                    <span>${d.entered_by}</span>
+                </div>
+                <div class="approval-meta-item">
+                    <label>Result Date</label>
+                    <span>${d.result_date || 'N/A'}</span>
+                </div>
+            </div>
+
+            ${resultDataHtml}
+
+            <h6 class="mt-3"><i class="mdi mdi-file-document"></i> Result Report</h6>
+            <div class="approval-result-preview">
+                ${d.result_html || '<em class="text-muted">No report content</em>'}
+            </div>
+
+            ${attachmentsHtml}
+        `);
+
+        // Show footer only if status is pending approval (5)
+        if (d.status === 5) {
+            $('#approval-review-footer').show();
+        } else {
+            $('#approval-review-footer').hide();
+        }
+    }).fail(function(xhr) {
+        $('#approval-review-body').html(`<div class="alert alert-danger">Failed to load result details.</div>`);
+    });
+}
+
+function approveImagingResult() {
+    if (!currentApprovalId) return;
+    $('#approvalReviewModal').modal('hide');
+    $('#approveConfirmModal').modal('show');
+}
+
+function confirmApproveImagingResult() {
+    if (!currentApprovalId) return;
+
+    $('#btn-confirm-approve').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Approving...');
+
+    $.ajax({
+        url: `/imaging-workbench/approval/${currentApprovalId}/approve`,
+        type: 'POST',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(response) {
+            $('#approveConfirmModal').modal('hide');
+            if (response.success) {
+                toastr.success(response.message);
+                loadQueueCounts();
+                if (queueDataTable) queueDataTable.ajax.reload(null, false);
+                if (currentPatient) refreshCurrentPatientData();
+            } else {
+                toastr.error(response.message);
+            }
+        },
+        error: function(xhr) {
+            $('#approveConfirmModal').modal('hide');
+            toastr.error(xhr.responseJSON?.message || 'Failed to approve result.');
+        },
+        complete: function() {
+            $('#btn-confirm-approve').prop('disabled', false).html('<i class="mdi mdi-check-bold"></i> Yes, Approve');
+        }
+    });
+}
+
+let currentReverseId = null;
+
+function reverseImagingApproval(requestId) {
+    currentReverseId = requestId;
+    $('#reverseApprovalModal').modal('show');
+}
+
+function confirmReverseImagingApproval() {
+    if (!currentReverseId) return;
+
+    $('#btn-confirm-reverse').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Reversing...');
+
+    $.ajax({
+        url: `/imaging-workbench/approval/${currentReverseId}/reverse`,
+        type: 'POST',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(response) {
+            $('#reverseApprovalModal').modal('hide');
+            if (response.success) {
+                toastr.success(response.message);
+                loadQueueCounts();
+                if (queueDataTable) queueDataTable.ajax.reload(null, false);
+                if (currentPatient) refreshCurrentPatientData();
+            } else {
+                toastr.error(response.message);
+            }
+        },
+        error: function(xhr) {
+            $('#reverseApprovalModal').modal('hide');
+            toastr.error(xhr.responseJSON?.message || 'Failed to reverse approval.');
+        },
+        complete: function() {
+            currentReverseId = null;
+            $('#btn-confirm-reverse').prop('disabled', false).html('<i class="mdi mdi-undo-variant"></i> Yes, Reverse');
+        }
+    });
+}
+
+function rejectImagingResult() {
+    if (!currentApprovalId) return;
+    $('#approvalReviewModal').modal('hide');
+    $('#rejection_reason').val('');
+    $('#rejectionReasonModal').modal('show');
+}
+
+function confirmRejectImagingResult() {
+    const reason = $('#rejection_reason').val().trim();
+    if (!reason) {
+        toastr.error('Please provide a rejection reason.');
+        return;
+    }
+
+    $.ajax({
+        url: `/imaging-workbench/approval/${currentApprovalId}/reject`,
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            rejection_reason: reason
+        },
+        success: function(response) {
+            if (response.success) {
+                $('#rejectionReasonModal').modal('hide');
+                toastr.success(response.message);
+                loadQueueCounts();
+                if (currentPatient) refreshCurrentPatientData();
+            } else {
+                toastr.error(response.message);
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to reject result.');
+        }
+    });
+}
+
+// Bind approval event listeners
+$(document).on('click', '.review-approval-btn', function() {
+    const requestId = $(this).data('request-id');
+    openApprovalReview(requestId);
+});
+
+$(document).on('click', '#btn-approve-result', function() {
+    approveImagingResult();
+});
+
+$(document).on('click', '#btn-confirm-approve', function() {
+    confirmApproveImagingResult();
+});
+
+$(document).on('click', '.reverse-approval-btn', function(e) {
+    e.stopPropagation();
+    const requestId = $(this).data('request-id');
+    reverseImagingApproval(requestId);
+});
+
+$(document).on('click', '#btn-confirm-reverse', function() {
+    confirmReverseImagingApproval();
+});
+
+$(document).on('click', '#btn-reject-result', function() {
+    rejectImagingResult();
+});
+
+$(document).on('submit', '#rejectionReasonForm', function(e) {
+    e.preventDefault();
+    confirmRejectImagingResult();
+});
+
+$(document).on('click', '#openApprovalQueue', function() {
+    showQueue('approval');
+});
 
 </script>
 
