@@ -1448,7 +1448,7 @@
         background: #c82333;
     }
 
-    /* â”€â”€ Floating Cart (billing-style) â”€â”€ */
+    /* ── Floating Cart (billing-style) ── */
     .floating-cart {
         position: fixed;
         bottom: 90px;
@@ -1506,7 +1506,7 @@
         animation: cartPulse 0.3s ease;
     }
 
-    /* â”€â”€ Cart Review Modal â”€â”€ */
+    /* ── Cart Review Modal ── */
     #cartReviewModal .modal-header {
         background: linear-gradient(135deg, var(--hospital-primary), #0056b3);
         color: white;
@@ -2795,33 +2795,33 @@
         @include('admin.partials.patient_search_html')
 
         <div class="queue-widget">
-            <h6>ðŸ“Š PENDING QUEUE</h6>
+            <h6>📊 PENDING QUEUE</h6>
             <div class="queue-item" data-filter="emergency" style="background: #fff5f5; border-left: 3px solid #dc3545;">
-                <span class="queue-item-label">ðŸš¨ <strong class="text-danger">Emergency</strong></span>
+                <span class="queue-item-label">🚨 <strong class="text-danger">Emergency</strong></span>
                 <span class="queue-count" id="queue-emergency-count" style="background: #dc3545; color: #fff;">0</span>
             </div>
             <div class="queue-item" data-filter="billing">
-                <span class="queue-item-label">ðŸŸ¡ Awaiting Billing</span>
+                <span class="queue-item-label">🟡 Awaiting Billing</span>
                 <span class="queue-count billing" id="queue-billing-count">0</span>
             </div>
             <!-- No sample collection stage for imaging -->
             <div class="queue-item" data-filter="results">
-                <span class="queue-item-label">ðŸ”´ Result Entry</span>
+                <span class="queue-item-label">🔴 Result Entry</span>
                 <span class="queue-count results" id="queue-results-count">0</span>
             </div>
             @if(($isApprover ?? false) && ($requiresApproval ?? false))
             <div class="queue-item" data-filter="approval" style="background: #f3f0ff; border-left: 3px solid #6f42c1;">
-                <span class="queue-item-label">ðŸŸ£ <strong class="text-purple">Awaiting Approval</strong></span>
+                <span class="queue-item-label">🟣 <strong class="text-purple">Awaiting Approval</strong></span>
                 <span class="queue-count" id="queue-approval-count" style="background: #6f42c1; color: #fff;">0</span>
             </div>
             @endif
             <button class="btn-queue-all" id="show-all-queue-btn">
-                ðŸ“‹ Show All Queue â†’
+                📋 Show All Queue →
             </button>
         </div>
 
         <div class="quick-actions">
-            <h6>âš¡ QUICK ACTIONS</h6>
+            <h6>⚡ QUICK ACTIONS</h6>
             <button class="quick-action-btn" id="btn-new-request" style="display: none;">
                 <i class="mdi mdi-plus-circle"></i>
                 <span>New Request</span>
@@ -2864,7 +2864,7 @@
             <h3>Select a patient to begin</h3>
             <p>Use the search box or view pending queue</p>
             <button class="btn btn-lg btn-primary" id="view-queue-btn">
-                ðŸ“‹ View All Pending Requests
+                📋 View All Pending Requests
             </button>
         </div>
 
@@ -4843,7 +4843,7 @@ function createRequestCard(request, section) {
         if (payableAmount > 0 && !isPaid) {
             statusBadges += ' <span class="badge bg-danger">Awaiting Payment</span>';
             pendingAlerts += `<div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
-                <i class="mdi mdi-cash-clock"></i> <strong>Payment Required:</strong> â‚¦${Number(payableAmount).toLocaleString()}</div>`;
+                <i class="mdi mdi-cash-clock"></i> <strong>Payment Required:</strong> ₦${Number(payableAmount).toLocaleString()}</div>`;
         } else if (payableAmount > 0 && isPaid) {
             statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> Paid</span>';
         }
@@ -4851,7 +4851,7 @@ function createRequestCard(request, section) {
         if (claimsAmount > 0 && (!validationStatus || validationStatus === 'pending')) {
             statusBadges += ' <span class="badge bg-info">Awaiting HMO Validation</span>';
             pendingAlerts += `<div class="alert alert-info py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
-                <i class="mdi mdi-shield-alert"></i> <strong>HMO Validation Required:</strong> â‚¦${Number(claimsAmount).toLocaleString()} claim pending</div>`;
+                <i class="mdi mdi-shield-alert"></i> <strong>HMO Validation Required:</strong> ₦${Number(claimsAmount).toLocaleString()} claim pending</div>`;
         } else if (claimsAmount > 0 && validationStatus === 'rejected') {
             statusBadges += ' <span class="badge bg-danger"><i class="mdi mdi-close"></i> HMO Rejected</span>';
         } else if (claimsAmount > 0 && isValidated) {
@@ -4870,7 +4870,7 @@ function createRequestCard(request, section) {
     }
 
     // Price display
-    const priceHtml = price > 0 ? `<div class="request-card-price">â‚¦${Number(price).toLocaleString()}</div>` : '';
+    const priceHtml = price > 0 ? `<div class="request-card-price">₦${Number(price).toLocaleString()}</div>` : '';
 
     // HMO coverage split info
     let hmoHtml = '';
@@ -4878,8 +4878,8 @@ function createRequestCard(request, section) {
         hmoHtml = `
             <div class="request-card-hmo-info">
                 <span class="badge bg-info">${coverageMode.toUpperCase()}</span>
-                ${payableAmount > 0 ? `<span class="text-danger ms-2">Pay: â‚¦${Number(payableAmount).toLocaleString()}</span>` : ''}
-                ${claimsAmount > 0 ? `<span class="text-success ms-2">HMO: â‚¦${Number(claimsAmount).toLocaleString()}</span>` : ''}
+                ${payableAmount > 0 ? `<span class="text-danger ms-2">Pay: ₦${Number(payableAmount).toLocaleString()}</span>` : ''}
+                ${claimsAmount > 0 ? `<span class="text-success ms-2">HMO: ₦${Number(claimsAmount).toLocaleString()}</span>` : ''}
             </div>
         `;
     }
@@ -4908,7 +4908,7 @@ function createRequestCard(request, section) {
         `;
     }
 
-    // Meta info section (like pharmacy â€” billed by)
+    // Meta info section (like pharmacy — billed by)
     let metaDetails = '';
     if (section !== 'billing') {
         let metaItems = '';
@@ -4998,7 +4998,7 @@ function initializeRequestHandlers() {
         $(`.request-checkbox[data-section="${section}"]`).prop('checked', isChecked).trigger('change');
     });
 
-    // Individual checkboxes â€” update floating cart + highlight card on change
+    // Individual checkboxes — update floating cart + highlight card on change
     $('.request-checkbox').on('change', function() {
         const section = $(this).data('section');
         const $card = $(this).closest('.request-card');
@@ -5156,7 +5156,7 @@ function displayNotes(notes) {
             $wrapper.find('.show-all-link').remove();
             $wrapper.append(`
                 <a href="/patients/show/${currentPatient}?section=encountersCardBody" target="_blank" class="show-all-link">
-                    Show All Notes â†’
+                    Show All Notes →
                 </a>
             `);
         }
@@ -5285,7 +5285,7 @@ function refreshClinicalPanel(panel) {
             $btn.find('i').removeClass('fa-spin');
         });
     } else {
-        // For vitals/medications/allergies â€” the shared module handles these via delegated click events
+        // For vitals/medications/allergies — the shared module handles these via delegated click events
         setTimeout(function() { $btn.find('i').removeClass('fa-spin'); }, 1000);
     }
 }
@@ -5302,7 +5302,7 @@ function loadUserPreferences() {
     const clinicalVisible = localStorage.getItem('clinicalPanelVisible') === 'true';
     if (clinicalVisible) {
         $('#right-panel').addClass('active');
-        $('#toggle-clinical-btn').html('ðŸ“Š Clinical Context Ã—');
+        $('#toggle-clinical-btn').html('📊 Clinical Context ×');
     }
 }
 
@@ -5365,7 +5365,7 @@ function enterResult(requestId) {
     );
 }
 
-// â”€â”€ Floating Cart Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Floating Cart Logic ──────────────────────────────────────────────
 function getSelectedItems() {
     const items = { billing: [] };
 
@@ -5395,7 +5395,7 @@ function updateFloatingCart() {
     const totalPrice = items.billing.reduce((sum, i) => sum + i.price, 0);
     $('#cart-item-count').text(totalCount);
     if (totalPrice > 0) {
-        $('#cart-total-display').text('â‚¦' + Number(totalPrice).toLocaleString()).show();
+        $('#cart-total-display').text('₦' + Number(totalPrice).toLocaleString()).show();
     } else {
         $('#cart-total-display').hide();
     }
@@ -5433,7 +5433,7 @@ function openCartReviewModal() {
                         <div class="cart-item-meta"><i class="mdi mdi-doctor"></i> ${item.doctor} &middot; ${item.date}</div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        ${item.price > 0 ? `<span class="cart-item-price">â‚¦${Number(item.price).toLocaleString()}</span>` : ''}
+                        ${item.price > 0 ? `<span class="cart-item-price">₦${Number(item.price).toLocaleString()}</span>` : ''}
                         <button class="cart-item-remove" onclick="uncheckItem(${item.id}, 'billing')" title="Remove">
                             <i class="mdi mdi-close-circle"></i>
                         </button>
@@ -5441,7 +5441,7 @@ function openCartReviewModal() {
                 </div>`;
             });
             if (billingTotal > 0) {
-                html += `<div class="cart-section-total text-end small text-muted pe-2">Subtotal: <strong>â‚¦${Number(billingTotal).toLocaleString()}</strong></div>`;
+                html += `<div class="cart-section-total text-end small text-muted pe-2">Subtotal: <strong>₦${Number(billingTotal).toLocaleString()}</strong></div>`;
             }
             html += `<div class="cart-action-row">
                 <button class="btn btn-success btn-sm" onclick="cartRecordBilling()">
@@ -5476,7 +5476,7 @@ function cartDismiss(section) {
     }).get();
     if (ids.length > 0) dismissRequests(ids, section);
 }
-// â”€â”€ End Floating Cart Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── End Floating Cart Logic ──────────────────────────────────────────
 
 function editImagingResult(obj) {
     const requestId = $(obj).data('id');
@@ -6124,7 +6124,7 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
         const temp = parseFloat(value);
         const idealTemp = 37.0;
         const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}Â°C above ideal` : `-${diff.toFixed(1)}Â°C below ideal`;
+        deviation = temp > idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
         status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'pulse' && value !== 'N/A') {
         const pulse = parseInt(value);
@@ -6217,7 +6217,7 @@ function displayAllergyAlert(alerts) {
 
     return `
         <div class="allergy-alert">
-            <div class="allergy-alert-icon">âš ï¸</div>
+            <div class="allergy-alert-icon">⚠️</div>
             <div>
                 <strong>ALLERGY WARNING!</strong><br>
                 ${allergyList}
@@ -6245,10 +6245,10 @@ function showQueue(filter) {
 
     // Update queue title - No sample stage for imaging
     const titles = {
-        'billing': 'ðŸŸ¢ Awaiting Billing',
-        'results': 'ðŸ”´ Awaiting Result Entry',
-        'approval': 'ðŸŸ£ Awaiting Approval',
-        'all': 'ðŸ“‹ All Pending Requests'
+        'billing': '🟢 Awaiting Billing',
+        'results': '🔴 Awaiting Result Entry',
+        'approval': '🟣 Awaiting Approval',
+        'all': '📋 All Pending Requests'
     };
     $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['all']}`);
 
@@ -6771,7 +6771,7 @@ function renderQueueCard(data) {
         <div class="queue-card-patient-meta">
             <div class="queue-card-patient-meta-item">
                 <i class="mdi mdi-account"></i>
-                <span>${data.age} â€¢ ${data.gender}</span>
+                <span>${data.age} • ${data.gender}</span>
             </div>
             <div class="queue-card-patient-meta-item">
                 <i class="mdi mdi-card-account-details"></i>
@@ -7166,7 +7166,7 @@ function renderTopDoctors(doctors) {
             <tr>
                 <td><i class="mdi mdi-doctor mr-1"></i> ${docName}</td>
                 <td class="text-center"><span class="badge badge-pill badge-info">${doc.count}</span></td>
-                <td class="text-right">â‚¦${parseFloat(doc.revenue).toLocaleString()}</td>
+                <td class="text-right">₦${parseFloat(doc.revenue).toLocaleString()}</td>
             </tr>
         `;
     });

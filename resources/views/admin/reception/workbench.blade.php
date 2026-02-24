@@ -4769,7 +4769,7 @@
                                 <div class="card-body">
                                     <div class="form-group mb-3">
                                         <input type="text" class="form-control" id="walkin-search"
-                                            placeholder="ðŸ” Search services/products...">
+                                            placeholder="🔍 Search services/products...">
                                     </div>
                                     <div class="walkin-search-results" id="walkin-search-results" style="max-height: 300px; overflow-y: auto;">
                                         <p class="text-muted text-center">Type to search...</p>
