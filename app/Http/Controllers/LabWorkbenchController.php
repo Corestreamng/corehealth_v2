@@ -747,7 +747,7 @@ class LabWorkbenchController extends Controller
 
             // Authorization: lab staff can always save, but doctors/nurses need appsetting permission
             $user = Auth::user();
-            $isLabStaff = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'LAB', 'LABORATORY']);
+            $isLabStaff = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'LAB SCIENTIST']);
             if (!$isLabStaff) {
                 $isRequestingDoctor = $user->hasRole('DOCTOR') && $user->id == $labRequest->doctor_id;
                 $isRequestingNurse  = $user->hasRole('NURSE') && $user->id == $labRequest->doctor_id;
@@ -1078,7 +1078,7 @@ class LabWorkbenchController extends Controller
             $labRequest = LabServiceRequest::findOrFail($id);
 
             // Check if user has permission to delete
-            if (Auth::id() != $labRequest->doctor_id && !Auth::user()->hasRole('admin')) {
+            if (Auth::id() != $labRequest->doctor_id && !Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You do not have permission to delete this request.'
