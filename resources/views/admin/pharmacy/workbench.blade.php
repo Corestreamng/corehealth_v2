@@ -6778,9 +6778,11 @@ function loadPatient(patientId) {
     // Hide all sticky bars when loading new patient
     hideAllStickyBars();
 
-    // Show loading state
-    $('#empty-state').hide();
-    $('#workspace-content').addClass('active');
+    // Hide all views to prevent stacking
+    hideAllViews();
+
+    // Show patient workspace
+    $('#workspace-content').show().addClass('active');
     $('#patient-header').addClass('active');
 
     // Show loading indicator
@@ -12403,6 +12405,25 @@ function animateRefresh(buttonElement) {
 }
 
 // =============================================
+// VIEW MANAGEMENT HELPERS
+// =============================================
+
+// Hide all overlapping views - call this before showing any new view
+function hideAllViews() {
+    $('#empty-state').hide();
+    $('#queue-view').removeClass('active').hide();
+    $('.queue-item').removeClass('active');
+    $('#pharmacy-reports-view').removeClass('active').hide();
+    $('#pharmacy-returns-view').removeClass('active').hide();
+    $('#pharmacy-return-create-view').removeClass('active').hide();
+    $('#pharmacy-damages-view').removeClass('active').hide();
+    $('#pharmacy-damage-create-view').removeClass('active').hide();
+    $('#pharmacy-stock-reports-view').removeClass('active').hide();
+    $('#patient-header').removeClass('active');
+    $('#workspace-content').removeClass('active').hide();
+}
+
+// =============================================
 // QUEUE FUNCTIONALITY
 // =============================================
 
@@ -12427,10 +12448,8 @@ function showQueue(filter) {
     }
 
     // Hide other views, show queue view
-    $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
-    $('#queue-view').addClass('active');
+    hideAllViews();
+    $('#queue-view').show().addClass('active');
 
     // On mobile, hide search pane and show main workspace
     if (window.innerWidth < 768) {
@@ -12532,20 +12551,11 @@ function initializeQueueDataTable(filter) {
 // ==========================================
 
 function showPharmacyReports() {
-    // Hide everything else
-    $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
-    $('#queue-view').removeClass('active');
-    // Hide post-transaction panels
-    $('#pharmacy-returns-view').removeClass('active');
-    $('#pharmacy-return-create-view').removeClass('active');
-    $('#pharmacy-damages-view').removeClass('active');
-    $('#pharmacy-damage-create-view').removeClass('active');
-    $('#pharmacy-stock-reports-view').removeClass('active');
+    // Hide all views to prevent stacking
+    hideAllViews();
 
     // Show pharmacy reports view
-    $('#pharmacy-reports-view').addClass('active');
+    $('#pharmacy-reports-view').show().addClass('active');
 
     // On mobile, switch to main workspace
     if (window.innerWidth < 768) {
@@ -15940,16 +15950,7 @@ $('#confirm-qty-adjustment').on('click', function() {
 
 // --------------- Helper: hide ALL full-screen views ---------------
 function hideAllPanelViews() {
-    $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
-    $('#queue-view').removeClass('active');
-    $('#pharmacy-reports-view').removeClass('active');
-    $('#pharmacy-returns-view').removeClass('active');
-    $('#pharmacy-return-create-view').removeClass('active');
-    $('#pharmacy-damages-view').removeClass('active');
-    $('#pharmacy-damage-create-view').removeClass('active');
-    $('#pharmacy-stock-reports-view').removeClass('active');
+    hideAllViews();
 }
 
 function showMobileMainWorkspace() {

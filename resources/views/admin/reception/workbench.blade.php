@@ -6996,10 +6996,11 @@ function updateServiceTypeUI(type) {
 function loadPatient(patientId) {
     currentPatient = patientId;
 
-    // Show loading state
-    $('#empty-state').hide();
-    $('#queue-view').hide();
-    $('#workspace-content').addClass('active');
+    // Hide all views to prevent stacking
+    hideAllViews();
+
+    // Show patient workspace
+    $('#workspace-content').show().addClass('active');
     $('#patient-header').addClass('active');
 
     // Show loading indicator
@@ -7410,11 +7411,24 @@ function startQueueRefresh() {
     }, 30000); // 30 seconds
 }
 
-function showQueue(filter) {
+// =============================================
+// VIEW MANAGEMENT HELPERS
+// =============================================
+
+// Hide all overlapping views - call this before showing any new view
+function hideAllViews() {
     $('#empty-state').hide();
-    $('#workspace-content').removeClass('active');
+    $('#queue-view').removeClass('active').hide();
+    $('.queue-item').removeClass('active');
+    $('#reports-view').removeClass('active').hide();
+    $('#ward-dashboard-view').removeClass('active').hide();
     $('#patient-header').removeClass('active');
-    $('#queue-view').addClass('active');
+    $('#workspace-content').removeClass('active').hide();
+}
+
+function showQueue(filter) {
+    hideAllViews();
+    $('#queue-view').show().addClass('active');
 
     // Update filter buttons
     $('.queue-item').removeClass('active');
@@ -7438,13 +7452,8 @@ function hideQueue() {
 // WARD DASHBOARD FUNCTIONS
 // =============================================
 function showWardDashboard() {
-    // Hide all other views
-    $('#empty-state').hide();
-    $('#patient-details-panel').hide();
-    $('#queue-view').removeClass('active');
-    $('#reports-view').hide();
-    $('#workspace-content').removeClass('active');
-    $('#patient-header').removeClass('active');
+    // Hide all views to prevent stacking
+    hideAllViews();
 
     // Show ward dashboard
     $('#ward-dashboard-view').show().addClass('active');
@@ -7490,13 +7499,8 @@ let hmoDistributionChart = null;
 let peakHoursChart = null;
 
 function showReports() {
-    // Hide all other views
-    $('#empty-state').hide();
-    $('#patient-details-panel').hide();
-    $('#queue-view').removeClass('active');
-    $('#ward-dashboard-view').hide().removeClass('active');
-    $('#workspace-content').removeClass('active');
-    $('#patient-header').removeClass('active');
+    // Hide all views to prevent stacking
+    hideAllViews();
 
     // Show reports view
     $('#reports-view').show().addClass('active');
