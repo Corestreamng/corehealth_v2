@@ -7186,14 +7186,14 @@ function hideAllViews() {
     $('#empty-state').hide();
 
     // Hide queue view
-    $('#queue-view').removeClass('active').css('display', 'none');
+    $('#queue-view').removeClass('active').hide();
     $('.queue-item').removeClass('active');
 
     // Hide reports view
-    $('#reports-view').removeClass('active');
+    $('#reports-view').removeClass('active').hide();
 
     // Hide ward dashboard
-    $('#ward-dashboard-view').removeClass('active');
+    $('#ward-dashboard-view').removeClass('active').hide();
 
     // Hide patient workspace
     $('#patient-header').removeClass('active');
