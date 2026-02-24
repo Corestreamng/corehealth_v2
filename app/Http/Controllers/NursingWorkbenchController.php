@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\HmoHelper;
 use App\Helpers\BatchHelper;
+use App\Models\HmoTariff;
 use App\Models\Store;
 use App\Models\StoreStock;
 use App\Models\StockBatch;
@@ -1300,6 +1301,7 @@ class NursingWorkbenchController extends Controller{
     {
         $term = $request->get('term', '');
         $categoryId = $request->get('category_id');
+        $patientId = $request->get('patient_id');
 
         $query = service::with(['price', 'category'])
             ->where('status', 1);
@@ -1315,15 +1317,38 @@ class NursingWorkbenchController extends Controller{
             $query->where('category_id', $categoryId);
         }
 
-        $services = $query->limit(30)->get();
+        $services = $query->limit(15)->get();
 
-        $results = $services->map(function ($service) {
+        // Batch-load HMO tariffs in one query instead of N+1
+        $hmoMap = [];
+        if ($patientId) {
+            $patient = patient::find($patientId);
+            if ($patient && $patient->hmo_id) {
+                $serviceIds = $services->pluck('id')->toArray();
+                $tariffs = HmoTariff::where('hmo_id', $patient->hmo_id)
+                    ->whereIn('service_id', $serviceIds)
+                    ->whereNull('product_id')
+                    ->get()
+                    ->keyBy('service_id');
+
+                foreach ($tariffs as $sid => $tariff) {
+                    $hmoMap[$sid] = [
+                        'payable' => $tariff->payable_amount,
+                        'claims'  => $tariff->claims_amount,
+                        'mode'    => $tariff->coverage_mode,
+                    ];
+                }
+            }
+        }
+
+        $results = $services->map(function ($service) use ($hmoMap) {
             return [
-                'id' => $service->id,
-                'name' => $service->service_name,
-                'code' => $service->service_code,
-                'price' => $service->price ? $service->price->sale_price : 0,
+                'id'       => $service->id,
+                'name'     => $service->service_name,
+                'code'     => $service->service_code,
+                'price'    => $service->price ? $service->price->sale_price : 0,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
+                'hmo'      => $hmoMap[$service->id] ?? null,
             ];
         });
 
@@ -1337,6 +1362,7 @@ class NursingWorkbenchController extends Controller{
     {
         $term = $request->get('term', '');
         $categoryId = $request->get('category_id');
+        $patientId = $request->get('patient_id');
 
         $query = Product::with(['price', 'stock', 'category'])
             ->where('status', 1);
@@ -1352,16 +1378,39 @@ class NursingWorkbenchController extends Controller{
             $query->where('category_id', $categoryId);
         }
 
-        $products = $query->limit(30)->get();
+        $products = $query->limit(15)->get();
 
-        $results = $products->map(function ($product) {
+        // Batch-load HMO tariffs in one query instead of N+1
+        $hmoMap = [];
+        if ($patientId) {
+            $patient = patient::find($patientId);
+            if ($patient && $patient->hmo_id) {
+                $productIds = $products->pluck('id')->toArray();
+                $tariffs = HmoTariff::where('hmo_id', $patient->hmo_id)
+                    ->whereIn('product_id', $productIds)
+                    ->whereNull('service_id')
+                    ->get()
+                    ->keyBy('product_id');
+
+                foreach ($tariffs as $pid => $tariff) {
+                    $hmoMap[$pid] = [
+                        'payable' => $tariff->payable_amount,
+                        'claims'  => $tariff->claims_amount,
+                        'mode'    => $tariff->coverage_mode,
+                    ];
+                }
+            }
+        }
+
+        $results = $products->map(function ($product) use ($hmoMap) {
             return [
-                'id' => $product->id,
-                'name' => $product->product_name,
-                'code' => $product->product_code,
-                'price' => $product->price ? $product->price->current_sale_price : 0,
-                'stock' => $product->stock ? $product->stock->current_quantity : 0,
+                'id'       => $product->id,
+                'name'     => $product->product_name,
+                'code'     => $product->product_code,
+                'price'    => $product->price ? $product->price->current_sale_price : 0,
+                'stock'    => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
+                'hmo'      => $hmoMap[$product->id] ?? null,
             ];
         });
 
