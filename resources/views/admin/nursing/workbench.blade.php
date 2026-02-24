@@ -1895,22 +1895,123 @@
         border: 1px solid #dee2e6;
     }
 
-    #service-search-results {
+    /* Billing search dropdowns - shared styles */
+    #service-search-results,
+    #consumable-search-results {
         border: 1px solid #dee2e6;
         border-top: none;
         background: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        border-radius: 0 0 8px 8px;
+        padding: 0;
+        list-style: none;
     }
 
-    #service-search-results .list-group-item {
+    #service-search-results .list-group-item,
+    #consumable-search-results .list-group-item {
         cursor: pointer;
         border-left: 3px solid transparent;
-        transition: all 0.2s;
+        transition: all 0.15s ease;
+        padding: 10px 14px;
     }
 
-    #service-search-results .list-group-item:hover {
+    #service-search-results .list-group-item:hover,
+    #consumable-search-results .list-group-item:hover {
         background: #f0f8ff;
         border-left-color: var(--hospital-primary);
+    }
+
+    #service-search-results .list-group-item:first-child,
+    #consumable-search-results .list-group-item:first-child {
+        border-top: none;
+    }
+
+    .billing-search-item-name {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.9rem;
+    }
+
+    .billing-search-item-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 3px;
+    }
+
+    .billing-search-item-price {
+        font-weight: 600;
+        color: #27ae60;
+        font-size: 0.85rem;
+    }
+
+    .billing-search-item-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 3px;
+        background: #eef2f7;
+        color: #607d8b;
+    }
+
+    .billing-search-item-stock {
+        font-size: 0.75rem;
+        margin-left: auto;
+    }
+
+    .billing-search-hmo-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px dashed #e0e0e0;
+        font-size: 0.78rem;
+    }
+
+    .billing-search-hmo-payable {
+        color: #e67e22;
+        font-weight: 600;
+    }
+
+    .billing-search-hmo-claims {
+        color: #27ae60;
+        font-weight: 600;
+    }
+
+    .billing-search-hmo-mode {
+        font-size: 0.68rem;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .billing-search-hmo-mode.mode-express {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .billing-search-hmo-mode.mode-primary {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .billing-search-hmo-mode.mode-secondary {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .billing-search-hmo-label {
+        font-size: 0.7rem;
+        color: #888;
+    }
+
+    .billing-search-no-results {
+        padding: 16px;
+        text-align: center;
+        color: #999;
+        font-style: italic;
     }
 
     .selected-service-item {
@@ -5342,11 +5443,11 @@
                                 <div class="card-body">
                                     <form id="service-billing-form">
                                         <div class="form-row">
-                                            <div class="form-group col-md-8">
+                                            <div class="form-group col-md-8" style="position: relative;">
                                                 <label for="service-search"><i class="mdi mdi-magnify"></i> Search Nursing Service *</label>
                                                 <input type="text" class="form-control" id="service-search" placeholder="Type to search for nursing services..." autocomplete="off">
                                                 <input type="hidden" id="service-id">
-                                                <ul class="list-group" id="service-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto; width: calc(66% - 30px);"></ul>
+                                                <ul class="list-group" id="service-search-results" style="display: none; position: absolute; z-index: 1050; max-height: 280px; overflow-y: auto; width: 100%; left: 0;"></ul>
                                             </div>
                                             <div class="form-group col-md-4">
                                                 <label for="service-price"><i class="mdi mdi-currency-ngn"></i> Price</label>
@@ -5406,11 +5507,11 @@
                                     <form id="consumable-billing-form">
                                         <!-- Step 2: Product Search & Selection -->
                                         <div class="form-row">
-                                            <div class="form-group col-md-5">
+                                            <div class="form-group col-md-5" style="position: relative;">
                                                 <label for="consumable-search"><i class="mdi mdi-magnify"></i> Step 2: Search Consumable *</label>
                                                 <input type="text" class="form-control" id="consumable-search" placeholder="Type to search for products..." autocomplete="off">
                                                 <input type="hidden" id="consumable-id">
-                                                <ul class="list-group" id="consumable-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto; width: calc(42% - 30px);"></ul>
+                                                <ul class="list-group" id="consumable-search-results" style="display: none; position: absolute; z-index: 1050; max-height: 280px; overflow-y: auto; width: 100%; left: 0;"></ul>
                                             </div>
                                             <div class="form-group col-md-2">
                                                 <label for="consumable-quantity"><i class="mdi mdi-numeric"></i> Qty *</label>
@@ -14099,65 +14200,125 @@ function loadImmunizationHistory(patientId) {
     loadImmunizationHistoryTable(patientId);
 }
 
+// Close billing search dropdowns on outside click
+$(document).on('click', function(e) {
+    if (!$(e.target).closest('#service-search, #service-search-results').length) {
+        $('#service-search-results').hide();
+    }
+    if (!$(e.target).closest('#consumable-search, #consumable-search-results').length) {
+        $('#consumable-search-results').hide();
+    }
+});
+
 // Service Billing Search
+let serviceSearchTimer = null;
+let serviceSearchXhr = null;
 $('#service-search').on('input', function() {
-    const query = $(this).val();
+    const query = $(this).val().trim();
+    clearTimeout(serviceSearchTimer);
+    if (serviceSearchXhr) { serviceSearchXhr.abort(); serviceSearchXhr = null; }
     if (query.length < 2) {
         $('#service-search-results').hide();
         return;
     }
 
-    $.ajax({
-        url: '{{ route("nursing-workbench.search-services") }}',
-        method: 'GET',
-        data: { term: query },
-        success: function(results) {
-            let html = '';
-            results.forEach(service => {
-                html += `<li class="list-group-item list-group-item-action" onclick="selectService(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${service.price || 0}')">
-                    <strong>${service.name}</strong><br>
-                    <small class="text-muted">₦${service.price || 'N/A'}</small>
-                </li>`;
-            });
-            $('#service-search-results').html(html).show();
-        }
-    });
+    serviceSearchTimer = setTimeout(function() {
+        $('#service-search-results').html('<li class="billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+        serviceSearchXhr = $.ajax({
+            url: '{{ route("nursing-workbench.search-services") }}',
+            method: 'GET',
+            data: { term: query, patient_id: currentPatient || null },
+            success: function(results) {
+                serviceSearchXhr = null;
+                if (!results.length) {
+                    $('#service-search-results').html('<li class="billing-search-no-results">No services found</li>').show();
+                    return;
+                }
+                let html = '';
+                results.forEach(service => {
+                    const price = parseFloat(service.price || 0);
+                    const hmo = service.hmo;
+                    const payable = hmo ? parseFloat(hmo.payable) : price;
+                    html += `<li class="list-group-item list-group-item-action" onclick="selectService(${service.id}, '${(service.name || '').replace(/'/g, "\\'")}', ${payable})">
+                        <div class="billing-search-item-name">${service.name}</div>
+                        <div class="billing-search-item-meta">
+                            <span class="billing-search-item-price">${hmo ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '</s>' : '₦' + price.toLocaleString()}</span>
+                            ${service.category ? `<span class="billing-search-item-badge">${service.category}</span>` : ''}
+                            ${service.code ? `<span class="billing-search-item-badge">${service.code}</span>` : ''}
+                        </div>
+                        ${hmo ? `<div class="billing-search-hmo-row">
+                            <span class="billing-search-hmo-label">HMO:</span>
+                            <span class="billing-search-hmo-payable">Pay ₦${parseFloat(hmo.payable).toLocaleString()}</span>
+                            <span class="billing-search-hmo-claims">Claim ₦${parseFloat(hmo.claims).toLocaleString()}</span>
+                            <span class="billing-search-hmo-mode mode-${hmo.mode}">${hmo.mode}</span>
+                        </div>` : ''}
+                    </li>`;
+                });
+                $('#service-search-results').html(html).show();
+            }
+        });
+    }, 300);
 });
 
 function selectService(id, name, price) {
     $('#service-id').val(id);
     $('#service-search').val(name);
-    $('#service-price').val('₦' + price);
+    $('#service-price').val('₦' + parseFloat(price).toLocaleString());
     $('#service-search-results').hide();
 }
 
 // Consumable Search
+let consumableSearchTimer = null;
+let consumableSearchXhr = null;
 $('#consumable-search').on('input', function() {
-    const query = $(this).val();
+    const query = $(this).val().trim();
+    clearTimeout(consumableSearchTimer);
+    if (consumableSearchXhr) { consumableSearchXhr.abort(); consumableSearchXhr = null; }
     if (query.length < 2) {
         $('#consumable-search-results').hide();
         return;
     }
 
-    $.ajax({
-        url: '{{ route("nursing-workbench.search-products") }}',
-        method: 'GET',
-        data: { term: query },
-        success: function(results) {
-            let html = '';
-            results.forEach(product => {
-                const escapedName = (product.name || '').replace(/'/g, "\\'");
-                const code = (product.code || '').replace(/'/g, "\\'");
-                html += `<li class="list-group-item list-group-item-action" onclick="selectConsumable(${product.id}, '${escapedName}', ${product.price || 0}, '${code}')">
-                    <strong>${product.name}</strong>
-                    <span class="badge bg-secondary float-right">[${product.code || 'N/A'}]</span>
-                    <br>
-                    <small class="text-muted">₦${product.price || 'N/A'}/unit</small>
-                </li>`;
-            });
-            $('#consumable-search-results').html(html).show();
-        }
-    });
+    consumableSearchTimer = setTimeout(function() {
+        $('#consumable-search-results').html('<li class="billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+        consumableSearchXhr = $.ajax({
+            url: '{{ route("nursing-workbench.search-products") }}',
+            method: 'GET',
+            data: { term: query, patient_id: currentPatient || null },
+            success: function(results) {
+                consumableSearchXhr = null;
+                if (!results.length) {
+                    $('#consumable-search-results').html('<li class="billing-search-no-results">No products found</li>').show();
+                    return;
+                }
+                let html = '';
+                results.forEach(product => {
+                    const escapedName = (product.name || '').replace(/'/g, "\\'");
+                    const code = (product.code || '').replace(/'/g, "\\'");
+                    const price = parseFloat(product.price || 0);
+                    const hmo = product.hmo;
+                    const payable = hmo ? parseFloat(hmo.payable) : price;
+                    const stock = parseInt(product.stock || 0);
+                    const stockClass = stock > 10 ? 'text-success' : stock > 0 ? 'text-warning' : 'text-danger';
+                    html += `<li class="list-group-item list-group-item-action" onclick="selectConsumable(${product.id}, '${escapedName}', ${payable}, '${code}')">
+                        <div class="billing-search-item-name">${product.name}</div>
+                        <div class="billing-search-item-meta">
+                            <span class="billing-search-item-price">${hmo ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '/unit</s>' : '₦' + price.toLocaleString() + '/unit'}</span>
+                            ${product.code ? `<span class="billing-search-item-badge">${product.code}</span>` : ''}
+                            <span class="billing-search-item-stock ${stockClass}"><i class="mdi mdi-package-variant-closed"></i> ${stock} in stock</span>
+                        </div>
+                        ${hmo ? `<div class="billing-search-hmo-row">
+                            <span class="billing-search-hmo-label">HMO:</span>
+                            <span class="billing-search-hmo-payable">Pay ₦${parseFloat(hmo.payable).toLocaleString()}/unit</span>
+                            <span class="billing-search-hmo-claims">Claim ₦${parseFloat(hmo.claims).toLocaleString()}</span>
+                            <span class="billing-search-hmo-mode mode-${hmo.mode}">${hmo.mode}</span>
+                        </div>` : ''}
+                    </li>`;
+                });
+                $('#consumable-search-results').html(html).show();
+            }
+        });
+    }, 300);
 });
 
 function selectConsumable(id, name, unitPrice, code) {
