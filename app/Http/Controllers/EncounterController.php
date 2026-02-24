@@ -523,6 +523,22 @@ class EncounterController extends Controller
                         </button>";
                 }
 
+                // Enter Result button for doctors/nurses who requested the investigation
+                $canEnterResult = false;
+                if (empty($his->result) && $canDeliver && $his->status >= 2 && Auth::id() == $his->doctor_id) {
+                    $user = Auth::user();
+                    if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
+                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))) {
+                        $canEnterResult = true;
+                    }
+                }
+                if ($canEnterResult) {
+                    $str .= "
+                        <button type='button' class='btn btn-success btn-sm' onclick='enterLabResult({$his->id})'>
+                            <i class='mdi mdi-flask-outline'></i> Enter Result
+                        </button>";
+                }
+
                 $str .= "
                     <button type='button' class='btn btn-info btn-sm' onclick='setResViewInModal(this)'
                         data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
@@ -746,6 +762,22 @@ class EncounterController extends Controller
                             data-template='" . htmlspecialchars($his->result) . "'
                             data-attachments='" . $attachmentsJson . "'>
                             <i class='mdi mdi-pencil'></i> Edit
+                        </button>";
+                }
+
+                // Enter Result button for doctors/nurses who requested the imaging
+                $canEnterImagingResult = false;
+                if (empty($his->result) && $canDeliver && $his->status >= 2 && Auth::id() == $his->doctor_id) {
+                    $user = Auth::user();
+                    if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
+                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))) {
+                        $canEnterImagingResult = true;
+                    }
+                }
+                if ($canEnterImagingResult) {
+                    $str .= "
+                        <button type='button' class='btn btn-success btn-sm' onclick='enterImagingResult({$his->id})'>
+                            <i class='mdi mdi-radiology-box-outline'></i> Enter Result
                         </button>";
                 }
 

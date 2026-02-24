@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 
 use OwenIt\Auditing\Contracts\Auditable;
+
 class ApplicationStatu extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
+    protected $fillable = [
         'site_name',
         'header_text',
         'footer_text',
@@ -63,6 +64,10 @@ protected $fillable = [
         'procedure_category_id',
         'lab_results_require_approval',
         'imaging_results_require_approval',
+        'doctor_can_enter_lab_result',
+        'nurse_can_enter_lab_result',
+        'doctor_can_enter_imaging_result',
+        'nurse_can_enter_imaging_result',
     ];
 
     /**

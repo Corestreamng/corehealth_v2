@@ -1309,7 +1309,6 @@
 
 @section('scripts')
 <script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
-<script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
 $(function() {
     let currentTab = 'pending';
@@ -1553,14 +1552,385 @@ $(function() {
         });
     });
 
-    // Clinical context button — uses shared ClinicalContext module
+    // Clinical context button
     $(document).on('click', '.clinical-context-btn', function() {
         let patientId = $(this).data('patient-id');
-        if (!patientId) {
-            toastr.warning('Please select a patient first');
+        loadClinicalContext(patientId);
+    });
+
+    // Manual tab switching for clinical context modal (BS5 data-bs-toggle not functional with BS4 runtime)
+    let clinicalTabsInitialized = false;
+    function initClinicalModalTabs() {
+        if (clinicalTabsInitialized) return;
+        clinicalTabsInitialized = true;
+
+        $('#clinical-context-modal').on('click', '#clinical-tabs .nav-link', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            var target = $this.attr('data-bs-target') || $this.attr('href');
+            if (!target) return;
+
+            // Deactivate all tabs and panes
+            $('#clinical-tabs .nav-link').removeClass('active').attr('aria-selected', 'false');
+            $('#clinical-tab-content .tab-pane').removeClass('show active');
+
+            // Activate clicked tab and target pane
+            $this.addClass('active').attr('aria-selected', 'true');
+            $(target).addClass('show active');
+
+            // Fire shown.bs.tab so the shared modal IIFE data loaders trigger
+            $this.trigger('shown.bs.tab');
+        });
+
+        // Also handle inner sub-tabs (e.g. injection/immunization sub-tabs) that use data-bs-toggle
+        $('#clinical-context-modal').on('click', '.tab-content [data-bs-toggle="tab"]', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            var target = $this.attr('data-bs-target') || $this.attr('href');
+            if (!target) return;
+
+            var $tabList = $this.closest('.nav-tabs');
+            var $tabContent = $tabList.next('.tab-content');
+            if (!$tabContent.length) $tabContent = $tabList.siblings('.tab-content');
+
+            $tabList.find('.nav-link').removeClass('active');
+            $tabContent.find('.tab-pane').removeClass('show active');
+
+            $this.addClass('active');
+            $(target).addClass('show active');
+
+            $this.trigger('shown.bs.tab');
+        });
+    }
+
+    function loadClinicalContext(patientId) {
+        // Store patient ID for see more buttons and shared modal tab loaders
+        window.currentClinicalPatientId = patientId;
+        window.currentPatient = patientId;
+        $('#clinical-context-modal').data('patient-id', patientId);
+
+        // Initialize manual tab switching (once)
+        initClinicalModalTabs();
+
+        // Show modal first with loading state
+        $('#clinical-context-modal').modal('show');
+
+        // Load vitals using DataTable rendering (nursing workbench approach)
+        $.get("{{ url('hmo/patient') }}/" + patientId + "/vitals", function(vitals) {
+            hmoDisplayVitals(vitals, patientId);
+        }).fail(function() {
+            $('#vitals-panel-body').html('<div class="alert alert-danger">Failed to load vitals</div>');
+        });
+
+        // Load medications using card rendering (nursing workbench approach)
+        $.get("{{ url('hmo/patient') }}/" + patientId + "/medications", function(meds) {
+            hmoDisplayMedications(meds, patientId);
+        }).fail(function() {
+            $('#clinical-meds-container').html('<div class="alert alert-danger"><i class="mdi mdi-alert-circle"></i> Failed to load medications</div>');
+        });
+
+        // Encounter notes, Injection/Immunization, and Procedures are loaded
+        // by the shared clinical_context_modal IIFE handlers when their tabs are clicked.
+
+        // Load allergies (nursing workbench approach)
+        $.get("{{ url('hmo/patient') }}/" + patientId + "/allergies", function(data) {
+            hmoDisplayAllergies(data);
+        }).fail(function() {
+            $('#allergies-panel-body').html('<div class="alert alert-danger"><i class="mdi mdi-alert-circle"></i> Failed to load allergy information</div>');
+        });
+    }
+
+    // Refresh handler for allergies tab
+    $(document).on('click', '.refresh-clinical-btn[data-panel="allergies"]', function() {
+        var patientId = window.currentPatient || window.currentClinicalPatientId;
+        if (!patientId) return;
+        $('#allergies-list').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i></div>');
+        $.get("{{ url('hmo/patient') }}/" + patientId + "/allergies", function(data) {
+            hmoDisplayAllergies(data);
+        }).fail(function() {
+            $('#allergies-list').html('<div class="alert alert-danger"><i class="mdi mdi-alert-circle"></i> Failed to load allergy information</div>');
+        });
+    });
+
+    // Vitals rendering using DataTable (nursing workbench approach)
+    function hmoDisplayVitals(vitals, patientId) {
+        if (typeof $.fn.DataTable === 'undefined') {
+            $('#vitals-panel-body').html('<p class="text-danger">Error: DataTables library not loaded</p>');
             return;
         }
-        ClinicalContext.load(patientId);
+
+        // Restore the table structure if previously overwritten
+        $('#vitals-panel-body').html('<div class="table-responsive"><table class="table" id="vitals-table" style="width: 100%"><thead><tr><th>Vital Signs History</th></tr></thead></table></div>');
+
+        if ($.fn.DataTable.isDataTable('#vitals-table')) {
+            $('#vitals-table').DataTable().destroy();
+        }
+
+        $('#vitals-table').DataTable({
+            data: vitals,
+            paging: false,
+            searching: false,
+            info: false,
+            ordering: false,
+            dom: 't',
+            language: {
+                emptyTable: '<p class="text-muted">No recent vitals recorded</p>'
+            },
+            columns: [{
+                data: null,
+                render: function(data, type, row) {
+                    var vitalDate = hmoFormatDateTime(row.time_taken || row.created_at);
+                    var temp = row.temp || 'N/A';
+                    var heartRate = row.heart_rate || 'N/A';
+                    var bp = row.blood_pressure || 'N/A';
+                    var respRate = row.resp_rate || 'N/A';
+                    var weight = row.weight || 'N/A';
+
+                    return `
+                        <div class="vital-entry">
+                            <div class="vital-entry-header">
+                                <span class="vital-date">${vitalDate}</span>
+                            </div>
+                            <div class="vital-entry-grid">
+                                <div class="vital-item ${hmoGetTempClass(temp)}">
+                                    <i class="mdi mdi-thermometer"></i>
+                                    <span class="vital-value">${temp}°C</span>
+                                    <span class="vital-label">Temp</span>
+                                </div>
+                                <div class="vital-item ${hmoGetHeartRateClass(heartRate)}">
+                                    <i class="mdi mdi-heart-pulse"></i>
+                                    <span class="vital-value">${heartRate}</span>
+                                    <span class="vital-label">Heart Rate</span>
+                                </div>
+                                <div class="vital-item ${hmoGetBPClass(bp)}">
+                                    <i class="mdi mdi-water"></i>
+                                    <span class="vital-value">${bp}</span>
+                                    <span class="vital-label">BP (mmHg)</span>
+                                </div>
+                                <div class="vital-item ${hmoGetRespRateClass(respRate)}">
+                                    <i class="mdi mdi-lungs"></i>
+                                    <span class="vital-value">${respRate}</span>
+                                    <span class="vital-label">Resp Rate (BPM)</span>
+                                </div>
+                                <div class="vital-item">
+                                    <i class="mdi mdi-weight-kilogram"></i>
+                                    <span class="vital-value">${weight}</span>
+                                    <span class="vital-label">Weight (Kg)</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }],
+            drawCallback: function() {
+                var $wrapper = $('#vitals-table_wrapper');
+                $wrapper.find('.show-all-link').remove();
+                $wrapper.append(`
+                    <a href="/patients/show/${patientId}?section=vitalsCardBody" target="_blank" class="show-all-link">
+                        Show All Vitals →
+                    </a>
+                `);
+            }
+        });
+    }
+
+    // Medications rendering using cards (nursing workbench approach)
+    function hmoDisplayMedications(meds, patientId) {
+        if (!meds || meds.length === 0) {
+            $('#clinical-meds-container').html(`
+                <div class="text-center py-4">
+                    <i class="mdi mdi-pill mdi-48px text-muted"></i>
+                    <p class="text-muted mt-2">No medications found for this patient</p>
+                </div>
+            `);
+            $('#clinical-meds-show-all').html('');
+            return;
+        }
+
+        var html = '';
+        meds.forEach(function(med) {
+            var drugName = med.drug_name || 'N/A';
+            var productCode = med.product_code || '';
+            var dose = med.dose || 'N/A';
+            var freq = med.freq || '';
+            var duration = med.duration || '';
+            var status = med.status || 'pending';
+            var requestedDate = med.requested_date || 'N/A';
+            var doctor = med.doctor || 'N/A';
+
+            var statusBadge = '';
+            if (status === 'dispensed') {
+                statusBadge = "<span class='badge bg-info'>Dispensed</span>";
+            } else if (status === 'billed') {
+                statusBadge = "<span class='badge bg-primary'>Billed</span>";
+            } else {
+                statusBadge = "<span class='badge bg-secondary'>Pending</span>";
+            }
+
+            var doseInfo = dose;
+            if (freq) doseInfo += ' | Freq: ' + freq;
+            if (duration) doseInfo += ' | Duration: ' + duration;
+
+            html += '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+            html += '<div class="card-body p-3">';
+            html += '<div class="d-flex justify-content-between align-items-start mb-3">';
+            html += "<h6 class='mb-0'><span class='badge bg-success'>" + (productCode ? '[' + productCode + '] ' : '') + drugName + '</span></h6>';
+            html += statusBadge;
+            html += '</div>';
+            html += '<div class="alert alert-light mb-3"><small><b><i class="mdi mdi-pill"></i> Dose/Frequency:</b><br>' + doseInfo + '</small></div>';
+            html += '<div class="mb-2"><small>';
+            html += '<div class="mb-1"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> '
+                + doctor + ' <span class="text-muted">(' + requestedDate + ')</span></div>';
+            html += '</small></div>';
+            html += '</div>';
+            html += '</div>';
+        });
+
+        $('#clinical-meds-container').html(html);
+
+        $('#clinical-meds-show-all').html(`
+            <a href="/patients/show/${patientId}?section=prescriptionsCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                <i class="mdi mdi-open-in-new"></i> See More Prescriptions
+            </a>
+        `);
+    }
+
+    // Allergies rendering (nursing workbench approach)
+    function hmoDisplayAllergies(data) {
+        let allergiesArray = [];
+
+        if (data && data.allergies) {
+            if (Array.isArray(data.allergies)) {
+                allergiesArray = data.allergies;
+            } else if (typeof data.allergies === 'string') {
+                try {
+                    const parsed = JSON.parse(data.allergies);
+                    allergiesArray = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+                } catch(e) {
+                    allergiesArray = data.allergies.split(',').map(a => a.trim()).filter(a => a);
+                }
+            } else if (typeof data.allergies === 'object') {
+                allergiesArray = Object.values(data.allergies).filter(a => a);
+            }
+        }
+
+        let html = '';
+
+        if (allergiesArray.length > 0) {
+            html += `
+                <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                    <i class="mdi mdi-alert-circle mdi-24px me-2"></i>
+                    <strong>${allergiesArray.length} known allerg${allergiesArray.length === 1 ? 'y' : 'ies'} on record</strong>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+            `;
+
+            allergiesArray.forEach(function(allergy) {
+                let allergyName = allergy;
+                let severity = '';
+                let reaction = '';
+
+                // Handle if allergy is an object with name/severity/reaction
+                if (typeof allergy === 'object' && allergy !== null) {
+                    allergyName = allergy.name || allergy.allergen || allergy.allergy || JSON.stringify(allergy);
+                    severity = allergy.severity || '';
+                    reaction = allergy.reaction || '';
+                }
+
+                let severityClass = 'allergy-card';
+                let badgeClass = 'badge bg-warning text-dark';
+                if (severity && severity.toLowerCase() === 'severe') {
+                    severityClass += ' severe';
+                    badgeClass = 'badge bg-danger';
+                }
+
+                html += `<div class="${severityClass}">`;
+                html += `<div class="allergy-name"><i class="mdi mdi-alert"></i> ${allergyName}</div>`;
+
+                if (reaction) {
+                    html += `<div class="allergy-reaction"><strong>Reaction:</strong> ${reaction}</div>`;
+                }
+
+                if (severity) {
+                    html += `<span class="allergy-severity ${severity.toLowerCase() === 'severe' ? 'severity-severe' : (severity.toLowerCase() === 'moderate' ? 'severity-moderate' : 'severity-mild')}">${severity}</span>`;
+                }
+
+                html += `</div>`;
+            });
+
+            html += `</div>`;
+        } else {
+            html = `
+                <div class="text-center py-4">
+                    <i class="mdi mdi-check-circle mdi-48px text-success"></i>
+                    <p class="text-success mt-2 mb-0"><strong>No Known Allergies (NKA)</strong></p>
+                    <small class="text-muted">No allergy information has been recorded for this patient</small>
+                </div>
+            `;
+        }
+
+        // Add medical history if available
+        if (data && data.medical_history && data.medical_history !== 'N/A') {
+            html += `
+                <div class="mt-3 p-3 bg-light rounded">
+                    <h6 class="mb-2"><i class="mdi mdi-clipboard-text"></i> Medical History</h6>
+                    <p class="mb-0 text-muted">${data.medical_history}</p>
+                </div>
+            `;
+        }
+
+        $('#allergies-list').html(html);
+    }
+
+    // Vital sign classification helpers (nursing workbench approach)
+    function hmoGetTempClass(temp) {
+        if (temp === 'N/A') return '';
+        var t = parseFloat(temp);
+        if (t < 34 || t > 39) return 'vital-critical';
+        if (t < 36.1 || t > 38.0) return 'vital-warning';
+        return 'vital-normal';
+    }
+
+    function hmoGetHeartRateClass(heartRate) {
+        if (heartRate === 'N/A') return '';
+        var hr = parseInt(heartRate);
+        if (hr < 50 || hr > 220) return 'vital-critical';
+        if (hr < 60 || hr > 100) return 'vital-warning';
+        return 'vital-normal';
+    }
+
+    function hmoGetRespRateClass(respRate) {
+        if (respRate === 'N/A') return '';
+        var rr = parseInt(respRate);
+        if (rr < 10 || rr > 35) return 'vital-critical';
+        if (rr < 12 || rr > 30) return 'vital-warning';
+        return 'vital-normal';
+    }
+
+    function hmoGetBPClass(bp) {
+        if (bp === 'N/A' || !bp.includes('/')) return '';
+        var parts = bp.split('/').map(function(v) { return parseInt(v); });
+        var systolic = parts[0], diastolic = parts[1];
+        if (systolic > 180 || systolic < 80 || diastolic > 110 || diastolic < 50) return 'vital-critical';
+        if (systolic > 140 || systolic < 90 || diastolic > 90 || diastolic < 60) return 'vital-warning';
+        return 'vital-normal';
+    }
+
+    function hmoFormatDateTime(dateString) {
+        var date = new Date(dateString);
+        var dateOptions = { month: 'short', day: 'numeric' };
+        var timeOptions = { hour: '2-digit', minute: '2-digit' };
+        return date.toLocaleDateString('en-US', dateOptions) + ', ' + date.toLocaleTimeString('en-US', timeOptions);
+    }
+
+    // Refresh clinical panel
+    $(document).on('click', '.refresh-clinical-btn', function() {
+        // Refresh current patient's data
+        if (window.currentClinicalPatientId) {
+            loadClinicalContext(window.currentClinicalPatientId);
+        } else {
+            swal('Info', 'Click the Clinical button on a patient row to refresh data', 'info');
+        }
     });
 
     // Patient history button
