@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             AccountingPermissionSeeder::class,
             InventoryPermissionsSeeder::class,
             HmoExecutiveRoleSeeder::class,
+            MaternityRoleSeeder::class,
 
             // Accounting
             ChartOfAccountsSeeder::class,
