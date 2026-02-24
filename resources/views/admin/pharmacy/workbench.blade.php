@@ -4027,13 +4027,7 @@
             </button>
         </div>
 
-        <div class="search-container" style="position: relative;">
-            <input type="text"
-                   id="patient-search-input"
-                   placeholder="🔍 Search patient name or file no..."
-                   autocomplete="off">
-            <div class="search-results" id="patient-search-results"></div>
-        </div>
+        @include('admin.partials.patient_search_html')
 
         <div class="queue-widget">
             <h6>📊 PRESCRIPTION QUEUE</h6>
@@ -6133,12 +6127,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- SheetJS for Excel export -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+@include('admin.partials.patient_search_js', ['search_context' => 'pharmacy'])
 <script>
 // Global state
 let currentPatient = null;
 let currentPatientData = null; // Store full patient data including allergies
 let queueRefreshInterval = null;
-let patientSearchTimeout = null;
 let vitalTooltip = null;
 
 // Utility function to format money
@@ -6174,25 +6168,8 @@ function initializeEventListeners() {
     // Generate initial reference number
     generateReferenceNumber();
 
-    // Patient search
-    $('#patient-search-input').on('input', function() {
-        clearTimeout(patientSearchTimeout);
-        const query = $(this).val().trim();
-
-        if (query.length < 2) {
-            $('#patient-search-results').hide();
-            return;
-        }
-
-        patientSearchTimeout = setTimeout(() => searchPatients(query), 300);
-    });
-
-    // Close search results when clicking outside
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.search-container').length) {
-            $('#patient-search-results').hide();
-        }
-    });
+    // Patient search (shared module)
+    PatientSearch.init();
 
     // Workspace tabs
     $('.workspace-tab').on('click', function() {
@@ -6740,20 +6717,6 @@ function submitNewPrescriptionRequest() {
     });
 }
 
-function searchPatients(query) {
-    $.ajax({
-        url: '{{ route("pharmacy.search-patients") }}',
-        method: 'GET',
-        data: { term: query },
-        success: function(results) {
-            displaySearchResults(results);
-        },
-        error: function() {
-            console.error('Search failed');
-        }
-    });
-}
-
 // Global banks cache
 let availableBanks = [];
 
@@ -6806,40 +6769,6 @@ function generateReferenceNumber() {
 
     const reference = `PAY-${year}${month}${day}-${hours}${minutes}${seconds}`;
     $('#payment-reference').val(reference);
-}
-
-function displaySearchResults(results) {
-    const $container = $('#patient-search-results');
-    $container.empty();
-
-    if (results.length === 0) {
-        $container.html('<div class="search-result-item">No patients found</div>');
-    } else {
-        results.forEach((patient, index) => {
-            const item = $(`
-                <div class="search-result-item ${index === 0 ? 'active' : ''}" data-patient-id="${patient.id}">
-                    <img src="/storage/image/user/${patient.photo}" alt="${patient.name}">
-                    <div class="search-result-info">
-                        <div class="search-result-name">${patient.name}</div>
-                        <div class="search-result-details">
-                            ${patient.file_no} | ${patient.age}y ${patient.gender} | ${patient.phone}
-                        </div>
-                    </div>
-                    ${patient.pending_count > 0 ? `<span class="pending-badge">${patient.pending_count}</span>` : ''}
-                </div>
-            `);
-
-            item.on('click', function() {
-                loadPatient(patient.id);
-                $container.hide();
-                $('#patient-search-input').val('');
-            });
-
-            $container.append(item);
-        });
-    }
-
-    $container.show();
 }
 
 function loadPatient(patientId) {
