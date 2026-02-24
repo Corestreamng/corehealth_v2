@@ -439,6 +439,14 @@
                     <span class="menu-title">Nursing Workbench</span>
                 </a>
             </li>
+            @hasanyrole('SUPERADMIN|ADMIN|MATERNITY')
+            <li class="nav-item {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}" href="{{ route('maternity-workbench.index') }}" id="sidebar-nurse-maternity-workbench">
+                    <i class="mdi mdi-mother-nurse menu-icon"></i>
+                    <span class="menu-title">Maternity Workbench</span>
+                </a>
+            </li>
+            @endhasanyrole
             <!-- Nursing Queue - Old DataTable Approach
             <li class="nav-item {{ request()->routeIs('vitals.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('vitals.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-nurse-queue-old" data-bs-target="#sidebar-nurse-queue-old" aria-expanded="{{ request()->routeIs('vitals.*') ? 'true' : 'false' }}" aria-controls="sidebar-nurse-queue-old" id="sidebar-nurse-queue-old-toggle">
@@ -507,6 +515,21 @@
                 </div>
             </li>
             -->
+            @endhasanyrole
+
+            {{-- ========================================
+                 MATERNITY SECTION
+                 ======================================== --}}
+            @hasanyrole('SUPERADMIN|ADMIN|MATERNITY')
+            <li class="pt-2 pb-1">
+                <span class="nav-item-head">Maternity</span>
+            </li>
+            <li class="nav-item {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}" href="{{ route('maternity-workbench.index') }}" id="sidebar-maternity-workbench">
+                    <i class="mdi mdi-mother-nurse menu-icon"></i>
+                    <span class="menu-title">Maternity Workbench</span>
+                </a>
+            </li>
             @endhasanyrole
 
             {{-- ========================================
@@ -652,6 +675,14 @@
                     </ul>
                 </div>
             </li>
+            @hasanyrole('SUPERADMIN|ADMIN|MATERNITY')
+            <li class="nav-item {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}" href="{{ route('maternity-workbench.index') }}" id="sidebar-doctor-maternity-workbench">
+                    <i class="mdi mdi-mother-nurse menu-icon"></i>
+                    <span class="menu-title">Maternity Workbench</span>
+                </a>
+            </li>
+            @endhasanyrole
             <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-doctor-patients" data-bs-target="#sidebar-doctor-patients" aria-expanded="false" aria-controls="sidebar-doctor-patients" id="sidebar-doctor-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
