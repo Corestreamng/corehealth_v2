@@ -680,7 +680,7 @@ class ImagingWorkbenchController extends Controller
 
             // Authorization: imaging staff can always save, but doctors/nurses need appsetting permission
             $user = Auth::user();
-            $isImagingStaff = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'IMAGING', 'RADIOLOGY']);
+            $isImagingStaff = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'RADIOLOGIST']);
             if (!$isImagingStaff) {
                 $isRequestingDoctor = $user->hasRole('DOCTOR') && $user->id == $imagingRequest->doctor_id;
                 $isRequestingNurse  = $user->hasRole('NURSE') && $user->id == $imagingRequest->doctor_id;
