@@ -4124,9 +4124,11 @@ function initializeEventListeners() {
 function loadPatient(patientId) {
     currentPatient = patientId;
 
-    // Show loading state
-    $('#empty-state').hide();
-    $('#workspace-content').addClass('active');
+    // Hide all views to prevent stacking
+    hideAllViews();
+
+    // Show patient workspace
+    $('#workspace-content').show().addClass('active');
     $('#patient-header').addClass('active');
 
     // Mobile: Switch to work pane
@@ -6104,6 +6106,20 @@ function animateRefresh(buttonElement) {
 }
 
 // =============================================
+// VIEW MANAGEMENT HELPERS
+// =============================================
+
+// Hide all overlapping views - call this before showing any new view
+function hideAllViews() {
+    $('#empty-state').hide();
+    $('#queue-view').removeClass('active').hide();
+    $('.queue-item').removeClass('active');
+    $('#reports-view').removeClass('active').hide();
+    $('#patient-header').removeClass('active');
+    $('#workspace-content').removeClass('active').hide();
+}
+
+// =============================================
 // QUEUE FUNCTIONALITY
 // =============================================
 
@@ -6151,10 +6167,8 @@ function showQueue(filter) {
     }
 
     // Hide other views, show queue view
-    $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
-    $('#queue-view').addClass('active');
+    hideAllViews();
+    $('#queue-view').show().addClass('active');
 
     // On mobile, hide search pane and show main workspace
     if (window.innerWidth < 768) {
@@ -6295,14 +6309,11 @@ function initializeQueueDataTable(filter) {
 // ==========================================
 
 function showReports() {
-    // Hide everything else
-    $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
-    $('#queue-view').removeClass('active');
+    // Hide all views to prevent stacking
+    hideAllViews();
 
     // Show reports view
-    $('#reports-view').addClass('active');
+    $('#reports-view').show().addClass('active');
 
     // On mobile, switch to main workspace
     if (window.innerWidth < 768) {
