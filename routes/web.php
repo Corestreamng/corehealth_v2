@@ -87,6 +87,9 @@ Route::get('/test-dept-notifications', function () {
 Route::group(['middleware' => ['auth']], function () {
     // Route::put('staff/updateAvatar/{id}', 'Admin\UserController@updateAvatar')->name('users.updateAvatar');
 
+    // Shared patient search (all workbenches)
+    Route::get('/patient-search', [\App\Http\Controllers\PatientSearchController::class, 'search'])->name('patient-search');
+
     // Messages/Chat
     Route::get('/messages', [MessagesController::class, 'index'])->name('messages');
     Route::get('/messages/create', [MessagesController::class, 'create'])->name('messages.create');

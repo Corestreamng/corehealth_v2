@@ -4093,13 +4093,7 @@
             </button>
         </div>
 
-        <div class="search-container" style="position: relative;">
-            <input type="text"
-                   id="patient-search-input"
-                   placeholder="Search or scan barcode..."
-                   autocomplete="off">
-            <div class="search-results" id="patient-search-results"></div>
-        </div>
+        @include('admin.partials.patient_search_html')
 
         <div class="queue-widget">
             <h6><i class="mdi mdi-format-list-bulleted"></i> DOCTOR QUEUE</h6>
@@ -6593,6 +6587,7 @@
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
 <script src="{{ asset('plugins/select2/select2.full.min.js') }}"></script>
 <script src="{{ asset('assets/js/jsbarcode.all.min.js') }}"></script>
+@include('admin.partials.patient_search_js', ['search_context' => 'reception'])
 <script>
 // =============================================
 // RECEPTION WORKBENCH JAVASCRIPT
@@ -6602,7 +6597,6 @@
 let currentPatient = null;
 let currentPatientData = null;
 let queueRefreshInterval = null;
-let patientSearchTimeout = null;
 let queueDataTable = null;
 let visitHistoryTable = null;
 
@@ -6645,56 +6639,8 @@ $(document).ready(function() {
 // EVENT LISTENERS
 // =============================================
 function initializeEventListeners() {
-    // Patient search with debounce - supports barcode scanner input
-    let lastInputTime = 0;
-    let inputBuffer = '';
-
-    $('#patient-search-input').on('input', function() {
-        clearTimeout(patientSearchTimeout);
-        const query = $(this).val().trim();
-        const currentTime = Date.now();
-
-        // Detect barcode scanner - rapid input (less than 50ms between characters)
-        if (currentTime - lastInputTime < 50 && inputBuffer.length > 0) {
-            // Likely barcode scanner - wait for complete input
-            inputBuffer = query;
-            patientSearchTimeout = setTimeout(() => {
-                // If input is a file number pattern (fast input complete)
-                if (inputBuffer.length >= 3) {
-                    searchPatients(inputBuffer, true); // true = auto-select if single result
-                }
-                inputBuffer = '';
-            }, 100);
-        } else {
-            inputBuffer = query;
-
-            if (query.length < 2) {
-                $('#patient-search-results').hide();
-                return;
-            }
-
-            patientSearchTimeout = setTimeout(() => searchPatients(query, false), 300);
-        }
-        lastInputTime = currentTime;
-    });
-
-    // Handle Enter key for barcode scanner (many scanners add Enter at end)
-    $('#patient-search-input').on('keypress', function(e) {
-        if (e.which === 13) { // Enter key
-            e.preventDefault();
-            const query = $(this).val().trim();
-            if (query.length >= 2) {
-                searchPatients(query, true); // Auto-select if single result
-            }
-        }
-    });
-
-    // Close search results when clicking outside
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.search-container').length) {
-            $('#patient-search-results').hide();
-        }
-    });
+    // Patient search (shared module with barcode support)
+    PatientSearch.init();
 
     // Workspace tabs
     $('.workspace-tab').on('click', function() {
@@ -7047,63 +6993,6 @@ function updateServiceTypeUI(type) {
 // =============================================
 // PATIENT SEARCH & LOAD
 // =============================================
-function searchPatients(query, autoSelectSingle = false) {
-    $.ajax({
-        url: '{{ route("reception.search-patients") }}',
-        method: 'GET',
-        data: { q: query },
-        success: function(results) {
-            // Auto-select if single result and barcode scan mode
-            if (autoSelectSingle && results.length === 1) {
-                loadPatient(results[0].id);
-                $('#patient-search-results').hide();
-                $('#patient-search-input').val('');
-                return;
-            }
-            displaySearchResults(results);
-        },
-        error: function() {
-            console.error('Search failed');
-        }
-    });
-}
-
-function displaySearchResults(results) {
-    const $container = $('#patient-search-results');
-    $container.empty();
-
-    if (results.length === 0) {
-        $container.html('<div class="search-result-item text-muted">No patients found</div>');
-    } else {
-        const defaultAvatar = '{{ asset("assets/images/default-avatar.png") }}';
-        results.forEach((patient, index) => {
-            const photoUrl = patient.photo || defaultAvatar;
-            const item = $(`
-                <div class="search-result-item ${index === 0 ? 'active' : ''}" data-patient-id="${patient.id}">
-                    <img src="${photoUrl}" alt="${patient.name}" onerror="this.onerror=null; this.src='${defaultAvatar}';">
-                    <div class="search-result-info">
-                        <div class="search-result-name">${patient.name}</div>
-                        <div class="search-result-details">
-                            ${patient.file_no} | ${patient.age || 'N/A'} ${patient.gender} | ${patient.phone || 'N/A'}
-                        </div>
-                    </div>
-                    ${patient.hmo_name ? `<span class="badge badge-info">${patient.hmo_name}</span>` : ''}
-                </div>
-            `);
-
-            item.on('click', function() {
-                loadPatient(patient.id);
-                $container.hide();
-                $('#patient-search-input').val('');
-            });
-
-            $container.append(item);
-        });
-    }
-
-    $container.show();
-}
-
 function loadPatient(patientId) {
     currentPatient = patientId;
 

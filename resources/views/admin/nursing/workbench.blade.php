@@ -2941,13 +2941,7 @@
             </button>
         </div>
 
-        <div class="search-container" style="position: relative;">
-            <input type="text"
-                   id="patient-search-input"
-                   placeholder="Search patient name or file no..."
-                   autocomplete="off">
-            <div class="search-results" id="patient-search-results"></div>
-        </div>
+        @include('admin.partials.patient_search_html')
 
         <div class="queue-widget">
             <h6><i class="mdi mdi-clipboard-list"></i> PATIENT QUEUES</h6>
@@ -7068,12 +7062,12 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
+@include('admin.partials.patient_search_js', ['search_context' => 'nursing'])
 <script>
 // Global state
 let currentPatient = null;
 let currentPatientData = null; // Store full patient data including allergies
 let queueRefreshInterval = null;
-let patientSearchTimeout = null;
 let vitalTooltip = null;
 let queueDataTable = null;
 let currentQueueFilter = 'admitted';
@@ -7833,25 +7827,8 @@ $(document).ready(function() {
 });
 
 function initializeEventListeners() {
-    // Patient search
-    $('#patient-search-input').on('input', function() {
-        clearTimeout(patientSearchTimeout);
-        const query = $(this).val().trim();
-
-        if (query.length < 2) {
-            $('#patient-search-results').hide();
-            return;
-        }
-
-        patientSearchTimeout = setTimeout(() => searchPatients(query), 300);
-    });
-
-    // Close search results when clicking outside
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.search-container').length) {
-            $('#patient-search-results').hide();
-        }
-    });
+    // Patient search (shared module)
+    PatientSearch.init();
 
     // Workspace tabs
     $('.workspace-tab').on('click', function() {
@@ -7924,54 +7901,6 @@ function initializeEventListeners() {
     $('#btn-close-queue').on('click', function() {
         hideQueue();
     });
-}
-
-function searchPatients(query) {
-    $.ajax({
-        url: '{{ route("nursing-workbench.search-patients") }}',
-        method: 'GET',
-        data: { term: query },
-        success: function(results) {
-            displaySearchResults(results);
-        },
-        error: function() {
-            console.error('Search failed');
-        }
-    });
-}
-
-function displaySearchResults(results) {
-    const $container = $('#patient-search-results');
-    $container.empty();
-
-    if (results.length === 0) {
-        $container.html('<div class="search-result-item">No patients found</div>');
-    } else {
-        results.forEach((patient, index) => {
-            const item = $(`
-                <div class="search-result-item ${index === 0 ? 'active' : ''}" data-patient-id="${patient.id}">
-                    <img src="/storage/image/user/${patient.photo}" alt="${patient.name}">
-                    <div class="search-result-info">
-                        <div class="search-result-name">${patient.name}</div>
-                        <div class="search-result-details">
-                            ${patient.file_no} | ${patient.age}y ${patient.gender} | ${patient.phone}
-                        </div>
-                    </div>
-                    ${patient.pending_count > 0 ? `<span class="pending-badge">${patient.pending_count}</span>` : ''}
-                </div>
-            `);
-
-            item.on('click', function() {
-                loadPatient(patient.id);
-                $container.hide();
-                $('#patient-search-input').val('');
-            });
-
-            $container.append(item);
-        });
-    }
-
-    $container.show();
 }
 
 function loadPatient(patientId) {
