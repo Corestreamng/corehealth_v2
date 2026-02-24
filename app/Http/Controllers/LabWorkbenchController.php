@@ -745,6 +745,21 @@ class LabWorkbenchController extends Controller
 
             $labRequest = LabServiceRequest::findOrFail($request->invest_res_entry_id);
 
+            // Authorization: lab staff can always save, but doctors/nurses need appsetting permission
+            $user = Auth::user();
+            $isLabStaff = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'LAB', 'LABORATORY']);
+            if (!$isLabStaff) {
+                $isRequestingDoctor = $user->hasRole('DOCTOR') && $user->id == $labRequest->doctor_id;
+                $isRequestingNurse  = $user->hasRole('NURSE') && $user->id == $labRequest->doctor_id;
+                if (!($isRequestingDoctor && appsettings('doctor_can_enter_lab_result'))
+                    && !($isRequestingNurse && appsettings('nurse_can_enter_lab_result'))) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to enter lab results.'
+                    ], 403);
+                }
+            }
+
             // Check if service can be delivered (payment + HMO validation)
             if ($labRequest->productOrServiceRequest) {
                 $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($labRequest->productOrServiceRequest);
