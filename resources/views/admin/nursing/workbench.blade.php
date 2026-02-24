@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
 @section('title', 'Nursing Workbench')
 
@@ -3049,7 +3049,7 @@
             <h3>Select a patient to begin</h3>
             <p>Use the search box or select from patient queues</p>
             <button class="btn btn-lg btn-primary" id="view-queue-btn">
-                ≡ƒôï View All Pending Requests
+                â‰¡Æ’Ã´Ã¯ View All Pending Requests
             </button>
         </div>
 
@@ -4534,7 +4534,7 @@
                                                 <input type="text" class="form-control" id="inj-external-note" placeholder="Where obtained / remarks">
                                             </div>
                                         </div>
-                                        {{-- §7.2: Add to List button for patient's own virtual row --}}
+                                        {{-- Â§7.2: Add to List button for patient's own virtual row --}}
                                         <div class="row mt-3">
                                             <div class="col text-end">
                                                 <button type="button" class="btn btn-warning btn-sm" id="btn-add-patient-own-injection" onclick="addPatientOwnInjectionRow()">
@@ -4573,7 +4573,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        {{-- §5.3: Bill Patient checkbox — unchecked = hospital absorbs cost, checked = creates POSR via tariff pipeline --}}
+                                        {{-- Â§5.3: Bill Patient checkbox â€” unchecked = hospital absorbs cost, checked = creates POSR via tariff pipeline --}}
                                         <div class="form-check mt-2 ms-1">
                                             <input class="form-check-input" type="checkbox" id="injection-bill-patient" value="1">
                                             <label class="form-check-label" for="injection-bill-patient">
@@ -4618,7 +4618,7 @@
                                             <tfoot>
                                                 <tr class="bg-light">
                                                     <td colspan="5" class="text-right"><strong>Total:</strong></td>
-                                                    <td id="injection-total-price"><strong>₦0.00</strong></td>
+                                                    <td id="injection-total-price"><strong>â‚¦0.00</strong></td>
                                                     <td id="injection-total-coverage">-</td>
                                                     <td colspan="2"></td>
                                                 </tr>
@@ -4903,7 +4903,7 @@
                                             <br><small id="modal-selected-product-stock" class="text-success"></small>
                                         </div>
                                         <div class="text-right">
-                                            <span class="badge badge-primary" id="modal-selected-product-price">Γéª0.00</span>
+                                            <span class="badge badge-primary" id="modal-selected-product-price">Î“Ã©Âª0.00</span>
                                             <button type="button" class="btn btn-sm btn-outline-danger ml-2" id="modal-remove-product">
                                                 <i class="mdi mdi-close"></i>
                                             </button>
@@ -5053,7 +5053,7 @@
                         <div class="tab-pane fade show active" id="cr-prescriptions" role="tabpanel">
                             <div class="card-modern">
                                 <div class="card-body">
-                                    {{-- Treatment Plans + Re-prescribe buttons (Plan §6.4, §5.3) --}}
+                                    {{-- Treatment Plans + Re-prescribe buttons (Plan Â§6.4, Â§5.3) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
                                             <button class="btn btn-sm btn-outline-secondary"
@@ -5065,7 +5065,7 @@
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
                                         </div>
-                                        {{-- Re-prescribe from previous encounter dropdown (Plan §5.3) --}}
+                                        {{-- Re-prescribe from previous encounter dropdown (Plan Â§5.3) --}}
                                         <div class="dropdown" id="cr-rp-encounter-dropdown">
                                             <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
                                                     data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
@@ -5093,7 +5093,7 @@
                                             <div id="cr_presc_message" class="mb-2"></div>
                                             <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Prescription</h6>
 
-                                            {{-- Dose Mode Toggle — Segmented button group (Plan §2.2, structured default) --}}
+                                            {{-- Dose Mode Toggle â€” Segmented button group (Plan Â§2.2, structured default) --}}
                                             @include('admin.partials.dose-mode-toggle', ['prefix' => 'cr_'])
 
                                             <div class="form-group">
@@ -5108,7 +5108,7 @@
                                                     <tbody id="cr-selected-products"></tbody>
                                                 </table>
                                             </div>
-                                            {{-- Save button removed — prescriptions auto-save on add (Plan §4.5) --}}
+                                            {{-- Save button removed â€” prescriptions auto-save on add (Plan Â§4.5) --}}
                                             <div id="cr_presc_message" class="mt-2"></div>
                                         </div>
                                     </div>
@@ -5120,7 +5120,7 @@
                         <div class="tab-pane fade" id="cr-lab" role="tabpanel">
                             <div class="card-modern">
                                 <div class="card-body">
-                                    {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+                                    {{-- Treatment Plans + Save as Template (Plan Â§6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
                                             <button class="btn btn-sm btn-outline-secondary"
@@ -5161,7 +5161,7 @@
                                                     <tbody id="cr-selected-labs"></tbody>
                                                 </table>
                                             </div>
-                                            {{-- Phase 2d (Plan §4.5): Auto-save status — labs save on add --}}
+                                            {{-- Phase 2d (Plan Â§4.5): Auto-save status â€” labs save on add --}}
                                             <div class="auto-save-status text-muted small mt-2" id="cr-labs-auto-save-status"></div>
                                         </div>
                                     </div>
@@ -5173,7 +5173,7 @@
                         <div class="tab-pane fade" id="cr-imaging" role="tabpanel">
                             <div class="card-modern">
                                 <div class="card-body">
-                                    {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+                                    {{-- Treatment Plans + Save as Template (Plan Â§6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
                                             <button class="btn btn-sm btn-outline-secondary"
@@ -5214,7 +5214,7 @@
                                                     <tbody id="cr-selected-imaging"></tbody>
                                                 </table>
                                             </div>
-                                            {{-- Phase 2d (Plan §4.5): Auto-save status — imaging saves on add --}}
+                                            {{-- Phase 2d (Plan Â§4.5): Auto-save status â€” imaging saves on add --}}
                                             <div class="auto-save-status text-muted small mt-2" id="cr-imaging-auto-save-status"></div>
                                         </div>
                                     </div>
@@ -5226,7 +5226,7 @@
                         <div class="tab-pane fade" id="cr-procedures" role="tabpanel">
                             <div class="card-modern">
                                 <div class="card-body">
-                                    {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+                                    {{-- Treatment Plans + Save as Template (Plan Â§6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
                                             <button class="btn btn-sm btn-outline-secondary"
@@ -5300,7 +5300,7 @@
                                                     <tbody id="cr-selected-procedures"></tbody>
                                                 </table>
                                             </div>
-                                            {{-- Save button removed — procedures auto-save on add (Plan §4.5) --}}
+                                            {{-- Save button removed â€” procedures auto-save on add (Plan Â§4.5) --}}
                                         </div>
                                     </div>
                                 </div>
@@ -5509,7 +5509,7 @@
                                     <div class="bh-stat-card bh-stat-green">
                                         <div class="bh-stat-icon"><i class="mdi mdi-shield-check mdi-24px"></i></div>
                                         <div>
-                                            <div class="bh-stat-value" id="bh-hmo-covered">₦0.00</div>
+                                            <div class="bh-stat-value" id="bh-hmo-covered">â‚¦0.00</div>
                                             <div class="bh-stat-label">HMO Covered</div>
                                         </div>
                                     </div>
@@ -5518,7 +5518,7 @@
                                     <div class="bh-stat-card bh-stat-pink">
                                         <div class="bh-stat-icon"><i class="mdi mdi-cash mdi-24px"></i></div>
                                         <div>
-                                            <div class="bh-stat-value" id="bh-patient-payable">₦0.00</div>
+                                            <div class="bh-stat-value" id="bh-patient-payable">â‚¦0.00</div>
                                             <div class="bh-stat-label">Patient Payable</div>
                                         </div>
                                     </div>
@@ -5744,7 +5744,7 @@
                             <input type="text" class="form-control" id="edit-blood-pressure" placeholder="e.g., 120/80">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="edit-temp" class="form-label"><i class="mdi mdi-thermometer text-warning"></i> Temperature (┬░C)</label>
+                            <label for="edit-temp" class="form-label"><i class="mdi mdi-thermometer text-warning"></i> Temperature (â”¬â–‘C)</label>
                             <input type="number" step="0.1" class="form-control" id="edit-temp" placeholder="e.g., 36.5">
                         </div>
                         <div class="col-md-6 mb-3">
@@ -6118,9 +6118,9 @@
                                 <label for="shift-type-select">Shift Type</label>
                                 <select class="form-control" id="shift-type-select">
                                     <option value="">Auto-detect</option>
-                                    <option value="morning">≡ƒîà Morning (6AM - 2PM)</option>
-                                    <option value="afternoon">ΓÿÇ∩╕Å Afternoon (2PM - 10PM)</option>
-                                    <option value="night">≡ƒîÖ Night (10PM - 6AM)</option>
+                                    <option value="morning">â‰¡Æ’Ã®Ã  Morning (6AM - 2PM)</option>
+                                    <option value="afternoon">Î“Ã¿Ã‡âˆ©â••Ã… Afternoon (2PM - 10PM)</option>
+                                    <option value="night">â‰¡Æ’Ã®Ã– Night (10PM - 6AM)</option>
                                 </select>
                                 <small class="text-muted">Leave blank to auto-detect based on current time</small>
                             </div>
@@ -6323,9 +6323,9 @@
                             </label>
                             <select class="form-control form-control-modern" id="handover-filter-shift">
                                 <option value="">All Shifts</option>
-                                <option value="morning">≡ƒîà Morning (6AM - 2PM)</option>
-                                <option value="afternoon">ΓÿÇ∩╕Å Afternoon (2PM - 10PM)</option>
-                                <option value="night">≡ƒîÖ Night (10PM - 6AM)</option>
+                                <option value="morning">â‰¡Æ’Ã®Ã  Morning (6AM - 2PM)</option>
+                                <option value="afternoon">Î“Ã¿Ã‡âˆ©â••Ã… Afternoon (2PM - 10PM)</option>
+                                <option value="night">â‰¡Æ’Ã®Ã– Night (10PM - 6AM)</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -6351,8 +6351,8 @@
                                 </label>
                                 <select class="form-control form-control-modern" id="handover-filter-status">
                                     <option value="">All Status</option>
-                                    <option value="pending">ΓÅ│ Pending</option>
-                                    <option value="acknowledged">Γ£à Acknowledged</option>
+                                    <option value="pending">Î“Ã…â”‚ Pending</option>
+                                    <option value="acknowledged">Î“Â£Ã  Acknowledged</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -6361,8 +6361,8 @@
                                 </label>
                                 <select class="form-control form-control-modern" id="handover-filter-priority">
                                     <option value="">All Priority</option>
-                                    <option value="critical">≡ƒö┤ Critical Only</option>
-                                    <option value="has_tasks">≡ƒôï Has Pending Tasks</option>
+                                    <option value="critical">â‰¡Æ’Ã¶â”¤ Critical Only</option>
+                                    <option value="has_tasks">â‰¡Æ’Ã´Ã¯ Has Pending Tasks</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -7056,6 +7056,10 @@
 @include('admin.partials.clinical_context_modal')
 @include('admin.partials.treatment-plan-modal')
 @include('admin.partials.re-prescribe-encounter-modal')
+@include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
+@include('admin.partials.invest_res_js')
+@include('admin.partials.invest_res_view_imaging_modal')
+@include('admin.partials.invest_res_view_imaging_js')
 
 @endsection
 
@@ -7220,7 +7224,7 @@ function loadQueueData(filter) {
 }
 
 // Display admitted patients in queue (card-based)
-// Display admitted patients in queue — ward-grouped with filters
+// Display admitted patients in queue â€” ward-grouped with filters
 let admittedPatientsData = [];
 let admittedWardFilter = 'all';
 let admittedStatusFilter = 'all';
@@ -7526,7 +7530,7 @@ function displayBedRequestsQueue(requests) {
     $container.html(html);
 }
 
-// Display discharge requests queue — detailed cards with billing warnings
+// Display discharge requests queue â€” detailed cards with billing warnings
 function displayDischargeRequestsQueue(requests) {
     const $container = $('#queue-view .queue-view-content');
 
@@ -7603,7 +7607,7 @@ function displayDischargeRequestsQueue(requests) {
     $container.html(summaryHtml + html);
 }
 
-// Display medication due queue — detailed with overdue timing and ward grouping
+// Display medication due queue â€” detailed with overdue timing and ward grouping
 function displayMedicationDueQueue(patients) {
     const $container = $('#queue-view .queue-view-content');
 
@@ -7747,7 +7751,7 @@ function openTransferWardModal(admissionId, patientName) {
     $.get('{{ route("nursing-workbench.ward-dashboard.available-beds") }}', function(beds) {
         const $sel = $('#transfer-ward-bed-select').empty().append('<option value="">-- Select target bed --</option>');
         beds.forEach(function(b) {
-            $sel.append(`<option value="${b.id}">${b.name} — ${b.ward_name}</option>`);
+            $sel.append(`<option value="${b.id}">${b.name} â€” ${b.ward_name}</option>`);
         });
     });
 
@@ -8085,7 +8089,7 @@ function initializeHistoryDataTable(patientId) {
 const ClinicalRequests = (function() {
     let patientId = null;
     let selectedProcedures = [];
-    let crDoseStructuredMode = true; // Plan §2.2: structured is now the default
+    let crDoseStructuredMode = true; // Plan Â§2.2: structured is now the default
     const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
     const procedureCategoryId = {{ appsettings('procedure_category_id', 0) }};
     const investigationCategoryId = '{{ appsettings("investigation_category_id", "") }}';
@@ -8107,10 +8111,10 @@ const ClinicalRequests = (function() {
         initImagingHistory();
         initProcHistory();
 
-        // Clear duplicate tracking (Plan §4.4)
+        // Clear duplicate tracking (Plan Â§4.4)
         ClinicalOrdersKit.clearAddedIds();
 
-        // Initialize dose mode toggle — structured by default (Plan §2.2)
+        // Initialize dose mode toggle â€” structured by default (Plan Â§2.2)
         if (!ClinicalRequests._doseToggleInit) {
             var nurseDoseState = ClinicalOrdersKit.initDoseModeToggle({
                 prefix: 'cr_',
@@ -8123,7 +8127,7 @@ const ClinicalRequests = (function() {
             });
             crDoseStructuredMode = nurseDoseState.isStructured;
 
-            // Phase 2b (Plan §4.3): Register debounced dose auto-save for medications
+            // Phase 2b (Plan Â§4.3): Register debounced dose auto-save for medications
             ClinicalOrdersKit.onDoseUpdate('cr-', function(recordId, doseValue) {
                 ClinicalOrdersKit.debouncedUpdate({
                     url: '/nursing-workbench/clinical-requests/prescriptions/' + recordId + '/dose',
@@ -8132,7 +8136,7 @@ const ClinicalRequests = (function() {
                 });
             });
 
-            // Phase 4d (Plan §6.4): Initialize treatment plans module
+            // Phase 4d (Plan Â§6.4): Initialize treatment plans module
             ClinicalOrdersKit.initTreatmentPlans({
                 applyUrl: '/nursing-workbench/clinical-requests/apply-treatment-plan',
                 csrfToken: CSRF_TOKEN,
@@ -8182,7 +8186,7 @@ const ClinicalRequests = (function() {
                 }
             });
 
-            // Phase 3c (Plan §5.3): Initialize re-prescribe from encounter dropdown
+            // Phase 3c (Plan Â§5.3): Initialize re-prescribe from encounter dropdown
             ClinicalOrdersKit.initRePrescribeFromEncounter({
                 recentUrl: '/nursing-workbench/clinical-requests/recent-encounters',
                 encounterItemsUrl: '/nursing-workbench/clinical-requests/encounter-items/{id}',
@@ -8202,7 +8206,7 @@ const ClinicalRequests = (function() {
         }
 
         // A5 fix: Update treatment plan & re-prescribe config on EVERY patient switch
-        // (Plan §6.4 + §5.3) — keeps extraPayload.patient_id current
+        // (Plan Â§6.4 + Â§5.3) â€” keeps extraPayload.patient_id current
         ClinicalOrdersKit.updateTreatmentPlanConfig({ extraPayload: { patient_id: patientId } });
         ClinicalOrdersKit.updateRePrescribeConfig({ extraPayload: { patient_id: patientId } });
 
@@ -8273,7 +8277,7 @@ const ClinicalRequests = (function() {
     function setupSearchHandlers() {
         let searchTimeout;
 
-        // Re-order / Re-prescribe from history (Plan §5.2)
+        // Re-order / Re-prescribe from history (Plan Â§5.2)
         $(document).off('click.reorder').on('click.reorder', '.re-order-btn', function() {
             var $btn = $(this);
             if ($btn.prop('disabled')) return;
@@ -8370,7 +8374,7 @@ const ClinicalRequests = (function() {
                     const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                     const displayName = `${name}[${code}](${qty} avail.)`;
 
-                    // Phase 2c (Plan §4.4): Duplicate filtering for medications
+                    // Phase 2c (Plan Â§4.4): Duplicate filtering for medications
                     const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
                     const disabledStyle = alreadyAdded ? 'opacity:0.5; pointer-events:none;' : 'cursor:pointer;';
                     const alreadyBadge = alreadyAdded ? '<span class="badge bg-secondary ms-2">Already Added</span>' : '';
@@ -8460,8 +8464,8 @@ const ClinicalRequests = (function() {
     }
 
     // ===== ADD TO SELECTION TABLE =====
-    // Phase 2b (Plan §4.3): Two-phase medication auto-save
-    // Phase 1 — instant POST with empty dose; Phase 2 — debounced PUT on dose field changes
+    // Phase 2b (Plan Â§4.3): Two-phase medication auto-save
+    // Phase 1 â€” instant POST with empty dose; Phase 2 â€” debounced PUT on dose field changes
     function addProduct(name, id, price, mode, claims, payable) {
         const rowId = 'crx_' + Date.now() + '_' + id;
         const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(
@@ -8516,9 +8520,9 @@ const ClinicalRequests = (function() {
 
     // Legacy dose functions (buildCrStructuredDoseHtml, crFreqMultiplierMap, crDurUnitMultiplierMap,
     // autoCalculateCrQty, updateDoseVal, toggleDoseMode) removed.
-    // All dose logic now lives in ClinicalOrdersKit (clinical-orders-shared.js) per Plan §2.1–§2.3.
+    // All dose logic now lives in ClinicalOrdersKit (clinical-orders-shared.js) per Plan Â§2.1â€“Â§2.3.
 
-    // Phase 0d (Plan §2.3): Old global calculator functions removed.
+    // Phase 0d (Plan Â§2.3): Old global calculator functions removed.
     // Per-drug inline calculator now lives in ClinicalOrdersKit (clinical-orders-shared.js).
 
     function addLabService(name, id, price, mode, claims, payable) {
@@ -8578,7 +8582,7 @@ const ClinicalRequests = (function() {
     }
 
     function addProcedure(item) {
-        // Phase 2a (Plan §4.1): Auto-save procedure via ClinicalOrdersKit.addItem
+        // Phase 2a (Plan Â§4.1): Auto-save procedure via ClinicalOrdersKit.addItem
         const procId = item.id;
         if (ClinicalOrdersKit.isAlreadyAdded('procedures', procId)) {
             toastr.warning('Procedure already added');
@@ -8624,7 +8628,7 @@ const ClinicalRequests = (function() {
     }
 
     function removeProcedure(procId) {
-        // Legacy fallback — for non-auto-saved rows only
+        // Legacy fallback â€” for non-auto-saved rows only
         selectedProcedures = selectedProcedures.filter(p => p.id !== procId);
         renderSelectedProcedures();
     }
@@ -8657,7 +8661,7 @@ const ClinicalRequests = (function() {
         setTimeout(() => $(`#${containerId} .alert`).alert('close'), 5000);
     }
 
-    // Phase 2b (Plan §4.3): skip auto-saved prescription rows
+    // Phase 2b (Plan Â§4.3): skip auto-saved prescription rows
     function savePrescriptions() {
         if (!patientId) { toastr.error('No patient selected'); return; }
         const products = [], doses = [];
@@ -8872,11 +8876,11 @@ const ClinicalRequests = (function() {
         saveLabs: saveLabs,
         saveImaging: saveImaging,
         saveProcedures: saveProcedures,
-        toggleDoseMode: function() { /* removed — now handled by ClinicalOrdersKit.initDoseModeToggle (Plan §2.2) */ },
-        toggleCalculator: function() { /* removed — global calculator replaced by per-drug calc (Plan §2.3) */ },
+        toggleDoseMode: function() { /* removed â€” now handled by ClinicalOrdersKit.initDoseModeToggle (Plan Â§2.2) */ },
+        toggleCalculator: function() { /* removed â€” global calculator replaced by per-drug calc (Plan Â§2.3) */ },
         calculate: function() { /* removed */ },
         applyToSelected: function() { /* removed */ },
-        updateDoseVal: function() { /* removed — now handled by ClinicalOrdersKit.updateDoseValue (Plan §2.2) */ },
+        updateDoseVal: function() { /* removed â€” now handled by ClinicalOrdersKit.updateDoseValue (Plan Â§2.2) */ },
         _searchBound: false,
         _doseToggleInit: false
     };
@@ -9513,7 +9517,7 @@ function refreshClinicalPanel(panel) {
         loadMedicationsList();
         $btn.find('i').removeClass('fa-spin');
     } else {
-        // For vitals/allergies — the shared module handles these via delegated click events
+        // For vitals/allergies â€” the shared module handles these via delegated click events
         setTimeout(function() { $btn.find('i').removeClass('fa-spin'); }, 1000);
     }
 }
@@ -9524,7 +9528,7 @@ function loadUserPreferences() {
     const clinicalVisible = localStorage.getItem('clinicalPanelVisible') === 'true';
     if (clinicalVisible) {
         $('#right-panel').addClass('active');
-        $('#toggle-clinical-btn').html('≡ƒôè Clinical Context ├ù');
+        $('#toggle-clinical-btn').html('â‰¡Æ’Ã´Ã¨ Clinical Context â”œÃ¹');
     }
 }
 
@@ -9532,450 +9536,65 @@ function loadUserPreferences() {
 // These were carried over from lab workbench and are not needed for nursing workbench
 
 // ============================================
-// LAB-SPECIFIC RESULT FUNCTIONS - DISABLED FOR NURSING WORKBENCH
-// The following functions are for lab result entry and viewing.
-// They use /lab-workbench/ routes and are not needed in nursing context.
-// These will cause 404 errors if called, but the triggers are disabled.
-// TODO: Remove entirely in future cleanup
+// INVESTIGATION RESULT ENTRY / VIEW FUNCTIONS
+// Uses shared InvestResultEntry module for enter/edit
 // ============================================
-/*
-function setResTempInModal(request) {
-    $('#investResModal').find('form').trigger('reset');
-    $('#invest_res_service_name').text(request.service ? request.service.name : '');
-    $('#invest_res_entry_id').val(request.id);
-    $('#invest_res_is_edit').val(0);
-    $('#deleted_attachments').val('[]');
-    $('#existing_attachments_container').hide();
-    $('#existing_attachments_list').html('');
 
-    // Check template version
-    const isV2 = request.service && request.service.template_version == 2;
-
-    if (isV2) {
-        let structure = request.service.template_structure;
-        if (typeof structure === 'string') {
-            try {
-                structure = JSON.parse(structure);
-            } catch (e) {
-                console.error('Error parsing V2 template structure:', e);
-                structure = null;
-            }
-        }
-
-        if (structure) {
-            // Parse result_data if available (for edit mode)
-            let existingData = null;
-            if (request.result_data) {
-                try {
-                    existingData = typeof request.result_data === 'string' ? JSON.parse(request.result_data) : request.result_data;
-                } catch (e) {
-                    console.error('Error parsing result_data:', e);
-                }
-            }
-            loadV2Template(structure, existingData);
-        } else {
-            console.error('Invalid V2 template structure');
-            // Fallback or error handling
-        }
-    } else {
-        // Use request.result if available (for edit), otherwise template body
-        let content = request.result || (request.service ? request.service.template_body : '');
-        loadV1Template(content);
-    }
-
-    // Load existing attachments if editing (logic to be added if edit mode is supported)
-    loadExistingAttachments(request.id);
+// Lab result entry (called from investigation history DataTable "Enter Result" button)
+function enterLabResult(requestId) {
+    InvestResultEntry.enterResult(
+        requestId,
+        `/lab-workbench/lab-service-requests/${requestId}`,
+        `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+        '{{ route("lab.saveResult") }}'
+    );
 }
 
-function loadV1Template(template) {
-    $('#invest_res_template_version').val('1');
-    $('#v1_template_container').show();
-    $('#v2_template_container').hide();
-
-    // Re-enable content editing if it was disabled upon save
-    if (template) {
-        template = template.replace(/contenteditable="false"/g, 'contenteditable="true"');
-        template = template.replace(/contenteditable='false'/g, "contenteditable='true'");
-    }
-
-    // Initialize CKEditor if not already initialized
-    if (!window.investResEditor) {
-        ClassicEditor
-            .create(document.querySelector('#invest_res_template_editor'), {
-                toolbar: {
-                    items: [
-                        'undo', 'redo',
-                        '|', 'heading',
-                        '|', 'bold', 'italic',
-                        '|', 'link', 'insertTable',
-                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                    ]
-                }
-            })
-            .then(editor => {
-                window.investResEditor = editor;
-                editor.setData(template || '');
-            })
-            .catch(err => {
-                console.error(err);
-            });
-    } else {
-        window.investResEditor.setData(template || '');
-    }
-}
-
-function loadV2Template(template, existingData) {
-    $('#invest_res_template_version').val('2');
-    $('#v1_template_container').hide();
-    $('#v2_template_container').show();
-
-    let formHtml = '<div class="v2-result-form">';
-    formHtml += '<h6 class="mb-3">' + (template.template_name || 'Result Entry') + '</h6>';
-
-    // Sort parameters by order
-    let parameters = template.parameters ? template.parameters.sort((a, b) => a.order - b.order) : [];
-
-    parameters.forEach(param => {
-        if (param.show_in_report === false) {
-            return; // Skip hidden parameters
-        }
-
-        formHtml += '<div class="form-group row">';
-        formHtml += '<label class="col-md-4 col-form-label">';
-        formHtml += param.name;
-        if (param.unit) {
-            formHtml += ' <small class="text-muted">(' + param.unit + ')</small>';
-        }
-        if (param.required) {
-            formHtml += ' <span class="text-danger">*</span>';
-        }
-        formHtml += '</label>';
-        formHtml += '<div class="col-md-8">';
-
-        let fieldId = 'param_' + param.id;
-        let value = '';
-        if (existingData && existingData[param.id]) {
-            // Handle both direct value and object with value property
-            if (typeof existingData[param.id] === 'object' && existingData[param.id] !== null && existingData[param.id].hasOwnProperty('value')) {
-                value = existingData[param.id].value;
-            } else {
-                value = existingData[param.id];
-            }
-        }
-        if (value === null || value === undefined) value = '';
-
-        // Generate form field based on type
-        if (param.type === 'string') {
-            formHtml += '<input type="text" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'integer') {
-            formHtml += '<input type="number" step="1" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range) {
-                formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
-                formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'float') {
-            formHtml += '<input type="number" step="0.01" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range) {
-                formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
-                formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'boolean') {
-            formHtml += '<select class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range && param.reference_range.reference_value !== undefined) {
-                formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += '>';
-            formHtml += '<option value="">Select</option>';
-            formHtml += '<option value="true" ' + (value === true || value === 'true' ? 'selected' : '') + '>Yes/Positive</option>';
-            formHtml += '<option value="false" ' + (value === false || value === 'false' ? 'selected' : '') + '>No/Negative</option>';
-            formHtml += '</select>';
-
-        } else if (param.type === 'enum') {
-            formHtml += '<select class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range && param.reference_range.reference_value) {
-                formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += '>';
-            formHtml += '<option value="">Select</option>';
-            if (param.options) {
-                param.options.forEach(opt => {
-                    let optVal = typeof opt === 'object' ? opt.value : opt;
-                    let optLabel = typeof opt === 'object' ? opt.label : opt;
-                    formHtml += '<option value="' + optVal + '" ' + (value === optVal ? 'selected' : '') + '>' + optLabel + '</option>';
-                });
-            }
-            formHtml += '</select>';
-
-        } else if (param.type === 'long_text') {
-            formHtml += '<textarea class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'rows="3" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">' + value + '</textarea>';
-        }
-
-        // Add reference range info if available
-        if (param.reference_range) {
-            formHtml += '<small class="form-text text-muted">';
-            if (param.type === 'integer' || param.type === 'float') {
-                if (param.reference_range.min !== null && param.reference_range.max !== null) {
-                    formHtml += 'Normal range: ' + param.reference_range.min + ' - ' + param.reference_range.max;
-                }
-            } else if (param.type === 'boolean' && param.reference_range.reference_value !== undefined) {
-                formHtml += 'Normal: ' + (param.reference_range.reference_value ? 'Yes/Positive' : 'No/Negative');
-            } else if (param.type === 'enum' && param.reference_range.reference_value) {
-                formHtml += 'Normal: ' + param.reference_range.reference_value;
-            } else if (param.reference_range.text) {
-                formHtml += param.reference_range.text;
-            }
-            formHtml += '</small>';
-        }
-
-        // Status indicator (will be updated on blur)
-        formHtml += '<div class="mt-1"><span class="param-status" id="status_' + param.id + '"></span></div>';
-
-        formHtml += '</div>';
-        formHtml += '</div>';
-    });
-
-    formHtml += '</div>';
-
-    $('#v2_form_fields').html(formHtml);
-
-    // Add event listeners for value changes to show status
-    $('.v2-param-field').on('blur change', function() {
-        updateParameterStatus($(this));
-    });
-
-    // Trigger status update for pre-filled values
-    $('.v2-param-field').each(function() {
-        if ($(this).val()) {
-            updateParameterStatus($(this));
-        }
-    });
-}
-
-function updateParameterStatus($field) {
-    let paramId = $field.data('param-id');
-    let paramType = $field.data('param-type');
-    let value = $field.val();
-    let $statusSpan = $('#status_' + paramId);
-
-    if (!value || value === '') {
-        $statusSpan.html('');
-        return;
-    }
-
-    let status = '';
-    let statusClass = '';
-
-    if (paramType === 'integer' || paramType === 'float') {
-        let numValue = parseFloat(value);
-        let min = $field.data('ref-min');
-        let max = $field.data('ref-max');
-
-        if (min !== undefined && max !== undefined && min !== '' && max !== '') {
-            if (numValue < min) {
-                status = 'Low';
-                statusClass = 'badge-warning';
-            } else if (numValue > max) {
-                status = 'High';
-                statusClass = 'badge-danger';
-            } else {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            }
-        }
-    } else if (paramType === 'boolean') {
-        let refValue = $field.data('ref-value');
-        if (refValue !== undefined) {
-            let boolValue = value === 'true';
-            let refBool = refValue === true || refValue === 'true';
-
-            if (boolValue === refBool) {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            } else {
-                status = 'Abnormal';
-                statusClass = 'badge-warning';
-            }
-        }
-    } else if (paramType === 'enum') {
-        let refValue = $field.data('ref-value');
-        if (refValue) {
-            if (value === refValue) {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            } else {
-                status = 'Abnormal';
-                statusClass = 'badge-warning';
-            }
-        }
-    }
-
-    if (status) {
-        $statusSpan.html('<span class="badge ' + statusClass + '">' + status + '</span>');
-    } else {
-        $statusSpan.html('');
-    }
-}
-
-function loadExistingAttachments(requestId) {
-    const container = $('#existing_attachments_list');
-    const wrapper = $('#existing_attachments_container');
-    container.empty();
-    wrapper.hide();
-
-    $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-        method: 'GET',
-        success: function(attachments) {
-            if (attachments && attachments.length > 0) {
-                wrapper.show();
-                attachments.forEach(att => {
-                    const attDiv = $('<div>').addClass('attachment-item mb-2 d-flex justify-content-between align-items-center');
-                    const link = $('<a>').attr('href', att.url).attr('target', '_blank').text(att.filename);
-                    const deleteBtn = $('<button>')
-                        .addClass('btn btn-sm btn-danger')
-                        .html('<i class="fa fa-trash"></i>')
-                        .on('click', function() {
-                            markAttachmentForDeletion(att.id);
-                            attDiv.remove();
-                            if (container.children().length === 0) {
-                                wrapper.hide();
-                            }
-                        });
-                    attDiv.append(link).append(deleteBtn);
-                    container.append(attDiv);
-                });
-            }
-        }
-    });
-}
-
-function markAttachmentForDeletion(attachmentId) {
-    const current = $('#deleted_attachments').val();
-    const deleted = current ? JSON.parse(current) : [];
-    deleted.push(attachmentId);
-    $('#deleted_attachments').val(JSON.stringify(deleted));
-}
-
-// Handle result form submission
-$('#investResForm').on('submit', function(e) {
-    e.preventDefault();
-
-    // Copy data from editors/inputs to hidden fields
-    copyResTemplateToField();
-
-    const formData = new FormData(this);
-
-    $.ajax({
-        url: $(this).attr('action'),
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            alert('Result saved successfully!');
-            $('#investResModal').modal('hide');
-            if (currentPatient) {
-                loadPatient(currentPatient);
-            }
-        },
-        error: function(xhr) {
-            alert('Error saving result: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
-});
-
-function copyResTemplateToField() {
-    let version = $('#invest_res_template_version').val();
-
-    if (version === '2') {
-        // Collect V2 structured data
-        let data = {};
-        $('.v2-param-field').each(function() {
-            let paramId = $(this).data('param-id');
-            let paramType = $(this).data('param-type');
-            let value = $(this).val();
-
-            // Convert values to appropriate types
-            if (paramType === 'integer') {
-                data[paramId] = value ? parseInt(value) : null;
-            } else if (paramType === 'float') {
-                data[paramId] = value ? parseFloat(value) : null;
-            } else if (paramType === 'boolean') {
-                data[paramId] = value === 'true' ? true : (value === 'false' ? false : null);
-            } else {
-                data[paramId] = value || null;
-            }
-        });
-
-        $('#invest_res_template_data').val(JSON.stringify(data));
-        // For V2, we still save a simple HTML representation to result column for backward compat
-        $('#invest_res_template_submited').val('<p>Structured result data (V2 template)</p>');
-    } else {
-        // V1: Copy from CKEditor
-        if (window.investResEditor) {
-            $('#invest_res_template_submited').val(window.investResEditor.getData());
-        }
-    }
-    return true;
-}
-
+// Lab result edit (called from investigation history DataTable "Edit" button)
 function editLabResult(obj) {
     const requestId = $(obj).data('id');
-
-    $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
-        method: 'GET',
-        success: function(request) {
-            // Populate the form with template structure AND existing result data
-            setResTempInModal(request);
-
-            // Set Edit Mode UI
-            $('#invest_res_is_edit').val(1);
-            $('#investResModalLabel').text('Edit Result: ' + (request.service ? request.service.name : ''));
-            $('#invest_res_submit_btn').html('<i class="mdi mdi-content-save"></i> Update Result');
-
-            $('#investResModal').modal('show');
-        },
-        error: function(xhr) {
-            alert('Error loading request: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
+    InvestResultEntry.editResult(
+        requestId,
+        `/lab-workbench/lab-service-requests/${requestId}`,
+        `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+        '{{ route("lab.saveResult") }}'
+    );
 }
+
+// Imaging result entry (called from imaging history DataTable "Enter Result" button)
+function enterImagingResult(requestId) {
+    InvestResultEntry.enterResult(
+        requestId,
+        `/imaging-workbench/imaging-service-requests/${requestId}`,
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+        '{{ route("imaging.saveResult") }}'
+    );
+}
+
+// Imaging result edit (called from imaging history DataTable "Edit" button)
+function editImagingResult(obj) {
+    const requestId = $(obj).data('id');
+    InvestResultEntry.editResult(
+        requestId,
+        `/imaging-workbench/imaging-service-requests/${requestId}`,
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+        '{{ route("imaging.saveResult") }}'
+    );
+}
+
+// Initialize shared result entry module
+InvestResultEntry.bindFormSubmit(function() {
+    // Refresh main history DataTables
+    if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+        $('#investigation_history_list').DataTable().ajax.reload(null, false);
+    }
+    if ($.fn.DataTable.isDataTable('#cr_lab_history_list')) {
+        $('#cr_lab_history_list').DataTable().ajax.reload(null, false);
+    }
+    if ($.fn.DataTable.isDataTable('#cr_imaging_history_list')) {
+        $('#cr_imaging_history_list').DataTable().ajax.reload(null, false);
+    }
+});
 
 function setResViewInModal(obj) {
     let res_obj = JSON.parse($(obj).attr('data-result-obj'));
@@ -9984,13 +9603,15 @@ function setResViewInModal(obj) {
     $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
 
     // Patient information
-    let patientName = res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname;
+    let patientName = (res_obj.patient && res_obj.patient.user)
+        ? res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname
+        : 'N/A';
     $('#res_patient_name').html(patientName);
-    $('#res_patient_id').html(res_obj.patient.file_no);
+    $('#res_patient_id').html(res_obj.patient ? res_obj.patient.file_no : 'N/A');
 
     // Calculate age from date of birth
     let age = 'N/A';
-    if (res_obj.patient.date_of_birth) {
+    if (res_obj.patient && res_obj.patient.date_of_birth) {
         let dob = new Date(res_obj.patient.date_of_birth);
         let today = new Date();
         let ageYears = today.getFullYear() - dob.getFullYear();
@@ -10003,14 +9624,16 @@ function setResViewInModal(obj) {
     $('#res_patient_age').html(age);
 
     // Gender
-    let gender = res_obj.patient.gender ? res_obj.patient.gender.toUpperCase() : 'N/A';
+    let gender = (res_obj.patient && res_obj.patient.gender) ? res_obj.patient.gender.toUpperCase() : 'N/A';
     $('#res_patient_gender').html(gender);
 
     // Test information
     $('#res_test_id').html(res_obj.id);
     $('#res_sample_date').html(res_obj.sample_date || 'N/A');
     $('#res_result_date').html(res_obj.result_date || 'N/A');
-    $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
+    $('#res_result_by').html(res_obj.results_person
+        ? res_obj.results_person.firstname + ' ' + res_obj.results_person.surname
+        : 'N/A');
 
     // Signature date (use result date)
     $('#res_signature_date').html(res_obj.result_date || '');
@@ -10279,7 +9902,7 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
         const temp = parseFloat(value);
         const idealTemp = 37.0;
         const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}┬░C above ideal` : `-${diff.toFixed(1)}┬░C below ideal`;
+        deviation = temp > idealTemp ? `+${diff.toFixed(1)}â”¬â–‘C above ideal` : `-${diff.toFixed(1)}â”¬â–‘C below ideal`;
         status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'pulse' && value !== 'N/A') {
         const pulse = parseInt(value);
@@ -10372,7 +9995,7 @@ function displayAllergyAlert(alerts) {
 
     return `
         <div class="allergy-alert">
-            <div class="allergy-alert-icon">ΓÜá∩╕Å</div>
+            <div class="allergy-alert-icon">Î“ÃœÃ¡âˆ©â••Ã…</div>
             <div>
                 <strong>ALLERGY WARNING!</strong><br>
                 ${allergyList}
@@ -10637,7 +10260,7 @@ function renderQueueCard(data) {
         <div class="queue-card-patient-meta">
             <div class="queue-card-patient-meta-item">
                 <i class="mdi mdi-account"></i>
-                <span>${data.age} ΓÇó ${data.gender}</span>
+                <span>${data.age} Î“Ã‡Ã³ ${data.gender}</span>
             </div>
             <div class="queue-card-patient-meta-item">
                 <i class="mdi mdi-card-account-details"></i>
@@ -11270,7 +10893,7 @@ const NursingReports = (function() {
                     { data: 'datetime', title: 'Date/Time' },
                     { data: 'patient_name', title: 'Patient' },
                     { data: 'file_no', title: 'File No' },
-                    { data: 'temp', title: 'Temp (┬░C)' },
+                    { data: 'temp', title: 'Temp (â”¬â–‘C)' },
                     { data: 'blood_pressure', title: 'BP' },
                     { data: 'heart_rate', title: 'Pulse' },
                     { data: 'spo2', title: 'SpO2' },
@@ -11910,7 +11533,7 @@ function renderTopDoctors(doctors) {
             <tr>
                 <td><i class="mdi mdi-doctor mr-1"></i> ${docName}</td>
                 <td class="text-center"><span class="badge badge-pill badge-info">${doc.count}</span></td>
-                <td class="text-right">Γéª${parseFloat(doc.revenue).toLocaleString()}</td>
+                <td class="text-right">Î“Ã©Âª${parseFloat(doc.revenue).toLocaleString()}</td>
             </tr>
         `;
     });
@@ -12068,7 +11691,7 @@ function populateOverviewTab(data) {
             <table class="table table-sm mb-0">
                 <tr><th width="50%">BP:</th><td>${data.last_vitals.bp || 'N/A'}</td></tr>
                 <tr><th>Heart Rate:</th><td>${data.last_vitals.heart_rate || 'N/A'} bpm</td></tr>
-                <tr><th>Temp:</th><td>${data.last_vitals.temp || 'N/A'} ┬░C</td></tr>
+                <tr><th>Temp:</th><td>${data.last_vitals.temp || 'N/A'} â”¬â–‘C</td></tr>
                 <tr><th>Resp Rate:</th><td>${data.last_vitals.resp_rate || 'N/A'} /min</td></tr>
                 <tr><th>Recorded:</th><td><small class="text-muted">${data.last_vitals.time || 'N/A'}</small></td></tr>
             </table>
@@ -12331,7 +11954,7 @@ function setInjectionDrugSource(source) {
     $('.source-section').hide();
     $('#inj-source-' + (source === 'ward_stock' ? 'ward' : source === 'patient_own' ? 'patient' : 'pharmacy')).show();
 
-    // §7.1: Only ward_stock needs the hospital product search (Step 2)
+    // Â§7.1: Only ward_stock needs the hospital product search (Step 2)
     // Pharmacy uses prescription dropdown, Patient's Own uses free-text fields
     if (source === 'ward_stock') {
         $('.inj-non-pharmacy').show();
@@ -12426,7 +12049,7 @@ function addInjectionRxToTable() {
             </td>
             <td class="batch-cell text-muted">N/A</td>
             <td class="stock-cell text-muted">N/A</td>
-            <td>₦${price.toFixed(2)}</td>
+            <td>â‚¦${price.toFixed(2)}</td>
             <td>${coverageInfo}</td>
             <td>
                 <input type="text" class="form-control form-control-sm" name="injection_dose[]" placeholder="e.g., 5mg" required>
@@ -12493,7 +12116,7 @@ $('#injection-drug-search').on('input', function() {
                     const mode = item.coverage_mode || 'cash';
 
                     const coverageBadge = mode && mode !== 'cash'
-                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Γéª${payable}</span> <span class='text-success ms-1'>Claim: Γéª${claims}</span>`
+                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Î“Ã©Âª${payable}</span> <span class='text-success ms-1'>Claim: Î“Ã©Âª${claims}</span>`
                         : '';
 
                     const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
@@ -12516,7 +12139,7 @@ $('#injection-drug-search').on('input', function() {
                                    </div>
                                    <div class="text-end">
                                        <div class="${qtyClass}"><strong>${qty}</strong> avail.</div>
-                                       <div>Γéª${price}</div>
+                                       <div>Î“Ã©Âª${price}</div>
                                    </div>
                                </div>
                                ${coverageBadge ? `<div class="small mt-1">${coverageBadge}</div>` : ''}
@@ -12574,7 +12197,7 @@ function addInjectionDrug(element) {
     }
 
     const coverageInfo = mode && mode !== 'cash'
-        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">₦${payable}</small>`
+        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">â‚¦${payable}</small>`
         : '<span class="badge bg-secondary">Cash</span>';
 
     const row = `
@@ -12591,7 +12214,7 @@ function addInjectionDrug(element) {
             </td>
             <td class="batch-cell">${drugSource === 'ward_stock' ? '<div class="batch-loading"><i class="mdi mdi-loading mdi-spin"></i> Loading...</div><select class="form-control form-control-sm batch-select-dropdown d-none" name="injection_batch_id[]"><option value="">Auto (FIFO)</option></select><input type="hidden" name="injection_selected_batch_id[]" value="">' : '<span class="text-muted">N/A</span>'}</td>
             <td class="stock-cell">${drugSource === 'ward_stock' ? '<span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i></span>' : '<span class="text-muted">N/A</span>'}</td>
-            <td>₦${payable.toFixed(2)}</td>
+            <td>â‚¦${payable.toFixed(2)}</td>
             <td>${coverageInfo}</td>
             <td>
                 <input type="text" class="form-control form-control-sm"
@@ -12623,7 +12246,7 @@ function removeInjectionRow(btn) {
     updateInjectionTotals();
 }
 
-// §7.2: Insert a virtual row for patient's own drug (no hospital product_id)
+// Â§7.2: Insert a virtual row for patient's own drug (no hospital product_id)
 function addPatientOwnInjectionRow() {
     const drugName  = $('#inj-external-name').val()?.trim();
     const qty       = $('#inj-external-qty').val();
@@ -12670,7 +12293,7 @@ function addPatientOwnInjectionRow() {
             </td>
             <td><span class="text-muted">N/A</span></td>
             <td><span class="text-muted">N/A</span></td>
-            <td><span class="text-muted">—</span></td>
+            <td><span class="text-muted">â€”</span></td>
             <td><span class="badge bg-secondary">No Billing</span></td>
             <td>
                 <input type="text" class="form-control form-control-sm"
@@ -12705,7 +12328,7 @@ function updateInjectionTotals() {
         const qty = parseInt($(this).find('.injection-qty').val()) || 1;
         total += price * qty;
     });
-    $('#injection-total-price').html(`<strong>₦${total.toFixed(2)}</strong>`);
+    $('#injection-total-price').html(`<strong>â‚¦${total.toFixed(2)}</strong>`);
 }
 
 // ===========================================
@@ -12740,7 +12363,7 @@ function fetchAndPopulateBatchDropdown(productId, storeId, rowSelector) {
                     const expiryClass = batch.is_expired ? 'batch-option-expired' :
                                        batch.is_expiring_soon ? 'batch-option-expiring' : '';
                     const expiryText = batch.expiry_formatted ? ` | Exp: ${batch.expiry_formatted}` : '';
-                    const fifoLabel = isFirst ? ' ★ FIFO' : '';
+                    const fifoLabel = isFirst ? ' â˜… FIFO' : '';
 
                     options += `<option value="${batch.id}" class="${expiryClass}"
                                 data-expiry="${batch.expiry_date || ''}"
@@ -12800,7 +12423,7 @@ function fetchProductBatchesForSelect(productId, storeId, selectId, callback) {
                     const expiryClass = batch.is_expired ? 'batch-option-expired' :
                                        batch.is_expiring_soon ? 'batch-option-expiring' : '';
                     const expiryText = batch.expiry_formatted ? ` | Exp: ${batch.expiry_formatted}` : '';
-                    const fifoLabel = isFirst ? ' ★' : '';
+                    const fifoLabel = isFirst ? ' â˜…' : '';
 
                     options += `<option value="${batch.id}" class="${expiryClass}"
                                 data-expiry="${batch.expiry_date || ''}"
@@ -13113,7 +12736,7 @@ function showStockValidationError(items, tableSelector) {
     return errorHtml;
 }
 
-// Injection Form Submit — §7.3 rewrite: 3-path source model
+// Injection Form Submit â€” Â§7.3 rewrite: 3-path source model
 $('#injection-form').on('submit', function(e) {
     e.preventDefault();
 
@@ -13138,7 +12761,7 @@ $('#injection-form').on('submit', function(e) {
         const productRequestId = $(this).data('product-request-id') || null;
 
         if (rowSource === 'patient_own') {
-            // §7.2: Virtual row — read external data from data attributes
+            // Â§7.2: Virtual row â€” read external data from data attributes
             products.push({
                 product_id: null, // no hospital product for patient's own
                 product_name: $(this).find('td:eq(1) strong').text(),
@@ -13153,7 +12776,7 @@ $('#injection-form').on('submit', function(e) {
                 external_source_note: $(this).data('ext-note') || null,
             });
         } else {
-            // pharmacy_dispensed or ward_stock — real hospital product
+            // pharmacy_dispensed or ward_stock â€” real hospital product
             products.push({
                 product_id: $(this).data('product-id'),
                 product_name: $(this).find('td:eq(1) strong').text(),
@@ -13400,7 +13023,7 @@ $('#vaccine-drug-search').on('input', function() {
                     const mode = item.coverage_mode || 'cash';
 
                     const coverageBadge = mode && mode !== 'cash'
-                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Γéª${payable}</span> <span class='text-success ms-1'>Claim: Γéª${claims}</span>`
+                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Î“Ã©Âª${payable}</span> <span class='text-success ms-1'>Claim: Î“Ã©Âª${claims}</span>`
                         : '';
 
                     const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
@@ -13423,7 +13046,7 @@ $('#vaccine-drug-search').on('input', function() {
                                    </div>
                                    <div class="text-end">
                                        <div class="${qtyClass}"><strong>${qty}</strong> avail.</div>
-                                       <div>Γéª${price}</div>
+                                       <div>Î“Ã©Âª${price}</div>
                                    </div>
                                </div>
                                ${coverageBadge ? `<div class="small mt-1">${coverageBadge}</div>` : ''}
@@ -13461,7 +13084,7 @@ function addVaccineDrug(element) {
     }
 
     const coverageInfo = mode && mode !== 'cash'
-        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">Pay: Γéª${payable}</small><br><small class="text-success">Claim: Γéª${claims}</small>`
+        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">Pay: Î“Ã©Âª${payable}</small><br><small class="text-success">Claim: Î“Ã©Âª${claims}</small>`
         : '<span class="badge bg-secondary">Cash</span>';
 
     const row = `
@@ -13477,7 +13100,7 @@ function addVaccineDrug(element) {
                        name="vaccine_qty[]" value="1" min="1" max="${qty}" style="width: 70px;">
                 <small class="text-muted">${qty} avail.</small>
             </td>
-            <td>Γéª${payable.toFixed(2)}</td>
+            <td>Î“Ã©Âª${payable.toFixed(2)}</td>
             <td>${coverageInfo}</td>
             <td>
                 <input type="text" class="form-control form-control-sm"
@@ -13511,7 +13134,7 @@ function updateVaccineTotals() {
         const qty = parseInt($(this).find('.vaccine-qty').val()) || 1;
         total += price * qty;
     });
-    $('#vaccine-total-price').html(`<strong>Γéª${total.toFixed(2)}</strong>`);
+    $('#vaccine-total-price').html(`<strong>Î“Ã©Âª${total.toFixed(2)}</strong>`);
 }
 
 // Recalculate on qty change
@@ -14088,12 +13711,12 @@ function selectModalProduct(element) {
     `);
 
     // Show price with HMO info if applicable
-    let priceHtml = `Γéª${parseFloat(product.price).toLocaleString()}`;
+    let priceHtml = `Î“Ã©Âª${parseFloat(product.price).toLocaleString()}`;
     if (product.mode && product.mode !== 'cash') {
         priceHtml = `
             <span class="badge badge-info mr-1">${product.mode.toUpperCase()}</span>
-            <span class="text-danger">Pay: Γéª${parseFloat(product.payable).toLocaleString()}</span>
-            <span class="text-success ml-1">Claim: Γéª${parseFloat(product.claims).toLocaleString()}</span>
+            <span class="text-danger">Pay: Î“Ã©Âª${parseFloat(product.payable).toLocaleString()}</span>
+            <span class="text-success ml-1">Claim: Î“Ã©Âª${parseFloat(product.claims).toLocaleString()}</span>
         `;
     }
     $('#modal-selected-product-price').html(priceHtml);
@@ -14173,7 +13796,7 @@ $('#modal-vaccine-search').on('input', function() {
                     const mode = item.coverage_mode || 'cash';
 
                     const coverageBadge = mode && mode !== 'cash'
-                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Γéª${payable}</span> <span class='text-success ms-1'>Claim: Γéª${claims}</span>`
+                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Î“Ã©Âª${payable}</span> <span class='text-success ms-1'>Claim: Î“Ã©Âª${claims}</span>`
                         : '';
 
                     const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
@@ -14196,7 +13819,7 @@ $('#modal-vaccine-search').on('input', function() {
                                    </div>
                                    <div class="text-end">
                                        <div class="${qtyClass}"><strong>${qty}</strong> avail.</div>
-                                       <div>Γéª${price}</div>
+                                       <div>Î“Ã©Âª${price}</div>
                                    </div>
                                </div>
                                ${coverageBadge ? `<div class="small mt-1">${coverageBadge}</div>` : ''}
@@ -14564,7 +14187,7 @@ $('#service-search').on('input', function() {
             results.forEach(service => {
                 html += `<li class="list-group-item list-group-item-action" onclick="selectService(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${service.price || 0}')">
                     <strong>${service.name}</strong><br>
-                    <small class="text-muted">Γéª${service.price || 'N/A'}</small>
+                    <small class="text-muted">Î“Ã©Âª${service.price || 'N/A'}</small>
                 </li>`;
             });
             $('#service-search-results').html(html).show();
@@ -14575,7 +14198,7 @@ $('#service-search').on('input', function() {
 function selectService(id, name, price) {
     $('#service-id').val(id);
     $('#service-search').val(name);
-    $('#service-price').val('Γéª' + price);
+    $('#service-price').val('Î“Ã©Âª' + price);
     $('#service-search-results').hide();
 }
 
@@ -14600,7 +14223,7 @@ $('#consumable-search').on('input', function() {
                     <strong>${product.name}</strong>
                     <span class="badge bg-secondary float-right">[${product.code || 'N/A'}]</span>
                     <br>
-                    <small class="text-muted">Γéª${product.price || 'N/A'}/unit</small>
+                    <small class="text-muted">Î“Ã©Âª${product.price || 'N/A'}/unit</small>
                 </li>`;
             });
             $('#consumable-search-results').html(html).show();
@@ -14661,7 +14284,7 @@ $('#consumable-quantity').on('input', function() {
 function updateConsumablePrice(unitPrice) {
     const quantity = $('#consumable-quantity').val() || 1;
     const total = unitPrice * quantity;
-    $('#consumable-price').val('Γéª' + total.toFixed(2));
+    $('#consumable-price').val('Î“Ã©Âª' + total.toFixed(2));
     $('#consumable-quantity').data('unit-price', unitPrice);
 }
 
@@ -14808,9 +14431,9 @@ function loadPendingBills(patientId) {
             {
                 data: 'payable_amount',
                 render: function(data, type, row) {
-                    let html = `Γéª${parseFloat(data || 0).toFixed(2)}`;
+                    let html = `Î“Ã©Âª${parseFloat(data || 0).toFixed(2)}`;
                     if (row.claims_amount > 0) {
-                        html += `<br><small class="text-success">Claims: Γéª${parseFloat(row.claims_amount).toFixed(2)}</small>`;
+                        html += `<br><small class="text-success">Claims: Î“Ã©Âª${parseFloat(row.claims_amount).toFixed(2)}</small>`;
                     }
                     return html;
                 }
@@ -14994,13 +14617,13 @@ function showBillingRequestDetails(type, id) {
         confirmButtonText: 'Close',
         width: '500px',
         didOpen: () => {
-            // Fetch details — use the same data from the table row if available
+            // Fetch details â€” use the same data from the table row if available
             const tableData = billingHistoryTable ? billingHistoryTable.rows().data().toArray() : [];
             const row = tableData.find(r => r.id == id && r.type === type);
 
             if (row) {
                 const hmoCoverage = row.hmo_covers > 0
-                    ? `<tr><td class="text-muted">HMO Covers</td><td class="text-success font-weight-bold">₦${parseFloat(row.hmo_covers).toFixed(2)}</td></tr>`
+                    ? `<tr><td class="text-muted">HMO Covers</td><td class="text-success font-weight-bold">â‚¦${parseFloat(row.hmo_covers).toFixed(2)}</td></tr>`
                     : '';
                 const coverageMode = row.coverage_mode
                     ? `<tr><td class="text-muted">Coverage</td><td><span class="badge badge-info">${row.coverage_mode}</span></td></tr>`
@@ -15015,9 +14638,9 @@ function showBillingRequestDetails(type, id) {
                             </div>
                             <table class="table table-sm table-borderless mb-0">
                                 <tr><td class="text-muted" style="width:40%;">Service/Item</td><td class="font-weight-bold">${row.name}</td></tr>
-                                <tr><td class="text-muted">Price</td><td>₦${parseFloat(row.price).toFixed(2)}</td></tr>
+                                <tr><td class="text-muted">Price</td><td>â‚¦${parseFloat(row.price).toFixed(2)}</td></tr>
                                 ${hmoCoverage}
-                                <tr><td class="text-muted">Payable</td><td class="text-primary font-weight-bold">₦${parseFloat(row.payable).toFixed(2)}</td></tr>
+                                <tr><td class="text-muted">Payable</td><td class="text-primary font-weight-bold">â‚¦${parseFloat(row.payable).toFixed(2)}</td></tr>
                                 ${coverageMode}
                                 <tr><td class="text-muted">Billing Status</td><td>${row.billing_badge}</td></tr>
                                 <tr><td class="text-muted">Delivery Status</td><td>${row.delivery_badge}</td></tr>
@@ -15275,7 +14898,7 @@ let medicationHistory = {};
 let patientPrescriptions = [];
 let patientPrescriptionsLoaded = false;
 
-// §4.6: Drug source badge helper
+// Â§4.6: Drug source badge helper
 function getDrugSourceBadge(drugSource, productRequestId) {
     switch (drugSource) {
         case 'patient_own':
@@ -15303,7 +14926,7 @@ function setCurrentDateTime(inputId) {
     document.getElementById(inputId).value = local.toISOString().slice(0, 16);
 }
 
-// §6.1: Select2 template for dropdown results (rich format)
+// Â§6.1: Select2 template for dropdown results (rich format)
 function formatRxOption(option) {
     if (!option.id) return option.text;
 
@@ -15369,14 +14992,14 @@ function formatRxOption(option) {
                 '<small class="text-muted">Scheduled: ' + (rx.times_scheduled || 0) + '</small>' +
                 (adminText ? '<small class="text-info">' + adminText + '</small>' : '') +
                 (doctorText ? '<small class="text-muted">' + doctorText + '</small>' : '') +
-                (rx.remaining_doses === 0 && rx.is_dispensed ? '<small class="text-success fw-bold">✓ Fully administered</small>' : '') +
+                (rx.remaining_doses === 0 && rx.is_dispensed ? '<small class="text-success fw-bold">âœ“ Fully administered</small>' : '') +
             '</div>' +
-            (isDisabled ? '<small class="text-danger ms-4"><i class="mdi mdi-lock"></i> ' + rx.status_label + ' — cannot chart</small>' : '') +
+            (isDisabled ? '<small class="text-danger ms-4"><i class="mdi mdi-lock"></i> ' + rx.status_label + ' â€” cannot chart</small>' : '') +
         '</div>'
     );
 }
 
-// §6.1: Select2 template for selected item (compact)
+// Â§6.1: Select2 template for selected item (compact)
 function formatRxSelection(option) {
     if (!option.id) return option.text;
 
@@ -15518,8 +15141,8 @@ function renderOverviewCalendar(data, startStr, endStr) {
             var time = new Date(s.scheduled_time);
             var timeStr = time.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true});
             var statusClass = s.is_administered ? 'status-given' : (isPast ? 'status-missed' : 'status-pending');
-            var sourceIcon = s.drug_source === 'ward_stock' ? '🏥' : (s.drug_source === 'patient_own' ? '👤' : '💊');
-            var statusIcon = s.is_administered ? '✅' : (isPast ? '❌' : '🕐');
+            var sourceIcon = s.drug_source === 'ward_stock' ? 'ðŸ¥' : (s.drug_source === 'patient_own' ? 'ðŸ‘¤' : 'ðŸ’Š');
+            var statusIcon = s.is_administered ? 'âœ…' : (isPast ? 'âŒ' : 'ðŸ•');
 
             gridHtml += '<div class="med-item ' + statusClass + '" title="' + s.drug_name + ' - ' + s.dose + ' ' + s.route + '">';
             gridHtml += '<span class="med-time">' + timeStr + '</span> ';
@@ -15533,12 +15156,12 @@ function renderOverviewCalendar(data, startStr, endStr) {
         dayAdmins.forEach(function(a) {
             var time = new Date(a.administered_at);
             var timeStr = time.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true});
-            var sourceIcon = a.drug_source === 'ward_stock' ? '🏥' : (a.drug_source === 'patient_own' ? '👤' : '💊');
+            var sourceIcon = a.drug_source === 'ward_stock' ? 'ðŸ¥' : (a.drug_source === 'patient_own' ? 'ðŸ‘¤' : 'ðŸ’Š');
 
             gridHtml += '<div class="med-item status-given" title="' + a.drug_name + ' - ' + a.dose + ' (unscheduled)">';
             gridHtml += '<span class="med-time">' + timeStr + '</span> ';
             gridHtml += '<span class="med-name">' + sourceIcon + ' ' + truncate(a.drug_name, 15) + '</span> ';
-            gridHtml += '<span class="med-status">✅</span>';
+            gridHtml += '<span class="med-status">âœ…</span>';
             gridHtml += '</div>';
         });
 
@@ -15555,7 +15178,7 @@ function renderOverviewCalendar(data, startStr, endStr) {
 
 function truncate(str, len) {
     if (!str) return '';
-    return str.length > len ? str.substring(0, len) + '…' : str;
+    return str.length > len ? str.substring(0, len) + 'â€¦' : str;
 }
 
 // Overview nav buttons
@@ -15574,7 +15197,7 @@ $(document).on('click', '#overview-next-btn', function() {
 });
 
 $(document).on('click', '#overview-today-btn', function() {
-    loadMedOverview(null); // null → defaults to current week
+    loadMedOverview(null); // null â†’ defaults to current week
 });
 
 // =============================================
@@ -15943,11 +15566,11 @@ function loadMedicationsList() {
         return;
     }
 
-    console.log('Loading medications list (enriched §6.1)...');
+    console.log('Loading medications list (enriched Â§6.1)...');
     $('#medication-loading').show();
     $('#medication-calendar').hide();
 
-    // §6.1: Use prescribed-drugs API for enriched status data
+    // Â§6.1: Use prescribed-drugs API for enriched status data
     var prescribedUrl = medicationChartPrescribedRoute.replace(':patient', PATIENT_ID);
 
     $.ajax({
@@ -15963,7 +15586,7 @@ function loadMedicationsList() {
             window._rxLookup = {};
             prescriptions.forEach(function(rx) { window._rxLookup[rx.posr_id || rx.id] = rx; });
 
-            // §6.1: Populate dropdown with rich, status-aware options
+            // Â§6.1: Populate dropdown with rich, status-aware options
             var select = $('#drug-select');
             select.empty();
             select.append('<option value="">-- Select a medication --</option>');
@@ -15977,24 +15600,24 @@ function loadMedicationsList() {
                     var posrId = rx.posr_id || '';
                     var canChart = rx.can_chart && posrId;
 
-                    // §6.1: Status icon + color
+                    // Â§6.1: Status icon + color
                     var statusIcon, statusBadge;
                     switch (rx.status) {
                         case 3:
-                            statusIcon = '🟢';
+                            statusIcon = 'ðŸŸ¢';
                             statusBadge = '<span class="badge bg-success">Dispensed</span>';
                             break;
                         case 2:
                             if (rx.is_paid) {
-                                statusIcon = '🟡';
+                                statusIcon = 'ðŸŸ¡';
                                 statusBadge = '<span class="badge bg-warning text-dark">Awaiting Pharmacy</span>';
                             } else {
-                                statusIcon = '🟠';
+                                statusIcon = 'ðŸŸ ';
                                 statusBadge = '<span class="badge bg-secondary">' + rx.status_label + '</span>';
                             }
                             break;
                         default:
-                            statusIcon = '🔴';
+                            statusIcon = 'ðŸ”´';
                             statusBadge = '<span class="badge bg-danger">Awaiting Billing</span>';
                     }
 
@@ -16007,7 +15630,7 @@ function loadMedicationsList() {
                     var doctorText = rx.doctor_name ? 'Dr. ' + rx.doctor_name : '';
 
                     // Build display text
-                    var plainText = statusIcon + ' ' + rx.product_name + ' (' + rx.product_code + ') — ' + rx.status_label;
+                    var plainText = statusIcon + ' ' + rx.product_name + ' (' + rx.product_code + ') â€” ' + rx.status_label;
 
                     var opt = new Option(plainText, posrId || ('rx_' + rx.id), false, false);
                     opt.disabled = !canChart;
@@ -16033,22 +15656,22 @@ function loadMedicationsList() {
                     }
                 });
 
-                // §6.1: Merge direct administration entries (ward stock + patient's own)
+                // Â§6.1: Merge direct administration entries (ward stock + patient's own)
                 var directEntries = data.direct_entries || [];
                 if (directEntries.length > 0) {
                     // Add separator
-                    var separator = new Option('── Direct Administrations ──', '', false, false);
+                    var separator = new Option('â”€â”€ Direct Administrations â”€â”€', '', false, false);
                     separator.disabled = true;
                     $(separator).data('is-separator', true);
                     select.append(separator);
 
                     directEntries.forEach(function(entry) {
                         var isPatientOwn = entry.drug_source === 'patient_own';
-                        var icon = isPatientOwn ? '🟣' : '🔵';
+                        var icon = isPatientOwn ? 'ðŸŸ£' : 'ðŸ”µ';
                         var label = isPatientOwn ? "Patient's Own" : 'Ward Stock';
                         var drugName = entry.product_name || entry.external_drug_name || 'Unknown';
                         var codeStr = entry.product_code ? ' (' + entry.product_code + ')' : '';
-                        var plainText = icon + ' ' + drugName + codeStr + ' — ' + label;
+                        var plainText = icon + ' ' + drugName + codeStr + ' â€” ' + label;
 
                         var optVal = 'direct_' + entry.drug_source + '_' + (entry.product_id || entry.external_drug_name || entry.id);
                         var opt = new Option(plainText, optVal, false, false);
@@ -16067,7 +15690,7 @@ function loadMedicationsList() {
                     console.log('Added ' + directEntries.length + ' direct administration entries to dropdown');
                 }
 
-                // §6.1: Initialize Select2 with rich formatting
+                // Â§6.1: Initialize Select2 with rich formatting
                 if (select.hasClass('select2-hidden-accessible')) {
                     select.select2('destroy');
                 }
@@ -16205,7 +15828,7 @@ function loadMedicationCalendarWithDateRange(medicationId, startDate, endDate) {
     var url;
 
     if (isDirect) {
-        // Direct entry — use directCalendar endpoint with query params
+        // Direct entry â€” use directCalendar endpoint with query params
         var drugSource = $selectedOpt.data('drug-source');
         var productId = $selectedOpt.data('product-id');
         var externalDrugName = $selectedOpt.data('external-drug-name');
@@ -16233,7 +15856,7 @@ function loadMedicationCalendarWithDateRange(medicationId, startDate, endDate) {
             }
         });
     } else {
-        // Standard POSR — use calendar route
+        // Standard POSR â€” use calendar route
         url = medicationChartCalendarRoute
             .replace(':patient', PATIENT_ID)
             .replace(':medication', medicationId)
@@ -16586,7 +16209,7 @@ function renderCalendarView(medication, schedules, administrations, period) {
                 gridHtml += `</div>`;
             });
 
-            // Render unscheduled (direct) administrations — these come from ward stock / patient's own buttons
+            // Render unscheduled (direct) administrations â€” these come from ward stock / patient's own buttons
             dayUnscheduledAdmins.forEach(admin => {
                 const adminTime = new Date(admin.administered_at);
                 const formattedTime = formatTime(adminTime);
@@ -16808,7 +16431,7 @@ $(document).on('submit', '#resumeForm', function(e) {
 // Store stock data cache for medication administration
 var administerStockData = null;
 
-// Administer modal population — §6.5: enriched with _rxLookup data
+// Administer modal population â€” Â§6.5: enriched with _rxLookup data
 $(document).on('click', '[data-bs-target="#administerModal"]', function() {
     const scheduleId = $(this).data('schedule-id');
     const schedule = currentSchedules.find(s => s.id == scheduleId);
@@ -16867,7 +16490,7 @@ $(document).on('click', '[data-bs-target="#administerModal"]', function() {
                 $('#administer-patient-own-section').removeClass('d-none');
             }
         } else {
-            // §6.5: Pharmacy dispensed — use enriched _rxLookup
+            // Â§6.5: Pharmacy dispensed â€” use enriched _rxLookup
             var posrId = selectedMedication;
             var rx = window._rxLookup ? window._rxLookup[posrId] : null;
 
@@ -17002,14 +16625,14 @@ $(document).on('change', '#administer_store_id', function() {
     }
 });
 
-// Administer form submit — routes to correct endpoint based on drug source
+// Administer form submit â€” routes to correct endpoint based on drug source
 $(document).on('submit', '#administerForm', function(e) {
     e.preventDefault();
 
     const drugSource = $('#administer_drug_source').val() || 'pharmacy_dispensed';
     const isDirect = (drugSource === 'ward_stock' || drugSource === 'patient_own');
 
-    // ── Direct entry (ward_stock / patient_own): submit to administerDirect ──
+    // â”€â”€ Direct entry (ward_stock / patient_own): submit to administerDirect â”€â”€
     if (isDirect) {
         // Validate required fields per source
         if (drugSource === 'ward_stock') {
@@ -17040,7 +16663,7 @@ $(document).on('submit', '#administerForm', function(e) {
 
         var directUrl = medicationChartAdministerDirectRoute.replace(':patient', PATIENT_ID);
 
-        // Build form data — collect what administerDirect expects
+        // Build form data â€” collect what administerDirect expects
         var formData = {
             _token: CSRF_TOKEN,
             drug_source: drugSource,
@@ -17088,7 +16711,7 @@ $(document).on('submit', '#administerForm', function(e) {
         return; // Don't fall through to pharmacy_dispensed flow
     }
 
-    // ── Pharmacy dispensed: standard flow (no store needed — stock from dispensed POSR) ──
+    // â”€â”€ Pharmacy dispensed: standard flow (no store needed â€” stock from dispensed POSR) â”€â”€
     var $btn = $('#administerSubmitBtn');
     var originalBtnHtml = $btn.html();
     $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Administering...');
@@ -17361,10 +16984,10 @@ $(document).on('change', 'input[name="repeat_type"]', function() {
 });
 
 // =============================================
-// §6.2–6.4: WARD STOCK & PATIENT'S OWN — DIRECT ADMINISTRATION
+// Â§6.2â€“6.4: WARD STOCK & PATIENT'S OWN â€” DIRECT ADMINISTRATION
 // =============================================
 
-// ── Button click handlers ───────────────────────────────────
+// â”€â”€ Button click handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $('#btn-add-patient-own').on('click', function() {
     // Reset form
     $('#patientOwnForm')[0].reset();
@@ -17389,7 +17012,7 @@ $('#btn-add-ward-stock').on('click', function() {
     modal.show();
 });
 
-// ── Patient's Own Modal Submit ──────────────────────────────
+// â”€â”€ Patient's Own Modal Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $('#patientOwnForm').on('submit', function(e) {
     e.preventDefault();
 
@@ -17446,7 +17069,7 @@ $('#patientOwnForm').on('submit', function(e) {
     });
 });
 
-// ── Ward Stock: Load stores ─────────────────────────────────
+// â”€â”€ Ward Stock: Load stores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function loadWardStores() {
     $.ajax({
         url: "{{ url('pharmacy-workbench/stores') }}",
@@ -17464,7 +17087,7 @@ function loadWardStores() {
     });
 }
 
-// ── Ward Stock: Product search ──────────────────────────────
+// â”€â”€ Ward Stock: Product search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var wsSearchTimeout;
 $('#ws_product_search').on('input', function() {
     var query = $(this).val();
@@ -17505,7 +17128,7 @@ $('#ws_product_search').on('input', function() {
                         'data-price="' + price + '">' +
                         '<div class="d-flex justify-content-between">' +
                         '<div><strong>' + name + '</strong> <small class="text-muted">[' + code + ']</small></div>' +
-                        '<div class="text-end"><span class="' + qtyClass + '"><strong>' + qty + '</strong> avail.</span><br><small>₦' + Number(price).toLocaleString() + '</small></div>' +
+                        '<div class="text-end"><span class="' + qtyClass + '"><strong>' + qty + '</strong> avail.</span><br><small>â‚¦' + Number(price).toLocaleString() + '</small></div>' +
                         '</div></li>';
                     $results.append(li);
                 });
@@ -17518,7 +17141,7 @@ $('#ws_product_search').on('input', function() {
     }, 300);
 });
 
-// ── Ward Stock: Select product from search results ──────────
+// â”€â”€ Ward Stock: Select product from search results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $(document).on('click', '#ws_product_results li[data-id]', function() {
     var id = $(this).data('id');
     var name = $(this).data('name');
@@ -17530,7 +17153,7 @@ $(document).on('click', '#ws_product_results li[data-id]', function() {
     $('#ws_product_search').val(name);
     $('#ws_product_name').text(name);
     $('#ws_product_code').text('[' + code + ']');
-    $('#ws_product_price').text('₦' + Number(price).toLocaleString());
+    $('#ws_product_price').text('â‚¦' + Number(price).toLocaleString());
     $('#ws_product_results').hide();
 
     // Show stock for the selected store
@@ -17544,7 +17167,7 @@ $(document).on('click', '#ws_product_results li[data-id]', function() {
     $('#ws_product_info').slideDown(200);
 });
 
-// ── Ward Stock: Update stock when store changes ─────────────
+// â”€â”€ Ward Stock: Update stock when store changes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $('#ws_store').on('change', function() {
     var productId = $('#ws_product_id').val();
     var storeId = $(this).val();
@@ -17581,7 +17204,7 @@ $(document).on('click', function(e) {
     }
 });
 
-// ── Ward Stock Modal Submit ─────────────────────────────────
+// â”€â”€ Ward Stock Modal Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $('#wardStockForm').on('submit', function(e) {
     e.preventDefault();
 
@@ -18572,7 +18195,7 @@ const ShiftManager = {
                             <div class="pending-handover-item ${h.has_critical_notes ? 'has-critical' : ''}">
                                 <div>
                                     <strong>${h.created_by_name}</strong>
-                                    <span class="text-muted">┬╖ ${h.created_at_ago}</span>
+                                    <span class="text-muted">â”¬â•– ${h.created_at_ago}</span>
                                     ${h.has_critical_notes ? '<span class="badge badge-danger ml-2">Critical</span>' : ''}
                                 </div>
                                 <span>${h.shift_type_badge}</span>
@@ -18608,7 +18231,7 @@ const ShiftManager = {
                             <div class="pending-handover-item ${h.has_critical_notes ? 'has-critical' : ''}">
                                 <div>
                                     <strong>${h.created_by_name}</strong>
-                                    <span class="text-muted">┬╖ ${h.created_at_ago}</span>
+                                    <span class="text-muted">â”¬â•– ${h.created_at_ago}</span>
                                     ${h.has_critical_notes ? '<span class="badge badge-danger ml-2">Critical</span>' : ''}
                                 </div>
                                 <span>${h.shift_type_badge}</span>
@@ -18703,7 +18326,7 @@ const ShiftManager = {
                         </div>
                     </div>
                     <div class="handover-ack-meta">
-                        <strong>${h.created_by_name}</strong> ┬╖ ${h.created_at_ago}
+                        <strong>${h.created_by_name}</strong> â”¬â•– ${h.created_at_ago}
                     </div>
                     <div class="handover-ack-content mt-2">
                         ${h.summary_preview}
@@ -19206,10 +18829,10 @@ const ShiftManager = {
             }[h.shift_type] || 'secondary';
 
             const shiftIcon = {
-                'morning': '≡ƒîà',
-                'afternoon': 'ΓÿÇ∩╕Å',
-                'night': '≡ƒîÖ'
-            }[h.shift_type] || 'ΓÅ░';
+                'morning': 'â‰¡Æ’Ã®Ã ',
+                'afternoon': 'Î“Ã¿Ã‡âˆ©â••Ã…',
+                'night': 'â‰¡Æ’Ã®Ã–'
+            }[h.shift_type] || 'Î“Ã…â–‘';
 
             html += `
                 <div class="col-md-6 col-lg-4">
@@ -19288,9 +18911,9 @@ const ShiftManager = {
                     <div class="handover-list-info">
                         <div class="handover-list-meta">
                             <strong>${h.created_by_name}</strong>
-                            <span class="text-muted">ΓÇó</span>
+                            <span class="text-muted">Î“Ã‡Ã³</span>
                             <span class="text-muted">${h.ward_name}</span>
-                            <span class="text-muted">ΓÇó</span>
+                            <span class="text-muted">Î“Ã‡Ã³</span>
                             <small class="text-muted">${h.created_at_ago}</small>
                             ${isCritical ? '<span class="badge badge-danger ms-2">Critical</span>' : ''}
                         </div>
@@ -19579,7 +19202,7 @@ const ShiftManager = {
                             if (change.type === 'created') {
                                 changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <strong>' + change.value + '</strong></li>';
                             } else if (change.type === 'changed') {
-                                changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.old + '</del> ΓåÆ <strong class="text-success">' + change.new + '</strong></li>';
+                                changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.old + '</del> Î“Ã¥Ã† <strong class="text-success">' + change.new + '</strong></li>';
                             } else if (change.type === 'deleted') {
                                 changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.value + '</del></li>';
                             }

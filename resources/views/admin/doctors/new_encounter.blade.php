@@ -1868,6 +1868,10 @@
     @include('admin.partials.vitals-scripts')
     @include('admin.partials.nursing-note-save-scripts')
     @include('admin.patients.partials.modals')
+    @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
+    @include('admin.partials.invest_res_js')
+    @include('admin.partials.invest_res_view_imaging_modal')
+    @include('admin.partials.invest_res_view_imaging_js')
 
     <script>
         function setResViewInModal(obj) {
@@ -1877,13 +1881,15 @@
             $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
 
             // Patient information
-            let patientName = res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname;
+            let patientName = (res_obj.patient && res_obj.patient.user)
+                ? res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname
+                : 'N/A';
             $('#res_patient_name').html(patientName);
-            $('#res_patient_id').html(res_obj.patient.file_no);
+            $('#res_patient_id').html(res_obj.patient ? res_obj.patient.file_no : 'N/A');
 
             // Calculate age from date of birth
             let age = 'N/A';
-            if (res_obj.patient.date_of_birth) {
+            if (res_obj.patient && res_obj.patient.date_of_birth) {
                 let dob = new Date(res_obj.patient.date_of_birth);
                 let today = new Date();
                 let ageYears = today.getFullYear() - dob.getFullYear();
@@ -1896,14 +1902,16 @@
             $('#res_patient_age').html(age);
 
             // Gender
-            let gender = res_obj.patient.gender ? res_obj.patient.gender.toUpperCase() : 'N/A';
+            let gender = (res_obj.patient && res_obj.patient.gender) ? res_obj.patient.gender.toUpperCase() : 'N/A';
             $('#res_patient_gender').html(gender);
 
             // Test information
             $('#res_test_id').html(res_obj.id);
             $('#res_sample_date').html(res_obj.sample_date || 'N/A');
             $('#res_result_date').html(res_obj.result_date || 'N/A');
-            $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
+            $('#res_result_by').html(res_obj.results_person
+                ? res_obj.results_person.firstname + ' ' + res_obj.results_person.surname
+                : 'N/A');
 
             // Signature date (use result date)
             $('#res_signature_date').html(res_obj.result_date || '');
@@ -2010,6 +2018,63 @@
             };
             return icons[extension] || '<i class="mdi mdi-file"></i>';
         }
+
+        // ============================================
+        // INVESTIGATION RESULT ENTRY FUNCTIONS
+        // Uses shared InvestResultEntry module
+        // ============================================
+
+        // Lab result entry (called from investigation history DataTable "Enter Result" button)
+        function enterLabResult(requestId) {
+            InvestResultEntry.enterResult(
+                requestId,
+                `/lab-workbench/lab-service-requests/${requestId}`,
+                `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+                '{{ route("lab.saveResult") }}'
+            );
+        }
+
+        // Lab result edit (called from investigation history DataTable "Edit" button)
+        function editLabResult(obj) {
+            const requestId = $(obj).data('id');
+            InvestResultEntry.editResult(
+                requestId,
+                `/lab-workbench/lab-service-requests/${requestId}`,
+                `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+                '{{ route("lab.saveResult") }}'
+            );
+        }
+
+        // Imaging result entry (called from imaging history DataTable "Enter Result" button)
+        function enterImagingResult(requestId) {
+            InvestResultEntry.enterResult(
+                requestId,
+                `/imaging-workbench/imaging-service-requests/${requestId}`,
+                `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+                '{{ route("imaging.saveResult") }}'
+            );
+        }
+
+        // Imaging result edit (called from imaging history DataTable "Edit" button)
+        function editImagingResult(obj) {
+            const requestId = $(obj).data('id');
+            InvestResultEntry.editResult(
+                requestId,
+                `/imaging-workbench/imaging-service-requests/${requestId}`,
+                `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+                '{{ route("imaging.saveResult") }}'
+            );
+        }
+
+        // Initialize shared result entry module
+        InvestResultEntry.bindFormSubmit(function() {
+            if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                $('#investigation_history_list').DataTable().ajax.reload(null, false);
+            }
+            if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                $('#imaging_history_list').DataTable().ajax.reload(null, false);
+            }
+        });
     </script>
 
     <!-- Nurse Charts Scripts -->

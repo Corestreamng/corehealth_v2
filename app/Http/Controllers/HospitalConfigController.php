@@ -92,6 +92,10 @@ class HospitalConfigController extends Controller
             'enable_twakto' => 'boolean',
             'lab_results_require_approval' => 'boolean',
             'imaging_results_require_approval' => 'boolean',
+            'doctor_can_enter_lab_result' => 'boolean',
+            'nurse_can_enter_lab_result' => 'boolean',
+            'doctor_can_enter_imaging_result' => 'boolean',
+            'nurse_can_enter_imaging_result' => 'boolean',
         ]);
 
         $config = ApplicationStatu::first();
@@ -107,6 +111,10 @@ class HospitalConfigController extends Controller
         $validated['enable_twakto'] = $request->has('enable_twakto');
         $validated['lab_results_require_approval'] = $request->has('lab_results_require_approval');
         $validated['imaging_results_require_approval'] = $request->has('imaging_results_require_approval');
+        $validated['doctor_can_enter_lab_result'] = $request->has('doctor_can_enter_lab_result');
+        $validated['nurse_can_enter_lab_result'] = $request->has('nurse_can_enter_lab_result');
+        $validated['doctor_can_enter_imaging_result'] = $request->has('doctor_can_enter_imaging_result');
+        $validated['nurse_can_enter_imaging_result'] = $request->has('nurse_can_enter_imaging_result');
 
         // Handle logo upload
         if ($request->hasFile('logo')) {

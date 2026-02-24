@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
 @section('title', 'Imaging Workbench')
 
@@ -1448,7 +1448,7 @@
         background: #c82333;
     }
 
-    /* ── Floating Cart (billing-style) ── */
+    /* â”€â”€ Floating Cart (billing-style) â”€â”€ */
     .floating-cart {
         position: fixed;
         bottom: 90px;
@@ -1506,7 +1506,7 @@
         animation: cartPulse 0.3s ease;
     }
 
-    /* ── Cart Review Modal ── */
+    /* â”€â”€ Cart Review Modal â”€â”€ */
     #cartReviewModal .modal-header {
         background: linear-gradient(135deg, var(--hospital-primary), #0056b3);
         color: white;
@@ -2795,39 +2795,39 @@
         <div class="search-container" style="position: relative;">
             <input type="text"
                    id="patient-search-input"
-                   placeholder="🔍 Search patient name or file no..."
+                   placeholder="ðŸ” Search patient name or file no..."
                    autocomplete="off">
             <div class="search-results" id="patient-search-results"></div>
         </div>
 
         <div class="queue-widget">
-            <h6>📊 PENDING QUEUE</h6>
+            <h6>ðŸ“Š PENDING QUEUE</h6>
             <div class="queue-item" data-filter="emergency" style="background: #fff5f5; border-left: 3px solid #dc3545;">
-                <span class="queue-item-label">🚨 <strong class="text-danger">Emergency</strong></span>
+                <span class="queue-item-label">ðŸš¨ <strong class="text-danger">Emergency</strong></span>
                 <span class="queue-count" id="queue-emergency-count" style="background: #dc3545; color: #fff;">0</span>
             </div>
             <div class="queue-item" data-filter="billing">
-                <span class="queue-item-label">🟡 Awaiting Billing</span>
+                <span class="queue-item-label">ðŸŸ¡ Awaiting Billing</span>
                 <span class="queue-count billing" id="queue-billing-count">0</span>
             </div>
             <!-- No sample collection stage for imaging -->
             <div class="queue-item" data-filter="results">
-                <span class="queue-item-label">🔴 Result Entry</span>
+                <span class="queue-item-label">ðŸ”´ Result Entry</span>
                 <span class="queue-count results" id="queue-results-count">0</span>
             </div>
             @if(($isApprover ?? false) && ($requiresApproval ?? false))
             <div class="queue-item" data-filter="approval" style="background: #f3f0ff; border-left: 3px solid #6f42c1;">
-                <span class="queue-item-label">🟣 <strong class="text-purple">Awaiting Approval</strong></span>
+                <span class="queue-item-label">ðŸŸ£ <strong class="text-purple">Awaiting Approval</strong></span>
                 <span class="queue-count" id="queue-approval-count" style="background: #6f42c1; color: #fff;">0</span>
             </div>
             @endif
             <button class="btn-queue-all" id="show-all-queue-btn">
-                📋 Show All Queue →
+                ðŸ“‹ Show All Queue â†’
             </button>
         </div>
 
         <div class="quick-actions">
-            <h6>⚡ QUICK ACTIONS</h6>
+            <h6>âš¡ QUICK ACTIONS</h6>
             <button class="quick-action-btn" id="btn-new-request" style="display: none;">
                 <i class="mdi mdi-plus-circle"></i>
                 <span>New Request</span>
@@ -2870,7 +2870,7 @@
             <h3>Select a patient to begin</h3>
             <p>Use the search box or view pending queue</p>
             <button class="btn btn-lg btn-primary" id="view-queue-btn">
-                📋 View All Pending Requests
+                ðŸ“‹ View All Pending Requests
             </button>
         </div>
 
@@ -3587,6 +3587,7 @@
 </div>
 
 @include('admin.partials.invest_res_modal', ['save_route' => 'imaging.saveResult'])
+@include('admin.partials.invest_res_js')
 
 <!-- Result Approval Review Modal -->
 @if(($isApprover ?? false) && ($requiresApproval ?? false))
@@ -4100,6 +4101,12 @@ const requiresApproval = @json($requiresApproval ?? false);
 let currentApprovalId = null;
 
 $(document).ready(function() {
+    // Initialize shared result entry module
+    InvestResultEntry.bindFormSubmit(function() {
+        if (currentPatient) loadPatient(currentPatient);
+        getQueueCounts();
+    });
+
     // Initialize
     loadQueueCounts();
     startQueueRefresh();
@@ -4907,7 +4914,7 @@ function createRequestCard(request, section) {
         if (payableAmount > 0 && !isPaid) {
             statusBadges += ' <span class="badge bg-danger">Awaiting Payment</span>';
             pendingAlerts += `<div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
-                <i class="mdi mdi-cash-clock"></i> <strong>Payment Required:</strong> ₦${Number(payableAmount).toLocaleString()}</div>`;
+                <i class="mdi mdi-cash-clock"></i> <strong>Payment Required:</strong> â‚¦${Number(payableAmount).toLocaleString()}</div>`;
         } else if (payableAmount > 0 && isPaid) {
             statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> Paid</span>';
         }
@@ -4915,7 +4922,7 @@ function createRequestCard(request, section) {
         if (claimsAmount > 0 && (!validationStatus || validationStatus === 'pending')) {
             statusBadges += ' <span class="badge bg-info">Awaiting HMO Validation</span>';
             pendingAlerts += `<div class="alert alert-info py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
-                <i class="mdi mdi-shield-alert"></i> <strong>HMO Validation Required:</strong> ₦${Number(claimsAmount).toLocaleString()} claim pending</div>`;
+                <i class="mdi mdi-shield-alert"></i> <strong>HMO Validation Required:</strong> â‚¦${Number(claimsAmount).toLocaleString()} claim pending</div>`;
         } else if (claimsAmount > 0 && validationStatus === 'rejected') {
             statusBadges += ' <span class="badge bg-danger"><i class="mdi mdi-close"></i> HMO Rejected</span>';
         } else if (claimsAmount > 0 && isValidated) {
@@ -4934,7 +4941,7 @@ function createRequestCard(request, section) {
     }
 
     // Price display
-    const priceHtml = price > 0 ? `<div class="request-card-price">₦${Number(price).toLocaleString()}</div>` : '';
+    const priceHtml = price > 0 ? `<div class="request-card-price">â‚¦${Number(price).toLocaleString()}</div>` : '';
 
     // HMO coverage split info
     let hmoHtml = '';
@@ -4942,8 +4949,8 @@ function createRequestCard(request, section) {
         hmoHtml = `
             <div class="request-card-hmo-info">
                 <span class="badge bg-info">${coverageMode.toUpperCase()}</span>
-                ${payableAmount > 0 ? `<span class="text-danger ms-2">Pay: ₦${Number(payableAmount).toLocaleString()}</span>` : ''}
-                ${claimsAmount > 0 ? `<span class="text-success ms-2">HMO: ₦${Number(claimsAmount).toLocaleString()}</span>` : ''}
+                ${payableAmount > 0 ? `<span class="text-danger ms-2">Pay: â‚¦${Number(payableAmount).toLocaleString()}</span>` : ''}
+                ${claimsAmount > 0 ? `<span class="text-success ms-2">HMO: â‚¦${Number(claimsAmount).toLocaleString()}</span>` : ''}
             </div>
         `;
     }
@@ -4972,7 +4979,7 @@ function createRequestCard(request, section) {
         `;
     }
 
-    // Meta info section (like pharmacy — billed by)
+    // Meta info section (like pharmacy â€” billed by)
     let metaDetails = '';
     if (section !== 'billing') {
         let metaItems = '';
@@ -5062,7 +5069,7 @@ function initializeRequestHandlers() {
         $(`.request-checkbox[data-section="${section}"]`).prop('checked', isChecked).trigger('change');
     });
 
-    // Individual checkboxes — update floating cart + highlight card on change
+    // Individual checkboxes â€” update floating cart + highlight card on change
     $('.request-checkbox').on('change', function() {
         const section = $(this).data('section');
         const $card = $(this).closest('.request-card');
@@ -5220,7 +5227,7 @@ function displayNotes(notes) {
             $wrapper.find('.show-all-link').remove();
             $wrapper.append(`
                 <a href="/patients/show/${currentPatient}?section=encountersCardBody" target="_blank" class="show-all-link">
-                    Show All Notes →
+                    Show All Notes â†’
                 </a>
             `);
         }
@@ -5349,7 +5356,7 @@ function refreshClinicalPanel(panel) {
             $btn.find('i').removeClass('fa-spin');
         });
     } else {
-        // For vitals/medications/allergies — the shared module handles these via delegated click events
+        // For vitals/medications/allergies â€” the shared module handles these via delegated click events
         setTimeout(function() { $btn.find('i').removeClass('fa-spin'); }, 1000);
     }
 }
@@ -5366,7 +5373,7 @@ function loadUserPreferences() {
     const clinicalVisible = localStorage.getItem('clinicalPanelVisible') === 'true';
     if (clinicalVisible) {
         $('#right-panel').addClass('active');
-        $('#toggle-clinical-btn').html('📊 Clinical Context ×');
+        $('#toggle-clinical-btn').html('ðŸ“Š Clinical Context Ã—');
     }
 }
 
@@ -5422,21 +5429,14 @@ function dismissRequests(requestIds, section) {
 }
 
 function enterResult(requestId) {
-    // Fetch the imaging request data
-    $.ajax({
-        url: `/imaging-workbench/imaging-service-requests/${requestId}`,
-        method: 'GET',
-        success: function(request) {
-            setInvestResTempInModal(request);
-            $('#investResModal').modal('show');
-        },
-        error: function(xhr) {
-            toastr.error('Error loading request: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
+    InvestResultEntry.enterResult(
+        requestId,
+        `/imaging-workbench/imaging-service-requests/${requestId}`,
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`
+    );
 }
 
-// ── Floating Cart Logic ──────────────────────────────────────────────
+// â”€â”€ Floating Cart Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function getSelectedItems() {
     const items = { billing: [] };
 
@@ -5466,7 +5466,7 @@ function updateFloatingCart() {
     const totalPrice = items.billing.reduce((sum, i) => sum + i.price, 0);
     $('#cart-item-count').text(totalCount);
     if (totalPrice > 0) {
-        $('#cart-total-display').text('₦' + Number(totalPrice).toLocaleString()).show();
+        $('#cart-total-display').text('â‚¦' + Number(totalPrice).toLocaleString()).show();
     } else {
         $('#cart-total-display').hide();
     }
@@ -5504,7 +5504,7 @@ function openCartReviewModal() {
                         <div class="cart-item-meta"><i class="mdi mdi-doctor"></i> ${item.doctor} &middot; ${item.date}</div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        ${item.price > 0 ? `<span class="cart-item-price">₦${Number(item.price).toLocaleString()}</span>` : ''}
+                        ${item.price > 0 ? `<span class="cart-item-price">â‚¦${Number(item.price).toLocaleString()}</span>` : ''}
                         <button class="cart-item-remove" onclick="uncheckItem(${item.id}, 'billing')" title="Remove">
                             <i class="mdi mdi-close-circle"></i>
                         </button>
@@ -5512,7 +5512,7 @@ function openCartReviewModal() {
                 </div>`;
             });
             if (billingTotal > 0) {
-                html += `<div class="cart-section-total text-end small text-muted pe-2">Subtotal: <strong>₦${Number(billingTotal).toLocaleString()}</strong></div>`;
+                html += `<div class="cart-section-total text-end small text-muted pe-2">Subtotal: <strong>â‚¦${Number(billingTotal).toLocaleString()}</strong></div>`;
             }
             html += `<div class="cart-action-row">
                 <button class="btn btn-success btn-sm" onclick="cartRecordBilling()">
@@ -5547,416 +5547,15 @@ function cartDismiss(section) {
     }).get();
     if (ids.length > 0) dismissRequests(ids, section);
 }
-// ── End Floating Cart Logic ──────────────────────────────────────────
-
-function setInvestResTempInModal(request) {
-    $('#investResForm').trigger('reset');
-    $('#invest_res_service_name').text(request.service ? request.service.name : '');
-    $('#invest_res_entry_id').val(request.id);
-    $('#invest_res_is_edit').val('0');
-    $('#deleted_attachments').val('[]');
-    $('#existing_attachments_container').hide();
-    $('#existing_attachments_list').html('');
-
-    // Determine template type
-    let template = request.result || (request.service ? request.service.template : '');
-
-    // Check if it's V2 structure (JSON object) or V1 (HTML string)
-    let isV2 = false;
-    if (typeof template === 'object' && template !== null) {
-        isV2 = true;
-    } else if (typeof template === 'string' && template.trim().startsWith('{')) {
-        try {
-            let parsed = JSON.parse(template);
-            if (typeof parsed === 'object') isV2 = true;
-        } catch(e) {}
-    }
-
-    if (isV2) {
-       // Logic for V2 would go here if needed to parse, but usually loadV2Template handles the structure object
-       // For now, assuming standard V1 for imaging unless structured
-       // If existing code had loadV2Template, we keep using it
-       // But wait, the original code called loadImagingV1Template unconditionally in setImagingResTempInModal
-       // "Imaging uses V1 templates (WYSIWYG)"
-       loadInvestV1Template(template);
-    } else {
-       loadInvestV1Template(template);
-    }
-
-    // Load existing attachments if editing
-    loadExistingAttachments(request.id);
-}
-
-function loadInvestV1Template(template) {
-    $('#invest_res_template_version').val('1');
-    $('#v1_template_container').show();
-    $('#v2_template_container').hide();
-
-    // Re-enable content editing if it was disabled upon save
-    if (template && typeof template === 'string') {
-        template = template.replace(/contenteditable="false"/g, 'contenteditable="true"');
-        template = template.replace(/contenteditable='false'/g, "contenteditable='true'");
-    }
-
-    // Initialize CKEditor if not already initialized
-    if (!window.investResEditor) {
-        ClassicEditor
-            .create(document.querySelector('#invest_res_template_editor'), {
-                toolbar: {
-                    items: [
-                        'undo', 'redo',
-                        '|', 'heading',
-                        '|', 'bold', 'italic',
-                        '|', 'link', 'insertTable',
-                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                    ]
-                }
-            })
-            .then(editor => {
-                window.investResEditor = editor;
-                editor.setData(template || '');
-            })
-            .catch(err => {
-                console.error(err);
-            });
-    } else {
-        window.investResEditor.setData(template || '');
-    }
-}
-
-function loadV2Template(template, existingData) {
-    $('#invest_res_template_version').val('2');
-    $('#v1_template_container').hide();
-    $('#v2_template_container').show();
-
-    let formHtml = '<div class="v2-result-form">';
-    formHtml += '<h6 class="mb-3">' + (template.template_name || 'Result Entry') + '</h6>';
-
-    // Sort parameters by order
-    let parameters = template.parameters ? template.parameters.sort((a, b) => a.order - b.order) : [];
-
-    parameters.forEach(param => {
-        if (param.show_in_report === false) {
-            return; // Skip hidden parameters
-        }
-
-        formHtml += '<div class="form-group row">';
-        formHtml += '<label class="col-md-4 col-form-label">';
-        formHtml += param.name;
-        if (param.unit) {
-            formHtml += ' <small class="text-muted">(' + param.unit + ')</small>';
-        }
-        if (param.required) {
-            formHtml += ' <span class="text-danger">*</span>';
-        }
-        formHtml += '</label>';
-        formHtml += '<div class="col-md-8">';
-
-        let fieldId = 'param_' + param.id;
-        let value = '';
-        if (existingData && existingData[param.id]) {
-            // Handle both direct value and object with value property
-            if (typeof existingData[param.id] === 'object' && existingData[param.id] !== null && existingData[param.id].hasOwnProperty('value')) {
-                value = existingData[param.id].value;
-            } else {
-                value = existingData[param.id];
-            }
-        }
-        if (value === null || value === undefined) value = '';
-
-        // Generate form field based on type
-        if (param.type === 'string') {
-            formHtml += '<input type="text" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'integer') {
-            formHtml += '<input type="number" step="1" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range) {
-                formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
-                formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'float') {
-            formHtml += '<input type="number" step="0.01" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range) {
-                formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
-                formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'boolean') {
-            formHtml += '<select class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range && param.reference_range.reference_value !== undefined) {
-                formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += '>';
-            formHtml += '<option value="">Select</option>';
-            formHtml += '<option value="true" ' + (value === true || value === 'true' ? 'selected' : '') + '>Yes/Positive</option>';
-            formHtml += '<option value="false" ' + (value === false || value === 'false' ? 'selected' : '') + '>No/Negative</option>';
-            formHtml += '</select>';
-
-        } else if (param.type === 'enum') {
-            formHtml += '<select class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range && param.reference_range.reference_value) {
-                formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += '>';
-            formHtml += '<option value="">Select</option>';
-            if (param.options) {
-                param.options.forEach(opt => {
-                    let optVal = typeof opt === 'object' ? opt.value : opt;
-                    let optLabel = typeof opt === 'object' ? opt.label : opt;
-                    formHtml += '<option value="' + optVal + '" ' + (value === optVal ? 'selected' : '') + '>' + optLabel + '</option>';
-                });
-            }
-            formHtml += '</select>';
-
-        } else if (param.type === 'long_text') {
-            formHtml += '<textarea class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'rows="3" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">' + value + '</textarea>';
-        }
-
-        // Add reference range info if available
-        if (param.reference_range) {
-            formHtml += '<small class="form-text text-muted">';
-            if (param.type === 'integer' || param.type === 'float') {
-                if (param.reference_range.min !== null && param.reference_range.max !== null) {
-                    formHtml += 'Normal range: ' + param.reference_range.min + ' - ' + param.reference_range.max;
-                }
-            } else if (param.type === 'boolean' && param.reference_range.reference_value !== undefined) {
-                formHtml += 'Normal: ' + (param.reference_range.reference_value ? 'Yes/Positive' : 'No/Negative');
-            } else if (param.type === 'enum' && param.reference_range.reference_value) {
-                formHtml += 'Normal: ' + param.reference_range.reference_value;
-            } else if (param.reference_range.text) {
-                formHtml += param.reference_range.text;
-            }
-            formHtml += '</small>';
-        }
-
-        // Status indicator (will be updated on blur)
-        formHtml += '<div class="mt-1"><span class="param-status" id="status_' + param.id + '"></span></div>';
-
-        formHtml += '</div>';
-        formHtml += '</div>';
-    });
-
-    formHtml += '</div>';
-
-    $('#v2_form_fields').html(formHtml);
-
-    // Add event listeners for value changes to show status
-    $('.v2-param-field').on('blur change', function() {
-        updateParameterStatus($(this));
-    });
-
-    // Trigger status update for pre-filled values
-    $('.v2-param-field').each(function() {
-        if ($(this).val()) {
-            updateParameterStatus($(this));
-        }
-    });
-}
-
-function updateParameterStatus($field) {
-    let paramId = $field.data('param-id');
-    let paramType = $field.data('param-type');
-    let value = $field.val();
-    let $statusSpan = $('#status_' + paramId);
-
-    if (!value || value === '') {
-        $statusSpan.html('');
-        return;
-    }
-
-    let status = '';
-    let statusClass = '';
-
-    if (paramType === 'integer' || paramType === 'float') {
-        let numValue = parseFloat(value);
-        let min = $field.data('ref-min');
-        let max = $field.data('ref-max');
-
-        if (min !== undefined && max !== undefined && min !== '' && max !== '') {
-            if (numValue < min) {
-                status = 'Low';
-                statusClass = 'badge-warning';
-            } else if (numValue > max) {
-                status = 'High';
-                statusClass = 'badge-danger';
-            } else {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            }
-        }
-    } else if (paramType === 'boolean') {
-        let refValue = $field.data('ref-value');
-        if (refValue !== undefined) {
-            let boolValue = value === 'true';
-            let refBool = refValue === true || refValue === 'true';
-
-            if (boolValue === refBool) {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            } else {
-                status = 'Abnormal';
-                statusClass = 'badge-warning';
-            }
-        }
-    } else if (paramType === 'enum') {
-        let refValue = $field.data('ref-value');
-        if (refValue) {
-            if (value === refValue) {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            } else {
-                status = 'Abnormal';
-                statusClass = 'badge-warning';
-            }
-        }
-    }
-
-    if (status) {
-        $statusSpan.html('<span class="badge ' + statusClass + '">' + status + '</span>');
-    } else {
-        $statusSpan.html('');
-    }
-}
-
-function loadExistingAttachments(requestId) {
-    const container = $('#existing_attachments_list');
-    const wrapper = $('#existing_attachments_container');
-    container.empty();
-    wrapper.hide();
-
-    $.ajax({
-        url: `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-        method: 'GET',
-        success: function(attachments) {
-            if (attachments && attachments.length > 0) {
-                wrapper.show();
-                attachments.forEach(att => {
-                    const attDiv = $('<div>').addClass('attachment-item mb-2 d-flex justify-content-between align-items-center');
-                    const link = $('<a>').attr('href', att.url).attr('target', '_blank').text(att.filename);
-                    const deleteBtn = $('<button>')
-                        .addClass('btn btn-sm btn-danger')
-                        .html('<i class="fa fa-trash"></i>')
-                        .on('click', function() {
-                            markAttachmentForDeletion(att.id);
-                            attDiv.remove();
-                            if (container.children().length === 0) {
-                                wrapper.hide();
-                            }
-                        });
-                    attDiv.append(link).append(deleteBtn);
-                    container.append(attDiv);
-                });
-            }
-        }
-    });
-}
-
-function markAttachmentForDeletion(attachmentId) {
-    const current = $('#deleted_attachments').val();
-    const deleted = current ? JSON.parse(current) : [];
-    deleted.push(attachmentId);
-    $('#deleted_attachments').val(JSON.stringify(deleted));
-}
-
-// Handle result form submission (copy CKEditor content to hidden field)
-function copyResTemplateToField() {
-    if (window.investResEditor) {
-        $('#invest_res_template_submited').val(window.investResEditor.getData());
-    }
-    return true;
-}
-
-// Handle imaging form submission via AJAX (no page refresh)
-$('#investResForm').on('submit', function(e) {
-    e.preventDefault();
-
-    // Copy data from editors/inputs to hidden fields
-    copyResTemplateToField();
-
-    const formData = new FormData(this);
-    const $submitBtn = $(this).find('button[type="submit"]');
-    const originalBtnHtml = $submitBtn.html();
-    $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-
-    $.ajax({
-        url: $(this).attr('action'),
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            toastr.success('Result saved successfully!');
-            $('#investResModal').modal('hide');
-            // Refresh patient data and queue counts
-            if (currentPatient) {
-                loadPatient(currentPatient);
-            }
-            getQueueCounts();
-        },
-        error: function(xhr) {
-            const errorMsg = xhr.responseJSON?.message || 'Unknown error';
-            toastr.error('Error saving result: ' + errorMsg);
-        },
-        complete: function() {
-            $submitBtn.prop('disabled', false).html(originalBtnHtml);
-        }
-    });
-});
+// â”€â”€ End Floating Cart Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function editImagingResult(obj) {
     const requestId = $(obj).data('id');
-
-    $.ajax({
-        url: `/imaging-workbench/imaging-service-requests/${requestId}`,
-        method: 'GET',
-        success: function(request) {
-             // Populate the form with template structure AND existing result data
-            setInvestResTempInModal(request);
-
-            // Set Edit Mode UI
-            $('#invest_res_is_edit').val('1');
-            $('#investResModalLabel').text('Edit Result: ' + (request.service ? request.service.name : ''));
-            $('#investResForm button[type="submit"]').html('<i class="mdi mdi-content-save"></i> Update Result');
-
-            $('#investResModal').modal('show');
-        },
-        error: function(xhr) {
-            toastr.error('Error loading request: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
+    InvestResultEntry.editResult(
+        requestId,
+        `/imaging-workbench/imaging-service-requests/${requestId}`,
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`
+    );
 }
 
 function setResViewInModal(obj) {
@@ -6596,7 +6195,7 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
         const temp = parseFloat(value);
         const idealTemp = 37.0;
         const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
+        deviation = temp > idealTemp ? `+${diff.toFixed(1)}Â°C above ideal` : `-${diff.toFixed(1)}Â°C below ideal`;
         status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'pulse' && value !== 'N/A') {
         const pulse = parseInt(value);
@@ -6689,7 +6288,7 @@ function displayAllergyAlert(alerts) {
 
     return `
         <div class="allergy-alert">
-            <div class="allergy-alert-icon">⚠️</div>
+            <div class="allergy-alert-icon">âš ï¸</div>
             <div>
                 <strong>ALLERGY WARNING!</strong><br>
                 ${allergyList}
@@ -6717,10 +6316,10 @@ function showQueue(filter) {
 
     // Update queue title - No sample stage for imaging
     const titles = {
-        'billing': '🟢 Awaiting Billing',
-        'results': '🔴 Awaiting Result Entry',
-        'approval': '🟣 Awaiting Approval',
-        'all': '📋 All Pending Requests'
+        'billing': 'ðŸŸ¢ Awaiting Billing',
+        'results': 'ðŸ”´ Awaiting Result Entry',
+        'approval': 'ðŸŸ£ Awaiting Approval',
+        'all': 'ðŸ“‹ All Pending Requests'
     };
     $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['all']}`);
 
@@ -7243,7 +6842,7 @@ function renderQueueCard(data) {
         <div class="queue-card-patient-meta">
             <div class="queue-card-patient-meta-item">
                 <i class="mdi mdi-account"></i>
-                <span>${data.age} • ${data.gender}</span>
+                <span>${data.age} â€¢ ${data.gender}</span>
             </div>
             <div class="queue-card-patient-meta-item">
                 <i class="mdi mdi-card-account-details"></i>
@@ -7638,7 +7237,7 @@ function renderTopDoctors(doctors) {
             <tr>
                 <td><i class="mdi mdi-doctor mr-1"></i> ${docName}</td>
                 <td class="text-center"><span class="badge badge-pill badge-info">${doc.count}</span></td>
-                <td class="text-right">₦${parseFloat(doc.revenue).toLocaleString()}</td>
+                <td class="text-right">â‚¦${parseFloat(doc.revenue).toLocaleString()}</td>
             </tr>
         `;
     });

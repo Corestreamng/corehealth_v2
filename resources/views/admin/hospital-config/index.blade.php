@@ -618,6 +618,69 @@
                                         </label>
                                     </div>
                                 </div>
+
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-clipboard-edit-outline mr-1"></i> Result Entry Permissions</h6>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="doctor_can_enter_lab_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-doctor text-primary mr-1"></i>Doctor Can Enter Lab Results
+                                            </label>
+                                            <small class="text-muted d-block">Allow doctors to enter lab results for investigations they requested</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="doctor_can_enter_lab_result" value="1" {{ $config->doctor_can_enter_lab_result ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="nurse_can_enter_lab_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-nurse text-success mr-1"></i>Nurse Can Enter Lab Results
+                                            </label>
+                                            <small class="text-muted d-block">Allow nurses to enter lab results for investigations they requested</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="nurse_can_enter_lab_result" value="1" {{ $config->nurse_can_enter_lab_result ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="doctor_can_enter_imaging_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-doctor text-primary mr-1"></i>Doctor Can Enter Imaging Results
+                                            </label>
+                                            <small class="text-muted d-block">Allow doctors to enter imaging results for requests they made</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="doctor_can_enter_imaging_result" value="1" {{ $config->doctor_can_enter_imaging_result ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="nurse_can_enter_imaging_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-nurse text-success mr-1"></i>Nurse Can Enter Imaging Results
+                                            </label>
+                                            <small class="text-muted d-block">Allow nurses to enter imaging results for requests they made</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="nurse_can_enter_imaging_result" value="1" {{ $config->nurse_can_enter_imaging_result ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

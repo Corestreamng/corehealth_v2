@@ -678,6 +678,21 @@ class ImagingWorkbenchController extends Controller
 
             $imagingRequest = ImagingServiceRequest::findOrFail($request->invest_res_entry_id);
 
+            // Authorization: imaging staff can always save, but doctors/nurses need appsetting permission
+            $user = Auth::user();
+            $isImagingStaff = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'IMAGING', 'RADIOLOGY']);
+            if (!$isImagingStaff) {
+                $isRequestingDoctor = $user->hasRole('DOCTOR') && $user->id == $imagingRequest->doctor_id;
+                $isRequestingNurse  = $user->hasRole('NURSE') && $user->id == $imagingRequest->doctor_id;
+                if (!($isRequestingDoctor && appsettings('doctor_can_enter_imaging_result'))
+                    && !($isRequestingNurse && appsettings('nurse_can_enter_imaging_result'))) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to enter imaging results.'
+                    ], 403);
+                }
+            }
+
             // Check if service can be delivered (payment + HMO validation)
             if ($imagingRequest->productOrServiceRequest) {
                 $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($imagingRequest->productOrServiceRequest);
