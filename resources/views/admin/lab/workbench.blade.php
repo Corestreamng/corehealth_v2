@@ -6115,7 +6115,7 @@ function showQueue(filter) {
 
     // Update queue title
     const titles = {
-        'billing': '� Awaiting Billing',
+        'billing': '🟡 Awaiting Billing',
         'sample': '🟠 Awaiting Sample Collection',
         'results': '🔴 Awaiting Result Entry',
         'completed': '🟢 Completed Requests',
