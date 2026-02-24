@@ -682,7 +682,7 @@ class NursingWorkbenchController extends Controller{
                 'id' => $product->id,
                 'name' => $product->product_name,
                 'code' => $product->product_code,
-                'price' => $product->price ? $product->price->selling_price : 0,
+                'price' => $product->price ? $product->price->current_sale_price : 0,
                 'stock' => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
             ];
@@ -1046,7 +1046,7 @@ class NursingWorkbenchController extends Controller{
                 'id' => $product->id,
                 'name' => $product->product_name,
                 'code' => $product->product_code,
-                'price' => $product->price ? $product->price->selling_price : 0,
+                'price' => $product->price ? $product->price->current_sale_price : 0,
                 'stock' => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
             ];
@@ -1215,7 +1215,7 @@ class NursingWorkbenchController extends Controller{
                         }
                     } catch (\Exception $e) {
                         // If no HMO tariff, use regular price
-                        $billReq->payable_amount = $product->price ? $product->price->selling_price : 0;
+                        $billReq->payable_amount = $product->price ? $product->price->current_sale_price : 0;
                     }
                 }
 
@@ -1322,7 +1322,7 @@ class NursingWorkbenchController extends Controller{
                 'id' => $service->id,
                 'name' => $service->service_name,
                 'code' => $service->service_code,
-                'price' => $service->price ? $service->price->amount : 0,
+                'price' => $service->price ? $service->price->sale_price : 0,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
             ];
         });
@@ -1359,7 +1359,7 @@ class NursingWorkbenchController extends Controller{
                 'id' => $product->id,
                 'name' => $product->product_name,
                 'code' => $product->product_code,
-                'price' => $product->price ? $product->price->selling_price : 0,
+                'price' => $product->price ? $product->price->current_sale_price : 0,
                 'stock' => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
             ];
@@ -1500,7 +1500,7 @@ class NursingWorkbenchController extends Controller{
                         'is_expiring_soon' => $expiryDate && $expiryDate->isBetween(now(), now()->addDays(30)),
                     ];
                 }),
-                'price' => $product->price ? $product->price->selling_price : 0,
+                'price' => $product->price ? $product->price->current_sale_price : 0,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -1624,7 +1624,7 @@ class NursingWorkbenchController extends Controller{
                 }
             } catch (\Exception $e) {
                 // If no HMO tariff, use regular price
-                $billReq->payable_amount = $service->price ? $service->price->amount : 0;
+                $billReq->payable_amount = $service->price ? $service->price->sale_price : 0;
             }
 
             $billReq->save();
@@ -1697,7 +1697,7 @@ class NursingWorkbenchController extends Controller{
                 }
             } catch (\Exception $e) {
                 // If no HMO tariff, use regular price
-                $unitPrice = $product->price ? $product->price->selling_price : 0;
+                $unitPrice = $product->price ? $product->price->current_sale_price : 0;
                 $billReq->payable_amount = $unitPrice * $request->qty;
             }
 
@@ -2792,7 +2792,7 @@ class NursingWorkbenchController extends Controller{
                 }
             } catch (\Exception $e) {
                 // If no HMO tariff, use regular price (non-HMO patient or tariff not configured)
-                $billing->payable_amount = $product->price ? $product->price->selling_price : 0;
+                $billing->payable_amount = $product->price ? $product->price->current_sale_price : 0;
             }
 
             $billing->save();
@@ -2932,7 +2932,7 @@ class NursingWorkbenchController extends Controller{
                 }
             } catch (\Exception $e) {
                 // If no HMO tariff, use regular price (non-HMO patient or tariff not configured)
-                $billing->payable_amount = $product->price ? $product->price->selling_price : 0;
+                $billing->payable_amount = $product->price ? $product->price->current_sale_price : 0;
             }
 
             $billing->save();
