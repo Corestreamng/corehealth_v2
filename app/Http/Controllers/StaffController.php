@@ -99,10 +99,10 @@ class StaffController extends Controller
                 $html = '<span class="badge ' . $statusClass . '">' . ucfirst($status) . '</span>';
                 if ($user->staff_profile) {
                     if ($user->staff_profile->is_dept_head) {
-                        $html .= ' <span class="badge badge-warning" title="Department Head"><i class="mdi mdi-shield-crown"></i></span>';
+                        $html .= '<br><span class="badge badge-warning" title="Department Head"><i class="mdi mdi-account-star"></i> Dept Head</span>';
                     }
                     if ($user->staff_profile->is_unit_head) {
-                        $html .= ' <span class="badge badge-info" title="Unit Head"><i class="mdi mdi-shield-account"></i></span>';
+                        $html .= '<br><span class="badge badge-info" title="Unit Head"><i class="mdi mdi-shield-account"></i> Unit Head</span>';
                     }
                 }
                 return $html;
