@@ -47,15 +47,12 @@
                             <thead>
                                 <tr>
                                     <th style="width: 40px;">#</th>
-                                    <th style="width: 50px;">Photo</th>
-                                    <th>Name</th>
+                                    <th>Staff</th>
                                     <th>Department</th>
-                                    <th>Job Title</th>
-                                    <th>Category</th>
-                                    <th>Phone</th>
+                                    <th>Contact</th>
+                                    <th>Category & Roles</th>
                                     <th>Status</th>
-                                    <th>Role</th>
-                                    <th style="width: 100px;">Actions</th>
+                                    <th style="width: 90px;">Actions</th>
                                 </tr>
                             </thead>
                         </table>
@@ -87,7 +84,7 @@
                         className: 'btn btn-sm btn-outline-success',
                         text: '<i class="mdi mdi-file-excel"></i> Excel',
                         exportOptions: {
-                            columns: [0, 2, 3, 4, 5, 6, 7, 8]
+                            columns: [0, 1, 2, 3, 4, 5]
                         }
                     },
                     {
@@ -95,7 +92,7 @@
                         className: 'btn btn-sm btn-outline-danger',
                         text: '<i class="mdi mdi-file-pdf"></i> PDF',
                         exportOptions: {
-                            columns: [0, 2, 3, 4, 5, 6, 7, 8]
+                            columns: [0, 1, 2, 3, 4, 5]
                         }
                     },
                     {
@@ -103,7 +100,7 @@
                         className: 'btn btn-sm btn-outline-info',
                         text: '<i class="mdi mdi-printer"></i> Print',
                         exportOptions: {
-                            columns: [0, 2, 3, 4, 5, 6, 7, 8]
+                            columns: [0, 1, 2, 3, 4, 5]
                         }
                     }
                 ],
@@ -115,14 +112,11 @@
                 },
                 "columns": [
                     { "data": "DT_RowIndex", "orderable": false, "searchable": false },
-                    { "data": "filename", "orderable": false, "searchable": false },
-                    { "data": "full_name" },
-                    { "data": "department" },
-                    { "data": "job_title" },
-                    { "data": "is_admin" },
-                    { "data": "phone" },
-                    { "data": "employment_status" },
-                    { "data": "leadership_role", "orderable": false },
+                    { "data": "staff_info" },
+                    { "data": "dept_info" },
+                    { "data": "contact" },
+                    { "data": "category_roles", "orderable": false },
+                    { "data": "status_info", "orderable": false },
                     { "data": "actions", "orderable": false, "searchable": false }
                 ],
                 "order": [[2, 'asc']],
