@@ -41,26 +41,54 @@ class StaffController extends Controller
     {
         $user = User::with(['category' => function ($q) {
             $q->addSelect(['id', 'name']);
-        }, 'staff_profile.department'])->where('status', '>', 0)->orderBy('id', 'ASC')->where('is_admin', '!=', 19)->get();
+        }, 'staff_profile.department', 'roles'])->where('status', '>', 0)->orderBy('id', 'ASC')->where('is_admin', '!=', 19)->get();
 
         return DataTables::of($user)
             ->addIndexColumn()
-            ->editColumn('is_admin', function ($user) {
-                return $user->category->name ?? 'N/A';
+            ->addColumn('staff_info', function ($user) {
+                $avatar = view('components.user-avatar', [
+                    'user' => $user,
+                    'width' => '40px',
+                    'height' => '40px',
+                    'attributes' => new ComponentAttributeBag()
+                ])->render();
+
+                $name = e($user->surname . ' ' . $user->firstname);
+                if ($user->othername && trim($user->othername) !== '') {
+                    $name .= ' ' . e($user->othername);
+                }
+                $email = $user->email ? '<div style="font-size:0.8rem;color:#6b7280;"><i class="mdi mdi-email-outline"></i> ' . e($user->email) . '</div>' : '';
+
+                return '<div style="display:flex;align-items:center;gap:10px;">' . $avatar . '<div><div style="font-weight:600;">' . $name . '</div>' . $email . '</div></div>';
             })
-            ->addColumn('full_name', function ($user) {
-                return $user->surname . ' ' . $user->firstname;
+            ->addColumn('dept_info', function ($user) {
+                $dept = $user->staff_profile?->department?->name;
+                $job = $user->staff_profile?->job_title;
+                if (!$dept && !$job) return '<span class="text-muted">-</span>';
+                $html = $dept ? '<div style="font-weight:600;">' . e($dept) . '</div>' : '';
+                $html .= $job ? '<div style="font-size:0.8rem;color:#6b7280;">' . e($job) . '</div>' : '';
+                return $html;
             })
-            ->addColumn('department', function ($user) {
-                return $user->staff_profile?->department?->name ?? '<span class="text-muted">-</span>';
+            ->addColumn('contact', function ($user) {
+                $phone = $user->staff_profile?->phone_number;
+                $email = $user->email;
+                if (!$phone && !$email) return '<span class="text-muted">-</span>';
+                $html = $phone ? '<div><i class="mdi mdi-phone"></i> ' . e($phone) . '</div>' : '';
+                $html .= $email ? '<div style="font-size:0.8rem;"><a href="mailto:' . e($email) . '" class="text-primary"><i class="mdi mdi-email"></i> ' . e($email) . '</a></div>' : '';
+                return $html;
             })
-            ->addColumn('job_title', function ($user) {
-                return $user->staff_profile?->job_title ?? '<span class="text-muted">-</span>';
+            ->addColumn('category_roles', function ($user) {
+                $category = $user->category->name ?? 'N/A';
+                $html = '<div><span class="badge badge-secondary" style="font-size:0.75rem;">' . e($category) . '</span></div>';
+                if ($user->roles->isNotEmpty()) {
+                    $roles = $user->roles->map(function ($role) {
+                        return '<span class="badge badge-outline-primary" style="font-size:0.7rem;margin:1px;">' . e($role->name) . '</span>';
+                    })->implode(' ');
+                    $html .= '<div style="margin-top:3px;">' . $roles . '</div>';
+                }
+                return $html;
             })
-            ->addColumn('phone', function ($user) {
-                return $user->staff_profile?->phone_number ?? '<span class="text-muted">-</span>';
-            })
-            ->addColumn('employment_status', function ($user) {
+            ->addColumn('status_info', function ($user) {
                 $status = $user->staff_profile?->employment_status ?? 'active';
                 $statusClass = match($status) {
                     'active' => 'badge-success',
@@ -68,27 +96,16 @@ class StaffController extends Controller
                     'resigned', 'terminated' => 'badge-secondary',
                     default => 'badge-secondary'
                 };
-                return '<span class="badge ' . $statusClass . '">' . ucfirst($status) . '</span>';
-            })
-            ->addColumn('leadership_role', function ($user) {
-                $badges = [];
+                $html = '<span class="badge ' . $statusClass . '">' . ucfirst($status) . '</span>';
                 if ($user->staff_profile) {
                     if ($user->staff_profile->is_dept_head) {
-                        $badges[] = '<span class="badge badge-warning" title="Department Head"><i class="mdi mdi-shield-crown"></i> Dept Head</span>';
+                        $html .= ' <span class="badge badge-warning" title="Department Head"><i class="mdi mdi-shield-crown"></i></span>';
                     }
                     if ($user->staff_profile->is_unit_head) {
-                        $badges[] = '<span class="badge badge-info" title="Unit Head"><i class="mdi mdi-shield-account"></i> Unit Head</span>';
+                        $html .= ' <span class="badge badge-info" title="Unit Head"><i class="mdi mdi-shield-account"></i></span>';
                     }
                 }
-                return count($badges) > 0 ? implode(' ', $badges) : '<span class="text-muted">-</span>';
-            })
-            ->addColumn('filename', function ($user) {
-                return view('components.user-avatar', [
-                    'user' => $user,
-                    'width' => '35px',
-                    'height' => '35px',
-                    'attributes' => new ComponentAttributeBag()
-                ])->render();
+                return $html;
             })
             ->addColumn('actions', function ($user) {
                 $viewUrl = route('staff.show', $user->id);
@@ -100,7 +117,7 @@ class StaffController extends Controller
                     </div>
                 ';
             })
-            ->rawColumns(['filename', 'full_name', 'department', 'job_title', 'phone', 'employment_status', 'leadership_role', 'actions'])
+            ->rawColumns(['staff_info', 'dept_info', 'contact', 'category_roles', 'status_info', 'actions'])
             ->make(true);
     }
 
@@ -765,13 +782,17 @@ class StaffController extends Controller
 
             if ($user->update()) {
                 if ($request->assignRole) {
-                    // code...
-                    $user->assignRole($request->roles);
+                    $user->syncRoles($request->roles);
+                } else {
+                    // Checkbox unchecked — remove all roles
+                    $user->syncRoles([]);
                 }
 
                 if ($request->assignPermission) {
-                    // code...
-                    $user->givePermissionTo($request->permissions);
+                    $user->syncPermissions($request->permissions);
+                } else {
+                    // Checkbox unchecked — remove all direct permissions
+                    $user->syncPermissions([]);
                 }
                 $staff = Staff::where('user_id', $id)->first();
                 if (!$staff) {
