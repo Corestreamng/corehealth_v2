@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
 
             // Other
             VaccineScheduleSeeder::class,
+            MaternalVaccineScheduleSeeder::class,
 
             // Clinical Templates
             ClinicNoteTemplateSeeder::class,
