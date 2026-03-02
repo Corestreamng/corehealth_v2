@@ -513,34 +513,42 @@ class LabWorkbenchController extends Controller
             foreach ($request->request_ids as $requestId) {
                 $labRequest = LabServiceRequest::findOrFail($requestId);
 
-                // Create ProductOrServiceRequest for billing
-                $billReq = new ProductOrServiceRequest();
-                $billReq->user_id = $labRequest->patient->user_id;
-                $billReq->staff_user_id = Auth::id();
-                $billReq->service_id = $labRequest->service_id;
-
-                // Apply HMO tariff if patient has HMO
-                try {
-                    $hmoData = HmoHelper::applyHmoTariff(
-                        $labRequest->patient_id,
-                        null,
-                        $labRequest->service_id
-                    );
-                    if ($hmoData) {
-                        $billReq->payable_amount = $hmoData['payable_amount'];
-                        $billReq->claims_amount = $hmoData['claims_amount'];
-                        $billReq->coverage_mode = $hmoData['coverage_mode'];
-                        $billReq->validation_status = $hmoData['validation_status'];
-                    }
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'HMO Tariff Error: ' . $e->getMessage()
-                    ], 400);
+                // Reuse existing ProductOrServiceRequest created at reception when available.
+                // Only create a new billing record if none exists.
+                $billReq = null;
+                if (!empty($labRequest->service_request_id)) {
+                    $billReq = ProductOrServiceRequest::find($labRequest->service_request_id);
                 }
 
-                $billReq->save();
+                if (!$billReq) {
+                    $billReq = new ProductOrServiceRequest();
+                    $billReq->user_id = $labRequest->patient->user_id;
+                    $billReq->staff_user_id = Auth::id();
+                    $billReq->service_id = $labRequest->service_id;
+
+                    // Apply HMO tariff if patient has HMO
+                    try {
+                        $hmoData = HmoHelper::applyHmoTariff(
+                            $labRequest->patient_id,
+                            null,
+                            $labRequest->service_id
+                        );
+                        if ($hmoData) {
+                            $billReq->payable_amount = $hmoData['payable_amount'];
+                            $billReq->claims_amount = $hmoData['claims_amount'];
+                            $billReq->coverage_mode = $hmoData['coverage_mode'];
+                            $billReq->validation_status = $hmoData['validation_status'];
+                        }
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'HMO Tariff Error: ' . $e->getMessage()
+                        ], 400);
+                    }
+
+                    $billReq->save();
+                }
 
                 // Update lab request status to billed (2)
                 $labRequest->update([
