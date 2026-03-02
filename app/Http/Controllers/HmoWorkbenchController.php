@@ -105,7 +105,9 @@ class HmoWorkbenchController extends Controller
                     $query->whereNotNull('payment_id')
                           ->where('claims_amount', '>', 0);
                     break;
-                // 'all' - no filter
+                case 'all':
+                    $query->where('claims_amount', '>', 0); // Skip items with 0 claims
+                    break;
             }
         }
 
@@ -1133,7 +1135,9 @@ class HmoWorkbenchController extends Controller
                 ->where('claims_amount', '>', 0)
                 ->count(),
 
-            'all' => $baseQuery()->count(),
+            'all' => $baseQuery()
+                ->where('claims_amount', '>', 0)
+                ->count(),
 
             'approved_today' => $baseQuery()
                 ->where('validation_status', 'approved')
