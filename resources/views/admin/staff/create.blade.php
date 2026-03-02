@@ -118,11 +118,11 @@
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Specialization <small class="text-muted">(Doctors)</small></label>
-                                    {!! Form::select('specializations', $specializations, old('specialization'), ['class' => 'form-control form-control-modern', 'placeholder' => 'Select Specialization']) !!}
+                                    {!! Form::select('specialization', $specializations, old('specialization'), ['class' => 'form-control form-control-modern', 'placeholder' => 'Select Specialization']) !!}
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Clinic <small class="text-muted">(Doctors)</small></label>
-                                    {!! Form::select('clinics', $clinics, old('clinics'), ['class' => 'form-control form-control-modern', 'placeholder' => 'Select Clinic']) !!}
+                                    {!! Form::select('clinic', $clinics, old('clinic'), ['class' => 'form-control form-control-modern', 'placeholder' => 'Select Clinic']) !!}
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Consultation Fee <small class="text-muted">(Doctors)</small></label>
@@ -155,19 +155,18 @@
                                     <input type="date" class="form-control form-control-modern" name="date_hired" value="{{ old('date_hired') }}">
                                 </div>
                                 <div class="col-lg-3 col-md-6">
-                                    <label class="form-label-modern">Employment Type</label>
-                                    <select class="form-control form-control-modern" name="employment_type">
-                                        <option value="">Select Type</option>
-                                        <option value="full_time" {{ old('employment_type') == 'full_time' ? 'selected' : '' }}>Full Time</option>
+                                    <label class="form-label-modern">Employment Type <span class="text-danger">*</span></label>
+                                    <select class="form-control form-control-modern" name="employment_type" required>
+                                        <option value="full_time" {{ old('employment_type', 'full_time') == 'full_time' ? 'selected' : '' }}>Full Time</option>
                                         <option value="part_time" {{ old('employment_type') == 'part_time' ? 'selected' : '' }}>Part Time</option>
                                         <option value="contract" {{ old('employment_type') == 'contract' ? 'selected' : '' }}>Contract</option>
                                         <option value="intern" {{ old('employment_type') == 'intern' ? 'selected' : '' }}>Intern</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-3 col-md-6">
-                                    <label class="form-label-modern">Employment Status</label>
-                                    <select class="form-control form-control-modern" name="employment_status">
-                                        <option value="active" selected>Active</option>
+                                    <label class="form-label-modern">Employment Status <span class="text-danger">*</span></label>
+                                    <select class="form-control form-control-modern" name="employment_status" required>
+                                        <option value="active" {{ old('employment_status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
                                         <option value="suspended" {{ old('employment_status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
                                     </select>
                                 </div>
