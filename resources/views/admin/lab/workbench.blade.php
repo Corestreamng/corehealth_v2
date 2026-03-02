@@ -3447,6 +3447,7 @@
                         <div class="result-info-box">
                             <div class="result-info-row"><div class="result-info-label">Test Name:</div><div class="result-info-value invest_res_service_name_view"></div></div>
                             <div class="result-info-row"><div class="result-info-label">Test ID:</div><div class="result-info-value" id="res_test_id"></div></div>
+                            <div class="result-info-row"><div class="result-info-label">Lab Number:</div><div class="result-info-value" id="res_lab_number"></div></div>
                             <div class="result-info-row"><div class="result-info-label">Sample Date:</div><div class="result-info-value" id="res_sample_date"></div></div>
                             <div class="result-info-row"><div class="result-info-label">Result Date:</div><div class="result-info-value" id="res_result_date"></div></div>
                         </div>
@@ -3477,6 +3478,54 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal"><i class="fa fa-times"></i> Close</button>
                 <button type="button" onclick="PrintElem('resultViewTable')" class="btn btn-primary"><i class="mdi mdi-printer"></i> Print Results</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sample Collection Modal (Lab Number Assignment) -->
+<div class="modal fade" id="sampleCollectionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="mdi mdi-test-tube"></i> Collect Sample</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <!-- Lab Number Input -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-tag-text"></i> Lab Number</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="sample_lab_number" placeholder="Lab number..." readonly>
+                        <button type="button" class="btn btn-outline-primary" id="btnAutoLabNumber" title="Auto-generate lab number">
+                            <i class="mdi mdi-refresh"></i> Auto
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnManualLabNumber" title="Enter manually">
+                            <i class="mdi mdi-pencil"></i> Manual
+                        </button>
+                    </div>
+                    <small class="text-muted" id="labNumberFormatHint"></small>
+                    <div class="text-danger small mt-1 d-none" id="labNumberError"></div>
+                    <div class="text-warning small mt-1 d-none" id="labNumberDuplicateWarning"></div>
+                </div>
+
+                <!-- Recent Lab Numbers -->
+                <div class="mb-3 d-none" id="recentLabNumbersBox">
+                    <label class="form-label text-muted small">Recent Lab Numbers:</label>
+                    <div id="recentLabNumbersList" class="d-flex flex-wrap gap-1"></div>
+                </div>
+
+                <!-- Items Preview -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-flask-outline"></i> Items to Collect (<span id="sampleItemCount">0</span>)</label>
+                    <div id="sampleItemsList" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
+                <button type="button" class="btn btn-info text-white" id="btnConfirmCollectSample" disabled>
+                    <i class="mdi mdi-test-tube"></i> Collect Sample
+                </button>
             </div>
         </div>
     </div>
@@ -4119,6 +4168,44 @@ function initializeEventListeners() {
             initializeQueueDataTable(currentQueueFilter);
         }
     });
+
+    // ── Sample Collection Modal Buttons ──────────────────────────────
+    $('#btnAutoLabNumber').on('click', function() {
+        autoGenerateLabNumber();
+    });
+
+    $('#btnManualLabNumber').on('click', function() {
+        $('#sample_lab_number').prop('readonly', false).val('').focus();
+        $('#labNumberFormatHint').text('Enter lab number manually');
+        $('#btnConfirmCollectSample').prop('disabled', false);
+    });
+
+    $('#sample_lab_number').on('input', function() {
+        let val = $(this).val().trim();
+        $('#labNumberError').addClass('d-none');
+        $('#labNumberDuplicateWarning').addClass('d-none');
+        $('#btnConfirmCollectSample').prop('disabled', val.length === 0);
+
+        // Check for duplicates after typing stops
+        clearTimeout(window._labNumCheckTimeout);
+        if (val.length > 0) {
+            window._labNumCheckTimeout = setTimeout(function() {
+                $.get('{{ route("lab.checkLabNumber") }}', { lab_number: val }, function(data) {
+                    if (data.exists) {
+                        let warn = 'This lab number is already used by ' + data.count + ' item(s)';
+                        if (data.items && data.items.length > 0) {
+                            warn += ': ' + data.items.map(i => i.service_name).join(', ');
+                        }
+                        $('#labNumberDuplicateWarning').removeClass('d-none').text(warn);
+                    }
+                });
+            }, 500);
+        }
+    });
+
+    $('#btnConfirmCollectSample').on('click', function() {
+        confirmCollectSample();
+    });
 }
 
 function loadPatient(patientId) {
@@ -4739,6 +4826,9 @@ function createRequestCard(request, section) {
         if (request.sample_by_name) {
             metaItems += `<div><i class="mdi mdi-test-tube"></i> Sample: ${request.sample_by_name}${request.sample_at_formatted ? ' (' + request.sample_at_formatted + ')' : ''}</div>`;
         }
+        if (request.lab_number) {
+            metaItems += `<div><i class="mdi mdi-tag-text"></i> Lab#: <span class="badge bg-info text-white">${request.lab_number}</span></div>`;
+        }
         if (metaItems) {
             metaDetails = `<div class="request-card-audit small text-muted mt-2 pt-2 border-top">${metaItems}</div>`;
         }
@@ -5158,25 +5248,101 @@ function recordBilling(requestIds) {
 }
 
 function collectSample(requestIds) {
+    // Store IDs for the modal confirm action
+    window._pendingSampleIds = requestIds;
+
+    // Reset modal state
+    $('#sample_lab_number').val('').prop('readonly', true);
+    $('#labNumberError').addClass('d-none').text('');
+    $('#labNumberDuplicateWarning').addClass('d-none').text('');
+    $('#labNumberFormatHint').text('');
+    $('#recentLabNumbersBox').addClass('d-none');
+    $('#btnConfirmCollectSample').prop('disabled', true);
+
+    // Build items preview list
+    let itemsHtml = '';
+    requestIds.forEach(function(id) {
+        let card = $(`.request-card[data-request-id="${id}"]`);
+        let name = card.find('.request-service-name').text() || `Request #${id}`;
+        itemsHtml += `<div class="d-flex align-items-center gap-2 py-1 border-bottom">
+            <i class="mdi mdi-flask-outline text-info"></i>
+            <span class="small">${name}</span>
+        </div>`;
+    });
+    $('#sampleItemsList').html(itemsHtml);
+    $('#sampleItemCount').text(requestIds.length);
+
+    // Auto-generate lab number
+    autoGenerateLabNumber();
+
+    // Show modal
+    $('#sampleCollectionModal').modal('show');
+}
+
+// Auto-generate next lab number from server
+function autoGenerateLabNumber() {
+    $('#sample_lab_number').prop('readonly', true);
+    $('#btnConfirmCollectSample').prop('disabled', true);
+    $('#labNumberError').addClass('d-none');
+    $('#labNumberDuplicateWarning').addClass('d-none');
+
+    $.ajax({
+        url: '{{ route("lab.nextLabNumber") }}',
+        method: 'GET',
+        success: function(data) {
+            $('#sample_lab_number').val(data.lab_number);
+            $('#labNumberFormatHint').text('Format: ' + (data.format_example || data.lab_number));
+            $('#btnConfirmCollectSample').prop('disabled', false);
+
+            // Show recent lab numbers
+            if (data.recent_lab_numbers && data.recent_lab_numbers.length > 0) {
+                let recentHtml = '';
+                data.recent_lab_numbers.forEach(function(num) {
+                    recentHtml += `<span class="badge bg-light text-dark border">${num}</span>`;
+                });
+                $('#recentLabNumbersList').html(recentHtml);
+                $('#recentLabNumbersBox').removeClass('d-none');
+            }
+        },
+        error: function(xhr) {
+            $('#labNumberError').removeClass('d-none').text('Could not generate lab number. Please enter manually.');
+            $('#sample_lab_number').prop('readonly', false);
+        }
+    });
+}
+
+// Confirm sample collection from modal
+function confirmCollectSample() {
+    let labNumber = $('#sample_lab_number').val().trim();
+    if (!labNumber) {
+        $('#labNumberError').removeClass('d-none').text('Lab number is required.');
+        return;
+    }
+
+    let requestIds = window._pendingSampleIds || [];
+    if (requestIds.length === 0) return;
+
+    $('#btnConfirmCollectSample').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Collecting...');
+
     $.ajax({
         url: '{{ route("lab.collectSample") }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
             request_ids: requestIds,
-            patient_id: currentPatient
-        },
-        beforeSend: function() {
-            toastr.info(`Collecting samples for ${requestIds.length} item(s)...`);
+            patient_id: currentPatient,
+            lab_number: labNumber
         },
         success: function(response) {
-            toastr.success('Sample collection recorded successfully!');
+            toastr.success('Sample collection recorded — Lab# ' + labNumber);
+            $('#sampleCollectionModal').modal('hide');
             $('#cartReviewModal').modal('hide');
             $('#floating-cart').fadeOut(200);
             loadPatient(currentPatient);
         },
         error: function(xhr) {
             toastr.error('Error recording sample: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            $('#btnConfirmCollectSample').prop('disabled', false).html('<i class="mdi mdi-test-tube"></i> Collect Sample');
         }
     });
 }
@@ -5421,6 +5587,7 @@ function setResViewInModal(obj) {
 
     // Test information
     $('#res_test_id').html(res_obj.id);
+    $('#res_lab_number').html(res_obj.lab_number || 'N/A');
     $('#res_sample_date').html(res_obj.sample_date || 'N/A');
     $('#res_result_date').html(res_obj.result_date || 'N/A');
     $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);

@@ -388,6 +388,7 @@ class LabWorkbenchController extends Controller
                         'priority' => $request->priority ?? 'routine',
                         'approved_by' => $request->approved_by,
                         'approved_at' => $this->formatDateTime($request->approved_at),
+                        'lab_number' => $request->lab_number ?? null,
                     ];
                 })
                 ->rawColumns(['card_data'])
@@ -577,7 +578,8 @@ class LabWorkbenchController extends Controller
             $request->validate([
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:lab_service_requests,id',
-                'patient_id' => 'required|exists:patients,id'
+                'patient_id' => 'required|exists:patients,id',
+                'lab_number' => 'required|string|max:50'
             ]);
 
             DB::beginTransaction();
@@ -596,16 +598,17 @@ class LabWorkbenchController extends Controller
                     }
                 }
 
-                // Update lab request status to sample taken (3)
+                // Update lab request status to sample taken (3) with shared lab number
                 $labRequest->update([
                     'status' => 3,
                     'sample_taken_by' => Auth::id(),
                     'sample_date' => now(),
-                    'sample_taken' => true
+                    'sample_taken' => true,
+                    'lab_number' => $request->lab_number
                 ]);
 
                 // Log audit
-                $this->logAudit($labRequest->id, 'sample_collection', 'Sample collected');
+                $this->logAudit($labRequest->id, 'sample_collection', 'Sample collected with Lab# ' . $request->lab_number);
             }
 
             DB::commit();
@@ -673,6 +676,7 @@ class LabWorkbenchController extends Controller
             return response()->json([
                 'id' => $request->id,
                 'patient_id' => $request->patient_id,
+                'lab_number' => $request->lab_number,
                 'service' => [
                     'name' => $request->service->service_name ?? 'N/A',
                     'template_version' => !empty($request->service->result_template_v2) ? 2 : 1,
@@ -1983,5 +1987,143 @@ class LabWorkbenchController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Get the next sequential lab number.
+     * Uses the same increment-last-numeric-segment pattern as reception file numbers.
+     * Format examples: LAB-0001, LAB-0002 or whatever the facility already uses.
+     */
+    public function getNextLabNumber()
+    {
+        // Get the last 5 lab numbers for reference
+        $recentRequests = LabServiceRequest::whereNotNull('lab_number')
+            ->where('lab_number', '!=', '')
+            ->orderBy('id', 'desc')
+            ->limit(5)
+            ->get(['id', 'lab_number']);
+
+        $recentLabNumbers = $recentRequests->pluck('lab_number')->unique()->values()->toArray();
+
+        if ($recentRequests->isEmpty()) {
+            // No existing lab numbers — seed with default format LAB-0001
+            return response()->json([
+                'lab_number' => 'LAB-0001',
+                'last_lab_number' => null,
+                'recent_lab_numbers' => [],
+                'format_pattern' => 'LAB-####',
+                'format_example' => 'LAB-0001'
+            ]);
+        }
+
+        $lastLabNo = $recentRequests->first()->lab_number;
+        $nextLabNo = $this->incrementLastNumericSegment($lastLabNo);
+
+        // Detect and describe the format pattern
+        $formatInfo = $this->detectLabNumberFormat($lastLabNo);
+
+        return response()->json([
+            'lab_number' => $nextLabNo,
+            'last_lab_number' => $lastLabNo,
+            'recent_lab_numbers' => $recentLabNumbers,
+            'format_pattern' => $formatInfo['pattern'],
+            'format_example' => $formatInfo['example']
+        ]);
+    }
+
+    /**
+     * Check if a lab number already exists
+     */
+    public function checkLabNumberExists(Request $request)
+    {
+        $labNo = $request->input('lab_number');
+
+        $existing = LabServiceRequest::where('lab_number', $labNo)
+            ->with(['patient.user', 'service'])
+            ->limit(5)
+            ->get();
+
+        $items = $existing->map(function ($req) {
+            return [
+                'id' => $req->id,
+                'patient_name' => $req->patient && $req->patient->user
+                    ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
+                    : 'Unknown',
+                'service_name' => $req->service ? $req->service->service_name : 'N/A',
+                'lab_number' => $req->lab_number
+            ];
+        });
+
+        return response()->json([
+            'exists' => $existing->isNotEmpty(),
+            'count' => $existing->count(),
+            'items' => $items
+        ]);
+    }
+
+    /**
+     * Detect the format pattern of a lab number
+     */
+    private function detectLabNumberFormat(string $labNo): array
+    {
+        $pattern = '';
+        $example = '';
+
+        if (preg_match('/^([A-Za-z]+)[-]?(\d+)$/', $labNo, $matches)) {
+            // Format: LAB0001 or LAB-0001
+            $prefix = $matches[1];
+            $hasHyphen = strpos($labNo, '-') !== false;
+            $numLength = strlen($matches[2]);
+            $pattern = $prefix . ($hasHyphen ? '-' : '') . str_repeat('#', $numLength);
+            $example = $prefix . ($hasHyphen ? '-' : '') . str_pad('X', $numLength, '0', STR_PAD_LEFT);
+        } elseif (preg_match('/^(\d+)[-](\d+)[-](\d+)$/', $labNo, $matches)) {
+            // Format: 14-38-78
+            $pattern = str_repeat('#', strlen($matches[1])) . '-' . str_repeat('#', strlen($matches[2])) . '-' . str_repeat('#', strlen($matches[3]));
+            $example = 'XX-XX-XX';
+        } elseif (preg_match('/^(\d+)([A-Za-z]+)$/', $labNo, $matches)) {
+            // Format: 7809LAB
+            $numLength = strlen($matches[1]);
+            $suffix = $matches[2];
+            $pattern = str_repeat('#', $numLength) . $suffix;
+            $example = str_repeat('X', $numLength) . $suffix;
+        } elseif (preg_match('/^\d+$/', $labNo)) {
+            // Pure numeric
+            $pattern = str_repeat('#', strlen($labNo));
+            $example = 'Sequential number';
+        } else {
+            $pattern = 'Custom';
+            $example = $labNo;
+        }
+
+        return [
+            'pattern' => $pattern,
+            'example' => $example
+        ];
+    }
+
+    /**
+     * Increment only the last numeric segment of a lab number.
+     * Same logic as reception file number incrementing.
+     * Examples:
+     *   LAB-0001  → LAB-0002
+     *   LAB0099   → LAB0100
+     *   14-38-78  → 14-38-79
+     *   7809LAB   → 7810LAB
+     */
+    private function incrementLastNumericSegment(string $value): string
+    {
+        if (preg_match('/^(.*?)(\d+)(\D*)$/', $value, $matches)) {
+            $prefix = $matches[1];
+            $number = $matches[2];
+            $suffix = $matches[3];
+
+            $originalLength = strlen($number);
+            $incrementedNumber = intval($number) + 1;
+            $newNumber = str_pad($incrementedNumber, $originalLength, '0', STR_PAD_LEFT);
+
+            return $prefix . $newNumber . $suffix;
+        }
+
+        return $value . '1';
     }
 }

@@ -27,6 +27,7 @@ protected $fillable = [
         'sample_taken',
         'sample_date',
         'sample_taken_by',
+        'lab_number',
         'doctor_id',
         'note',
         'status',

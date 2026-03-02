@@ -443,6 +443,12 @@ class EncounterController extends Controller
                 $str .= '<div class="mb-2"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> '
                     . ((isset($his->result_by) && $his->result_by != null) ? (userfullname($his->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->result_date)) . ')</span>') : "<span class='badge bg-secondary'>Awaiting Results</span>");
                 $str .= '</div>';
+
+                // Lab Number
+                if (isset($his->lab_number) && $his->lab_number) {
+                    $str .= '<div class="mb-2"><i class="mdi mdi-tag-text text-info"></i> <b>Lab Number:</b> <span class="badge bg-info text-white">' . e($his->lab_number) . '</span></div>';
+                }
+
                 $str .= '</small></div>';
 
                 // Results section — hide for pending approval / rejected status
