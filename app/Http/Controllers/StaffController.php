@@ -526,26 +526,26 @@ class StaffController extends Controller
                 $staff->is_dept_head = $request->has('is_dept_head') ? true : false;
 
                 // HR Fields
-                $staff->employee_id = $request->employee_id ?? null;
-                $staff->date_hired = $request->date_hired ?? null;
-                $staff->employment_type = $request->employment_type ?? null;
-                $staff->employment_status = $request->employment_status ?? 'active';
-                $staff->job_title = $request->job_title ?? null;
-                $staff->department_id = $request->department_id ?? null;
+                $staff->employee_id = $request->employee_id ?: null;
+                $staff->date_hired = $request->date_hired ?: null;
+                $staff->employment_type = $request->employment_type ?: 'full_time';
+                $staff->employment_status = $request->employment_status ?: 'active';
+                $staff->job_title = $request->job_title ?: null;
+                $staff->department_id = $request->department_id ?: null;
 
                 // Bank information
-                $staff->bank_name = $request->bank_name ?? null;
-                $staff->bank_account_number = $request->bank_account_number ?? null;
-                $staff->bank_account_name = $request->bank_account_name ?? null;
+                $staff->bank_name = $request->bank_name ?: null;
+                $staff->bank_account_number = $request->bank_account_number ?: null;
+                $staff->bank_account_name = $request->bank_account_name ?: null;
 
                 // Emergency contact
-                $staff->emergency_contact_name = $request->emergency_contact_name ?? null;
-                $staff->emergency_contact_phone = $request->emergency_contact_phone ?? null;
-                $staff->emergency_contact_relationship = $request->emergency_contact_relationship ?? null;
+                $staff->emergency_contact_name = $request->emergency_contact_name ?: null;
+                $staff->emergency_contact_phone = $request->emergency_contact_phone ?: null;
+                $staff->emergency_contact_relationship = $request->emergency_contact_relationship ?: null;
 
                 // Tax & pension
-                $staff->tax_id = $request->tax_id ?? null;
-                $staff->pension_id = $request->pension_id ?? null;
+                $staff->tax_id = $request->tax_id ?: null;
+                $staff->pension_id = $request->pension_id ?: null;
 
                 if ($staff->save()) {
                     if (appsettings('goonline', 0) == 1) {
@@ -812,26 +812,26 @@ class StaffController extends Controller
                 $staff->is_dept_head = $request->has('is_dept_head') ? true : false;
 
                 // HR Fields
-                $staff->employee_id = $request->employee_id ?? $staff->employee_id;
-                $staff->date_hired = $request->date_hired ?? $staff->date_hired;
-                $staff->employment_type = $request->employment_type ?? $staff->employment_type;
-                $staff->employment_status = $request->employment_status ?? $staff->employment_status;
-                $staff->job_title = $request->job_title ?? $staff->job_title;
-                $staff->department_id = $request->department_id ?? $staff->department_id;
+                $staff->employee_id = $request->employee_id ?: ($staff->employee_id ?? null);
+                $staff->date_hired = $request->date_hired ?: ($staff->date_hired ?? null);
+                $staff->employment_type = $request->employment_type ?: ($staff->employment_type ?? 'full_time');
+                $staff->employment_status = $request->employment_status ?: ($staff->employment_status ?? 'active');
+                $staff->job_title = $request->job_title ?: ($staff->job_title ?? null);
+                $staff->department_id = $request->department_id ?: ($staff->department_id ?? null);
 
                 // Bank information
-                $staff->bank_name = $request->bank_name ?? $staff->bank_name;
-                $staff->bank_account_number = $request->bank_account_number ?? $staff->bank_account_number;
-                $staff->bank_account_name = $request->bank_account_name ?? $staff->bank_account_name;
+                $staff->bank_name = $request->bank_name ?: ($staff->bank_name ?? null);
+                $staff->bank_account_number = $request->bank_account_number ?: ($staff->bank_account_number ?? null);
+                $staff->bank_account_name = $request->bank_account_name ?: ($staff->bank_account_name ?? null);
 
                 // Emergency contact
-                $staff->emergency_contact_name = $request->emergency_contact_name ?? $staff->emergency_contact_name;
-                $staff->emergency_contact_phone = $request->emergency_contact_phone ?? $staff->emergency_contact_phone;
-                $staff->emergency_contact_relationship = $request->emergency_contact_relationship ?? $staff->emergency_contact_relationship;
+                $staff->emergency_contact_name = $request->emergency_contact_name ?: ($staff->emergency_contact_name ?? null);
+                $staff->emergency_contact_phone = $request->emergency_contact_phone ?: ($staff->emergency_contact_phone ?? null);
+                $staff->emergency_contact_relationship = $request->emergency_contact_relationship ?: ($staff->emergency_contact_relationship ?? null);
 
                 // Tax & pension
-                $staff->tax_id = $request->tax_id ?? $staff->tax_id;
-                $staff->pension_id = $request->pension_id ?? $staff->pension_id;
+                $staff->tax_id = $request->tax_id ?: ($staff->tax_id ?? null);
+                $staff->pension_id = $request->pension_id ?: ($staff->pension_id ?? null);
 
                 if ($staff->save()) {
                     // Send User an email with set password link
