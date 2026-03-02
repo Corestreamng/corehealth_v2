@@ -1424,37 +1424,45 @@ class PharmacyWorkbenchController extends Controller
 
                     $prodId = $productRequest->product_id;
 
-                    // Create ProductOrServiceRequest (billing record)
-                    $billReq = new ProductOrServiceRequest();
-                    $billReq->user_id = $request->patient_user_id;
-                    $billReq->staff_user_id = Auth::id();
-                    $billReq->product_id = $prodId;
-                    $billReq->qty = $productRequest->qty; // Use the qty from ProductRequest (may have been adjusted)
+                    // Reuse existing ProductOrServiceRequest created at reception when available.
+                    // Only create a new billing record if none exists.
+                    $billReq = null;
+                    if (!empty($productRequest->product_request_id)) {
+                        $billReq = ProductOrServiceRequest::find($productRequest->product_request_id);
+                    }
 
-                    \Log::info('PharmacyWorkbench: Before applyHmoTariff', [
-                        'product_request_id' => $productRequest->id,
-                        'product_id' => $prodId,
-                        'qty_from_product_request' => $productRequest->qty,
-                        'billReq_qty_before' => $billReq->qty
-                    ]);
+                    if (!$billReq) {
+                        $billReq = new ProductOrServiceRequest();
+                        $billReq->user_id = $request->patient_user_id;
+                        $billReq->staff_user_id = Auth::id();
+                        $billReq->product_id = $prodId;
+                        $billReq->qty = $productRequest->qty; // Use the qty from ProductRequest (may have been adjusted)
 
-                    // Apply HMO tariff if patient has HMO
-                    $this->applyHmoTariffToRequest($billReq, $patient, $prodId, $productRequest->product, $productRequest->qty);
+                        \Log::info('PharmacyWorkbench: Before applyHmoTariff', [
+                            'product_request_id' => $productRequest->id,
+                            'product_id' => $prodId,
+                            'qty_from_product_request' => $productRequest->qty,
+                            'billReq_qty_before' => $billReq->qty
+                        ]);
 
-                    \Log::info('PharmacyWorkbench: After applyHmoTariff', [
-                        'product_request_id' => $productRequest->id,
-                        'billReq_qty_after' => $billReq->qty,
-                        'payable_amount' => $billReq->payable_amount,
-                        'claims_amount' => $billReq->claims_amount
-                    ]);
+                        // Apply HMO tariff if patient has HMO
+                        $this->applyHmoTariffToRequest($billReq, $patient, $prodId, $productRequest->product, $productRequest->qty);
 
-                    $billReq->save();
+                        \Log::info('PharmacyWorkbench: After applyHmoTariff', [
+                            'product_request_id' => $productRequest->id,
+                            'billReq_qty_after' => $billReq->qty,
+                            'payable_amount' => $billReq->payable_amount,
+                            'claims_amount' => $billReq->claims_amount
+                        ]);
 
-                    \Log::info('PharmacyWorkbench: After save', [
-                        'product_request_id' => $productRequest->id,
-                        'bill_request_id' => $billReq->id,
-                        'saved_qty' => $billReq->qty
-                    ]);
+                        $billReq->save();
+
+                        \Log::info('PharmacyWorkbench: After save', [
+                            'product_request_id' => $productRequest->id,
+                            'bill_request_id' => $billReq->id,
+                            'saved_qty' => $billReq->qty
+                        ]);
+                    }
 
                     // Update ProductRequest to billed status
                     // Note: Stock is NOT deducted at billing - it will be deducted at dispense
