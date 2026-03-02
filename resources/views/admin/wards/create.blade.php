@@ -62,13 +62,27 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="capacity" class="control-label">Capacity</label>
+                                <label for="capacity" class="control-label">Number of Beds</label>
                                 <input type="number" class="form-control @error('capacity') is-invalid @enderror"
                                     id="capacity" name="capacity" value="{{ old('capacity') }}"
-                                    min="1" placeholder="Max beds">
+                                    min="0" placeholder="e.g., 20">
                                 @error('capacity')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
+                                <small class="form-text text-muted">Beds will be auto-created as: Bed 1 - Ward Name, Bed 2 - Ward Name, ...</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="bed_price" class="control-label">Bed Price</label>
+                                <input type="number" step="0.01" class="form-control @error('bed_price') is-invalid @enderror"
+                                    id="bed_price" name="bed_price" value="{{ old('bed_price') }}"
+                                    min="0" placeholder="e.g., 15000">
+                                @error('bed_price')
+                                    <span class="invalid-feedback">{{ $message }}</span>
+                                @enderror
+                                <small class="form-text text-muted">This price will be applied to all beds in this ward.</small>
                             </div>
                         </div>
 
