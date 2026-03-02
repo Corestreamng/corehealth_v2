@@ -479,34 +479,42 @@ class ImagingWorkbenchController extends Controller
             foreach ($request->request_ids as $requestId) {
                 $imagingRequest = ImagingServiceRequest::findOrFail($requestId);
 
-                // Create ProductOrServiceRequest for billing
-                $billReq = new ProductOrServiceRequest();
-                $billReq->user_id = $imagingRequest->patient->user_id;
-                $billReq->staff_user_id = Auth::id();
-                $billReq->service_id = $imagingRequest->service_id;
-
-                // Apply HMO tariff if patient has HMO
-                try {
-                    $hmoData = HmoHelper::applyHmoTariff(
-                        $imagingRequest->patient_id,
-                        null,
-                        $imagingRequest->service_id
-                    );
-                    if ($hmoData) {
-                        $billReq->payable_amount = $hmoData['payable_amount'];
-                        $billReq->claims_amount = $hmoData['claims_amount'];
-                        $billReq->coverage_mode = $hmoData['coverage_mode'];
-                        $billReq->validation_status = $hmoData['validation_status'];
-                    }
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'HMO Tariff Error: ' . $e->getMessage()
-                    ], 400);
+                // Reuse existing ProductOrServiceRequest created at reception when available.
+                // Only create a new billing record if none exists.
+                $billReq = null;
+                if (!empty($imagingRequest->service_request_id)) {
+                    $billReq = ProductOrServiceRequest::find($imagingRequest->service_request_id);
                 }
 
-                $billReq->save();
+                if (!$billReq) {
+                    $billReq = new ProductOrServiceRequest();
+                    $billReq->user_id = $imagingRequest->patient->user_id;
+                    $billReq->staff_user_id = Auth::id();
+                    $billReq->service_id = $imagingRequest->service_id;
+
+                    // Apply HMO tariff if patient has HMO
+                    try {
+                        $hmoData = HmoHelper::applyHmoTariff(
+                            $imagingRequest->patient_id,
+                            null,
+                            $imagingRequest->service_id
+                        );
+                        if ($hmoData) {
+                            $billReq->payable_amount = $hmoData['payable_amount'];
+                            $billReq->claims_amount = $hmoData['claims_amount'];
+                            $billReq->coverage_mode = $hmoData['coverage_mode'];
+                            $billReq->validation_status = $hmoData['validation_status'];
+                        }
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'HMO Tariff Error: ' . $e->getMessage()
+                        ], 400);
+                    }
+
+                    $billReq->save();
+                }
 
                 // Update imaging request status to billed (2 = awaiting results)
                 // No sample collection stage for imaging
