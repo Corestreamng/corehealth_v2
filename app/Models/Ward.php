@@ -35,6 +35,7 @@ class Ward extends Model implements Auditable
         'code',
         'type',
         'capacity',
+        'bed_price',
         'floor',
         'building',
         'nurse_station',
@@ -46,6 +47,7 @@ class Ward extends Model implements Auditable
 
     protected $casts = [
         'capacity' => 'integer',
+        'bed_price' => 'decimal:2',
         'nurse_patient_ratio' => 'decimal:1',
         'is_active' => 'boolean',
     ];
