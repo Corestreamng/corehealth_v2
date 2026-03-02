@@ -533,6 +533,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/lab-workbench/filter-hmos', [\App\Http\Controllers\LabWorkbenchController::class, 'getHmosForFilter'])->name('lab.filterHmos');
         Route::get('/lab-workbench/filter-services', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabServicesForFilter'])->name('lab.filterServices');
 
+        // Lab Number Routes
+        Route::get('/lab-workbench/next-lab-number', [\App\Http\Controllers\LabWorkbenchController::class, 'getNextLabNumber'])->name('lab.nextLabNumber');
+        Route::get('/lab-workbench/check-lab-number', [\App\Http\Controllers\LabWorkbenchController::class, 'checkLabNumberExists'])->name('lab.checkLabNumber');
+
         // Lab Result Approval Routes
         Route::get('/lab-workbench/approval-queue', [\App\Http\Controllers\LabWorkbenchController::class, 'getApprovalQueue'])->name('lab.approvalQueue');
         Route::get('/lab-workbench/approval-count', [\App\Http\Controllers\LabWorkbenchController::class, 'getApprovalCount'])->name('lab.approvalCount');

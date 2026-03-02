@@ -60,7 +60,8 @@ window.InvestResultEntry = (function() {
                 }
                 // Set Edit Mode UI
                 $('#invest_res_is_edit').val(1);
-                $('#investResModalLabel').html('Edit Result (<span id="invest_res_service_name_edit">' + (request.service ? request.service.name : '') + '</span>)');
+                let editLabBadge = request.lab_number ? ' <span class="badge bg-info text-white ms-2"><i class="mdi mdi-tag-text"></i> Lab# ' + request.lab_number + '</span>' : '';
+                $('#investResModalLabel').html('Edit Result (<span id="invest_res_service_name_edit">' + (request.service ? request.service.name : '') + '</span>)' + editLabBadge);
                 $('#investResForm button[type="submit"]').html('<i class="mdi mdi-content-save"></i> Update Result');
                 $('#investResModal').modal('show');
             },
@@ -83,7 +84,8 @@ window.InvestResultEntry = (function() {
         $('#existing_attachments_list').html('');
 
         // Reset title back to default
-        $('#investResModalLabel').html('Enter Result (<span id="invest_res_service_name">' + (request.service ? request.service.name : '') + '</span>)');
+        let labNumberBadge = request.lab_number ? ' <span class="badge bg-info text-white ms-2"><i class="mdi mdi-tag-text"></i> Lab# ' + request.lab_number + '</span>' : '';
+        $('#investResModalLabel').html('Enter Result (<span id="invest_res_service_name">' + (request.service ? request.service.name : '') + '</span>)' + labNumberBadge);
         $('#investResForm button[type="submit"]').html('<i class="mdi mdi-content-save"></i> Save Result');
 
         // Check template version
