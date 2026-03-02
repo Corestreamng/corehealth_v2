@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bed;
 use App\Models\Ward;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
@@ -106,7 +108,8 @@ class WardController extends Controller
             'name' => 'required|string|max:255|unique:wards,name',
             'code' => 'nullable|string|max:20|unique:wards,code',
             'type' => 'required|in:' . implode(',', array_keys(Ward::TYPES)),
-            'capacity' => 'nullable|integer|min:1',
+            'capacity' => 'nullable|integer|min:0',
+            'bed_price' => 'nullable|numeric|min:0',
             'floor' => 'nullable|string|max:50',
             'building' => 'nullable|string|max:100',
             'nurse_station' => 'nullable|string|max:255',
@@ -121,19 +124,26 @@ class WardController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $ward = Ward::create([
-            'name' => $request->name,
-            'code' => $request->code,
-            'type' => $request->type,
-            'capacity' => $request->capacity,
-            'floor' => $request->floor,
-            'building' => $request->building,
-            'nurse_station' => $request->nurse_station,
-            'contact_extension' => $request->contact_extension,
-            'nurse_patient_ratio' => $request->nurse_patient_ratio,
-            'is_active' => $request->has('is_active'),
-            'created_by' => auth()->id(),
-        ]);
+        $ward = DB::transaction(function () use ($request) {
+            $createdWard = Ward::create([
+                'name' => $request->name,
+                'code' => $request->code,
+                'type' => $request->type,
+                'capacity' => $request->capacity,
+                'bed_price' => $request->bed_price,
+                'floor' => $request->floor,
+                'building' => $request->building,
+                'nurse_station' => $request->nurse_station,
+                'contact_extension' => $request->contact_extension,
+                'nurse_patient_ratio' => $request->nurse_patient_ratio,
+                'is_active' => $request->has('is_active'),
+                'created_by' => auth()->id(),
+            ]);
+
+            $this->syncWardBeds($createdWard);
+
+            return $createdWard;
+        });
 
         Alert::success('Success', 'Ward "' . $ward->name . '" created successfully!');
         return redirect()->route('wards.index');
@@ -180,7 +190,8 @@ class WardController extends Controller
             'name' => 'required|string|max:255|unique:wards,name,' . $ward->id,
             'code' => 'nullable|string|max:20|unique:wards,code,' . $ward->id,
             'type' => 'required|in:' . implode(',', array_keys(Ward::TYPES)),
-            'capacity' => 'nullable|integer|min:1',
+            'capacity' => 'nullable|integer|min:0',
+            'bed_price' => 'nullable|numeric|min:0',
             'floor' => 'nullable|string|max:50',
             'building' => 'nullable|string|max:100',
             'nurse_station' => 'nullable|string|max:255',
@@ -195,18 +206,25 @@ class WardController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $ward->update([
-            'name' => $request->name,
-            'code' => $request->code,
-            'type' => $request->type,
-            'capacity' => $request->capacity,
-            'floor' => $request->floor,
-            'building' => $request->building,
-            'nurse_station' => $request->nurse_station,
-            'contact_extension' => $request->contact_extension,
-            'nurse_patient_ratio' => $request->nurse_patient_ratio,
-            'is_active' => $request->has('is_active'),
-        ]);
+        DB::transaction(function () use ($request, $ward) {
+            $previousWardName = $ward->name;
+
+            $ward->update([
+                'name' => $request->name,
+                'code' => $request->code,
+                'type' => $request->type,
+                'capacity' => $request->capacity,
+                'bed_price' => $request->bed_price,
+                'floor' => $request->floor,
+                'building' => $request->building,
+                'nurse_station' => $request->nurse_station,
+                'contact_extension' => $request->contact_extension,
+                'nurse_patient_ratio' => $request->nurse_patient_ratio,
+                'is_active' => $request->has('is_active'),
+            ]);
+
+            $this->syncWardBeds($ward->fresh(), $previousWardName);
+        });
 
         Alert::success('Success', 'Ward "' . $ward->name . '" updated successfully!');
         return redirect()->route('wards.index');
@@ -291,5 +309,80 @@ class WardController extends Controller
         });
 
         return response()->json($result);
+    }
+
+    /**
+     * Ensure ward beds are created from capacity and priced from ward bed_price.
+     * Beds are auto-created only when exact names do not already exist.
+     */
+    private function syncWardBeds(Ward $ward, ?string $previousWardName = null): void
+    {
+        $capacity = max(0, (int) ($ward->capacity ?? 0));
+        $bedPrice = $ward->bed_price ?? 0;
+
+        if ($previousWardName && $previousWardName !== $ward->name) {
+            $this->renameAutoGeneratedBedsForWard($ward, $previousWardName);
+        }
+
+        for ($index = 1; $index <= $capacity; $index++) {
+            $bedName = 'Bed ' . $index . ' - ' . $ward->name;
+
+            $existing = Bed::where('ward_id', $ward->id)
+                ->where('name', $bedName)
+                ->first();
+
+            if (!$existing) {
+                Bed::create([
+                    'name' => $bedName,
+                    'ward_id' => $ward->id,
+                    'ward' => $ward->name,
+                    'price' => $bedPrice,
+                    'status' => 1,
+                    'bed_status' => 'available',
+                ]);
+            }
+        }
+
+        // Keep legacy ward text in sync and apply ward bed price to all beds in this ward.
+        $ward->beds()->update([
+            'ward' => $ward->name,
+            'price' => $bedPrice,
+        ]);
+    }
+
+    /**
+     * Rename auto-generated beds when ward name changes.
+     * Only exact old pattern names are renamed.
+     */
+    private function renameAutoGeneratedBedsForWard(Ward $ward, string $oldWardName): void
+    {
+        $prefix = 'Bed ';
+        $oldSuffix = ' - ' . $oldWardName;
+
+        $ward->beds()
+            ->where('name', 'like', $prefix . '%')
+            ->where('name', 'like', '%' . $oldSuffix)
+            ->get()
+            ->each(function (Bed $bed) use ($ward, $oldWardName, $prefix, $oldSuffix) {
+                if (!str_starts_with($bed->name, $prefix) || !str_ends_with($bed->name, $oldSuffix)) {
+                    return;
+                }
+
+                $numberPart = substr($bed->name, strlen($prefix), -strlen($oldSuffix));
+                if (!ctype_digit($numberPart)) {
+                    return;
+                }
+
+                $newName = $prefix . $numberPart . ' - ' . $ward->name;
+
+                $exists = Bed::where('ward_id', $ward->id)
+                    ->where('name', $newName)
+                    ->where('id', '!=', $bed->id)
+                    ->exists();
+
+                if (!$exists) {
+                    $bed->update(['name' => $newName]);
+                }
+            });
     }
 }
