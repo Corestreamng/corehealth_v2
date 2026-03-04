@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QueueStatus;
 use App\Models\VitalSign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -88,10 +89,13 @@ class VitalSignController extends Controller
 
             $vitalSign->save();
 
-            //update all doc queues for the patient, so that they no longer show on the viatls queue
-            $doQueue = DoctorQueue::where('patient_id', $request->patient_id)->update([
-                'vitals_taken' => true
-            ]);
+            //update today's doc queues for the patient, so that they no longer show on the vitals queue
+            $doQueue = DoctorQueue::where('patient_id', $request->patient_id)
+                ->whereDate('created_at', Carbon::today())
+                ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])
+                ->update([
+                    'vitals_taken' => true
+                ]);
             DB::commit();
 
             if ($request->wantsJson()) {
@@ -156,7 +160,7 @@ class VitalSignController extends Controller
 
         // Base query
         $query = DoctorQueue::with(['patient', 'doctor', 'receptionist'])
-            ->where('status', 1)
+            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])
             ->where('vitals_taken', false)
             ->where('created_at', '>', $timeThreshold);
 
