@@ -35,9 +35,9 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductOrServiceRequestController;
 use App\Http\Controllers\ProductRequestController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\serviceCategoryController;
+use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\servicePriceController;
+use App\Http\Controllers\ServicePriceController;
 use App\Http\Controllers\ProcedureCategoryController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockController;
@@ -282,6 +282,32 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('clinic-note-templates/{clinic_note_template}', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'update'])->name('clinic-note-templates.update');
         Route::post('clinic-note-templates/{clinic_note_template}/toggle', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'toggle'])->name('clinic-note-templates.toggle');
         Route::delete('clinic-note-templates/{clinic_note_template}', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'destroy'])->name('clinic-note-templates.destroy');
+
+        // Clinic Schedules & Doctor Availability Management
+        Route::get('clinic-schedules', [\App\Http\Controllers\ClinicScheduleController::class, 'index'])->name('clinic-schedules.index');
+
+        // Clinic weekly schedule CRUD
+        Route::get('clinic-schedules/data', [\App\Http\Controllers\ClinicScheduleController::class, 'clinicScheduleData'])->name('clinic-schedules.data');
+        Route::post('clinic-schedules', [\App\Http\Controllers\ClinicScheduleController::class, 'storeClinicSchedule'])->name('clinic-schedules.store');
+        Route::get('clinic-schedules/{schedule}', [\App\Http\Controllers\ClinicScheduleController::class, 'showClinicSchedule'])->name('clinic-schedules.show');
+        Route::put('clinic-schedules/{schedule}', [\App\Http\Controllers\ClinicScheduleController::class, 'updateClinicSchedule'])->name('clinic-schedules.update');
+        Route::post('clinic-schedules/{schedule}/toggle', [\App\Http\Controllers\ClinicScheduleController::class, 'toggleClinicSchedule'])->name('clinic-schedules.toggle');
+        Route::delete('clinic-schedules/{schedule}', [\App\Http\Controllers\ClinicScheduleController::class, 'destroyClinicSchedule'])->name('clinic-schedules.destroy');
+
+        // Doctor availability CRUD
+        Route::get('doctor-availability/data', [\App\Http\Controllers\ClinicScheduleController::class, 'doctorAvailabilityData'])->name('doctor-availability.data');
+        Route::post('doctor-availability', [\App\Http\Controllers\ClinicScheduleController::class, 'storeDoctorAvailability'])->name('doctor-availability.store');
+        Route::get('doctor-availability/{availability}', [\App\Http\Controllers\ClinicScheduleController::class, 'showDoctorAvailability'])->name('doctor-availability.show');
+        Route::put('doctor-availability/{availability}', [\App\Http\Controllers\ClinicScheduleController::class, 'updateDoctorAvailability'])->name('doctor-availability.update');
+        Route::post('doctor-availability/{availability}/toggle', [\App\Http\Controllers\ClinicScheduleController::class, 'toggleDoctorAvailability'])->name('doctor-availability.toggle');
+        Route::delete('doctor-availability/{availability}', [\App\Http\Controllers\ClinicScheduleController::class, 'destroyDoctorAvailability'])->name('doctor-availability.destroy');
+
+        // Doctor availability overrides CRUD
+        Route::get('doctor-availability-overrides/data', [\App\Http\Controllers\ClinicScheduleController::class, 'overrideData'])->name('doctor-availability-overrides.data');
+        Route::post('doctor-availability-overrides', [\App\Http\Controllers\ClinicScheduleController::class, 'storeOverride'])->name('doctor-availability-overrides.store');
+        Route::get('doctor-availability-overrides/{override}', [\App\Http\Controllers\ClinicScheduleController::class, 'showOverride'])->name('doctor-availability-overrides.show');
+        Route::put('doctor-availability-overrides/{override}', [\App\Http\Controllers\ClinicScheduleController::class, 'updateOverride'])->name('doctor-availability-overrides.update');
+        Route::delete('doctor-availability-overrides/{override}', [\App\Http\Controllers\ClinicScheduleController::class, 'destroyOverride'])->name('doctor-availability-overrides.destroy');
 
         // Medical Reports
         Route::post('medical-reports', [\App\Http\Controllers\MedicalReportController::class, 'store'])->name('medical-reports.store');
@@ -885,6 +911,12 @@ require __DIR__ . '/nurse_chart.php';
 
 // Reception Workbench routes
 require __DIR__ . '/reception_workbench.php';
+
+// Appointment & Scheduling routes
+require __DIR__ . '/appointments.php';
+
+// Specialist Referral routes
+require __DIR__ . '/referrals.php';
 
 // Emergency Intake routes
 require __DIR__ . '/emergency_intake.php';

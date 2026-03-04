@@ -62,6 +62,9 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
+                    {{-- Consultation Timer --}}
+                    @include('admin.doctors.partials.consultation_timer')
+
                     @if (isset($admission_request))
                         <!-- Patient has admission request - show status and discharge button -->
                         <div class="d-flex align-items-center me-2 px-3 py-1 bg-light rounded border">
@@ -169,6 +172,12 @@
             <button class="nav-link" id="admissions_tab" data-bs-toggle="tab" data-bs-target="#admissions"
                 type="button" role="tab" aria-controls="admissions" aria-selected="false">
                 <i class="fa fa-bed me-1"></i> Admission History
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="referrals_tab" data-bs-toggle="tab" data-bs-target="#referrals"
+                type="button" role="tab" aria-controls="referrals" aria-selected="false">
+                <i class="mdi mdi-account-switch me-1"></i> Referrals <span class="badge bg-purple ms-1" id="referral-count-badge" style="display:none;">0</span>
             </button>
         </li>
     </ul>
@@ -388,6 +397,89 @@
             <div class="card-modern mt-2">
                 <div class="card-body">
                     @include('admin.patients.partials.admissions')
+                </div>
+            </div>
+        </div>
+
+        {{-- Referrals Tab --}}
+        <div class="tab-pane fade" id="referrals" role="tabpanel" aria-labelledby="referrals_tab">
+            <div class="card-modern mt-2">
+                <div class="card-body">
+                    {{-- Create Referral Section --}}
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="mdi mdi-account-plus me-1"></i> Create Specialist Referral</h6>
+                            <button type="button" class="btn btn-sm btn-primary" id="toggle-referral-form-btn" onclick="$('#referral-form-card').toggle()">
+                                <i class="fa fa-plus"></i> New Referral
+                            </button>
+                        </div>
+                        <div class="card-body d-none" id="referral-form-card">
+                            <form id="create-referral-form">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label fw-bold">Referral Type</label>
+                                        <select name="type" class="form-select form-select-sm" id="referral-type-select">
+                                            <option value="internal">Internal (Within Hospital)</option>
+                                            <option value="external">External (Outside Hospital)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-2" id="referral-clinic-group">
+                                        <label class="form-label fw-bold">Referred To Clinic</label>
+                                        <select name="referred_to_clinic_id" class="form-select form-select-sm">
+                                            <option value="">-- Select Clinic --</option>
+                                            @foreach(\App\Models\Clinic::orderBy('name')->get() as $clinic)
+                                                <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-2" id="referral-doctor-group">
+                                        <label class="form-label fw-bold">Referred To Doctor</label>
+                                        <select name="referred_to_doctor_id" class="form-select form-select-sm">
+                                            <option value="">-- Select Doctor (Optional) --</option>
+                                            @foreach(\App\Models\Staff::whereHas('user', function($q) { $q->where('role_id', '!=', 0); })->orderBy('firstname')->get() as $staff)
+                                                <option value="{{ $staff->id }}">{{ $staff->firstname }} {{ $staff->lastname }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-2" id="referral-facility-group" style="display:none;">
+                                        <label class="form-label fw-bold">External Facility</label>
+                                        <input type="text" name="external_facility" class="form-control form-control-sm" placeholder="Hospital/Clinic name">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label fw-bold">Urgency</label>
+                                        <select name="urgency" class="form-select form-select-sm">
+                                            <option value="routine">Routine</option>
+                                            <option value="urgent">Urgent</option>
+                                            <option value="emergency">Emergency</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label fw-bold">Clinical Indication</label>
+                                        <input type="text" name="clinical_indication" class="form-control form-control-sm" placeholder="e.g., Suspected fracture">
+                                    </div>
+                                    <div class="col-12 mb-2">
+                                        <label class="form-label fw-bold">Referral Notes</label>
+                                        <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Additional notes for the specialist..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="$('#referral-form-card').addClass('d-none')">Cancel</button>
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="mdi mdi-send"></i> Submit Referral
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {{-- Existing Referrals List --}}
+                    <div id="referrals-list-container">
+                        <div class="text-center text-muted py-3" id="referrals-loading">
+                            <i class="fa fa-spinner fa-spin"></i> Loading referrals...
+                        </div>
+                        <div id="referrals-list"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3282,6 +3374,13 @@
         const patientId = '{{ request()->get("patient_id") }}';
         const queueId = '{{ request()->get("queue_id") ?? "ward_round" }}';
 
+        // Initialize consultation timer
+        $(function() {
+            if (typeof ConsultationTimer !== 'undefined') {
+                ConsultationTimer.init(queueId);
+            }
+        });
+
         // Patient weight from last vital that recorded a weight (for dose calculators)
         window.patientWeight = <?php echo json_encode(\App\Models\VitalSign::where('patient_id', $patient->id)->whereNotNull('weight')->where('weight', '>', 0)->orderBy('created_at', 'desc')->value('weight')); ?>;
 
@@ -4081,6 +4180,48 @@
 
                     <hr>
 
+                    {{-- Follow-Up Scheduling Section --}}
+                    <div class="mb-3">
+                        <h6 style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="mdi mdi-calendar-clock"></i> Schedule Follow-Up</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="schedule-followup-check">
+                            <label class="form-check-label" for="schedule-followup-check">Schedule a follow-up appointment for this patient</label>
+                        </div>
+                        <div id="followup-fields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label fw-bold small">Follow-Up Date</label>
+                                    <input type="date" class="form-control form-control-sm" id="followup-date" min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label fw-bold small">Time Slot</label>
+                                    <select class="form-select form-select-sm" id="followup-time-slot">
+                                        <option value="">-- Select date first --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label fw-bold small">Priority</label>
+                                    <select class="form-select form-select-sm" id="followup-priority">
+                                        <option value="routine">Routine</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8 mb-2">
+                                    <label class="form-label fw-bold small">Follow-Up Notes</label>
+                                    <input type="text" class="form-control form-control-sm" id="followup-notes" placeholder="e.g., Review blood test results">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="followup-prepaid">
+                                        <label class="form-check-label small" for="followup-prepaid">Pre-paid (skip billing at check-in)</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
                     <div class="alert alert-info">
                         <i class="fa fa-info-circle"></i>
                         <strong>Note:</strong> Clicking "Complete Encounter" will finalize this consultation.
@@ -4358,28 +4499,69 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Completing...';
 
-        $.ajax({
-            url: `/encounters/${encounterId}/finalize`,
-            method: 'POST',
-            data: {
-                end_consultation: 0,
-                consult_admit: 0,
-                admit_note: '',
-                queue_id: queueId,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                showMessage('modal_finalize_message', response.message, 'success');
-                setTimeout(() => {
-                    window.location.href = response.redirect;
-                }, 1500);
-            },
-            error: function(xhr) {
-                const message = xhr.responseJSON?.message || 'Error completing encounter';
-                showMessage('modal_finalize_message', message, 'error');
+        // First: schedule follow-up if opted in
+        var followUpPromise = Promise.resolve();
+        if ($('#schedule-followup-check').is(':checked')) {
+            var fuDate = $('#followup-date').val();
+            var fuSlot = $('#followup-time-slot').val();
+            if (!fuDate) {
+                showMessage('modal_finalize_message', 'Please select a follow-up date', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa fa-check-circle"></i> Complete Encounter';
+                return;
             }
+            followUpPromise = new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: '/encounters/' + encounterId + '/schedule-followup',
+                    method: 'POST',
+                    data: {
+                        appointment_date: fuDate,
+                        start_time: fuSlot || null,
+                        priority: $('#followup-priority').val(),
+                        notes: $('#followup-notes').val(),
+                        is_prepaid: $('#followup-prepaid').is(':checked') ? 1 : 0,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(res) {
+                        resolve(res);
+                    },
+                    error: function(xhr) {
+                        // Non-critical — log but continue with finalization
+                        console.warn('Follow-up scheduling failed:', xhr.responseJSON?.message);
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        followUpPromise.then(function(followUpResult) {
+            $.ajax({
+                url: `/encounters/${encounterId}/finalize`,
+                method: 'POST',
+                data: {
+                    end_consultation: 0,
+                    consult_admit: 0,
+                    admit_note: '',
+                    queue_id: queueId,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    var msg = response.message;
+                    if (followUpResult && followUpResult.appointment) {
+                        msg += ' Follow-up scheduled for ' + followUpResult.appointment.appointment_date + '.';
+                    }
+                    showMessage('modal_finalize_message', msg, 'success');
+                    setTimeout(() => {
+                        window.location.href = response.redirect;
+                    }, 1500);
+                },
+                error: function(xhr) {
+                    const message = xhr.responseJSON?.message || 'Error completing encounter';
+                    showMessage('modal_finalize_message', message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-check-circle"></i> Complete Encounter';
+                }
+            });
         });
     }
 
@@ -4462,6 +4644,163 @@
                     orderable: false
                 }],
                 "paging": true
+            });
+        });
+    </script>
+
+    {{-- Referral Tab JS --}}
+    <script>
+        // ─── Follow-Up Scheduling Toggle & Slot Loading ────────────────
+        $('#schedule-followup-check').on('change', function() {
+            $('#followup-fields').toggle(this.checked);
+        });
+
+        $('#followup-date').on('change', function() {
+            var date = $(this).val();
+            var $slot = $('#followup-time-slot');
+            if (!date) {
+                $slot.html('<option value="">-- Select date first --</option>');
+                return;
+            }
+            $slot.html('<option value="">Loading...</option>');
+            $.ajax({
+                url: "{{ route('appointments.available-slots') }}",
+                type: 'GET',
+                data: { date: date },
+                success: function(data) {
+                    var html = '<option value="">-- Select time (optional) --</option>';
+                    if (data.slots && data.slots.length > 0) {
+                        data.slots.forEach(function(slot) {
+                            if (slot.available) {
+                                html += '<option value="' + slot.time + '">' + slot.time + '</option>';
+                            }
+                        });
+                    } else {
+                        html += '<option value="" disabled>No slots available</option>';
+                    }
+                    $slot.html(html);
+                },
+                error: function() {
+                    $slot.html('<option value="">-- Error loading slots --</option>');
+                }
+            });
+        });
+
+        // Toggle internal/external referral fields
+        $(document).on('change', '#referral-type-select', function() {
+            if ($(this).val() === 'external') {
+                $('#referral-clinic-group, #referral-doctor-group').hide();
+                $('#referral-facility-group').show();
+            } else {
+                $('#referral-clinic-group, #referral-doctor-group').show();
+                $('#referral-facility-group').hide();
+            }
+        });
+
+        // Show referral form
+        $(document).on('click', '#toggle-referral-form-btn', function() {
+            $('#referral-form-card').toggleClass('d-none');
+        });
+
+        // Load referrals when tab is shown
+        $('button[data-bs-target="#referrals"]').on('shown.bs.tab', function() {
+            loadEncounterReferrals();
+        });
+
+        function loadEncounterReferrals() {
+            $.ajax({
+                url: '/encounters/' + encounterId + '/referrals',
+                type: 'GET',
+                success: function(data) {
+                    $('#referrals-loading').hide();
+                    var html = '';
+                    if (data.referrals && data.referrals.length > 0) {
+                        $('#referral-count-badge').text(data.referrals.length).show();
+                        data.referrals.forEach(function(ref) {
+                            var urgencyBadge = {
+                                'emergency': 'bg-danger',
+                                'urgent': 'bg-warning text-dark',
+                                'routine': 'bg-secondary'
+                            }[ref.urgency] || 'bg-secondary';
+
+                            var statusBadge = {
+                                'pending': 'bg-warning text-dark',
+                                'accepted': 'bg-info',
+                                'scheduled': 'bg-primary',
+                                'completed': 'bg-success',
+                                'cancelled': 'bg-danger',
+                                'declined': 'bg-dark',
+                                'referred_out': 'bg-purple'
+                            }[ref.status] || 'bg-secondary';
+
+                            html += '<div class="card border-start border-4 mb-2" style="border-color: ' + (ref.urgency === 'emergency' ? '#dc3545' : ref.urgency === 'urgent' ? '#ffc107' : '#6c757d') + ' !important;">';
+                            html += '<div class="card-body py-2 px-3">';
+                            html += '<div class="d-flex justify-content-between align-items-start">';
+                            html += '<div>';
+                            html += '<span class="badge ' + urgencyBadge + ' me-1">' + ref.urgency + '</span>';
+                            html += '<span class="badge ' + statusBadge + ' me-1">' + ref.status + '</span>';
+                            html += '<span class="badge bg-light text-dark">' + ref.type + '</span>';
+                            html += '</div>';
+                            html += '<small class="text-muted">' + (ref.created_at_formatted || '') + '</small>';
+                            html += '</div>';
+                            html += '<div class="mt-1">';
+                            if (ref.referred_to_clinic) {
+                                html += '<small><strong>Clinic:</strong> ' + ref.referred_to_clinic + '</small><br>';
+                            }
+                            if (ref.referred_to_doctor) {
+                                html += '<small><strong>Doctor:</strong> ' + ref.referred_to_doctor + '</small><br>';
+                            }
+                            if (ref.external_facility) {
+                                html += '<small><strong>Facility:</strong> ' + ref.external_facility + '</small><br>';
+                            }
+                            if (ref.clinical_indication) {
+                                html += '<small><strong>Indication:</strong> ' + ref.clinical_indication + '</small><br>';
+                            }
+                            if (ref.notes) {
+                                html += '<small class="text-muted">' + ref.notes + '</small>';
+                            }
+                            html += '</div>';
+                            html += '</div></div>';
+                        });
+                    } else {
+                        html = '<div class="text-center text-muted py-3"><i class="mdi mdi-account-switch" style="font-size: 2rem;"></i><br>No referrals for this encounter</div>';
+                    }
+                    $('#referrals-list').html(html);
+                },
+                error: function() {
+                    $('#referrals-loading').hide();
+                    $('#referrals-list').html('<div class="alert alert-danger">Failed to load referrals</div>');
+                }
+            });
+        }
+
+        // Submit referral form
+        $(document).on('submit', '#create-referral-form', function(e) {
+            e.preventDefault();
+            var btn = $(this).find('button[type="submit"]');
+            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+
+            $.ajax({
+                url: '/encounters/' + encounterId + '/referrals',
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    toastr.success(response.message || 'Referral created successfully');
+                    $('#create-referral-form')[0].reset();
+                    $('#referral-form-card').addClass('d-none');
+                    loadEncounterReferrals();
+                },
+                error: function(xhr) {
+                    var msg = xhr.responseJSON?.message || 'Failed to create referral';
+                    if (xhr.responseJSON?.errors) {
+                        var errs = Object.values(xhr.responseJSON.errors).flat();
+                        msg = errs.join('<br>');
+                    }
+                    toastr.error(msg);
+                },
+                complete: function() {
+                    btn.prop('disabled', false).html('<i class="mdi mdi-send"></i> Submit Referral');
+                }
             });
         });
     </script>

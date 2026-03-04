@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QueueStatus;
 use App\Helpers\HmoHelper;
 use App\Models\AdmissionRequest;
 use App\Models\Clinic;
+use App\Models\DoctorAppointment;
 use App\Models\DoctorQueue;
 use App\Models\Encounter;
 use App\Models\Hmo;
@@ -17,9 +19,10 @@ use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\service;
-use App\Models\serviceCategory;
+use App\Models\ServiceCategory;
 use App\Models\Staff;
 use App\Models\User;
+use App\Services\AppointmentSlotService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -278,13 +281,14 @@ class ReceptionWorkbenchController extends Controller
         $today = Carbon::today();
 
         $counts = [
-            'waiting' => DoctorQueue::where('status', 1)->whereDate('created_at', $today)->count(),
-            'vitals_pending' => DoctorQueue::where('status', 2)->whereDate('created_at', $today)->count(),
-            'in_consultation' => DoctorQueue::where('status', 3)->whereDate('created_at', $today)->count(),
-            'completed' => DoctorQueue::where('status', 4)->whereDate('created_at', $today)->count(),
+            'waiting' => DoctorQueue::where('status', QueueStatus::WAITING)->whereDate('created_at', $today)->count(),
+            'vitals_pending' => DoctorQueue::where('status', QueueStatus::VITALS_PENDING)->whereDate('created_at', $today)->count(),
+            'in_consultation' => DoctorQueue::where('status', QueueStatus::IN_CONSULTATION)->whereDate('created_at', $today)->count(),
+            'completed' => DoctorQueue::where('status', QueueStatus::COMPLETED)->whereDate('created_at', $today)->count(),
             'total_today' => DoctorQueue::whereDate('created_at', $today)->count(),
             'admitted' => AdmissionRequest::where('discharged', 0)->count(),
-            'emergency' => DoctorQueue::where('priority', 'emergency')->whereDate('created_at', $today)->whereIn('status', [1, 2, 3])->count(),
+            'emergency' => DoctorQueue::where('priority', 'emergency')->whereDate('created_at', $today)->whereIn('status', QueueStatus::ACTIVE)->count(),
+            'scheduled' => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::SCHEDULED)->count(),
         ];
 
         return response()->json($counts);
@@ -311,15 +315,17 @@ class ReceptionWorkbenchController extends Controller
 
         // Apply status filter
         if ($filter === 'waiting') {
-            $query->where('status', 1);
+            $query->where('status', QueueStatus::WAITING);
         } elseif ($filter === 'vitals') {
-            $query->where('status', 2);
+            $query->where('status', QueueStatus::VITALS_PENDING);
+        } elseif ($filter === 'ready') {
+            $query->where('status', QueueStatus::READY);
         } elseif ($filter === 'consultation') {
-            $query->where('status', 3);
+            $query->where('status', QueueStatus::IN_CONSULTATION);
         } elseif ($filter === 'completed') {
-            $query->where('status', 4);
+            $query->where('status', QueueStatus::COMPLETED);
         } elseif ($filter === 'emergency') {
-            $query->where('priority', 'emergency')->whereIn('status', [1, 2, 3]);
+            $query->where('priority', 'emergency')->whereIn('status', QueueStatus::ACTIVE);
         }
 
         // Apply clinic filter
@@ -348,17 +354,15 @@ class ReceptionWorkbenchController extends Controller
                 return $q->request_entry->service->service_name ?? 'Consultation';
             })
             ->addColumn('status_badge', function($q) {
-                $badges = [
-                    1 => '<span class="badge bg-warning">Waiting</span>',
-                    2 => '<span class="badge bg-info">Vitals Pending</span>',
-                    3 => '<span class="badge bg-success">In Consultation</span>',
-                    4 => '<span class="badge bg-secondary">Completed</span>',
-                ];
-                $badge = $badges[$q->status] ?? '<span class="badge bg-secondary">Unknown</span>';
+                $badge = QueueStatus::badge($q->status);
                 if ($q->priority === 'emergency') {
                     $badge = '<span class="badge bg-danger"><i class="fa fa-bolt"></i> EMERGENCY</span> ' . $badge;
                 } elseif ($q->priority === 'urgent') {
                     $badge = '<span class="badge bg-warning text-dark">Urgent</span> ' . $badge;
+                }
+                // Add source badge if appointment-based
+                if ($q->appointment_id) {
+                    $badge .= ' <span class="badge bg-purple"><i class="mdi mdi-calendar-clock"></i> Appt</span>';
                 }
                 return $badge;
             })
@@ -720,20 +724,41 @@ class ReceptionWorkbenchController extends Controller
             $queue->clinic_id = $request->clinic_id;
             $queue->receptionist_id = Auth::id();
             $queue->request_entry_id = $serviceRequest->id;
-            $queue->status = 1; // Waiting
+            $queue->status = QueueStatus::WAITING;
 
             if ($request->doctor_id) {
                 $queue->staff_id = $request->doctor_id;
+            }
+
+            // If scheduling for a future date, create an appointment instead
+            if ($request->has('appointment_date') && $request->appointment_date) {
+                $appointment = DoctorAppointment::create([
+                    'patient_id'       => $patient->id,
+                    'clinic_id'        => $request->clinic_id,
+                    'doctor_id'        => $request->doctor_id,
+                    'appointment_date' => $request->appointment_date,
+                    'start_time'       => $request->start_time ?? '09:00',
+                    'end_time'         => $request->end_time ?? '09:30',
+                    'appointment_type' => $request->appointment_type ?? 'scheduled',
+                    'status'           => QueueStatus::SCHEDULED,
+                    'booked_by'        => Auth::id(),
+                    'service_request_id' => $serviceRequest->id,
+                    'notes'            => $request->appointment_notes,
+                ]);
+                $queue->appointment_id = $appointment->id;
+                $queue->status = QueueStatus::SCHEDULED;
             }
 
             $queue->save();
 
             DB::commit();
 
+            $isScheduled = $request->has('appointment_date') && $request->appointment_date;
             return response()->json([
                 'success' => true,
-                'message' => 'Patient added to queue successfully',
+                'message' => $isScheduled ? 'Appointment scheduled successfully' : 'Patient added to queue successfully',
                 'queue_id' => $queue->id,
+                'appointment_id' => $queue->appointment_id,
             ]);
 
         } catch (\Exception $e) {
