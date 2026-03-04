@@ -120,6 +120,50 @@ class Staff extends Model implements Auditable
     }
 
     // ====================
+    // APPOINTMENT / AVAILABILITY RELATIONSHIPS
+    // ====================
+
+    /**
+     * Get weekly availability slots for this staff
+     */
+    public function availabilities()
+    {
+        return $this->hasMany(DoctorAvailability::class, 'staff_id', 'id');
+    }
+
+    /**
+     * Get availability overrides (holidays, extra slots)
+     */
+    public function availabilityOverrides()
+    {
+        return $this->hasMany(DoctorAvailabilityOverride::class, 'staff_id', 'id');
+    }
+
+    /**
+     * Get appointments assigned to this staff
+     */
+    public function appointments()
+    {
+        return $this->hasMany(DoctorAppointment::class, 'staff_id', 'id');
+    }
+
+    /**
+     * Get referrals made by this staff
+     */
+    public function referralsMade()
+    {
+        return $this->hasMany(SpecialistReferral::class, 'referring_doctor_id', 'id');
+    }
+
+    /**
+     * Get referrals targeting this staff
+     */
+    public function referralsReceived()
+    {
+        return $this->hasMany(SpecialistReferral::class, 'target_doctor_id', 'id');
+    }
+
+    // ====================
     // HR RELATIONSHIPS
     // ====================
 

@@ -545,6 +545,13 @@
                     <span class="menu-title">Lab Workbench</span>
                 </a>
             </li>
+
+            <li class="nav-item {{ request()->routeIs('services.index') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('services.index') ? 'active' : '' }}" href="{{ route('services.index', ['category' => appsettings('lab_category_id', 2)]) }}" id="sidebar-lab-workbench">
+                    <i class="mdi mdi-flask-outline menu-icon"></i>
+                    <span class="menu-title">Lab Services</span>
+                </a>
+            </li>
             <!-- Med Lab Queue - Old DataTable Approach
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-lab-queue-old" data-bs-target="#sidebar-lab-queue-old" aria-expanded="false" aria-controls="sidebar-lab-queue-old" id="sidebar-lab-queue-old-toggle">
@@ -625,9 +632,9 @@
                 </a>
                 <div class="collapse {{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'show' : '' }}" id="sidebar-radiology-services">
                     <ul class="nav flex-column sub-menu">
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a class="nav-link" href="{{ route('services-category.index') }}" id="sidebar-radiology-service-categories">Categories</a>
-                        </li>
+                        </li> -->
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('services.index', ['category' => appsettings('imaging_category_id', 6)]) }}" id="sidebar-radiology-imaging-services">Imaging Services</a>
                         </li>
@@ -896,6 +903,12 @@
                 <a class="nav-link {{ request()->routeIs('clinics.*') ? 'active' : '' }}" href="{{ route('clinics.index') }}" id="sidebar-admin-clinics">
                     <i class="mdi mdi-hospital-building menu-icon"></i>
                     <span class="menu-title">Clinics Management</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('clinic-schedules.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('clinic-schedules.*') ? 'active' : '' }}" href="{{ route('clinic-schedules.index') }}" id="sidebar-admin-clinic-schedules">
+                    <i class="mdi mdi-calendar-clock menu-icon"></i>
+                    <span class="menu-title">Clinic Schedules</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('departments.*') ? 'active' : '' }}">

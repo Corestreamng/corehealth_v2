@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QueueStatus;
 use App\Models\AdmissionRequest;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
@@ -17,6 +18,7 @@ use App\Models\ProductRequest;
 use App\Models\ReasonForEncounter;
 use App\Models\Staff;
 use App\Models\User;
+use App\Services\QueueStatusService;
 use Carbon\Carbon;
 use App\Helpers\HmoHelper;
 use Illuminate\Http\Request;
@@ -56,7 +58,7 @@ class EncounterController extends Controller
                 $q->where('clinic_id', $doc->clinic_id)
                     ->orWhere('staff_id', $doc->id);
             })
-                ->where('status', 1);
+                ->where('status', QueueStatus::WAITING);
 
             // Apply date filtering if both dates are provided
             if ($startDate && $endDate) {
@@ -128,17 +130,22 @@ class EncounterController extends Controller
 
                     return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
                 })
-                ->addColumn('delivery_status', function ($queue) {
-                    $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
-                    $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
-
-                    $badgeClass = $deliveryCheck['can_deliver'] ? 'bg-success' : 'bg-danger';
-                    $label = $deliveryCheck['can_deliver'] ? 'Ready' : $deliveryCheck['reason'];
-                    $title = e($deliveryCheck['hint'] ?? '');
-
-                    return '<span class="badge ' . $badgeClass . '" title="' . $title . '">' . e($label) . '</span>';
+                ->addColumn('source', function ($queue) {
+                    $icons = [
+                        'appointment' => '<span class="badge bg-purple-subtle text-purple source-badge"><i class="mdi mdi-calendar-check"></i> Scheduled</span>',
+                        'emergency'   => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
+                    ];
+                    return $icons[$queue->source ?? ''] ?? '<span class="badge bg-secondary-subtle text-secondary source-badge"><i class="mdi mdi-walk"></i> Walk-in</span>';
                 })
-                ->rawColumns(['fullname', 'view', 'delivery_status', 'priority'])
+                ->addColumn('status_badge', function ($queue) {
+                    $badge = QueueStatus::badge($queue->status);
+                    // Add mini-timer for in-consultation
+                    if ($queue->status == QueueStatus::IN_CONSULTATION && $queue->consultation_started_at) {
+                        $badge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $queue->consultation_started_at . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . ($queue->last_paused_at ?? '') . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
+                    }
+                    return $badge;
+                })
+                ->rawColumns(['fullname', 'view', 'priority', 'source', 'status_badge'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -152,11 +159,11 @@ class EncounterController extends Controller
         $currentDateTime = Carbon::now();
         $timeThreshold = $currentDateTime->subHours(appsettings('consultation_cycle_duration', 24));
 
-        $q = DoctorQueue::where('status', 2)
+        $q = DoctorQueue::where('status', QueueStatus::VITALS_PENDING)
             ->where('created_at', '<', $timeThreshold)->get();
         foreach ($q as $r) {
             $r->update([
-                'status' => 3,
+                'status' => QueueStatus::READY,
             ]);
         }
     }
@@ -181,7 +188,7 @@ class EncounterController extends Controller
                 }
                 $q->orWhere('staff_id', $doc->id);
             })
-                ->where('status', '>', '2');
+                ->whereIn('status', [QueueStatus::IN_CONSULTATION, QueueStatus::COMPLETED]);
 
             // Apply date range filter if provided
             if ($startDate) {
@@ -248,7 +255,7 @@ class EncounterController extends Controller
                 $q->where('clinic_id', $doc->clinic_id);
                 $q->orWhere('staff_id', $doc->id);
             })
-                ->where('status', 2)
+                ->where('status', QueueStatus::VITALS_PENDING)
                 ->where('created_at', '>=', $timeThreshold);
 
             // Apply date range filter if provided
@@ -302,17 +309,29 @@ class EncounterController extends Controller
 
                     return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> Encounter</a>';
                 })
-                ->addColumn('delivery_status', function ($queue) {
-                    $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
-                    $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
-
-                    $badgeClass = $deliveryCheck['can_deliver'] ? 'bg-success' : 'bg-danger';
-                    $label = $deliveryCheck['can_deliver'] ? 'Ready' : $deliveryCheck['reason'];
-                    $title = e($deliveryCheck['hint'] ?? '');
-
-                    return '<span class="badge ' . $badgeClass . '" title="' . $title . '">' . e($label) . '</span>';
+                ->addColumn('priority', function ($queue) {
+                    $badges = [
+                        'emergency' => '<span class="badge bg-danger"><i class="fa fa-bolt"></i> Emergency</span>',
+                        'urgent'    => '<span class="badge bg-warning text-dark">Urgent</span>',
+                        'routine'   => '<span class="badge bg-secondary">Routine</span>',
+                    ];
+                    return $badges[$queue->priority] ?? $badges['routine'];
                 })
-                ->rawColumns(['fullname', 'view', 'delivery_status'])
+                ->addColumn('source', function ($queue) {
+                    $icons = [
+                        'appointment' => '<span class="badge bg-purple-subtle text-purple source-badge"><i class="mdi mdi-calendar-check"></i> Scheduled</span>',
+                        'emergency'   => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
+                    ];
+                    return $icons[$queue->source ?? ''] ?? '<span class="badge bg-secondary-subtle text-secondary source-badge"><i class="mdi mdi-walk"></i> Walk-in</span>';
+                })
+                ->addColumn('status_badge', function ($queue) {
+                    $badge = QueueStatus::badge($queue->status);
+                    if ($queue->status == QueueStatus::IN_CONSULTATION && $queue->consultation_started_at) {
+                        $badge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $queue->consultation_started_at . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . ($queue->last_paused_at ?? '') . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
+                    }
+                    return $badge;
+                })
+                ->rawColumns(['fullname', 'view', 'priority', 'source', 'status_badge'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -1892,13 +1911,32 @@ class EncounterController extends Controller
                 $encounter->service_request_id = $req_entry ? $req_entry->id : null;
                 $encounter->service_id = $req_entry ? $req_entry->service_id : null;
                 $encounter->patient_id = $patient->id;
+                $encounter->queue_id = $doctorQueue ? $doctorQueue->id : null;
+                $encounter->started_at = now();
                 $encounter->save();
+
+                // Transition queue to IN_CONSULTATION
+                if ($doctorQueue && $doctorQueue->status !== QueueStatus::IN_CONSULTATION) {
+                    try {
+                        $queueService = app(QueueStatusService::class);
+                        $queueService->transition($doctorQueue, QueueStatus::IN_CONSULTATION);
+                    } catch (\Exception $transitionEx) {
+                        // Fallback: direct update
+                        $doctorQueue->update([
+                            'status' => QueueStatus::IN_CONSULTATION,
+                            'consultation_started_at' => $doctorQueue->consultation_started_at ?? now(),
+                        ]);
+                    }
+                }
             } else {
                 // Update existing encounter (in case doctor or service changed)
                 $encounter->doctor_id = $doctor->id;
                 $encounter->service_request_id = $req_entry ? $req_entry->id : null;
                 $encounter->service_id = $req_entry ? $req_entry->service_id : null;
                 $encounter->patient_id = $patient->id;
+                if (!$encounter->queue_id && $doctorQueue) {
+                    $encounter->queue_id = $doctorQueue->id;
+                }
                 $encounter->update();
             }
 
@@ -2564,14 +2602,29 @@ class EncounterController extends Controller
 
             // Mark encounter as complete
             $encounter->completed = true;
+            $encounter->completed_at = now();
             $encounter->doctor_id = Auth::id();
             $encounter->save();
 
-            // Handle queue status
+            // Handle queue status using QueueStatusService
             if ($request->queue_id != 'ward_round') {
-                DoctorQueue::where('id', $request->queue_id)->update([
-                    'status' => (($request->end_consultation && $request->end_consultation == '1') ? 3 : 2),
-                ]);
+                $queue = DoctorQueue::find($request->queue_id);
+                if ($queue) {
+                    $endConsultation = $request->end_consultation && $request->end_consultation == '1';
+                    $newStatus = $endConsultation ? QueueStatus::COMPLETED : QueueStatus::IN_CONSULTATION;
+
+                    try {
+                        $queueService = app(QueueStatusService::class);
+                        $queueService->transition($queue, $newStatus);
+                    } catch (\Exception $transitionEx) {
+                        // Fallback: direct update if transition fails (e.g. already in target state)
+                        $updateData = ['status' => $newStatus];
+                        if ($endConsultation) {
+                            $updateData['consultation_ended_at'] = now();
+                        }
+                        $queue->update($updateData);
+                    }
+                }
             }
 
             // Handle admission request
