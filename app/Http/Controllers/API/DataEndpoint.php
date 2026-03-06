@@ -428,7 +428,7 @@ class DataEndpoint extends Controller
     {
         try {
 
-            $query = DoctorQueue::with(['patient', 'patient.user', 'clinic', 'doctor', 'receptionist', 'request_entry']);
+            $query = DoctorQueue::with(['patient', 'patient.user', 'clinic', 'doctor.user', 'receptionist', 'request_entry']);
             // Define pagination parameters
             $perPage = $request->input('per_page', 10);
             $page = $request->input('page', 1);

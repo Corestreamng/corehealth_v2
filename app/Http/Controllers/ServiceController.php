@@ -9,7 +9,7 @@ use App\Http\Requests\UpdateServiceRequest;
 use App\Models\Sale;
 use App\Models\ApplicationStatu;
 use App\Models\Stock;
-use App\Models\serviceCategory;
+use App\Models\ServiceCategory;
 use App\Models\ProcedureDefinition;
 use App\Models\ProcedureCategory;
 use Illuminate\Http\Request;

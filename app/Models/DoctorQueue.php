@@ -59,12 +59,12 @@ class DoctorQueue extends Model implements Auditable
 
     public function doctor()
     {
-        return $this->belongsTo(User::class, 'staff_id', 'id');
+        return $this->belongsTo(Staff::class, 'staff_id', 'id');
     }
 
     public function receptionist()
     {
-        return $this->belongsTo(User::class, 'receptionist_id', 'id');
+        return $this->belongsTo(Staff::class, 'receptionist_id', 'id');
     }
 
     public function request_entry()

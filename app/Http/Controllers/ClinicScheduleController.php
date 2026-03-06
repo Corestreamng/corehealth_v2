@@ -35,7 +35,7 @@ class ClinicScheduleController extends Controller
             $q->whereHas('roles', function ($rq) {
                 $rq->where('name', 'DOCTOR');
             });
-        })->with('user:id,name')->orderBy('id')->get();
+        })->with('user:id,surname,firstname,othername')->orderBy('id')->get();
 
         return view('admin.clinic-schedules.index', compact('clinics', 'doctors'));
     }
@@ -153,7 +153,7 @@ class ClinicScheduleController extends Controller
 
     public function doctorAvailabilityData(Request $request)
     {
-        $query = DoctorAvailability::with(['staff.user:id,name', 'clinic:id,name'])
+        $query = DoctorAvailability::with(['staff.user:id,surname,firstname,othername', 'clinic:id,name'])
             ->orderBy('staff_id')
             ->orderBy('clinic_id')
             ->orderBy('day_of_week');
@@ -210,7 +210,7 @@ class ClinicScheduleController extends Controller
 
     public function showDoctorAvailability(DoctorAvailability $availability)
     {
-        return response()->json($availability->load(['staff.user:id,name', 'clinic:id,name']));
+        return response()->json($availability->load(['staff.user:id,surname,firstname,othername', 'clinic:id,name']));
     }
 
     public function updateDoctorAvailability(Request $request, DoctorAvailability $availability)
@@ -259,7 +259,7 @@ class ClinicScheduleController extends Controller
 
     public function overrideData(Request $request)
     {
-        $query = DoctorAvailabilityOverride::with(['staff.user:id,name', 'clinic:id,name'])
+        $query = DoctorAvailabilityOverride::with(['staff.user:id,surname,firstname,othername', 'clinic:id,name'])
             ->orderBy('override_date', 'desc');
 
         if ($request->filled('staff_id')) {
@@ -318,7 +318,7 @@ class ClinicScheduleController extends Controller
 
     public function showOverride(DoctorAvailabilityOverride $override)
     {
-        return response()->json($override->load(['staff.user:id,name', 'clinic:id,name']));
+        return response()->json($override->load(['staff.user:id,surname,firstname,othername', 'clinic:id,name']));
     }
 
     public function updateOverride(Request $request, DoctorAvailabilityOverride $override)
