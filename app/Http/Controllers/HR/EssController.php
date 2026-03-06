@@ -717,6 +717,8 @@ class EssController extends Controller
             'home_address' => 'nullable|string|max:500',
             'specialization_id' => 'nullable|exists:specializations,id',
             'clinic_id' => 'nullable|exists:clinics,id',
+            'can_see_clinic_queues' => 'nullable|array',
+            'can_see_clinic_queues.*' => 'integer|exists:clinics,id',
             'emergency_contact_name' => 'nullable|string|max:255',
             'emergency_contact_phone' => 'nullable|string|max:20',
             'emergency_contact_relationship' => 'nullable|string|max:100',
@@ -776,6 +778,14 @@ class EssController extends Controller
                 // For other fields, set to null if empty string (they're nullable in DB)
                 $staff->$field = $value === '' ? null : $value;
             }
+        }
+
+        // Handle can_see_clinic_queues (JSON array field — needs explicit casting)
+        if ($request->has('can_see_clinic_queues')) {
+            $staff->can_see_clinic_queues = array_values(array_unique(array_map('intval', array_filter((array) $request->input('can_see_clinic_queues', [])))));
+        } elseif ($request->isMethod('put') || $request->isMethod('patch')) {
+            // Unchecked/cleared multi-select sends no key — treat as empty array
+            $staff->can_see_clinic_queues = [];
         }
 
         $staff->save();
