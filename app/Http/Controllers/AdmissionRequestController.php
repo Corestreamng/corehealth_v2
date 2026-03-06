@@ -30,17 +30,23 @@ class AdmissionRequestController extends Controller
 
     public function myAdmissionRequests(Request $request)
     {
-        // Get start and end dates from request
-        $startDate = Carbon::parse($request->input('start_date'));
-        $endDate = Carbon::parse($request->input('end_date'));
-
         // Build the query with date range filtering
         $query = AdmissionRequest::where('discharged', 0)
             ->where('status', 1)
             ->where('doctor_id', Auth::id());
 
-        if ($startDate && $endDate) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $startDate = Carbon::parse($request->input('start_date'));
+            $endDate = Carbon::parse($request->input('end_date'));
             $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
+        }
+
+        // HMO filter
+        if ($request->filled('hmo_id')) {
+            $hmoId = $request->hmo_id;
+            $query->whereHas('patient', function ($q) use ($hmoId) {
+                $q->where('hmo_id', $hmoId);
+            });
         }
 
         $req = $query->orderBy('created_at', 'DESC')->get();
@@ -48,8 +54,11 @@ class AdmissionRequestController extends Controller
         return Datatables::of($req)
             ->addIndexColumn()
             ->addColumn('show', function ($r) {
-                $url = route('patient.show', [$r->patient_id, 'section' => 'addmissionsCardBody']);
-                return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
+                $url = url('encounters/create') . '?patient_id=' . $r->patient_id;
+                if ($r->service_request_id) {
+                    $url .= '&req_entry_id=' . $r->service_request_id;
+                }
+                return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
             })
             ->addColumn('patient', function ($r) {
                 return userfullname($r->patient->user_id);
@@ -91,16 +100,27 @@ class AdmissionRequestController extends Controller
     }
     public function admissionRequests(Request $request)
     {
-        // Get start and end dates from request
-        $startDate = Carbon::parse($request->input('start_date'));
-        $endDate = Carbon::parse($request->input('end_date'));
-
         // Build the query with date range filtering
         $query = AdmissionRequest::where('discharged', 0)
             ->where('status', 1);
 
-        if ($startDate && $endDate) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $startDate = Carbon::parse($request->input('start_date'));
+            $endDate = Carbon::parse($request->input('end_date'));
             $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
+        }
+
+        // Doctor filter
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+
+        // HMO filter
+        if ($request->filled('hmo_id')) {
+            $hmoId = $request->hmo_id;
+            $query->whereHas('patient', function ($q) use ($hmoId) {
+                $q->where('hmo_id', $hmoId);
+            });
         }
 
         $req = $query->orderBy('created_at', 'DESC')->get();
@@ -108,8 +128,11 @@ class AdmissionRequestController extends Controller
         return Datatables::of($req)
             ->addIndexColumn()
             ->addColumn('show', function ($r) {
-                $url = route('patient.show', [$r->patient_id, 'section' => 'addmissionsCardBody']);
-                return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
+                $url = url('encounters/create') . '?patient_id=' . $r->patient_id;
+                if ($r->service_request_id) {
+                    $url .= '&req_entry_id=' . $r->service_request_id;
+                }
+                return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
             })
             ->addColumn('patient', function ($r) {
                 return userfullname($r->patient->user_id);
