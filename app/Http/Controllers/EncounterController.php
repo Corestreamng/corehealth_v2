@@ -40,7 +40,13 @@ class EncounterController extends Controller
      */
     public function index()
     {
-        return view('admin.doctors.my_queues');
+        // Clinics & doctors for referral filter dropdowns
+        $filterClinics  = Clinic::orderBy('name')->get(['id', 'name']);
+        $filterDoctors  = Staff::whereHas('user')
+                                ->orderBy('id')
+                                ->get(['id', 'user_id']);
+
+        return view('admin.doctors.my_queues', compact('filterClinics', 'filterDoctors'));
     }
 
     public function NewEncounterList(Request $request)
@@ -139,9 +145,11 @@ class EncounterController extends Controller
                 })
                 ->addColumn('status_badge', function ($queue) {
                     $badge = QueueStatus::badge($queue->status);
-                    // Add mini-timer for in-consultation
+                    // Add mini-timer for in-consultation (ISO 8601 for reliable JS parsing)
                     if ($queue->status == QueueStatus::IN_CONSULTATION && $queue->consultation_started_at) {
-                        $badge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $queue->consultation_started_at . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . ($queue->last_paused_at ?? '') . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
+                        $startedIso = \Carbon\Carbon::parse($queue->consultation_started_at)->toIso8601String();
+                        $pausedAtIso = $queue->last_paused_at ? \Carbon\Carbon::parse($queue->last_paused_at)->toIso8601String() : '';
+                        $badge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $startedIso . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . $pausedAtIso . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
                     }
                     return $badge;
                 })
@@ -196,6 +204,19 @@ class EncounterController extends Controller
             }
             if ($endDate) {
                 $queueQuery->where('created_at', '<=', $endDate->endOfDay());
+            }
+
+            // Apply clinic filter
+            if ($request->filled('clinic_id')) {
+                $queueQuery->where('clinic_id', $request->clinic_id);
+            }
+
+            // Apply HMO filter (join via patient)
+            if ($request->filled('hmo_id')) {
+                $hmoId = $request->hmo_id;
+                $queueQuery->whereHas('patient', function ($q) use ($hmoId) {
+                    $q->where('hmo_id', $hmoId);
+                });
             }
 
             $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
@@ -327,7 +348,9 @@ class EncounterController extends Controller
                 ->addColumn('status_badge', function ($queue) {
                     $badge = QueueStatus::badge($queue->status);
                     if ($queue->status == QueueStatus::IN_CONSULTATION && $queue->consultation_started_at) {
-                        $badge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $queue->consultation_started_at . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . ($queue->last_paused_at ?? '') . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
+                        $startedIso = \Carbon\Carbon::parse($queue->consultation_started_at)->toIso8601String();
+                        $pausedAtIso = $queue->last_paused_at ? \Carbon\Carbon::parse($queue->last_paused_at)->toIso8601String() : '';
+                        $badge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $startedIso . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . $pausedAtIso . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
                     }
                     return $badge;
                 })
@@ -576,22 +599,33 @@ class EncounterController extends Controller
                     </a>";
 
                 // Show delete button only if:
-                // 1. Current user is the doctor who created the request
-                // 2. Status is pending (1) or in progress (2)
-                // 3. Not yet billed
-                // 4. No results entered yet
+                // 1. Current user is the requester
+                // 2. Status is pending (1) or in progress (2), not yet billed, no results
+                // 3. Within the note_edit_window
+                $editWindowMinutes = appsettings('note_edit_window', 30);
+                $withinWindow = $his->created_at && now()->diffInMinutes($his->created_at) <= $editWindowMinutes;
                 $canDelete = (Auth::id() == $his->doctor_id)
                     && ($his->status == 1 || $his->status == 2)
                     && empty($his->billed_by)
-                    && empty($his->result);
+                    && empty($his->result)
+                    && $withinWindow;
 
                 if ($canDelete) {
                     $serviceName = $his->service ? $his->service->service_name : 'N/A';
-                    $str .= "<button type='button' class='btn btn-danger btn-sm'
-                        onclick='deleteLabRequest({$his->id}, {$his->encounter_id}, \"{$serviceName}\")'
-                        title='Delete this request'>
-                        <i class='fa fa-trash'></i> Delete
-                    </button>";
+                    if ($his->encounter_id) {
+                        $str .= "<button type='button' class='btn btn-danger btn-sm'
+                            onclick='deleteLabRequest({$his->id}, {$his->encounter_id}, \"{$serviceName}\")'
+                            title='Delete this request'>
+                            <i class='fa fa-trash'></i> Delete
+                        </button>";
+                    } else {
+                        // Nurse-created item (no encounter) — use nurse route
+                        $str .= "<button type='button' class='btn btn-danger btn-sm'
+                            onclick='deleteNurseClinicalRequest(\"lab\", {$his->id}, \"{$serviceName}\")'
+                            title='Delete this request'>
+                            <i class='fa fa-trash'></i> Delete
+                        </button>";
+                    }
                 }
 
                 // Re-order button (Plan §5.2)
@@ -818,22 +852,33 @@ class EncounterController extends Controller
                     </a>";
 
                 // Show delete button only if:
-                // 1. Current user is the doctor who created the request
-                // 2. Status is pending (1) or in progress (2)
-                // 3. Not yet billed
-                // 4. No results entered yet
+                // 1. Current user is the requester
+                // 2. Status is pending (1) or in progress (2), not yet billed, no results
+                // 3. Within the note_edit_window
+                $editWindowMinutes = appsettings('note_edit_window', 30);
+                $withinWindow = $his->created_at && now()->diffInMinutes($his->created_at) <= $editWindowMinutes;
                 $canDelete = (Auth::id() == $his->doctor_id)
                     && ($his->status == 1 || $his->status == 2)
                     && empty($his->billed_by)
-                    && empty($his->result);
+                    && empty($his->result)
+                    && $withinWindow;
 
                 if ($canDelete) {
                     $serviceName = $his->service ? $his->service->service_name : 'N/A';
-                    $str .= "<button type='button' class='btn btn-danger btn-sm'
-                        onclick='deleteImagingRequest({$his->id}, {$his->encounter_id}, \"{$serviceName}\")'
-                        title='Delete this request'>
-                        <i class='fa fa-trash'></i> Delete
-                    </button>";
+                    if ($his->encounter_id) {
+                        $str .= "<button type='button' class='btn btn-danger btn-sm'
+                            onclick='deleteImagingRequest({$his->id}, {$his->encounter_id}, \"{$serviceName}\")'
+                            title='Delete this request'>
+                            <i class='fa fa-trash'></i> Delete
+                        </button>";
+                    } else {
+                        // Nurse-created item (no encounter) — use nurse route
+                        $str .= "<button type='button' class='btn btn-danger btn-sm'
+                            onclick='deleteNurseClinicalRequest(\"imaging\", {$his->id}, \"{$serviceName}\")'
+                            title='Delete this request'>
+                            <i class='fa fa-trash'></i> Delete
+                        </button>";
+                    }
                 }
 
                 // Re-order button (Plan §5.2)
@@ -1502,6 +1547,32 @@ class EncounterController extends Controller
                 $roPay   = optional($item->productOrServiceRequest)->payable_amount ?? $price;
                 $roClaim = optional($item->productOrServiceRequest)->claims_amount ?? 0;
 
+                // Delete button — only if requester, within edit window, not yet billed/dispensed
+                $editWindowMinutes = appsettings('note_edit_window', 30);
+                $withinWindow = $item->created_at && now()->diffInMinutes($item->created_at) <= $editWindowMinutes;
+                $canDeletePresc = (Auth::id() == $item->doctor_id)
+                    && ($status == 1 || $status == 2)
+                    && empty($item->billed_by)
+                    && $withinWindow;
+
+                $deleteBtn = '';
+                if ($canDeletePresc) {
+                    if ($item->encounter_id) {
+                        $deleteBtn = "<button type='button' class='btn btn-danger btn-sm me-1'
+                            onclick='deletePrescription({$item->id}, {$item->encounter_id}, \"{$roName}\")'
+                            title='Delete this prescription'>
+                            <i class='fa fa-trash'></i> Delete
+                        </button>";
+                    } else {
+                        // Nurse-created item (no encounter) — use nurse route
+                        $deleteBtn = "<button type='button' class='btn btn-danger btn-sm me-1'
+                            onclick='deleteNurseClinicalRequest(\"prescription\", {$item->id}, \"{$roName}\")'
+                            title='Delete this prescription'>
+                            <i class='fa fa-trash'></i> Delete
+                        </button>";
+                    }
+                }
+
                 return "
                     <div class='p-2 border-bottom'>
                         <div class='d-flex justify-content-between'>
@@ -1516,6 +1587,7 @@ class EncounterController extends Controller
                         </div>
                         {$statusInfo}
                         <div class='mt-1'>
+                            {$deleteBtn}
                             <button type='button' class='btn btn-outline-primary btn-sm re-order-btn'
                                 data-type='prescriptions'
                                 data-product-id='{$item->product_id}'
@@ -1544,7 +1616,6 @@ class EncounterController extends Controller
         $query = Encounter::with(['doctor.staff_profile.specialization', 'patient'])
             ->where('patient_id', $patient_id)
             ->where('notes', '!=', null)
-            ->where('completed', true) // Only show completed encounters
             ->orderBy('created_at', 'DESC');
 
         // Exclude the current encounter if specified
@@ -1556,7 +1627,7 @@ class EncounterController extends Controller
 
         return DataTables::of($hist)
             ->addColumn('info', function ($hist) {
-                $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str = '<div class="card-modern mb-2" style="border-left: 4px solid ' . ($hist->completed ? '#0d6efd' : '#ffc107') . ';">';
                 $str .= '<div class="card-body p-3">';
 
                 // Header with doctor name and status
@@ -1566,7 +1637,12 @@ class EncounterController extends Controller
                 $specialty = $hist->doctor->staff_profile->specialization->name ?? 'General Practitioner';
                 $str .= "<small class='text-muted' style='margin-left: 1.5rem; display: block; margin-top: 2px;'>" . $specialty . "</small>";
                 $str .= "</div>";
+                $str .= '<div class="d-flex flex-column align-items-end gap-1">';
                 $str .= "<span class='badge bg-info'>" . date('h:i a D M j, Y', strtotime($hist->created_at)) . "</span>";
+                if (!$hist->completed) {
+                    $str .= "<span class='badge bg-warning text-dark'><i class='mdi mdi-clock-outline'></i> In Progress</span>";
+                }
+                $str .= '</div>';
                 $str .= '</div>';
 
                 // Reasons for encounter
@@ -2618,11 +2694,12 @@ class EncounterController extends Controller
                         $queueService->transition($queue, $newStatus);
                     } catch (\Exception $transitionEx) {
                         // Fallback: direct update if transition fails (e.g. already in target state)
-                        $updateData = ['status' => $newStatus];
-                        if ($endConsultation) {
-                            $updateData['consultation_ended_at'] = now();
-                        }
-                        $queue->update($updateData);
+                        Log::warning('QueueStatusService transition failed in finalizeEncounter, using fallback', [
+                            'queue_id' => $queue->id,
+                            'target_status' => $newStatus,
+                            'error' => $transitionEx->getMessage(),
+                        ]);
+                        $queue->update(['status' => $newStatus]);
                     }
                 }
             }
@@ -3119,7 +3196,12 @@ class EncounterController extends Controller
                 // Only allow deletion for requested status, by creator, within edit window
                 if ($proc->procedure_status === \App\Models\Procedure::STATUS_REQUESTED && $isCreator && $withinEditWindow) {
                     $serviceName = addslashes(optional($proc->service)->service_name ?? 'Procedure');
-                    $deleteBtn = " <button class='btn btn-sm btn-outline-danger' onclick='deleteProcedureRequest({$proc->id}, {$proc->encounter_id}, \"{$serviceName}\")' title='Delete Request'><i class='fa fa-trash'></i></button>";
+                    if ($proc->encounter_id) {
+                        $deleteBtn = " <button class='btn btn-sm btn-outline-danger' onclick='deleteProcedureRequest({$proc->id}, {$proc->encounter_id}, \"{$serviceName}\")' title='Delete Request'><i class='fa fa-trash'></i></button>";
+                    } else {
+                        // Nurse-created item (no encounter) — use nurse route
+                        $deleteBtn = " <button class='btn btn-sm btn-outline-danger' onclick='deleteNurseClinicalRequest(\"procedure\", {$proc->id}, \"{$serviceName}\")' title='Delete Request'><i class='fa fa-trash'></i></button>";
+                    }
                 }
 
                 return "<div class='btn-group btn-group-sm' role='group'>" . $openDetailsBtn . $deleteBtn . "</div>";

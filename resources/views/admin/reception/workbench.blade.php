@@ -5,6 +5,7 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/fullcalendar/fullcalendar.min.css') }}">
+<link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
 @endpush
 
 @section('content')
@@ -4859,9 +4860,14 @@
                                                     </div>
                                                     <div class="col-md-6 mb-2">
                                                         <label><i class="mdi mdi-clock-outline"></i> Time Slot <span class="text-danger">*</span></label>
-                                                        <select class="form-control" id="booking-appointment-time">
+                                                        <select class="form-control" id="booking-appointment-time" style="display:block;">
                                                             <option value="">-- Select date first --</option>
                                                         </select>
+                                                        <input type="time" class="form-control mt-1" id="booking-appointment-time-manual" style="display:none;" placeholder="HH:MM">
+                                                        <div class="form-check mt-1">
+                                                            <input class="form-check-input" type="checkbox" id="booking-custom-time-toggle">
+                                                            <label class="form-check-label text-muted small" for="booking-custom-time-toggle">Enter custom time</label>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="form-group mb-2">
@@ -7238,6 +7244,9 @@ function loadPatient(patientId) {
             currentPatientData = data.patient;
             displayPatientInfo(data.patient);
 
+            // Display upcoming appointments / follow-up alerts
+            displayUpcomingAppointments(data.upcoming_appointments || []);
+
             // Switch to profile tab by default
             switchWorkspaceTab('profile');
 
@@ -7397,6 +7406,102 @@ function displayPatientInfo(patient) {
 
     // Update profile tab with patient details
     updateProfileTab(patient);
+}
+
+/**
+ * Display upcoming appointments & follow-up alerts for the loaded patient
+ */
+function displayUpcomingAppointments(appointments) {
+    // Remove any previous alert
+    $('#upcoming-appointments-alert').remove();
+
+    if (!appointments || appointments.length === 0) return;
+
+    // Filter today's appointments
+    const todayAppts = appointments.filter(a => a.is_today);
+    const futureAppts = appointments.filter(a => !a.is_today);
+    const prepaidFollowUps = todayAppts.filter(a => a.is_prepaid_followup);
+
+    let alertHtml = '';
+
+    // Prepaid follow-up — highlight prominently
+    if (prepaidFollowUps.length > 0) {
+        alertHtml += `<div class="alert alert-success border-success mb-2 py-2 px-3 d-flex align-items-center gap-2" style="border-left: 4px solid #198754;">
+            <i class="mdi mdi-calendar-check mdi-24px text-success"></i>
+            <div class="flex-grow-1">
+                <strong>Pre-paid Follow-up Today</strong><br>
+                <small>${prepaidFollowUps.map(a => `${a.time} — ${a.clinic} (Dr. ${a.doctor})`).join('<br>')}</small>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="quickCheckInFollowUp(${prepaidFollowUps[0].id})" title="Check-in without billing">
+                <i class="mdi mdi-login-variant"></i> Check-In (No Billing)
+            </button>
+        </div>`;
+    }
+
+    // Other today appointments
+    const otherToday = todayAppts.filter(a => !a.is_prepaid_followup);
+    if (otherToday.length > 0) {
+        alertHtml += `<div class="alert alert-info border-info mb-2 py-2 px-3" style="border-left: 4px solid #0dcaf0;">
+            <i class="mdi mdi-calendar-today text-info"></i>
+            <strong>Scheduled Today:</strong>
+            <small>${otherToday.map(a => {
+                let badge = a.is_follow_up ? '<span class="badge bg-info-subtle text-info ms-1">Follow-up</span>' : '';
+                return `${a.time} — ${a.clinic} (Dr. ${a.doctor})${badge}`;
+            }).join('<br>')}</small>
+        </div>`;
+    }
+
+    // Future appointments (compact)
+    if (futureAppts.length > 0) {
+        alertHtml += `<div class="alert alert-light border mb-2 py-2 px-3" style="border-left: 4px solid #6c757d;">
+            <i class="mdi mdi-calendar-range text-muted"></i>
+            <strong>Upcoming:</strong>
+            <small>${futureAppts.slice(0, 3).map(a => {
+                let badge = a.is_follow_up ? '<span class="badge bg-info-subtle text-info ms-1">Follow-up</span>' : '';
+                return `${a.date} ${a.time} — ${a.clinic}${badge}`;
+            }).join('<br>')}${futureAppts.length > 3 ? '<br><em>+' + (futureAppts.length - 3) + ' more</em>' : ''}</small>
+        </div>`;
+    }
+
+    if (alertHtml) {
+        $('#patient-meta').after('<div id="upcoming-appointments-alert" class="mt-2">' + alertHtml + '</div>');
+    }
+}
+
+/**
+ * Quick check-in for a pre-paid follow-up appointment (no billing needed)
+ */
+function quickCheckInFollowUp(appointmentId) {
+    Swal.fire({
+        title: 'Check-In Follow-Up',
+        text: 'This is a pre-paid follow-up. Check in without billing?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Check In',
+        confirmButtonColor: '#198754'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', appointmentId),
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(res) {
+                    if (res.success) {
+                        toastr.success(res.message || 'Follow-up checked in successfully.');
+                        $('#upcoming-appointments-alert').remove();
+                        // Refresh queue
+                        if (typeof loadQueueEntries === 'function') loadQueueEntries();
+                        if (typeof loadTodayQueueList === 'function') loadTodayQueueList();
+                    } else {
+                        toastr.error(res.message || 'Check-in failed.');
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Check-in failed.');
+                }
+            });
+        }
+    });
 }
 
 function updateProfileTab(patient) {
@@ -8056,7 +8161,21 @@ function reloadReportsData() {
 function initializeQueueDataTable(filter) {
     if (queueDataTable) {
         queueDataTable.destroy();
+        queueDataTable = null;
     }
+    if (referralsDataTable) {
+        referralsDataTable.destroy();
+        referralsDataTable = null;
+    }
+
+    // Rebuild table headers for queue
+    $('#queue-datatable').empty().html(
+        '<thead><tr>' +
+        '<th>#</th><th>Patient</th><th>File No</th><th>HMO</th>' +
+        '<th>Clinic</th><th>Doctor</th><th>Service</th><th>Status</th>' +
+        '<th>Time</th><th>Action</th>' +
+        '</tr></thead>'
+    );
 
     queueDataTable = $('#queue-datatable').DataTable({
         processing: true,
@@ -8196,13 +8315,13 @@ function bookConsultation() {
     // Validate schedule fields if scheduling
     if (bookingType === 'schedule') {
         const apptDate = $('#booking-appointment-date').val();
-        const apptTime = $('#booking-appointment-time').val();
+        const apptTime = getBookingTime();
         if (!apptDate) {
             toastr.warning('Please select a date for the appointment');
             return;
         }
         if (!apptTime) {
-            toastr.warning('Please select a time slot');
+            toastr.warning('Please select or enter a time for the appointment');
             return;
         }
     }
@@ -8228,10 +8347,14 @@ function bookConsultation() {
     if (bookingType === 'schedule') {
         requestUrl = '{{ route("appointments.create") }}';
         requestData.appointment_date = $('#booking-appointment-date').val();
-        requestData.start_time = $('#booking-appointment-time').val();
+        requestData.start_time = getBookingTime();
         requestData.priority = $('#booking-priority').val();
         requestData.notes = $('#booking-appointment-notes').val();
         requestData.appointment_type = 'scheduled';
+        // Flag custom time so backend skips slot availability check
+        if ($('#booking-custom-time-toggle').is(':checked')) {
+            requestData.custom_time = 1;
+        }
     } else {
         // Walk-in: include appointment_date/time in book-consultation if they exist
         // (already handled by controller when appointment_date is present)
@@ -10845,6 +10968,26 @@ $('#booking-appointment-date').on('change', function() {
     loadAvailableSlots();
 });
 
+// Custom time toggle
+$('#booking-custom-time-toggle').on('change', function() {
+    if ($(this).is(':checked')) {
+        $('#booking-appointment-time').hide();
+        $('#booking-appointment-time-manual').show().val('');
+        $('#custom-time-hint').remove();
+    } else {
+        $('#booking-appointment-time-manual').hide().val('');
+        $('#booking-appointment-time').show();
+        $('#custom-time-hint').remove();
+    }
+});
+
+function getBookingTime() {
+    if ($('#booking-custom-time-toggle').is(':checked')) {
+        return $('#booking-appointment-time-manual').val();
+    }
+    return $('#booking-appointment-time').val();
+}
+
 function loadAvailableSlots() {
     var date = $('#booking-appointment-date').val();
     var clinicId = $('#booking-clinic').val();
@@ -10855,6 +10998,9 @@ function loadAvailableSlots() {
         return;
     }
 
+    // Remove any previous hint
+    $('#custom-time-hint').remove();
+
     $.get('{{ route("appointments.available-slots") }}', {
         date: date,
         clinic_id: clinicId,
@@ -10862,15 +11008,47 @@ function loadAvailableSlots() {
     }, function(response) {
         var $select = $('#booking-appointment-time');
         $select.empty().append('<option value="">-- Select Time --</option>');
+
+        var availableCount = 0;
         if (response.success && response.slots && response.slots.length > 0) {
             response.slots.forEach(function(slot) {
                 if (slot.available) {
                     $select.append('<option value="' + slot.time + '">' + slot.time + '</option>');
+                    availableCount++;
+                } else {
+                    // Show booked slots as disabled to give full schedule visibility
+                    $select.append('<option value="' + slot.time + '" disabled class="text-muted">' + slot.time + ' (booked)</option>');
                 }
             });
-        } else {
-            $select.append('<option value="" disabled>No available slots</option>');
         }
+
+        // Auto-suggest custom time when no slots are available
+        if (availableCount === 0) {
+            $select.empty().append('<option value="" disabled>No preset slots available</option>');
+
+            // Auto-enable custom time
+            $('#booking-custom-time-toggle').prop('checked', true).trigger('change');
+
+            // Show helpful hint
+            var hintHtml = '<div id="custom-time-hint" class="alert alert-info py-1 px-2 mt-1 mb-0 small">' +
+                '<i class="mdi mdi-information-outline"></i> ' +
+                'No preset slots available for this date. Enter a custom time below.' +
+                '</div>';
+            $('#booking-appointment-time-manual').after(hintHtml);
+        } else {
+            // If custom time was auto-enabled, reset back to dropdown
+            // (only if user didn't manually check it)
+            if ($('#booking-custom-time-toggle').data('auto-enabled')) {
+                $('#booking-custom-time-toggle').prop('checked', false).trigger('change');
+                $('#booking-custom-time-toggle').removeData('auto-enabled');
+            }
+        }
+
+        // Track that it was auto-enabled
+        if (availableCount === 0) {
+            $('#booking-custom-time-toggle').data('auto-enabled', true);
+        }
+
     }).fail(function() {
         $('#booking-appointment-time').empty().append('<option value="">Error loading slots</option>');
     });
@@ -10984,7 +11162,8 @@ function initAppointmentsCalendar() {
                 end: end.format('YYYY-MM-DD'),
                 clinic_id: $('#appt-cal-clinic-filter').val(),
                 doctor_id: $('#appt-cal-doctor-filter').val(),
-                status: $('#appt-cal-status-filter').val()
+                status: $('#appt-cal-status-filter').val(),
+                include_queue: 1
             }, function(events) {
                 callback(events);
             }).fail(function() {
@@ -10993,16 +11172,37 @@ function initAppointmentsCalendar() {
             });
         },
         eventRender: function(event, element) {
-            // Rich tooltip
+            // Rich tooltip with delivery status + next step
             var tipContent = '<strong>' + event.patient_name + '</strong>';
             if (event.file_no) tipContent += '<br>File: ' + event.file_no;
             if (event.phone) tipContent += '<br>Phone: ' + event.phone;
-            tipContent += '<br>Doctor: ' + event.doctor;
+            tipContent += '<br>Doctor: ' + (event.doctor || '');
             tipContent += '<br>Status: ' + event.status_label;
             if (event.is_follow_up) tipContent += '<br><span class="badge bg-info">Follow-Up</span>';
+            if (event.event_type === 'queue') tipContent += '<br><span class="badge bg-secondary"><i class="mdi mdi-walk"></i> Walk-in Queue</span>';
+
+            // Delivery status
+            if (event.can_deliver === false) {
+                tipContent += '<br><span style="color:#dc3545;"><i class="mdi mdi-alert-circle"></i> ' + (event.delivery_reason || 'Blocked') + '</span>';
+            } else if (event.status === 1 || event.status === 2 || event.status === 3 || event.status === 4) {
+                tipContent += '<br><span style="color:#198754;"><i class="mdi mdi-check-circle"></i> Payment OK</span>';
+            }
+
+            // Next step guidance
+            if (event.next_step) {
+                tipContent += '<br><em style="color:#0d6efd;font-size:0.85em;"><i class="mdi mdi-arrow-right-circle"></i> ' + event.next_step + '</em>';
+            }
 
             element.attr('title', '');
             element.tooltip({ title: tipContent, html: true, container: 'body', placement: 'top' });
+
+            // Delivery blocked visual (striped pattern)
+            if (event.can_deliver === false) {
+                element.css({
+                    'background': 'repeating-linear-gradient(45deg, ' + event.color + ', ' + event.color + ' 10px, rgba(255,255,255,0.15) 10px, rgba(255,255,255,0.15) 12px)',
+                    'border-right': '3px solid #dc3545'
+                });
+            }
 
             // Add file no to event display
             element.find('.fc-title').append(
@@ -11019,6 +11219,7 @@ function initAppointmentsCalendar() {
         },
         eventClick: function(event, jsEvent, view) {
             jsEvent.preventDefault();
+            jsEvent.stopPropagation(); // Prevent doc click handler removing the new menu immediately
             showAppointmentContextMenu(event, jsEvent);
         },
         dayClick: function(date, jsEvent, view) {
@@ -11037,7 +11238,23 @@ function showAppointmentContextMenu(event, jsEvent) {
 
     // Start Visit - for WAITING or READY
     if (status === 1 || status === 3) {
-        menuItems += '<a class="context-item text-primary" data-action="start-visit"><i class="mdi mdi-play-circle"></i> Start Visit</a>';
+        if (event.can_deliver === false) {
+            menuItems += '<a class="context-item" style="color:#dc3545;cursor:default;opacity:0.85;" data-action="none"><i class="mdi mdi-alert-circle"></i> ' + (event.delivery_reason || 'Payment Pending') + '</a>';
+            menuItems += '<a class="context-item" style="color:#0d6efd;cursor:default;opacity:0.85;font-style:italic;" data-action="none"><i class="mdi mdi-arrow-right-circle"></i> Direct patient to billing/cashier</a>';
+        } else {
+            menuItems += '<a class="context-item text-success" style="cursor:default;" data-action="none"><i class="mdi mdi-check-circle"></i> Payment OK — In doctor\'s queue</a>';
+        }
+    }
+    // Vitals Pending hint
+    if (status === 2) {
+        if (event.can_deliver === false) {
+            menuItems += '<a class="context-item" style="color:#dc3545;cursor:default;opacity:0.85;" data-action="none"><i class="mdi mdi-alert-circle"></i> ' + (event.delivery_reason || 'Payment Pending') + '</a>';
+        }
+        menuItems += '<a class="context-item" style="color:#17a2b8;cursor:default;opacity:0.85;font-style:italic;" data-action="none"><i class="mdi mdi-needle"></i> Vitals in progress — waiting for nurse</a>';
+    }
+    // In Consultation hint
+    if (status === 4) {
+        menuItems += '<a class="context-item" style="color:#198754;cursor:default;opacity:0.85;font-style:italic;" data-action="none"><i class="mdi mdi-stethoscope"></i> Consultation in progress</a>';
     }
     // Check In - for SCHEDULED
     if (status === 6) {
@@ -11062,7 +11279,9 @@ function showAppointmentContextMenu(event, jsEvent) {
     // View History
     menuItems += '<a class="context-item text-secondary" data-action="history"><i class="mdi mdi-link-variant"></i> View History</a>';
 
-    var menu = $('<div class="appt-context-menu" data-appt-id="' + event.appointment_id +
+    var menu = $('<div class="appt-context-menu" data-appt-id="' + (event.appointment_id || event.record_id || '') +
+        '" data-event-type="' + (event.event_type || 'appointment') +
+        '" data-queue-id="' + (event.queue_id || '') +
         '" data-clinic="' + (event.clinic_id || '') +
         '" data-doctor="' + (event.doctor_id || '') +
         '" data-date="' + (event.start ? moment(event.start).format('YYYY-MM-DD') : '') +
@@ -11091,22 +11310,27 @@ $(document).on('click', '.appt-context-menu .context-item', function(e) {
     switch (action) {
         case 'checkin':
             if (!confirm('Check in this appointment?')) return;
-            $.post('/appointments/' + apptId + '/check-in', { _token: '{{ csrf_token() }}' }, function(res) {
-                if (res.success) { toastr.success(res.message); refreshAppointmentViews(); }
+            $.post("{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
+                if (res.success) {
+                    toastr.success(res.message || 'Checked in successfully.');
+                    // Show actionable next-step guidance
+                    toastr.info('<i class="mdi mdi-arrow-right-circle"></i> Patient is now <b>Waiting</b>. If HMO/payment is pending, direct them to <b>billing/cashier</b> before the doctor can start.', 'Next Step', { timeOut: 8000, extendedTimeOut: 4000, enableHtml: true });
+                    refreshAppointmentViews();
+                }
                 else toastr.error(res.message);
             }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Check-in failed'); });
             break;
         case 'cancel':
             var reason = prompt('Cancellation reason (optional):');
             if (reason === null) return;
-            $.post('/appointments/' + apptId + '/cancel', { _token: '{{ csrf_token() }}', reason: reason }, function(res) {
+            $.post("{{ route('appointments.cancel', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}', reason: reason }, function(res) {
                 if (res.success) { toastr.success(res.message); refreshAppointmentViews(); }
                 else toastr.error(res.message);
             }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Cancel failed'); });
             break;
         case 'noshow':
             if (!confirm('Mark this appointment as No-Show?')) return;
-            $.post('/appointments/' + apptId + '/no-show', { _token: '{{ csrf_token() }}' }, function(res) {
+            $.post("{{ route('appointments.no-show', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
                 if (res.success) { toastr.success(res.message); refreshAppointmentViews(); }
                 else toastr.error(res.message);
             }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Failed'); });
@@ -11117,29 +11341,81 @@ $(document).on('click', '.appt-context-menu .context-item', function(e) {
             $('#reschedule-patient-name').text($menu.data('patient'));
             $('#reschedule-original-date').text($menu.data('date'));
             $('#reschedule-count-info').text('Reschedule #' + (parseInt($menu.data('reschedule-count') || 0) + 1));
-            $('#reschedule-clinic').val($menu.data('clinic'));
+            var ctxReschClinic = $menu.data('clinic');
+            $('#reschedule-clinic').val(ctxReschClinic);
             $('#reschedule-date').val('');
-            $('#reschedule-time').empty().append('<option value="">-- Select date first --</option>');
+            $('#reschedule-time').empty().append('<option value="">-- Select date first --</option>').removeClass('d-none');
+            $('#reschedule-custom-time-input').addClass('d-none').val('');
+            $('#reschedule-custom-time-toggle').prop('checked', false);
+            $('#reschedule-doctor').empty().append('<option value="">Same Doctor</option>');
             $('#reschedule-reason').val('');
+            loadRescheduleModalDoctors(ctxReschClinic);
             $('#rescheduleAppointmentModal').modal('show');
             break;
         case 'reassign':
-            // Trigger the reassign modal
-            var fakeBtn = $('<button>').data({
-                id: apptId,
-                clinic: $menu.data('clinic'),
-                doctor: $menu.data('doctor'),
-                patient: $menu.data('patient')
+            // Directly open reassign modal (delegated handlers won't fire on detached elements)
+            var ctxReassignDoctorId = $menu.data('doctor');
+            $('#reassign-appt-id').val(apptId);
+            $('#reassign-patient-name').text($menu.data('patient'));
+            $('#reassign-current-doctor').text('Loading...');
+            $('#reassign-doctor').empty().append('<option value="">Loading doctors...</option>');
+            $('#reassign-reason').val('');
+            $('#reassignDoctorModal').modal('show');
+            $.get("{{ route('appointments.available-doctors', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), function(res) {
+                var $sel = $('#reassign-doctor');
+                $sel.empty().append('<option value="">-- Select Doctor --</option>');
+                if (res.success && res.doctors) {
+                    var currentName = '';
+                    res.doctors.forEach(function(doc) {
+                        var isCurrent = doc.id == ctxReassignDoctorId;
+                        if (isCurrent) currentName = doc.name;
+                        $sel.append('<option value="' + doc.id + '"' + (isCurrent ? ' disabled' : '') + '>' + doc.name + (isCurrent ? ' (current)' : '') + '</option>');
+                    });
+                    $('#reassign-current-doctor').text(currentName || 'Unknown');
+                }
+            }).fail(function() {
+                $('#reassign-doctor').empty().append('<option value="">Error loading doctors</option>');
             });
-            fakeBtn.addClass('btn-reassign-appointment');
-            fakeBtn.trigger('click');
             break;
         case 'history':
-            var fakeChainBtn = $('<button>').data('id', apptId).addClass('btn-view-chain');
-            fakeChainBtn.trigger('click');
+            // Directly open chain modal (delegated events won't fire on detached elements)
+            $('#chain-body').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>');
+            $('#appointmentChainModal').modal('show');
+            $.get("{{ route('appointments.chain', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), function(res) {
+                if (res.success && res.chain) {
+                    var html = '<div class="appointment-chain-timeline">';
+                    res.chain.forEach(function(item, idx) {
+                        var isActive = item.id == apptId;
+                        var statusBadge = item.status_badge || ('<span class="badge bg-secondary">' + (item.status_label || item.status) + '</span>');
+                        html += '<div class="chain-item' + (isActive ? ' chain-item-active' : '') + '">';
+                        html += '<div class="chain-marker"><span class="chain-dot' + (isActive ? ' active' : '') + '">' + (idx + 1) + '</span></div>';
+                        html += '<div class="chain-content">';
+                        html += '<div class="d-flex justify-content-between align-items-center mb-1">';
+                        html += '<strong>' + (item.appointment_date || '') + '</strong> ' + statusBadge;
+                        html += '</div>';
+                        html += '<div class="text-muted small">';
+                        html += (item.start_time || '') + ' - ' + (item.end_time || '') + ' &bull; Dr. ' + (item.doctor_name || 'Any');
+                        html += '</div>';
+                        if (item.appointment_type === 'follow_up') html += '<span class="badge bg-info badge-sm">Follow-Up</span> ';
+                        if (item.rescheduled_from_id) html += '<span class="badge bg-warning badge-sm">Rescheduled</span> ';
+                        if (item.reassignment_reason) html += '<span class="badge bg-purple badge-sm">Reassigned</span> ';
+                        if (item.cancellation_reason) html += '<div class="text-muted small mt-1"><em>' + item.cancellation_reason + '</em></div>';
+                        html += '</div></div>';
+                    });
+                    html += '</div>';
+                    $('#chain-body').html(html);
+                } else {
+                    $('#chain-body').html('<div class="alert alert-warning">No chain data found.</div>');
+                }
+            }).fail(function() {
+                $('#chain-body').html('<div class="alert alert-danger">Failed to load history.</div>');
+            });
             break;
         case 'start-visit':
-            toastr.info('This patient is already in the queue. Visit can be started from the Doctor Queue.');
+            // No longer used — replaced by status-aware hints
+            break;
+        case 'none':
+            // Informational items — do nothing
             break;
     }
 });
@@ -11203,46 +11479,15 @@ function showAppointmentsQueueView() {
 }
 
 function showReferralsQueueView() {
-    hideAllViews();
-    $('#queue-view').addClass('active');
-    $('#queue-view-title').text('Pending Referrals');
-
-    if (referralsDataTable) {
-        referralsDataTable.destroy();
-    }
-
-    referralsDataTable = $('#queue-datatable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: '{{ route("referrals.pending") }}'
-        },
-        columns: [
-            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'patient_name', name: 'patient_name' },
-            { data: 'patient_file_no', name: 'patient_file_no' },
-            { data: 'referring_doctor', name: 'referring_doctor' },
-            { data: 'referring_clinic', name: 'referring_clinic' },
-            { data: 'target_info', name: 'target_info' },
-            { data: 'urgency_badge', name: 'urgency', orderable: false },
-            { data: 'type_badge', name: 'referral_type', orderable: false },
-            { data: 'time', name: 'created_at' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
-        ],
-        order: [[8, 'asc']],
-        pageLength: 15,
-        language: {
-            emptyTable: 'No pending referrals',
-            processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
-        }
-    });
+    referralViewMode = 'pending';
+    _loadReferralsTable('pending', 'Pending Referrals');
 }
 
 // ─── Appointment actions from queue view ─────────────
 $(document).on('click', '.btn-check-in-appointment', function() {
     var apptId = $(this).data('id');
     if (!confirm('Check in this appointment?')) return;
-    $.post('/appointments/' + apptId + '/check-in', { _token: '{{ csrf_token() }}' }, function(res) {
+    $.post("{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
         if (res.success) {
             toastr.success(res.message);
             loadQueueCounts();
@@ -11259,7 +11504,7 @@ $(document).on('click', '.btn-cancel-appointment', function() {
     var apptId = $(this).data('id');
     var reason = prompt('Cancellation reason (optional):');
     if (reason === null) return;
-    $.post('/appointments/' + apptId + '/cancel', { _token: '{{ csrf_token() }}', reason: reason }, function(res) {
+    $.post("{{ route('appointments.cancel', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}', reason: reason }, function(res) {
         if (res.success) {
             toastr.success(res.message);
             loadQueueCounts();
@@ -11275,7 +11520,7 @@ $(document).on('click', '.btn-cancel-appointment', function() {
 $(document).on('click', '.btn-noshow-appointment', function() {
     var apptId = $(this).data('id');
     if (!confirm('Mark this appointment as No-Show?')) return;
-    $.post('/appointments/' + apptId + '/no-show', { _token: '{{ csrf_token() }}' }, function(res) {
+    $.post("{{ route('appointments.no-show', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
         if (res.success) {
             toastr.success(res.message);
             loadQueueCounts();
@@ -11289,25 +11534,63 @@ $(document).on('click', '.btn-noshow-appointment', function() {
 });
 
 // ─── Referral actions from queue view ─────────────
+
+// Book referral — open modal
 $(document).on('click', '.btn-book-referral', function() {
-    var refId = $(this).data('id');
-    var clinicId = $(this).data('clinic');
-    var doctorId = $(this).data('doctor');
-    var patientId = $(this).data('patient');
-    // Simple prompt-based booking for now
-    var date = prompt('Appointment date (YYYY-MM-DD):');
-    if (!date) return;
-    var time = prompt('Start time (HH:MM, e.g. 09:00):');
-    if (!time) return;
-    $.post('/referrals/' + refId + '/book', {
+    $('#book-ref-id').val($(this).data('id'));
+    $('#book-ref-clinic').val($(this).data('clinic'));
+    $('#book-ref-doctor').val($(this).data('doctor'));
+    $('#book-ref-patient').val($(this).data('patient'));
+    $('#book-ref-date').val('');
+    $('#book-ref-time').val('09:00');
+    $('#book-ref-clinic-override').val('');
+    $('#book-ref-doctor-override').val('');
+
+    // Show target info
+    var targetClinic = $(this).data('clinic-name') || '';
+    var targetDoctor = $(this).data('doctor-name') || '';
+    var info = [];
+    if (targetClinic) info.push('Clinic: ' + targetClinic);
+    if (targetDoctor) info.push('Doctor: ' + targetDoctor);
+    if (info.length) {
+        $('#book-ref-target-text').text(info.join(' — '));
+        $('#book-ref-target-info').show();
+    } else {
+        $('#book-ref-target-info').hide();
+    }
+
+    // Pre-select existing values in override dropdowns
+    if ($(this).data('clinic')) {
+        $('#book-ref-clinic-override').val($(this).data('clinic'));
+    }
+    if ($(this).data('doctor')) {
+        $('#book-ref-doctor-override').val($(this).data('doctor'));
+    }
+
+    $('#bookReferralModal').modal('show');
+});
+
+// Confirm book referral
+$(document).on('click', '#confirm-book-referral', function() {
+    var refId = $('#book-ref-id').val();
+    var date = $('#book-ref-date').val();
+    var time = $('#book-ref-time').val();
+    if (!date) { toastr.warning('Please select an appointment date'); return; }
+    if (!time) { toastr.warning('Please select a start time'); return; }
+
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Booking...');
+
+    $.post("{{ route('referrals.book', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
         _token: '{{ csrf_token() }}',
         appointment_date: date,
         start_time: time,
-        clinic_id: clinicId,
-        doctor_id: doctorId
+        clinic_id: $('#book-ref-clinic-override').val() || $('#book-ref-clinic').val(),
+        doctor_id: $('#book-ref-doctor-override').val() || $('#book-ref-doctor').val()
     }, function(res) {
         if (res.success) {
             toastr.success(res.message);
+            $('#bookReferralModal').modal('hide');
             loadQueueCounts();
             if (referralsDataTable) referralsDataTable.ajax.reload(null, false);
         } else {
@@ -11315,47 +11598,396 @@ $(document).on('click', '.btn-book-referral', function() {
         }
     }).fail(function(xhr) {
         toastr.error(xhr.responseJSON?.message || 'Booking failed');
+    }).always(function() {
+        $btn.prop('disabled', false).html('<i class="mdi mdi-calendar-check me-1"></i> Confirm Booking');
     });
 });
 
+// Refer out — open modal
 $(document).on('click', '.btn-refer-out', function() {
-    var refId = $(this).data('id');
-    var notes = prompt('Action notes (optional):');
-    if (notes === null) return;
-    $.post('/referrals/' + refId + '/refer-out', { _token: '{{ csrf_token() }}', action_notes: notes }, function(res) {
+    $('#refer-out-ref-id').val($(this).data('id'));
+    $('#refer-out-notes').val('');
+    $('#referOutModal').modal('show');
+});
+
+// Confirm refer out
+$(document).on('click', '#confirm-refer-out', function() {
+    var refId = $('#refer-out-ref-id').val();
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+
+    $.post("{{ route('referrals.refer-out', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
+        _token: '{{ csrf_token() }}',
+        action_notes: $('#refer-out-notes').val()
+    }, function(res) {
         if (res.success) {
-            toastr.success(res.message);
+            toastr.success(res.message + ' — You can view & print the referral letter from the history.');
+            $('#referOutModal').modal('hide');
             loadQueueCounts();
-            if (referralsDataTable) referralsDataTable.ajax.reload(null, false);
+            // Switch to all view so user can see the referred-out entry
+            showReferralsAllView();
         }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Refer out failed');
+    }).always(function() {
+        $btn.prop('disabled', false).html('<i class="mdi mdi-check me-1"></i> Confirm Referred Out');
     });
 });
 
+// Decline referral — open modal
 $(document).on('click', '.btn-decline-referral', function() {
-    var refId = $(this).data('id');
-    var reason = prompt('Decline reason:');
-    if (!reason) return;
-    $.post('/referrals/' + refId + '/decline', { _token: '{{ csrf_token() }}', reason: reason }, function(res) {
+    $('#decline-ref-id').val($(this).data('id'));
+    $('#decline-reason').val('');
+    $('#declineReferralModal').modal('show');
+});
+
+// Confirm decline
+$(document).on('click', '#confirm-decline-referral', function() {
+    var refId = $('#decline-ref-id').val();
+    var reason = $('#decline-reason').val();
+    if (!reason || reason.trim().length < 3) {
+        toastr.warning('Please provide a reason for declining');
+        return;
+    }
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Declining...');
+
+    $.post("{{ route('referrals.decline', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
+        _token: '{{ csrf_token() }}',
+        reason: reason
+    }, function(res) {
         if (res.success) {
             toastr.success(res.message);
+            $('#declineReferralModal').modal('hide');
             if (referralsDataTable) referralsDataTable.ajax.reload(null, false);
         }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Decline failed');
+    }).always(function() {
+        $btn.prop('disabled', false).html('<i class="mdi mdi-close-circle me-1"></i> Decline Referral');
     });
 });
 
+// Cancel referral
 $(document).on('click', '.btn-cancel-referral', function() {
     var refId = $(this).data('id');
-    if (!confirm('Cancel this referral?')) return;
-    $.post('/referrals/' + refId + '/cancel', { _token: '{{ csrf_token() }}' }, function(res) {
+    if (!confirm('Cancel this referral? This cannot be undone.')) return;
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    $.post("{{ route('referrals.cancel', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
+        _token: '{{ csrf_token() }}'
+    }, function(res) {
         if (res.success) {
             toastr.success(res.message);
             loadQueueCounts();
             if (referralsDataTable) referralsDataTable.ajax.reload(null, false);
         }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Cancel referral failed');
+        $btn.prop('disabled', false);
     });
+});
+
+// View referral detail
+$(document).on('click', '.btn-view-referral', function() {
+    var refId = $(this).data('id');
+    $('#referral-detail-loading').show();
+    $('#referral-detail-content').hide();
+    $('#btn-print-referral-letter').hide();
+    $('#referralDetailModal').modal('show');
+
+    $.get("{{ route('referrals.detail', ['referral' => '__RID__']) }}".replace('__RID__', refId), function(data) {
+        if (!data.success) { toastr.error('Failed to load referral'); return; }
+
+        var ref = data.referral;
+        var urgencyClass = { 'emergency': 'text-danger', 'urgent': 'text-warning', 'routine': 'text-secondary' }[ref.urgency] || '';
+        var statusBadge = {
+            'pending': '<span class="badge bg-warning text-dark">Pending</span>',
+            'booked': '<span class="badge bg-primary">Booked</span>',
+            'completed': '<span class="badge bg-success">Completed</span>',
+            'cancelled': '<span class="badge bg-danger">Cancelled</span>',
+            'declined': '<span class="badge bg-dark">Declined</span>',
+            'referred_out': '<span class="badge bg-purple text-white">Referred Out</span>'
+        }[ref.status] || '<span class="badge bg-secondary">' + ref.status + '</span>';
+
+        var html = '<div class="p-3">';
+        html += '<div class="d-flex justify-content-between mb-3">';
+        html += '<div>' + statusBadge + ' <span class="badge ' + (ref.referral_type === 'internal' ? 'bg-info' : 'bg-dark') + '">' + (ref.referral_type === 'internal' ? 'Internal' : 'External') + '</span></div>';
+        html += '<span class="' + urgencyClass + ' fw-bold text-uppercase">' + ref.urgency + '</span>';
+        html += '</div>';
+
+        html += '<h6 class="border-bottom pb-1 mb-2"><i class="mdi mdi-account me-1"></i> Patient Information</h6>';
+        html += '<div class="row mb-3">';
+        html += '<div class="col-md-4"><small class="text-muted">Name</small><br><strong>' + ref.patient_name + '</strong></div>';
+        html += '<div class="col-md-4"><small class="text-muted">File No</small><br><strong>' + ref.patient_file_no + '</strong></div>';
+        html += '<div class="col-md-4"><small class="text-muted">HMO</small><br><strong>' + ref.patient_hmo + '</strong></div>';
+        html += '</div>';
+
+        html += '<h6 class="border-bottom pb-1 mb-2"><i class="mdi mdi-stethoscope me-1"></i> Referral Information</h6>';
+        html += '<div class="row mb-3">';
+        html += '<div class="col-md-6"><small class="text-muted">Referring Doctor</small><br><strong>' + ref.referring_doctor + '</strong></div>';
+        html += '<div class="col-md-6"><small class="text-muted">Referring Clinic</small><br><strong>' + ref.referring_clinic + '</strong></div>';
+        html += '</div>';
+
+        if (ref.referral_type === 'internal') {
+            html += '<div class="row mb-3">';
+            html += '<div class="col-md-6"><small class="text-muted">Target Clinic</small><br><strong>' + (ref.target_clinic || 'Any') + '</strong></div>';
+            html += '<div class="col-md-6"><small class="text-muted">Target Doctor</small><br><strong>' + (ref.target_doctor || 'Any Available') + '</strong></div>';
+            html += '</div>';
+        } else {
+            html += '<div class="row mb-3">';
+            html += '<div class="col-md-6"><small class="text-muted">External Facility</small><br><strong>' + (ref.external_facility_name || 'N/A') + '</strong></div>';
+            html += '<div class="col-md-6"><small class="text-muted">External Doctor</small><br><strong>' + (ref.external_doctor_name || 'N/A') + '</strong></div>';
+            html += '</div>';
+            if (ref.external_facility_address || ref.external_facility_phone) {
+                html += '<div class="row mb-3">';
+                html += '<div class="col-md-8"><small class="text-muted">Address</small><br>' + (ref.external_facility_address || '—') + '</div>';
+                html += '<div class="col-md-4"><small class="text-muted">Phone</small><br>' + (ref.external_facility_phone || '—') + '</div>';
+                html += '</div>';
+            }
+        }
+
+        html += '<h6 class="border-bottom pb-1 mb-2"><i class="mdi mdi-clipboard-pulse me-1"></i> Clinical Details</h6>';
+        if (ref.provisional_diagnosis) html += '<div class="mb-2"><small class="text-muted">Provisional Diagnosis</small><br>' + ref.provisional_diagnosis + '</div>';
+        if (ref.clinical_summary) html += '<div class="mb-2"><small class="text-muted">Clinical Summary</small><br>' + ref.clinical_summary + '</div>';
+        html += '<div class="mb-2"><small class="text-muted">Reason for Referral</small><br>' + (ref.reason || 'N/A') + '</div>';
+
+        if (ref.action_notes) {
+            html += '<h6 class="border-bottom pb-1 mb-2 mt-3"><i class="mdi mdi-note-text me-1"></i> Action Notes</h6>';
+            html += '<div class="mb-2">' + ref.action_notes + '</div>';
+            if (ref.actioned_at) html += '<small class="text-muted">Actioned: ' + ref.actioned_at + '</small>';
+        }
+
+        html += '<div class="text-end mt-3"><small class="text-muted">Created: ' + ref.created_at + '</small></div>';
+        html += '</div>';
+
+        $('#referral-detail-content').html(html).show();
+        $('#referral-detail-loading').hide();
+
+        // Show print button for external referrals
+        if (ref.referral_type === 'external') {
+            $('#btn-print-referral-letter').data('ref-data', data).show();
+        }
+
+    }).fail(function() {
+        $('#referral-detail-loading').hide();
+        $('#referral-detail-content').html('<div class="alert alert-danger m-3">Failed to load referral details</div>').show();
+    });
+});
+
+// Print referral letter — open via detail modal
+$(document).on('click', '#btn-print-referral-letter', function() {
+    var cachedData = $(this).data('ref-data');
+    if (cachedData) {
+        buildAndPrintReferralLetter(cachedData);
+    }
+});
+
+// Print referral directly from table
+$(document).on('click', '.btn-print-referral', function() {
+    var refId = $(this).data('id');
+    $.get("{{ route('referrals.detail', ['referral' => '__RID__']) }}".replace('__RID__', refId), function(data) {
+        if (data.success) {
+            buildAndPrintReferralLetter(data);
+        } else {
+            toastr.error('Failed to load referral for printing');
+        }
+    }).fail(function() {
+        toastr.error('Failed to load referral');
+    });
+});
+
+function buildAndPrintReferralLetter(data) {
+    var ref = data.referral;
+    var hosp = data.hospital;
+    var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    var urgencyClass = 'urgency-' + (ref.urgency || 'routine');
+
+    var html = '<div class="referral-letter">';
+
+    // Hospital header
+    html += '<div class="letter-header">';
+    if (hosp.logo) html += '<img src="' + hosp.logo + '" alt="Logo">';
+    html += '<h2>' + (hosp.name || 'Hospital') + '</h2>';
+    if (hosp.address) html += '<p>' + hosp.address + '</p>';
+    var contacts = [];
+    if (hosp.phones) contacts.push(hosp.phones);
+    if (hosp.email) contacts.push(hosp.email);
+    if (contacts.length) html += '<p>' + contacts.join(' | ') + '</p>';
+    html += '</div>';
+
+    // Title
+    html += '<div class="letter-title">Specialist Referral Letter</div>';
+
+    // Meta row
+    html += '<div class="letter-meta">';
+    html += '<div><strong>Date:</strong> ' + today + '</div>';
+    html += '<div><strong>Ref #:</strong> REF-' + String(ref.id).padStart(5, '0') + '</div>';
+    html += '</div>';
+
+    // Urgency stamp
+    if (ref.urgency !== 'routine') {
+        html += '<div style="text-align:right; margin-bottom:10px;"><span class="urgency-stamp ' + urgencyClass + '">' + ref.urgency + '</span></div>';
+    }
+
+    // To: section
+    html += '<div class="letter-body">';
+    html += '<p><strong>To:</strong><br>';
+    if (ref.external_doctor_name) html += ref.external_doctor_name + '<br>';
+    html += (ref.external_facility_name || 'The Receiving Doctor') + '<br>';
+    if (ref.external_facility_address) html += ref.external_facility_address + '<br>';
+    if (ref.external_facility_phone) html += 'Tel: ' + ref.external_facility_phone;
+    html += '</p>';
+
+    // Patient info table
+    html += '<table class="patient-info-table">';
+    html += '<tr><td class="label-cell">Patient Name</td><td>' + ref.patient_name + '</td><td class="label-cell">File No</td><td>' + ref.patient_file_no + '</td></tr>';
+    var row2 = '<tr>';
+    row2 += '<td class="label-cell">Gender</td><td>' + (ref.patient_gender || '—') + '</td>';
+    row2 += '<td class="label-cell">Date of Birth</td><td>' + (ref.patient_dob || '—') + '</td>';
+    row2 += '</tr>';
+    html += row2;
+    html += '<tr><td class="label-cell">HMO / Insurance</td><td colspan="3">' + (ref.patient_hmo || '—') + '</td></tr>';
+    html += '</table>';
+
+    // Dear Doctor
+    html += '<p>Dear Colleague,</p>';
+
+    html += '<p>I am writing to refer the above-named patient to your facility for specialist evaluation and management.</p>';
+
+    // Diagnosis
+    if (ref.provisional_diagnosis) {
+        html += '<p><strong>Provisional Diagnosis:</strong> ' + ref.provisional_diagnosis + '</p>';
+    }
+
+    // Clinical summary
+    if (ref.clinical_summary) {
+        html += '<p><strong>Clinical Summary:</strong><br>' + ref.clinical_summary + '</p>';
+    }
+
+    // Reason
+    html += '<p><strong>Reason for Referral:</strong><br>' + (ref.reason || 'N/A') + '</p>';
+
+    html += '<p>Kindly evaluate and manage as appropriate. I would appreciate feedback on the patient\'s progress and management plan.</p>';
+
+    html += '<p>Thank you for your kind attention.</p>';
+    html += '</div>';
+
+    // Signature
+    html += '<div class="letter-signature">';
+    html += '<p>Yours faithfully,</p>';
+    html += '<div class="sig-line">';
+    html += '<strong>' + ref.referring_doctor + '</strong><br>';
+    html += ref.referring_clinic + '<br>';
+    html += (hosp.name || '');
+    html += '</div>';
+    html += '</div>';
+
+    // Footer
+    html += '<div class="letter-footer">';
+    html += 'This referral letter was generated electronically by ' + (hosp.name || 'the hospital') + ' on ' + today + '. Ref #REF-' + String(ref.id).padStart(5, '0');
+    html += '</div>';
+
+    html += '</div>';
+
+    $('#referral-print-area').html(html);
+
+    setTimeout(function() {
+        window.print();
+    }, 300);
+}
+
+// ─── Referral History Toggle ─────────────
+var referralViewMode = 'pending'; // 'pending' or 'all'
+
+function showReferralsAllView() {
+    referralViewMode = 'all';
+    _loadReferralsTable('all', 'All Referrals (History)');
+}
+
+function _loadReferralsTable(statusFilter, titleText) {
+    hideAllViews();
+    $('#queue-view').show().addClass('active');
+    $('#queue-view-title').html(titleText + ' <div class="btn-group btn-group-sm ms-3" role="group">' +
+        '<button class="btn btn-' + (statusFilter === 'pending' ? '' : 'outline-') + 'primary btn-referral-filter" data-filter="pending">Pending</button>' +
+        '<button class="btn btn-' + (statusFilter === 'all' ? '' : 'outline-') + 'primary btn-referral-filter" data-filter="all">All History</button>' +
+        '</div>');
+
+    if (queueDataTable) { queueDataTable.destroy(); queueDataTable = null; }
+    if (referralsDataTable) { referralsDataTable.destroy(); referralsDataTable = null; }
+
+    var showStatus = (statusFilter === 'all');
+
+    // Rebuild headers — add Status column for "all" view
+    var headerHtml = '<thead><tr><th>#</th><th>Patient</th><th>File No</th><th>Referring Doctor</th><th>Clinic</th><th>Target</th><th>Urgency</th><th>Type</th>';
+    if (showStatus) headerHtml += '<th>Status</th>';
+    headerHtml += '<th>Time</th><th>Actions</th></tr></thead>';
+    $('#queue-datatable').empty().html(headerHtml);
+
+    var columns = [
+        { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+        { data: 'patient_name', name: 'patient_name' },
+        { data: 'patient_file_no', name: 'patient_file_no' },
+        { data: 'referring_doctor', name: 'referring_doctor' },
+        { data: 'referring_clinic', name: 'referring_clinic' },
+        { data: 'target_info', name: 'target_info' },
+        { data: 'urgency_badge', name: 'urgency', orderable: false },
+        { data: 'type_badge', name: 'referral_type', orderable: false },
+    ];
+    if (showStatus) columns.push({ data: 'status_badge', name: 'status', orderable: false });
+    columns.push({ data: 'time', name: 'created_at' });
+    columns.push({ data: 'actions', name: 'actions', orderable: false, searchable: false });
+
+    referralsDataTable = $('#queue-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("referrals.pending") }}',
+            data: function(d) { d.status = statusFilter; }
+        },
+        columns: columns,
+        order: [[showStatus ? 9 : 8, 'desc']],
+        pageLength: 15,
+        language: {
+            emptyTable: statusFilter === 'pending' ? 'No pending referrals' : 'No referrals found',
+            processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+        }
+    });
+}
+
+// Filter toggle buttons
+$(document).on('click', '.btn-referral-filter', function() {
+    var filter = $(this).data('filter');
+    referralViewMode = filter;
+    if (filter === 'pending') {
+        showReferralsQueueView();
+    } else {
+        showReferralsAllView();
+    }
 });
 
 // ─── Reschedule Appointment ────────────────────────────────────────
+
+/**
+ * Populate the #reschedule-doctor select with doctors for the given clinic.
+ * If selectedDoctorId is provided, that option will be pre-selected.
+ */
+function loadRescheduleModalDoctors(clinicId, selectedDoctorId) {
+    var $sel = $('#reschedule-doctor');
+    if (!clinicId) { $sel.empty().append('<option value="">Same Doctor</option>'); return; }
+    $.get('{{ url("reception/clinics") }}/' + clinicId + '/doctors', function(doctors) {
+        $sel.empty().append('<option value="">Same Doctor</option>');
+        if (doctors && doctors.length) {
+            doctors.forEach(function(doc) {
+                var selected = (selectedDoctorId && doc.id == selectedDoctorId) ? ' selected' : '';
+                $sel.append('<option value="' + doc.id + '"' + selected + '>' + doc.name + '</option>');
+            });
+        }
+    }).fail(function() {
+        $sel.empty().append('<option value="">Same Doctor</option>');
+    });
+}
+
 $(document).on('click', '.btn-reschedule-appointment', function() {
     var $btn = $(this);
     var apptId = $btn.data('id');
@@ -11371,14 +12003,18 @@ $(document).on('click', '.btn-reschedule-appointment', function() {
     $('#reschedule-count-info').text('Reschedule #' + (parseInt(rescheduleCount) + 1));
     $('#reschedule-clinic').val(clinicId);
     $('#reschedule-date').val('');
-    $('#reschedule-time').empty().append('<option value="">-- Select date first --</option>');
-    $('#reschedule-doctor').val(doctorId);
+    $('#reschedule-time').empty().append('<option value="">-- Select date first --</option>').removeClass('d-none');
+    $('#reschedule-custom-time-input').addClass('d-none').val('');
+    $('#reschedule-custom-time-toggle').prop('checked', false);
+    $('#reschedule-doctor').empty().append('<option value="">Same Doctor</option>');
     $('#reschedule-reason').val('');
+    loadRescheduleModalDoctors(clinicId, doctorId);
 
     $('#rescheduleAppointmentModal').modal('show');
 });
 
-$('#reschedule-date, #reschedule-clinic, #reschedule-doctor').on('change', function() {
+$(document).on('change', '#reschedule-date, #reschedule-clinic, #reschedule-doctor', function() {
+    if ($('#reschedule-custom-time-toggle').is(':checked')) return; // skip if custom time active
     var date = $('#reschedule-date').val();
     var clinicId = $('#reschedule-clinic').val();
     var doctorId = $('#reschedule-doctor').val();
@@ -11392,34 +12028,62 @@ $('#reschedule-date, #reschedule-clinic, #reschedule-doctor').on('change', funct
         var $sel = $('#reschedule-time');
         $sel.empty().append('<option value="">-- Select Time --</option>');
         if (response.success && response.slots && response.slots.length > 0) {
+            var hasSlots = false;
             response.slots.forEach(function(slot) {
                 if (slot.available) {
+                    hasSlots = true;
                     $sel.append('<option value="' + slot.time + '">' + slot.time + '</option>');
                 }
             });
+            if (!hasSlots) {
+                $sel.append('<option value="" disabled>No available slots — use custom time</option>');
+            }
         } else {
-            $sel.append('<option value="" disabled>No available slots</option>');
+            $sel.append('<option value="" disabled>No slots configured — use custom time</option>');
         }
     });
 });
 
-$('#reschedule-form').on('submit', function(e) {
+// Custom time toggle
+$(document).on('change', '#reschedule-custom-time-toggle', function() {
+    var isCustom = $(this).is(':checked');
+    if (isCustom) {
+        $('#reschedule-time').addClass('d-none');
+        $('#reschedule-custom-time-input').removeClass('d-none');
+    } else {
+        $('#reschedule-custom-time-input').addClass('d-none').val('');
+        $('#reschedule-time').removeClass('d-none');
+        // Re-fetch slots if date set
+        var date = $('#reschedule-date').val();
+        if (date) $('#reschedule-date').trigger('change');
+    }
+});
+
+$(document).on('submit', '#reschedule-form', function(e) {
     e.preventDefault();
     var apptId = $('#reschedule-appt-id').val();
     var $submitBtn = $(this).find('button[type="submit"]');
     $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Rescheduling...');
 
-    var startTime = $('#reschedule-time').val();
-    var endTime = $('#reschedule-time option:selected').data('end') || '';
+    var isCustomTime = $('#reschedule-custom-time-toggle').is(':checked');
+    var startTime = isCustomTime ? $('#reschedule-custom-time-input').val() : $('#reschedule-time').val();
+    var endTime = isCustomTime ? '' : ($('#reschedule-time option:selected').data('end') || '');
+
+    if (!startTime) {
+        $submitBtn.prop('disabled', false).html('<i class="mdi mdi-calendar-edit"></i> Reschedule');
+        toastr.warning('Please select or enter a time.');
+        return;
+    }
 
     $.ajax({
-        url: '/appointments/' + apptId + '/reschedule',
+        url: "{{ route('appointments.reschedule', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
             appointment_date: $('#reschedule-date').val(),
             start_time: startTime,
             end_time: endTime,
+            custom_time: isCustomTime ? 1 : 0,
             doctor_id: $('#reschedule-doctor').val(),
             reason: $('#reschedule-reason').val()
         },
@@ -11427,8 +12091,7 @@ $('#reschedule-form').on('submit', function(e) {
             if (res.success) {
                 toastr.success(res.message);
                 $('#rescheduleAppointmentModal').modal('hide');
-                loadQueueCounts();
-                if (appointmentsDataTable) appointmentsDataTable.ajax.reload(null, false);
+                refreshAppointmentViews();
                 if (typeof patientAppointmentsDataTable !== 'undefined' && patientAppointmentsDataTable) {
                     patientAppointmentsDataTable.ajax.reload(null, false);
                 }
@@ -11462,7 +12125,7 @@ $(document).on('click', '.btn-reassign-appointment', function() {
     $('#reassignDoctorModal').modal('show');
 
     // Load available doctors for this appointment
-    $.get('/appointments/' + apptId + '/available-doctors', function(res) {
+    $.get("{{ route('appointments.available-doctors', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), function(res) {
         var $sel = $('#reassign-doctor');
         $sel.empty().append('<option value="">-- Select Doctor --</option>');
         if (res.success && res.doctors) {
@@ -11479,14 +12142,14 @@ $(document).on('click', '.btn-reassign-appointment', function() {
     });
 });
 
-$('#reassign-form').on('submit', function(e) {
+$(document).on('submit', '#reassign-form', function(e) {
     e.preventDefault();
     var apptId = $('#reassign-appt-id').val();
     var $submitBtn = $(this).find('button[type="submit"]');
     $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Reassigning...');
 
     $.ajax({
-        url: '/appointments/' + apptId + '/reassign',
+        url: "{{ route('appointments.reassign', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -11497,8 +12160,7 @@ $('#reassign-form').on('submit', function(e) {
             if (res.success) {
                 toastr.success(res.message);
                 $('#reassignDoctorModal').modal('hide');
-                loadQueueCounts();
-                if (appointmentsDataTable) appointmentsDataTable.ajax.reload(null, false);
+                refreshAppointmentViews();
                 if (typeof patientAppointmentsDataTable !== 'undefined' && patientAppointmentsDataTable) {
                     patientAppointmentsDataTable.ajax.reload(null, false);
                 }
@@ -11521,7 +12183,7 @@ $(document).on('click', '.btn-view-chain', function() {
     $('#chain-body').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>');
     $('#appointmentChainModal').modal('show');
 
-    $.get('/appointments/' + apptId + '/chain', function(res) {
+    $.get("{{ route('appointments.chain', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), function(res) {
         if (res.success && res.chain) {
             var html = '<div class="appointment-chain-timeline">';
             res.chain.forEach(function(item, idx) {
@@ -11616,9 +12278,16 @@ function loadPatientAppointments(patientId) {
                     </div>
                     <div class="form-group mb-3">
                         <label><i class="mdi mdi-clock-outline"></i> Time Slot <span class="text-danger">*</span></label>
-                        <select class="form-control" id="reschedule-time" required>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="reschedule-custom-time-toggle">
+                                <label class="form-check-label small text-muted" for="reschedule-custom-time-toggle">Custom time</label>
+                            </div>
+                        </div>
+                        <select class="form-control" id="reschedule-time">
                             <option value="">-- Select date first --</option>
                         </select>
+                        <input type="time" class="form-control d-none" id="reschedule-custom-time-input" placeholder="HH:MM">
                     </div>
                     <div class="form-group mb-3">
                         <label><i class="mdi mdi-hospital-building"></i> Clinic</label>
@@ -11730,6 +12399,274 @@ function loadPatientAppointments(patientId) {
 
 {{-- Shared Medical Report History Modal --}}
 @include('admin.partials.medical_report_history_modal')
+
+{{-- ═══════════════════════════════════════════════════════════════════ --}}
+{{-- Referral Action Modals                                            --}}
+{{-- ═══════════════════════════════════════════════════════════════════ --}}
+
+{{-- Book Referral Appointment Modal --}}
+<div class="modal fade" id="bookReferralModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h6 class="modal-title"><i class="mdi mdi-calendar-plus me-1"></i> Book Referral Appointment</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="book-ref-id">
+                <input type="hidden" id="book-ref-clinic">
+                <input type="hidden" id="book-ref-doctor">
+                <input type="hidden" id="book-ref-patient">
+                <div class="alert alert-info py-2 mb-3">
+                    <i class="mdi mdi-information-outline me-1"></i>
+                    Schedule an appointment for this internal referral. The patient will be added to the target clinic's queue.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-calendar me-1"></i> Appointment Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="book-ref-date" min="{{ date('Y-m-d') }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-clock-outline me-1"></i> Start Time <span class="text-danger">*</span></label>
+                    <input type="time" class="form-control" id="book-ref-time" value="09:00">
+                </div>
+                <div class="alert alert-light border py-2 mb-3" id="book-ref-target-info" style="display:none;">
+                    <small class="text-muted">Referring doctor requested:</small><br>
+                    <strong id="book-ref-target-text"></strong>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold"><i class="mdi mdi-hospital-building me-1"></i> Clinic</label>
+                        <select class="form-select" id="book-ref-clinic-override">
+                            <option value="">Use referral's target clinic</option>
+                            @foreach(\App\Models\Clinic::orderBy('name')->get() as $clinic)
+                                <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Override only if needed</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold"><i class="mdi mdi-doctor me-1"></i> Doctor</label>
+                        <select class="form-select" id="book-ref-doctor-override">
+                            <option value="">Use referral's target doctor</option>
+                            @foreach(\App\Models\Staff::whereHas('user', function($q) { $q->whereHas('roles', fn($r) => $r->where('name', 'DOCTOR')); })->with('user:id,surname,firstname,othername')->orderBy('id')->get() as $staff)
+                                <option value="{{ $staff->id }}">{{ $staff->user ? trim(($staff->user->surname ?? '').' '.($staff->user->firstname ?? '')) : 'Staff #'.$staff->id }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Override only if needed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success btn-sm" id="confirm-book-referral">
+                    <i class="mdi mdi-calendar-check me-1"></i> Confirm Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Refer Out Modal --}}
+<div class="modal fade" id="referOutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h6 class="modal-title"><i class="mdi mdi-arrow-right-bold me-1"></i> Mark as Referred Out</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="refer-out-ref-id">
+                <div class="alert alert-warning py-2 mb-3">
+                    <i class="mdi mdi-alert-outline me-1"></i>
+                    This confirms the patient's referral letter has been given and they have been directed to the external facility. You can print the referral letter after this action.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-note-text me-1"></i> Action Notes</label>
+                    <textarea class="form-control" id="refer-out-notes" rows="3" placeholder="e.g., Letter given to patient, appointment confirmed with facility..."></textarea>
+                    <small class="form-text text-muted">Optional — document handover details for record keeping</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info btn-sm" id="confirm-refer-out">
+                    <i class="mdi mdi-check me-1"></i> Confirm Referred Out
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Decline Referral Modal --}}
+<div class="modal fade" id="declineReferralModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h6 class="modal-title"><i class="mdi mdi-close-circle me-1"></i> Decline Referral</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="decline-ref-id">
+                <div class="alert alert-danger py-2 mb-3">
+                    <i class="mdi mdi-alert me-1"></i>
+                    Declining will notify the referring doctor. Please provide a clear reason so they can take alternative action for the patient.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-text-box-outline me-1"></i> Reason for Decline <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="decline-reason" rows="3" placeholder="e.g., Specialist unavailable this week, clinic fully booked..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning btn-sm" id="confirm-decline-referral">
+                    <i class="mdi mdi-close-circle me-1"></i> Decline Referral
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Referral Detail / Print Modal --}}
+<div class="modal fade" id="referralDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h6 class="modal-title"><i class="mdi mdi-file-document-outline me-1"></i> Referral Details</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="referral-detail-loading" class="text-center py-4">
+                    <i class="fa fa-spinner fa-spin fa-2x"></i>
+                </div>
+                <div id="referral-detail-content" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-dark btn-sm" id="btn-print-referral-letter" style="display:none;">
+                    <i class="mdi mdi-printer me-1"></i> Print Referral Letter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Hidden printable referral letter --}}
+<div id="referral-print-area" style="display:none;"></div>
+
+<style>
+/* Referral print styles */
+.referral-letter {
+    font-family: 'Times New Roman', Times, serif;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 15mm 20mm;
+    color: #000;
+    font-size: 12pt;
+    line-height: 1.6;
+}
+.referral-letter .letter-header {
+    text-align: center;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.referral-letter .letter-header img {
+    max-height: 60px;
+    margin-bottom: 5px;
+}
+.referral-letter .letter-header h2 {
+    margin: 0;
+    font-size: 18pt;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.referral-letter .letter-header p {
+    margin: 2px 0;
+    font-size: 10pt;
+    color: #555;
+}
+.referral-letter .letter-title {
+    text-align: center;
+    font-size: 14pt;
+    font-weight: bold;
+    text-decoration: underline;
+    margin: 15px 0;
+    text-transform: uppercase;
+}
+.referral-letter .letter-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 10pt;
+}
+.referral-letter .patient-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+.referral-letter .patient-info-table td {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    font-size: 11pt;
+}
+.referral-letter .patient-info-table td.label-cell {
+    font-weight: bold;
+    width: 30%;
+    background: #f8f9fa;
+}
+.referral-letter .letter-body {
+    margin-bottom: 20px;
+}
+.referral-letter .letter-body p {
+    margin-bottom: 10px;
+    text-align: justify;
+}
+.referral-letter .letter-signature {
+    margin-top: 40px;
+}
+.referral-letter .letter-signature .sig-line {
+    border-top: 1px solid #333;
+    width: 200px;
+    margin-top: 40px;
+    padding-top: 5px;
+    font-size: 10pt;
+}
+.referral-letter .letter-footer {
+    margin-top: 30px;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+    font-size: 8pt;
+    color: #888;
+    text-align: center;
+}
+.referral-letter .urgency-stamp {
+    display: inline-block;
+    padding: 3px 12px;
+    font-weight: bold;
+    font-size: 11pt;
+    border: 2px solid;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+.referral-letter .urgency-emergency { color: #dc3545; border-color: #dc3545; }
+.referral-letter .urgency-urgent { color: #e67e00; border-color: #e67e00; }
+.referral-letter .urgency-routine { color: #6c757d; border-color: #6c757d; }
+
+@media print {
+    body * { visibility: hidden !important; }
+    #referral-print-area, #referral-print-area * { visibility: visible !important; }
+    #referral-print-area {
+        display: block !important;
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%;
+        z-index: 99999;
+        background: #fff;
+    }
+    .referral-letter {
+        padding: 10mm 15mm;
+    }
+}
+</style>
 
 @endsection
 

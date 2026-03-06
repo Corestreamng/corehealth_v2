@@ -103,6 +103,10 @@
                         <i class="mdi mdi-file-document me-1"></i> Medical Report
                     </button>
 
+                    <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center shadow-sm" onclick="$('button[data-bs-target=\'#referrals\']').tab('show'); setTimeout(function(){ $('#toggle-referral-form-btn').click(); }, 300);">
+                        <i class="mdi mdi-account-switch me-1"></i> Refer Patient
+                    </button>
+
                     <div class="vr mx-2 text-muted"></div>
 
                     <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
@@ -405,80 +409,209 @@
         <div class="tab-pane fade" id="referrals" role="tabpanel" aria-labelledby="referrals_tab">
             <div class="card-modern mt-2">
                 <div class="card-body">
-                    {{-- Create Referral Section --}}
+                    {{-- Create / Edit Referral Section --}}
                     <div class="card border-0 shadow-sm mb-3">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0"><i class="mdi mdi-account-plus me-1"></i> Create Specialist Referral</h6>
-                            <button type="button" class="btn btn-sm btn-primary" id="toggle-referral-form-btn" onclick="$('#referral-form-card').toggle()">
-                                <i class="fa fa-plus"></i> New Referral
+                            <h6 class="mb-0"><i class="mdi mdi-account-switch me-1 text-primary"></i> Specialist Referrals</h6>
+                            <button type="button" class="btn btn-sm btn-primary" id="toggle-referral-form-btn">
+                                <i class="mdi mdi-plus"></i> New Referral
                             </button>
                         </div>
                         <div class="card-body d-none" id="referral-form-card">
                             <form id="create-referral-form">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="_referral_id" id="referral-edit-id" value="">
+
+                                {{-- Row 1: Type + Urgency --}}
                                 <div class="row">
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label fw-bold">Referral Type</label>
-                                        <select name="type" class="form-select form-select-sm" id="referral-type-select">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold mb-1">
+                                            <i class="mdi mdi-swap-horizontal-circle text-primary me-1"></i>
+                                            Referral Type <span class="text-danger">*</span>
+                                        </label>
+                                        <select name="referral_type" class="form-select form-select-sm" id="referral-type-select">
                                             <option value="internal">Internal (Within Hospital)</option>
                                             <option value="external">External (Outside Hospital)</option>
                                         </select>
+                                        <small class="form-text text-muted"><i class="mdi mdi-information-outline"></i> Internal referrals can be booked directly by reception</small>
                                     </div>
-                                    <div class="col-md-4 mb-2" id="referral-clinic-group">
-                                        <label class="form-label fw-bold">Referred To Clinic</label>
-                                        <select name="referred_to_clinic_id" class="form-select form-select-sm">
-                                            <option value="">-- Select Clinic --</option>
-                                            @foreach(\App\Models\Clinic::orderBy('name')->get() as $clinic)
-                                                <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4 mb-2" id="referral-doctor-group">
-                                        <label class="form-label fw-bold">Referred To Doctor</label>
-                                        <select name="referred_to_doctor_id" class="form-select form-select-sm">
-                                            <option value="">-- Select Doctor (Optional) --</option>
-                                            @foreach(\App\Models\Staff::whereHas('user', function($q) { $q->where('role_id', '!=', 0); })->orderBy('firstname')->get() as $staff)
-                                                <option value="{{ $staff->id }}">{{ $staff->firstname }} {{ $staff->lastname }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4 mb-2" id="referral-facility-group" style="display:none;">
-                                        <label class="form-label fw-bold">External Facility</label>
-                                        <input type="text" name="external_facility" class="form-control form-control-sm" placeholder="Hospital/Clinic name">
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label fw-bold">Urgency</label>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold mb-1">
+                                            <i class="mdi mdi-alert-circle text-warning me-1"></i>
+                                            Urgency <span class="text-danger">*</span>
+                                        </label>
                                         <select name="urgency" class="form-select form-select-sm">
-                                            <option value="routine">Routine</option>
-                                            <option value="urgent">Urgent</option>
-                                            <option value="emergency">Emergency</option>
+                                            <option value="routine">&#x1F7E2; Routine</option>
+                                            <option value="urgent">&#x1F7E1; Urgent</option>
+                                            <option value="emergency">&#x1F534; Emergency</option>
                                         </select>
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label class="form-label fw-bold">Clinical Indication</label>
-                                        <input type="text" name="clinical_indication" class="form-control form-control-sm" placeholder="e.g., Suspected fracture">
-                                    </div>
-                                    <div class="col-12 mb-2">
-                                        <label class="form-label fw-bold">Referral Notes</label>
-                                        <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Additional notes for the specialist..."></textarea>
+                                        <small class="form-text text-muted"><i class="mdi mdi-information-outline"></i> Emergency referrals are flagged &amp; prioritized at reception</small>
                                     </div>
                                 </div>
-                                <div class="text-end">
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="$('#referral-form-card').addClass('d-none')">Cancel</button>
-                                    <button type="submit" class="btn btn-primary btn-sm">
-                                        <i class="mdi mdi-send"></i> Submit Referral
-                                    </button>
+
+                                {{-- Internal fields: Clinic + Doctor --}}
+                                <div id="referral-internal-fields">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold mb-1">
+                                                <i class="mdi mdi-hospital-building text-info me-1"></i>
+                                                Target Clinic <span class="text-danger">*</span>
+                                            </label>
+                                            <select name="target_clinic_id" class="form-select form-select-sm">
+                                                <option value="">-- Select Clinic --</option>
+                                                @foreach(\App\Models\Clinic::orderBy('name')->get() as $clinic)
+                                                    <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <small class="form-text text-muted">Required for internal referrals</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold mb-1">
+                                                <i class="mdi mdi-doctor text-success me-1"></i>
+                                                Target Doctor
+                                            </label>
+                                            <select name="target_doctor_id" class="form-select form-select-sm">
+                                                <option value="">-- Any Available Doctor --</option>
+                                                @foreach(\App\Models\Staff::whereHas('user', function($q) { $q->whereHas('roles', fn($r) => $r->where('name', 'DOCTOR')); })->with('user:id,surname,firstname,othername')->orderBy('id')->get() as $staff)
+                                                    <option value="{{ $staff->id }}">{{ $staff->user ? trim(($staff->user->surname ?? '').' '.($staff->user->firstname ?? '')) : 'Staff #'.$staff->id }}</option>
+                                                @endforeach
+                                            </select>
+                                            <small class="form-text text-muted">Optional &mdash; leave blank for any available doctor</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- External fields: Facility + Doctor + Address + Phone --}}
+                                <div id="referral-external-fields" style="display:none;">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold mb-1">
+                                                <i class="mdi mdi-hospital-marker text-danger me-1"></i>
+                                                External Facility <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" name="external_facility_name" class="form-control form-control-sm" placeholder="e.g., City General Hospital">
+                                            <small class="form-text text-muted">Name of the hospital or clinic being referred to</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold mb-1">
+                                                <i class="mdi mdi-account-tie text-secondary me-1"></i>
+                                                External Doctor
+                                            </label>
+                                            <input type="text" name="external_doctor_name" class="form-control form-control-sm" placeholder="e.g., Dr. John Smith">
+                                            <small class="form-text text-muted">Optional &mdash; name of the receiving doctor</small>
+                                        </div>
+                                        <div class="col-md-8 mb-3">
+                                            <label class="form-label fw-bold mb-1">
+                                                <i class="mdi mdi-map-marker text-muted me-1"></i>
+                                                Facility Address
+                                            </label>
+                                            <input type="text" name="external_facility_address" class="form-control form-control-sm" placeholder="Address of the external facility">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold mb-1">
+                                                <i class="mdi mdi-phone text-muted me-1"></i>
+                                                Facility Phone
+                                            </label>
+                                            <input type="text" name="external_facility_phone" class="form-control form-control-sm" placeholder="+234...">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Clinical Details --}}
+                                <hr class="my-2">
+                                <p class="mb-2 text-muted" style="font-size:.8rem;"><i class="mdi mdi-stethoscope me-1"></i> Clinical Information</p>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold mb-1">
+                                            <i class="mdi mdi-clipboard-pulse text-primary me-1"></i>
+                                            Provisional Diagnosis
+                                        </label>
+                                        <input type="text" name="provisional_diagnosis" class="form-control form-control-sm" placeholder="e.g., Suspected fracture, chronic renal disease">
+                                        <small class="form-text text-muted">Helps the receiving doctor prepare</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold mb-1">
+                                            <i class="mdi mdi-file-document-outline text-secondary me-1"></i>
+                                            Clinical Summary
+                                        </label>
+                                        <input type="text" name="clinical_summary" class="form-control form-control-sm" placeholder="Brief overview of patient's condition">
+                                        <small class="form-text text-muted">Optional &mdash; relevant history &amp; findings for the specialist</small>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label fw-bold mb-1">
+                                            <i class="mdi mdi-text-box-outline text-dark me-1"></i>
+                                            Reason for Referral <span class="text-danger">*</span>
+                                        </label>
+                                        <textarea name="reason" class="form-control form-control-sm" rows="2" placeholder="Why is this patient being referred? Include relevant clinical findings..." required></textarea>
+                                        <small class="form-text text-muted">Provide clear reasoning so the receiving team can prioritize appropriately</small>
+                                    </div>
+                                </div>
+
+                                {{-- Actions --}}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><span class="text-danger">*</span> = Required field</small>
+                                    <div>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="cancel-referral-form-btn">
+                                            <i class="mdi mdi-close"></i> Cancel
+                                        </button>
+                                        <button type="submit" class="btn btn-primary btn-sm" id="referral-submit-btn">
+                                            <i class="mdi mdi-send"></i> Submit Referral
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
                     </div>
 
-                    {{-- Existing Referrals List --}}
-                    <div id="referrals-list-container">
-                        <div class="text-center text-muted py-3" id="referrals-loading">
-                            <i class="fa fa-spinner fa-spin"></i> Loading referrals...
+                    {{-- ── Referral List Sub-Tabs ── --}}
+                    <ul class="nav nav-pills nav-fill mt-2 mb-2" id="referralSubTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active py-1 px-2" id="refSubTab-encounter" data-bs-toggle="pill" data-bs-target="#refPane-encounter" type="button" role="tab">
+                                <i class="mdi mdi-file-document-outline me-1"></i>This Encounter <span class="badge bg-secondary ms-1" id="ref-encounter-count">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-1 px-2" id="refSubTab-patient" data-bs-toggle="pill" data-bs-target="#refPane-patient" type="button" role="tab">
+                                <i class="mdi mdi-history me-1"></i>All Patient Referrals <span class="badge bg-secondary ms-1" id="ref-patient-count">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-1 px-2" id="refSubTab-incoming" data-bs-toggle="pill" data-bs-target="#refPane-incoming" type="button" role="tab">
+                                <i class="mdi mdi-arrow-down-bold-circle me-1"></i>Incoming To Me <span class="badge bg-info ms-1" id="incoming-referral-count" style="display:none;">0</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="referralSubTabContent">
+                        {{-- Sub-pane: This Encounter --}}
+                        <div class="tab-pane fade show active" id="refPane-encounter" role="tabpanel">
+                            <div id="referrals-list-container">
+                                <div class="text-center text-muted py-3" id="referrals-loading">
+                                    <i class="fa fa-spinner fa-spin"></i> Loading referrals...
+                                </div>
+                                <div id="referrals-list"></div>
+                            </div>
                         </div>
-                        <div id="referrals-list"></div>
+
+                        {{-- Sub-pane: All Patient Referrals --}}
+                        <div class="tab-pane fade" id="refPane-patient" role="tabpanel">
+                            <small class="text-muted d-block mb-2"><i class="mdi mdi-information-outline me-1"></i>Complete referral history for this patient across all encounters. You can edit/delete your own pending referrals.</small>
+                            <div class="text-center text-muted py-3" id="patient-referrals-loading" style="display:none;">
+                                <i class="fa fa-spinner fa-spin"></i> Loading patient referrals...
+                            </div>
+                            <div id="patient-referrals-list"></div>
+                        </div>
+
+                        {{-- Sub-pane: Incoming To Me --}}
+                        <div class="tab-pane fade" id="refPane-incoming" role="tabpanel">
+                            <small class="text-muted d-block mb-2"><i class="mdi mdi-information-outline me-1"></i>Pending referrals from other doctors directed to you or your clinic. You can accept and start a new encounter.</small>
+                            <div class="text-center text-muted py-2" id="incoming-referrals-loading" style="display:none;">
+                                <i class="fa fa-spinner fa-spin"></i> Loading...
+                            </div>
+                            <div id="incoming-referrals-list"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3373,6 +3506,7 @@
         const encounterId = '{{ $encounter->id }}';
         const patientId = '{{ request()->get("patient_id") }}';
         const queueId = '{{ request()->get("queue_id") ?? "ward_round" }}';
+        const currentDoctorStaffId = '{{ $doctor->id ?? "" }}';
 
         // Initialize consultation timer
         $(function() {
@@ -4002,7 +4136,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i> <strong>Patient:</strong> {{ $patient->surname }} {{ $patient->first_name }} {{ $patient->other_names }}
+                        <i class="fa fa-info-circle"></i> <strong>Patient:</strong> {{ userfullname($patient->user_id) }}
                     </div>
 
                     <form id="admitDischargeForm">
@@ -4512,13 +4646,13 @@
             }
             followUpPromise = new Promise(function(resolve, reject) {
                 $.ajax({
-                    url: '/encounters/' + encounterId + '/schedule-followup',
+                    url: "{{ route('encounters.schedule-followup', ['encounter' => '__EID__']) }}".replace('__EID__', encounterId),
                     method: 'POST',
                     data: {
                         appointment_date: fuDate,
                         start_time: fuSlot || null,
                         priority: $('#followup-priority').val(),
-                        notes: $('#followup-notes').val(),
+                        reason: $('#followup-notes').val(),
                         is_prepaid: $('#followup-prepaid').is(':checked') ? 1 : 0,
                         _token: $('meta[name="csrf-token"]').attr('content')
                     },
@@ -4666,7 +4800,7 @@
             $.ajax({
                 url: "{{ route('appointments.available-slots') }}",
                 type: 'GET',
-                data: { date: date },
+                data: { date: date, clinic_id: '{{ $clinic->id ?? '' }}' },
                 success: function(data) {
                     var html = '<option value="">-- Select time (optional) --</option>';
                     if (data.slots && data.slots.length > 0) {
@@ -4689,33 +4823,67 @@
         // Toggle internal/external referral fields
         $(document).on('change', '#referral-type-select', function() {
             if ($(this).val() === 'external') {
-                $('#referral-clinic-group, #referral-doctor-group').hide();
-                $('#referral-facility-group').show();
+                $('#referral-internal-fields').hide();
+                $('#referral-external-fields').show();
             } else {
-                $('#referral-clinic-group, #referral-doctor-group').show();
-                $('#referral-facility-group').hide();
+                $('#referral-internal-fields').show();
+                $('#referral-external-fields').hide();
             }
         });
 
-        // Show referral form
+        // Show referral form (new mode)
         $(document).on('click', '#toggle-referral-form-btn', function() {
+            resetReferralForm();
             $('#referral-form-card').toggleClass('d-none');
         });
 
-        // Load referrals when tab is shown
+        // Cancel referral form
+        $(document).on('click', '#cancel-referral-form-btn', function() {
+            resetReferralForm();
+            $('#referral-form-card').addClass('d-none');
+        });
+
+        // Reset form to "create" mode
+        function resetReferralForm() {
+            $('#create-referral-form')[0].reset();
+            $('#referral-edit-id').val('');
+            $('#referral-submit-btn').html('<i class="mdi mdi-send"></i> Submit Referral');
+            $('#referral-internal-fields').show();
+            $('#referral-external-fields').hide();
+            $('#referral-type-select').val('internal');
+        }
+
+        // Load referrals when main referrals tab is shown
+        var _patientRefLoaded = false;
+        var _incomingRefLoaded = false;
         $('button[data-bs-target="#referrals"]').on('shown.bs.tab', function() {
             loadEncounterReferrals();
+        });
+        // Lazy-load patient referrals subtab
+        $('#refSubTab-patient').on('shown.bs.tab', function() {
+            if (!_patientRefLoaded) {
+                loadPatientReferrals();
+                _patientRefLoaded = true;
+            }
+        });
+        // Lazy-load incoming referrals subtab
+        $('#refSubTab-incoming').on('shown.bs.tab', function() {
+            if (!_incomingRefLoaded) {
+                loadIncomingReferrals();
+                _incomingRefLoaded = true;
+            }
         });
 
         function loadEncounterReferrals() {
             $.ajax({
-                url: '/encounters/' + encounterId + '/referrals',
+                url: "{{ route('encounters.referrals.list', ['encounter' => '__EID__']) }}".replace('__EID__', encounterId),
                 type: 'GET',
                 success: function(data) {
                     $('#referrals-loading').hide();
                     var html = '';
                     if (data.referrals && data.referrals.length > 0) {
                         $('#referral-count-badge').text(data.referrals.length).show();
+                        $('#ref-encounter-count').text(data.referrals.length);
                         data.referrals.forEach(function(ref) {
                             var urgencyBadge = {
                                 'emergency': 'bg-danger',
@@ -4727,37 +4895,60 @@
                                 'pending': 'bg-warning text-dark',
                                 'accepted': 'bg-info',
                                 'scheduled': 'bg-primary',
+                                'booked': 'bg-primary',
                                 'completed': 'bg-success',
                                 'cancelled': 'bg-danger',
                                 'declined': 'bg-dark',
                                 'referred_out': 'bg-purple'
                             }[ref.status] || 'bg-secondary';
 
+                            var urgencyIcon = { 'emergency': 'mdi-alert-circle', 'urgent': 'mdi-alert', 'routine': 'mdi-check-circle' }[ref.urgency] || 'mdi-check-circle';
+                            var canEdit = ref.can_edit;
+
                             html += '<div class="card border-start border-4 mb-2" style="border-color: ' + (ref.urgency === 'emergency' ? '#dc3545' : ref.urgency === 'urgent' ? '#ffc107' : '#6c757d') + ' !important;">';
                             html += '<div class="card-body py-2 px-3">';
+
+                            // Header row: badges + actions
                             html += '<div class="d-flex justify-content-between align-items-start">';
                             html += '<div>';
-                            html += '<span class="badge ' + urgencyBadge + ' me-1">' + ref.urgency + '</span>';
+                            html += '<span class="badge ' + urgencyBadge + ' me-1"><i class="mdi ' + urgencyIcon + ' me-1"></i>' + ref.urgency + '</span>';
                             html += '<span class="badge ' + statusBadge + ' me-1">' + ref.status + '</span>';
-                            html += '<span class="badge bg-light text-dark">' + ref.type + '</span>';
+                            html += '<span class="badge ' + (ref.type === 'internal' ? 'bg-info' : 'bg-secondary') + '">' + (ref.type === 'internal' ? '<i class="mdi mdi-hospital-building me-1"></i>Internal' : '<i class="mdi mdi-hospital-marker me-1"></i>External') + '</span>';
+                            if (ref.is_mine) html += '<span class="badge bg-primary ms-1"><i class="mdi mdi-account me-1"></i>Mine</span>';
                             html += '</div>';
-                            html += '<small class="text-muted">' + (ref.created_at_formatted || '') + '</small>';
-                            html += '</div>';
-                            html += '<div class="mt-1">';
-                            if (ref.referred_to_clinic) {
-                                html += '<small><strong>Clinic:</strong> ' + ref.referred_to_clinic + '</small><br>';
+                            html += '<div class="d-flex align-items-center gap-1">';
+                            html += '<small class="text-muted me-2">' + (ref.created_at || '') + '</small>';
+                            if (canEdit) {
+                                html += '<button class="btn btn-sm btn-outline-primary py-0 px-1 btn-edit-referral" data-referral=\'' + JSON.stringify(ref) + '\' title="Edit"><i class="mdi mdi-pencil" style="font-size:.8rem;"></i></button>';
+                                html += '<button class="btn btn-sm btn-outline-danger py-0 px-1 btn-delete-referral" data-id="' + ref.id + '" title="Delete"><i class="mdi mdi-delete" style="font-size:.8rem;"></i></button>';
                             }
-                            if (ref.referred_to_doctor) {
-                                html += '<small><strong>Doctor:</strong> ' + ref.referred_to_doctor + '</small><br>';
+                            html += '</div>';
+                            html += '</div>';
+
+                            // Details
+                            html += '<div class="mt-1">';
+                            if (ref.target_clinic) {
+                                html += '<small><i class="mdi mdi-hospital-building text-info me-1"></i><strong>Clinic:</strong> ' + ref.target_clinic + '</small><br>';
+                            }
+                            if (ref.target_doctor) {
+                                html += '<small><i class="mdi mdi-doctor text-success me-1"></i><strong>Doctor:</strong> ' + ref.target_doctor + '</small><br>';
                             }
                             if (ref.external_facility) {
-                                html += '<small><strong>Facility:</strong> ' + ref.external_facility + '</small><br>';
+                                html += '<small><i class="mdi mdi-hospital-marker text-danger me-1"></i><strong>Facility:</strong> ' + ref.external_facility + '</small>';
+                                if (ref.external_doctor) html += ' &mdash; <small>' + ref.external_doctor + '</small>';
+                                html += '<br>';
                             }
-                            if (ref.clinical_indication) {
-                                html += '<small><strong>Indication:</strong> ' + ref.clinical_indication + '</small><br>';
+                            if (ref.provisional_diagnosis) {
+                                html += '<small><i class="mdi mdi-clipboard-pulse text-primary me-1"></i><strong>Diagnosis:</strong> ' + ref.provisional_diagnosis + '</small><br>';
                             }
-                            if (ref.notes) {
-                                html += '<small class="text-muted">' + ref.notes + '</small>';
+                            if (ref.clinical_summary) {
+                                html += '<small><i class="mdi mdi-file-document-outline text-secondary me-1"></i><strong>Summary:</strong> ' + ref.clinical_summary + '</small><br>';
+                            }
+                            if (ref.reason) {
+                                html += '<small class="text-muted"><i class="mdi mdi-text-box-outline me-1"></i>' + ref.reason + '</small>';
+                            }
+                            if (ref.referring_doctor) {
+                                html += '<br><small class="text-muted fst-italic">Referred by ' + ref.referring_doctor + '</small>';
                             }
                             html += '</div>';
                             html += '</div></div>';
@@ -4774,24 +4965,237 @@
             });
         }
 
-        // Submit referral form
+        // ─── Patient-wide Referrals (all encounters, all doctors) ───
+        function loadPatientReferrals() {
+            $('#patient-referrals-loading').show();
+            $('#patient-referrals-list').empty();
+            $.ajax({
+                url: "{{ route('encounters.referrals.patient-all', ['encounter' => '__EID__']) }}".replace('__EID__', encounterId),
+                type: 'GET',
+                success: function(data) {
+                    $('#patient-referrals-loading').hide();
+                    var html = '';
+                    if (data.referrals && data.referrals.length > 0) {
+                        $('#ref-patient-count').text(data.referrals.length);
+                        data.referrals.forEach(function(ref) {
+                            var urgencyBadge = { 'emergency': 'bg-danger', 'urgent': 'bg-warning text-dark', 'routine': 'bg-secondary' }[ref.urgency] || 'bg-secondary';
+                            var statusBadge = { 'pending': 'bg-warning text-dark', 'booked': 'bg-primary', 'completed': 'bg-success', 'cancelled': 'bg-danger', 'declined': 'bg-dark', 'referred_out': 'bg-purple' }[ref.status] || 'bg-secondary';
+                            var urgencyIcon = { 'emergency': 'mdi-alert-circle', 'urgent': 'mdi-alert', 'routine': 'mdi-check-circle' }[ref.urgency] || 'mdi-check-circle';
+                            var borderColor = ref.urgency === 'emergency' ? '#dc3545' : ref.urgency === 'urgent' ? '#ffc107' : '#6c757d';
+
+                            html += '<div class="card border-start border-4 mb-2" style="border-color: ' + borderColor + ' !important;">';
+                            html += '<div class="card-body py-2 px-3">';
+
+                            // Header: badges + encounter source label + action buttons
+                            html += '<div class="d-flex justify-content-between align-items-start">';
+                            html += '<div>';
+                            html += '<span class="badge ' + urgencyBadge + ' me-1"><i class="mdi ' + urgencyIcon + ' me-1"></i>' + ref.urgency + '</span>';
+                            html += '<span class="badge ' + statusBadge + ' me-1">' + ref.status + '</span>';
+                            html += '<span class="badge ' + (ref.type === 'internal' ? 'bg-info' : 'bg-secondary') + ' me-1">' + (ref.type === 'internal' ? 'Internal' : 'External') + '</span>';
+                            if (ref.is_current_encounter) {
+                                html += '<span class="badge bg-success me-1"><i class="mdi mdi-check me-1"></i>This Encounter</span>';
+                            } else {
+                                html += '<span class="badge bg-light text-dark border me-1">Other Encounter</span>';
+                            }
+                            if (ref.is_mine) {
+                                html += '<span class="badge bg-primary me-1"><i class="mdi mdi-account me-1"></i>Mine</span>';
+                            }
+                            html += '</div>';
+                            html += '<div class="d-flex align-items-center gap-1">';
+                            html += '<small class="text-muted me-2">' + (ref.created_at || '') + '</small>';
+                            if (ref.can_edit) {
+                                html += '<button class="btn btn-sm btn-outline-primary py-0 px-1 btn-edit-referral" data-referral=\'' + JSON.stringify(ref) + '\' title="Edit"><i class="mdi mdi-pencil" style="font-size:.8rem;"></i></button>';
+                                html += '<button class="btn btn-sm btn-outline-danger py-0 px-1 btn-delete-referral" data-id="' + ref.id + '" title="Delete"><i class="mdi mdi-delete" style="font-size:.8rem;"></i></button>';
+                            }
+                            html += '</div>';
+                            html += '</div>';
+
+                            // Details
+                            html += '<div class="mt-1">';
+                            if (ref.referring_doctor) {
+                                html += '<small><i class="mdi mdi-arrow-up-bold text-danger me-1"></i><strong>From:</strong> ' + ref.referring_doctor;
+                                if (ref.referring_clinic) html += ' <span class="text-muted">(' + ref.referring_clinic + ')</span>';
+                                html += '</small><br>';
+                            }
+                            if (ref.target_clinic) {
+                                html += '<small><i class="mdi mdi-arrow-down-bold text-success me-1"></i><strong>To:</strong> ' + ref.target_clinic;
+                                if (ref.target_doctor) html += ' &mdash; ' + ref.target_doctor;
+                                html += '</small><br>';
+                            }
+                            if (ref.external_facility) {
+                                html += '<small><i class="mdi mdi-hospital-marker text-danger me-1"></i><strong>Facility:</strong> ' + ref.external_facility;
+                                if (ref.external_doctor) html += ' &mdash; ' + ref.external_doctor;
+                                html += '</small><br>';
+                            }
+                            if (ref.provisional_diagnosis) {
+                                html += '<small><i class="mdi mdi-clipboard-pulse text-primary me-1"></i><strong>Diagnosis:</strong> ' + ref.provisional_diagnosis + '</small><br>';
+                            }
+                            if (ref.reason) {
+                                html += '<small class="text-muted"><i class="mdi mdi-text-box-outline me-1"></i>' + ref.reason + '</small>';
+                            }
+                            if (ref.action_notes) {
+                                html += '<br><small class="text-info"><i class="mdi mdi-note-text me-1"></i><em>' + ref.action_notes + '</em></small>';
+                            }
+                            html += '</div>';
+
+                            html += '</div></div>';
+                        });
+                    } else {
+                        html = '<div class="text-center text-muted py-3"><i class="mdi mdi-account-switch" style="font-size: 2rem;"></i><br>No referrals found for this patient</div>';
+                    }
+                    $('#patient-referrals-list').html(html);
+                },
+                error: function() {
+                    $('#patient-referrals-loading').hide();
+                    $('#patient-referrals-list').html('<div class="alert alert-danger">Failed to load patient referrals</div>');
+                }
+            });
+        }
+
+        // ─── Incoming Referrals (to this doctor from other encounters) ───
+        function loadIncomingReferrals() {
+            $('#incoming-referrals-loading').show();
+            $('#incoming-referrals-list').empty();
+            $.ajax({
+                url: "{{ route('encounters.referrals.incoming', ['encounter' => '__EID__']) }}".replace('__EID__', encounterId),
+                type: 'GET',
+                success: function(data) {
+                    $('#incoming-referrals-loading').hide();
+                    var html = '';
+                    if (data.referrals && data.referrals.length > 0) {
+                        $('#incoming-referral-count').text(data.referrals.length).show();
+                        data.referrals.forEach(function(ref) {
+                            var urgencyBadge = { 'emergency': 'bg-danger', 'urgent': 'bg-warning text-dark', 'routine': 'bg-secondary' }[ref.urgency] || 'bg-secondary';
+                            var urgencyIcon = { 'emergency': 'mdi-alert-circle', 'urgent': 'mdi-alert', 'routine': 'mdi-check-circle' }[ref.urgency] || 'mdi-check-circle';
+                            var borderColor = ref.urgency === 'emergency' ? '#dc3545' : ref.urgency === 'urgent' ? '#ffc107' : '#17a2b8';
+
+                            html += '<div class="card border-start border-4 mb-2" style="border-color: ' + borderColor + ' !important;">';
+                            html += '<div class="card-body py-2 px-3">';
+
+                            // Header
+                            html += '<div class="d-flex justify-content-between align-items-start">';
+                            html += '<div>';
+                            html += '<span class="badge ' + urgencyBadge + ' me-1"><i class="mdi ' + urgencyIcon + ' me-1"></i>' + ref.urgency + '</span>';
+                            html += '<span class="badge ' + (ref.type === 'internal' ? 'bg-info' : 'bg-secondary') + ' me-1">' + ref.type + '</span>';
+                            html += '<span class="badge bg-light text-dark">' + ref.patient_name + ' — ' + ref.patient_file_no + '</span>';
+                            html += '</div>';
+                            html += '<small class="text-muted">' + (ref.created_at || '') + '</small>';
+                            html += '</div>';
+
+                            // Details
+                            html += '<div class="mt-1">';
+                            html += '<small><i class="mdi mdi-doctor text-primary me-1"></i><strong>From:</strong> ' + ref.referring_doctor + '</small>';
+                            if (ref.referring_clinic) html += ' <small class="text-muted">(' + ref.referring_clinic + ')</small>';
+                            html += '<br>';
+                            if (ref.provisional_diagnosis) {
+                                html += '<small><i class="mdi mdi-clipboard-pulse text-primary me-1"></i><strong>Diagnosis:</strong> ' + ref.provisional_diagnosis + '</small><br>';
+                            }
+                            if (ref.reason) {
+                                html += '<small class="text-muted"><i class="mdi mdi-text-box-outline me-1"></i>' + ref.reason + '</small><br>';
+                            }
+                            html += '</div>';
+
+                            // Actions
+                            html += '<div class="mt-2 d-flex gap-2">';
+                            html += '<button class="btn btn-sm btn-success btn-accept-incoming-referral" data-id="' + ref.id + '" data-patient="' + ref.patient_id + '" data-patient-name="' + ref.patient_name + '"><i class="mdi mdi-check-circle me-1"></i> Accept &amp; Start Encounter</button>';
+                            html += '<button class="btn btn-sm btn-outline-warning btn-decline-incoming-referral" data-id="' + ref.id + '"><i class="mdi mdi-close-circle me-1"></i> Decline</button>';
+                            html += '</div>';
+
+                            html += '</div></div>';
+                        });
+                    } else {
+                        html = '<div class="text-center text-muted py-2"><i class="mdi mdi-check-circle" style="font-size:1.5rem;"></i><br><small>No pending incoming referrals</small></div>';
+                    }
+                    $('#incoming-referrals-list').html(html);
+                },
+                error: function() {
+                    $('#incoming-referrals-loading').hide();
+                    $('#incoming-referrals-list').html('<div class="alert alert-sm alert-danger">Failed to load incoming referrals</div>');
+                }
+            });
+        }
+
+        // Accept incoming referral — mark as accepted and navigate to new encounter
+        $(document).on('click', '.btn-accept-incoming-referral', function() {
+            var refId = $(this).data('id');
+            var patientId = $(this).data('patient');
+            var patientName = $(this).data('patient-name');
+            var $btn = $(this);
+
+            if (!confirm('Accept this referral for ' + patientName + '? A new encounter will be started.')) return;
+
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Accepting...');
+            $.post("{{ url('referrals') }}/" + refId + "/accept", {
+                _token: '{{ csrf_token() }}'
+            }, function(res) {
+                if (res.success) {
+                    toastr.success(res.message || 'Referral accepted');
+                    // Navigate to new encounter for this patient
+                    if (res.encounter_url) {
+                        window.open(res.encounter_url, '_blank');
+                    }
+                    loadIncomingReferrals();
+                } else {
+                    toastr.error(res.message || 'Failed to accept referral');
+                }
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to accept referral');
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check-circle me-1"></i> Accept & Start Encounter');
+            });
+        });
+
+        // Decline incoming referral
+        $(document).on('click', '.btn-decline-incoming-referral', function() {
+            var refId = $(this).data('id');
+            var reason = prompt('Reason for declining this referral:');
+            if (!reason) return;
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+            $.post("{{ route('referrals.decline', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
+                _token: '{{ csrf_token() }}',
+                reason: reason
+            }, function(res) {
+                if (res.success) {
+                    toastr.success('Referral declined');
+                    loadIncomingReferrals();
+                }
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to decline');
+                $btn.prop('disabled', false);
+            });
+        });
+
+        // Submit referral form (create or update)
         $(document).on('submit', '#create-referral-form', function(e) {
             e.preventDefault();
-            var btn = $(this).find('button[type="submit"]');
-            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+            var btn = $('#referral-submit-btn');
+            var editId = $('#referral-edit-id').val();
+            var isEdit = editId && editId.length > 0;
+            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> ' + (isEdit ? 'Updating...' : 'Submitting...'));
+
+            var url, method;
+            if (isEdit) {
+                url = "{{ url('encounters') }}/" + encounterId + "/referrals/" + editId;
+                method = 'PUT';
+            } else {
+                url = "{{ route('encounters.referrals.create', ['encounter' => '__EID__']) }}".replace('__EID__', encounterId);
+                method = 'POST';
+            }
 
             $.ajax({
-                url: '/encounters/' + encounterId + '/referrals',
-                type: 'POST',
+                url: url,
+                type: method,
                 data: $(this).serialize(),
                 success: function(response) {
-                    toastr.success(response.message || 'Referral created successfully');
-                    $('#create-referral-form')[0].reset();
+                    toastr.success(response.message || (isEdit ? 'Referral updated' : 'Referral created successfully'));
+                    resetReferralForm();
                     $('#referral-form-card').addClass('d-none');
                     loadEncounterReferrals();
+                    _patientRefLoaded = false; // force reload patient referrals
+                    _incomingRefLoaded = false; // force reload incoming referrals
                 },
                 error: function(xhr) {
-                    var msg = xhr.responseJSON?.message || 'Failed to create referral';
+                    var msg = xhr.responseJSON?.message || 'Failed to save referral';
                     if (xhr.responseJSON?.errors) {
                         var errs = Object.values(xhr.responseJSON.errors).flat();
                         msg = errs.join('<br>');
@@ -4799,7 +5203,60 @@
                     toastr.error(msg);
                 },
                 complete: function() {
-                    btn.prop('disabled', false).html('<i class="mdi mdi-send"></i> Submit Referral');
+                    btn.prop('disabled', false).html('<i class="mdi mdi-send"></i> ' + (isEdit ? 'Update Referral' : 'Submit Referral'));
+                }
+            });
+        });
+
+        // Edit referral — populate form
+        $(document).on('click', '.btn-edit-referral', function() {
+            var ref = $(this).data('referral');
+            resetReferralForm();
+
+            $('#referral-edit-id').val(ref.id);
+            $('#referral-submit-btn').html('<i class="mdi mdi-pencil"></i> Update Referral');
+
+            // Set type and toggle fields
+            $('#referral-type-select').val(ref.type).trigger('change');
+
+            // Set values
+            $('[name="target_clinic_id"]').val(ref.target_clinic_id || '');
+            $('[name="target_doctor_id"]').val(ref.target_doctor_id || '');
+            $('[name="external_facility_name"]').val(ref.external_facility || '');
+            $('[name="external_doctor_name"]').val(ref.external_doctor || '');
+            $('[name="external_facility_address"]').val(ref.external_facility_address || '');
+            $('[name="external_facility_phone"]').val(ref.external_facility_phone || '');
+            $('[name="urgency"]').val(ref.urgency || 'routine');
+            $('[name="provisional_diagnosis"]').val(ref.provisional_diagnosis || '');
+            $('[name="clinical_summary"]').val(ref.clinical_summary || '');
+            $('[name="reason"]').val(ref.reason || '');
+
+            // Show form
+            $('#referral-form-card').removeClass('d-none');
+            $('#referral-form-card')[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        // Delete referral
+        $(document).on('click', '.btn-delete-referral', function() {
+            var refId = $(this).data('id');
+            var $btn = $(this);
+
+            if (!confirm('Delete this referral? This cannot be undone.')) return;
+
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+            $.ajax({
+                url: "{{ url('encounters') }}/" + encounterId + "/referrals/" + refId,
+                type: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(response) {
+                    toastr.success(response.message || 'Referral deleted');
+                    loadEncounterReferrals();
+                    _patientRefLoaded = false; // force reload patient referrals
+                    _incomingRefLoaded = false; // force reload incoming referrals
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Failed to delete referral');
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-delete" style="font-size:.8rem;"></i>');
                 }
             });
         });
