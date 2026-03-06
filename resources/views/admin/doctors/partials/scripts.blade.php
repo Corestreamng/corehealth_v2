@@ -81,7 +81,10 @@ $('#confirmDeleteBtn').on('click', function() {
 
     // Determine the URL based on type
     let url = '';
-    if (currentDeleteItem.type === 'lab') {
+    if (currentDeleteItem._nurseRoute) {
+        // Nurse-created item — use nursing-workbench route
+        url = currentDeleteItem._nurseRoute;
+    } else if (currentDeleteItem.type === 'lab') {
         url = `/encounters/${currentDeleteItem.encounterId}/labs/${currentDeleteItem.id}`;
     } else if (currentDeleteItem.type === 'imaging') {
         url = `/encounters/${currentDeleteItem.encounterId}/imaging/${currentDeleteItem.id}`;
@@ -114,17 +117,21 @@ $('#confirmDeleteBtn').on('click', function() {
                 // Show success message
                 alert('Request deleted successfully');
 
-                // Reload the appropriate DataTable
+                // Reload the appropriate DataTable (doctor encounter + nurse workbench variants)
                 if (currentDeleteItem.type === 'lab') {
-                    $('#investigation_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#investigation_history_list')) $('#investigation_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#cr_lab_history_list')) $('#cr_lab_history_list').DataTable().ajax.reload();
                 } else if (currentDeleteItem.type === 'imaging') {
-                    $('#imaging_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#imaging_history_list')) $('#imaging_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#cr_imaging_history_list')) $('#cr_imaging_history_list').DataTable().ajax.reload();
                 } else if (currentDeleteItem.type === 'prescription') {
-                    $('#presc_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#presc_history_list')) $('#presc_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#cr_presc_history_list')) $('#cr_presc_history_list').DataTable().ajax.reload();
                 } else if (currentDeleteItem.type === 'procedure') {
-                    $('#procedure_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#procedure_history_list')) $('#procedure_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#cr_proc_history_list')) $('#cr_proc_history_list').DataTable().ajax.reload();
                 } else if (currentDeleteItem.type === 'encounter') {
-                    $('#encounter_history_list').DataTable().ajax.reload();
+                    if ($.fn.DataTable.isDataTable('#encounter_history_list')) $('#encounter_history_list').DataTable().ajax.reload();
                 }
 
                 // Reset form
@@ -166,6 +173,45 @@ function resetDeleteModal() {
 $('#deleteConfirmModal').on('hidden.bs.modal', function() {
     resetDeleteModal();
 });
+
+/**
+ * Delete a nurse-created clinical request (encounter_id = NULL).
+ * Uses the nursing-workbench DELETE routes instead of the encounter routes.
+ *
+ * @param {string} type  One of: lab, imaging, prescription, procedure
+ * @param {number} id    The model primary key
+ * @param {string} name  Display name for the confirmation dialog
+ */
+function deleteNurseClinicalRequest(type, id, name) {
+    // Map type to the nurse API path segment
+    var pathMap = {
+        lab:          'labs',
+        imaging:      'imaging',
+        prescription: 'prescriptions',
+        procedure:    'procedures'
+    };
+    var typeLabels = {
+        lab:          'Laboratory Test',
+        imaging:      'Imaging/Radiology',
+        prescription: 'Prescription',
+        procedure:    'Procedure'
+    };
+
+    currentDeleteItem = {
+        type: type,
+        id: id,
+        encounterId: null,
+        name: name,
+        _nurseRoute: '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id
+    };
+
+    $('#deleteItemInfo').html(
+        '<strong>Service:</strong> ' + name + '<br>' +
+        '<strong>Type:</strong> ' + (typeLabels[type] || type)
+    );
+
+    $('#deleteConfirmModal').modal('show');
+}
 
 // Delete Encounter Note
 function deleteEncounter(encounterId, encounterDate) {

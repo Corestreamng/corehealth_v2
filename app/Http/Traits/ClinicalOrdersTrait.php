@@ -39,6 +39,76 @@ use Illuminate\Support\Facades\Log;
 trait ClinicalOrdersTrait
 {
     /* ═══════════════════════════════════════════
+       DELETION ELIGIBILITY CHECK
+       ═══════════════════════════════════════════ */
+
+    /**
+     * Determine whether the current user may delete a clinical request.
+     *
+     * Rules checked (in order):
+     *   1. Current user must be the original requester (doctor_id / requested_by).
+     *   2. The request must still be within the note_edit_window (appsettings).
+     *   3. Item must NOT already be delivered / completed / billed.
+     *
+     * @param  string $type  One of: lab, imaging, prescription, procedure
+     * @param  \Illuminate\Database\Eloquent\Model $item  The Eloquent model instance
+     * @return array{allowed: bool, reason: string}
+     */
+    protected function canDeleteClinicalRequest(string $type, $item): array
+    {
+        $userId = Auth::id();
+
+        // 1. Ownership check
+        $creatorField = ($type === 'procedure') ? 'requested_by' : 'doctor_id';
+        if ((int) $item->{$creatorField} !== (int) $userId) {
+            return ['allowed' => false, 'reason' => 'You can only delete your own requests.'];
+        }
+
+        // 2. Edit-window check
+        $editWindowMinutes = appsettings('note_edit_window', 30);
+        $createdAt = $item->created_at;
+        if ($createdAt && now()->diffInMinutes($createdAt) > $editWindowMinutes) {
+            return ['allowed' => false, 'reason' => "Edit window ({$editWindowMinutes} min) has expired."];
+        }
+
+        // 3. Type-specific status / delivery checks
+        switch ($type) {
+            case 'lab':
+            case 'imaging':
+                // status > 2 means sample collected / completed / approved / rejected
+                if ($item->status > 2) {
+                    return ['allowed' => false, 'reason' => 'Results have already been entered.'];
+                }
+                if ($item->billed_by || $item->billed_date) {
+                    return ['allowed' => false, 'reason' => 'This request has already been billed.'];
+                }
+                if (!empty($item->result)) {
+                    return ['allowed' => false, 'reason' => 'Results have already been entered.'];
+                }
+                break;
+
+            case 'prescription':
+                // status > 2 means dispensed
+                if ($item->status > 2) {
+                    return ['allowed' => false, 'reason' => 'This prescription has already been dispensed.'];
+                }
+                if ($item->billed_by || $item->billed_date) {
+                    return ['allowed' => false, 'reason' => 'This prescription has already been billed.'];
+                }
+                break;
+
+            case 'procedure':
+                $allowed = [Procedure::STATUS_REQUESTED, Procedure::STATUS_SCHEDULED];
+                if (!in_array($item->procedure_status, $allowed)) {
+                    return ['allowed' => false, 'reason' => 'Cannot delete a procedure that is already in progress or completed.'];
+                }
+                break;
+        }
+
+        return ['allowed' => true, 'reason' => ''];
+    }
+
+    /* ═══════════════════════════════════════════
        LABS  (LabServiceRequest model)
        ═══════════════════════════════════════════ */
 
@@ -76,13 +146,25 @@ trait ClinicalOrdersTrait
     }
 
     /**
-     * Remove a single lab service request (owned by current user).
+     * Remove a single lab service request (validated + soft-delete with audit).
+     *
+     * @param int         $id
+     * @param string|null $reason  Optional deletion reason
+     * @throws \RuntimeException when deletion is not allowed
      */
-    protected function removeSingleLab(int $id): void
+    protected function removeSingleLab(int $id, ?string $reason = null): void
     {
-        LabServiceRequest::where('id', $id)
-            ->where('doctor_id', Auth::id())
-            ->delete();
+        $lab = LabServiceRequest::findOrFail($id);
+        $check = $this->canDeleteClinicalRequest('lab', $lab);
+
+        if (!$check['allowed']) {
+            throw new \RuntimeException($check['reason']);
+        }
+
+        $lab->deleted_by      = Auth::id();
+        $lab->deletion_reason = $reason ?? 'Removed by requester';
+        $lab->save();
+        $lab->delete();
     }
 
     /* ═══════════════════════════════════════════
@@ -123,13 +205,25 @@ trait ClinicalOrdersTrait
     }
 
     /**
-     * Remove a single imaging service request (owned by current user).
+     * Remove a single imaging service request (validated + soft-delete with audit).
+     *
+     * @param int         $id
+     * @param string|null $reason  Optional deletion reason
+     * @throws \RuntimeException when deletion is not allowed
      */
-    protected function removeSingleImaging(int $id): void
+    protected function removeSingleImaging(int $id, ?string $reason = null): void
     {
-        ImagingServiceRequest::where('id', $id)
-            ->where('doctor_id', Auth::id())
-            ->delete();
+        $imaging = ImagingServiceRequest::findOrFail($id);
+        $check = $this->canDeleteClinicalRequest('imaging', $imaging);
+
+        if (!$check['allowed']) {
+            throw new \RuntimeException($check['reason']);
+        }
+
+        $imaging->deleted_by      = Auth::id();
+        $imaging->deletion_reason = $reason ?? 'Removed by requester';
+        $imaging->save();
+        $imaging->delete();
     }
 
     /* ═══════════════════════════════════════════
@@ -172,13 +266,25 @@ trait ClinicalOrdersTrait
     }
 
     /**
-     * Remove a single prescription (owned by current user).
+     * Remove a single prescription (validated + soft-delete with audit).
+     *
+     * @param int         $id
+     * @param string|null $reason  Optional deletion reason
+     * @throws \RuntimeException when deletion is not allowed
      */
-    protected function removeSinglePrescription(int $id): void
+    protected function removeSinglePrescription(int $id, ?string $reason = null): void
     {
-        ProductRequest::where('id', $id)
-            ->where('doctor_id', Auth::id())
-            ->delete();
+        $presc = ProductRequest::findOrFail($id);
+        $check = $this->canDeleteClinicalRequest('prescription', $presc);
+
+        if (!$check['allowed']) {
+            throw new \RuntimeException($check['reason']);
+        }
+
+        $presc->deleted_by      = Auth::id();
+        $presc->deletion_reason = $reason ?? 'Removed by requester';
+        $presc->save();
+        $presc->delete();
     }
 
     /* ═══════════════════════════════════════════
@@ -276,21 +382,35 @@ trait ClinicalOrdersTrait
     }
 
     /**
-     * Remove a single procedure + its billing entry (owned by current user).
+     * Remove a single procedure + its billing entry (validated + soft-delete with audit).
+     *
+     * @param int         $id
+     * @param string|null $reason  Optional deletion reason
+     * @throws \RuntimeException when deletion is not allowed
      */
-    protected function removeSingleProcedure(int $id): void
+    protected function removeSingleProcedure(int $id, ?string $reason = null): void
     {
-        $procedure = Procedure::where('id', $id)
-            ->where('requested_by', Auth::id())
-            ->first();
+        $procedure = Procedure::findOrFail($id);
+        $check = $this->canDeleteClinicalRequest('procedure', $procedure);
 
-        if ($procedure) {
-            // Also remove billing entry if linked
-            if ($procedure->product_or_service_request_id) {
-                ProductOrServiceRequest::where('id', $procedure->product_or_service_request_id)->delete();
-            }
-            $procedure->delete();
+        if (!$check['allowed']) {
+            throw new \RuntimeException($check['reason']);
         }
+
+        // Remove unpaid billing entry if linked
+        if ($procedure->product_or_service_request_id) {
+            $billing = ProductOrServiceRequest::find($procedure->product_or_service_request_id);
+            if ($billing && !$billing->paid) {
+                $billing->delete();
+            }
+        }
+
+        $procedure->cancellation_reason = $reason ?? 'Removed by requester';
+        $procedure->cancelled_by        = Auth::id();
+        $procedure->cancelled_at        = now();
+        $procedure->procedure_status     = Procedure::STATUS_CANCELLED;
+        $procedure->save();
+        $procedure->delete();
     }
 
     /* ═══════════════════════════════════════════

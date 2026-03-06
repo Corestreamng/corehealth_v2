@@ -649,7 +649,7 @@
 
                 // Add show all link
                 $('#clinical-enc-notes-show-all').html(`
-                    <a href="/patients/show/${patientId}?section=encountersCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                    <a href="/patient/${patientId}?section=doctorNotesCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
                         <i class="mdi mdi-open-in-new"></i> Show All Notes
                     </a>
                 `);
@@ -1122,7 +1122,7 @@
 
                 // Add see more link
                 $('#clinical-meds-show-all').html(`
-                    <a href="/patients/show/${patientId}?section=prescriptionsNotesCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                    <a href="/patient/${patientId}?section=prescriptionsNotesCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
                         <i class="mdi mdi-open-in-new"></i> See More Prescriptions
                     </a>
                 `);
@@ -1239,7 +1239,7 @@
 
                 // Add see more link
                 $('#clinical-procedures-show-all').html(`
-                    <a href="/patients/show/${patientId}?section=wardNotesCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                    <a href="/patient/${patientId}?section=wardNotesCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
                         <i class="mdi mdi-open-in-new"></i> See All Procedures
                     </a>
                 `);
