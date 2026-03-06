@@ -6,7 +6,7 @@ use App\Helpers\HmoHelper;
 
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Hmo;
 use App\Models\ProductOrServiceRequest;
 use Carbon\Carbon;

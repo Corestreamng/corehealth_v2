@@ -13,7 +13,7 @@ class PatientProfile extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
 public function patient()
     {
-        return $this->belongsTo(patient::class, 'patient_id', 'id');
+        return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 
     public function doctor()

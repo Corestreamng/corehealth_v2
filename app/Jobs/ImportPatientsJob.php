@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\User;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Hmo;
 use App\Services\ImportProgressService;
 use Illuminate\Bus\Queueable;
@@ -51,7 +51,7 @@ class ImportPatientsJob implements ShouldQueue
         try {
             $generator = $this->parseFileInChunks($fullPath);
 
-            $existingPatients = patient::pluck('user_id', 'file_no')->toArray();
+            $existingPatients = Patient::pluck('user_id', 'file_no')->toArray();
             $existingEmails = User::pluck('id', 'email')->toArray();
             $hmos = Hmo::pluck('id', 'name')->toArray();
             $patientRole = Role::where('name', 'PATIENT')->first();
@@ -324,7 +324,7 @@ class ImportPatientsJob implements ShouldQueue
                         'othername' => $nullIfEmpty($row['othername'] ?? null),
                     ]);
 
-                    patient::where('user_id', $userId)->update([
+                    Patient::where('user_id', $userId)->update([
                         'phone_no' => $nullIfEmpty($row['phone_no'] ?? null),
                         'gender' => $gender,
                         'dob' => $dob,
@@ -362,7 +362,7 @@ class ImportPatientsJob implements ShouldQueue
                         $user->assignRole($patientRole);
                     }
 
-                    patient::create([
+                    Patient::create([
                         'user_id' => $user->id,
                         'file_no' => $fileNo,
                         'phone_no' => $nullIfEmpty($row['phone_no'] ?? null),
@@ -411,7 +411,7 @@ class ImportPatientsJob implements ShouldQueue
     private function generatePatientFileNo(): string
     {
         $prefix = date('Y');
-        $lastPatient = patient::where('file_no', 'like', $prefix . '%')
+        $lastPatient = Patient::where('file_no', 'like', $prefix . '%')
             ->orderBy('file_no', 'desc')
             ->first();
 

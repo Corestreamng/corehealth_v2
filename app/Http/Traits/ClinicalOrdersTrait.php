@@ -7,8 +7,8 @@ use App\Models\ImagingServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\Procedure;
 use App\Models\ProductOrServiceRequest;
-use App\Models\service;
-use App\Models\patient;
+use App\Models\Service;
+use App\Models\Patient;
 use App\Helpers\HmoHelper;
 use App\Models\Encounter;
 use App\Models\Product;
@@ -305,7 +305,7 @@ trait ClinicalOrdersTrait
      */
     protected function addSingleProcedure(array $data, int $patientId, ?int $encounterId, ?int $admissionRequestId = null): Procedure
     {
-        $service = service::with('price', 'procedureDefinition')->find($data['service_id']);
+        $service = Service::with('price', 'procedureDefinition')->find($data['service_id']);
 
         if (!$service) {
             throw new \InvalidArgumentException('Service not found: ' . $data['service_id']);
@@ -345,7 +345,7 @@ trait ClinicalOrdersTrait
             $coverage = null;
         }
 
-        $patient = patient::find($patientId);
+        $patient = Patient::find($patientId);
 
         $billing = new ProductOrServiceRequest();
         $billing->type                 = 'service';
@@ -642,7 +642,7 @@ trait ClinicalOrdersTrait
                 'dose' => $p->dose,
             ])->toArray(),
             'procedures' => $procedures->map(function ($proc) {
-                $svc = service::find($proc->service_id);
+                $svc = Service::find($proc->service_id);
                 return [
                     'id'         => $proc->id,
                     'service_id' => $proc->service_id,

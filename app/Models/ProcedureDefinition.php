@@ -45,7 +45,7 @@ class ProcedureDefinition extends Model implements Auditable
      */
     public function service()
     {
-        return $this->belongsTo(service::class, 'service_id', 'id');
+        return $this->belongsTo(Service::class, 'service_id', 'id');
     }
 
     /**

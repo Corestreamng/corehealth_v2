@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\service;
+use App\Models\Service;
 use App\Http\Requests\StoreServiceRequest;
 use App\Http\Requests\UpdateServiceRequest;
 
@@ -23,7 +23,7 @@ class ServiceController extends Controller
 {
     public function listServices(Request $request)
     {
-        $query = service::where('status', '=', 1)->with('category');
+        $query = Service::where('status', '=', 1)->with('category');
 
         // Filter by category if provided
         if ($request->has('category') && $request->category) {
@@ -112,7 +112,7 @@ class ServiceController extends Controller
 
         $categoryId = $request->input('category_id', appsettings('investigation_category_id'));
 
-        $query = service::where('status', 1)
+        $query = Service::where('status', 1)
             ->where('category_id', $categoryId)
             ->whereHas('price');
 
@@ -305,7 +305,7 @@ class ServiceController extends Controller
     {
         $pc = Sale::where('service_id', '=', $id)->with('transaction', 'product', 'store')->sum('total_amount');
         $qt = Sale::where('service_id', '=', $id)->with('transaction', 'product', 'store')->sum('quantity_buy');
-        $pp = service::find($id);
+        $pp = Service::find($id);
 
         return view('admin.service.product', compact('id', 'pp', 'pc', 'qt'));
     }
@@ -320,7 +320,7 @@ class ServiceController extends Controller
     {
 
         try {
-            $product = service::with('procedureDefinition')->whereId($id)->first();
+            $product = Service::with('procedureDefinition')->whereId($id)->first();
             $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
             $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
             $procedureCategoryId = appsettings('procedure_category_id');
@@ -369,7 +369,7 @@ class ServiceController extends Controller
 
                 DB::beginTransaction();
 
-                $myservice                 = service::whereId($id)->first();
+                $myservice                 = Service::whereId($id)->first();
                 $oldCategoryId             = $myservice->category_id;
                 $myservice->user_id        = Auth::user()->id;
                 $myservice->category_id    = $request->category_id;
@@ -435,7 +435,7 @@ class ServiceController extends Controller
      */
     public function buildTemplate($id)
     {
-        $service = service::with('category')->findOrFail($id);
+        $service = Service::with('category')->findOrFail($id);
 
         // Decode existing template if any
         $template = $service->result_template_v2;
@@ -456,7 +456,7 @@ class ServiceController extends Controller
     public function saveTemplate(Request $request, $id)
     {
         try {
-            $service = service::findOrFail($id);
+            $service = Service::findOrFail($id);
 
             // Validate the template structure with flexible rules
             $validated = $request->validate([

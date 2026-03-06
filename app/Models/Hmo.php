@@ -25,6 +25,6 @@ protected $fillable = [
     }
 
     public function patients(){
-        return $this->hasMany(patient::class,'hmo_id','id');
+        return $this->hasMany(Patient::class,'hmo_id','id');
     }
 }

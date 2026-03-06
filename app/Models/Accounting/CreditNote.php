@@ -3,7 +3,7 @@
 namespace App\Models\Accounting;
 
 use App\Models\Encounter;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -75,7 +75,7 @@ class CreditNote extends Model implements Auditable
      */
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(patient::class);
+        return $this->belongsTo(Patient::class);
     }
 
     /**

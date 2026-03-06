@@ -3,7 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Bed;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\ServicePrice;
 use Illuminate\Support\Facades\Log;
 
@@ -42,7 +42,7 @@ class BedObserver
         if (!$bed->service_id) {
             $needsService = true;
         } else {
-            $existingService = service::find($bed->service_id);
+            $existingService = Service::find($bed->service_id);
             if (!$existingService || $existingService->category_id != $bedServiceCategoryId) {
                 $needsService = true;
             }
@@ -54,12 +54,12 @@ class BedObserver
             $serviceCode = $this->generateServiceCode($bed);
 
             // Check if service already exists
-            $bedService = service::where('service_code', $serviceCode)
+            $bedService = Service::where('service_code', $serviceCode)
                 ->where('category_id', $bedServiceCategoryId)
                 ->first();
 
             if (!$bedService) {
-                $bedService = service::create([
+                $bedService = Service::create([
                     'user_id' => auth()->id() ?? 1,
                     'category_id' => $bedServiceCategoryId,
                     'service_name' => $serviceName,
@@ -93,7 +93,7 @@ class BedObserver
         $servicePrice->save();
 
         // Sync service name if bed name/ward changed
-        $service = service::find($bed->service_id);
+        $service = Service::find($bed->service_id);
         if ($service) {
             $newName = $this->generateServiceName($bed);
             $newCode = $this->generateServiceCode($bed);

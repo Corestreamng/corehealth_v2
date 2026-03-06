@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\NursingNote;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\NursingNoteType;
 use App\Models\User;
 use App\Models\Hmo;
 use App\Models\Clinic;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\Product;
 use App\Models\UserCategory;
 use Illuminate\Http\Request;
@@ -56,7 +56,7 @@ class PatientController extends Controller
     {
         try {
             // Optimized query: Pagination at DB level, fixed N+1 queries, column selection
-            $query = patient::select([
+            $query = Patient::select([
                 'id', 'user_id', 'file_no', 'hmo_id', 'hmo_no', 'phone_no', 'created_at'
             ])->with(['user', 'hmo']); // Eager load relationships
 
@@ -142,7 +142,7 @@ class PatientController extends Controller
 
     public function PatientServicesRendered(Request $request, $patient_id)
     {
-        $patient = patient::where('id', $patient_id)->first();
+        $patient = Patient::where('id', $patient_id)->first();
         if (null != $request->start_from && null != $request->stop_at) {
             try {
                 $start = $request->start_from;
@@ -201,7 +201,7 @@ class PatientController extends Controller
             $searchTerms = array_filter(explode(' ', $q));
 
             // Build query using Eloquent for better performance and maintainability
-            $query = patient::leftJoin('users', 'patients.user_id', '=', 'users.id')
+            $query = Patient::leftJoin('users', 'patients.user_id', '=', 'users.id')
                 ->select(
                     'patients.*',
                     'users.surname',
@@ -297,10 +297,10 @@ class PatientController extends Controller
     public function getMyDependants($user_id)
     {
         try {
-            $patient = patient::where('user_id', $user_id)->first();
-            $family = patient::with(['user'])->where('file_no', $patient->file_no)->get();
+            $patient = Patient::where('user_id', $user_id)->first();
+            $family = Patient::with(['user'])->where('file_no', $patient->file_no)->get();
             $products = Product::with(['category', 'price'])->where('status', 1)->get();
-            $services = service::with(['category', 'price'])->where('status', 1)->where('price_assign', 1)->where('category_id', appsettings('consultation_category_id'))->get();
+            $services = Service::with(['category', 'price'])->where('status', 1)->where('price_assign', 1)->where('category_id', appsettings('consultation_category_id'))->get();
             $clinics = Clinic::where('status', 1)->get();
             return view('admin.receptionist.send_queue', compact('family', 'products', 'services', 'clinics'));
         } catch (\Exception $e) {
@@ -317,14 +317,14 @@ class PatientController extends Controller
     public function create()
     {
         try {
-            $all_patients = patient::with(['user'])->where('status', 1);
+            $all_patients = Patient::with(['user'])->where('status', 1);
             $hmos = Hmo::with('scheme')->where('status', 1)->get()->groupBy('scheme.name');
 
             // Get registration services for optional registration fee
             $registrationCategoryId = appsettings('registration_category_id');
             $registrationServices = collect();
             if ($registrationCategoryId) {
-                $registrationServices = service::with('price')
+                $registrationServices = Service::with('price')
                     ->where('category_id', $registrationCategoryId)
                     ->where('status', 1)
                     ->orderBy('service_name')
@@ -620,7 +620,7 @@ class PatientController extends Controller
 
                 // Create registration fee billing entry if selected
                 if ($request->registration_service_id) {
-                    $regService = service::with('price')->find($request->registration_service_id);
+                    $regService = Service::with('price')->find($request->registration_service_id);
                     if ($regService && $regService->price) {
                         ProductOrServiceRequest::create([
                             'user_id' => $user->id,
@@ -676,7 +676,7 @@ class PatientController extends Controller
 
             //for nursing notes
             $patient_id = $patient->id;
-            $patient = patient::find($patient_id);
+            $patient = Patient::find($patient_id);
 
             $observation_note = NursingNote::with(['patient', 'createdBy', 'type'])
                 ->where('patient_id', $patient_id)

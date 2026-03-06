@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\HmoTariff;
-use App\Models\patient;
+use App\Models\Patient;
 
 class HmoHelper
 {
@@ -18,7 +18,7 @@ class HmoHelper
      */
     public static function applyHmoTariff($patientId, $productId = null, $serviceId = null)
     {
-        $patient = patient::find($patientId);
+        $patient = Patient::find($patientId);
 
         if (!$patient || !$patient->hmo_id) {
             return null; // Not an HMO patient

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TreatmentPlan;
 use App\Models\TreatmentPlanItem;
 use App\Models\Product;
-use App\Models\service;
+use App\Models\Service;
 use App\Http\Traits\ClinicalOrdersTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -116,7 +116,7 @@ class TreatmentPlanController extends Controller
                 $enriched['display_name'] = $product->product_name ?? 'Unknown';
                 $enriched['price'] = optional(optional($product)->price)->current_sale_price ?? 0;
             } else {
-                $svc = service::with('price')->find($item->reference_id);
+                $svc = Service::with('price')->find($item->reference_id);
                 $enriched['display_name'] = $svc->service_name ?? 'Unknown';
                 $enriched['price'] = optional(optional($svc)->price)->sale_price ?? 0;
             }

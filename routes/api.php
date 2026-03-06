@@ -11,7 +11,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VitalSignController;
 use App\Http\Controllers\NursingWorkbenchController;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\Product;
 use App\Models\ProcedureCategory;
 
@@ -32,7 +32,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Lab Services API - Returns services from the investigation category
     Route::get('lab-services', function () {
         $labCategoryId = appsettings('investigation_category_id', 2);
-        $services = service::with('price')
+        $services = Service::with('price')
             ->where('category_id', $labCategoryId)
             ->where('status', 1)
             ->orderBy('service_name')
@@ -43,7 +43,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Imaging Services API - Returns services from the imaging category
     Route::get('imaging-services', function () {
         $imagingCategoryId = appsettings('imaging_category_id', 6);
-        $services = service::with('price')
+        $services = Service::with('price')
             ->where('category_id', $imagingCategoryId)
             ->where('status', 1)
             ->orderBy('service_name')
@@ -83,7 +83,7 @@ Route::middleware(['web', 'auth'])->group(function () {
             return response()->json(['data' => [], 'message' => 'Procedure category not configured']);
         }
 
-        $services = service::with(['price', 'procedureDefinition.procedureCategory'])
+        $services = Service::with(['price', 'procedureDefinition.procedureCategory'])
             ->where('category_id', $procedureCategoryId)
             ->where('status', 1)
             ->orderBy('service_name')

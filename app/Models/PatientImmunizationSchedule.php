@@ -41,7 +41,7 @@ class PatientImmunizationSchedule extends Model implements Auditable
      */
     public function patient()
     {
-        return $this->belongsTo(patient::class, 'patient_id');
+        return $this->belongsTo(Patient::class, 'patient_id');
     }
 
     /**
@@ -73,7 +73,7 @@ class PatientImmunizationSchedule extends Model implements Auditable
      */
     public static function generateForPatient($patientId, $templateId = null)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         // Patient model uses 'dob' not 'date_of_birth'
         if (!$patient->dob) {

@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\patient;
-use App\Models\patient as PatientLowerCase;
+use App\Models\Patient;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\Product;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\ProductCategory;
 use App\Models\VitalSign;
@@ -229,7 +228,7 @@ class NursingWorkbenchController extends Controller{
             return response()->json([]);
         }
 
-        $patients = PatientLowerCase::with(['user', 'hmo'])
+        $patients = Patient::with(['user', 'hmo'])
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -513,7 +512,7 @@ class NursingWorkbenchController extends Controller{
             }
         }
 
-        $patient = PatientLowerCase::with(['user', 'hmo.scheme'])->findOrFail($patientId);
+        $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Calculate detailed age
         $ageText = 'N/A';
@@ -650,7 +649,7 @@ class NursingWorkbenchController extends Controller{
      */
     public function getPatientOrders($patientId)
     {
-        $patient = PatientLowerCase::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         // Get today's medication schedules
         $todaySchedules = MedicationSchedule::with(['productOrServiceRequest.product'])
@@ -816,7 +815,7 @@ class NursingWorkbenchController extends Controller{
         try {
             DB::beginTransaction();
 
-            $patient = PatientLowerCase::findOrFail($request->patient_id);
+            $patient = Patient::findOrFail($request->patient_id);
             $storeId = $request->store_id ?? null;
             $injections = [];
             $stockService = ($drugSource === 'ward_stock') ? app(StockService::class) : null;
@@ -1122,7 +1121,7 @@ class NursingWorkbenchController extends Controller{
      */
     public function getImmunizationSchedule($patientId)
     {
-        $patient = PatientLowerCase::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         // Standard immunization schedule (can be made configurable)
         $schedule = [
@@ -1200,7 +1199,7 @@ class NursingWorkbenchController extends Controller{
         try {
             DB::beginTransaction();
 
-            $patient = PatientLowerCase::findOrFail($request->patient_id);
+            $patient = Patient::findOrFail($request->patient_id);
             $storeId = $request->store_id;
             $immunizations = [];
             $stockService = app(StockService::class);
@@ -1328,7 +1327,7 @@ class NursingWorkbenchController extends Controller{
         $categoryId = $request->get('category_id');
         $patientId = $request->get('patient_id');
 
-        $query = service::with(['price', 'category'])
+        $query = Service::with(['price', 'category'])
             ->where('status', 1);
 
         if ($term) {
@@ -1347,7 +1346,7 @@ class NursingWorkbenchController extends Controller{
         // Batch-load HMO tariffs in one query instead of N+1
         $hmoMap = [];
         if ($patientId) {
-            $patient = patient::find($patientId);
+            $patient = Patient::find($patientId);
             if ($patient && $patient->hmo_id) {
                 $serviceIds = $services->pluck('id')->toArray();
                 $tariffs = HmoTariff::where('hmo_id', $patient->hmo_id)
@@ -1408,7 +1407,7 @@ class NursingWorkbenchController extends Controller{
         // Batch-load HMO tariffs in one query instead of N+1
         $hmoMap = [];
         if ($patientId) {
-            $patient = patient::find($patientId);
+            $patient = Patient::find($patientId);
             if ($patient && $patient->hmo_id) {
                 $productIds = $products->pluck('id')->toArray();
                 $tariffs = HmoTariff::where('hmo_id', $patient->hmo_id)
@@ -1613,7 +1612,7 @@ class NursingWorkbenchController extends Controller{
      */
     public function getPendingBills($patientId)
     {
-        $patient = PatientLowerCase::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $bills = ProductOrServiceRequest::with(['product', 'service', 'staff', 'sale', 'productRequest'])
             ->where('user_id', $patient->user_id)
@@ -1679,8 +1678,8 @@ class NursingWorkbenchController extends Controller{
         try {
             DB::beginTransaction();
 
-            $patient = PatientLowerCase::findOrFail($request->patient_id);
-            $service = service::with('price')->findOrFail($request->service_id);
+            $patient = Patient::findOrFail($request->patient_id);
+            $service = Service::with('price')->findOrFail($request->service_id);
 
             $billReq = new ProductOrServiceRequest();
             $billReq->user_id = $patient->user_id;
@@ -1740,7 +1739,7 @@ class NursingWorkbenchController extends Controller{
         try {
             DB::beginTransaction();
 
-            $patient = PatientLowerCase::findOrFail($request->patient_id);
+            $patient = Patient::findOrFail($request->patient_id);
             $product = Product::with(['price', 'stock'])->findOrFail($request->product_id);
             $storeId = $request->store_id;
             $qty = $request->qty;
@@ -1899,7 +1898,7 @@ class NursingWorkbenchController extends Controller{
      */
     public function getServiceRequests($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $allRequests = collect();
 
@@ -2082,7 +2081,7 @@ class NursingWorkbenchController extends Controller{
      */
     public function getServiceRequestsStats($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->startOfDay() : null;
         $dateTo = $request->date_to ? Carbon::parse($request->date_to)->endOfDay() : null;
@@ -2651,7 +2650,7 @@ class NursingWorkbenchController extends Controller{
      */
     public function getPatientSchedule($patientId)
     {
-        $patient = PatientLowerCase::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         // Get patient's schedule
         $schedules = PatientImmunizationSchedule::with(['scheduleItem.template'])
@@ -2759,7 +2758,7 @@ class NursingWorkbenchController extends Controller{
      */
     public function generatePatientSchedule(Request $request, $patientId)
     {
-        $patient = PatientLowerCase::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         if (!$patient->dob) {
             return response()->json([
@@ -2843,7 +2842,7 @@ class NursingWorkbenchController extends Controller{
         $inputRoute = $validated['route'] ?? $schedule->scheduleItem->route ?? 'IM';
         $route = $routeMap[$inputRoute] ?? 'IM';
 
-        $patient = PatientLowerCase::findOrFail($schedule->patient_id);
+        $patient = Patient::findOrFail($schedule->patient_id);
         $product = Product::with('price')->findOrFail($validated['product_id']);
 
         DB::beginTransaction();
@@ -2983,7 +2982,7 @@ class NursingWorkbenchController extends Controller{
         $route = $routeMap[$validated['route']] ?? 'IM';
 
         $schedule = PatientImmunizationSchedule::with('scheduleItem')->findOrFail($validated['schedule_id']);
-        $patient = PatientLowerCase::findOrFail($schedule->patient_id);
+        $patient = Patient::findOrFail($schedule->patient_id);
         $product = Product::with('price')->findOrFail($validated['product_id']);
 
         DB::beginTransaction();
@@ -5328,11 +5327,11 @@ class NursingWorkbenchController extends Controller{
             ]);
 
             $patientId  = $request->patient_id;
-            $patient    = patient::findOrFail($patientId);
+            $patient    = Patient::findOrFail($patientId);
             $savedCount = 0;
 
             foreach ($request->procedures as $data) {
-                $service = service::with('price')->find($data['service_id']);
+                $service = Service::with('price')->find($data['service_id']);
                 if (!$service) continue;
 
                 // Create the procedure record

@@ -7,7 +7,8 @@ use App\Helpers\HmoHelper;
 use Illuminate\Http\Request;
 use App\Models\ImagingServiceRequest;
 use App\Models\Encounter;
-use App\Models\service;
+use App\Models\Patient;
+use App\Models\Service;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ProductOrServiceRequest;
@@ -85,7 +86,7 @@ class ImagingServiceRequestController extends Controller
 
                 if ($structuredData) {
                     // Get the service template for generating HTML
-                    $service = \App\Models\service::find($imagingRequest->service_id);
+                    $service = \App\Models\Service::find($imagingRequest->service_id);
                     $template = $service->result_template_v2;
 
                     if ($template && isset($template['parameters'])) {
@@ -340,7 +341,7 @@ class ImagingServiceRequestController extends Controller
 
                         // Apply HMO tariff if patient has HMO
                         try {
-                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            $patient = Patient::where('user_id', $request->patient_user_id)->first();
                             if ($patient) {
                                 $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $prod_id);
                                 if ($hmoData) {
@@ -374,7 +375,7 @@ class ImagingServiceRequestController extends Controller
 
                         // Apply HMO tariff if patient has HMO
                         try {
-                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            $patient = Patient::where('user_id', $request->patient_user_id)->first();
                             if ($patient) {
                                 $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $request->addedImagingBillRows[$i]);
                                 if ($hmoData) {

@@ -97,7 +97,7 @@ class User extends Authenticatable implements Auditable
 
     public function patient_profile()
     {
-        return $this->hasOne(patient::class, 'user_id', 'id');
+        return $this->hasOne(Patient::class, 'user_id', 'id');
     }
 
     public function conversations()
