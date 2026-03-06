@@ -28,6 +28,7 @@ class Staff extends Model implements Auditable
         'user_id',
         'specialization_id',
         'clinic_id',
+        'can_see_clinic_queues',
         'gender',
         'date_of_birth',
         'home_address',
@@ -72,12 +73,13 @@ class Staff extends Model implements Auditable
      * @var array
      */
     protected $casts = [
-        'is_unit_head' => 'boolean',
-        'is_dept_head' => 'boolean',
-        'date_of_birth' => 'date',
-        'date_hired' => 'date',
-        'suspended_at' => 'datetime',
-        'suspension_end_date' => 'date',
+        'is_unit_head'            => 'boolean',
+        'is_dept_head'            => 'boolean',
+        'date_of_birth'           => 'date',
+        'date_hired'              => 'date',
+        'suspended_at'            => 'datetime',
+        'suspension_end_date'     => 'date',
+        'can_see_clinic_queues'   => 'array',
     ];
 
     // Employment Types
@@ -109,6 +111,19 @@ class Staff extends Model implements Auditable
     public function clinic()
     {
         return $this->belongsTo(Clinic::class, 'clinic_id', 'id');
+    }
+
+    /**
+     * All clinic IDs this doctor can monitor (primary + can_see_clinic_queues).
+     * Usage: $doctor->all_clinic_ids  => [1, 3, 7]
+     */
+    public function getAllClinicIdsAttribute(): array
+    {
+        $ids = array_merge(
+            $this->clinic_id ? [$this->clinic_id] : [],
+            $this->can_see_clinic_queues ?? []
+        );
+        return array_values(array_unique(array_filter($ids)));
     }
 
     /**

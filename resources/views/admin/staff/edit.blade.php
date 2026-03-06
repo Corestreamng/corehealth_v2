@@ -140,6 +140,15 @@
                                             <label class="form-label-modern">Clinic <small class="text-muted">(Doctors)</small></label>
                                             {!! Form::select('clinic', $clinics, $user->staff_profile?->clinic_id ?? null, ['class' => 'form-control form-control-modern', 'placeholder' => 'Select Clinic']) !!}
                                         </div>
+                                        <div class="col-lg-8 col-md-12">
+                                            <label class="form-label-modern">Also See Queues From <small class="text-muted">(Doctors &ndash; Additional Clinics)</small></label>
+                                            <select name="can_see_clinic_queues[]" class="form-control form-control-modern select2" multiple="multiple" data-placeholder="Select additional clinics...">
+                                                @php $selectedClinics = $user->staff_profile?->can_see_clinic_queues ?? []; @endphp
+                                                @foreach($clinics as $clinicId => $clinicName)
+                                                    <option value="{{ $clinicId }}" {{ in_array($clinicId, old('can_see_clinic_queues', $selectedClinics)) ? 'selected' : '' }}>{{ $clinicName }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                         <div class="col-lg-4 col-md-6">
                                             <label class="form-label-modern">Consultation Fee <small class="text-muted">(Doctors)</small></label>
                                             <div class="input-group">
