@@ -271,7 +271,7 @@ class DoctorAppointmentController extends Controller
                 'delivery_hint'   => $deliveryHint,
                 'next_step'       => $nextStep,
             ];
-        });
+        })->values();          // force base Collection so merge() doesn't call getKey()
 
         // ── Optionally merge live queue entries ──────────────────────
         if ($request->boolean('include_queue')) {
