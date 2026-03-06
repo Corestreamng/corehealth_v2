@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QueueStatus;
 use App\Models\VitalSign;
+use App\Services\QueueStatusService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,13 @@ use Carbon\Carbon;
 
 class VitalSignController extends Controller
 {
+    protected QueueStatusService $queueStatusService;
+
+    public function __construct(QueueStatusService $queueStatusService)
+    {
+        $this->queueStatusService = $queueStatusService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -90,12 +98,29 @@ class VitalSignController extends Controller
             $vitalSign->save();
 
             //update today's doc queues for the patient, so that they no longer show on the vitals queue
-            $doQueue = DoctorQueue::where('patient_id', $request->patient_id)
+            $queues = DoctorQueue::where('patient_id', $request->patient_id)
                 ->whereDate('created_at', Carbon::today())
                 ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])
-                ->update([
-                    'vitals_taken' => true
-                ]);
+                ->get();
+
+            foreach ($queues as $queue) {
+                $queue->update(['vitals_taken' => true]);
+
+                if ($queue->status === QueueStatus::VITALS_PENDING) {
+                    try {
+                        $this->queueStatusService->transition($queue, QueueStatus::READY);
+                    } catch (\Throwable $e) {
+                        $queue->update(['status' => QueueStatus::READY]);
+                    }
+                } elseif ($queue->status === QueueStatus::WAITING) {
+                    try {
+                        $updatedQueue = $this->queueStatusService->transition($queue, QueueStatus::VITALS_PENDING);
+                        $this->queueStatusService->transition($updatedQueue, QueueStatus::READY);
+                    } catch (\Throwable $e) {
+                        $queue->update(['status' => QueueStatus::READY]);
+                    }
+                }
+            }
             DB::commit();
 
             if ($request->wantsJson()) {
@@ -159,7 +184,7 @@ class VitalSignController extends Controller
         $endDate = $request->input('end_date');
 
         // Base query
-        $query = DoctorQueue::with(['patient', 'doctor', 'receptionist'])
+        $query = DoctorQueue::with(['patient', 'doctor.user', 'receptionist'])
             ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])
             ->where('vitals_taken', false)
             ->where('created_at', '>', $timeThreshold);
@@ -196,8 +221,12 @@ class VitalSignController extends Controller
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
                 $str .= "<b>Clinic</b>: " . (($h->clinic) ? $h->clinic->name : "N/A");
-                $str .= "<br><br><b>Doctor</b>: " . (($h->doctor) ? userfullname($h->doctor->id) : "N/A");
-                $str .= "<br><br><b>Requested by:</b> " . ((isset($h->receptionist_id) && $h->receptionist_id != null) ? (userfullname($h->receptionist_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<br><br><b>Doctor</b>: " . (($h->doctor) ? userfullname($h->doctor->user_id) : "N/A");
+                $receptionistName = 'N/A';
+                if (isset($h->receptionist_id) && $h->receptionist_id != null && $h->receptionist) {
+                    $receptionistName = userfullname($h->receptionist->user_id);
+                }
+                $str .= "<br><br><b>Requested by:</b> " . ($receptionistName !== 'N/A' ? ($receptionistName . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b>Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
                 $str .= "</small>";
                 return $str;

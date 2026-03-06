@@ -68,6 +68,19 @@ class ApplicationStatu extends Model implements Auditable
         'nurse_can_enter_lab_result',
         'doctor_can_enter_imaging_result',
         'nurse_can_enter_imaging_result',
+
+        // SMTP Configuration
+        'smtp_host',
+        'smtp_port',
+        'smtp_username',
+        'smtp_password',
+        'smtp_encryption',
+        'smtp_from_address',
+        'smtp_from_name',
+
+        // Appointment Email Notification Flags
+        'send_appointment_email_to_doctors',
+        'send_appointment_email_to_patients',
     ];
 
     /**

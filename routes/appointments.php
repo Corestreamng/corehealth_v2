@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Route;
 | follow-up, reassignment, and availability slot queries.
 |
 | Prefix: /appointments
-| Middleware: auth (inherited from web.php group)
+| Middleware: auth
 */
+
+Route::middleware(['auth'])->group(function () {
 
 Route::prefix('appointments')->name('appointments.')->group(function () {
 
@@ -45,6 +47,10 @@ Route::prefix('appointments')->name('appointments.')->group(function () {
     Route::get('/doctor/list', [DoctorAppointmentController::class, 'getDoctorAppointments'])->name('doctor.list');
     Route::get('/doctor/counts', [DoctorAppointmentController::class, 'getDoctorAppointmentCounts'])->name('doctor.counts');
     Route::get('/doctor/queue-counts', [DoctorAppointmentController::class, 'getDoctorQueueCounts'])->name('doctor.queue-counts');
+
+    // ─── Unified Calendar + Table (doctor view) ────────────────────────
+    Route::get('/doctor/unified-events', [DoctorAppointmentController::class, 'getUnifiedCalendarEvents'])->name('doctor.unified-events');
+    Route::get('/doctor/unified-list', [DoctorAppointmentController::class, 'getUnifiedQueueList'])->name('doctor.unified-list');
 });
 
 // ─── Follow-Up (from encounter context) ────────────────────────────────
@@ -56,3 +62,5 @@ Route::prefix('queue')->name('queue.')->group(function () {
     Route::post('/{queue}/timer/pause', [DoctorAppointmentController::class, 'pauseTimer'])->name('timer.pause');
     Route::get('/{queue}/timer/status', [DoctorAppointmentController::class, 'getTimerStatus'])->name('timer.status');
 });
+
+}); // end auth middleware

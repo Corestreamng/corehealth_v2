@@ -7,12 +7,14 @@ use App\Models\AdmissionRequest;
 use App\Models\Bed;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
+use App\Enums\QueueStatus;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\patient;
 use App\Models\PatientAccount;
 use App\Models\ProductOrServiceRequest;
 use App\Models\service;
+use App\Models\Staff;
 use App\Models\User;
 use App\Models\VitalSign;
 use Carbon\Carbon;
@@ -397,12 +399,14 @@ class EmergencyIntakeController extends Controller
         $clinicId = $request->admit_clinic_id;
 
         if ($clinicId) {
+            $receptionistStaff = Staff::where('user_id', Auth::id())->first();
+
             $queue = new DoctorQueue();
             $queue->patient_id = $patient->id;
             $queue->clinic_id = $clinicId;
-            $queue->receptionist_id = Auth::id();
+            $queue->receptionist_id = $receptionistStaff ? $receptionistStaff->id : Auth::id();
             $queue->request_entry_id = $serviceRequest->id;
-            $queue->status = 1; // Waiting
+            $queue->status = QueueStatus::WAITING;
             $queue->priority = 'emergency';
             $queue->source = 'emergency_intake';
             $queue->triage_note = $triageData;
@@ -452,12 +456,14 @@ class EmergencyIntakeController extends Controller
         $serviceRequest->save();
 
         // Create DoctorQueue entry with status=1 (Waiting)
+        $receptionistStaff = Staff::where('user_id', Auth::id())->first();
+
         $queue = new DoctorQueue();
         $queue->patient_id = $patient->id;
         $queue->clinic_id = $request->clinic_id;
-        $queue->receptionist_id = Auth::id();
+        $queue->receptionist_id = $receptionistStaff ? $receptionistStaff->id : Auth::id();
         $queue->request_entry_id = $serviceRequest->id;
-        $queue->status = 1; // Waiting
+        $queue->status = QueueStatus::WAITING;
         $queue->priority = 'emergency';
         $queue->source = 'emergency_intake';
         $queue->triage_note = $triageData;
