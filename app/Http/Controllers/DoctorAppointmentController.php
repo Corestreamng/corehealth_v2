@@ -272,6 +272,7 @@ class DoctorAppointmentController extends Controller
                 'next_step'       => $nextStep,
             ];
         });
+        $events = collect($events->all());  // force base Support\Collection — Eloquent\Collection::merge() calls getKey()
 
         // ── Optionally merge live queue entries ──────────────────────
         if ($request->boolean('include_queue')) {
@@ -351,6 +352,7 @@ class DoctorAppointmentController extends Controller
                     'next_step'       => $nextStep,
                 ];
             });
+            $queueEvents = collect($queueEvents->all());
 
             $events = $events->merge($queueEvents);
         }
