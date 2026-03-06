@@ -523,6 +523,29 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="info-row">
+                                    <span class="info-label">Also See Queues From <small class="text-muted">(Additional Clinics)</small></span>
+                                    @php $seenClinics = $staff->can_see_clinic_queues ?? []; @endphp
+                                    <span class="info-value {{ empty($seenClinics) ? 'text-muted' : '' }}">
+                                        @if(empty($seenClinics))
+                                            Not configured
+                                        @else
+                                            {{ implode(', ', $clinics->only($seenClinics)->values()->toArray()) }}
+                                        @endif
+                                    </span>
+                                    <div class="edit-field">
+                                        <select name="can_see_clinic_queues[]" class="form-control-edit select2" multiple="multiple" data-placeholder="Select additional clinics...">
+                                            @foreach($clinics as $id => $name)
+                                                <option value="{{ $id }}" {{ in_array($id, $seenClinics) ? 'selected' : '' }}>{{ $name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">Your queue view will include your primary clinic plus any selected here.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="text-right btn-save-section">
                             <button type="button" class="btn btn-light mr-2" onclick="cancelEdit('professionalCard')">Cancel</button>
                             <button type="submit" class="btn btn-purple" style="background: #6f42c1; border-color: #6f42c1; color: #fff;"><i class="mdi mdi-content-save mr-1"></i>Save Changes</button>
