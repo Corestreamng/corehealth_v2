@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Models\service;
+use App\Models\Service;
 use App\Models\Hmo;
 use App\Models\HmoTariff;
 use Illuminate\Support\Facades\Log;

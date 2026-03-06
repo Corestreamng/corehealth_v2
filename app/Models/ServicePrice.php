@@ -20,6 +20,6 @@ protected $fillable = [
     ];
 
     public function service() {
-        return $this->belongsTo(service::class,'service_id','id');
+        return $this->belongsTo(Service::class,'service_id','id');
     }
 }

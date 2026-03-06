@@ -3,7 +3,7 @@
 namespace App\Models\Accounting;
 
 use App\Models\User;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Bank;
 use App\Models\Admission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -84,7 +84,7 @@ class PatientDeposit extends Model
 
     public function patient()
     {
-        return $this->belongsTo(patient::class);
+        return $this->belongsTo(Patient::class);
     }
 
     public function admission()

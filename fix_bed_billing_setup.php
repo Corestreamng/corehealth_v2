@@ -12,7 +12,7 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 use App\Models\Bed;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\AdmissionRequest;
 use Illuminate\Support\Facades\DB;
 

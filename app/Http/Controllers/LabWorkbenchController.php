@@ -3,18 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\LabServiceRequest;
 use App\Models\ProductOrServiceRequest;
 use App\Models\VitalSign;
 use App\Models\Encounter;
 use App\Models\ProductRequest;
-use App\Models\service;
+use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\HmoHelper;
-
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
 
 class LabWorkbenchController extends Controller
@@ -47,7 +47,7 @@ class LabWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = patient::with('user')
+        $patients = Patient::with('user')
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -108,7 +108,7 @@ class LabWorkbenchController extends Controller
      */
     public function getPatientRequests($patientId)
     {
-        $patient = patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
+        $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Get all pending investigation requests
         $statuses = [1, 2, 3];
@@ -811,7 +811,7 @@ class LabWorkbenchController extends Controller
 
                 if ($structuredData) {
                     // Get the service template for generating HTML
-                    $service = service::find($labRequest->service_id);
+                    $service = Service::find($labRequest->service_id);
                     $template = $service->result_template_v2;
 
                     if ($template && isset($template['parameters'])) {
@@ -1348,7 +1348,7 @@ class LabWorkbenchController extends Controller
                 'user_agent' => request()->userAgent(),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Audit log error: ' . $e->getMessage());
+            Log::error('Audit log error: ' . $e->getMessage());
         }
     }
 
@@ -1579,7 +1579,7 @@ class LabWorkbenchController extends Controller
             // Get investigation/lab service category ID from app settings
             $labCategoryId = appsettings()->investigation_service_cat_id ?? null;
 
-            $query = \App\Models\service::orderBy('service_name');
+            $query = \App\Models\Service::orderBy('service_name');
 
             // Filter by lab/investigation category if configured
             if ($labCategoryId) {

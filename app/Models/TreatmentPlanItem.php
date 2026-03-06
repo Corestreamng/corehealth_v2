@@ -49,7 +49,7 @@ class TreatmentPlanItem extends Model
             return $this->belongsTo(\App\Models\Product::class, 'reference_id');
         }
         // lab, imaging, procedure → service
-        return $this->belongsTo(\App\Models\service::class, 'reference_id');
+        return $this->belongsTo(\App\Models\Service::class, 'reference_id');
     }
 
     /**
@@ -60,6 +60,6 @@ class TreatmentPlanItem extends Model
         if ($this->item_type === 'medication') {
             return optional(\App\Models\Product::find($this->reference_id))->product_name ?? 'Unknown Product';
         }
-        return optional(\App\Models\service::find($this->reference_id))->service_name ?? 'Unknown Service';
+        return optional(\App\Models\Service::find($this->reference_id))->service_name ?? 'Unknown Service';
     }
 }

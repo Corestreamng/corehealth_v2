@@ -8,7 +8,7 @@ use App\Models\Clinic;
 use App\Models\DoctorQueue;
 use App\Models\Encounter;
 use App\Models\Hmo;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Staff;
 use App\Models\User;
 use Carbon\Carbon;
@@ -38,7 +38,7 @@ class ProcedureController extends Controller
             return Datatables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return userfullname($patient->user_id);
                 })
@@ -47,7 +47,7 @@ class ProcedureController extends Controller
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
@@ -60,7 +60,7 @@ class ProcedureController extends Controller
                     return userfullname($doc->user_id);
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return $patient->file_no;
                 })
@@ -106,7 +106,7 @@ class ProcedureController extends Controller
             return Datatables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return userfullname($patient->user_id);
                 })
@@ -115,7 +115,7 @@ class ProcedureController extends Controller
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
@@ -128,7 +128,7 @@ class ProcedureController extends Controller
                     return userfullname($doc->user_id);
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return $patient->file_no;
                 })
@@ -167,7 +167,7 @@ class ProcedureController extends Controller
             return Datatables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return userfullname($patient->user_id);
                 })
@@ -176,7 +176,7 @@ class ProcedureController extends Controller
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
@@ -189,7 +189,7 @@ class ProcedureController extends Controller
                     return userfullname($doc->user_id);
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     return $patient->file_no;
                 })

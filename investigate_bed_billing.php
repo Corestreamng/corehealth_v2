@@ -11,10 +11,10 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\ServicePrice;
 use App\Models\ProductOrServiceRequest;
 use Carbon\Carbon;

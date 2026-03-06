@@ -22,6 +22,6 @@ protected $table = 'price_list';
      */
     public function service(): HasMany
     {
-        return $this->hasMany(service::class);
+        return $this->hasMany(Service::class);
     }
 }

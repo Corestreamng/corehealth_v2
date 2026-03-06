@@ -4,7 +4,7 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use App\Models\IntakeOutputPeriod;
-use App\Models\patient;
+use App\Models\Patient;
 use Carbon\Carbon;
 
 // Get patient by file number

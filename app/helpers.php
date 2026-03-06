@@ -3,7 +3,7 @@
 use App\Models\ApplicationStatu;
 use App\Models\User;
 use App\Models\StoreStoke;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\LabService;
 use App\Models\ModeOfPayment;
 use App\Models\BudgetYear;
@@ -375,7 +375,7 @@ if (!function_exists('generateFileNo')) {
         // $timestamp =  $dt->year . $dt->month;
         // $fileNumber = randomDigits(REFERENCE_FILE_NUMBER_LENGTH);
         // return  $fileNumber . $timestamp;
-        $p = \App\Models\patient::orderBy('file_no', 'DESC')->first()->file_no;
+        $p = \App\Models\Patient::orderBy('file_no', 'DESC')->first()->file_no;
         return $p + 1;
     }
 }
@@ -404,7 +404,7 @@ if (!function_exists('showFileNumber')) {
 
     function showFileNumber($id)
     {
-        $pfile = patient::where('user_id', '=', $id)->first();
+        $pfile = Patient::where('user_id', '=', $id)->first();
         $getItem = $pfile->file_no;
         return $getItem;
     }

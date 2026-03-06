@@ -11,11 +11,11 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
 use App\Models\ProductOrServiceRequest;
-use App\Models\service;
+use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;

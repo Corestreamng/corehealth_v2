@@ -95,12 +95,12 @@ class Bed extends Model implements Auditable
 
     public function occupant()
     {
-        return $this->belongsTo(patient::class, 'occupant_id', 'id');
+        return $this->belongsTo(Patient::class, 'occupant_id', 'id');
     }
 
     public function service()
     {
-        return $this->belongsTo(service::class, 'service_id', 'id');
+        return $this->belongsTo(Service::class, 'service_id', 'id');
     }
 
     /**
@@ -109,7 +109,7 @@ class Bed extends Model implements Auditable
      */
     public function serviceWithPrice()
     {
-        return $this->belongsTo(service::class, 'service_id', 'id')->with('price');
+        return $this->belongsTo(Service::class, 'service_id', 'id')->with('price');
     }
 
     // =====================

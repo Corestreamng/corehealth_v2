@@ -62,7 +62,7 @@ class HmoTariff extends Model
      */
     public function service()
     {
-        return $this->belongsTo(service::class, 'service_id');
+        return $this->belongsTo(Service::class, 'service_id');
     }
 
     /**

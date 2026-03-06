@@ -92,7 +92,7 @@ class AdmissionRequest extends Model implements Auditable
 
     public function service()
     {
-        return $this->belongsTo(service::class, 'service_id', 'id');
+        return $this->belongsTo(Service::class, 'service_id', 'id');
     }
 
     public function encounter()
@@ -107,7 +107,7 @@ class AdmissionRequest extends Model implements Auditable
 
     public function patient()
     {
-        return $this->belongsTo(patient::class, 'patient_id', 'id');
+        return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 
     public function doctor()
