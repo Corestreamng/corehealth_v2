@@ -891,8 +891,13 @@ class DoctorAppointmentController extends Controller
         // Return all doctors for the clinic — the frontend will mark the current doctor
         // Slot-availability filtering is omitted to avoid false-empty results when
         // schedules are not fully configured (slot check uses the existing appointment time)
-        $doctors = Staff::where('clinic_id', $appointment->clinic_id)
-            ->whereHas('user')   // ensure user record exists; no is_active column on users table
+        // Include doctors whose primary clinic matches OR who have the clinic
+        // in their can_see_clinic_queues list
+        $doctors = Staff::where(function ($q) use ($appointment) {
+                $q->where('clinic_id', $appointment->clinic_id)
+                  ->orWhereJsonContains('can_see_clinic_queues', (int) $appointment->clinic_id);
+            })
+            ->whereHas('user')
             ->get()
             ->map(function ($doctor) {
                 return [
@@ -1185,7 +1190,7 @@ class DoctorAppointmentController extends Controller
         $appts = DoctorAppointment::with(['patient.user', 'clinic'])
             ->where(function ($q) use ($doc) {
                 $q->where('staff_id', $doc->id)
-                  ->orWhere('clinic_id', $doc->clinic_id);
+                  ->orWhereIn('clinic_id', $doc->all_clinic_ids);
             })
             ->whereBetween('appointment_date', [$startDate, $endDate])
             ->orderBy('appointment_date')
@@ -1246,7 +1251,7 @@ class DoctorAppointmentController extends Controller
         // ── 2. Doctor Queue entries (walk-ins & active) ────────────────
         $queues = DoctorQueue::with(['patient.user', 'patient.hmo'])
             ->where(function ($q) use ($doc) {
-                $q->where('clinic_id', $doc->clinic_id)
+                $q->whereIn('clinic_id', $doc->all_clinic_ids)
                   ->orWhere('staff_id', $doc->id);
             })
             ->whereBetween('created_at', [

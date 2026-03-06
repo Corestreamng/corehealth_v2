@@ -61,7 +61,7 @@ class EncounterController extends Controller
 
             // Build the base query
             $queueQuery = DoctorQueue::where(function ($q) use ($doc) {
-                $q->where('clinic_id', $doc->clinic_id)
+                $q->whereIn('clinic_id', $doc->all_clinic_ids)
                     ->orWhere('staff_id', $doc->id);
             })
                 ->where('status', QueueStatus::WAITING);
@@ -192,7 +192,7 @@ class EncounterController extends Controller
 
             $queueQuery = DoctorQueue::where(function ($q) use ($doc) {
                 if ($doc->clinic_id) {
-                    $q->where('clinic_id', $doc->clinic_id);
+                    $q->whereIn('clinic_id', $doc->all_clinic_ids);
                 }
                 $q->orWhere('staff_id', $doc->id);
             })
@@ -273,7 +273,7 @@ class EncounterController extends Controller
             $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : null;
 
             $queueQuery = DoctorQueue::where(function ($q) use ($doc) {
-                $q->where('clinic_id', $doc->clinic_id);
+                $q->whereIn('clinic_id', $doc->all_clinic_ids);
                 $q->orWhere('staff_id', $doc->id);
             })
                 ->where('status', QueueStatus::VITALS_PENDING)

@@ -452,16 +452,25 @@ class ReceptionWorkbenchController extends Controller
      */
     public function getDoctorsByClinic($clinicId)
     {
+        // Include doctors whose primary clinic matches OR who have this clinic
+        // in their can_see_clinic_queues visibility list.
         $doctors = Staff::with('user')
-            ->where('clinic_id', $clinicId)
+            ->where(function ($q) use ($clinicId) {
+                $q->where('clinic_id', $clinicId)
+                  ->orWhereJsonContains('can_see_clinic_queues', (int) $clinicId);
+            })
+            ->whereHas('user')
             ->get()
-            ->map(function($staff) {
+            ->map(function ($staff) use ($clinicId) {
                 return [
-                    'id' => $staff->id,
-                    'user_id' => $staff->user_id,
-                    'name' => userfullname($staff->user_id),
+                    'id'         => $staff->id,
+                    'user_id'    => $staff->user_id,
+                    'name'       => userfullname($staff->user_id),
+                    'primary'    => (int) $staff->clinic_id === (int) $clinicId,
                 ];
-            });
+            })
+            ->sortByDesc('primary')
+            ->values();
 
         return response()->json($doctors);
     }
