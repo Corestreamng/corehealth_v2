@@ -1,0 +1,53 @@
+.queue-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.queue-source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.queue-source-badge.source-appointment {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.queue-source-badge.source-walkin {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.queue-source-badge.source-emergency {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.queue-source-badge.source-er {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.consult-mini-timer {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.72rem;
+}
+
+.consult-mini-timer.timer-paused {
+    animation: queueTimerPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes queueTimerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}

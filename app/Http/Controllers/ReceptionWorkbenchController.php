@@ -127,19 +127,19 @@ class ReceptionWorkbenchController extends Controller
             ->findOrFail($patientId);
 
         // Get current queue entries for this patient
-        $queueEntries = DoctorQueue::with(['clinic', 'doctor', 'request_entry.service'])
+        $queueEntries = DoctorQueue::with(['clinic', 'doctor.user', 'request_entry.service'])
             ->where('patient_id', $patientId)
-            ->whereIn('status', [1, 2, 3]) // Waiting, Vitals Pending, In Consultation
+            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function($q) {
                 return [
                     'id' => $q->id,
                     'clinic' => $q->clinic->name ?? 'N/A',
-                    'doctor' => $q->doctor ? userfullname($q->doctor->id) : 'Any Available',
+                    'doctor' => $q->doctor ? userfullname($q->doctor->user_id) : 'Any Available',
                     'service' => $q->request_entry->service->service_name ?? 'Consultation',
                     'status' => $q->status,
-                    'status_text' => $this->getQueueStatusText($q->status),
+                    'status_text' => QueueStatus::label($q->status),
                     'vitals_taken' => $q->vitals_taken,
                     'created_at' => $q->created_at->format('h:i A'),
                 ];
@@ -158,6 +158,30 @@ class ReceptionWorkbenchController extends Controller
                     'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
                     'service' => $e->service->service_name ?? 'Consultation',
                     'reason' => $e->reasons_for_encounter,
+                ];
+            });
+
+        // Get upcoming scheduled appointments & follow-ups
+        $upcomingAppointments = DoctorAppointment::with(['clinic', 'doctor', 'parentAppointment'])
+            ->where('patient_id', $patientId)
+            ->where('status', QueueStatus::SCHEDULED)
+            ->where('appointment_date', '>=', Carbon::today())
+            ->orderBy('appointment_date')
+            ->orderBy('start_time')
+            ->limit(10)
+            ->get()
+            ->map(function($appt) {
+                return [
+                    'id'                  => $appt->id,
+                    'date'                => $appt->appointment_date->format('M d, Y'),
+                    'time'                => $appt->start_time ? Carbon::parse($appt->start_time)->format('h:i A') : 'N/A',
+                    'clinic'              => $appt->clinic->name ?? 'N/A',
+                    'doctor'              => $appt->doctor ? userfullname($appt->doctor->user_id) : 'Any Available',
+                    'reason'              => $appt->reason ?? $appt->notes ?? '',
+                    'is_follow_up'        => $appt->parent_appointment_id !== null,
+                    'is_prepaid_followup' => (bool) $appt->is_prepaid_followup,
+                    'is_today'            => $appt->appointment_date->isToday(),
+                    'appointment_type'    => $appt->appointment_type ?? 'scheduled',
                 ];
             });
 
@@ -224,22 +248,11 @@ class ReceptionWorkbenchController extends Controller
             ],
             'queue_entries' => $queueEntries,
             'recent_visits' => $recentVisits,
+            'upcoming_appointments' => $upcomingAppointments,
         ]);
     }
 
-    /**
-     * Get queue status text
-     */
-    private function getQueueStatusText($status)
-    {
-        $statuses = [
-            1 => 'Waiting',
-            2 => 'Vitals Pending',
-            3 => 'In Consultation',
-            4 => 'Completed',
-        ];
-        return $statuses[$status] ?? 'Unknown';
-    }
+    // getQueueStatusText() removed — replaced by QueueStatus::label()
 
     /**
      * Get patient's current queue entries
@@ -250,8 +263,8 @@ class ReceptionWorkbenchController extends Controller
 
         $entries = DoctorQueue::where('patient_id', $id)
             ->whereDate('created_at', $today)
-            ->whereIn('status', [1, 2, 3]) // Only active entries
-            ->with(['clinic', 'doctor', 'patient'])
+            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY]) // Only active pre-consultation entries
+            ->with(['clinic', 'doctor.user', 'patient'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($entry) {
@@ -264,7 +277,7 @@ class ReceptionWorkbenchController extends Controller
                     'patient_name' => $entry->patient ? userfullname($entry->patient->user_id) : 'N/A',
                     'patient_file_no' => $entry->patient->file_no ?? 'N/A',
                     'clinic_name' => $entry->clinic->name ?? 'N/A',
-                    'doctor_name' => $entry->doctor ? userfullname($entry->doctor->id) : null,
+                    'doctor_name' => $entry->doctor ? userfullname($entry->doctor->user_id) : null,
                     'status' => $entry->status,
                     'created_at' => $entry->created_at->format('H:i'),
                 ];
@@ -308,7 +321,7 @@ class ReceptionWorkbenchController extends Controller
             return $this->getAdmittedPatientsList($request);
         }
 
-        $query = DoctorQueue::with(['patient.user', 'patient.hmo', 'clinic', 'doctor', 'request_entry.service'])
+        $query = DoctorQueue::with(['patient.user', 'patient.hmo', 'clinic', 'doctor.user', 'request_entry.service'])
             ->whereDate('created_at', $today)
             ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
             ->orderBy('created_at', 'desc');
@@ -348,7 +361,7 @@ class ReceptionWorkbenchController extends Controller
                 return $q->clinic->name ?? 'N/A';
             })
             ->addColumn('doctor_name', function($q) {
-                return $q->doctor ? userfullname($q->doctor->id) : 'Any';
+                return $q->doctor ? userfullname($q->doctor->user_id) : 'Any';
             })
             ->addColumn('service_name', function($q) {
                 return $q->request_entry->service->service_name ?? 'Consultation';
@@ -719,10 +732,15 @@ class ReceptionWorkbenchController extends Controller
             $serviceRequest->save();
 
             // Create queue entry
+            $receptionistStaff = Staff::where('user_id', Auth::id())->first();
+            if (!$receptionistStaff) {
+                return response()->json(['error' => 'Staff profile not found for current user.'], 422);
+            }
+
             $queue = new DoctorQueue();
             $queue->patient_id = $patient->id;
             $queue->clinic_id = $request->clinic_id;
-            $queue->receptionist_id = Auth::id();
+            $queue->receptionist_id = $receptionistStaff->id;
             $queue->request_entry_id = $serviceRequest->id;
             $queue->status = QueueStatus::WAITING;
 
@@ -735,13 +753,15 @@ class ReceptionWorkbenchController extends Controller
                 $appointment = DoctorAppointment::create([
                     'patient_id'       => $patient->id,
                     'clinic_id'        => $request->clinic_id,
-                    'doctor_id'        => $request->doctor_id,
+                    'staff_id'         => $request->doctor_id,
                     'appointment_date' => $request->appointment_date,
                     'start_time'       => $request->start_time ?? '09:00',
                     'end_time'         => $request->end_time ?? '09:30',
+                    'duration_minutes' => (int) (Carbon::parse($request->start_time ?? '09:00')->diffInMinutes(Carbon::parse($request->end_time ?? '09:30'))),
                     'appointment_type' => $request->appointment_type ?? 'scheduled',
                     'status'           => QueueStatus::SCHEDULED,
-                    'booked_by'        => Auth::id(),
+                    'booked_by'        => $receptionistStaff->id,
+                    'source'           => 'reception',
                     'service_request_id' => $serviceRequest->id,
                     'notes'            => $request->appointment_notes,
                 ]);
@@ -1148,7 +1168,7 @@ class ReceptionWorkbenchController extends Controller
         $stats = [
             'new_registrations' => patient::whereDate('created_at', $today)->count(),
             'total_queued' => DoctorQueue::whereDate('created_at', $today)->count(),
-            'consultations_done' => DoctorQueue::where('status', 4)->whereDate('created_at', $today)->count(),
+            'consultations_done' => DoctorQueue::where('status', QueueStatus::COMPLETED)->whereDate('created_at', $today)->count(),
             'pending_services' => ProductOrServiceRequest::whereNull('payment_id')
                 ->whereDate('created_at', $today)
                 ->count(),
@@ -1486,7 +1506,7 @@ class ReceptionWorkbenchController extends Controller
             $queueQuery->where('clinic_id', $clinicId);
         }
         $totalQueued = $queueQuery->count();
-        $pendingQueue = (clone $queueQuery)->whereIn('status', [1, 2, 3])->count();
+        $pendingQueue = (clone $queueQuery)->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY])->count();
 
         // Completed visits (encounters)
         $visitsQuery = Encounter::whereBetween('encounters.created_at', [$dateFrom, $dateTo]);
@@ -1610,7 +1630,7 @@ class ReceptionWorkbenchController extends Controller
         $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->startOfDay() : Carbon::now()->startOfMonth();
         $dateTo = $request->date_to ? Carbon::parse($request->date_to)->endOfDay() : Carbon::now()->endOfDay();
 
-        $query = DoctorQueue::with(['patient.user', 'clinic', 'doctor', 'request_entry.service'])
+        $query = DoctorQueue::with(['patient.user', 'clinic', 'doctor.user', 'request_entry.service'])
             ->whereBetween('doctor_queues.created_at', [$dateFrom, $dateTo]);
 
         // Filters
@@ -1643,7 +1663,7 @@ class ReceptionWorkbenchController extends Controller
                 return $q->clinic->name ?? '-';
             })
             ->addColumn('doctor', function ($q) {
-                return $q->doctor ? userfullname($q->doctor->id) : 'Any Available';
+                return $q->doctor ? userfullname($q->doctor->user_id) : 'Any Available';
             })
             ->addColumn('service', function ($q) {
                 return $q->request_entry->service->service_name ?? 'Consultation';

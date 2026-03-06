@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('reason', 255)->nullable();
             $table->timestamps();
 
-            $table->index(['staff_id', 'override_date']);
+            $table->unique(['staff_id', 'override_date'], 'staff_override_date_unique');
         });
     }
 

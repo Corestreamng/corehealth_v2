@@ -21,6 +21,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Enums\QueueStatus;
 
 class MobileEncounterController extends Controller
 {
@@ -28,7 +29,8 @@ class MobileEncounterController extends Controller
      * GET /api/mobile/doctor/queues
      *
      * Returns a JSON queue listing for the current doctor.
-     * Params: status (1=new, 2=continuing, 3=previous), start_date, end_date, page, per_page
+     * Params: status (1=new/waiting, 2=continuing/in_consultation, 3=previous/completed), start_date, end_date, page, per_page
+     * Note: Mobile app sends legacy 1/2/3 values. We map them to QueueStatus enum internally.
      */
     public function queues(Request $request)
     {
@@ -42,10 +44,17 @@ class MobileEncounterController extends Controller
                 ], 404);
             }
 
-            $status = $request->input('status', 1);
+            $status = (int) $request->input('status', 1);
             $startDate = $request->input('start_date');
             $endDate = $request->input('end_date');
             $perPage = $request->input('per_page', 30);
+
+            // Map legacy mobile status values to QueueStatus enum
+            $statusMap = [
+                1 => [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY],
+                2 => [QueueStatus::IN_CONSULTATION],
+                3 => [QueueStatus::COMPLETED],
+            ];
 
             // Auto-close old continuing encounters
             if ($status == 2) {
@@ -60,7 +69,10 @@ class MobileEncounterController extends Controller
             });
 
             if ($status == 3) {
-                $query->where('status', '>', 2);
+                // Previous = completed + any terminal status
+                $query->whereIn('status', [QueueStatus::COMPLETED, QueueStatus::CANCELLED, QueueStatus::NO_SHOW]);
+            } elseif (isset($statusMap[$status])) {
+                $query->whereIn('status', $statusMap[$status]);
             } else {
                 $query->where('status', $status);
             }
@@ -88,7 +100,16 @@ class MobileEncounterController extends Controller
                     ? HmoHelper::canDeliverService($reqEntry)
                     : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
 
-                $statusLabels = [1 => 'New', 2 => 'Continuing', 3 => 'Completed'];
+                $statusLabels = [
+                    QueueStatus::WAITING => 'New',
+                    QueueStatus::VITALS_PENDING => 'New',
+                    QueueStatus::READY => 'New',
+                    QueueStatus::IN_CONSULTATION => 'Continuing',
+                    QueueStatus::COMPLETED => 'Completed',
+                    QueueStatus::CANCELLED => 'Cancelled',
+                    QueueStatus::NO_SHOW => 'No-Show',
+                    QueueStatus::SCHEDULED => 'Scheduled',
+                ];
 
                 return [
                     'queue_id'          => $queue->id,
@@ -100,7 +121,7 @@ class MobileEncounterController extends Controller
                     'hmo_name'          => $patient && $patient->hmo ? $patient->hmo->name : 'N/A',
                     'hmo_no'            => $patient->hmo_no ?? '',
                     'clinic_name'       => $clinic->name ?? 'N/A',
-                    'doctor_name'       => userfullname($queue->staff_id),
+                    'doctor_name'       => $queue->doctor ? userfullname($queue->doctor->user_id) : 'N/A',
                     'status'            => (int) $queue->status,
                     'status_label'      => $statusLabels[$queue->status] ?? 'Unknown',
                     'vitals_taken'      => (bool) $queue->vitals_taken,
@@ -641,9 +662,9 @@ class MobileEncounterController extends Controller
     private function endOldContinuingEncounters()
     {
         $threshold = Carbon::now()->subHours(appsettings('consultation_cycle_duration', 24));
-        DoctorQueue::where('status', 2)
+        DoctorQueue::where('status', QueueStatus::IN_CONSULTATION)
             ->where('created_at', '<', $threshold)
-            ->update(['status' => 3]);
+            ->update(['status' => QueueStatus::COMPLETED]);
     }
 
     private function labStatusLabel($status): string
