@@ -263,6 +263,7 @@ class StaffController extends Controller
                 $staff = Staff::where('user_id', $id)->first();
                 // dd($staff);
                 $staff->clinic_id = $request->clinic ?? null;
+                $staff->can_see_clinic_queues = array_values(array_unique(array_map('intval', array_filter((array) $request->input('can_see_clinic_queues', [])))));
                 $staff->user_id = $user->id;
                 $staff->specialization_id = $request->specialization ?? null;
                 $staff->gender = $request->gender ?? null;
@@ -515,6 +516,7 @@ class StaffController extends Controller
                 }
                 $staff = new Staff();
                 $staff->clinic_id = $request->clinic ?? null;
+                $staff->can_see_clinic_queues = array_values(array_unique(array_map('intval', array_filter((array) $request->input('can_see_clinic_queues', [])))));
                 $staff->user_id = $user->id;
                 $staff->specialization_id = $request->specialization ?? null;
                 $staff->gender = $request->gender ?? null;
@@ -802,6 +804,9 @@ class StaffController extends Controller
 
                 // Original fields
                 $staff->clinic_id = $request->clinic ?? $staff->clinic_id;
+                $staff->can_see_clinic_queues = $request->has('can_see_clinic_queues')
+                    ? array_values(array_unique(array_map('intval', array_filter((array) $request->input('can_see_clinic_queues', [])))))
+                    : ($staff->can_see_clinic_queues ?? []);
                 $staff->specialization_id = $request->specialization ?? $staff->specialization_id;
                 $staff->gender = $request->gender ?? $staff->gender;
                 $staff->date_of_birth = $request->dob ?? $staff->date_of_birth;
