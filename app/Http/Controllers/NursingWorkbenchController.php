@@ -43,11 +43,20 @@ use App\Models\StockBatch;
 use App\Services\StockService;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
+use App\Services\QueueStatusService;
+use App\Enums\QueueStatus;
 use Yajra\DataTables\DataTables;
 use App\Http\Traits\ClinicalOrdersTrait;
 
 class NursingWorkbenchController extends Controller{
     use ClinicalOrdersTrait;
+
+    protected QueueStatusService $queueStatusService;
+
+    public function __construct(QueueStatusService $queueStatusService)
+    {
+        $this->queueStatusService = $queueStatusService;
+    }
 
     /**
      * Get patients with medication due (for medication-due queue).
@@ -408,9 +417,7 @@ class NursingWorkbenchController extends Controller{
             ->count('patient_id');
 
         // Vitals queue (patients in doctor queue with vitals not taken)
-        $vitalsQueueCount = DoctorQueue::where(function($q) {
-                $q->where('vitals_taken', 0)->orWhereNull('vitals_taken');
-            })
+        $vitalsQueueCount = DoctorQueue::whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])
             ->whereDate('created_at', Carbon::today())
             ->count();
 
@@ -488,6 +495,24 @@ class NursingWorkbenchController extends Controller{
      */
     public function getPatientDetails($patientId)
     {
+        // Nurse pickup transition: Waiting -> Vitals Pending
+        $activeQueue = DoctorQueue::where('patient_id', $patientId)
+            ->whereDate('created_at', Carbon::today())
+            ->where('status', QueueStatus::WAITING)
+            ->latest('created_at')
+            ->first();
+
+        if ($activeQueue) {
+            try {
+                $this->queueStatusService->transition($activeQueue, QueueStatus::VITALS_PENDING);
+            } catch (\Throwable $e) {
+                // Fallback for edge cases where transition is already advanced
+                if ($activeQueue->status === QueueStatus::WAITING) {
+                    $activeQueue->update(['status' => QueueStatus::VITALS_PENDING]);
+                }
+            }
+        }
+
         $patient = PatientLowerCase::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Calculate detailed age
@@ -3385,11 +3410,8 @@ class NursingWorkbenchController extends Controller{
 
     public function getVitalsQueue(Request $request)
     {
-        $query = DoctorQueue::with(['patient.user', 'patient.hmo', 'doctor', 'clinic'])
-            ->where(function($q) {
-                $q->where('vitals_taken', 0)
-                  ->orWhereNull('vitals_taken');
-            })
+        $query = DoctorQueue::with(['patient.user', 'patient.hmo', 'doctor.user', 'clinic'])
+            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])
             ->whereDate('created_at', Carbon::today())
             ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
             ->orderBy('created_at', 'asc');
@@ -3413,16 +3435,59 @@ class NursingWorkbenchController extends Controller{
                 'age' => $patient ? $this->calculateAge($patient->dob) : 'N/A',
                 'gender' => $patient ? ($patient->gender ?? 'N/A') : 'N/A',
                 'hmo' => $patient && $patient->hmo ? $patient->hmo->name : null,
-                'doctor' => $queue->doctor ? userfullname($queue->doctor->id) : 'N/A',
+                'doctor' => $queue->doctor ? userfullname($queue->doctor->user_id) : 'N/A',
                 'clinic' => $queue->clinic ? $queue->clinic->name : 'N/A',
                 'clinic_id' => $queue->clinic_id,
                 'priority' => $queue->priority ?? 'routine',
-                'source' => $queue->source ?? 'reception',
+                'source' => $queue->source ?? 'walk_in',
                 'triage_note' => $queue->triage_note,
                 'queued_at' => Carbon::parse($queue->created_at)->format('h:i A'),
                 'wait_minutes' => $waitMinutes,
                 'wait_display' => $waitMinutes < 60 ? $waitMinutes . 'min' : floor($waitMinutes / 60) . 'h ' . ($waitMinutes % 60) . 'm',
                 'wait_level' => $waitMinutes > 45 ? 'critical' : ($waitMinutes > 25 ? 'warning' : 'normal'),
+            ];
+        });
+
+        return response()->json($results);
+    }
+
+    /**
+     * Get patients currently in consultation — with timer data for mini-timers.
+     */
+    public function getConsultingQueue(Request $request)
+    {
+        $query = DoctorQueue::with(['patient.user', 'patient.hmo', 'doctor.user', 'clinic'])
+            ->where('status', QueueStatus::IN_CONSULTATION)
+            ->whereDate('created_at', Carbon::today())
+            ->orderBy('consultation_started_at', 'asc');
+
+        // Clinic filter
+        if ($request->has('clinic_id') && $request->clinic_id && $request->clinic_id !== 'all') {
+            $query->where('clinic_id', $request->clinic_id);
+        }
+
+        $items = $query->get();
+
+        $results = $items->map(function ($queue) {
+            $patient = $queue->patient;
+
+            return [
+                'id'                          => $queue->id,
+                'patient_id'                  => $patient ? $patient->id : 0,
+                'patient_name'                => $patient ? userfullname($patient->user_id) : 'Unknown',
+                'file_no'                     => $patient ? ($patient->file_no ?? 'N/A') : 'N/A',
+                'age'                         => $patient ? $this->calculateAge($patient->dob) : 'N/A',
+                'gender'                      => $patient ? ($patient->gender ?? 'N/A') : 'N/A',
+                'hmo'                         => $patient && $patient->hmo ? $patient->hmo->name : null,
+                'doctor'                      => $queue->doctor ? userfullname($queue->doctor->user_id) : 'N/A',
+                'clinic'                      => $queue->clinic ? $queue->clinic->name : 'N/A',
+                'clinic_id'                   => $queue->clinic_id,
+                'priority'                    => $queue->priority ?? 'routine',
+                'source'                      => $queue->source ?? 'walk_in',
+                'consultation_started_at'     => $queue->consultation_started_at,
+                'is_paused'                   => (bool) $queue->is_paused,
+                'consultation_paused_seconds' => (int) ($queue->consultation_paused_seconds ?? 0),
+                'last_paused_at'              => $queue->last_paused_at,
             ];
         });
 
@@ -5368,8 +5433,10 @@ class NursingWorkbenchController extends Controller{
     public function nurseRemoveSingleLab(LabServiceRequest $lab)
     {
         try {
-            $this->removeSingleLab($lab->id);
+            $this->removeSingleLab($lab->id, request()->input('reason'));
             return response()->json(['success' => true, 'message' => 'Lab removed']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -5399,8 +5466,10 @@ class NursingWorkbenchController extends Controller{
     public function nurseRemoveSingleImaging(ImagingServiceRequest $imaging)
     {
         try {
-            $this->removeSingleImaging($imaging->id);
+            $this->removeSingleImaging($imaging->id, request()->input('reason'));
             return response()->json(['success' => true, 'message' => 'Imaging removed']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -5441,8 +5510,10 @@ class NursingWorkbenchController extends Controller{
     public function nurseRemoveSinglePrescription(ProductRequest $prescription)
     {
         try {
-            $this->removeSinglePrescription($prescription->id);
+            $this->removeSinglePrescription($prescription->id, request()->input('reason'));
             return response()->json(['success' => true, 'message' => 'Prescription removed']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -5476,8 +5547,10 @@ class NursingWorkbenchController extends Controller{
     public function nurseRemoveSingleProcedure(Procedure $procedure)
     {
         try {
-            $this->removeSingleProcedure($procedure->id);
+            $this->removeSingleProcedure($procedure->id, request()->input('reason'));
             return response()->json(['success' => true, 'message' => 'Procedure removed']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

@@ -64,9 +64,9 @@
     // ─── Consultation Timer Class ──────────────────────────────────────
     var ConsultationTimer = (function() {
         var _startedAt = null;
-        var _pausedSeconds = 0;
+        var _serverElapsed = 0;
+        var _syncTime = null;
         var _isPaused = false;
-        var _lastPausedAt = null;
         var _tickInterval = null;
         var _queueId = null;
         var _initialized = false;
@@ -86,14 +86,12 @@
         }
 
         function getElapsedSeconds() {
-            if (!_startedAt) return 0;
-            var now = new Date();
-            var total = Math.floor((now - _startedAt) / 1000);
-            total -= _pausedSeconds;
-            if (_isPaused && _lastPausedAt) {
-                total -= Math.floor((now - _lastPausedAt) / 1000);
+            if (!_syncTime) return 0;
+            var elapsed = _serverElapsed;
+            if (!_isPaused) {
+                elapsed += Math.floor((new Date() - _syncTime) / 1000);
             }
-            return Math.max(0, total);
+            return Math.max(0, elapsed);
         }
 
         function updateUI() {
@@ -115,9 +113,10 @@
             }
 
             // Show pause info if any pause time accumulated
-            var totalPaused = _pausedSeconds;
-            if (_isPaused && _lastPausedAt) {
-                totalPaused += Math.floor((new Date() - _lastPausedAt) / 1000);
+            var totalPaused = 0;
+            if (_startedAt) {
+                var wallTime = Math.floor((new Date() - _startedAt) / 1000);
+                totalPaused = Math.max(0, wallTime - getElapsedSeconds());
             }
             if (totalPaused > 0) {
                 $('#timer-pause-info').removeClass('d-none');
@@ -132,6 +131,15 @@
             }, 1000);
         }
 
+        function syncFromServer(timer) {
+            _serverElapsed = parseInt(timer.elapsed_seconds) || 0;
+            _syncTime = new Date();
+            _isPaused = timer.is_paused === true || timer.is_paused == 1;
+            if (timer.started_at) {
+                _startedAt = new Date(timer.started_at);
+            }
+        }
+
         return {
             init: function(queueId) {
                 _queueId = queueId;
@@ -142,14 +150,11 @@
 
                 // Fetch current timer status from server
                 $.ajax({
-                    url: '/queue/' + _queueId + '/timer/status',
+                    url: "{{ route('queue.timer.status', ['queue' => '__QID__']) }}".replace('__QID__', _queueId),
                     type: 'GET',
                     success: function(data) {
-                        if (data.consultation_started_at) {
-                            _startedAt = new Date(data.consultation_started_at);
-                            _pausedSeconds = parseInt(data.consultation_paused_seconds) || 0;
-                            _isPaused = data.is_paused == true || data.is_paused == 1;
-                            _lastPausedAt = data.last_paused_at ? new Date(data.last_paused_at) : null;
+                        if (data.timer && data.timer.started_at) {
+                            syncFromServer(data.timer);
                             _initialized = true;
 
                             $('#timer-started-at').text('Started: ' + _startedAt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
@@ -172,15 +177,12 @@
                 if (!_queueId || _queueId === 'ward_round') return;
 
                 $.ajax({
-                    url: '/queue/' + _queueId + '/timer/start',
+                    url: "{{ route('queue.timer.start', ['queue' => '__QID__']) }}".replace('__QID__', _queueId),
                     type: 'POST',
                     data: { _token: $('meta[name="csrf-token"]').attr('content') },
                     success: function(data) {
-                        if (data.consultation_started_at) {
-                            _startedAt = new Date(data.consultation_started_at);
-                            _pausedSeconds = 0;
-                            _isPaused = false;
-                            _lastPausedAt = null;
+                        if (data.timer && data.timer.started_at) {
+                            syncFromServer(data.timer);
                             _initialized = true;
 
                             $('#timer-started-at').text('Started: ' + _startedAt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
@@ -196,15 +198,24 @@
             togglePause: function() {
                 if (!_initialized || !_queueId) return;
 
+                // If currently paused → resume (start endpoint), otherwise → pause
+                var endpoint = _isPaused
+                    ? "{{ route('queue.timer.start', ['queue' => '__QID__']) }}".replace('__QID__', _queueId)
+                    : "{{ route('queue.timer.pause', ['queue' => '__QID__']) }}".replace('__QID__', _queueId);
+
                 $.ajax({
-                    url: '/queue/' + _queueId + '/timer/pause',
+                    url: endpoint,
                     type: 'POST',
                     data: { _token: $('meta[name="csrf-token"]').attr('content') },
                     success: function(data) {
-                        _isPaused = data.is_paused == true || data.is_paused == 1;
-                        _pausedSeconds = parseInt(data.consultation_paused_seconds) || 0;
-                        _lastPausedAt = data.last_paused_at ? new Date(data.last_paused_at) : null;
+                        if (data.timer) {
+                            syncFromServer(data.timer);
+                        }
                         updateUI();
+                    },
+                    error: function(xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Timer action failed.';
+                        toastr.error(msg);
                     }
                 });
             },
@@ -215,6 +226,11 @@
 
             isRunning: function() {
                 return _initialized && !_isPaused;
+            },
+
+            sync: function(timerData) {
+                syncFromServer(timerData);
+                updateUI();
             }
         };
     })();
@@ -228,10 +244,12 @@
     setInterval(function() {
         if (typeof queueId !== 'undefined' && queueId && queueId !== 'ward_round') {
             $.ajax({
-                url: '/queue/' + queueId + '/timer/status',
+                url: "{{ route('queue.timer.status', ['queue' => '__QID__']) }}".replace('__QID__', queueId),
                 type: 'GET',
                 success: function(data) {
-                    // Silent sync — just prevents clock drift
+                    if (data.timer) {
+                        ConsultationTimer.sync(data.timer);
+                    }
                 }
             });
         }

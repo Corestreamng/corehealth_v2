@@ -71,6 +71,8 @@ use App\Observers\Accounting\LiabilityScheduleObserver;
 use App\Observers\Accounting\LiabilityPaymentObserver;
 use App\Observers\Accounting\PharmacyReturnObserver;
 use App\Observers\Accounting\PharmacyDamageObserver;
+use App\Models\DoctorAppointment;
+use App\Observers\DoctorAppointmentObserver;
 use App\Helpers\HmoHelper;
 use App\Services\DepartmentNotificationService;
 use Carbon\Carbon;
@@ -170,6 +172,9 @@ class AppServiceProvider extends ServiceProvider
 
         // NEW: Bed observer - ensures beds have proper services for billing
         Bed::observe(BedObserver::class);
+
+        // NEW: Appointment observer - sends emails, auto no-show marking
+        DoctorAppointment::observe(DoctorAppointmentObserver::class);
 
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();

@@ -131,6 +131,96 @@ class AppointmentSlotService
     }
 
     /**
+     * Detect double-booking conflicts for a proposed appointment.
+     *
+     * Checks whether the patient or doctor already has an overlapping appointment
+     * at the given date/time window. Returns an array of conflicts found.
+     *
+     * @param  int         $patientId
+     * @param  int|null    $doctorId   Staff ID
+     * @param  int         $clinicId
+     * @param  string|Carbon $date
+     * @param  string      $startTime  H:i format
+     * @param  string|null $endTime    H:i format (optional)
+     * @param  int|null    $excludeAppointmentId  Exclude this appointment (for reschedule)
+     * @return array       ['has_conflict' => bool, 'conflicts' => [...]]
+     */
+    public function detectDoubleBooking(
+        int $patientId,
+        ?int $doctorId,
+        int $clinicId,
+        $date,
+        string $startTime,
+        ?string $endTime = null,
+        ?int $excludeAppointmentId = null
+    ): array {
+        $date = Carbon::parse($date)->toDateString();
+        $endTime = $endTime ?: Carbon::parse($startTime)->addMinutes(15)->format('H:i');
+
+        $conflicts = [];
+
+        // 1. Check patient conflicts — patient can't be in two places at once
+        $patientConflicts = DoctorAppointment::where('patient_id', $patientId)
+            ->where('appointment_date', $date)
+            ->whereNotIn('status', [QueueStatus::CANCELLED, QueueStatus::NO_SHOW])
+            ->when($excludeAppointmentId, fn($q) => $q->where('id', '!=', $excludeAppointmentId))
+            ->where(function ($q) use ($startTime, $endTime) {
+                // Overlap: existing.start < new.end AND existing.end > new.start
+                $q->where('start_time', '<', $endTime)
+                  ->where(function ($q2) use ($startTime) {
+                      $q2->where('end_time', '>', $startTime)
+                         ->orWhereNull('end_time');
+                  });
+            })
+            ->with(['clinic', 'doctor.user'])
+            ->get();
+
+        foreach ($patientConflicts as $conflict) {
+            $clinicName = $conflict->clinic ? $conflict->clinic->name : 'another clinic';
+            $doctorName = ($conflict->doctor && $conflict->doctor->user) ? $conflict->doctor->user->name : 'Unknown';
+            $conflicts[] = [
+                'type'    => 'patient',
+                'message' => "Patient already has an appointment at {$clinicName} "
+                           . "with Dr. {$doctorName}"
+                           . " at " . Carbon::parse($conflict->start_time)->format('g:i A'),
+                'appointment_id' => $conflict->id,
+            ];
+        }
+
+        // 2. Check doctor conflicts — doctor can't see two patients at the same time
+        if ($doctorId) {
+            $doctorConflicts = DoctorAppointment::where('staff_id', $doctorId)
+                ->where('appointment_date', $date)
+                ->whereNotIn('status', [QueueStatus::CANCELLED, QueueStatus::NO_SHOW])
+                ->when($excludeAppointmentId, fn($q) => $q->where('id', '!=', $excludeAppointmentId))
+                ->where(function ($q) use ($startTime, $endTime) {
+                    $q->where('start_time', '<', $endTime)
+                      ->where(function ($q2) use ($startTime) {
+                          $q2->where('end_time', '>', $startTime)
+                             ->orWhereNull('end_time');
+                      });
+                })
+                ->with(['patient.user', 'clinic'])
+                ->get();
+
+            foreach ($doctorConflicts as $conflict) {
+                $patientName = ($conflict->patient && $conflict->patient->user) ? $conflict->patient->user->name : 'a patient';
+                $conflicts[] = [
+                    'type'    => 'doctor',
+                    'message' => "Doctor already has an appointment with {$patientName}"
+                               . " at " . Carbon::parse($conflict->start_time)->format('g:i A'),
+                    'appointment_id' => $conflict->id,
+                ];
+            }
+        }
+
+        return [
+            'has_conflict' => count($conflicts) > 0,
+            'conflicts'    => $conflicts,
+        ];
+    }
+
+    /**
      * Get the next available slot on or after a given date.
      */
     public function getNextAvailableSlot(int $clinicId, ?int $doctorId = null, ?Carbon $fromDate = null, int $maxDaysAhead = 30): ?array

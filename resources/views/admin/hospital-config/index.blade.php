@@ -532,6 +532,115 @@
                             </div>
                         </div>
 
+                        <!-- SMTP / Email Configuration Card -->
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-email-send-outline mr-2" style="color: var(--primary-color);"></i>
+                                    Email / SMTP Configuration
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                                    <i class="mdi mdi-information-outline"></i> Configure SMTP credentials for sending appointment notification emails. If SMTP is not configured, the system will fall back to PHP's built-in <code>mail()</code> function.
+                                </p>
+
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">SMTP Host</label>
+                                        <input type="text" class="form-control" name="smtp_host"
+                                               value="{{ old('smtp_host', $config->smtp_host) }}"
+                                               placeholder="e.g. smtp.gmail.com, smtp.office365.com"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">SMTP Port</label>
+                                        <input type="number" class="form-control" name="smtp_port"
+                                               value="{{ old('smtp_port', $config->smtp_port) }}"
+                                               placeholder="587"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">SMTP Username</label>
+                                        <input type="text" class="form-control" name="smtp_username"
+                                               value="{{ old('smtp_username', $config->smtp_username) }}"
+                                               placeholder="your-email@hospital.com"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">SMTP Password</label>
+                                        <input type="password" class="form-control" name="smtp_password"
+                                               value="{{ old('smtp_password', $config->smtp_password) }}"
+                                               placeholder="••••••••"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Encryption</label>
+                                        <select class="form-control" name="smtp_encryption" style="border-radius: 8px; padding: 0.75rem;">
+                                            <option value="">None</option>
+                                            <option value="tls" {{ old('smtp_encryption', $config->smtp_encryption) === 'tls' ? 'selected' : '' }}>TLS</option>
+                                            <option value="ssl" {{ old('smtp_encryption', $config->smtp_encryption) === 'ssl' ? 'selected' : '' }}>SSL</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">From Address</label>
+                                        <input type="email" class="form-control" name="smtp_from_address"
+                                               value="{{ old('smtp_from_address', $config->smtp_from_address) }}"
+                                               placeholder="noreply@hospital.com"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">From Name</label>
+                                        <input type="text" class="form-control" name="smtp_from_name"
+                                               value="{{ old('smtp_from_name', $config->smtp_from_name) }}"
+                                               placeholder="{{ $config->site_name ?? 'Hospital' }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                </div>
+
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3" style="font-weight: 600;">
+                                    <i class="mdi mdi-calendar-clock mr-1"></i> Appointment Email Notifications
+                                </h6>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-doctor text-primary mr-1"></i>Send Appointment Emails to Doctors
+                                            </label>
+                                            <small class="text-muted d-block">Notify doctors via email when appointments are booked, rescheduled, or cancelled for their clinic</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="send_appointment_email_to_doctors" value="1" {{ $config->send_appointment_email_to_doctors ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-account-outline text-success mr-1"></i>Send Appointment Emails to Patients
+                                            </label>
+                                            <small class="text-muted d-block">Notify patients via email when their appointments are booked, rescheduled, or cancelled</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="send_appointment_email_to_patients" value="1" {{ $config->send_appointment_email_to_patients ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Feature Flags Card -->
                         <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">

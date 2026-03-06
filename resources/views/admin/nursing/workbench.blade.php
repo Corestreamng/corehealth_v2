@@ -5,6 +5,7 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
+<link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
 @endpush
 
 @section('content')
@@ -64,6 +65,20 @@
     .delivery-badge.delivery-pending { background: #fff3cd; color: #856404; }
     .delivery-badge.delivery-progress { background: #cce5ff; color: #004085; }
     .delivery-badge.delivery-completed { background: #d4edda; color: #155724; }
+
+    /* Queue Source Badges */
+    .queue-source-badge {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+    .queue-source-badge.source-walkin { background: #e2e3e5; color: #495057; }
+    .queue-source-badge.source-appointment { background: #cce5ff; color: #004085; }
+    .queue-source-badge.source-emergency { background: #f8d7da; color: #721c24; }
 
     /* Main Layout */
     .nursing-workbench-container {
@@ -7474,7 +7489,9 @@ function displayVitalsQueue(patients) {
     const $container = $('#queue-view .queue-view-content');
 
     if (vitalsQueueData.length === 0) {
-        $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-heart-pulse mdi-48px"></i><br>No patients pending vitals</div>');
+        $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-heart-pulse mdi-48px"></i><br>No patients pending vitals</div>' +
+            '<div id="consulting-section" class="mt-3"></div>');
+        loadConsultingQueue();
         return;
     }
 
@@ -7511,7 +7528,11 @@ function displayVitalsQueue(patients) {
             </div>
         </div>`;
 
-        $container.html(filterHtml + '<div id="vitals-cards-container">' + renderVitalsCards(patients) + '</div>');
+        $container.html(filterHtml + '<div id="vitals-cards-container">' + renderVitalsCards(patients) + '</div>' +
+            '<div id="consulting-section" class="mt-3"></div>');
+
+        // Load currently consulting patients
+        loadConsultingQueue();
 
         $('#vitals-clinic-filter').on('change', function() {
             vitalsClinicFilter = $(this).val();
@@ -7540,8 +7561,12 @@ function renderVitalsCards(patients) {
         const priorityBadge = p.priority === 'emergency'
             ? '<span class="badge bg-danger"><i class="mdi mdi-alert"></i> Emergency</span>'
             : (p.priority === 'urgent' ? '<span class="badge bg-warning text-dark">Urgent</span>' : '');
-        const sourceBadge = p.source === 'emergency_intake'
-            ? '<span class="badge bg-danger"><i class="mdi mdi-ambulance"></i> ER</span>' : '';
+        let sourceBadge = '<span class="queue-source-badge source-walkin"><i class="mdi mdi-walk"></i> Walk-in</span>';
+        if (p.source === 'appointment') {
+            sourceBadge = '<span class="queue-source-badge source-appointment"><i class="mdi mdi-calendar-check"></i> Scheduled</span>';
+        } else if (p.source === 'emergency' || p.source === 'emergency_intake') {
+            sourceBadge = '<span class="queue-source-badge source-emergency"><i class="mdi mdi-ambulance"></i> Emergency</span>';
+        }
 
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
@@ -7573,6 +7598,98 @@ function renderVitalsCards(patients) {
     });
     html += '</div>';
     return html;
+}
+
+/**
+ * Load currently consulting patients with mini-timers
+ */
+function loadConsultingQueue() {
+    $.get('{{ route("nursing-workbench.consulting-queue") }}', { clinic_id: vitalsClinicFilter }, function(data) {
+        if (!data || data.length === 0) {
+            $('#consulting-section').html('');
+            return;
+        }
+        $('#consulting-section').html(renderConsultingCards(data));
+        initNurseMiniTimers();
+    });
+}
+
+function renderConsultingCards(patients) {
+    if (!patients || patients.length === 0) return '';
+
+    let html = `<div class="border-top pt-3 mt-2">
+        <div class="d-flex align-items-center gap-2 mb-2 px-2">
+            <i class="mdi mdi-stethoscope text-primary"></i>
+            <strong class="small text-uppercase text-muted">Currently In Consultation</strong>
+            <span class="badge bg-primary">${patients.length}</span>
+        </div>
+        <div class="row p-2">`;
+
+    patients.forEach(p => {
+        const started = p.consultation_started_at;
+        const paused = p.consultation_paused_seconds || 0;
+        const isPaused = p.is_paused ? '1' : '0';
+        const lastPaused = p.last_paused_at || '';
+        const priorityBorder = p.priority === 'emergency' ? 'border-left: 4px solid #dc3545;'
+            : (p.priority === 'urgent' ? 'border-left: 4px solid #fd7e14;' : 'border-left: 4px solid #0d6efd;');
+
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card-modern" style="${priorityBorder}">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <strong>${p.patient_name || 'N/A'}</strong>
+                            <span class="badge bg-success-subtle text-success nurse-mini-timer"
+                                data-started="${started}"
+                                data-paused-seconds="${paused}"
+                                data-is-paused="${isPaused}"
+                                data-last-paused-at="${lastPaused}">
+                                <i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span>
+                                ${p.is_paused ? ' <i class="mdi mdi-pause-circle text-warning"></i>' : ''}
+                            </span>
+                        </div>
+                        <small class="text-muted d-block">${p.file_no || ''} | ${p.age || ''} ${p.gender || ''}</small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small"><i class="mdi mdi-hospital-building text-primary"></i> ${p.clinic || 'N/A'}</span>
+                            <span class="small"><i class="mdi mdi-doctor"></i> ${p.doctor || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    });
+
+    html += '</div></div>';
+    return html;
+}
+
+/**
+ * Initialize mini-timers for nurse consulting section
+ */
+function initNurseMiniTimers() {
+    $('.nurse-mini-timer[data-started]').each(function() {
+        var $el = $(this);
+        if ($el.data('nurse-timer-init')) return;
+        $el.data('nurse-timer-init', true);
+
+        var startedAt = new Date($el.data('started'));
+        var pausedSeconds = parseInt($el.data('paused-seconds')) || 0;
+        var isPaused = $el.data('is-paused') == true || $el.data('is-paused') === 'true' || $el.data('is-paused') == 1;
+        var lastPausedAt = $el.data('last-paused-at') ? new Date($el.data('last-paused-at')) : null;
+
+        setInterval(function() {
+            if (isPaused) return;
+            var now = new Date();
+            var total = Math.floor((now - startedAt) / 1000) - pausedSeconds;
+            total = Math.max(0, total);
+            var h = Math.floor(total / 3600);
+            var m = Math.floor((total % 3600) / 60);
+            var s = total % 60;
+            $el.find('.timer-value').text(
+                String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0')
+            );
+        }, 1000);
+    });
 }
 
 // Display bed requests queue (card-based)
@@ -19725,5 +19842,159 @@ $(document).ready(function() {
 
 {{-- Emergency Intake Modal --}}
 @include('admin.partials.emergency-intake-modal')
+
+{{-- ================================================================
+     Clinical Request Delete Confirmation Modal (for history tabs)
+     ================================================================ --}}
+<div class="modal fade" id="crDeleteConfirmModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa fa-trash"></i> Delete Clinical Request</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action will soft-delete the request. It can be restored later.
+                </div>
+                <div class="mb-3" id="crDeleteItemInfo"></div>
+                <div class="form-group">
+                    <label>Reason for Deletion <span class="text-danger">*</span></label>
+                    <select class="form-control mb-2" id="crDeletionReasonSelect">
+                        <option value="">-- Select a reason --</option>
+                        <option value="Duplicate request">Duplicate request</option>
+                        <option value="Entered in error">Entered in error</option>
+                        <option value="Patient refused">Patient refused</option>
+                        <option value="No longer needed">No longer needed</option>
+                        <option value="Doctor changed order">Doctor changed order</option>
+                        <option value="Other">Other (specify below)</option>
+                    </select>
+                    <textarea class="form-control d-none" id="crDeletionReasonOther" rows="2"
+                              placeholder="Please specify the reason..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="crConfirmDeleteBtn">
+                    <i class="fa fa-trash-alt"></i> Delete Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    var crCurrentDeleteItem = null;
+
+    // Toggle "Other" textarea when "Other" is selected
+    $('#crDeletionReasonSelect').on('change', function() {
+        if ($(this).val() === 'Other') {
+            $('#crDeletionReasonOther').removeClass('d-none');
+        } else {
+            $('#crDeletionReasonOther').addClass('d-none').val('');
+        }
+    });
+
+    /**
+     * Delete a nurse-created clinical request from history.
+     * Uses the nursing-workbench DELETE routes.
+     */
+    window.deleteNurseClinicalRequest = function(type, id, name) {
+        var pathMap = {
+            lab:          'labs',
+            imaging:      'imaging',
+            prescription: 'prescriptions',
+            procedure:    'procedures'
+        };
+        var typeLabels = {
+            lab:          'Laboratory Test',
+            imaging:      'Imaging/Radiology',
+            prescription: 'Prescription',
+            procedure:    'Procedure'
+        };
+
+        crCurrentDeleteItem = {
+            type: type,
+            id: id,
+            url: '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id
+        };
+
+        $('#crDeleteItemInfo').html(
+            '<strong>Service:</strong> ' + name + '<br>' +
+            '<strong>Type:</strong> ' + (typeLabels[type] || type)
+        );
+
+        $('#crDeletionReasonSelect').val('');
+        $('#crDeletionReasonOther').addClass('d-none').val('');
+        $('#crConfirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
+        $('#crDeleteConfirmModal').modal('show');
+    };
+
+    // Confirm delete handler
+    $('#crConfirmDeleteBtn').on('click', function() {
+        if (!crCurrentDeleteItem) return;
+
+        var reasonSelect = $('#crDeletionReasonSelect').val();
+        var reasonOther  = $('#crDeletionReasonOther').val();
+
+        if (!reasonSelect) {
+            alert('Please select a reason for deletion');
+            return;
+        }
+        if (reasonSelect === 'Other' && !reasonOther) {
+            alert('Please specify the reason');
+            return;
+        }
+
+        var finalReason = (reasonSelect === 'Other' && reasonOther) ? reasonOther : reasonSelect;
+
+        $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
+
+        $.ajax({
+            url: crCurrentDeleteItem.url,
+            type: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: { reason: finalReason },
+            success: function(response) {
+                if (response.success) {
+                    $('#crDeleteConfirmModal').modal('hide');
+                    toastr.success(response.message || 'Request deleted successfully');
+
+                    // Reload the appropriate nurse workbench DataTable
+                    var tableMap = {
+                        lab:          '#cr_lab_history_list',
+                        imaging:      '#cr_imaging_history_list',
+                        prescription: '#cr_presc_history_list',
+                        procedure:    '#cr_proc_history_list'
+                    };
+                    var tableId = tableMap[crCurrentDeleteItem.type];
+                    if (tableId && $.fn.DataTable.isDataTable(tableId)) {
+                        $(tableId).DataTable().ajax.reload();
+                    }
+
+                    crCurrentDeleteItem = null;
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to delete request';
+                toastr.error(msg);
+                $('#crConfirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
+            }
+        });
+    });
+
+    // Reset on modal close
+    $('#crDeleteConfirmModal').on('hidden.bs.modal', function() {
+        crCurrentDeleteItem = null;
+        $('#crConfirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
+    });
+})();
+</script>
 
 @endsection

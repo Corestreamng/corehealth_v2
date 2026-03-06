@@ -86,6 +86,19 @@ class HospitalConfigController extends Controller
             'corehms_superadmin_username' => 'nullable|string',
             'corehms_superadmin_pass' => 'nullable|string',
 
+            // SMTP Configuration
+            'smtp_host' => 'nullable|string|max:255',
+            'smtp_port' => 'nullable|integer|min:1|max:65535',
+            'smtp_username' => 'nullable|string|max:255',
+            'smtp_password' => 'nullable|string|max:255',
+            'smtp_encryption' => 'nullable|in:tls,ssl',
+            'smtp_from_address' => 'nullable|email|max:255',
+            'smtp_from_name' => 'nullable|string|max:255',
+
+            // Appointment Email Notifications
+            'send_appointment_email_to_doctors' => 'boolean',
+            'send_appointment_email_to_patients' => 'boolean',
+
             // Feature Flags
             'goonline' => 'boolean',
             'requirediagnosis' => 'boolean',
@@ -115,6 +128,8 @@ class HospitalConfigController extends Controller
         $validated['nurse_can_enter_lab_result'] = $request->has('nurse_can_enter_lab_result');
         $validated['doctor_can_enter_imaging_result'] = $request->has('doctor_can_enter_imaging_result');
         $validated['nurse_can_enter_imaging_result'] = $request->has('nurse_can_enter_imaging_result');
+        $validated['send_appointment_email_to_doctors'] = $request->has('send_appointment_email_to_doctors');
+        $validated['send_appointment_email_to_patients'] = $request->has('send_appointment_email_to_patients');
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
@@ -134,7 +149,7 @@ class HospitalConfigController extends Controller
         $config->save();
 
         // Clear cache to ensure new settings are loaded immediately
-        \Cache::forget('application_settings');
+        clearAppSettingsCache();
 
         return redirect()->route('hospital-config.index')
             ->with('success', 'Hospital configuration updated successfully!');
