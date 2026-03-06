@@ -493,8 +493,9 @@
                         </button>
                     </div>
                     <div class="info-card-body">
+                        @php $seenClinics = $staff->can_see_clinic_queues ?? []; @endphp
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="info-row">
                                     <span class="info-label">Specialization</span>
                                     <span class="info-value {{ !($staff->specialization ?? null) ? 'text-muted' : '' }}">{{ $staff->specialization->name ?? 'Not applicable' }}</span>
@@ -508,7 +509,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="info-row">
                                     <span class="info-label">Assigned Clinic</span>
                                     <span class="info-value {{ !($staff->clinic ?? null) ? 'text-muted' : '' }}">{{ $staff->clinic->name ?? 'Not applicable' }}</span>
@@ -522,12 +523,9 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-4">
                                 <div class="info-row">
-                                    <span class="info-label">Also See Queues From <small class="text-muted">(Additional Clinics)</small></span>
-                                    @php $seenClinics = $staff->can_see_clinic_queues ?? []; @endphp
+                                    <span class="info-label">Also See Queues From</span>
                                     <span class="info-value {{ empty($seenClinics) ? 'text-muted' : '' }}">
                                         @if(empty($seenClinics))
                                             Not configured
@@ -541,7 +539,7 @@
                                                 <option value="{{ $id }}" {{ in_array($id, $seenClinics) ? 'selected' : '' }}>{{ $name }}</option>
                                             @endforeach
                                         </select>
-                                        <small class="text-muted">Your queue view will include your primary clinic plus any selected here.</small>
+                                        <small class="text-muted">Clinics whose queues you can also monitor.</small>
                                     </div>
                                 </div>
                             </div>
