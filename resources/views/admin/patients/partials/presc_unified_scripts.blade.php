@@ -165,9 +165,9 @@ function initPrescHistoryTable() {
 
     $('#presc_history_table').DataTable({
         dom: 'Bfrtip',
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        buttons: ['pageLength', 'copy', 'excel', 'pdf', 'print'],
+        pageLength: 50,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        buttons: ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
         processing: true,
         serverSide: true,
         ajax: {

@@ -265,7 +265,7 @@
                 var $wrapper = $('#vitals-table_wrapper');
                 $wrapper.find('.show-all-link').remove();
                 $wrapper.append(
-                    '<a href="/patients/show/' + pid + '?section=vitalsCardBody" target="_blank" class="show-all-link">' +
+                    '<a href="/patient/' + pid + '?section=vitalsCardBody" target="_blank" class="show-all-link">' +
                         'Show All Vitals \u2192' +
                     '</a>'
                 );
@@ -336,7 +336,7 @@
         $('#clinical-meds-container').html(html);
 
         $('#clinical-meds-show-all').html(
-            '<a href="/patients/show/' + patientId + '?section=prescriptionsCardBody" target="_blank" class="btn btn-outline-primary btn-sm">' +
+            '<a href="/patient/' + patientId + '?section=prescriptionsNotesCardBody" target="_blank" class="btn btn-outline-primary btn-sm">' +
                 '<i class="mdi mdi-open-in-new"></i> See More Prescriptions' +
             '</a>'
         );
