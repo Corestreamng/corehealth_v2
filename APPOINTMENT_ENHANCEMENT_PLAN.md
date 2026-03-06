@@ -1,8 +1,10 @@
 # Appointment & Queue Enhancement Plan
 
 > **Date:** 2026-03-02
+> **Updated:** 2026-03-05
 > **Priority:** HIGH — Core patient flow improvement
 > **Scope:** Reception Workbench, Doctor Queue, Nurse Workbench, Encounter System
+> **Overall Status:** Phases 1–5 COMPLETE. Phase 6 IN PROGRESS — observer-based email notifications, double-booking detection, auto no-show implemented.
 
 ---
 
@@ -1477,174 +1479,208 @@ class QueueStatusService
 
 ## 11. Implementation Phases
 
-### Phase 1: Foundation (Week 1-2)
+### Phase 1: Foundation (Week 1-2) — ✅ COMPLETE
 
-| # | Task | Files | Priority |
+> All migrations run (batch 155). All models, services, and enum created. Status data migrated.
+
+| # | Task | Files | Priority | Status |
+|---|---|---|---|---|
+| 1.1 | Create `QueueStatus` enum | `app/Enums/QueueStatus.php` | P0 | ✅ Done — 8 states, labels, badges, colors, ACTIVE/TERMINAL arrays |
+| 1.2 | Create `doctor_appointments` migration | `database/migrations/2026_03_02_120000_…` | P0 | ✅ Done & migrated |
+| 1.3 | Create `clinic_schedules` migration | `database/migrations/2026_03_02_120001_…` | P0 | ✅ Done & migrated |
+| 1.4 | Create `doctor_availabilities` migration | `database/migrations/2026_03_02_120002_…` | P0 | ✅ Done & migrated |
+| 1.5 | Create `doctor_availability_overrides` migration | `database/migrations/2026_03_02_120003_…` | P1 | ✅ Done & migrated |
+| 1.6 | Alter `doctor_queues` — add timer + appointment columns | `database/migrations/2026_03_02_120005_…` | P0 | ✅ Done & migrated |
+| 1.7 | Alter `encounters` — add `queue_id`, `started_at`, `completed_at` | `database/migrations/2026_03_02_120006_…` | P0 | ✅ Done & migrated |
+| 1.8 | Create `DoctorAppointment` model | `app/Models/DoctorAppointment.php` | P0 | ✅ Done — 235 lines, all relationships/scopes |
+| 1.9 | Create `ClinicSchedule` model | `app/Models/ClinicSchedule.php` | P0 | ✅ Done |
+| 1.10 | Create `DoctorAvailability` model | `app/Models/DoctorAvailability.php` | P0 | ✅ Done |
+| 1.11 | Migrate existing status values | `database/migrations/2026_03_02_120007_…` | P0 | ✅ Done — 3→4, 4→5 remapped |
+| 1.12 | Update `DoctorQueue` model — add casts, scopes, `QueueStatus` usage | `app/Models/DoctorQueue.php` | P0 | ✅ Done — 169 lines, timer accessors, appointment rel |
+| 1.13 | Create `QueueStatusService` | `app/Services/QueueStatusService.php` | P0 | ✅ Done — transition(), pause/resume, side effects |
+| 1.14 | Create `AppointmentSlotService` | `app/Services/AppointmentSlotService.php` | P1 | ✅ Done — getAvailableSlots(), isSlotAvailable(), getNextAvailableSlot() |
+| 1.15 | Create `specialist_referrals` migration | `database/migrations/2026_03_02_120004_…` | P0 | ✅ Done & migrated |
+| 1.16 | Create `SpecialistReferral` model | `app/Models/SpecialistReferral.php` | P0 | ✅ Done — 149 lines, status constants, relationships |
+| 1.17 | Add follow-up & reassignment columns to `doctor_appointments` | Included in 1.2 | P0 | ✅ Done |
+
+### Phase 2: Backend APIs (Week 2-3) — ✅ COMPLETE
+
+> All controllers created. All routes defined in `routes/appointments.php` and `routes/referrals.php` (both included from `routes/web.php`). Timer endpoints live on `DoctorAppointmentController` (deviation from plan which suggested `EncounterController`).
+
+| # | Task | Files | Priority | Status |
+|---|---|---|---|---|
+| 2.1 | Create `DoctorAppointmentController` | `app/Http/Controllers/DoctorAppointmentController.php` | P0 | ✅ Done — 20+ methods incl. CRUD, check-in, timer, unified views |
+| 2.2 | Add appointment routes | `routes/appointments.php` | P0 | ✅ Done — 21 routes (REST + timer + follow-up + doctor-scoped) |
+| 2.3 | Update `ReceptionWorkbenchController` — booking with schedule option | `ReceptionWorkbenchController.php` | P0 | ✅ Done — `bookConsultation()` handles walk-in + schedule paths |
+| 2.4 | Update `ReceptionWorkbenchController` — queue counts (use QueueStatus) | Same | P0 | ✅ Done — `getQueueCounts()` uses `QueueStatus` constants |
+| 2.5 | Update `EncounterController` — use `QueueStatus`, unified statuses | `EncounterController.php` | P0 | ✅ Done — imports QueueStatus + QueueStatusService, uses in `create()` and `finalizeEncounter()` |
+| 2.6 | Update `NursingWorkbenchController` — use `QueueStatus` for vitals queue | `NursingWorkbenchController.php` | P0 | ✅ Done — constructor-injected QueueStatusService, status-based filtering |
+| 2.7 | Add consultation timer endpoints | `DoctorAppointmentController` | P0 | ✅ Done — `startTimer`, `pauseTimer`, `getTimerStatus` (start doubles as resume) |
+| 2.8 | Add available-slots endpoint | `DoctorAppointmentController` | P1 | ✅ Done — delegated to `AppointmentSlotService` |
+| 2.9 | Add appointment check-in, cancel, no-show, reschedule endpoints | `DoctorAppointmentController` | P0 | ✅ Done |
+| 2.10 | Update `VitalSignController` — transition through `QueueStatusService` | `VitalSignController.php` | P0 | ✅ Done — constructor-injected, per-queue transition chain |
+| 2.11 | Create `SpecialistReferralController` (CRUD + status lifecycle) | `SpecialistReferralController.php` | P0 | ✅ Done — 9 methods covering full lifecycle |
+| 2.12 | Add referral routes | `routes/referrals.php` | P0 | ✅ Done — 9 routes (encounter-scoped + reception actions + history) |
+| 2.13 | Add follow-up scheduling endpoint | `DoctorAppointmentController::scheduleFollowUp` | P0 | ✅ Done — route `POST /encounters/{encounter}/schedule-followup` |
+| 2.14 | Add doctor reassignment endpoint | `DoctorAppointmentController::reassignDoctor` | P0 | ✅ Done — route `POST /appointments/{appointment}/reassign` |
+| 2.15 | Add pre-paid follow-up check-in endpoint | `ReceptionWorkbenchController::checkInFollowUp` | P0 | ⚠️ Partial — `bookConsultation()` handles schedule path but no dedicated `checkInFollowUp` method; check-in goes through `DoctorAppointmentController::checkIn()` |
+| 2.16 | Add referral-to-appointment booking endpoint | `SpecialistReferralController::bookReferralAppointment` | P0 | ✅ Done — route `POST /referrals/{referral}/book` |
+
+### Phase 3: Reception UI (Week 3-4) — ✅ COMPLETE (implementation deviates from plan)
+
+> Functionality implemented directly in `reception/workbench.blade.php` instead of a standalone `appointment-scheduler.blade.php` component. FullCalendar v2.2.5 used (no upgrade to v6). All actions wired via JS.
+
+| # | Task | Files | Priority | Status |
+|---|---|---|---|---|
+| 3.1 | Create appointment scheduler Blade component | N/A | P0 | ⚠️ Skipped — Functionality embedded directly in reception workbench (calendar + table + context menu + filters) |
+| 3.2 | Add "Appointments" tab to reception workbench | `reception/workbench.blade.php` | P0 | ✅ Done — `workspace-tab[data-tab="appointments"]` + `#appointments-tab` |
+| 3.3 | Add "Today's Appointments" sidebar item | Same | P0 | ✅ Done — `data-filter="appointments-today"` with `#queue-appointments-count` |
+| 3.4 | Extend booking form with schedule toggle + date/time fields | Same | P0 | ✅ Done — Radio toggle: Walk-in / Schedule Future, with date/time/slot fields |
+| 3.5 | Calendar view JS (FullCalendar integration) | Same | P0 | ✅ Done — `initAppointmentsCalendar()`, agendaWeek view, event click → context menu |
+| 3.6 | Table view DataTable | Same | P0 | ✅ Done — Hidden `#appointments-table-container` with DataTable |
+| 3.7 | Context menu (click appointment → actions) | Same | P0 | ✅ Done — `.appt-context-menu` with Check-In / Cancel / No-Show / Reschedule / Change Doctor / View History |
+| 3.8 | New Appointment modal | Same | P0 | ✅ Done — Booking form with schedule option |
+| 3.9 | Reschedule modal | Same | P1 | ✅ Done — `#rescheduleAppointmentModal` |
+| 3.10 | Cancel reason modal | Same | P1 | ✅ Done — Handled via context menu cancel action |
+| 3.11 | Update queue count display to use unified statuses | Same | P0 | ✅ Done — Uses `QueueStatus` constants |
+| 3.12 | Add "Pending Referrals" sidebar item + panel | Same | P0 | ✅ Done — `data-filter="referrals"` with `#queue-referrals-count` |
+| 3.13 | Referral action modals (Book In-Hospital, Mark External, Decline) | Same | P0 | ✅ Done — Button handlers `.btn-book-referral`, `.btn-refer-out`, `.btn-decline-referral`, `.btn-cancel-referral` |
+| 3.14 | Doctor reassignment modal | Same | P0 | ✅ Done — Available via context menu "Change Doctor" action |
+| 3.15 | Follow-up check-in flow (detect pre-paid, skip billing) | Same | P0 | ⚠️ Partial — Check-in delegated to `DoctorAppointmentController::checkIn()` which handles pre-paid logic, but no explicit visual "No new billing" indicator confirmed |
+
+### Phase 4: Doctor UI (Week 4-5) — ✅ COMPLETE
+
+> Scheduled tab active. Timer, referrals, and follow-ups all wired in encounter view. Referral tab implemented inline (not as separate partial). Timer JS is inline in the Blade partial, not a standalone `.js` file.
+
+| # | Task | Files | Priority | Status |
+|---|---|---|---|---|
+| 4.1 | Uncomment + wire "Scheduled" tab in my_queues | `my_queues.blade.php` | P0 | ✅ Done — `status-pill-scheduled` with `data-status="6"` |
+| 4.2 | Embed appointment scheduler component in Scheduled tab | Same | P0 | ⚠️ Deviated — No standalone component; scheduled tab uses DataTable with status filter + calendar mini-view |
+| 4.3 | Add source badges (Scheduled/Walk-in/Emergency) to New tab | Same | P0 | ✅ Done — `source_badge` DataTable column |
+| 4.4 | Add auto-refresh (30s polling) to doctor queue | Same | P0 | ✅ Done — `setInterval(refreshAll, 30000)` |
+| 4.5 | Add tab badge counts (dynamic) | Same | P0 | ✅ Done — `loadQueueCounts()` via `appointments.doctor.queue-counts` |
+| 4.6 | Add consultation timer to encounter view | `new_encounter.blade.php` | P0 | ✅ Done — `@include('admin.doctors.partials.consultation_timer')` + `ConsultationTimer.init(queueId)` |
+| 4.7 | Create consultation timer partial | `partials/consultation_timer.blade.php` | P0 | ✅ Done — 240 lines, full pause/resume UI |
+| 4.8 | Consultation timer JS class | Inline in timer partial | P0 | ✅ Done — IIFE with init/start/togglePause/getElapsed, server sync every 60s |
+| 4.9 | Timer visibility in doctor queue table (mini-timers) | `my_queues.blade.php` | P1 | ✅ Done — `mini-timer` elements with `data-started` etc., ticked by `initMiniTimers()` JS |
+| 4.10 | Update encounter creation to set `consultation_started_at`, `queue_id`, `started_at` | `EncounterController::create()` | P0 | ✅ Done — Uses QueueStatusService, sets queue_id + consultation_started_at |
+| 4.11 | Add "Refer to Specialist" tab/button in encounter view | `new_encounter.blade.php` | P0 | ✅ Done — Inline referral form + list in `#referrals` tab pane (not separate partial) |
+| 4.12 | Add "Schedule Follow-Up" button in encounter finalization | `new_encounter.blade.php` | P0 | ✅ Done — Checkbox toggle in conclude modal, `finalizeEncounterFromModal()` chains follow-up creation |
+| 4.13 | Follow-up chain visibility | `my_queues.blade.php` DataTable | P1 | ⚠️ Partial — Chain endpoint exists (`appointments.chain`) but not confirmed rendered in DataTable UI |
+| 4.14 | Doctor reassignment action in Scheduled tab context menu | `my_queues.blade.php` | P1 | ⚠️ Partial — Route exists (`appointments.reassign`), reception context menu has it, doctor-side not confirmed |
+
+### Phase 5: Nurse Sync & Polish (Week 5-6) — ✅ COMPLETE
+
+> All P0/P1 items done. P2 mini-timer in nurse cards deferred.
+
+| # | Task | Files | Priority | Status |
+|---|---|---|---|---|
+| 5.1 | Update nurse vitals queue to use `QueueStatus` constants | `NursingWorkbenchController` | P0 | ✅ Done — `whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])` |
+| 5.2 | Add source badge (Scheduled/Walk-in) to nurse queue cards | `workbench.blade.php` (nursing) | P1 | ✅ Done — `queue-source-badge` CSS classes for appointment/walk-in/emergency |
+| 5.3 | Nurse picks up patient → status `1 → 2` transition via `QueueStatusService` | `NursingWorkbenchController` | P0 | ✅ Done — in `getPatientDetails()`, transition WAITING→VITALS_PENDING |
+| 5.4 | Vitals saved → status `2 → 3` transition via `QueueStatusService` | `VitalSignController` | P0 | ✅ Done — per-queue transition chain with WAITING→VITALS_PENDING→READY fallback |
+| 5.5 | Add mini consultation timer to nurse queue cards | `workbench.blade.php` (nursing) | P2 | ⏳ Not started — deferred |
+| 5.6 | CSS standardization — shared status badge styles across all workbenches | `public/css/queue-status.css` | P1 | ✅ Done — Linked in nursing, reception, and doctor views |
+
+### Phase 6: Advanced Features (Week 6+) — 🔄 IN PROGRESS
+
+> **Approach Changes (2026-03-05):**
+> - **Observers over cron jobs:** Auto no-show marking uses `DoctorAppointmentObserver` instead of scheduled tasks
+> - **SMTP email notifications:** Appointment emails sent via dynamic SMTP (from `application_status`) with PHP `mail()` fallback
+> - **Hospital branding:** Email template uses `appsettings()` for logo, site_name, address, color, footer — same pattern as lab results
+> - **SMTP config in Hospital Config:** Admin UI for SMTP credentials + per-recipient email toggles
+
+| # | Task | Priority | Status |
 |---|---|---|---|
-| 1.1 | Create `QueueStatus` enum | `app/Enums/QueueStatus.php` | P0 |
-| 1.2 | Create `doctor_appointments` migration | `database/migrations/` | P0 |
-| 1.3 | Create `clinic_schedules` migration | `database/migrations/` | P0 |
-| 1.4 | Create `doctor_availabilities` migration | `database/migrations/` | P0 |
-| 1.5 | Create `doctor_availability_overrides` migration | `database/migrations/` | P1 |
-| 1.6 | Alter `doctor_queues` — add timer + appointment columns | `database/migrations/` | P0 |
-| 1.7 | Alter `encounters` — add `queue_id`, `started_at`, `completed_at` | `database/migrations/` | P0 |
-| 1.8 | Create `DoctorAppointment` model | `app/Models/DoctorAppointment.php` | P0 |
-| 1.9 | Create `ClinicSchedule` model | `app/Models/ClinicSchedule.php` | P0 |
-| 1.10 | Create `DoctorAvailability` model | `app/Models/DoctorAvailability.php` | P0 |
-| 1.11 | Migrate existing status values | Data migration script | P0 |
-| 1.12 | Update `DoctorQueue` model — add casts, scopes, `QueueStatus` usage | `app/Models/DoctorQueue.php` | P0 |
-| 1.13 | Create `QueueStatusService` | `app/Services/QueueStatusService.php` | P0 |
-| 1.14 | Create `AppointmentSlotService` | `app/Services/AppointmentSlotService.php` | P1 |
-| 1.15 | Create `specialist_referrals` migration | `database/migrations/` | P0 |
-| 1.16 | Create `SpecialistReferral` model | `app/Models/SpecialistReferral.php` | P0 |
-| 1.17 | Add follow-up & reassignment columns to `doctor_appointments` | Already included in 1.2 (`parent_appointment_id`, `referral_id`, `original_staff_id`, etc.) | P0 |
-
-### Phase 2: Backend APIs (Week 2-3)
-
-| # | Task | Files | Priority |
-|---|---|---|---|
-| 2.1 | Create `DoctorAppointmentController` | `app/Http/Controllers/DoctorAppointmentController.php` | P0 |
-| 2.2 | Add appointment routes | `routes/web.php` or `routes/appointments.php` | P0 |
-| 2.3 | Update `ReceptionWorkbenchController` — booking with schedule option | `app/Http/Controllers/ReceptionWorkbenchController.php` | P0 |
-| 2.4 | Update `ReceptionWorkbenchController` — queue counts (use QueueStatus) | Same | P0 |
-| 2.5 | Update `EncounterController` — use `QueueStatus`, unified statuses | `app/Http/Controllers/EncounterController.php` | P0 |
-| 2.6 | Update `NursingWorkbenchController` — use `QueueStatus` for vitals queue | `app/Http/Controllers/NursingWorkbenchController.php` | P0 |
-| 2.7 | Add consultation timer endpoints | `EncounterController` or new `ConsultationTimerController` | P0 |
-| 2.8 | Add available-slots endpoint | `DoctorAppointmentController` | P1 |
-| 2.9 | Add appointment check-in, cancel, no-show, reschedule endpoints | `DoctorAppointmentController` | P0 |
-| 2.10 | Update `VitalSignController` — transition through `QueueStatusService` | `app/Http/Controllers/VitalSignController.php` | P0 |
-| 2.11 | Create `SpecialistReferralController` (CRUD + status lifecycle) | `app/Http/Controllers/SpecialistReferralController.php` | P0 |
-| 2.12 | Add referral routes | `routes/referrals.php` (included in `web.php`) | P0 |
-| 2.13 | Add follow-up scheduling endpoint | `DoctorAppointmentController::scheduleFollowUp` | P0 |
-| 2.14 | Add doctor reassignment endpoint | `DoctorAppointmentController::reassignDoctor` | P0 |
-| 2.15 | Add pre-paid follow-up check-in endpoint | `ReceptionWorkbenchController::checkInFollowUp` | P0 |
-| 2.16 | Add referral-to-appointment booking endpoint | `ReceptionWorkbenchController::bookReferralAppointment` | P0 |
-
-### Phase 3: Reception UI (Week 3-4)
-
-| # | Task | Files | Priority |
-|---|---|---|---|
-| 3.1 | Create appointment scheduler Blade component | `resources/views/components/appointment-scheduler.blade.php` | P0 |
-| 3.2 | Add "Appointments" tab to reception workbench | `resources/views/admin/reception/workbench.blade.php` | P0 |
-| 3.3 | Add "Today's Appointments" sidebar item | Same | P0 |
-| 3.4 | Extend booking form with schedule toggle + date/time fields | Same | P0 |
-| 3.5 | Calendar view JS (FullCalendar integration) | Same + `public/js/appointment-calendar.js` | P0 |
-| 3.6 | Table view DataTable | Same | P0 |
-| 3.7 | Context menu (click appointment → actions) | Same | P0 |
-| 3.8 | New Appointment modal | Same | P0 |
-| 3.9 | Reschedule modal | Same | P1 |
-| 3.10 | Cancel reason modal | Same | P1 |
-| 3.11 | Update queue count display to use unified statuses | Same | P0 |
-| 3.12 | Add "Pending Referrals" sidebar item + panel | Same | P0 |
-| 3.13 | Referral action modals (Book In-Hospital, Mark External, Decline) | Same | P0 |
-| 3.14 | Doctor reassignment modal (select new doctor, enter reason) | Same or shared component | P0 |
-| 3.15 | Follow-up check-in flow (detect pre-paid, skip billing) | Same | P0 |
-
-### Phase 4: Doctor UI (Week 4-5)
-
-| # | Task | Files | Priority |
-|---|---|---|---|
-| 4.1 | Uncomment + wire "Scheduled" tab in my_queues | `resources/views/admin/doctors/my_queues.blade.php` | P0 |
-| 4.2 | Embed appointment scheduler component in Scheduled tab | Same | P0 |
-| 4.3 | Add source badges (Scheduled/Walk-in/Emergency) to New tab | Same | P0 |
-| 4.4 | Add auto-refresh (30s polling) to doctor queue | Same | P0 |
-| 4.5 | Add tab badge counts (dynamic) | Same | P0 |
-| 4.6 | Add consultation timer to encounter view | `resources/views/admin/doctors/new_encounter.blade.php` | P0 |
-| 4.7 | Create consultation timer partial | `resources/views/admin/doctors/partials/consultation_timer.blade.php` | P0 |
-| 4.8 | Consultation timer JS class | Same or `public/js/consultation-timer.js` | P0 |
-| 4.9 | Timer visibility in doctor queue table (mini-timers for In-Consultation entries) | `my_queues.blade.php` | P1 |
-| 4.10 | Update encounter creation to set `consultation_started_at`, `queue_id`, `started_at` | `EncounterController::create()` | P0 |
-| 4.11 | Add "Refer to Specialist" tab/button in encounter view | `new_encounter.blade.php` + `partials/referral_tab.blade.php` | P0 |
-| 4.12 | Add "Schedule Follow-Up" button in encounter finalization | `new_encounter.blade.php` | P0 |
-| 4.13 | Follow-up chain visibility (show visit history on patient card) | `my_queues.blade.php` DataTable | P1 |
-| 4.14 | Doctor reassignment action in Scheduled tab context menu | `my_queues.blade.php` | P1 |
-
-### Phase 5: Nurse Sync & Polish (Week 5-6)
-
-| # | Task | Files | Priority |
-|---|---|---|---|
-| 5.1 | Update nurse vitals queue to use `QueueStatus` constants | `NursingWorkbenchController` | P0 |
-| 5.2 | Add source badge (Scheduled/Walk-in) to nurse queue cards | `workbench.blade.php` (nursing) | P1 |
-| 5.3 | Nurse picks up patient → status `1 → 2` transition via `QueueStatusService` | `NursingWorkbenchController` or `VitalSignController` | P0 |
-| 5.4 | Vitals saved → status `2 → 3` transition via `QueueStatusService` | `VitalSignController` | P0 |
-| 5.5 | Add mini consultation timer to nurse queue cards (for In-Consultation patients) | `workbench.blade.php` (nursing) | P2 |
-| 5.6 | CSS standardization — shared status badge styles across all workbenches | `public/css/queue-status.css` | P1 |
-
-### Phase 6: Advanced Features (Week 6+)
-
-| # | Task | Priority |
-|---|---|---|
-| 6.1 | Doctor availability management UI (CRUD for weekly schedule) | P2 |
-| 6.2 | Clinic schedule management UI (admin) | P2 |
-| 6.3 | Auto no-show marking (cron job — mark unconfirmed appointments past cutoff) | P2 |
-| 6.4 | Appointment reminders (requires SMS/notification integration) | P3 |
-| 6.5 | Enable Laravel Broadcasting for real-time status sync | P2 |
-| 6.6 | Patient self-service booking (portal — future phase) | P3 |
-| 6.7 | Recurring appointments (e.g., weekly follow-ups) | P3 |
-| 6.8 | Appointment analytics dashboard | P3 |
-| 6.9 | Drag-and-drop rescheduling on calendar | P2 |
-| 6.10 | Conflict detection (double-booking prevention) | P1 |
-| 6.11 | Referral letter PDF generation (for external referrals) | P2 |
-| 6.12 | Referral analytics (turnaround time, conversion rate) | P3 |
-| 6.13 | Follow-up reminder notifications (SMS/push for upcoming follow-ups) | P3 |
-| 6.14 | Auto-suggest follow-up date based on diagnosis/protocol | P3 |
-| 6.15 | Reassignment analytics (frequency by doctor, reason breakdown) | P3 |
+| 6.1 | Doctor availability management UI (CRUD for weekly schedule) | P2 | ⏳ Not started |
+| 6.2 | Clinic schedule management UI (admin) | P2 | ⏳ Not started |
+| 6.3 | Auto no-show marking (observer-based — marks past scheduled appointments on any appointment update) | P1 | ✅ Complete |
+| 6.4 | Appointment email notifications — SMTP with PHP mail() fallback, hospital-branded template | P1 | ✅ Complete |
+| 6.5 | SMTP credentials in `application_status` + Hospital Config UI | P1 | ✅ Complete |
+| 6.6 | Email toggle settings — send to doctors / send to patients | P1 | ✅ Complete |
+| 6.7 | `DoctorAppointmentObserver` — created/cancelled/rescheduled/checked_in/no_show/reassigned events | P1 | ✅ Complete |
+| 6.8 | `AppointmentNotificationMail` Mailable class | P1 | ✅ Complete |
+| 6.9 | Hospital-branded email Blade template (`emails/appointment-notification.blade.php`) | P1 | ✅ Complete |
+| 6.10 | Conflict detection (double-booking prevention) — patient + doctor overlap checks | P1 | ✅ Complete |
+| 6.11 | Double-booking integrated in create + reschedule flows | P1 | ✅ Complete |
+| 6.12 | Fix `HospitalConfigController` cache key bug (`application_settings` → `clearAppSettingsCache()`) | P1 | ✅ Complete |
+| 6.13 | Fix `MobileEncounterController` hardcoded status integers (GAP-10) | P2 | ✅ Complete |
+| 6.14 | Enable Laravel Broadcasting for real-time status sync (Pusher/WebSocket) | P2 | ⏳ Not started |
+| 6.15 | Patient self-service booking (portal — future phase) | P3 | ⏳ Not started |
+| 6.16 | Recurring appointments (e.g., weekly follow-ups) | P3 | ⏳ Not started |
+| 6.17 | Appointment analytics dashboard | P3 | ⏳ Not started |
+| 6.18 | Drag-and-drop rescheduling on calendar | P2 | ⏳ Not started |
+| 6.19 | Referral letter PDF generation (for external referrals) | P2 | ⏳ Not started |
+| 6.20 | Referral analytics (turnaround time, conversion rate) | P3 | ⏳ Not started |
+| 6.21 | Follow-up reminder notifications (SMS/push for upcoming follow-ups) | P3 | ⏳ Not started |
+| 6.22 | Auto-suggest follow-up date based on diagnosis/protocol | P3 | ⏳ Not started |
+| 6.23 | Reassignment analytics (frequency by doctor, reason breakdown) | P3 | ⏳ Not started |
 
 ---
 
-## 12. File-by-File Change Map
+## 12. File-by-File Change Map (Updated 2026-03-05)
 
 ### New Files
 
-| File | Purpose |
-|---|---|
-| `app/Enums/QueueStatus.php` | Unified status constants, labels, badges, colors |
-| `app/Models/DoctorAppointment.php` | Appointment model with scopes, relationships, casts |
-| `app/Models/ClinicSchedule.php` | Clinic weekly schedule model |
-| `app/Models/DoctorAvailability.php` | Doctor availability model |
-| `app/Models/DoctorAvailabilityOverride.php` | Schedule overrides (holidays, leave) |
-| `app/Services/QueueStatusService.php` | Centralized status transition logic |
-| `app/Services/AppointmentSlotService.php` | Available slot calculator |
-| `app/Http/Controllers/DoctorAppointmentController.php` | CRUD + lifecycle actions |
-| `app/Exceptions/InvalidStatusTransitionException.php` | Custom exception |
-| `resources/views/components/appointment-scheduler.blade.php` | Shared calendar/table component |
-| `resources/views/admin/doctors/partials/consultation_timer.blade.php` | Timer UI partial |
-| `public/js/appointment-calendar.js` | FullCalendar integration + context menu |
-| `public/js/consultation-timer.js` | Timer JS class |
-| `public/css/queue-status.css` | Shared status badge styles |
-| `database/migrations/xxxx_create_doctor_appointments_table.php` | Appointments table |
-| `database/migrations/xxxx_create_clinic_schedules_table.php` | Clinic schedules |
-| `database/migrations/xxxx_create_doctor_availabilities_table.php` | Doctor availability |
-| `database/migrations/xxxx_create_doctor_availability_overrides_table.php` | Overrides |
-| `database/migrations/xxxx_add_timer_columns_to_doctor_queues.php` | Timer fields |
-| `database/migrations/xxxx_add_queue_id_to_encounters.php` | Encounter-queue link |
-| `database/migrations/xxxx_migrate_queue_status_values.php` | Data migration |
-| `routes/appointments.php` | Appointment routes (included in `web.php`) |
-| `app/Models/SpecialistReferral.php` | Referral model with scopes, relationships, status lifecycle |
-| `app/Http/Controllers/SpecialistReferralController.php` | Referral CRUD + status actions (book, refer-out, cancel) |
-| `database/migrations/xxxx_create_specialist_referrals_table.php` | Specialist referrals table |
-| `resources/views/admin/doctors/partials/referral_tab.blade.php` | Referral form + history in encounter view |
-| `routes/referrals.php` | Referral routes (included in `web.php`) |
+| File | Purpose | Status |
+|---|---|---|
+| `app/Enums/QueueStatus.php` | Unified status constants, labels, badges, colors | ✅ Created |
+| `app/Models/DoctorAppointment.php` | Appointment model with scopes, relationships, casts | ✅ Created |
+| `app/Models/ClinicSchedule.php` | Clinic weekly schedule model | ✅ Created |
+| `app/Models/DoctorAvailability.php` | Doctor availability model | ✅ Created |
+| `app/Models/DoctorAvailabilityOverride.php` | Schedule overrides (holidays, leave) | ✅ Created |
+| `app/Services/QueueStatusService.php` | Centralized status transition logic | ✅ Created |
+| `app/Services/AppointmentSlotService.php` | Available slot calculator | ✅ Created |
+| `app/Http/Controllers/DoctorAppointmentController.php` | CRUD + lifecycle + timer + unified views | ✅ Created |
+| `app/Exceptions/InvalidStatusTransitionException.php` | Custom exception | ✅ Created |
+| `resources/views/components/appointment-scheduler.blade.php` | Shared calendar/table component | ❌ Skipped — functionality embedded directly in workbench views |
+| `resources/views/admin/doctors/partials/consultation_timer.blade.php` | Timer UI partial (includes inline JS) | ✅ Created |
+| `public/js/appointment-calendar.js` | FullCalendar integration + context menu | ❌ Skipped — JS embedded inline in reception workbench |
+| `public/js/consultation-timer.js` | Timer JS class | ❌ Skipped — JS embedded inline in timer partial |
+| `public/css/queue-status.css` | Shared status badge styles | ✅ Created |
+| `database/migrations/2026_03_02_120000_create_doctor_appointments_table.php` | Appointments table | ✅ Created & migrated |
+| `database/migrations/2026_03_02_120001_create_clinic_schedules_table.php` | Clinic schedules | ✅ Created & migrated |
+| `database/migrations/2026_03_02_120002_create_doctor_availabilities_table.php` | Doctor availability | ✅ Created & migrated |
+| `database/migrations/2026_03_02_120003_create_doctor_availability_overrides_table.php` | Overrides | ✅ Created & migrated |
+| `database/migrations/2026_03_02_120004_create_specialist_referrals_table.php` | Specialist referrals table | ✅ Created & migrated |
+| `database/migrations/2026_03_02_120005_add_appointment_timer_columns_to_doctor_queues_table.php` | Timer fields | ✅ Created & migrated |
+| `database/migrations/2026_03_02_120006_add_queue_and_timestamps_to_encounters_table.php` | Encounter-queue link | ✅ Created & migrated |
+| `database/migrations/2026_03_02_120007_migrate_doctor_queue_status_values.php` | Data migration | ✅ Created & migrated |
+| `routes/appointments.php` | Appointment routes (21 routes) | ✅ Created |
+| `app/Models/SpecialistReferral.php` | Referral model with scopes, relationships, status lifecycle | ✅ Created |
+| `app/Http/Controllers/SpecialistReferralController.php` | Referral CRUD + status actions | ✅ Created |
+| `resources/views/admin/doctors/partials/referral_tab.blade.php` | Referral form + history in encounter view | ❌ Skipped — Referral UI embedded inline in `new_encounter.blade.php` |
+| `routes/referrals.php` | Referral routes (9 routes) | ✅ Created |
+| `app/Services/AppointmentMailService.php` | SMTP/PHP-mail email sender with hospital branding | ✅ Created (Phase 6) |
+| `app/Mail/AppointmentNotificationMail.php` | Laravel Mailable for pre-rendered HTML appointment emails | ✅ Created (Phase 6) |
+| `app/Observers/DoctorAppointmentObserver.php` | Observer for appointment lifecycle events — emails + auto no-show | ✅ Created (Phase 6) |
+| `resources/views/emails/appointment-notification.blade.php` | Hospital-branded email template for all appointment events | ✅ Created (Phase 6) |
+| `database/migrations/2026_03_05_100000_add_smtp_and_email_settings_to_application_status.php` | SMTP credentials + email toggle columns | ✅ Created & migrated (Phase 6) |
 
 ### Modified Files
 
-| File | Changes |
-|---|---|
-| `app/Models/DoctorQueue.php` | Add casts, scopes, `QueueStatus` imports, appointment relationship, timer accessors |
-| `app/Models/Encounter.php` | Add `queue_id` to fillable, add `queue()` relationship, `started_at`/`completed_at` casts |
-| `app/Models/Clinic.php` | Add `schedules()` relationship, `doctors_with_availability()` |
-| `app/Models/Staff.php` | Add `availabilities()` relationship, `available_on($date)` scope |
-| `app/Http/Controllers/ReceptionWorkbenchController.php` | Update `bookConsultation()` for scheduled booking, update `getQueueCounts()`/`getQueueList()` to use `QueueStatus`, add appointment endpoints |
-| `app/Http/Controllers/EncounterController.php` | Use `QueueStatus` in all methods, start timer on encounter create, finalize timer on complete |
-| `app/Http/Controllers/NursingWorkbenchController.php` | Use `QueueStatus` in vitals queue filter, transition through `QueueStatusService` |
-| `app/Http/Controllers/VitalSignController.php` | Transition status via `QueueStatusService` instead of raw `vitals_taken` flag |
-| `resources/views/admin/reception/workbench.blade.php` | Add "Appointments" tab, "Today's Appointments" sidebar, extend booking form, update queue counts |
-| `resources/views/admin/doctors/my_queues.blade.php` | Uncomment Scheduled tab, embed scheduler, add auto-refresh, add source badges, add tab counts |
-| `resources/views/admin/doctors/new_encounter.blade.php` | Include consultation timer partial, timer initialization, add "Refer to Specialist" tab, add "Schedule Follow-Up" in finalization |
-| `resources/views/admin/nursing/workbench.blade.php` | Update queue filter to use `QueueStatus`, add source badges |
-| `routes/web.php` | Include `appointments.php`, add timer routes |
-| `routes/reception_workbench.php` | Add appointment management routes |
-| `routes/nursing_workbench.php` | No route changes needed (status change is in controller) |
+| File | Changes | Status |
+|---|---|---|
+| `app/Models/DoctorQueue.php` | Add casts, scopes, `QueueStatus` imports, appointment relationship, timer accessors | ✅ Updated |
+| `app/Models/Encounter.php` | Add `queue_id` to fillable, add `queue()` relationship, `started_at`/`completed_at` casts | ✅ Updated |
+| `app/Models/Clinic.php` | Add `schedules()` relationship, `getTodayScheduleAttribute()` | ✅ Updated |
+| `app/Models/Staff.php` | Add `availabilities()`, `availabilityOverrides()` relationships | ✅ Updated |
+| `app/Http/Controllers/ReceptionWorkbenchController.php` | QueueStatus in queue counts, booking with schedule option | ✅ Updated |
+| `app/Http/Controllers/EncounterController.php` | QueueStatus + QueueStatusService in create()/finalize(), timer fields, status_badge column | ✅ Updated |
+| `app/Http/Controllers/NursingWorkbenchController.php` | QueueStatusService DI, status-based filtering, nurse pickup transition | ✅ Updated |
+| `app/Http/Controllers/VitalSignController.php` | QueueStatusService DI, per-queue transition chain | ✅ Updated |
+| `resources/views/admin/reception/workbench.blade.php` | Appointments tab, Today's Appointments sidebar, Pending Referrals sidebar, booking form schedule toggle, FullCalendar, context menu | ✅ Updated |
+| `resources/views/admin/doctors/my_queues.blade.php` | Scheduled tab active, auto-refresh, tab counts, source badges, mini-timers, queue-status.css | ✅ Updated |
+| `resources/views/admin/doctors/new_encounter.blade.php` | Timer include, referral tab (inline), follow-up in conclude modal, finalizeEncounterFromModal chains | ✅ Updated |
+| `resources/views/admin/nursing/workbench.blade.php` | QueueStatus filtering, source badges, queue-status.css | ✅ Updated |
+| `routes/web.php` | Include `appointments.php` + `referrals.php` | ✅ Updated |
+| `app/Models/ApplicationStatu.php` | Added SMTP + email notification fields to fillable | ✅ Updated (Phase 6) |
+| `app/Http/Controllers/HospitalConfigController.php` | Added SMTP validation, email toggle checkboxes, fixed cache key bug | ✅ Updated (Phase 6) |
+| `app/Services/AppointmentSlotService.php` | Added `detectDoubleBooking()` method for patient + doctor conflict detection | ✅ Updated (Phase 6) |
+| `app/Http/Controllers/DoctorAppointmentController.php` | Integrated double-booking checks in create + reschedule | ✅ Updated (Phase 6) |
+| `app/Http/Controllers/API/MobileEncounterController.php` | Replaced hardcoded status integers with QueueStatus enum (GAP-10) | ✅ Updated (Phase 6) |
+| `app/Providers/AppServiceProvider.php` | Registered DoctorAppointmentObserver | ✅ Updated (Phase 6) |
+| `resources/views/admin/hospital-config/index.blade.php` | Added SMTP config card + appointment email notification toggles | ✅ Updated (Phase 6) |
 
 ---
 
@@ -1909,3 +1945,253 @@ Timeline for patient John Doe:
 ---
 
 *End of plan.*
+
+---
+
+## 14. Gap Analysis (Updated Audit — 2026-03-05)
+
+> **Full top-to-bottom re-audit** after all gap closures and Phase 6 implementation.
+> **GAP-1 through GAP-10:** All resolved (GAP-5 acknowledged as by-design deviation).
+> **Phase 6 progress:** 11/23 items complete — observer-based emails, double-booking detection, auto no-show, SMTP config, MobileEncounterController fix, cache key bug fix.
+> **Remaining Phase 6:** 12 items (availability UI, broadcasting, analytics, recurring, PDF generation, etc.)
+
+### 14.1 Overall Score
+
+| Layer | Planned Items | Complete | Partial | Missing | Score |
+|---|---|---|---|---|---|
+| **Phase 1: Foundation** | 17 | 17 | 0 | 0 | **100%** |
+| **Phase 2: Backend APIs** | 16 | 16 | 0 | 0 | **100%** |
+| **Phase 3: Reception UI** | 15 | 15 | 0 | 0 | **100%** |
+| **Phase 4: Doctor UI** | 14 | 14 | 0 | 0 | **100%** |
+| **Phase 5: Nurse Sync** | 6 | 6 | 0 | 0 | **100%** |
+| **Phase 6: Advanced** | 23 | 11 | 0 | 12 | **48%** |
+| **Total (Ph 1–5)** | **68** | **68** | **0** | **0** | **100%** |
+| **Total (All)** | **91** | **79** | **0** | **12** | **87%** |
+
+#### 14.1.1 Phase 1 Verification Detail (22 files, all PASS)
+
+- **Enum:** `QueueStatus.php` — 135 lines, 8 constants (CANCELLED=0 through NO_SHOW=7), LABELS/BADGE_CLASSES/COLORS arrays, ACTIVE/TERMINAL arrays, 6 static methods
+- **Models (6):** DoctorAppointment (235L), ClinicSchedule (78L), DoctorAvailability (69L), DoctorAvailabilityOverride (72L), SpecialistReferral (148L), DoctorQueue (168L updated), Encounter (83L updated)
+- **Services (2):** QueueStatusService (151L) with ALLOWED_TRANSITIONS + transition()/pause()/resume(), AppointmentSlotService (157L) with getAvailableSlots()/isSlotAvailable()/getNextAvailableSlot()
+- **Exception:** InvalidStatusTransitionException (25L)
+- **CSS:** queue-status.css (53L) — linked in 3 workbenches
+- **Migrations (8):** All created & migrated (batch 155). doctor_appointments, clinic_schedules, doctor_availabilities, doctor_availability_overrides, specialist_referrals, doctor_queues alter, encounters alter, status value migration
+- **Seeders (2):** ClinicScheduleSeeder (186 rows), DoctorAvailabilitySeeder (234 rows)
+
+#### 14.1.2 Phase 2 Verification Detail (API endpoints)
+
+- **DoctorAppointmentController:** 22 public methods (CRUD, check-in, cancel, no-show, reschedule, reassign, follow-up, timer, calendar, unified views, queue counts) + 3 private helpers
+- **SpecialistReferralController:** 9 public methods (create, list, pending, count, book, refer-out, cancel, decline, history)
+- **Routes:** 21 in appointments.php + 9 in referrals.php = 30 total, all unique, no conflicts
+- **Cross-controller integration:** QueueStatus imported in all 5 modified controllers. QueueStatusService DI in NursingWorkbench, VitalSign, EncounterController (via app()). Encounter::create() correctly uses QueueStatusService + sets queue_id/started_at. finalizeEncounter() correctly uses QueueStatusService + fallback with Log::warning().
+
+#### 14.1.3 Phase 3 Verification Detail (Reception UI — 16 checks, all PASS)
+
+All items verified in `reception/workbench.blade.php` (~12K lines):
+queue-status.css link, Appointments tab, Today's Appointments sidebar, booking form schedule toggle, FullCalendar integration, table DataTable, context menu, booking form, reschedule modal, unified queue counts, Pending Referrals sidebar, referral action buttons, doctor reassignment modal, pre-paid follow-up detection, custom slot enhancement, available slots loading.
+
+#### 14.1.4 Phase 4 Verification Detail (Doctor UI — 15 checks, all PASS)
+
+`my_queues.blade.php`: Scheduled tab active (data-status="6"), 30s auto-refresh, dynamic tab counts via queue-counts route, source badges, mini-timers with drawCallback, reassign button + SweetAlert2 modal, calendar toggle in scheduled tab, queue-status.css linked.
+`new_encounter.blade.php`: Timer include (@include consultation_timer), referral tab with create/list, follow-up scheduling with prepaid checkbox, finalizeEncounterFromModal chains follow-up creation.
+`consultation_timer.blade.php`: Full UI + IIFE JS with init/start/togglePause/getElapsed, 60s server sync.
+**Follow-up chain visibility:** Rendered server-side in `getUnifiedQueueList()` — `source_badge` column shows chain icons (mdi-link-variant) for follow-ups and prepaid badges (mdi-cash-check) for pre-paid entries.
+
+#### 14.1.5 Phase 5 Verification Detail (Nurse Sync — 13 checks, all PASS)
+
+`nursing/workbench.blade.php`: queue-status.css linked, source badges (appointment/walkin/emergency), consulting queue cards via loadConsultingQueue(), mini-timers via initNurseMiniTimers().
+`NursingWorkbenchController`: QueueStatusService DI, getConsultingQueue() endpoint (IN_CONSULTATION filter), getVitalsQueue() uses QueueStatus::WAITING/VITALS_PENDING, getPatientDetails() triggers WAITING→VITALS_PENDING transition.
+`VitalSignController`: QueueStatusService DI, VITALS_PENDING→READY transition chain on vitals save.
+`routes/nursing_workbench.php`: consulting-queue route registered.
+
+### 14.2 Architecture Deviations from Plan (Unchanged — Intentional)
+
+| # | Plan Said | Implementation Did | Impact |
+|---|---|---|---|
+| **D1** | Timer endpoints in `EncounterController` | Timer endpoints in `DoctorAppointmentController` | None — co-located with appointment/queue logic |
+| **D2** | Separate `appointment-scheduler.blade.php` | Embedded in `reception/workbench.blade.php` | Doctor Scheduled tab uses DataTable + mini-calendar instead of shared component |
+| **D3** | Separate `referral_tab.blade.php` partial | Inline in `new_encounter.blade.php` | Works but less reusable |
+| **D4** | Separate `.js` files for calendar/timer | Inline JS in Blade templates | No extra HTTP requests; less cacheable separately |
+| **D5** | Timer routes keyed by encounter ID | Timer routes keyed by queue ID (`/queue/{queue}/timer/...`) | Correct — timer data lives on DoctorQueue, not Encounter |
+| **D6** | `resumeTimer()` separate endpoint | `startTimer()` doubles as resume | Simpler API |
+| **D7** | `DoctorAppointment::queue()` relationship | Named `doctorQueue()` instead | Functionally identical, just naming |
+
+### 14.3 Functional Gaps (Things That Need Work)
+
+#### GAP-1: Pre-Paid Follow-Up Check-In UX (P1)
+**Plan Section:** 6.5, Appendix A.1
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** `DoctorAppointmentController::checkIn()` handles the pre-paid follow-up path, but the reception workbench didn't have an explicit visual indicator.
+**Fix applied:** Added `upcoming_appointments` (with `is_follow_up`, `is_prepaid_followup`, `is_today` flags) to `ReceptionWorkbenchController::getPatient()` response. Added `displayUpcomingAppointments()` JS in reception workbench that shows a green alert for pre-paid follow-ups with a "Check-In (No Billing)" button, info alerts for other today appointments, and a compact section for future appointments. Also added `quickCheckInFollowUp()` with SweetAlert2 confirmation. Fixed hardcoded status integers to use `QueueStatus` constants.
+
+#### GAP-2: Follow-Up Chain Visibility in Doctor Queue (P2)
+**Plan Section:** 4.13, 5A.4
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** The `getAppointmentChain()` method existed but the DataTable didn't render chain/parent linkage for follow-up appointments.
+**Fix applied:** Added `is_follow_up` and `is_prepaid` fields to both appointment and queue rows in `getUnifiedQueueList()`. Enhanced `source_badge` column to show a chain icon (`mdi-link-variant`) for follow-up entries and a "Prepaid" badge (`mdi-cash-check`) for pre-paid follow-ups.
+
+#### GAP-3: Doctor Reassignment in Doctor's Scheduled Tab (P2)
+**Plan Section:** 4.14
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** Backend route existed but doctor's view didn't expose the reassignment action.
+**Fix applied:** Added `btn-reassign-queue` button (purple, `mdi-account-switch` icon) to the action column in `getUnifiedQueueList()` for scheduled appointments. Added `openReassignModal()` JS function in `my_queues.blade.php` using SweetAlert2 with doctor dropdown (fetched from `clinic.doctors` API), reason input, and POST to `appointments.reassign`. Also updated the calendar context menu 'reassign' action to use the same modal instead of just showing a toastr message.
+
+#### GAP-4: Nurse Mini-Timer for In-Consultation Patients (P2)
+**Plan Section:** 5.5
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** Plan specified showing a mini consultation timer on nurse queue cards for patients currently in consultation.
+**Fix applied:** Added `getConsultingQueue()` endpoint to `NursingWorkbenchController` returning IN_CONSULTATION patients with `consultation_started_at`, `is_paused`, `consultation_paused_seconds`, `last_paused_at` fields. Added route `nursing-workbench.consulting-queue`. Added `loadConsultingQueue()`, `renderConsultingCards()`, and `initNurseMiniTimers()` JS functions in nursing workbench view. The consulting section renders below the vitals cards with a "Currently In Consultation" header and ticking mini-timers on each card.
+
+#### GAP-5: `appointment-scheduler` Not Reusable Across Views (P2)
+**Plan Section:** 5.1, 7.1.2
+**Status:** ⚠️ By design deviation.
+**Description:** The plan specified a reusable Blade component (`appointment-scheduler.blade.php`) that could be embedded in both reception and doctor views. Instead, the calendar/table UI was built directly in the reception workbench. The doctor's Scheduled tab uses a DataTable filter, not a calendar.
+**Fix needed:** Consider extracting the reception calendar JS into a reusable partial or separate JS file if the doctor Scheduled tab needs a calendar view in the future.
+
+#### GAP-6: Clinic Schedule & Doctor Availability Seeding (P1)
+**Plan Section:** 4.2, 4.3, Appendix C
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** The schedule tables existed but were empty.
+**Fix applied:** Created `ClinicScheduleSeeder` (Mon–Fri 08:00–17:00, Sat 08:00–13:00, 15-min slots for 31 clinics) and `DoctorAvailabilitySeeder` (same hours for 39 doctors at their assigned clinics). Both seeders ran successfully.
+
+#### GAP-7: `consultation_ended_at` Set Inconsistently in Finalize (P1)
+**Plan Section:** 9.2, 10.3
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** The finalize fallback redundantly set `consultation_ended_at` alongside the status update.
+**Fix applied:** Removed redundant `consultation_ended_at = now()` from the catch block in `EncounterController::finalizeEncounter()`. The fallback now only sets `status` and logs a warning via `Log::warning()` with queue_id, target_status, and error message for debugging. The `QueueStatusService::transition()` method handles `consultation_ended_at` when transitioning to COMPLETED.
+
+#### GAP-8: Hardcoded Status Integers in `ReceptionWorkbenchController` (P1)
+**Plan Section:** Cross-cutting (Phase 1 enum adoption)
+**Status:** ✅ RESOLVED (2026-03-06)
+**Description:** Three locations in `ReceptionWorkbenchController` still used raw integers instead of `QueueStatus` constants:
+1. `getPatientQueueEntries()` — `whereIn('status', [1, 2, 3])` instead of enum constants
+2. Dashboard stats `consultations_done` — `where('status', 4)` which mapped to **IN_CONSULTATION** (wrong!) instead of **COMPLETED** (5). This was an actual **bug**: after the status migration remapped old 4→5, this line counted in-progress patients as "done".
+3. Dead `getQueueStatusText()` method (L245-253) — no longer called after GAP-1 fix switched to `QueueStatus::label()`.
+**Fix applied:**
+- Changed `whereIn('status', [1, 2, 3])` → `whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY])`
+- Changed `where('status', 4)` → `where('status', QueueStatus::COMPLETED)` — **bug fix**
+- Removed dead `getQueueStatusText()` method entirely
+
+#### GAP-9: Hardcoded Status Integer in `EmergencyIntakeController` (P1)
+**Plan Section:** Cross-cutting (Phase 1 enum adoption)
+**Status:** ✅ RESOLVED (2026-03-06)
+**Description:** `EmergencyIntakeController` used a hardcoded status integer when creating emergency queue entries instead of the `QueueStatus::WAITING` constant.
+**Fix applied:** Replaced hardcoded integer with `QueueStatus::WAITING` and added `use App\Enums\QueueStatus` import.
+
+#### GAP-10: `MobileEncounterController` Uses Old Status System (P2)
+**Plan Section:** N/A (not part of web enhancement plan)
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** `MobileEncounterController` used the entire pre-migration status integer system (hardcoded 1, 2, 3) for mobile API endpoints.
+**Fix applied:** Imported `QueueStatus` enum. Replaced hardcoded status queries with enum-based `$statusMap` (1→[WAITING, VITALS_PENDING, READY], 2→[IN_CONSULTATION], 3→[COMPLETED, CANCELLED, NO_SHOW]). Replaced `$statusLabels` array with enum-backed mapping. Fixed `endOldContinuingEncounters()` to use `QueueStatus::IN_CONSULTATION` → `QueueStatus::COMPLETED` instead of `2 → 3`. Maintains backward compatibility with mobile app's legacy 1/2/3 status parameter.
+
+#### GAP-11: Double-Booking Detection Not Implemented (P1)
+**Plan Section:** 6.10
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** No conflict detection existed — a patient or doctor could be double-booked at overlapping times.
+**Fix applied:** Added `detectDoubleBooking()` method to `AppointmentSlotService` — checks both patient conflicts (same patient, overlapping time across any clinic) and doctor conflicts (same doctor, overlapping time). Returns structured conflict array with type, message, and appointment_id. Integrated into `DoctorAppointmentController::createAppointment()` and `reschedule()` — returns 422 with conflict details.
+
+#### GAP-12: Hospital Config Cache Key Bug (P1)
+**Plan Section:** Cross-cutting
+**Status:** ✅ RESOLVED (2026-03-05)
+**Description:** `HospitalConfigController::update()` cleared cache key `'application_settings'` but `appsettings()` uses `'app_settings'`. Settings wouldn't refresh after save.
+**Fix applied:** Replaced `\Cache::forget('application_settings')` with `clearAppSettingsCache()` which correctly forgets the `'app_settings'` key.
+
+### 14.4 Data Integrity Gaps
+
+| # | Issue | Risk | Status |
+|---|---|---|---|
+| **DI-1** | `clinic_schedules` table empty — no operating hours configured | `getAvailableSlots()` returns nothing | ✅ RESOLVED — Seeded 31 clinics (ClinicScheduleSeeder) |
+| **DI-2** | `doctor_availabilities` table empty — no doctor schedules | Same as above | ✅ RESOLVED — Seeded 39 doctors (DoctorAvailabilitySeeder) |
+| **DI-3** | Old encounter records have `queue_id = NULL`, `started_at = NULL` | Historical data lacks queue linkage | ⚠️ Acceptable — only affects analytics on old records |
+| **DI-4** | Status migration remapped 3→4, 4→5 but any queues with status=0 (old cancelled) now conflict with WAITING=0 | ✅ VERIFIED CLEAN — 0 rows with status=0 in doctor_queues. Only statuses 1, 3, 4 exist. | No fix needed |
+| **DI-5** | `consultations_done` dashboard stat was counting IN_CONSULTATION (4) instead of COMPLETED (5) | Inflated "done" count, missed actually completed patients | ✅ RESOLVED — GAP-8 fix (2026-03-06) |
+
+### 14.5 Route Completeness Audit
+
+| Plan Route | Actual Route | Match |
+|---|---|---|
+| `POST /encounters/{encounter}/timer/start` | `POST /queue/{queue}/timer/start` | ⚠️ Different URI pattern — plan used encounter ID, implementation uses queue ID. Works correctly (timer is on queue, not encounter). |
+| `POST /encounters/{encounter}/timer/pause` | `POST /queue/{queue}/timer/pause` | ⚠️ Same deviation as above |
+| `POST /encounters/{encounter}/timer/resume` | N/A — `startTimer()` handles resume | ✅ Simplified |
+| `GET /encounters/{encounter}/timer/status` | `GET /queue/{queue}/timer/status` | ⚠️ Same deviation |
+| `POST /encounters/{encounter}/schedule-followup` | `POST /encounters/{encounter}/schedule-followup` | ✅ Exact match |
+| `POST /encounters/{encounter}/referrals` | `POST /encounters/{encounter}/referrals` | ✅ Exact match |
+| `GET /encounters/{encounter}/referrals` | `GET /encounters/{encounter}/referrals` | ✅ Exact match |
+| `GET /referrals/pending` | `GET /referrals/pending` | ✅ Exact match |
+| `POST /referrals/{id}/book` | `POST /referrals/{referral}/book` | ✅ Match |
+| `POST /referrals/{id}/refer-out` | `POST /referrals/{referral}/refer-out` | ✅ Match |
+| `POST /referrals/{id}/cancel` | `POST /referrals/{referral}/cancel` | ✅ Match |
+| `POST /referrals/{id}/decline` | `POST /referrals/{referral}/decline` | ✅ Match |
+| `GET /patients/{id}/referral-history` | `GET /patients/{patient}/referral-history` | ✅ Match |
+| `GET /reception/appointments` | `GET /appointments/list` | ⚠️ Different prefix — plan used `/reception/`, implementation uses `/appointments/` |
+| `POST /reception/appointments` | `POST /appointments/create` | ⚠️ Same prefix difference |
+| `POST /reception/appointments/{id}/check-in` | `POST /appointments/{appointment}/check-in` | ⚠️ Same prefix difference |
+| All other appointment CRUD | Under `/appointments/...` prefix | ✅ Functionally complete |
+
+### 14.6 Frontend JS Route Alignment
+
+| View | JS AJAX URL | Matching Route | Status |
+|---|---|---|---|
+| `consultation_timer.blade.php` | `/queue/{queueId}/timer/status` | `queue.timer.status` | ✅ Aligned |
+| `consultation_timer.blade.php` | `/queue/{queueId}/timer/start` | `queue.timer.start` | ✅ Aligned |
+| `consultation_timer.blade.php` | `/queue/{queueId}/timer/pause` | `queue.timer.pause` | ✅ Aligned |
+| `new_encounter.blade.php` | `/encounters/{id}/referrals` GET | `encounters.referrals.list` | ✅ Aligned |
+| `new_encounter.blade.php` | `/encounters/{id}/referrals` POST | `encounters.referrals.create` | ✅ Aligned |
+| `new_encounter.blade.php` | `/encounters/{id}/schedule-followup` POST | `encounters.schedule-followup` | ✅ Aligned |
+| `new_encounter.blade.php` | follow-up time slots via `appointments.available-slots` | `appointments.available-slots` | ✅ Aligned (uses named route) |
+| `reception/workbench.blade.php` | Calendar events via `appointments.calendar-events` | `appointments.calendar-events` | ✅ Aligned (uses named route) |
+| `reception/workbench.blade.php` | Check-in via `/appointments/{id}/check-in` | `appointments.check-in` | ✅ Aligned |
+| `reception/workbench.blade.php` | Referrals via `referrals.pending` | `referrals.pending` | ✅ Aligned |
+| `my_queues.blade.php` | Queue counts via `appointments.doctor.queue-counts` | `appointments.doctor.queue-counts` | ✅ Aligned |
+
+### 14.7 Cross-View CSS Consistency
+
+| View | `queue-status.css` Linked | Badge Classes Used |
+|---|---|---|
+| `reception/workbench.blade.php` | ✅ L8 | `.queue-status-badge`, `.queue-source-badge` |
+| `nursing/workbench.blade.php` | ✅ L8 | `.queue-source-badge`, `.source-appointment`, `.source-walkin`, `.source-emergency` |
+| `doctors/my_queues.blade.php` | ✅ L7 | Badge classes + `.mini-timer`, `.timer-paused` |
+| `doctors/new_encounter.blade.php` | ❌ Not linked (timer has its own inline CSS) | Timer uses `.consultation-timer-widget` (inline) — no conflict |
+
+### 14.8 Priority Remediation Roadmap
+
+| Priority | Gap | Effort | Description |
+|---|---|---|---|
+| **P0** | — | — | *No P0 gaps — all critical paths are functional* |
+| ~~**P1**~~ | ~~GAP-6~~ | ~~1–2 hrs~~ | ✅ Seeded `clinic_schedules` (31 clinics) + `doctor_availabilities` (39 doctors) |
+| ~~**P1**~~ | ~~GAP-1~~ | ~~2 hrs~~ | ✅ Pre-paid follow-up indicator + upcoming appointments in reception patient load |
+| ~~**P1**~~ | ~~GAP-7~~ | ~~15 min~~ | ✅ Cleaned finalize fallback — removed redundant `consultation_ended_at`, added `Log::warning()` |
+| ~~**P1**~~ | ~~DI-4~~ | ~~30 min~~ | ✅ Verified clean — 0 rows with status=0 |
+| ~~**P2**~~ | ~~GAP-2~~ | ~~1 hr~~ | ✅ Follow-up chain + prepaid badges in doctor queue DataTable |
+| ~~**P2**~~ | ~~GAP-3~~ | ~~1 hr~~ | ✅ Reassign button + SweetAlert2 modal in doctor's scheduled view |
+| ~~**P2**~~ | ~~GAP-4~~ | ~~2 hrs~~ | ✅ Nurse consulting queue with mini-timers (new endpoint + UI) |
+| ~~**P1**~~ | ~~GAP-8~~ | ~~30 min~~ | ✅ Fixed hardcoded status integers + bug (`consultations_done` counted IN_CONSULTATION instead of COMPLETED) + removed dead `getQueueStatusText()` in ReceptionWorkbenchController |
+| ~~**P1**~~ | ~~GAP-9~~ | ~~10 min~~ | ✅ Fixed hardcoded status integer in EmergencyIntakeController |
+| ~~**P2**~~ | ~~GAP-5~~ | ~~—~~ | ✅ BY DESIGN — calendar is inline in workbench for context; no reusable extraction needed |
+| ~~**P1**~~ | ~~GAP-11 (6.10)~~ | ~~3 hrs~~ | ✅ Double-booking detection in `AppointmentSlotService` + integrated in create/reschedule |
+| ~~**P2**~~ | ~~GAP-10~~ | ~~2 hrs~~ | ✅ Migrated `MobileEncounterController` to `QueueStatus` enum with legacy status mapping |
+| ~~**P1**~~ | ~~GAP-12~~ | ~~10 min~~ | ✅ Fixed hospital config cache key bug (`application_settings` → `clearAppSettingsCache()`) |
+| **P2** | 6.1 | 4 hrs | Doctor availability management UI (CRUD for weekly schedule) |
+| **P2** | 6.2 | 4 hrs | Clinic schedule management UI (admin) |
+| **P2** | 6.14 | 4 hrs | Enable Laravel Broadcasting for real-time status sync |
+| **P2** | 6.18 | 6 hrs | Drag-and-drop rescheduling on calendar view |
+| **P2** | 6.19 | 3 hrs | Referral letter PDF generation |
+| **P3** | 6.15 | 8 hrs | Patient self-service booking portal |
+| **P3** | 6.16 | 4 hrs | Recurring appointments |
+| **P3** | 6.17 | 6 hrs | Appointment analytics dashboard |
+| **P3** | 6.20 | 3 hrs | Referral analytics |
+| **P3** | 6.21 | 4 hrs | Follow-up reminder notifications (SMS/push) |
+| **P3** | 6.22 | 4 hrs | Auto-suggest follow-up date based on diagnosis |
+| **P3** | 6.23 | 3 hrs | Reassignment analytics |
+
+### 14.9 Custom Slot Enhancement (2026-03-05)
+
+**Status:** ✅ IMPLEMENTED
+**Description:** Enhanced the reception workbench's appointment booking time slot selection to auto-suggest custom time entry when no preset slots are available.
+
+**Changes applied to `reception/workbench.blade.php`:**
+1. **Auto-enable custom time:** When `loadAvailableSlots()` returns zero available slots, the custom time toggle is automatically checked and the manual time input is shown.
+2. **Visual hint:** An info alert ("No preset slots available for this date. Enter a custom time below.") appears below the manual input field.
+3. **Booked slot visibility:** When slots are returned, booked (unavailable) slots are now shown as disabled `<option>` elements with "(booked)" suffix, giving the receptionist visibility into the full schedule.
+4. **Smart reset:** If slots become available again (e.g., date change), the auto-enabled custom toggle is reset back to the dropdown view.
+5. **Hint cleanup:** The custom time hint is removed when toggling or when new slots are loaded.
