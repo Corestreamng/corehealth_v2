@@ -757,8 +757,8 @@ class ReceptionWorkbenchController extends Controller
                 $queue->staff_id = $request->doctor_id;
             }
 
-            // If scheduling for a future date, create an appointment instead
             if ($request->has('appointment_date') && $request->appointment_date) {
+                // ── Scheduled appointment ────────────────────────────────
                 $appointment = DoctorAppointment::create([
                     'patient_id'       => $patient->id,
                     'clinic_id'        => $request->clinic_id,
@@ -776,9 +776,37 @@ class ReceptionWorkbenchController extends Controller
                 ]);
                 $queue->appointment_id = $appointment->id;
                 $queue->status = QueueStatus::SCHEDULED;
-            }
+                $queue->save();
+            } else {
+                // ── Walk-in: save queue first, then create its appointment
+                $queue->save();
 
-            $queue->save();
+                $slotDuration = (int) (appsettings('default_slot_duration') ?? 15);
+                $now = Carbon::now();
+                $startMinute = (int) floor($now->minute / $slotDuration) * $slotDuration;
+                $start = $now->copy()->setTime($now->hour, $startMinute, 0);
+                $end   = $start->copy()->addMinutes($slotDuration);
+
+                $appointment = DoctorAppointment::create([
+                    'patient_id'         => $patient->id,
+                    'clinic_id'          => $request->clinic_id,
+                    'staff_id'           => $request->doctor_id,
+                    'appointment_date'   => Carbon::today(),
+                    'start_time'         => $start->format('H:i'),
+                    'end_time'           => $end->format('H:i'),
+                    'duration_minutes'   => $slotDuration,
+                    'appointment_type'   => 'walk_in',
+                    'status'             => QueueStatus::WAITING,
+                    'booked_by'          => $receptionistStaff->id,
+                    'source'             => 'reception',
+                    'service_request_id' => $serviceRequest->id,
+                    'doctor_queue_id'    => $queue->id,
+                    'checked_in_at'      => $now,
+                ]);
+
+                $queue->appointment_id = $appointment->id;
+                $queue->save();
+            }
 
             DB::commit();
 

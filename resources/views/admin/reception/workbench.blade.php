@@ -11093,10 +11093,12 @@ $('#appt-view-toggle .btn').on('click', function() {
     }
 });
 
-// Calendar filter changes → refetch
+// Calendar filter changes → when filters change we need a full refetch (data set changes completely)
 $('#appt-cal-clinic-filter, #appt-cal-doctor-filter, #appt-cal-status-filter').on('change', function() {
     if (appointmentsCalendar) {
+        // Filter change = entirely new data set, must use refetch
         $('#appointments-fullcalendar').fullCalendar('refetchEvents');
+        window._apptCalLastEvents = {}; // reset fingerprints
     }
     if (appointmentsGlobalDataTable) {
         appointmentsGlobalDataTable.ajax.reload(null, false);
@@ -11135,12 +11137,66 @@ function showAppointmentsCalendarView() {
     if (!appointmentsCalendar) {
         initAppointmentsCalendar();
     } else {
-        $('#appointments-fullcalendar').fullCalendar('refetchEvents');
+        smoothRefreshApptCal();
     }
 }
 
 function initAppointmentsCalendar() {
     appointmentsCalendar = true;
+
+    // ── Smooth refresh: diff-based update to avoid blink ────────────
+    window._apptCalLastEvents = {};  // id → JSON fingerprint
+
+    function apptCalFetchParams() {
+        return {
+            start: $('#appointments-fullcalendar').fullCalendar('getView').start.format('YYYY-MM-DD'),
+            end: $('#appointments-fullcalendar').fullCalendar('getView').end.format('YYYY-MM-DD'),
+            clinic_id: $('#appt-cal-clinic-filter').val(),
+            doctor_id: $('#appt-cal-doctor-filter').val(),
+            status: $('#appt-cal-status-filter').val(),
+            include_queue: 1
+        };
+    }
+
+    window.smoothRefreshApptCal = function() {
+        if (!appointmentsCalendar) return;
+        $.get('{{ route("appointments.calendar-events") }}', apptCalFetchParams(), function(newEvents) {
+            var cal = $('#appointments-fullcalendar');
+            var newMap = {};
+            (newEvents || []).forEach(function(e) {
+                var fp = JSON.stringify([e.id, e.start, e.end, e.color, e.status, e.title, e.can_deliver, e.doctor_id, e.clinic_id]);
+                newMap[e.id] = { data: e, fingerprint: fp };
+            });
+
+            // Remove events that are gone or changed
+            var existingEvents = cal.fullCalendar('clientEvents');
+            existingEvents.forEach(function(existing) {
+                var newEntry = newMap[existing.id];
+                if (!newEntry) {
+                    // Event no longer exists — remove it
+                    cal.fullCalendar('removeEvents', existing.id);
+                } else if (newEntry.fingerprint !== window._apptCalLastEvents[existing.id]) {
+                    // Event changed — remove so we can re-add with new data
+                    cal.fullCalendar('removeEvents', existing.id);
+                } else {
+                    // Unchanged — keep it, mark as seen
+                    delete newMap[existing.id];
+                }
+            });
+
+            // Add new or changed events
+            Object.keys(newMap).forEach(function(id) {
+                cal.fullCalendar('renderEvent', newMap[id].data, true);
+            });
+
+            // Store fingerprints for next diff
+            window._apptCalLastEvents = {};
+            (newEvents || []).forEach(function(e) {
+                window._apptCalLastEvents[e.id] = JSON.stringify([e.id, e.start, e.end, e.color, e.status, e.title, e.can_deliver, e.doctor_id, e.clinic_id]);
+            });
+        });
+    };
+
     $('#appointments-fullcalendar').fullCalendar({
         header: {
             left: 'prev,today,next',
@@ -11165,6 +11221,11 @@ function initAppointmentsCalendar() {
                 status: $('#appt-cal-status-filter').val(),
                 include_queue: 1
             }, function(events) {
+                // Store fingerprints so first smooth refresh can diff
+                window._apptCalLastEvents = {};
+                (events || []).forEach(function(e) {
+                    window._apptCalLastEvents[e.id] = JSON.stringify([e.id, e.start, e.end, e.color, e.status, e.title, e.can_deliver, e.doctor_id, e.clinic_id]);
+                });
                 callback(events);
             }).fail(function() {
                 callback([]);
@@ -11423,7 +11484,7 @@ $(document).on('click', '.appt-context-menu .context-item', function(e) {
 function refreshAppointmentViews() {
     loadQueueCounts();
     if (appointmentsCalendar) {
-        $('#appointments-fullcalendar').fullCalendar('refetchEvents');
+        smoothRefreshApptCal();
     }
     if (appointmentsDataTable) {
         appointmentsDataTable.ajax.reload(null, false);

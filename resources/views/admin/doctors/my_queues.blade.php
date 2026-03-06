@@ -688,7 +688,7 @@
                 initUnifiedCalendar();
                 calendarInitialized = true;
             } else {
-                $('#unified-calendar').fullCalendar('refetchEvents');
+                smoothRefreshDocCal();
             }
         });
 
@@ -703,7 +703,7 @@
 
         function refreshCurrentView() {
             if (currentView === 'calendar' && calendarInitialized) {
-                $('#unified-calendar').fullCalendar('refetchEvents');
+                smoothRefreshDocCal();
             } else {
                 reloadUnifiedTable();
             }
@@ -756,6 +756,56 @@
         // ═══════════════════════════════════════════════════════════════
         //  Unified Calendar (FullCalendar v2)
         // ═══════════════════════════════════════════════════════════════
+
+        // ── Smooth refresh: diff-based update to avoid blink ────────
+        var _docCalLastEvents = {};  // id → JSON fingerprint
+
+        function smoothRefreshDocCal() {
+            if (!calendarInitialized) return;
+            var view = $('#unified-calendar').fullCalendar('getView');
+            $.ajax({
+                url: "{{ route('appointments.doctor.unified-events') }}",
+                type: 'GET',
+                data: {
+                    start: view.start.format('YYYY-MM-DD'),
+                    end: view.end.format('YYYY-MM-DD'),
+                    status: currentStatusFilter === 'all' ? '' : currentStatusFilter
+                },
+                success: function(newEvents) {
+                    var cal = $('#unified-calendar');
+                    var newMap = {};
+                    (newEvents || []).forEach(function(e) {
+                        var fp = JSON.stringify([e.id, e.start, e.end, e.color, e.status, e.title, e.can_deliver, e.doctor_id, e.clinic_id]);
+                        newMap[e.id] = { data: e, fingerprint: fp };
+                    });
+
+                    // Remove events that are gone or changed
+                    var existing = cal.fullCalendar('clientEvents');
+                    existing.forEach(function(ev) {
+                        var n = newMap[ev.id];
+                        if (!n) {
+                            cal.fullCalendar('removeEvents', ev.id);
+                        } else if (n.fingerprint !== _docCalLastEvents[ev.id]) {
+                            cal.fullCalendar('removeEvents', ev.id);
+                        } else {
+                            delete newMap[ev.id];
+                        }
+                    });
+
+                    // Add new or changed events
+                    Object.keys(newMap).forEach(function(id) {
+                        cal.fullCalendar('renderEvent', newMap[id].data, true);
+                    });
+
+                    // Store fingerprints for next diff
+                    _docCalLastEvents = {};
+                    (newEvents || []).forEach(function(e) {
+                        _docCalLastEvents[e.id] = JSON.stringify([e.id, e.start, e.end, e.color, e.status, e.title, e.can_deliver, e.doctor_id, e.clinic_id]);
+                    });
+                }
+            });
+        }
+
         function initUnifiedCalendar() {
             $('#unified-calendar').fullCalendar({
                 header: {
@@ -784,7 +834,14 @@
                             end: end.format('YYYY-MM-DD'),
                             status: currentStatusFilter === 'all' ? '' : currentStatusFilter
                         },
-                        success: function(events) { callback(events); },
+                        success: function(events) {
+                            // Store fingerprints so first smooth refresh can diff
+                            _docCalLastEvents = {};
+                            (events || []).forEach(function(e) {
+                                _docCalLastEvents[e.id] = JSON.stringify([e.id, e.start, e.end, e.color, e.status, e.title, e.can_deliver, e.doctor_id, e.clinic_id]);
+                            });
+                            callback(events);
+                        },
                         error: function() { callback([]); }
                     });
                 },
@@ -1079,7 +1136,7 @@
         function refreshAll() {
             loadQueueCounts();
             if (currentView === 'calendar' && calendarInitialized) {
-                $('#unified-calendar').fullCalendar('refetchEvents');
+                smoothRefreshDocCal();
             }
             if (currentView === 'table') {
                 reloadUnifiedTable();

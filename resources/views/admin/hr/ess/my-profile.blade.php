@@ -4,7 +4,7 @@
 
 @section('style')
 <link href="{{ asset('plugins/select2/select2.min.css') }}" rel="stylesheet">
-<link href="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}" rel="stylesheet">
+<link rel="stylesheet" href="{{ asset('css/modern-forms.css') }}">
 @php
     $primaryColor = appsettings()->hos_color ?? '#011b33';
 @endphp
@@ -495,7 +495,7 @@
                     <div class="info-card-body">
                         @php $seenClinics = $staff->can_see_clinic_queues ?? []; @endphp
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="info-row">
                                     <span class="info-label">Specialization</span>
                                     <span class="info-value {{ !($staff->specialization ?? null) ? 'text-muted' : '' }}">{{ $staff->specialization->name ?? 'Not applicable' }}</span>
@@ -509,7 +509,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="info-row">
                                     <span class="info-label">Assigned Clinic</span>
                                     <span class="info-value {{ !($staff->clinic ?? null) ? 'text-muted' : '' }}">{{ $staff->clinic->name ?? 'Not applicable' }}</span>
@@ -523,7 +523,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
                                 <div class="info-row">
                                     <span class="info-label">Also See Queues From</span>
                                     <span class="info-value {{ empty($seenClinics) ? 'text-muted' : '' }}">
@@ -780,14 +782,22 @@
 <script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
 <script>
 $(document).ready(function() {
-    $('.select2').select2({ theme: 'bootstrap4', width: '100%' });
+    $('.select2').select2({ placeholder: 'Select...', allowClear: true, width: '100%' });
 });
 
 function toggleEdit(cardId) {
     const card = document.getElementById(cardId);
     card.classList.add('edit-mode');
     card.querySelector('.edit-toggle').style.display = 'none';
-    $(card).find('.select2').select2({ theme: 'bootstrap4', width: '100%' });
+    // Destroy and reinitialize select2 AFTER edit-mode is visible so it measures width correctly
+    $(card).find('.select2').each(function() {
+        if ($(this).data('select2')) $(this).select2('destroy');
+        $(this).select2({
+            placeholder: $(this).data('placeholder') || 'Select...',
+            allowClear: true,
+            width: '100%',
+        });
+    });
     // Clear any previous errors when entering edit mode
     clearFormErrors(card.closest('form'));
 }

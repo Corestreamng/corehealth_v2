@@ -303,8 +303,15 @@ class DoctorAppointmentController extends Controller
                 $clinic  = Clinic::find($queue->clinic_id)->name ?? '';
                 $color   = $statusColors[$queue->status] ?? '#6c757d';
 
+                $slotMin   = (int) (appsettings('default_slot_duration') ?? 15);
                 $startTime = Carbon::parse($queue->created_at);
-                $endTime   = $startTime->copy()->addMinutes((int) (appsettings('default_slot_duration') ?? 15));
+                // Clamp to calendar visible range (07:00–20:00) so events aren't invisible
+                if ($startTime->hour >= 20) {
+                    $startTime->setTime(19, 60 - $slotMin, 0);
+                } elseif ($startTime->hour < 7) {
+                    $startTime->setTime(7, 0, 0);
+                }
+                $endTime = $startTime->copy()->addMinutes($slotMin);
 
                 // Delivery check for queue entries
                 $canDeliver = true;
@@ -1271,7 +1278,14 @@ class DoctorAppointmentController extends Controller
             $color   = $statusColors[$queue->status] ?? '#6c757d';
 
             $startTime = Carbon::parse($queue->created_at);
-            $endTime   = $startTime->copy()->addMinutes((int) (appsettings('default_slot_duration') ?? 15));
+            // Clamp to calendar visible range (07:00–20:00) so events aren't invisible
+            $slotMin = (int) (appsettings('default_slot_duration') ?? 15);
+            if ($startTime->hour >= 20) {
+                $startTime->setTime(19, 60 - $slotMin, 0);
+            } elseif ($startTime->hour < 7) {
+                $startTime->setTime(7, 0, 0);
+            }
+            $endTime = $startTime->copy()->addMinutes($slotMin);
 
             // HMO delivery check — determines encounter access + shown in calendar
             $encounterUrl = null;
@@ -1368,7 +1382,7 @@ class DoctorAppointmentController extends Controller
         $appts = DoctorAppointment::with(['patient.user', 'patient.hmo', 'clinic'])
             ->where(function ($q) use ($doc) {
                 $q->where('staff_id', $doc->id)
-                  ->orWhere('clinic_id', $doc->clinic_id);
+                  ->orWhereIn('clinic_id', $doc->all_clinic_ids);
             })
             ->where('status', QueueStatus::SCHEDULED)
             ->where('appointment_date', '>=', $startDate)
@@ -1419,7 +1433,7 @@ class DoctorAppointmentController extends Controller
 
         // ── 2. Doctor Queue entries ────────────────────────────────────
         $queues = DoctorQueue::where(function ($q) use ($doc) {
-                $q->where('clinic_id', $doc->clinic_id)
+                $q->whereIn('clinic_id', $doc->all_clinic_ids)
                   ->orWhere('staff_id', $doc->id);
             })
             ->whereBetween('created_at', [
