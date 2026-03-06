@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ProductOrServiceRequest;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\User;
 use App\Models\Store;
 use App\Models\StoreStock;
@@ -235,7 +235,7 @@ class MedicationChartController extends Controller
      */
     public function overview($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $startDate = $request->query('start_date')
             ? Carbon::parse($request->query('start_date'))->startOfDay()
@@ -364,7 +364,7 @@ class MedicationChartController extends Controller
 
     public function index($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
         $userId = $patient->user_id ?? $patient->user->id ?? null;
 
         // Get date range from request or use defaults (30 days with today in middle)
@@ -457,7 +457,7 @@ class MedicationChartController extends Controller
 
     public function calendar($patientId, $medicationId, $startDate = null, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
         $medication = ProductOrServiceRequest::with(['product.category', 'productRequest.doctor'])
             ->where('id', $medicationId)
             ->where('user_id', $patient->user_id)
@@ -617,7 +617,7 @@ class MedicationChartController extends Controller
      */
     public function directCalendar($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $drugSource = $request->query('drug_source');
         $productId = $request->query('product_id');
@@ -1304,7 +1304,7 @@ class MedicationChartController extends Controller
         $data = $validator->validated();
 
         // Verify patient exists
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         try {
             DB::beginTransaction();

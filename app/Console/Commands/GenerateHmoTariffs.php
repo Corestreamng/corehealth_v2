@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Hmo;
 use App\Models\Product;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\HmoTariff;
 
 class GenerateHmoTariffs extends Command

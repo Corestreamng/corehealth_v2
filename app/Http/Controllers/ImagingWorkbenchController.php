@@ -3,18 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ImagingServiceRequest;
 use App\Models\ProductOrServiceRequest;
 use App\Models\VitalSign;
 use App\Models\Encounter;
 use App\Models\ProductRequest;
-use App\Models\service;
+use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\HmoHelper;
-
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
 
 class ImagingWorkbenchController extends Controller
@@ -47,7 +47,7 @@ class ImagingWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = patient::with('user')
+        $patients = Patient::with('user')
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -105,7 +105,7 @@ class ImagingWorkbenchController extends Controller
      */
     public function getPatientRequests($patientId)
     {
-        $patient = patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
+        $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Get all pending imaging requests
         $statuses = [1, 2];
@@ -738,7 +738,7 @@ class ImagingWorkbenchController extends Controller
                 $structuredData = json_decode($request->invest_res_template_data, true);
 
                 if ($structuredData) {
-                    $service = service::find($imagingRequest->service_id);
+                    $service = Service::find($imagingRequest->service_id);
                     $template = $service->result_template_v2;
 
                     if ($template && isset($template['parameters'])) {
@@ -1220,7 +1220,7 @@ class ImagingWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $query = service::where('service_name', 'like', "%{$term}%")
+        $query = Service::where('service_name', 'like', "%{$term}%")
             ->where('is_active', 1);
 
         // Filter by imaging category if set
@@ -1261,7 +1261,7 @@ class ImagingWorkbenchController extends Controller
 
             DB::beginTransaction();
 
-            $patient = patient::findOrFail($request->patient_id);
+            $patient = Patient::findOrFail($request->patient_id);
             $notes = $request->notes ?? [];
 
             foreach ($request->service_ids as $index => $serviceId) {
@@ -1344,7 +1344,7 @@ class ImagingWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             // Silently fail if audit log table doesn't exist
-            \Log::warning('Could not log imaging audit: ' . $e->getMessage());
+            Log::warning('Could not log imaging audit: ' . $e->getMessage());
         }
     }
 

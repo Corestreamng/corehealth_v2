@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MiscBill;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\PatientAccount;
 use App\Models\payment;
 use App\Models\Product;
@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\servicePrice;
 use Yajra\DataTables\DataTables;
 
@@ -131,7 +131,7 @@ class PatientAccountController extends Controller
                 'patient_id' => 'required'
             ]);
 
-            $patient = patient::where('id', $request->patient_id)->first();
+            $patient = Patient::where('id', $request->patient_id)->first();
 
             DB::beginTransaction();
 

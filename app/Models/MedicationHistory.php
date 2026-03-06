@@ -30,7 +30,7 @@ protected $fillable = [
      */
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(patient::class);
+        return $this->belongsTo(Patient::class);
     }
 
     /**

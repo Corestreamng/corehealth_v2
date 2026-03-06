@@ -291,7 +291,7 @@
 
             // Fallback to blade
             @php
-                $patient = \App\Models\patient::where('user_id', $id)->first();
+                $patient = \App\Models\Patient::where('user_id', $id)->first();
             @endphp
             if (!patientName) {
                 patientName = "{{ $patient ? $patient->fullname : 'N/A' }}";

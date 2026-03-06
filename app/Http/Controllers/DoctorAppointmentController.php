@@ -8,7 +8,7 @@ use App\Models\Clinic;
 use App\Models\DoctorAppointment;
 use App\Models\DoctorQueue;
 use App\Models\Encounter;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Staff;
 use App\Services\AppointmentSlotService;
@@ -510,7 +510,7 @@ class DoctorAppointmentController extends Controller
         try {
             DB::beginTransaction();
 
-            $patient = patient::find($appointment->patient_id);
+            $patient = Patient::find($appointment->patient_id);
 
             // Create ProductOrServiceRequest (unless pre-paid follow-up)
             $serviceRequest = null;
@@ -1428,7 +1428,7 @@ class DoctorAppointmentController extends Controller
             ->get();
 
         foreach ($queues as $queue) {
-            $patient = patient::find($queue->patient_id);
+            $patient = Patient::find($queue->patient_id);
             $patientName = $patient ? userfullname($patient->user_id) : 'N/A';
             $hmoName = ($patient && $patient->hmo_id) ? (\App\Models\Hmo::find($patient->hmo_id)->name ?? '') : '';
             $clinic  = \App\Models\Clinic::find($queue->clinic_id)->name ?? '';
@@ -1655,7 +1655,7 @@ class DoctorAppointmentController extends Controller
         }
 
         // Fall back to first active consultation service
-        $service = \App\Models\service::where('service_name', 'LIKE', '%consultation%')
+        $service = \App\Models\Service::where('service_name', 'LIKE', '%consultation%')
             ->first();
 
         return $service?->id;

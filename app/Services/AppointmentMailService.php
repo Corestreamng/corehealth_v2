@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Mail\AppointmentNotificationMail;
 use App\Models\DoctorAppointment;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Staff;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -230,7 +230,7 @@ class AppointmentMailService
      */
     protected function getPatientEmail(int $patientId): ?string
     {
-        $patient = patient::with('user')->find($patientId);
+        $patient = Patient::with('user')->find($patientId);
         return $patient && $patient->user ? $patient->user->email : null;
     }
 }

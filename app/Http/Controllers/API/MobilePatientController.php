@@ -7,7 +7,7 @@ use App\Models\AdmissionRequest;
 use App\Models\Encounter;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\ProductRequest;
 use App\Models\VitalSign;
@@ -24,7 +24,7 @@ class MobilePatientController extends Controller
     {
         try {
             $user = Auth::user();
-            $patient = patient::with('user', 'hmo')->where('user_id', $user->id)->first();
+            $patient = Patient::with('user', 'hmo')->where('user_id', $user->id)->first();
 
             if (!$patient) {
                 return response()->json(['status' => false, 'message' => 'Patient profile not found.'], 404);
@@ -472,10 +472,10 @@ class MobilePatientController extends Controller
 
     // ── Private helpers ─────────────────────────────────────────────
 
-    private function getAuthenticatedPatient(): ?patient
+    private function getAuthenticatedPatient(): ?Patient
     {
         $user = Auth::user();
-        return patient::where('user_id', $user->id)->first();
+        return Patient::where('user_id', $user->id)->first();
     }
 
     private function labStatusLabel($status): string

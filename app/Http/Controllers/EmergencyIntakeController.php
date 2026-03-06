@@ -10,10 +10,10 @@ use App\Models\DoctorQueue;
 use App\Enums\QueueStatus;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\PatientAccount;
 use App\Models\ProductOrServiceRequest;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\Staff;
 use App\Models\User;
 use App\Models\VitalSign;
@@ -120,7 +120,7 @@ class EmergencyIntakeController extends Controller
             $newPatientCreated = false;
 
             if ($request->patient_id) {
-                $patient = patient::find($request->patient_id);
+                $patient = Patient::find($request->patient_id);
             } elseif ($request->is_new_patient) {
                 // Handle unidentified patients
                 $surname = $request->is_unidentified
@@ -598,7 +598,7 @@ class EmergencyIntakeController extends Controller
             return response()->json([]);
         }
 
-        $patients = patient::with(['user', 'hmo'])
+        $patients = Patient::with(['user', 'hmo'])
             ->whereHas('user', function ($q) use ($query) {
                 $q->where('surname', 'like', "%{$query}%")
                   ->orWhere('firstname', 'like', "%{$query}%")
@@ -693,7 +693,7 @@ class EmergencyIntakeController extends Controller
         $admissionCategoryId = appsettings('bed_service_category_id');
         $consultationCategoryId = appsettings('consultation_category_id');
 
-        $admissionServices = service::with('price')
+        $admissionServices = Service::with('price')
             ->where('status', 1)
             ->where(function ($q) use ($admissionCategoryId) {
                 if ($admissionCategoryId) {
@@ -719,7 +719,7 @@ class EmergencyIntakeController extends Controller
             });
 
         // Consultation services — from the configured category or fallback
-        $consultationServices = service::with('price')
+        $consultationServices = Service::with('price')
             ->where('status', 1)
             ->where(function ($q) use ($consultationCategoryId) {
                 if ($consultationCategoryId) {

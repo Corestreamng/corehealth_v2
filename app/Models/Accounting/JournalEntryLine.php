@@ -4,7 +4,7 @@ namespace App\Models\Accounting;
 
 use App\Models\Department;
 use App\Models\Hmo;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Service;
@@ -194,7 +194,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(patient::class);
+        return $this->belongsTo(Patient::class);
     }
 
     /**

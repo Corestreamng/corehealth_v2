@@ -13,12 +13,12 @@ use App\Models\Hmo;
 use App\Models\HmoTariff;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\PatientAccount;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\Staff;
 use App\Models\User;
@@ -65,7 +65,7 @@ class ReceptionWorkbenchController extends Controller
         $registrationCategoryId = appsettings('registration_category_id');
         $registrationServices = collect();
         if ($registrationCategoryId) {
-            $registrationServices = service::with('price')
+            $registrationServices = Service::with('price')
                 ->where('category_id', $registrationCategoryId)
                 ->where('status', 1)
                 ->orderBy('service_name')
@@ -86,7 +86,7 @@ class ReceptionWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = patient::with(['user', 'hmo', 'account'])
+        $patients = Patient::with(['user', 'hmo', 'account'])
             ->whereHas('user', function($q) use ($query) {
                 $q->where('surname', 'like', "%{$query}%")
                   ->orWhere('firstname', 'like', "%{$query}%")
@@ -123,7 +123,7 @@ class ReceptionWorkbenchController extends Controller
      */
     public function getPatient($patientId)
     {
-        $patient = patient::with(['user', 'hmo.scheme', 'account'])
+        $patient = Patient::with(['user', 'hmo.scheme', 'account'])
             ->findOrFail($patientId);
 
         // Get current queue entries for this patient
@@ -472,7 +472,7 @@ class ReceptionWorkbenchController extends Controller
     public function getConsultationServices()
     {
         // Get services in consultation-related categories
-        $services = service::with('price')
+        $services = Service::with('price')
             ->whereHas('category', function($q) {
                 $q->where('category_name', 'like', '%consult%')
                   ->orWhere('category_name', 'like', '%clinic%');
@@ -501,7 +501,7 @@ class ReceptionWorkbenchController extends Controller
     {
         $search = $request->get('q', '');
 
-        $query = service::with(['price', 'category'])
+        $query = Service::with(['price', 'category'])
             ->whereHas('category', function($q) {
                 $q->where('category_name', 'like', '%lab%')
                   ->orWhere('category_name', 'like', '%investigation%')
@@ -539,7 +539,7 @@ class ReceptionWorkbenchController extends Controller
     {
         $search = $request->get('q', '');
 
-        $query = service::with(['price', 'category'])
+        $query = Service::with(['price', 'category'])
             ->whereHas('category', function($q) {
                 $q->where('category_name', 'like', '%imaging%')
                   ->orWhere('category_name', 'like', '%radiology%')
@@ -616,7 +616,7 @@ class ReceptionWorkbenchController extends Controller
         $productId = $request->get('product_id');
         $qty = $request->get('qty', 1);
 
-        $patient = patient::with('hmo')->find($patientId);
+        $patient = Patient::with('hmo')->find($patientId);
 
         if (!$patient) {
             return response()->json(['error' => 'Patient not found'], 404);
@@ -627,7 +627,7 @@ class ReceptionWorkbenchController extends Controller
         $itemName = '';
 
         if ($serviceId) {
-            $service = service::with('price')->find($serviceId);
+            $service = Service::with('price')->find($serviceId);
             if ($service) {
                 $basePrice = $service->price->sale_price ?? 0;
                 $itemName = $service->service_name;
@@ -701,7 +701,7 @@ class ReceptionWorkbenchController extends Controller
         try {
             DB::beginTransaction();
 
-            $patient = patient::find($request->patient_id);
+            $patient = Patient::find($request->patient_id);
 
             // Create ProductOrServiceRequest
             $serviceRequest = new ProductOrServiceRequest();
@@ -808,7 +808,7 @@ class ReceptionWorkbenchController extends Controller
         try {
             DB::beginTransaction();
 
-            $patient = patient::find($request->patient_id);
+            $patient = Patient::find($request->patient_id);
             $createdRequests = [];
 
             foreach ($request->items as $item) {
@@ -914,7 +914,7 @@ class ReceptionWorkbenchController extends Controller
             } catch (\Exception $e) {
                 // No HMO tariff - patient pays standard price
                 if ($serviceId) {
-                    $service = service::with('price')->find($serviceId);
+                    $service = Service::with('price')->find($serviceId);
                     $serviceRequest->payable_amount = ($service->price->sale_price ?? 0) * $qty;
                 } elseif ($productId) {
                     $product = Product::with('price')->find($productId);
@@ -924,7 +924,7 @@ class ReceptionWorkbenchController extends Controller
         } else {
             // Private patient - standard pricing
             if ($serviceId) {
-                $service = service::with('price')->find($serviceId);
+                $service = Service::with('price')->find($serviceId);
                 $serviceRequest->payable_amount = ($service->price->sale_price ?? 0) * $qty;
             } elseif ($productId) {
                 $product = Product::with('price')->find($productId);
@@ -1002,7 +1002,7 @@ class ReceptionWorkbenchController extends Controller
             $user->save();
 
             // Create patient
-            $patient = new patient();
+            $patient = new Patient();
             $patient->user_id = $user->id;
             $patient->file_no = $request->file_no; // Use provided file number
             $patient->gender = $request->gender;
@@ -1101,7 +1101,7 @@ class ReceptionWorkbenchController extends Controller
 
             // Create registration fee billing entry if selected
             if ($request->registration_service_id) {
-                $regService = service::with('price')->find($request->registration_service_id);
+                $regService = Service::with('price')->find($request->registration_service_id);
                 if ($regService && $regService->price) {
                     ProductOrServiceRequest::create([
                         'user_id' => $user->id,
@@ -1166,7 +1166,7 @@ class ReceptionWorkbenchController extends Controller
         $today = Carbon::today();
 
         $stats = [
-            'new_registrations' => patient::whereDate('created_at', $today)->count(),
+            'new_registrations' => Patient::whereDate('created_at', $today)->count(),
             'total_queued' => DoctorQueue::whereDate('created_at', $today)->count(),
             'consultations_done' => DoctorQueue::where('status', QueueStatus::COMPLETED)->whereDate('created_at', $today)->count(),
             'pending_services' => ProductOrServiceRequest::whereNull('payment_id')
@@ -1185,7 +1185,7 @@ class ReceptionWorkbenchController extends Controller
     public function getNextFileNumber()
     {
         // Get the last 5 patients with file numbers for reference
-        $recentPatients = patient::whereNotNull('file_no')
+        $recentPatients = Patient::whereNotNull('file_no')
             ->where('file_no', '!=', '')
             ->orderBy('id', 'desc')
             ->limit(5)
@@ -1226,7 +1226,7 @@ class ReceptionWorkbenchController extends Controller
         $fileNo = $request->input('file_no');
         $excludePatientId = $request->input('exclude_patient_id'); // For edit mode
 
-        $query = patient::where('file_no', $fileNo);
+        $query = Patient::where('file_no', $fileNo);
 
         if ($excludePatientId) {
             $query->where('id', '!=', $excludePatientId);
@@ -1340,7 +1340,7 @@ class ReceptionWorkbenchController extends Controller
         try {
             DB::beginTransaction();
 
-            $patient = patient::with('user')->findOrFail($patientId);
+            $patient = Patient::with('user')->findOrFail($patientId);
             $user = $patient->user;
 
             // Update user info
@@ -1494,7 +1494,7 @@ class ReceptionWorkbenchController extends Controller
         $hmoId = $request->hmo_id;
 
         // New registrations
-        $registrationsQuery = patient::whereBetween('created_at', [$dateFrom, $dateTo]);
+        $registrationsQuery = Patient::whereBetween('created_at', [$dateFrom, $dateTo]);
         if ($hmoId) {
             $registrationsQuery->where('hmo_id', $hmoId);
         }
@@ -1565,7 +1565,7 @@ class ReceptionWorkbenchController extends Controller
         $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->startOfDay() : Carbon::now()->startOfMonth();
         $dateTo = $request->date_to ? Carbon::parse($request->date_to)->endOfDay() : Carbon::now()->endOfDay();
 
-        $query = patient::with(['user', 'hmo'])
+        $query = Patient::with(['user', 'hmo'])
             ->whereBetween('patients.created_at', [$dateFrom, $dateTo]);
 
         // Filters
@@ -1780,14 +1780,14 @@ class ReceptionWorkbenchController extends Controller
 
         // Registration trends
         // Registration trends
-        $registrationTrends = patient::whereBetween('patients.created_at', [$dateFrom, $dateTo])
+        $registrationTrends = Patient::whereBetween('patients.created_at', [$dateFrom, $dateTo])
             ->select(DB::raw('DATE(patients.created_at) as date'), DB::raw('COUNT(*) as count'))
             ->groupBy(DB::raw('DATE(patients.created_at)'))
             ->orderBy('date')
             ->get();
 
         // HMO distribution
-        $hmoDistribution = patient::whereBetween('patients.created_at', [$dateFrom, $dateTo])
+        $hmoDistribution = Patient::whereBetween('patients.created_at', [$dateFrom, $dateTo])
             ->join('hmos', 'patients.hmo_id', '=', 'hmos.id')
             ->select('hmos.name', DB::raw('COUNT(*) as count'))
             ->groupBy('hmos.id', 'hmos.name')
@@ -1827,7 +1827,7 @@ class ReceptionWorkbenchController extends Controller
      */
     public function getRecentRequests($patientId)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
         $since = Carbon::now()->subHours(24);
 
         $requests = collect();
@@ -1920,7 +1920,7 @@ class ReceptionWorkbenchController extends Controller
      */
     public function getServiceRequests($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         // Build combined query results
         $allRequests = collect();
@@ -2135,7 +2135,7 @@ class ReceptionWorkbenchController extends Controller
      */
     public function getServiceRequestsStats($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         // Date filters
         $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->startOfDay() : null;

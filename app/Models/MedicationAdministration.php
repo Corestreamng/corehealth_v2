@@ -38,7 +38,7 @@ protected $fillable = [
         'deleted_by',
         'delete_reason'
     ];
-    public function patient() { return $this->belongsTo(patient::class); }
+    public function patient() { return $this->belongsTo(Patient::class); }
     public function product() { return $this->belongsTo(Product::class); }
     public function productOrServiceRequest() { return $this->belongsTo(ProductOrServiceRequest::class); }
     public function productRequest() { return $this->belongsTo(ProductRequest::class); }

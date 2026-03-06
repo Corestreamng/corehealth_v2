@@ -63,7 +63,7 @@ protected $fillable = [
 
     public function service()
     {
-        return $this->belongsTo(service::class, 'service_id', 'id');
+        return $this->belongsTo(Service::class, 'service_id', 'id');
     }
 
     public function encounter()
@@ -73,7 +73,7 @@ protected $fillable = [
 
     public function patient()
     {
-        return $this->belongsTo(patient::class, 'patient_id', 'id');
+        return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 
     public function doctor()

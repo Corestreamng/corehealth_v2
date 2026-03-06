@@ -7,7 +7,7 @@ use App\Models\Hmo;
 use App\Models\HmoScheme;
 use App\Models\HmoTariff;
 use App\Models\Product;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\ServiceCategory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -72,7 +72,7 @@ class NormalizeNhisShisTariffs extends Command
 
         // 3. Load all products and services
         $products = Product::all();
-        $services = service::with('price', 'category')->get();
+        $services = Service::with('price', 'category')->get();
 
         // 4. Identify "General Consultation" services (case-insensitive match)
         $generalConsultationIds = $services->filter(function ($svc) {

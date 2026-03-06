@@ -12,7 +12,7 @@ use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\NursingNote;
 use App\Models\NursingNoteType;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\ReasonForEncounter;
@@ -83,7 +83,7 @@ class EncounterController extends Controller
             return DataTables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     $name = userfullname($patient->user_id);
                     if ($queue->priority === 'emergency') {
                         return '<span class="text-danger fw-bold"><i class="fa fa-exclamation-triangle"></i> ' . e($name) . '</span>';
@@ -106,7 +106,7 @@ class EncounterController extends Controller
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
@@ -117,7 +117,7 @@ class EncounterController extends Controller
                     return userfullname($doc->user_id);
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return $patient->file_no;
                 })
                 ->addColumn('view', function ($queue) {
@@ -224,14 +224,14 @@ class EncounterController extends Controller
             return DataTables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return userfullname($patient->user_id);
                 })
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
@@ -242,7 +242,7 @@ class EncounterController extends Controller
                     return userfullname($doc->user_id);
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return $patient?->file_no;
                 })
                 ->addColumn('view', function ($queue) {
@@ -292,14 +292,14 @@ class EncounterController extends Controller
             return DataTables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return userfullname($patient->user_id);
                 })
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
@@ -310,7 +310,7 @@ class EncounterController extends Controller
                     return userfullname($doc->user_id);
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return $patient->file_no;
                 })
                 ->addColumn('view', function ($queue) {
@@ -388,7 +388,7 @@ class EncounterController extends Controller
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->addColumn('hmo_id', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
 
                     if (!$patient) return 'N/A';
                     if (!$patient->hmo_id) return 'N/A';
@@ -404,7 +404,7 @@ class EncounterController extends Controller
                     return $queue->doctor_id ? userfullname($queue->doctor_id) : 'N/A';
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = patient::find($queue->patient_id);
+                    $patient = Patient::find($queue->patient_id);
                     return $patient ? $patient->file_no : 'N/A';
                 })
                 ->addColumn('view', function ($queue) {
@@ -1956,7 +1956,7 @@ class EncounterController extends Controller
     {
         try {
             $doctor = Staff::where('user_id', Auth::id())->first();
-            $patient = patient::find(request()->get('patient_id'));
+            $patient = Patient::find(request()->get('patient_id'));
             $clinic = Clinic::find($doctor->clinic_id);
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
             $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
@@ -2029,7 +2029,7 @@ class EncounterController extends Controller
                     $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->where('discharged', 0)->first() ?? $admission_exists;
                     // for nursing notes
                     $patient_id = $patient->id;
-                    $patient = patient::find($patient_id);
+                    $patient = Patient::find($patient_id);
 
                     $observation_note = NursingNote::with(['patient', 'createdBy', 'type'])
                         ->where('patient_id', $patient_id)
@@ -2200,7 +2200,7 @@ class EncounterController extends Controller
             }
 
             // Find the patient
-            $patient = patient::findOrFail($request->patient_id);
+            $patient = Patient::findOrFail($request->patient_id);
 
             if (null != $patient->dhis_consult_enrollment_id && null != $patient->dhis_consult_tracker_id && $patient->dhis_consult_enrollment_id != '' && $patient->dhis_consult_tracker_id != '') {
                 // Get current time in the required format
@@ -3054,7 +3054,7 @@ class EncounterController extends Controller
             $savedCount = 0;
 
             foreach ($request->procedures as $procedureData) {
-                $service = \App\Models\service::with('price')->find($procedureData['service_id']);
+                $service = \App\Models\Service::with('price')->find($procedureData['service_id']);
 
                 if (!$service) {
                     continue;
@@ -3096,7 +3096,7 @@ class EncounterController extends Controller
                 }
 
                 // Get patient's user_id for the billing entry
-                $patient = \App\Models\patient::find($encounter->patient_id);
+                $patient = \App\Models\Patient::find($encounter->patient_id);
 
                 $billingEntry = new \App\Models\ProductOrServiceRequest();
                 $billingEntry->type = 'service';

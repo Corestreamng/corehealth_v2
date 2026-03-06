@@ -115,7 +115,7 @@ class Procedure extends Model implements Auditable
      */
     public function service()
     {
-        return $this->belongsTo(service::class, 'service_id', 'id');
+        return $this->belongsTo(Service::class, 'service_id', 'id');
     }
 
     /**
@@ -131,7 +131,7 @@ class Procedure extends Model implements Auditable
      */
     public function patient()
     {
-        return $this->belongsTo(patient::class, 'patient_id', 'id');
+        return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 
     /**

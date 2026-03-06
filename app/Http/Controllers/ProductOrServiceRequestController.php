@@ -175,7 +175,7 @@ class ProductOrServiceRequestController extends Controller
 
                                 // Apply HMO tariff if patient has HMO
                                 try {
-                                    $p = patient::where('user_id', $user_ids[$i])->first();
+                                    $p = Patient::where('user_id', $user_ids[$i])->first();
                                     if ($p) {
                                         $hmoData = HmoHelper::applyHmoTariff(
                                             $p->id,

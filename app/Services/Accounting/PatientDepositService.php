@@ -7,7 +7,7 @@ use App\Models\Accounting\PatientDepositApplication;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Billing\Bill;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;

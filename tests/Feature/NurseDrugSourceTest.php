@@ -12,7 +12,7 @@ use App\Models\ProductRequest;
 use App\Models\StockBatch;
 use App\Models\Store;
 use App\Models\User;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Services\StockService;
 use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;

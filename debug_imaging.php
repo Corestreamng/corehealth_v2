@@ -5,7 +5,7 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ImagingServiceRequest;
 use App\Models\ProductOrServiceRequest;
 use Illuminate\Support\Facades\DB;

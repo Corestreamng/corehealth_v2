@@ -7,7 +7,7 @@ use App\Models\Hmo;
 use App\Models\HmoRemittance;
 use App\Models\ProductOrServiceRequest;
 use App\Models\PatientProfile;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ServiceCategory;
 use App\Models\ProductCategory;
 use App\Models\service;
@@ -842,7 +842,7 @@ class HmoReportsController extends Controller
             ->limit(10)
             ->get()
             ->map(function($item) {
-                $service = service::with('category')->find($item->service_id);
+                $service = Service::with('category')->find($item->service_id);
                 return [
                     'name' => $service ? $service->service_name : 'Unknown',
                     'category' => $service && $service->category ? $service->category->category_name : 'Uncategorized',
