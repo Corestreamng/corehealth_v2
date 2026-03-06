@@ -168,7 +168,7 @@ class JournalEntryLine extends Model implements Auditable
     /**
      * Get the service category associated with this line.
      */
-    public function serviceCategory(): BelongsTo
+    public function ServiceCategory(): BelongsTo
     {
         return $this->belongsTo(ServiceCategory::class);
     }
