@@ -4673,6 +4673,56 @@ function displayPatientInfo(patient) {
 let currentPendingRequests = null;
 let currentPendingFilter = 'all';
 
+// ── Selection Preservation State (pharmacy-style) ────────────────────
+let checkedItemsState = {
+    billing: new Set()
+};
+
+function saveCheckedItemsState(section) {
+    checkedItemsState[section] = new Set();
+    $(`.request-checkbox[data-section="${section}"]:checked`).each(function() {
+        checkedItemsState[section].add($(this).data('request-id'));
+    });
+}
+
+function restoreCheckedItemsState() {
+    Object.keys(checkedItemsState).forEach(section => {
+        if (checkedItemsState[section].size === 0) return;
+
+        checkedItemsState[section].forEach(id => {
+            const $cb = $(`.request-checkbox[data-section="${section}"][data-request-id="${id}"]`);
+            if ($cb.length) {
+                $cb.prop('checked', true);
+                $cb.closest('.request-card').addClass('selected');
+            } else {
+                // Item no longer in DOM — remove from state
+                checkedItemsState[section].delete(id);
+            }
+        });
+
+        // Sync select-all checkbox
+        const total = $(`.request-checkbox[data-section="${section}"]`).length;
+        const checked = $(`.request-checkbox[data-section="${section}"]:checked`).length;
+        $(`#select-all-${section}`).prop('checked', total > 0 && checked === total);
+    });
+
+    // Refresh floating cart to reflect restored selections
+    updateFloatingCart();
+}
+
+function clearCheckedItems(section) {
+    if (section) {
+        checkedItemsState[section] = new Set();
+    } else {
+        Object.keys(checkedItemsState).forEach(k => checkedItemsState[k] = new Set());
+    }
+}
+
+function hasActiveSelections() {
+    return Object.values(checkedItemsState).some(s => s.size > 0);
+}
+// ── End Selection Preservation State ─────────────────────────────────
+
 function displayPendingRequests(requests) {
     currentPendingRequests = requests;
     // No sample stage for imaging
@@ -4809,8 +4859,9 @@ function renderPendingSubtabContent(filter) {
         });
     }
 
-    // Initialize event handlers
+    // Initialize event handlers + restore preserved selections
     initializeRequestHandlers();
+    restoreCheckedItemsState();
 }
 
 function createRequestCard(request, section) {
@@ -4993,23 +5044,43 @@ function createRequestCard(request, section) {
 }
 
 function initializeRequestHandlers() {
+    // Unbind previous direct handlers to avoid duplicates (cards are rebuilt each render)
+    $('.select-all-checkbox').off('change');
+    $('.request-checkbox').off('change');
+    $('.enter-result-btn').off('click');
+
     // Select all checkboxes
     $('.select-all-checkbox').on('change', function() {
         const section = $(this).attr('id').replace('select-all-', '');
         const isChecked = $(this).is(':checked');
-        $(`.request-checkbox[data-section="${section}"]`).prop('checked', isChecked).trigger('change');
+        $(`.request-checkbox[data-section="${section}"]`).each(function() {
+            $(this).prop('checked', isChecked);
+            // Update Set state
+            const rid = $(this).data('request-id');
+            if (isChecked) {
+                checkedItemsState[section]?.add(rid);
+                $(this).closest('.request-card').addClass('selected');
+            } else {
+                checkedItemsState[section]?.delete(rid);
+                $(this).closest('.request-card').removeClass('selected');
+            }
+        });
+        updateFloatingCart();
     });
 
-    // Individual checkboxes — update floating cart + highlight card on change
+    // Individual checkboxes — update floating cart + highlight card + track in Set
     $('.request-checkbox').on('change', function() {
         const section = $(this).data('section');
+        const rid = $(this).data('request-id');
         const $card = $(this).closest('.request-card');
 
-        // Toggle selected highlight
+        // Toggle selected highlight + track in state Set
         if ($(this).is(':checked')) {
             $card.addClass('selected');
+            checkedItemsState[section]?.add(rid);
         } else {
             $card.removeClass('selected');
+            checkedItemsState[section]?.delete(rid);
         }
 
         const checkedCount = $(`.request-checkbox[data-section="${section}"]:checked`).length;
@@ -5157,7 +5228,7 @@ function displayNotes(notes) {
             const $wrapper = $('#notes-table_wrapper');
             $wrapper.find('.show-all-link').remove();
             $wrapper.append(`
-                <a href="/patients/show/${currentPatient}?section=encountersCardBody" target="_blank" class="show-all-link">
+                <a href="/patient/${currentPatient}?section=doctorNotesCardBody" target="_blank" class="show-all-link">
                     Show All Notes →
                 </a>
             `);
@@ -5232,6 +5303,12 @@ function startQueueRefresh() {
 
 function refreshCurrentPatientData() {
     if (!currentPatient) return;
+
+    // Skip auto-refresh if user has active checkbox selections (pharmacy-style guard)
+    if (hasActiveSelections()) {
+        console.log('Skipping auto-refresh: active selections detected');
+        return;
+    }
 
     // Silently reload patient requests
     $.get(`/imaging-workbench/patient/${currentPatient}/requests`, function(data) {
@@ -5325,6 +5402,7 @@ function recordBilling(requestIds) {
             toastr.success('Billing recorded successfully!');
             $('#cartReviewModal').modal('hide');
             $('#floating-cart').fadeOut(200);
+            clearCheckedItems('billing');
             loadPatient(currentPatient);
         },
         error: function(xhr) {
@@ -5351,6 +5429,7 @@ function dismissRequests(requestIds, section) {
             toastr.success('Requests dismissed successfully!');
             $('#cartReviewModal').modal('hide');
             $('#floating-cart').fadeOut(200);
+            clearCheckedItems();
             loadPatient(currentPatient);
         },
         error: function(xhr) {
