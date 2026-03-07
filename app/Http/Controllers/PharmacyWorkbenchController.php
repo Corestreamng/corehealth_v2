@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ProductRequest;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Product;
@@ -357,7 +357,7 @@ class PharmacyWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = patient::with('user', 'hmo')
+        $patients = Patient::with('user', 'hmo')
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -433,7 +433,7 @@ class PharmacyWorkbenchController extends Controller
             ->get();
 
         // Preload patient data
-        $patients = patient::with('user', 'hmo')
+        $patients = Patient::with('user', 'hmo')
             ->whereIn('id', $results->pluck('patient_id'))
             ->get()
             ->keyBy('id');
@@ -551,7 +551,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function getPatientPrescriptionData($patientId, Request $request)
     {
-        $patient = patient::with('hmo', 'user')->findOrFail($patientId);
+        $patient = Patient::with('hmo', 'user')->findOrFail($patientId);
         $statusFilter = $request->input('status');
 
         // Build query for items
@@ -722,7 +722,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function getPatientDispensingHistory($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $query = ProductRequest::with(['product', 'doctor', 'dispenser', 'productOrServiceRequest.payment'])
             ->where('patient_id', $patientId)
@@ -1230,7 +1230,7 @@ class PharmacyWorkbenchController extends Controller
         // Get the patient's HMO if patient_id is provided
         $patient = null;
         if ($patientId) {
-            $patient = patient::find($patientId);
+            $patient = Patient::find($patientId);
         }
 
         $products = Product::with(['category', 'price', 'stock'])
@@ -1322,7 +1322,7 @@ class PharmacyWorkbenchController extends Controller
             'products.*.dose' => 'nullable|string',
         ]);
 
-        $patient = patient::findOrFail($request->patient_id);
+        $patient = Patient::findOrFail($request->patient_id);
 
         DB::beginTransaction();
         try {
@@ -1404,7 +1404,7 @@ class PharmacyWorkbenchController extends Controller
 
             $billedCount = 0;
             $errors = [];
-            $patient = patient::findOrFail($request->patient_id);
+            $patient = Patient::findOrFail($request->patient_id);
 
             // Process existing ProductRequests (from DataTable checkboxes)
             if ($request->has('prescription_ids') && is_array($request->prescription_ids)) {

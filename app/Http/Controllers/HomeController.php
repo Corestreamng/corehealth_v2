@@ -134,7 +134,7 @@ class HomeController extends Controller
         $today = now()->toDateString();
 
         // New patients registered today
-        $newPatients = \App\Models\patient::whereDate('created_at', $today)->count();
+        $newPatients = \App\Models\Patient::whereDate('created_at', $today)->count();
 
         // Returning patients seen today (patients with encounters today, but not new)
         $returningPatients = \App\Models\Encounter::whereDate('created_at', $today)
@@ -152,7 +152,7 @@ class HomeController extends Controller
             })->count();
 
         // Total patients
-        $totalPatients = \App\Models\patient::count();
+        $totalPatients = \App\Models\Patient::count();
 
         // Total admissions (all time)
         $totalAdmissions = \App\Models\AdmissionRequest::count();
@@ -226,7 +226,7 @@ class HomeController extends Controller
         $totalStaff = DB::table('users')->where('is_admin', '!=', 19)->count();
 
         // Total patients
-        $totalPatients = \App\Models\patient::count();
+        $totalPatients = \App\Models\Patient::count();
 
         // Total clinics
         $totalClinics = DB::table('clinics')->count();
@@ -238,7 +238,7 @@ class HomeController extends Controller
         $encountersToday = \App\Models\Encounter::whereDate('created_at', now()->toDateString())->count();
 
         // New registrations this month
-        $newThisMonth = \App\Models\patient::whereMonth('created_at', now()->month)
+        $newThisMonth = \App\Models\Patient::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
 
@@ -458,7 +458,7 @@ class HomeController extends Controller
         $today = now()->toDateString();
 
         // HMO patients
-        $hmoPatients = \App\Models\patient::whereNotNull('hmo_id')->count();
+        $hmoPatients = \App\Models\Patient::whereNotNull('hmo_id')->count();
 
         // Pending claims (HMO requests not yet validated)
         $pendingClaims = DB::table('product_or_service_requests as posr')
@@ -486,7 +486,7 @@ class HomeController extends Controller
             ->sum('posr.claims_amount');
 
         // New enrollees this month
-        $newEnrollees = \App\Models\patient::whereNotNull('hmo_id')
+        $newEnrollees = \App\Models\Patient::whereNotNull('hmo_id')
             ->whereMonth('created_at', now()->month)
             ->count();
 

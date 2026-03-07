@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationStatu;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -135,7 +135,7 @@ class MobileAuthController extends Controller
         }
 
         try {
-            $patient = patient::with('user', 'hmo.scheme')
+            $patient = Patient::with('user', 'hmo.scheme')
                 ->where('file_no', $request->patient_id)
                 ->first();
 

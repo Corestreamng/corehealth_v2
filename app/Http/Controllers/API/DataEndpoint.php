@@ -9,7 +9,7 @@ use App\Models\DoctorQueue;
 use App\Models\Encounter;
 use App\Models\Hmo;
 use App\Models\LabServiceRequest;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
 use App\Models\service;
 use App\Models\Staff;
@@ -35,7 +35,7 @@ class DataEndpoint extends Controller
     public function getFullStats()
     {
         try {
-            $patients  = patient::count();
+            $patients  = Patient::count();
             $bookings = DoctorQueue::count();
             $consultations = Encounter::count();
             $hmos = Hmo::count();
@@ -69,7 +69,7 @@ class DataEndpoint extends Controller
     {
         try {
             // Retrieve all patients from the database
-            $patients = patient::all();
+            $patients = Patient::all();
 
             // Initialize an array to store the count of patients in each age group
             $ageCounts = [
@@ -371,7 +371,7 @@ class DataEndpoint extends Controller
     {
         try {
 
-            $query = patient::with(['user', 'hmo', 'account']);
+            $query = Patient::with(['user', 'hmo', 'account']);
             // Define pagination parameters
             $perPage = $request->input('per_page', 10);
             $page = $request->input('page', 1);

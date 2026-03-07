@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
 use App\Models\invoice as in;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\PatientAccount;
-use App\Models\payment;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\service;
@@ -134,7 +134,7 @@ class paymentController extends Controller
             }
 
             // make the payment entry
-            $payment = payment::create([
+            $payment = Payment::create([
                 'payment_type' => $request->payment_type,
                 'total' => $request->total,
                 'total_discount' => $totalDiscount,
@@ -143,7 +143,7 @@ class paymentController extends Controller
                 'patient_id' => $request->patient_id,
             ]);
             // dd($payment);
-            $pp = patient::find($request->patient_id);
+            $pp = Patient::find($request->patient_id);
             $app_set = appsettings();
 
             $data = in::create();
@@ -250,7 +250,7 @@ class paymentController extends Controller
                 }
 
                 // Create HMO Claim if patient has HMO and there are claims
-                $patient = patient::find($request->patient_id);
+                $patient = Patient::find($request->patient_id);
                 if ($patient && $patient->hmo_id) {
                     $claimsTotal = 0;
 
@@ -360,7 +360,7 @@ class paymentController extends Controller
      */
     public function ajaxUnpaid(Request $request, $userId)
     {
-        $patient = patient::where('user_id', $userId)->with('hmo')->firstOrFail();
+        $patient = Patient::where('user_id', $userId)->with('hmo')->firstOrFail();
 
         $items = ProductOrServiceRequest::with([
                 'service.price',
@@ -428,7 +428,7 @@ class paymentController extends Controller
         DB::beginTransaction();
 
         try {
-            $patient = patient::with('hmo')->findOrFail($data['patient_id']);
+            $patient = Patient::with('hmo')->findOrFail($data['patient_id']);
 
             $ids = collect($data['items'])->pluck('id')->all();
 
@@ -491,7 +491,7 @@ class paymentController extends Controller
             }
 
             // Create payment entry
-            $payment = payment::create([
+            $payment = Payment::create([
                 'payment_type' => $data['payment_type'],
                 'total' => $total,
                 'total_discount' => $totalDiscount,
@@ -583,7 +583,7 @@ class paymentController extends Controller
         $payment_type = $request->input('payment_type', null);
         $bank_id = $request->input('bank_id', null);
 
-        $query = \App\Models\payment::query()
+        $query = \App\Models\Payment::query()
             ->with(['patient', 'patient.user', 'bank'])
             ->whereDate('created_at', '>=', $from)
             ->whereDate('created_at', '<=', $to);
@@ -622,7 +622,7 @@ class paymentController extends Controller
         $to = $request->input('to', now()->toDateString());
         $payment_type = $request->input('payment_type', null);
 
-        $query = \App\Models\payment::query()
+        $query = \App\Models\Payment::query()
             ->with(['patient', 'patient.user'])
             ->whereDate('created_at', '>=', $from)
             ->whereDate('created_at', '<=', $to)

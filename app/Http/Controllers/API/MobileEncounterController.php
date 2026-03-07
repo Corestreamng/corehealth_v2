@@ -11,7 +11,7 @@ use App\Models\Encounter;
 use App\Models\Hmo;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
@@ -93,7 +93,7 @@ class MobileEncounterController extends Controller
             $paginated = $query->orderBy('created_at', 'DESC')->paginate($perPage);
 
             $items = $paginated->getCollection()->map(function ($queue) {
-                $patient = patient::with('user', 'hmo')->find($queue->patient_id);
+                $patient = Patient::with('user', 'hmo')->find($queue->patient_id);
                 $clinic = Clinic::find($queue->clinic_id);
                 $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
                 $deliveryCheck = $reqEntry
@@ -175,7 +175,7 @@ class MobileEncounterController extends Controller
                 ], 404);
             }
 
-            $patient = patient::with('user', 'hmo')->find($request->patient_id);
+            $patient = Patient::with('user', 'hmo')->find($request->patient_id);
             $clinic = Clinic::find($doctor->clinic_id);
             $reqEntry = $request->req_entry_id
                 ? ProductOrServiceRequest::find($request->req_entry_id)
@@ -288,7 +288,7 @@ class MobileEncounterController extends Controller
     public function encounterDetail(Encounter $encounter)
     {
         try {
-            $patient = patient::with('user', 'hmo')->find($encounter->patient_id);
+            $patient = Patient::with('user', 'hmo')->find($encounter->patient_id);
             $vitals = VitalSign::where('patient_id', $encounter->patient_id)
                 ->orderBy('created_at', 'DESC')
                 ->limit(10)

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\NursingNote;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\NursingNoteType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +24,7 @@ class NursingNoteController extends Controller
     public function index(Request $request)
     {
         $patient_id = $request->input('patient_id');
-        $patient = patient::find($patient_id);
+        $patient = Patient::find($patient_id);
 
         $observation_note = NursingNote::with(['patient', 'createdBy', 'type'])
             ->where('patient_id', $patient_id)

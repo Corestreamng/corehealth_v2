@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\patient;
+use App\Models\Patient;
 use Carbon\Carbon;
 
 /**
@@ -31,7 +31,7 @@ class PatientSearchController extends Controller
         }
 
         // ── 1. File‑number matches (limit 10) ──────────────────────────
-        $fileNoPatients = patient::with(['user', 'hmo', 'account'])
+        $fileNoPatients = Patient::with(['user', 'hmo', 'account'])
             ->where('file_no', 'like', "%{$q}%")
             ->limit(10)
             ->get();
@@ -39,7 +39,7 @@ class PatientSearchController extends Controller
         $fileNoIds = $fileNoPatients->pluck('id')->toArray();
 
         // ── 2. Name matches (limit 10, excluding already‑found) ────────
-        $namePatients = patient::with(['user', 'hmo', 'account'])
+        $namePatients = Patient::with(['user', 'hmo', 'account'])
             ->whereNotIn('id', $fileNoIds)
             ->whereHas('user', function ($uq) use ($q) {
                 $uq->where('surname', 'like', "%{$q}%")
@@ -52,7 +52,7 @@ class PatientSearchController extends Controller
         $excludeIds = array_merge($fileNoIds, $namePatients->pluck('id')->toArray());
 
         // ── 3. Phone‑number matches (limit 10, excluding already‑found)
-        $phonePatients = patient::with(['user', 'hmo', 'account'])
+        $phonePatients = Patient::with(['user', 'hmo', 'account'])
             ->whereNotIn('id', $excludeIds)
             ->where('phone_no', 'like', "%{$q}%")
             ->limit(10)

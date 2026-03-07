@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MiscBill;
 use App\Models\Patient;
 use App\Models\PatientAccount;
-use App\Models\payment;
+use App\Models\Payment;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -63,7 +63,7 @@ class PatientAccountController extends Controller
     public function patientPaymentHistoryList($patient_id)
     {
 
-        $hist = payment::where('patient_id', $patient_id)->with('product_or_service_request', 'patient', 'staff_user')->get();
+        $hist = Payment::where('patient_id', $patient_id)->with('product_or_service_request', 'patient', 'staff_user')->get();
         //dd($pc);
         return Datatables::of($hist)
             ->addIndexColumn()

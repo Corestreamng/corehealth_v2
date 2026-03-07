@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MedicalReport;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Encounter;
 use App\Models\VitalSign;
 use App\Models\Staff;
@@ -192,7 +192,7 @@ class MedicalReportController extends Controller
     public function getPatientData(Request $request, $patientId)
     {
         try {
-            $patient = patient::with('user')->find($patientId);
+            $patient = Patient::with('user')->find($patientId);
             if (!$patient) {
                 return response()->json(['success' => false, 'message' => 'Patient not found'], 404);
             }

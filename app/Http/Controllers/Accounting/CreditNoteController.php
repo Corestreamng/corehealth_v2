@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounting\CreditNote;
 use App\Models\Accounting\Account;
 use App\Models\Bank;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -164,7 +164,7 @@ class CreditNoteController extends Controller
      */
     public function create(Request $request)
     {
-        $patients = patient::with('user')
+        $patients = Patient::with('user')
             ->whereHas('user')
             ->orderBy('id', 'desc')
             ->limit(100)
@@ -174,7 +174,7 @@ class CreditNoteController extends Controller
         $payments = collect();
 
         if ($request->filled('patient_id')) {
-            $selectedPatient = patient::with('user')->find($request->patient_id);
+            $selectedPatient = Patient::with('user')->find($request->patient_id);
             if ($selectedPatient) {
                 // Get payments that can be refunded
                 $payments = \App\Models\Payment::where('patient_id', $selectedPatient->id)

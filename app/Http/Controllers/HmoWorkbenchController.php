@@ -6,7 +6,7 @@ use App\Models\ProductOrServiceRequest;
 use App\Models\Hmo;
 use App\Models\HmoScheme;
 use App\Models\HmoTariff;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\User;
 use App\Helpers\HmoHelper;
 use App\Models\DoctorQueue;
@@ -517,7 +517,7 @@ class HmoWorkbenchController extends Controller
      */
     public function getPatientHistory($patientId)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $history = ProductOrServiceRequest::with(['service', 'product', 'validator'])
             ->where('user_id', $patient->user_id)
@@ -604,7 +604,7 @@ class HmoWorkbenchController extends Controller
      */
     public function getPatientNotes($patientId)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $encounters = Encounter::with(['doctor.staff_profile.specialization'])
             ->where('patient_id', $patientId)
@@ -641,7 +641,7 @@ class HmoWorkbenchController extends Controller
      */
     public function getPatientMedications($patientId)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $meds = ProductRequest::with(['product', 'doctor', 'biller', 'dispenser'])
             ->where('patient_id', $patientId)
@@ -678,7 +678,7 @@ class HmoWorkbenchController extends Controller
      */
     public function getPatientAllergies($patientId)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $allergies = $patient->allergies ?? [];
 
@@ -1177,7 +1177,7 @@ class HmoWorkbenchController extends Controller
 
         if ($emergencyPatientIds->isEmpty()) return 0;
 
-        $emergencyUserIds = patient::whereIn('id', $emergencyPatientIds)->pluck('user_id');
+        $emergencyUserIds = Patient::whereIn('id', $emergencyPatientIds)->pluck('user_id');
 
         return ProductOrServiceRequest::whereIn('user_id', $emergencyUserIds)
             ->where('validation_status', 'pending')

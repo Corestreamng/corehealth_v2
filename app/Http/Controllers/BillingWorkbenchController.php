@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
-use App\Models\payment;
+use App\Models\Payment;
 use App\Models\PatientAccount;
 use App\Models\HmoClaim;
 use App\Models\Hmo;
@@ -40,7 +40,7 @@ class BillingWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = patient::with('user', 'hmo')
+        $patients = Patient::with('user', 'hmo')
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -88,6 +88,9 @@ class BillingWorkbenchController extends Controller
             ->whereNull('payment_id')
             ->whereNull('invoice_id');
 
+        // Exclude fully HMO-covered approved items (₦0 payable)
+        $this->excludeFullyHmoCovered($query);
+
         // Apply filters
         if ($filter === 'hmo') {
             $query->where('claims_amount', '>', 0);
@@ -95,7 +98,7 @@ class BillingWorkbenchController extends Controller
             // Filter for patients with credit accounts
             $creditPatientUserIds = PatientAccount::where('balance', '>', 0)
                 ->pluck('patient_id');
-            $creditUserIds = patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
+            $creditUserIds = Patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
             $query->whereIn('user_id', $creditUserIds);
         }
 
@@ -111,7 +114,7 @@ class BillingWorkbenchController extends Controller
             ->get();
 
         // Preload patient data
-        $patients = patient::with('user', 'hmo')
+        $patients = Patient::with('user', 'hmo')
             ->whereIn('user_id', $results->pluck('user_id'))
             ->get()
             ->keyBy('user_id');
@@ -161,26 +164,29 @@ class BillingWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
-        $unpaidCount = ProductOrServiceRequest::whereNull('payment_id')
-            ->whereNull('invoice_id')
-            ->select('user_id')
+        $unpaidQuery = ProductOrServiceRequest::whereNull('payment_id')
+            ->whereNull('invoice_id');
+        $this->excludeFullyHmoCovered($unpaidQuery);
+        $unpaidCount = $unpaidQuery->select('user_id')
             ->distinct()
             ->count();
 
-        $hmoCount = ProductOrServiceRequest::whereNull('payment_id')
+        $hmoQuery = ProductOrServiceRequest::whereNull('payment_id')
             ->whereNull('invoice_id')
-            ->where('claims_amount', '>', 0)
-            ->select('user_id')
+            ->where('claims_amount', '>', 0);
+        $this->excludeFullyHmoCovered($hmoQuery);
+        $hmoCount = $hmoQuery->select('user_id')
             ->distinct()
             ->count();
 
         $creditPatientUserIds = PatientAccount::where('balance', '>', 0)
             ->pluck('patient_id');
-        $creditUserIds = patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
-        $creditCount = ProductOrServiceRequest::whereNull('payment_id')
+        $creditUserIds = Patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
+        $creditQuery = ProductOrServiceRequest::whereNull('payment_id')
             ->whereNull('invoice_id')
-            ->whereIn('user_id', $creditUserIds)
-            ->select('user_id')
+            ->whereIn('user_id', $creditUserIds);
+        $this->excludeFullyHmoCovered($creditQuery);
+        $creditCount = $creditQuery->select('user_id')
             ->distinct()
             ->count();
 
@@ -194,16 +200,32 @@ class BillingWorkbenchController extends Controller
     }
 
     /**
+     * Exclude fully HMO-covered items from billing queue queries.
+     *
+     * These are items where: payable_amount is 0/NULL, claims_amount > 0,
+     * and validation_status = 'approved'. They are fully covered by HMO
+     * and should not appear as unpaid items in the billing queue.
+     */
+    private function excludeFullyHmoCovered($query)
+    {
+        return $query->whereRaw(
+            'NOT ((payable_amount IS NULL OR payable_amount = 0) AND claims_amount > 0 AND validation_status = ?)',
+            ['approved']
+        );
+    }
+
+    /**
      * Count patients with unpaid bills who are emergency patients
      */
     private function getEmergencyBillingCount()
     {
-        $unpaidPatientUserIds = ProductOrServiceRequest::whereNull('payment_id')
-            ->whereNull('invoice_id')
-            ->distinct()
+        $emergencyQuery = ProductOrServiceRequest::whereNull('payment_id')
+            ->whereNull('invoice_id');
+        $this->excludeFullyHmoCovered($emergencyQuery);
+        $unpaidPatientUserIds = $emergencyQuery->distinct()
             ->pluck('user_id');
 
-        $unpaidPatientIds = patient::whereIn('user_id', $unpaidPatientUserIds)->pluck('id');
+        $unpaidPatientIds = Patient::whereIn('user_id', $unpaidPatientUserIds)->pluck('id');
 
         $fromQueue = DoctorQueue::where('priority', 'emergency')
             ->whereIn('patient_id', $unpaidPatientIds)
@@ -225,9 +247,9 @@ class BillingWorkbenchController extends Controller
      */
     public function getPatientBillingData($patientId)
     {
-        $patient = patient::with('hmo')->findOrFail($patientId);
+        $patient = Patient::with('hmo')->findOrFail($patientId);
 
-        $items = ProductOrServiceRequest::with([
+        $itemsQuery = ProductOrServiceRequest::with([
                 'service.price',
                 'service.category',
                 'product.price',
@@ -235,7 +257,10 @@ class BillingWorkbenchController extends Controller
             ])
             ->where('user_id', $patient->user_id)
             ->whereNull('payment_id')
-            ->whereNull('invoice_id')
+            ->whereNull('invoice_id');
+        // Exclude fully HMO-covered approved items
+        $this->excludeFullyHmoCovered($itemsQuery);
+        $items = $itemsQuery
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($row) {
@@ -287,7 +312,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getPatientReceipts($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
         $receipts = collect();
 
         // Get filter values
@@ -296,7 +321,7 @@ class BillingWorkbenchController extends Controller
         $paymentTypeFilter = $request->payment_type;
 
         // 1. Get payments from payment table
-        $paymentQuery = payment::where('patient_id', $patientId);
+        $paymentQuery = Payment::where('patient_id', $patientId);
 
         if ($fromDate) {
             $paymentQuery->whereDate('created_at', '>=', $fromDate);
@@ -414,9 +439,9 @@ class BillingWorkbenchController extends Controller
      */
     public function getPatientTransactions($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
-        $query = payment::where('patient_id', $patientId);
+        $query = Payment::where('patient_id', $patientId);
 
         // Apply filters
         if ($request->has('start_date') && $request->has('end_date')) {
@@ -458,7 +483,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getAccountTransactions($patientId, Request $request)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
         $account = PatientAccount::where('patient_id', $patientId)->first();
 
         // Apply date filters - default to current month if not provided
@@ -498,7 +523,7 @@ class BillingWorkbenchController extends Controller
 
         // 2. Get withdrawals and adjustments from payment table
         // Skip ACC_DEPOSIT from payment table if the deposit has source_payment_id (to avoid duplicates)
-        $paymentQuery = payment::where('patient_id', $patientId)
+        $paymentQuery = Payment::where('patient_id', $patientId)
             ->whereIn('payment_type', ['ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
             ->whereDate('created_at', '>=', $fromDate)
             ->whereDate('created_at', '<=', $toDate);
@@ -562,7 +587,7 @@ class BillingWorkbenchController extends Controller
         $totalDeposits = PatientDeposit::where('patient_id', $patientId)->sum('amount');
 
         // Withdrawals from payments (stored as negative values)
-        $totalWithdrawals = abs(payment::where('patient_id', $patientId)
+        $totalWithdrawals = abs(Payment::where('patient_id', $patientId)
             ->where('payment_type', 'ACC_WITHDRAW')
             ->sum('total'));
 
@@ -582,12 +607,12 @@ class BillingWorkbenchController extends Controller
      */
     public function getPatientAccountSummary($patientId)
     {
-        $patient = patient::with('hmo')->findOrFail($patientId);
+        $patient = Patient::with('hmo')->findOrFail($patientId);
 
         $account = PatientAccount::where('patient_id', $patientId)->first();
         $balance = $account ? $account->balance : 0;
 
-        $totalPaid = payment::where('patient_id', $patientId)->sum('total');
+        $totalPaid = Payment::where('patient_id', $patientId)->sum('total');
 
         $totalClaims = HmoClaim::where('patient_id', $patientId)->sum('claims_amount');
         $pendingClaims = HmoClaim::where('patient_id', $patientId)
@@ -634,7 +659,7 @@ class BillingWorkbenchController extends Controller
         DB::beginTransaction();
 
         try {
-            $patient = patient::with('hmo')->findOrFail($data['patient_id']);
+            $patient = Patient::with('hmo')->findOrFail($data['patient_id']);
 
             $ids = collect($data['items'])->pluck('id')->all();
 
@@ -758,7 +783,7 @@ class BillingWorkbenchController extends Controller
             }
 
             // Create payment entry
-            $payment = payment::create([
+            $payment = Payment::create([
                 'payment_type' => $paymentType,
                 'payment_method' => $data['payment_method'] ?? $data['payment_type'],
                 'bank_id' => $data['bank_id'] ?? null,
@@ -889,8 +914,8 @@ class BillingWorkbenchController extends Controller
             'payment_ids.*' => 'integer|exists:payments,id',
         ]);
 
-        $patient = patient::findOrFail($request->patient_id);
-        $payments = payment::whereIn('id', $request->payment_ids)->get();
+        $patient = Patient::findOrFail($request->patient_id);
+        $payments = Payment::whereIn('id', $request->payment_ids)->get();
 
         // Aggregate items from selected payments
         $allItems = ProductOrServiceRequest::whereIn('payment_id', $request->payment_ids)
@@ -987,7 +1012,7 @@ class BillingWorkbenchController extends Controller
             'item_ids.*' => 'integer|exists:product_or_service_requests,id',
         ]);
 
-        $patient = patient::with('hmo')->findOrFail($request->patient_id);
+        $patient = Patient::with('hmo')->findOrFail($request->patient_id);
 
         // Get the unpaid items
         $items = ProductOrServiceRequest::whereIn('id', $request->item_ids)
@@ -1103,7 +1128,7 @@ class BillingWorkbenchController extends Controller
     {
         $userId = Auth::id();
 
-        $query = payment::where('user_id', $userId)->with(['patient.user', 'bank']);
+        $query = Payment::where('user_id', $userId)->with(['patient.user', 'bank']);
 
         // Date filtering - default to today
         $from = $request->input('from', now()->toDateString());
@@ -1228,7 +1253,7 @@ class BillingWorkbenchController extends Controller
             $account->update(['balance' => $newBalance]);
 
             // Create payment record for tracking
-            $payment = payment::create([
+            $payment = Payment::create([
                 'patient_id' => $request->patient_id,
                 'user_id' => Auth::id(),
                 'total' => $request->amount,
@@ -1316,7 +1341,7 @@ class BillingWorkbenchController extends Controller
             // Create payment record for tracking
             // Note: We store description in reference_no field as notes field doesn't exist
             $refNo = generate_invoice_no();
-            $payment = payment::create([
+            $payment = Payment::create([
                 'patient_id' => $request->patient_id,
                 'user_id' => Auth::id(),
                 'total' => $balanceChange,
@@ -1497,7 +1522,7 @@ class BillingWorkbenchController extends Controller
         $includeWithdrawals = filter_var($request->include_withdrawals, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
         $includeServices = filter_var($request->include_services, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
 
-        $patient = patient::with(['hmo', 'user'])->findOrFail($patientId);
+        $patient = Patient::with(['hmo', 'user'])->findOrFail($patientId);
         $account = PatientAccount::where('patient_id', $patientId)->first();
 
         $dateFrom = Carbon::parse($request->date_from)->startOfDay();
@@ -1535,7 +1560,7 @@ class BillingWorkbenchController extends Controller
 
         // Include direct payments (CASH, POS, TRANSFER - not from account)
         if ($includePayments) {
-            $directPayments = payment::where('patient_id', $patientId)
+            $directPayments = Payment::where('patient_id', $patientId)
                 ->whereNotIn('payment_type', ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
                 ->whereBetween('created_at', [$dateFrom, $dateTo])
                 ->with(['product_or_service_request.service', 'product_or_service_request.product'])
@@ -1571,7 +1596,7 @@ class BillingWorkbenchController extends Controller
 
         // Include account withdrawals/payments from balance
         if ($includeWithdrawals) {
-            $withdrawals = payment::where('patient_id', $patientId)
+            $withdrawals = Payment::where('patient_id', $patientId)
                 ->whereIn('payment_type', ['ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
                 ->whereBetween('created_at', [$dateFrom, $dateTo])
                 ->orderBy('created_at')
@@ -1652,12 +1677,12 @@ class BillingWorkbenchController extends Controller
             ->where('deposit_date', '<', $dateFrom)
             ->sum('amount');
 
-        $withdrawalsBeforePeriod = abs(payment::where('patient_id', $patientId)
+        $withdrawalsBeforePeriod = abs(Payment::where('patient_id', $patientId)
             ->where('payment_type', 'ACC_WITHDRAW')
             ->where('created_at', '<', $dateFrom)
             ->sum('total'));
 
-        $adjustmentsBeforePeriod = payment::where('patient_id', $patientId)
+        $adjustmentsBeforePeriod = Payment::where('patient_id', $patientId)
             ->where('payment_type', 'ACC_ADJUSTMENT')
             ->where('created_at', '<', $dateFrom)
             ->sum('total');
@@ -1740,7 +1765,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getAdmissionHistory($patientId)
     {
-        $patient = patient::find($patientId);
+        $patient = Patient::find($patientId);
         if (!$patient) {
             return response()->json(['error' => 'Patient not found'], 404);
         }
