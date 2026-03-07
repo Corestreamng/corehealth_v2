@@ -64,16 +64,16 @@ class AdmissionRequestController extends Controller
                 return userfullname($r->patient->user_id);
             })
             ->addColumn('file_no', function ($r) {
-                $p = patient::where('user_id', $r->patient->user_id)->first();
+                $p = Patient::where('user_id', $r->patient->user_id)->first();
                 return $p->file_no ?? 'N/A';
             })
             ->addColumn('hmo', function ($r) {
-                $p = patient::where('user_id', $r->patient->user_id)->first();
+                $p = Patient::where('user_id', $r->patient->user_id)->first();
                 $hmo = Hmo::find($p->hmo_id);
                 return $hmo ? $hmo->name : 'N/A';
             })
             ->addColumn('hmo_no', function ($r) {
-                $p = patient::where('user_id', $r->patient->user_id)->first();
+                $p = Patient::where('user_id', $r->patient->user_id)->first();
                 return $p->hmo_no ?? 'N/A';
             })
             ->editColumn('bed_id', function ($r) {
@@ -138,16 +138,16 @@ class AdmissionRequestController extends Controller
                 return userfullname($r->patient->user_id);
             })
             ->addColumn('file_no', function ($r) {
-                $p = patient::where('user_id', $r->patient->user_id)->first();
+                $p = Patient::where('user_id', $r->patient->user_id)->first();
                 return $p->file_no ?? 'N/A';
             })
             ->addColumn('hmo', function ($r) {
-                $p = patient::where('user_id', $r->patient->user_id)->first();
+                $p = Patient::where('user_id', $r->patient->user_id)->first();
                 $hmo = Hmo::find($p->hmo_id);
                 return $hmo ? $hmo->name : 'N/A';
             })
             ->addColumn('hmo_no', function ($r) {
-                $p = patient::where('user_id', $r->patient->user_id)->first();
+                $p = Patient::where('user_id', $r->patient->user_id)->first();
                 return $p->hmo_no ?? 'N/A';
             })
             ->editColumn('bed_id', function ($r) {
@@ -649,7 +649,7 @@ class AdmissionRequestController extends Controller
                 'bed_id' => 'required|exists:beds,id'
             ]);
 
-            $patient = patient::find($request->patient_id);
+            $patient = Patient::find($request->patient_id);
             $bed = Bed::with('service')->find($request->bed_id);
 
             if (!$bed->service_id) {

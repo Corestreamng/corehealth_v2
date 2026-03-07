@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DoctorQueue;
 use App\Models\Hmo;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Staff;
 use App\Models\VitalSign;
@@ -60,7 +60,7 @@ class ProductOrServiceRequestController extends Controller
                 ->get();
 
             // Preload patient + HMO data to avoid N+1
-            $patients = patient::with('hmo')
+            $patients = Patient::with('hmo')
                 ->whereIn('user_id', $req->pluck('user_id'))
                 ->get()
                 ->keyBy('user_id');
@@ -200,7 +200,7 @@ class ProductOrServiceRequestController extends Controller
 
                                 $queue = new DoctorQueue();
                                 if (isset($doctor_ids[$i])) {
-                                    $p = patient::where('user_id', $user_ids[$i])->first();
+                                    $p = Patient::where('user_id', $user_ids[$i])->first();
                                     // die($p);
                                     $d = Staff::find($doctor_ids[$i]);
                                     $r = Staff::where('user_id', Auth::id())->first();
@@ -210,7 +210,7 @@ class ProductOrServiceRequestController extends Controller
                                     $queue->staff_id = $d->id ?? null;
                                     $queue->request_entry_id = $req->id;
                                 } else {
-                                    $p = patient::where('user_id', $user_ids[$i])->first();
+                                    $p = Patient::where('user_id', $user_ids[$i])->first();
                                     $r = Staff::where('user_id', Auth::id())->first();
                                     $queue->patient_id = $p->id;
                                     $queue->clinic_id = $clinic_ids[$i];

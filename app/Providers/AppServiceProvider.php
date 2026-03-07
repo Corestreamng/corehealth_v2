@@ -14,7 +14,7 @@ use App\Models\ProductOrServiceRequest;
 use App\Models\ChatConversation;
 use App\Models\ChatParticipant;
 use App\Models\User;
-use App\Models\payment;
+use App\Models\Payment;
 use App\Models\Expense;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderPayment;
@@ -120,7 +120,7 @@ class AppServiceProvider extends ServiceProvider
         JournalEntry::observe(JournalEntryObserver::class);
         CreditNote::observe(CreditNoteObserver::class);
         JournalEntryEdit::observe(JournalEntryEditObserver::class);
-        payment::observe(PaymentObserver::class);
+        Payment::observe(PaymentObserver::class);
         Expense::observe(ExpenseObserver::class);
         PurchaseOrder::observe(PurchaseOrderObserver::class);
         PayrollBatch::observe(PayrollBatchObserver::class);

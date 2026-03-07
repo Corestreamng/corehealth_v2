@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\patient as PatientLowerCase;
 use App\Models\Product;
 use App\Models\service;
@@ -1794,15 +1794,15 @@ class MaternityWorkbenchController extends Controller
             ]);
 
             // Get mother's patient record for defaults
-            $motherPatient = patient::find($enrollment->patient_id);
+            $motherPatient = Patient::find($enrollment->patient_id);
 
             // Generate file number for baby
-            $lastFile = patient::orderBy('id', 'desc')->first();
+            $lastFile = Patient::orderBy('id', 'desc')->first();
             $nextFileNo = $lastFile ? intval(preg_replace('/[^0-9]/', '', $lastFile->file_no)) + 1 : 1;
             $fileNo = str_pad($nextFileNo, 6, '0', STR_PAD_LEFT);
 
             // Create patient record for baby
-            $babyPatient = patient::create([
+            $babyPatient = Patient::create([
                 'user_id'     => $babyUser->id,
                 'file_no'     => $fileNo,
                 'gender'      => $request->sex,

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\VitalSign;
 use App\Models\Encounter;
 use App\Models\ProductRequest;
@@ -56,7 +56,7 @@ class ClinicalContextController extends Controller
      */
     public function getNotes($patientId)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $encounters = Encounter::with(['doctor.staff_profile.specialization'])
             ->where('patient_id', $patientId)
@@ -93,7 +93,7 @@ class ClinicalContextController extends Controller
      */
     public function getMedications($patientId)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $meds = ProductRequest::with(['product', 'doctor', 'biller', 'dispenser'])
             ->where('patient_id', $patientId)
@@ -130,7 +130,7 @@ class ClinicalContextController extends Controller
      */
     public function getAllergies($patientId)
     {
-        $patient = patient::findOrFail($patientId);
+        $patient = Patient::findOrFail($patientId);
 
         $allergies = $patient->allergies ?? [];
 

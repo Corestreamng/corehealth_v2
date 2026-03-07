@@ -260,7 +260,7 @@ class HmoReportsController extends Controller
      */
     public function getPatientReport(Request $request, $patientId)
     {
-        $patient = patient::with(['user', 'hmo'])->findOrFail($patientId);
+        $patient = Patient::with(['user', 'hmo'])->findOrFail($patientId);
 
         $claims = ProductOrServiceRequest::with([
             'service.price',
@@ -797,7 +797,7 @@ class HmoReportsController extends Controller
     {
         $search = $request->input('q', '');
 
-        $patients = patient::with(['user', 'hmo'])
+        $patients = Patient::with(['user', 'hmo'])
             ->whereHas('user', function($q) use ($search) {
                 $q->where('fname', 'like', "%$search%")
                   ->orWhere('lname', 'like', "%$search%");
@@ -1080,7 +1080,7 @@ class HmoReportsController extends Controller
      */
     public function getPatientPrintData(Request $request, $patientId)
     {
-        $patient = patient::with(['user', 'hmo'])->findOrFail($patientId);
+        $patient = Patient::with(['user', 'hmo'])->findOrFail($patientId);
 
         $claims = ProductOrServiceRequest::with([
             'service.price',
