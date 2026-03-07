@@ -57,7 +57,7 @@ protected $fillable = [
 
     public function payment()
     {
-        return $this->belongsTo(payment::class, 'payment_id', 'id');
+        return $this->belongsTo(Payment::class, 'payment_id', 'id');
     }
 
     public function user()

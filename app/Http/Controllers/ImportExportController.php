@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\User;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Staff;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -62,7 +62,7 @@ class ImportExportController extends Controller
             'products' => Product::count(),
             'services' => Service::count(),
             'staff' => Staff::count(),
-            'patients' => patient::count(),
+            'patients' => Patient::count(),
         ];
 
         $categories = [
@@ -1489,7 +1489,7 @@ class ImportExportController extends Controller
             }
 
             // Pre-fetch lookup data for performance
-            $existingPatients = patient::pluck('user_id', 'file_no')->toArray();
+            $existingPatients = Patient::pluck('user_id', 'file_no')->toArray();
             $existingEmails = User::pluck('id', 'email')->toArray();
             $hmos = Hmo::pluck('id', 'name')->toArray();
             $patientRole = Role::where('name', 'PATIENT')->first();
@@ -1582,7 +1582,7 @@ class ImportExportController extends Controller
                                 'othername' => trim($row['othername'] ?? ''),
                             ]);
 
-                            patient::where('file_no', $fileNo)->update([
+                            Patient::where('file_no', $fileNo)->update([
                                 'hmo_id' => $hmoId,
                                 'hmo_no' => $hmoNo,
                                 'gender' => $gender,
@@ -1628,7 +1628,7 @@ class ImportExportController extends Controller
                                 $user->assignRole($patientRole);
                             }
 
-                            patient::create([
+                            Patient::create([
                                 'user_id' => $user->id,
                                 'file_no' => $fileNo,
                                 'hmo_id' => $hmoId,
@@ -1841,7 +1841,7 @@ class ImportExportController extends Controller
     {
         $hmoId = $request->hmo_id;
 
-        $query = patient::with(['user', 'hmo']);
+        $query = Patient::with(['user', 'hmo']);
 
         if ($hmoId) {
             $query->where('hmo_id', $hmoId);
@@ -2123,7 +2123,7 @@ class ImportExportController extends Controller
     private function generatePatientFileNo()
     {
         $prefix = date('Y');
-        $lastPatient = patient::where('file_no', 'like', $prefix . '%')
+        $lastPatient = Patient::where('file_no', 'like', $prefix . '%')
             ->orderBy('file_no', 'desc')
             ->first();
 

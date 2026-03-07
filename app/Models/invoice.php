@@ -18,6 +18,6 @@ class invoice extends Model implements Auditable
      */
     public function payment(): BelongsTo
     {
-        return $this->belongsTo(payment::class);
+        return $this->belongsTo(Payment::class);
     }
 }

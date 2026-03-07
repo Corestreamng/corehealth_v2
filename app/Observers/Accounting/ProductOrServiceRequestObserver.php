@@ -3,6 +3,8 @@
 namespace App\Observers\Accounting;
 
 use App\Models\ProductOrServiceRequest;
+use App\Models\Payment;
+use App\Models\Patient;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountSubAccount;
 use App\Models\Accounting\JournalEntry;
@@ -33,6 +35,12 @@ use Illuminate\Support\Facades\Log;
  * - hmo_id (for HMO-specific reports)
  * - patient_id (for patient transaction history)
  * - category (lab, pharmacy, imaging, etc.)
+ *
+ * AUTO-SETTLEMENT:
+ * When a fully HMO-covered item has payable_amount = 0 and claims_amount > 0
+ * with validation_status = 'approved', it is auto-settled with a ₦0 payment
+ * (type HMO_FULL_COVER) so it does not clog the billing queue.
+ * Triggered on both created() and updated() (when validation_status → approved).
  */
 class ProductOrServiceRequestObserver
 {
@@ -41,6 +49,17 @@ class ProductOrServiceRequestObserver
     public function __construct(SubAccountService $subAccountService)
     {
         $this->subAccountService = $subAccountService;
+    }
+
+    /**
+     * Handle the ProductOrServiceRequest "created" event.
+     *
+     * Auto-settles fully HMO-covered items (express, approved, payable = 0)
+     * so they never appear in the billing queue.
+     */
+    public function created(ProductOrServiceRequest $request): void
+    {
+        $this->autoSettleIfFullyCovered($request);
     }
 
     /**
@@ -64,6 +83,9 @@ class ProductOrServiceRequestObserver
                     'trace' => $e->getTraceAsString()
                 ]);
             }
+
+            // Auto-settle if the approved item has zero payable (fully HMO-covered)
+            $this->autoSettleIfFullyCovered($request);
         }
 
         // When validation_status changes to rejected - reverse any existing entry
@@ -77,6 +99,63 @@ class ProductOrServiceRequestObserver
                     'trace' => $e->getTraceAsString()
                 ]);
             }
+        }
+    }
+
+    /**
+     * Auto-settle a fully HMO-covered item by creating a ₦0 payment.
+     *
+     * Conditions (ALL must be true):
+     * - validation_status = 'approved'
+     * - claims_amount > 0
+     * - payable_amount = 0 or NULL
+     * - payment_id is NULL (not already settled)
+     * - invoice_id is NULL (not already invoiced)
+     */
+    protected function autoSettleIfFullyCovered(ProductOrServiceRequest $request): void
+    {
+        // Guard: must be approved HMO with zero patient payable
+        if ($request->validation_status !== 'approved') return;
+        if (!$request->claims_amount || $request->claims_amount <= 0) return;
+        if ($request->payable_amount !== null && $request->payable_amount > 0) return;
+        if ($request->payment_id !== null) return;
+        if ($request->invoice_id !== null) return;
+
+        try {
+            // Resolve patient_id for the payment record
+            $patientId = $request->patient_id;
+            if (!$patientId && $request->user_id) {
+                $patientId = Patient::where('user_id', $request->user_id)->value('id');
+            }
+
+            $payment = Payment::create([
+                'payment_type'   => 'HMO_FULL_COVER',
+                'payment_method' => 'HMO_FULL_COVER',
+                'total'          => 0,
+                'total_discount' => 0,
+                'patient_id'     => $patientId,
+                'hmo_id'         => $request->hmo_id,
+                'user_id'        => 1, // System user
+                'reference_no'   => 'HMO-AUTO-' . $request->id,
+            ]);
+
+            // Update without triggering observer again
+            ProductOrServiceRequest::withoutEvents(function () use ($request, $payment) {
+                $request->update(['payment_id' => $payment->id]);
+            });
+
+            Log::info('ProductOrServiceRequestObserver: Auto-settled fully HMO-covered item', [
+                'request_id'    => $request->id,
+                'payment_id'    => $payment->id,
+                'claims_amount' => $request->claims_amount,
+                'coverage_mode' => $request->coverage_mode,
+                'hmo_id'        => $request->hmo_id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('ProductOrServiceRequestObserver: Failed to auto-settle HMO item', [
+                'request_id' => $request->id,
+                'error'      => $e->getMessage(),
+            ]);
         }
     }
 

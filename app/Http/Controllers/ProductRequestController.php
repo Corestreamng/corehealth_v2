@@ -15,7 +15,7 @@ use App\Models\Staff;
 use App\Models\Hmo;
 use App\Models\LabServiceRequest;
 use Illuminate\Support\Facades\Auth;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Store;
@@ -239,7 +239,7 @@ class ProductRequestController extends Controller
 
                         // Apply HMO tariff if patient has HMO
                         try {
-                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            $patient = Patient::where('user_id', $request->patient_user_id)->first();
                             if ($patient) {
                                 $hmoData = HmoHelper::applyHmoTariff($patient->id, $request->addedPrescBillRows[$i], null);
                                 if ($hmoData) {
@@ -423,7 +423,7 @@ class ProductRequestController extends Controller
                     $bill_req->qty = $prod_req->qty; // Use the qty from ProductRequest (may have been adjusted)
 
                     // Apply HMO tariff
-                    $patient = patient::find($request->patient_id);
+                    $patient = Patient::find($request->patient_id);
                     if ($patient && $patient->hmo_id) {
                         try {
                             $hmoData = HmoHelper::applyHmoTariff($patient->id, $prod_id, null);
@@ -489,7 +489,7 @@ class ProductRequestController extends Controller
                     $bill_req->qty = 1; // Newly added items default to qty 1
 
                     // Apply HMO tariff
-                    $patient = patient::find($request->patient_id);
+                    $patient = Patient::find($request->patient_id);
                     if ($patient && $patient->hmo_id) {
                         try {
                             $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);

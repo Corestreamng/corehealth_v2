@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PharmacyReturn;
 use App\Models\ProductRequest;
 use App\Models\ProductOrServiceRequest;
-use App\Models\patient;
+use App\Models\Patient;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -365,7 +365,7 @@ class PharmacyReturnsController extends Controller
                 // 2. Create ACC_DEPOSIT payment for patient statement visibility
                 //    Link to existing JE so PaymentObserver does NOT create a duplicate
                 $refNo = generate_invoice_no();
-                \App\Models\payment::create([
+                \App\Models\Payment::create([
                     'patient_id' => $return->patient_id,
                     'user_id' => Auth::id(),
                     'total' => $refundToPatient,
