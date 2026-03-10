@@ -1,4 +1,13 @@
 {{-- Clinical Notes & Diagnosis: Combined History + New Entry --}}
+<style>
+    /* Make the doctor clinical notes CKEditor taller (same pattern as medical report builder) */
+    #clinical_notes .ck-editor__editable,
+    #my_notes_old .ck-editor__editable {
+        min-height: 55vh !important;
+        max-height: calc(100vh - 250px) !important;
+        overflow-y: auto !important;
+    }
+</style>
 <div class="card-modern">
     <div class="card-body">
         {{-- Nav tabs for History and New Entry --}}

@@ -129,7 +129,7 @@ class MaternityWorkbenchController extends Controller
 
         $results = $patients->map(function ($p) {
             $enrollment = MaternityEnrollment::where('patient_id', $p->id)
-                ->whereIn('status', ['active', 'delivered', 'postnatal'])
+                ->whereIn('status', ['active', 'postnatal'])
                 ->first();
 
             return [
@@ -157,7 +157,7 @@ class MaternityWorkbenchController extends Controller
         $patient = PatientLowerCase::with(['user', 'hmo'])->findOrFail($id);
 
         $enrollment = MaternityEnrollment::where('patient_id', $id)
-            ->whereIn('status', ['active', 'delivered', 'postnatal'])
+            ->whereIn('status', ['active', 'postnatal'])
             ->with(['ancVisits', 'deliveryRecord', 'babies', 'postnatalVisits'])
             ->first();
 
@@ -199,9 +199,12 @@ class MaternityWorkbenchController extends Controller
                 'height_cm'         => $enrollment->height_cm,
                 'anc_visit_count'   => $enrollment->ancVisits->count(),
                 'has_delivery'      => $enrollment->deliveryRecord ? true : false,
+                'delivery_date'     => $enrollment->deliveryRecord ? $enrollment->deliveryRecord->delivery_date->format('d M Y') : null,
                 'baby_count'        => $enrollment->babies->count(),
                 'postnatal_visit_count' => $enrollment->postnatalVisits->count(),
                 'remaining_days'    => $enrollment->getRemainingDays(),
+                'completed_at'      => $enrollment->completed_at ? $enrollment->completed_at->format('d M Y H:i') : null,
+                'outcome_summary'   => $enrollment->outcome_summary,
             ] : null,
             'last_vitals'  => $lastVitals ? [
                 'bp'        => $lastVitals->blood_pressure ?? 'N/A',
@@ -244,7 +247,7 @@ class MaternityWorkbenchController extends Controller
 
         // Check for existing active enrollment
         $existing = MaternityEnrollment::where('patient_id', $request->patient_id)
-            ->whereIn('status', ['active', 'delivered', 'postnatal'])
+            ->whereIn('status', ['active', 'postnatal'])
             ->first();
 
         if ($existing) {
@@ -269,7 +272,7 @@ class MaternityWorkbenchController extends Controller
             // Determine initial status based on entry point
             $status = 'active';
             if ($request->entry_point === 'delivery') {
-                $status = 'delivered';
+                $status = 'postnatal';
             } elseif ($request->entry_point === 'postnatal') {
                 $status = 'postnatal';
             }
@@ -407,6 +410,70 @@ class MaternityWorkbenchController extends Controller
         ]);
     }
 
+    /**
+     * Discharge a maternity enrollment with validation and warnings.
+     */
+    public function dischargeEnrollment(Request $request, $id)
+    {
+        $enrollment = MaternityEnrollment::with(['deliveryRecord', 'babies', 'postnatalVisits'])
+            ->findOrFail($id);
+
+        // Cannot discharge if already completed/transferred/deceased
+        if (in_array($enrollment->status, ['completed', 'transferred', 'deceased'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This enrollment is already ' . $enrollment->status . ' and cannot be discharged.',
+            ], 422);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'outcome_summary' => 'required|string|min:5',
+            'confirm'         => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        // Build warnings based on current state
+        $warnings = [];
+        if ($enrollment->status === 'active' && !$enrollment->deliveryRecord) {
+            $warnings[] = 'Patient has NOT delivered yet. Discharging now will close the enrollment without a delivery record.';
+        }
+        if ($enrollment->babies->count() === 0 && $enrollment->deliveryRecord) {
+            $warnings[] = 'No baby records have been registered for this delivery.';
+        }
+        if ($enrollment->postnatalVisits->count() === 0 && $enrollment->deliveryRecord) {
+            $warnings[] = 'No postnatal visits have been recorded.';
+        }
+
+        // If not confirmed yet, return warnings for user review
+        if (!$request->confirm) {
+            return response()->json([
+                'success'  => false,
+                'confirm'  => true,
+                'warnings' => $warnings,
+                'message'  => 'Please review the warnings and confirm discharge.',
+            ]);
+        }
+
+        try {
+            $enrollment->update([
+                'status'          => 'completed',
+                'completed_at'    => Carbon::now(),
+                'outcome_summary' => $request->outcome_summary,
+            ]);
+
+            return response()->json([
+                'success'    => true,
+                'message'    => 'Patient has been discharged from maternity care.',
+                'enrollment' => $enrollment->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function getTimeline($id)
     {
         $enrollment = MaternityEnrollment::with([
@@ -480,6 +547,7 @@ class MaternityWorkbenchController extends Controller
             'medicalHistory',
             'previousPregnancies',
             'ancVisits.seenBy',
+            'ancInvestigations',
             'deliveryRecord.deliveredBy',
             'postnatalVisits.seenBy',
             'babies.patient.user',
@@ -497,6 +565,7 @@ class MaternityWorkbenchController extends Controller
             'medicalHistory' => $enrollment->medicalHistory,
             'delivery' => $enrollment->deliveryRecord,
             'postnatal' => $enrollment->postnatalVisits->sortBy('visit_date')->values(),
+            'investigations' => $enrollment->ancInvestigations,
         ]);
     }
 
@@ -505,6 +574,7 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::with([
             'patient.user',
             'deliveryRecord',
+            'ancVisits',
             'babies.patient.user',
         ])->findOrFail($id);
 
@@ -516,7 +586,7 @@ class MaternityWorkbenchController extends Controller
             $babyUser = $babyPatient ? $babyPatient->user : null;
 
             $immunizations = ImmunizationRecord::where('patient_id', $baby->patient_id)
-                ->orderBy('date_of_vaccination')
+                ->orderBy('administered_at')
                 ->get();
 
             $growth = ChildGrowthRecord::where('baby_id', $baby->id)
@@ -1452,8 +1522,8 @@ class MaternityWorkbenchController extends Controller
                 'notes'                  => $request->notes,
             ]);
 
-            // Update enrollment status
-            $enrollment->update(['status' => 'delivered']);
+            // Update enrollment status — delivery transitions directly to postnatal
+            $enrollment->update(['status' => 'postnatal']);
 
             DB::commit();
 
@@ -2124,10 +2194,7 @@ class MaternityWorkbenchController extends Controller
                 'seen_by'            => Auth::id(),
             ]);
 
-            // Update enrollment status to postnatal if it's still 'delivered'
-            if ($enrollment->status === 'delivered') {
-                $enrollment->update(['status' => 'postnatal']);
-            }
+
 
             return response()->json([
                 'success' => true,
@@ -2561,7 +2628,7 @@ class MaternityWorkbenchController extends Controller
             ->where('edd', '>=', Carbon::today())
             ->count();
 
-        $postnatal = MaternityEnrollment::whereIn('status', ['delivered', 'postnatal'])->count();
+        $postnatal = MaternityEnrollment::where('status', 'postnatal')->count();
 
         $overdueImmunization = MaternityBaby::where('status', 'alive')
             ->whereHas('patient', function ($q) {
@@ -2569,7 +2636,7 @@ class MaternityWorkbenchController extends Controller
             })
             ->count();
 
-        $highRisk = MaternityEnrollment::whereIn('status', ['active', 'delivered', 'postnatal'])
+        $highRisk = MaternityEnrollment::whereIn('status', ['active', 'postnatal'])
             ->where('risk_level', 'high')
             ->count();
 
@@ -2658,7 +2725,7 @@ class MaternityWorkbenchController extends Controller
 
     public function getPostnatalQueue()
     {
-        $enrollments = MaternityEnrollment::whereIn('status', ['delivered', 'postnatal'])
+        $enrollments = MaternityEnrollment::where('status', 'postnatal')
             ->with(['patient.user', 'deliveryRecord', 'babies'])
             ->orderBy('updated_at', 'desc')
             ->get()
@@ -2718,7 +2785,7 @@ class MaternityWorkbenchController extends Controller
 
     public function getHighRiskQueue()
     {
-        $enrollments = MaternityEnrollment::whereIn('status', ['active', 'delivered', 'postnatal'])
+        $enrollments = MaternityEnrollment::whereIn('status', ['active', 'postnatal'])
             ->where('risk_level', 'high')
             ->with('patient.user')
             ->orderBy('edd', 'asc')
@@ -2840,7 +2907,7 @@ class MaternityWorkbenchController extends Controller
     public function getHighRiskRegister()
     {
         $register = MaternityEnrollment::where('risk_level', 'high')
-            ->whereIn('status', ['active', 'delivered', 'postnatal'])
+            ->whereIn('status', ['active', 'postnatal'])
             ->with('patient.user')
             ->get()
             ->map(function ($e) {

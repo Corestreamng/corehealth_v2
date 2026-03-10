@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Road to Health Card - Enrollment {{ $enrollment->id }}</title>
+    <title>Road to Health Card — {{ $motherUser ? trim(($motherUser->surname ?? '') . ' ' . ($motherUser->firstname ?? '')) : 'Enrollment ' . $enrollment->id }} ({{ $babies->count() }} {{ $babies->count() === 1 ? 'baby' : 'babies' }})</title>
     <style>
         @page { size: A4 landscape; margin: 6mm 8mm; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -182,14 +182,7 @@
 <body>
 
 @php
-    $firstBaby = $babies->first();
-    $babySex = $firstBaby ? strtoupper(substr($firstBaby['model']->sex ?? 'M', 0, 1)) : 'M';
-    $sexLabel = $babySex === 'F' ? 'Girls' : 'Boys';
-    $whoData = $firstBaby ? ($firstBaby['whoWfa'] ?? []) : [];
-    $fullGrowth = $firstBaby ? collect($firstBaby['growth'])->sortBy('age_months')->values() : collect();
-    $vaxRows = $firstBaby ? collect($firstBaby['immunizations']) : collect();
-
-    // Nigerian NPI Vaccination Schedule
+    // Nigerian NPI Vaccination Schedule (static — shared across all babies)
     $npiSchedule = [
         ['group' => 'At Birth', 'vaccines' => [
             ['name' => 'B.C.G', 'key' => 'bcg'],
@@ -232,13 +225,6 @@
         ]],
     ];
 
-    // Match immunization records to schedule
-    $vaxMap = [];
-    foreach ($vaxRows as $v) {
-        $vName = strtolower(trim($v->vaccine_name ?? ''));
-        $vaxMap[$vName] = $v;
-    }
-
     // Chart dimension helpers
     function svgX($month, $monthMin, $monthMax, $chartW) {
         return round(40 + (($month - $monthMin) / ($monthMax - $monthMin)) * ($chartW - 50), 2);
@@ -248,25 +234,43 @@
     }
 @endphp
 
+@foreach($babies as $babyIndex => $babyData)
+@php
+    $babySex = strtoupper(substr($babyData['model']->sex ?? 'M', 0, 1));
+    $sexLabel = $babySex === 'F' ? 'Girls' : 'Boys';
+    $whoData = $babyData['whoWfa'] ?? [];
+    $fullGrowth = collect($babyData['growth'])->sortBy('age_months')->values();
+    $vaxRows = collect($babyData['immunizations']);
+    $babyName = $babyData['user'] ? trim(($babyData['user']->surname ?? '') . ' ' . ($babyData['user']->firstname ?? '')) : ('Baby #' . ($babyData['model']->birth_order ?? ($babyIndex + 1)));
+    $totalPages = $babies->count() * 2;
+    $page1Num = ($babyIndex * 2) + 1;
+    $page2Num = ($babyIndex * 2) + 2;
+@endphp
+
 {{-- ═══════════════════════════════════════════════════════════════
-     PAGE 1: INSIDE LEFT — Growth Curves (Birth to 3 Years)
-     WHO Weight-for-Age with SVG curves + child data points
+     PAGE {{ $page1Num }}: Growth Curves (Birth to 3 Years) — {{ $babyName }}
      ═══════════════════════════════════════════════════════════════ --}}
 <div class="page">
     <div style="text-align:center; margin-bottom:4px;">
         <span class="card-title" style="font-size:13px;">Weight-for-Age Growth Chart ({{ $sexLabel }}) — Birth to 3 Years</span>
         <span style="font-size:9px; color:#888; margin-left:8px;">WHO Child Growth Standards</span>
+        @if($babies->count() > 1)
+            <br><span style="font-size:10px; font-weight:700; color:#006400;">{{ $babyName }} (Baby {{ $babyIndex + 1 }} of {{ $babies->count() }})</span>
+        @endif
     </div>
 
     {{-- ── Reasons for Special Care ── --}}
     <div class="section" style="margin-bottom:5px;">
         <div class="section-head" style="font-size:9px; padding:2px 6px;">Reasons for Special Care</div>
         <div class="section-body" style="padding:3px 5px; font-size:9px;">
-            @if($firstBaby && ($firstBaby['model']->birth_weight_kg ?? 0) < 2.5)
-                <span style="color:#dc3545; font-weight:700;">Low Birth Weight ({{ $firstBaby['model']->birth_weight_kg }} kg)</span> &nbsp;|&nbsp;
+            @if(($babyData['model']->birth_weight_kg ?? 0) < 2.5)
+                <span style="color:#dc3545; font-weight:700;">Low Birth Weight ({{ $babyData['model']->birth_weight_kg }} kg)</span> &nbsp;|&nbsp;
             @endif
-            @if($firstBaby && ($firstBaby['model']->condition_at_birth ?? '') !== 'Normal' && !empty($firstBaby['model']->condition_at_birth))
-                <span style="color:#dc3545;">Condition: {{ $firstBaby['model']->condition_at_birth }}</span> &nbsp;|&nbsp;
+            @if(!empty($babyData['model']->reasons_for_special_care))
+                <span style="color:#dc3545;">{{ $babyData['model']->reasons_for_special_care }}</span> &nbsp;|&nbsp;
+            @endif
+            @if($babyData['model']->status && $babyData['model']->status !== 'alive')
+                <span style="color:#dc3545;">Status: {{ ucfirst($babyData['model']->status) }}</span> &nbsp;|&nbsp;
             @endif
             @if($enrollment->risk_level === 'high' || $enrollment->risk_level === 'very_high')
                 <span style="color:#dc3545;">High Risk Pregnancy</span> &nbsp;|&nbsp;
@@ -415,8 +419,8 @@
 
     <div class="page-footer">
         <div>{{ appsettings('hos_name', 'O.L.A Hospital Jos') }} — Road to Health Card</div>
-        <div>Baby: {{ $firstBaby && $firstBaby['user'] ? trim(($firstBaby['user']->surname ?? '') . ' ' . ($firstBaby['user']->firstname ?? '')) : 'N/A' }}</div>
-        <div>Page 1 of 2 | Printed: {{ now()->format('d M Y H:i') }}</div>
+        <div>Baby: {{ $babyName }}</div>
+        <div>Page {{ $page1Num }} of {{ $totalPages }} | Printed: {{ now()->format('d M Y H:i') }}</div>
     </div>
 </div>
 
@@ -429,6 +433,9 @@
         <div class="hospital-name">{{ appsettings('hos_name', 'O.L.A Hospital — Jos') }}</div>
         <div class="hospital-sub">{{ appsettings('hos_address', '') }}</div>
         <div class="card-title">Road to Health Card</div>
+        @if($babies->count() > 1)
+            <div style="font-size:10px; font-weight:700; color:#006400;">{{ $babyName }} (Baby {{ $babyIndex + 1 }} of {{ $babies->count() }})</div>
+        @endif
     </div>
 
     <div class="cols-2">
@@ -438,13 +445,16 @@
                 <div class="section-head">Child's Particulars</div>
                 <div class="section-body">
                     <table class="info-grid">
-                        <tr><td class="lbl">Child's No.</td><td class="val">{{ $firstBaby && $firstBaby['patient'] ? ($firstBaby['patient']->file_no ?? 'N/A') : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Child's Name</td><td class="val highlight">{{ $firstBaby && $firstBaby['user'] ? trim(($firstBaby['user']->surname ?? '') . ' ' . ($firstBaby['user']->firstname ?? '') . ' ' . ($firstBaby['user']->othername ?? '')) : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Date of Birth</td><td class="val">{{ $firstBaby && $firstBaby['patient'] && $firstBaby['patient']->dob ? \Carbon\Carbon::parse($firstBaby['patient']->dob)->format('d/m/Y') : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Child's No.</td><td class="val">{{ $babyData['patient'] ? ($babyData['patient']->file_no ?? 'N/A') : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Child's Name</td><td class="val highlight">{{ $babyData['user'] ? trim(($babyData['user']->surname ?? '') . ' ' . ($babyData['user']->firstname ?? '') . ' ' . ($babyData['user']->othername ?? '')) : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Date of Birth</td><td class="val">{{ $babyData['patient'] && $babyData['patient']->dob ? \Carbon\Carbon::parse($babyData['patient']->dob)->format('d/m/Y') : 'N/A' }}</td></tr>
                         <tr><td class="lbl">Time of Birth</td><td class="val">{{ $delivery && ($delivery->delivery_time ?? $delivery->delivery_date) ? \Carbon\Carbon::parse($delivery->delivery_time ?? $delivery->delivery_date)->format('H:i') : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Sex</td><td class="val">{{ ucfirst($firstBaby['model']->sex ?? 'N/A') }}</td></tr>
+                        <tr><td class="lbl">Sex</td><td class="val">{{ ucfirst($babyData['model']->sex ?? 'N/A') }}</td></tr>
                         <tr><td class="lbl">Mother's Name</td><td class="val">{{ $motherUser ? trim(($motherUser->surname ?? '') . ' ' . ($motherUser->firstname ?? '')) : 'N/A' }}</td></tr>
                         <tr><td class="lbl">Mother's Phone</td><td class="val">{{ $mother->phone_no ?? 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Mother's Blood Group</td><td class="val">{{ $enrollment->blood_group ?? ($mother->blood_group ?? 'N/A') }}</td></tr>
+                        <tr><td class="lbl">Mother's Genotype</td><td class="val">{{ $enrollment->genotype ?? ($mother->genotype ?? 'N/A') }}</td></tr>
+                        <tr><td class="lbl">Place of Delivery</td><td class="val">{{ $delivery->place_of_delivery ?? 'N/A' }}</td></tr>
                         <tr><td class="lbl">Father's Name</td><td class="val">{{ $mother->next_of_kin_name ?? 'N/A' }}</td></tr>
                         <tr><td class="lbl">Address</td><td class="val">{{ $mother->address ?? 'N/A' }}</td></tr>
                     </table>
@@ -459,8 +469,8 @@
                         <thead><tr><th>Name</th><th>Sex</th><th>Age</th><th>Alive/Dead</th></tr></thead>
                         <tbody>
                         @php
-                            $otherBabies = $enrollment->babies->filter(function($b) use ($firstBaby) {
-                                return $firstBaby && $b->id !== $firstBaby['model']->id;
+                            $otherBabies = $enrollment->babies->filter(function($b) use ($babyData) {
+                                return $b->id !== $babyData['model']->id;
                             });
                         @endphp
                         @forelse($otherBabies as $ob)
@@ -485,15 +495,17 @@
                 <div class="section-head">Ante-Natal / Delivery Records</div>
                 <div class="section-body">
                     <table class="info-grid">
-                        <tr><td class="lbl">Birth Weight</td><td class="val highlight">{{ $firstBaby && $firstBaby['model']->birth_weight_kg ? $firstBaby['model']->birth_weight_kg . ' kg' : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Apgar Score</td><td class="val">{{ $firstBaby ? (($firstBaby['model']->apgar_1_min ?? '-') . '/' . ($firstBaby['model']->apgar_5_min ?? '-') . '/' . ($firstBaby['model']->apgar_10_min ?? '-') . ' (1/5/10 min)') : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Head Circumference</td><td class="val">{{ $firstBaby && $firstBaby['model']->head_circumference_cm ? $firstBaby['model']->head_circumference_cm . ' cm' : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Chest Circumference</td><td class="val">{{ $firstBaby && $firstBaby['model']->chest_circumference_cm ? $firstBaby['model']->chest_circumference_cm . ' cm' : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Length</td><td class="val">{{ $firstBaby && $firstBaby['model']->length_cm ? $firstBaby['model']->length_cm . ' cm' : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Condition at Birth</td><td class="val">{{ $firstBaby ? ($firstBaby['model']->condition_at_birth ?? 'Normal') : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Birth Weight</td><td class="val highlight">{{ $babyData['model']->birth_weight_kg ? $babyData['model']->birth_weight_kg . ' kg' : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Apgar Score</td><td class="val">{{ ($babyData['model']->apgar_1_min ?? '-') . '/' . ($babyData['model']->apgar_5_min ?? '-') . '/' . ($babyData['model']->apgar_10_min ?? '-') . ' (1/5/10 min)' }}</td></tr>
+                        <tr><td class="lbl">Head Circumference</td><td class="val">{{ $babyData['model']->head_circumference_cm ? $babyData['model']->head_circumference_cm . ' cm' : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Chest Circumference</td><td class="val">{{ $babyData['model']->chest_circumference_cm ? $babyData['model']->chest_circumference_cm . ' cm' : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Length</td><td class="val">{{ $babyData['model']->length_cm ? $babyData['model']->length_cm . ' cm' : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Status at Birth</td><td class="val">{{ ucfirst($babyData['model']->status ?? 'alive') }}</td></tr>
                         <tr><td class="lbl">Type of Delivery</td><td class="val">{{ $delivery ? strtoupper($delivery->type_of_delivery ?? 'N/A') : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Date First Seen</td><td class="val">{{ $firstBaby && $firstBaby['model']->date_first_seen ? \Carbon\Carbon::parse($firstBaby['model']->date_first_seen)->format('d/m/Y') : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Other Remarks</td><td class="val">{{ $firstBaby ? ($firstBaby['model']->resuscitation ?? ($firstBaby['model']->remarks ?? 'None')) : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Date First Seen</td><td class="val">{{ $babyData['model']->date_first_seen ? \Carbon\Carbon::parse($babyData['model']->date_first_seen)->format('d/m/Y') : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Special Care</td><td class="val">{{ $babyData['model']->reasons_for_special_care ?? 'None' }}</td></tr>
+                        <tr><td class="lbl">Resuscitation</td><td class="val">{{ $babyData['model']->resuscitation ? 'Yes' . ($babyData['model']->resuscitation_details ? ' — ' . $babyData['model']->resuscitation_details : '') : 'No' }}</td></tr>
+                        <tr><td class="lbl">Notes</td><td class="val">{{ $babyData['model']->notes ?? 'None' }}</td></tr>
                     </table>
                 </div>
             </div>
@@ -561,9 +573,9 @@
                                 @endphp
                                 <tr>
                                     <td class="vax-name">{{ $vax['name'] }}</td>
-                                    <td>{!! $matched ? '<span style="color:#006400;font-weight:700;">' . \Carbon\Carbon::parse($matched->date_of_vaccination)->format('d/m/Y') . '</span>' : '' !!}</td>
+                                    <td>{!! $matched ? '<span style="color:#006400;font-weight:700;">' . \Carbon\Carbon::parse($matched->administered_at)->format('d/m/Y') . '</span>' : '' !!}</td>
                                     <td style="text-align:left; font-size:8.5px;">{{ $matched ? ($matched->notes ?? '') : '' }}</td>
-                                    <td>{{ $matched && $matched->created_by ? substr(userfullname($matched->created_by), 0, 15) : '' }}</td>
+                                    <td>{{ $matched && $matched->administered_by ? substr(userfullname($matched->administered_by), 0, 15) : '' }}</td>
                                 </tr>
                             @endforeach
                         @endforeach
@@ -587,9 +599,9 @@
                         @forelse($otherVax as $ov)
                             <tr>
                                 <td class="vax-name">{{ $ov->vaccine_name }}</td>
-                                <td>{{ $ov->date_of_vaccination ? \Carbon\Carbon::parse($ov->date_of_vaccination)->format('d/m/Y') : '' }}</td>
+                                <td>{{ $ov->administered_at ? \Carbon\Carbon::parse($ov->administered_at)->format('d/m/Y') : '' }}</td>
                                 <td style="text-align:left; font-size:8.5px;">{{ $ov->notes ?? '' }}</td>
-                                <td>{{ $ov->created_by ? substr(userfullname($ov->created_by), 0, 15) : '' }}</td>
+                                <td>{{ $ov->administered_by ? substr(userfullname($ov->administered_by), 0, 15) : '' }}</td>
                             </tr>
                         @empty
                             @for($i = 0; $i < 3; $i++)
@@ -638,7 +650,7 @@
                 <div class="section-body" style="font-size:9px;">
                     <table class="info-grid">
                         <tr><td class="lbl">Total ANC Visits</td><td class="val">{{ $enrollment->ancVisits ? $enrollment->ancVisits->count() : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Delivery Date</td><td class="val">{{ $delivery && ($delivery->delivery_date ?? $delivery->date_of_delivery) ? \Carbon\Carbon::parse($delivery->delivery_date ?? $delivery->date_of_delivery)->format('d/m/Y') : 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Delivery Date</td><td class="val">{{ $delivery && $delivery->delivery_date ? \Carbon\Carbon::parse($delivery->delivery_date)->format('d/m/Y') : 'N/A' }}</td></tr>
                         <tr><td class="lbl">Growth Records</td><td class="val">{{ $fullGrowth->count() }} entries</td></tr>
                         <tr><td class="lbl">Immunizations</td><td class="val">{{ $vaxRows->count() }} given</td></tr>
                     </table>
@@ -649,10 +661,11 @@
 
     <div class="page-footer">
         <div>{{ appsettings('hos_name', 'O.L.A Hospital Jos') }} — Road to Health Card</div>
-        <div>Enrollment #{{ $enrollment->id }} | Mother: {{ $motherUser ? trim(($motherUser->surname ?? '') . ' ' . ($motherUser->firstname ?? '')) : 'N/A' }}</div>
-        <div>Page 2 of 2 | Generated by CoreHealth Maternity Workbench</div>
+        <div>Baby: {{ $babyName }} | Enrollment #{{ $enrollment->id }} | Mother: {{ $motherUser ? trim(($motherUser->surname ?? '') . ' ' . ($motherUser->firstname ?? '')) : 'N/A' }}</div>
+        <div>Page {{ $page2Num }} of {{ $totalPages }} | Generated by CoreHealth Maternity Workbench</div>
     </div>
 </div>
+@endforeach
 
 <script>
     window.onload = function () { window.print(); };

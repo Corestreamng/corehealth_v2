@@ -949,7 +949,7 @@ class LabWorkbenchController extends Controller
                 }
             }
 
-            $req = LabServiceRequest::where('id', $request->invest_res_entry_id)->update($updateData);
+            $labRequest->update($updateData);
 
             // Log audit trail
             $action = $isEdit ? 'edit' : 'result_entry';

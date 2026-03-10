@@ -29,6 +29,7 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::post('/enroll', [MaternityWorkbenchController::class, 'enrollPatient'])->name('enroll');
         Route::get('/enrollment/{id}', [MaternityWorkbenchController::class, 'getEnrollment'])->name('enrollment.show');
         Route::put('/enrollment/{id}', [MaternityWorkbenchController::class, 'updateEnrollment'])->name('enrollment.update');
+        Route::post('/enrollment/{id}/discharge', [MaternityWorkbenchController::class, 'dischargeEnrollment'])->name('enrollment.discharge');
         Route::get('/enrollment/{id}/timeline', [MaternityWorkbenchController::class, 'getTimeline'])->name('enrollment.timeline');
         Route::get('/enrollment/{id}/print-anc-card', [MaternityWorkbenchController::class, 'printAncCard'])->name('enrollment.print-anc-card');
         Route::get('/enrollment/{id}/print-road-health-card', [MaternityWorkbenchController::class, 'printRoadHealthCard'])->name('enrollment.print-road-health-card');
