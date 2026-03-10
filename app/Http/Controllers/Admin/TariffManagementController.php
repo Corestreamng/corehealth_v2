@@ -5,12 +5,21 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\HmoTariff;
 use App\Models\Hmo;
+use App\Models\HmoScheme;
 use App\Models\Product;
-use App\Models\service;
+use App\Models\Service;
+use App\Models\ServiceCategory;
+use App\Models\ProductCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class TariffManagementController extends Controller
 {
@@ -21,9 +30,12 @@ class TariffManagementController extends Controller
     {
         $hmos = Hmo::where('status', 1)->orderBy('name', 'ASC')->get();
         $products = Product::where('status', 1)->orderBy('product_name', 'ASC')->get();
-        $services = service::where('status', 1)->orderBy('service_name', 'ASC')->get();
+        $services = Service::where('status', 1)->orderBy('service_name', 'ASC')->get();
+        $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
+        $productCategories = ProductCategory::orderBy('category_name', 'ASC')->get();
+        $serviceCategories = ServiceCategory::orderBy('category_name', 'ASC')->get();
 
-        return view('admin.tariffs.index', compact('hmos', 'products', 'services'));
+        return view('admin.tariffs.index', compact('hmos', 'products', 'services', 'schemes', 'productCategories', 'serviceCategories'));
     }
 
     /**
@@ -66,7 +78,7 @@ class TariffManagementController extends Controller
                     $product = Product::find($tariff->product_id);
                     return $product ? $product->product_name : 'N/A';
                 } elseif ($tariff->service_id) {
-                    $service = service::find($tariff->service_id);
+                    $service = Service::find($tariff->service_id);
                     return $service ? $service->service_name : 'N/A';
                 }
                 return 'N/A';
@@ -82,13 +94,13 @@ class TariffManagementController extends Controller
             ->addColumn('original_price', function ($tariff) {
                 if ($tariff->product_id) {
                     // Load product price from prices table
-                    $price = \DB::table('prices')
+                    $price = DB::table('prices')
                         ->where('product_id', $tariff->product_id)
                         ->value('current_sale_price');
                     return $price ? '₦' . number_format($price, 2) : 'N/A';
                 } elseif ($tariff->service_id) {
                     // Load service price from service_prices table
-                    $price = \DB::table('service_prices')
+                    $price = DB::table('service_prices')
                         ->where('service_id', $tariff->service_id)
                         ->value('sale_price');
                     return $price ? '₦' . number_format($price, 2) : 'N/A';
@@ -366,7 +378,7 @@ class TariffManagementController extends Controller
                     }
                     $productId = $product->id;
                 } elseif ($itemType === 'service') {
-                    $service = service::where('service_name', $itemName)->first();
+                    $service = Service::where('service_name', $itemName)->first();
                     if (!$service) {
                         $errors[] = "Service '$itemName' not found";
                         $skipped++;
@@ -440,5 +452,524 @@ class TariffManagementController extends Controller
             'success' => true,
             'data' => $tariff
         ]);
+    }
+
+    /**
+     * Get HMOs belonging to a scheme (AJAX).
+     */
+    public function getSchemeHmos($schemeId)
+    {
+        $hmos = Hmo::where('hmo_scheme_id', $schemeId)
+            ->where('status', 1)
+            ->orderBy('name', 'ASC')
+            ->get(['id', 'name']);
+
+        return response()->json(['success' => true, 'data' => $hmos]);
+    }
+
+    /**
+     * Export tariffs to Excel with scheme/HMO/type/category filters.
+     */
+    public function exportExcel(Request $request)
+    {
+        $scope      = $request->input('scope', 'hmo'); // hmo | scheme
+        $hmoId      = $request->input('hmo_id');
+        $schemeId   = $request->input('scheme_id');
+        $type       = $request->input('type', '');       // product | service | ''
+        $coverage   = $request->input('coverage_mode', '');
+        $prodCatId  = $request->input('product_category_id', '');
+        $svcCatId   = $request->input('service_category_id', '');
+
+        // Determine which HMO(s) to export
+        if ($scope === 'scheme' && $schemeId) {
+            $hmoIds = Hmo::where('hmo_scheme_id', $schemeId)->where('status', 1)->pluck('id');
+            $referenceHmo = Hmo::where('hmo_scheme_id', $schemeId)->where('status', 1)->orderBy('id')->first();
+            $scheme = HmoScheme::find($schemeId);
+            $scopeLabel = $scheme ? $scheme->name : 'Scheme';
+        } elseif ($hmoId) {
+            $hmoIds = collect([$hmoId]);
+            $referenceHmo = Hmo::find($hmoId);
+            $scopeLabel = $referenceHmo ? $referenceHmo->name : 'HMO';
+        } else {
+            $hmoIds = Hmo::where('status', 1)->pluck('id');
+            $referenceHmo = Hmo::where('status', 1)->orderBy('id')->first();
+            $scopeLabel = 'All HMOs';
+        }
+
+        if (!$referenceHmo) {
+            return response()->json(['success' => false, 'message' => 'No active HMOs found for the selected ' . ($scope === 'scheme' ? 'scheme. Please assign HMOs to this scheme first.' : 'filter.')], 404);
+        }
+
+        // For scheme export, use only the first/reference HMO's tariffs (one row per item)
+        $query = HmoTariff::with(['product.price', 'product.category', 'service.price', 'service.category'])
+            ->where('hmo_id', $referenceHmo->id);
+
+        if ($type === 'product') {
+            $query->whereNotNull('product_id')->whereNull('service_id');
+        } elseif ($type === 'service') {
+            $query->whereNotNull('service_id')->whereNull('product_id');
+        }
+
+        if ($coverage) {
+            $query->where('coverage_mode', $coverage);
+        }
+
+        if ($prodCatId && $type !== 'service') {
+            $query->whereHas('product', fn($q) => $q->where('category_id', $prodCatId));
+        }
+
+        if ($svcCatId && $type !== 'product') {
+            $query->whereHas('service', fn($q) => $q->where('category_id', $svcCatId));
+        }
+
+        $tariffs = $query->get();
+
+        // Build Excel
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Tariffs');
+
+        // Metadata row
+        $metaText = "Scope: {$scopeLabel} | Reference HMO: {$referenceHmo->name} | HMOs in scope: {$hmoIds->count()} | Exported: " . now()->format('Y-m-d H:i');
+        $sheet->setCellValue('A1', $metaText);
+        $sheet->mergeCells('A1:H1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setItalic(true)->setSize(10);
+        $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E8F5E9');
+
+        // Headers
+        $headers = ['Item Code', 'Item Name', 'Item Type', 'Category', 'Current Price', 'Claims Amount', 'Payable Amount', 'Coverage Mode'];
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '2', $header);
+            $sheet->getStyle($col . '2')->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFF'));
+            $sheet->getStyle($col . '2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1565C0');
+            $sheet->getStyle($col . '2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+            $col++;
+        }
+
+        // Data rows
+        $row = 3;
+        foreach ($tariffs as $tariff) {
+            if ($tariff->product_id && $tariff->product) {
+                $code = $tariff->product->product_code ?? '';
+                $name = $tariff->product->product_name;
+                $itemType = 'Product';
+                $category = $tariff->product->category ? $tariff->product->category->category_name : '';
+                $currentPrice = optional(optional($tariff->product)->price)->current_sale_price ?? 0;
+            } elseif ($tariff->service_id && $tariff->service) {
+                $code = $tariff->service->service_code ?? '';
+                $name = $tariff->service->service_name;
+                $itemType = 'Service';
+                $category = $tariff->service->category ? $tariff->service->category->category_name : '';
+                $currentPrice = optional(optional($tariff->service)->price)->sale_price ?? 0;
+            } else {
+                continue;
+            }
+
+            $sheet->setCellValue("A{$row}", $code);
+            $sheet->setCellValue("B{$row}", $name);
+            $sheet->setCellValue("C{$row}", $itemType);
+            $sheet->setCellValue("D{$row}", $category);
+            $sheet->setCellValue("E{$row}", (float) $currentPrice);
+            $sheet->setCellValue("F{$row}", (float) $tariff->claims_amount);
+            $sheet->setCellValue("G{$row}", (float) $tariff->payable_amount);
+            $sheet->setCellValue("H{$row}", $tariff->coverage_mode);
+
+            // Number format for price columns
+            $sheet->getStyle("E{$row}:G{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+
+            // Alternate row color
+            if ($row % 2 === 1) {
+                $sheet->getStyle("A{$row}:H{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F5F5F5');
+            }
+            $row++;
+        }
+
+        // Auto-filter
+        $sheet->setAutoFilter("A2:H2");
+
+        // Stream download
+        $filename = 'tariffs_' . str_replace(' ', '_', $scopeLabel) . '_' . date('Y-m-d') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
+     * Preview import — returns JSON with parsed rows + diff against current tariffs.
+     */
+    public function importPreview(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file'      => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
+            'scope'     => 'required|in:hmo,scheme',
+            'hmo_id'    => 'required_if:scope,hmo|nullable|exists:hmos,id',
+            'scheme_id' => 'required_if:scope,scheme|nullable|exists:hmo_schemes,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $file  = $request->file('file');
+        $scope = $request->input('scope');
+
+        // Determine target HMO(s)
+        if ($scope === 'scheme') {
+            $hmos = Hmo::where('hmo_scheme_id', $request->scheme_id)->where('status', 1)->get();
+            $targetLabel = HmoScheme::find($request->scheme_id)->name ?? 'Scheme';
+        } else {
+            $hmos = Hmo::where('id', $request->hmo_id)->get();
+            $targetLabel = $hmos->first()->name ?? 'HMO';
+        }
+
+        $hmoIds = $hmos->pluck('id');
+
+        // Parse Excel/CSV
+        $spreadsheet = IOFactory::load($file->getPathname());
+        $worksheet = $spreadsheet->getActiveSheet();
+        $rows = $worksheet->toArray();
+
+        // Find header row (skip metadata)
+        $headerRowIndex = 0;
+        foreach ($rows as $i => $row) {
+            $firstCell = strtolower(trim($row[0] ?? ''));
+            if ($firstCell === 'item code') {
+                $headerRowIndex = $i;
+                break;
+            }
+        }
+
+        $dataRows = array_slice($rows, $headerRowIndex + 1);
+        $preview = [];
+        $totalUpdates = 0;
+        $totalNew = 0;
+        $totalSkipped = 0;
+
+        foreach ($dataRows as $row) {
+            if (empty(trim($row[1] ?? ''))) continue; // skip empty name rows
+
+            $code     = trim($row[0] ?? '');
+            $name     = trim($row[1] ?? '');
+            $itemType = strtolower(trim($row[2] ?? ''));
+            $claims   = floatval($row[5] ?? 0);
+            $payable  = floatval($row[6] ?? 0);
+            $mode     = strtolower(trim($row[7] ?? 'primary'));
+
+            // Find item
+            $item = null;
+            if ($itemType === 'product') {
+                $item = $code ? Product::where('product_code', $code)->first() : null;
+                if (!$item) $item = Product::where('product_name', $name)->first();
+            } else {
+                $item = $code ? Service::where('service_code', $code)->first() : null;
+                if (!$item) $item = Service::where('service_name', $name)->first();
+            }
+
+            if (!$item) {
+                $preview[] = [
+                    'name' => $name, 'code' => $code, 'type' => $itemType,
+                    'new_claims' => $claims, 'new_payable' => $payable, 'new_mode' => $mode,
+                    'old_claims' => null, 'old_payable' => null, 'old_mode' => null,
+                    'status' => 'skipped', 'reason' => 'Item not found',
+                ];
+                $totalSkipped++;
+                continue;
+            }
+
+            // Check existing tariff (use first target HMO as reference)
+            $existingQuery = HmoTariff::where('hmo_id', $hmoIds->first());
+            if ($itemType === 'product') {
+                $existingQuery->where('product_id', $item->id)->whereNull('service_id');
+            } else {
+                $existingQuery->where('service_id', $item->id)->whereNull('product_id');
+            }
+            $existing = $existingQuery->first();
+
+            $status = $existing ? 'update' : 'new';
+            if ($existing) $totalUpdates++;
+            else $totalNew++;
+
+            $preview[] = [
+                'name' => $name, 'code' => $code, 'type' => $itemType,
+                'new_claims' => $claims, 'new_payable' => $payable, 'new_mode' => $mode,
+                'old_claims' => $existing ? (float) $existing->claims_amount : null,
+                'old_payable' => $existing ? (float) $existing->payable_amount : null,
+                'old_mode' => $existing ? $existing->coverage_mode : null,
+                'status' => $status,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'target' => $targetLabel,
+            'hmo_count' => $hmos->count(),
+            'hmo_names' => $hmos->pluck('name'),
+            'summary' => ['updates' => $totalUpdates, 'new' => $totalNew, 'skipped' => $totalSkipped],
+            'preview' => array_slice($preview, 0, 100), // limit preview to 100 rows
+            'total_rows' => count($preview),
+        ]);
+    }
+
+    /**
+     * Import tariffs from Excel — applies to single HMO or all HMOs in a scheme.
+     */
+    public function importExcel(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file'      => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
+            'scope'     => 'required|in:hmo,scheme',
+            'hmo_id'    => 'required_if:scope,hmo|nullable|exists:hmos,id',
+            'scheme_id' => 'required_if:scope,scheme|nullable|exists:hmo_schemes,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $scope  = $request->input('scope');
+
+        // Determine target HMO(s)
+        if ($scope === 'scheme') {
+            $hmoIds = Hmo::where('hmo_scheme_id', $request->scheme_id)->where('status', 1)->pluck('id');
+        } else {
+            $hmoIds = collect([(int) $request->hmo_id]);
+        }
+
+        if ($hmoIds->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No active HMOs found for selected scope.'], 422);
+        }
+
+        // Parse file
+        $spreadsheet = IOFactory::load($request->file('file')->getPathname());
+        $rows = $spreadsheet->getActiveSheet()->toArray();
+
+        // Find header row
+        $headerRowIndex = 0;
+        foreach ($rows as $i => $row) {
+            if (strtolower(trim($row[0] ?? '')) === 'item code') {
+                $headerRowIndex = $i;
+                break;
+            }
+        }
+
+        $dataRows = array_slice($rows, $headerRowIndex + 1);
+
+        $created = 0;
+        $updated = 0;
+        $skipped = 0;
+        $errors  = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($dataRows as $idx => $row) {
+                if (empty(trim($row[1] ?? ''))) continue;
+
+                $code     = trim($row[0] ?? '');
+                $name     = trim($row[1] ?? '');
+                $itemType = strtolower(trim($row[2] ?? ''));
+                $claims   = floatval($row[5] ?? 0);
+                $payable  = floatval($row[6] ?? 0);
+                $mode     = strtolower(trim($row[7] ?? 'primary'));
+
+                if (!in_array($mode, ['express', 'primary', 'secondary'])) {
+                    $errors[] = "Row " . ($idx + 1) . ": Invalid coverage mode '{$mode}'";
+                    $skipped++;
+                    continue;
+                }
+
+                // Find item by code first, then name
+                $productId = null;
+                $serviceId = null;
+
+                if ($itemType === 'product') {
+                    $item = $code ? Product::where('product_code', $code)->first() : null;
+                    if (!$item) $item = Product::where('product_name', $name)->first();
+                    if (!$item) { $skipped++; $errors[] = "Row " . ($idx + 1) . ": Product '{$name}' not found"; continue; }
+                    $productId = $item->id;
+                } else {
+                    $item = $code ? Service::where('service_code', $code)->first() : null;
+                    if (!$item) $item = Service::where('service_name', $name)->first();
+                    if (!$item) { $skipped++; $errors[] = "Row " . ($idx + 1) . ": Service '{$name}' not found"; continue; }
+                    $serviceId = $item->id;
+                }
+
+                // Apply to all target HMOs
+                foreach ($hmoIds as $hmoId) {
+                    $existing = HmoTariff::where('hmo_id', $hmoId)
+                        ->where(function ($q) use ($productId, $serviceId) {
+                            if ($productId) {
+                                $q->where('product_id', $productId)->whereNull('service_id');
+                            } else {
+                                $q->where('service_id', $serviceId)->whereNull('product_id');
+                            }
+                        })->first();
+
+                    if ($existing) {
+                        $existing->update([
+                            'claims_amount'  => $claims,
+                            'payable_amount' => $payable,
+                            'coverage_mode'  => $mode,
+                        ]);
+                        $updated++;
+                    } else {
+                        HmoTariff::create([
+                            'hmo_id'         => $hmoId,
+                            'product_id'     => $productId,
+                            'service_id'     => $serviceId,
+                            'claims_amount'  => $claims,
+                            'payable_amount' => $payable,
+                            'coverage_mode'  => $mode,
+                        ]);
+                        $created++;
+                    }
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Import failed: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Import complete: {$created} created, {$updated} updated, {$skipped} skipped.",
+            'errors' => array_slice($errors, 0, 10),
+        ]);
+    }
+
+    /**
+     * Quick Normalize — apply drug split / service coverage to all HMOs in a scheme.
+     */
+    public function normalizeScheme(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'scheme_id'        => 'required|exists:hmo_schemes,id',
+            'drug_patient_pct' => 'required|numeric|min:0|max:100',
+            'service_claims_pct' => 'required|numeric|min:0|max:100',
+            'general_consult_express' => 'nullable|boolean',
+            'other_consult_secondary' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $schemeId          = $request->scheme_id;
+        $drugPatientPct    = $request->drug_patient_pct / 100;
+        $drugClaimsPct     = 1 - $drugPatientPct;
+        $serviceClaimsPct  = $request->service_claims_pct / 100;
+        $servicePatientPct = 1 - $serviceClaimsPct;
+        $generalExpress    = (bool) $request->general_consult_express;
+        $otherSecondary    = (bool) $request->other_consult_secondary;
+
+        $hmoIds = Hmo::where('hmo_scheme_id', $schemeId)->where('status', 1)->pluck('id');
+        if ($hmoIds->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No active HMOs in this scheme.'], 422);
+        }
+
+        $products = Product::with('price')->where('status', 1)->get();
+        $services = Service::with('price', 'category')->where('status', 1)->get();
+
+        // Identify general consultation services
+        $generalConsultIds = $services->filter(function ($svc) {
+            return preg_match('/^general\s+consultation$/i', trim($svc->service_name));
+        })->pluck('id')->toArray();
+
+        $otherConsultIds = $services->filter(function ($svc) use ($generalConsultIds) {
+            return stripos($svc->service_name, 'consultation') !== false
+                && !in_array($svc->id, $generalConsultIds);
+        })->pluck('id')->toArray();
+
+        $created = 0;
+        $updated = 0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($hmoIds as $hmoId) {
+                // Products (drugs)
+                foreach ($products as $product) {
+                    $price   = $product->price ? (float) $product->price->current_sale_price : 0;
+                    $payable = round($price * $drugPatientPct, 2);
+                    $claims  = round($price * $drugClaimsPct, 2);
+
+                    $result = $this->upsertTariffRow($hmoId, $product->id, null, $payable, $claims, 'primary');
+                    $result === 'created' ? $created++ : $updated++;
+                }
+
+                // Services
+                foreach ($services as $service) {
+                    $price   = $service->price ? (float) $service->price->sale_price : 0;
+                    $payable = round($price * $servicePatientPct, 2);
+                    $claims  = round($price * $serviceClaimsPct, 2);
+
+                    // Determine coverage mode
+                    if ($generalExpress && in_array($service->id, $generalConsultIds)) {
+                        $mode = 'express';
+                        $payable = 0;
+                        $claims = $price;
+                    } elseif ($otherSecondary && in_array($service->id, $otherConsultIds)) {
+                        $mode = 'secondary';
+                    } else {
+                        $mode = 'primary';
+                    }
+
+                    $result = $this->upsertTariffRow($hmoId, null, $service->id, $payable, $claims, $mode);
+                    $result === 'created' ? $created++ : $updated++;
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Normalization failed: ' . $e->getMessage()], 500);
+        }
+
+        $scheme = HmoScheme::find($schemeId);
+        return response()->json([
+            'success' => true,
+            'message' => "Normalized {$scheme->name}: {$created} created, {$updated} updated across {$hmoIds->count()} HMO(s).",
+        ]);
+    }
+
+    /**
+     * Helper: upsert a single tariff row (bypasses model boot validation).
+     */
+    private function upsertTariffRow(int $hmoId, ?int $productId, ?int $serviceId, float $payable, float $claims, string $mode): string
+    {
+        $existing = HmoTariff::where('hmo_id', $hmoId)
+            ->where(function ($q) use ($productId) {
+                $productId ? $q->where('product_id', $productId) : $q->whereNull('product_id');
+            })
+            ->where(function ($q) use ($serviceId) {
+                $serviceId ? $q->where('service_id', $serviceId) : $q->whereNull('service_id');
+            })
+            ->first();
+
+        if ($existing) {
+            $existing->update([
+                'payable_amount' => $payable,
+                'claims_amount'  => $claims,
+                'coverage_mode'  => $mode,
+            ]);
+            return 'updated';
+        }
+
+        HmoTariff::create([
+            'hmo_id'         => $hmoId,
+            'product_id'     => $productId,
+            'service_id'     => $serviceId,
+            'payable_amount' => $payable,
+            'claims_amount'  => $claims,
+            'coverage_mode'  => $mode,
+        ]);
+        return 'created';
     }
 }
