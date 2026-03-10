@@ -804,12 +804,17 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
         Route::get('admin/hmo-tariffs', [TariffManagementController::class, 'index'])->name('hmo-tariffs.index');
         Route::get('admin/hmo-tariffs/data', [TariffManagementController::class, 'getTariffs'])->name('hmo-tariffs.data');
+        Route::get('admin/hmo-tariffs/export/csv', [TariffManagementController::class, 'exportCsv'])->name('hmo-tariffs.export');
+        Route::get('admin/hmo-tariffs/export/excel', [TariffManagementController::class, 'exportExcel'])->name('hmo-tariffs.export-excel');
+        Route::post('admin/hmo-tariffs/import/csv', [TariffManagementController::class, 'importCsv'])->name('hmo-tariffs.import');
+        Route::post('admin/hmo-tariffs/import/excel', [TariffManagementController::class, 'importExcel'])->name('hmo-tariffs.import-excel');
+        Route::post('admin/hmo-tariffs/import/preview', [TariffManagementController::class, 'importPreview'])->name('hmo-tariffs.import-preview');
+        Route::post('admin/hmo-tariffs/normalize', [TariffManagementController::class, 'normalizeScheme'])->name('hmo-tariffs.normalize');
+        Route::get('admin/hmo-tariffs/scheme-hmos/{id}', [TariffManagementController::class, 'getSchemeHmos'])->name('hmo-tariffs.scheme-hmos');
         Route::post('admin/hmo-tariffs', [TariffManagementController::class, 'store'])->name('hmo-tariffs.store');
         Route::get('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'show'])->name('hmo-tariffs.show');
         Route::put('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'update'])->name('hmo-tariffs.update');
         Route::delete('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'destroy'])->name('hmo-tariffs.destroy');
-        Route::get('admin/hmo-tariffs/export/csv', [TariffManagementController::class, 'exportCsv'])->name('hmo-tariffs.export');
-        Route::post('admin/hmo-tariffs/import/csv', [TariffManagementController::class, 'importCsv'])->name('hmo-tariffs.import');
     });
 
     Route::group(['middleware' => ['auth']], function () {
