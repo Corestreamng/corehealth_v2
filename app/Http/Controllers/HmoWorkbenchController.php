@@ -88,8 +88,7 @@ class HmoWorkbenchController extends Controller
                           ->where('claims_amount', '>', 0);
                     break;
                 case 'express':
-                    $query->where('coverage_mode', 'express')
-                          ->where('validation_status', 'pending');
+                    $query->where('coverage_mode', 'express');
                     break;
                 case 'approved':
                     $query->where('validation_status', 'approved')
@@ -1118,7 +1117,6 @@ class HmoWorkbenchController extends Controller
 
             'express' => $baseQuery()
                 ->where('coverage_mode', 'express')
-                ->where('validation_status', 'pending')
                 ->count(),
 
             'approved' => $baseQuery()
