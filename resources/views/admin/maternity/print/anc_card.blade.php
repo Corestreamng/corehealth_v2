@@ -244,10 +244,10 @@
                     <table class="info-grid">
                         <tr><td class="lbl">Name</td><td class="val">{{ $motherUser ? trim(($motherUser->surname ?? '') . ' ' . ($motherUser->firstname ?? '') . ' ' . ($motherUser->othername ?? '')) : 'N/A' }}</td></tr>
                         <tr><td class="lbl">Address</td><td class="val">{{ $mother->address ?? 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Occupation</td><td class="val">{{ $motherUser->occupation ?? 'N/A' }}</td></tr>
                         <tr><td class="lbl">Age</td><td class="val">{{ $mother && $mother->dob ? \Carbon\Carbon::parse($mother->dob)->age . ' years' : 'N/A' }}</td></tr>
-                        <tr><td class="lbl">Husband's Occupation</td><td class="val">{{ $mother->next_of_kin_relationship == 'spouse' ? ($mother->next_of_kin_occupation ?? 'N/A') : 'N/A' }}</td></tr>
                         <tr><td class="lbl">Phone</td><td class="val">{{ $mother->phone_no ?? 'N/A' }}</td></tr>
+                        <tr><td class="lbl">Next of Kin</td><td class="val">{{ $mother->next_of_kin_name ?? 'N/A' }}</td></tr>
+                        <tr><td class="lbl">NOK Phone</td><td class="val">{{ $mother->next_of_kin_phone ?? 'N/A' }}</td></tr>
                     </table>
                 </div>
             </div>
@@ -276,7 +276,7 @@
                         <tr><td class="lbl">Weight</td><td class="val">{{ $enrollment->booking_weight_kg ? $enrollment->booking_weight_kg . ' kg' : 'N/A' }}</td></tr>
                         <tr><td class="lbl">BMI</td><td class="val">{{ $enrollment->booking_bmi ?? 'N/A' }}</td></tr>
                         <tr><td class="lbl">BP (Booking)</td><td class="val">{{ $enrollment->booking_bp ?? 'N/A' }}</td></tr>
-                        <tr><td class="lbl">HIV Status</td><td class="val">{{ $enrollment->hiv_status ?? 'N/A' }}</td></tr>
+
                         <tr><td class="lbl">Risk Level</td><td class="val"><span class="risk-badge risk-{{ $enrollment->risk_level ?? 'low' }}">{{ strtoupper(str_replace('_', ' ', $enrollment->risk_level ?? 'LOW')) }}</span></td></tr>
                         <tr><td class="lbl">Risk Factors</td><td class="val">{{ is_array($enrollment->risk_factors) ? implode(', ', $enrollment->risk_factors) : ($enrollment->risk_factors ?? 'None identified') }}</td></tr>
                         <tr><td class="lbl">Preferred Place</td><td class="val">{{ $enrollment->preferred_delivery_place ?? 'N/A' }}</td></tr>
@@ -293,9 +293,9 @@
                 <div class="section-body">
                     @if($delivery)
                         <table class="info-grid">
-                            <tr><td class="lbl">Date of Delivery</td><td class="val">{{ $delivery->delivery_date ? \Carbon\Carbon::parse($delivery->delivery_date)->format('d/m/Y H:i') : ($delivery->date_of_delivery ? \Carbon\Carbon::parse($delivery->date_of_delivery)->format('d/m/Y H:i') : 'N/A') }}</td></tr>
+                            <tr><td class="lbl">Date of Delivery</td><td class="val">{{ $delivery->delivery_date ? \Carbon\Carbon::parse($delivery->delivery_date)->format('d/m/Y H:i') : 'N/A' }}</td></tr>
                             <tr><td class="lbl">Place</td><td class="val">{{ $delivery->place_of_delivery ?? 'N/A' }}</td></tr>
-                            <tr><td class="lbl">Duration of Labour</td><td class="val">{{ $delivery->duration_of_labour_hours ? $delivery->duration_of_labour_hours . ' hrs' : ($delivery->duration_of_labour ?? 'N/A') }}</td></tr>
+                            <tr><td class="lbl">Duration of Labour</td><td class="val">{{ $delivery->duration_of_labour_hours ? $delivery->duration_of_labour_hours . ' hrs' : 'N/A' }}</td></tr>
                             <tr><td class="lbl">Type of Delivery</td><td class="val highlight">{{ strtoupper($delivery->type_of_delivery ?? 'N/A') }}</td></tr>
                             <tr><td class="lbl">Episiotomy</td><td class="val">{{ $delivery->episiotomy ?? 'None' }}</td></tr>
                             <tr><td class="lbl">Complications</td><td class="val">{{ $delivery->complications ?? 'None' }}</td></tr>
@@ -322,7 +322,7 @@
                                     <td>{{ str_replace('_', ' ', $pn->visit_type ?? '-') }}</td>
                                     <td>{{ $pn->general_condition ?? '-' }}</td>
                                     <td>{{ $pn->blood_pressure ?? '-' }}</td>
-                                    <td>{{ $pn->temperature ? $pn->temperature . '°C' : '-' }}</td>
+                                    <td>{{ $pn->temperature_c ? $pn->temperature_c . '°C' : '-' }}</td>
                                     <td>{{ $pn->baby_general_condition ?? '-' }}</td>
                                     <td>{{ str_replace('_', ' ', $pn->baby_feeding ?? '-') }}</td>
                                 </tr>
@@ -346,8 +346,9 @@
                             <tr><td class="lbl">Length</td><td class="val">{{ $b->length_cm ? $b->length_cm . ' cm' : 'N/A' }}</td></tr>
                             <tr><td class="lbl">Head Circumference</td><td class="val">{{ $b->head_circumference_cm ? $b->head_circumference_cm . ' cm' : 'N/A' }}</td></tr>
                             <tr><td class="lbl">Chest Circumference</td><td class="val">{{ $b->chest_circumference_cm ? $b->chest_circumference_cm . ' cm' : 'N/A' }}</td></tr>
-                            <tr><td class="lbl">Condition at Birth</td><td class="val">{{ $b->condition_at_birth ?? 'Normal' }}</td></tr>
-                            <tr><td class="lbl">Resuscitation</td><td class="val">{{ $b->resuscitation ?? 'None' }}</td></tr>
+                            <tr><td class="lbl">Status at Birth</td><td class="val">{{ ucfirst($b->status ?? 'alive') }}</td></tr>
+                            <tr><td class="lbl">Special Care</td><td class="val">{{ $b->reasons_for_special_care ?? 'None' }}</td></tr>
+                            <tr><td class="lbl">Resuscitation</td><td class="val">{{ $b->resuscitation ? 'Yes' . ($b->resuscitation_details ? ' — ' . $b->resuscitation_details : '') : 'No' }}</td></tr>
                         </table>
                         @if(!$loop->last)<hr style="border-top:1px dashed #ccc; margin:4px 0;">@endif
                     @empty
@@ -433,6 +434,28 @@
                     @else
                         <p class="muted" style="padding:4px 0;">No past medical/surgical history recorded.</p>
                         <div style="height:60px; border-bottom:1px dotted #ccc;"></div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">ANC Investigations</div>
+                <div class="section-body">
+                    @if($investigations && $investigations->count())
+                        <table class="data-table">
+                            <thead><tr><th>Investigation</th><th>Result</th><th>Routine</th></tr></thead>
+                            <tbody>
+                            @foreach($investigations as $inv)
+                                <tr>
+                                    <td>{{ $inv->investigation_name ?? '-' }}</td>
+                                    <td>{{ $inv->result_summary ?? 'Pending' }}</td>
+                                    <td>{{ $inv->is_routine ? 'Yes' : 'No' }}</td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="muted" style="padding:4px 0;">No investigations recorded.</p>
                     @endif
                 </div>
             </div>

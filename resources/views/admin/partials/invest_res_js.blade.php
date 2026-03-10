@@ -71,6 +71,12 @@ window.InvestResultEntry = (function() {
         });
     }
 
+    // Store current request context for V1/V2 switching
+    var _currentRequest = null;
+    var _currentV2Structure = null;
+    var _currentV2ExistingData = null;
+    var _hasV2Template = false;
+
     /**
      * Populate the modal with request data and template.
      */
@@ -88,35 +94,37 @@ window.InvestResultEntry = (function() {
         $('#investResModalLabel').html('Enter Result (<span id="invest_res_service_name">' + (request.service ? request.service.name : '') + '</span>)' + labNumberBadge);
         $('#investResForm button[type="submit"]').html('<i class="mdi mdi-content-save"></i> Save Result');
 
-        // Check template version
-        const isV2 = request.service && request.service.template_version == 2;
+        // Store context for version switching
+        _currentRequest = request;
+        _currentV2Structure = null;
+        _currentV2ExistingData = null;
+        _hasV2Template = false;
 
-        if (isV2) {
+        // Parse V2 structure if available
+        if (request.service && request.service.template_version == 2) {
             let structure = request.service.template_structure;
             if (typeof structure === 'string') {
-                try {
-                    structure = JSON.parse(structure);
-                } catch (e) {
-                    console.error('Error parsing V2 template structure:', e);
-                    structure = null;
-                }
+                try { structure = JSON.parse(structure); } catch (e) { structure = null; }
             }
-
             if (structure) {
-                let existingData = null;
+                _currentV2Structure = structure;
+                _hasV2Template = true;
                 if (request.result_data) {
                     try {
-                        existingData = typeof request.result_data === 'string' ? JSON.parse(request.result_data) : request.result_data;
-                    } catch (e) {
-                        console.error('Error parsing result_data:', e);
-                    }
+                        _currentV2ExistingData = typeof request.result_data === 'string' ? JSON.parse(request.result_data) : request.result_data;
+                    } catch (e) { _currentV2ExistingData = null; }
                 }
-                _loadV2Template(structure, existingData);
-            } else {
-                console.error('Invalid V2 template structure');
-                let content = request.result || (request.service ? request.service.template_body : '');
-                _loadV1Template(content);
             }
+        }
+
+        // Show/hide the V1/V2 toggle based on whether a V2 template exists
+        _setupVersionToggle();
+
+        // Check template version — default to service setting
+        const isV2 = _hasV2Template;
+
+        if (isV2) {
+            _loadV2Template(_currentV2Structure, _currentV2ExistingData);
         } else {
             let content = request.result || (request.service ? request.service.template_body : '');
             _loadV1Template(content);
@@ -129,12 +137,45 @@ window.InvestResultEntry = (function() {
     }
 
     /**
+     * Show/hide the version toggle and set the default selection.
+     */
+    function _setupVersionToggle() {
+        if (_hasV2Template) {
+            $('#template_version_toggle_container').show();
+            // Default to V2 when service has V2 template
+            $('#toggle_v2').prop('checked', true);
+        } else {
+            $('#template_version_toggle_container').hide();
+            $('#toggle_v1').prop('checked', true);
+        }
+    }
+
+    /**
+     * Switch between V1 and V2 template mode (called by toggle radio buttons).
+     */
+    function switchTemplateVersion(version) {
+        if (version === '1' || version === 1) {
+            let content = '';
+            if (_currentRequest) {
+                content = _currentRequest.result || (_currentRequest.service ? _currentRequest.service.template_body : '');
+            }
+            _loadV1Template(content);
+        } else if (version === '2' || version === 2) {
+            if (_currentV2Structure) {
+                _loadV2Template(_currentV2Structure, _currentV2ExistingData);
+            }
+        }
+    }
+
+    /**
      * Load V1 (CKEditor WYSIWYG) template into the modal.
      */
     function _loadV1Template(template) {
         $('#invest_res_template_version').val('1');
         $('#v1_template_container').show();
         $('#v2_template_container').hide();
+        $('#v1_template_selector_container').show();
+        $('#toggle_v1').prop('checked', true);
 
         if (template && typeof template === 'string') {
             template = template.replace(/contenteditable="false"/g, 'contenteditable="true"');
@@ -172,7 +213,9 @@ window.InvestResultEntry = (function() {
     function _loadV2Template(template, existingData) {
         $('#invest_res_template_version').val('2');
         $('#v1_template_container').hide();
+        $('#v1_template_selector_container').hide();
         $('#v2_template_container').show();
+        $('#toggle_v2').prop('checked', true);
 
         let formHtml = '<div class="v2-result-form">';
         formHtml += '<h6 class="mb-3">' + (template.template_name || 'Result Entry') + '</h6>';
@@ -500,7 +543,8 @@ window.InvestResultEntry = (function() {
         enterResult: enterResult,
         editResult: editResult,
         copyResTemplateToField: copyResTemplateToField,
-        bindFormSubmit: bindFormSubmit
+        bindFormSubmit: bindFormSubmit,
+        switchTemplateVersion: switchTemplateVersion
     };
 
 })();
@@ -509,4 +553,80 @@ window.InvestResultEntry = (function() {
 function copyResTemplateToField() {
     return InvestResultEntry.copyResTemplateToField();
 }
+
+/**
+ * V1 Result Template Selector — loads templates from the server and populates the dropdown.
+ * When a template is selected, it inserts directly into the CKEditor (no preview).
+ */
+(function() {
+    var _v1TemplatesLoaded = false;
+    var _v1TemplateData = [];
+
+    window._loadV1ResultTemplates = function() {
+        if (_v1TemplatesLoaded) return;
+        $.get('{{ route("v1-result-templates.list") }}', function(response) {
+            if (response.success && response.groups && response.groups.length > 0) {
+                _v1TemplateData = response.groups;
+                _v1TemplatesLoaded = true;
+                _populateV1TemplateSelect();
+            }
+        }).fail(function() {
+            console.error('Failed to load V1 result templates');
+        });
+    };
+
+    function _populateV1TemplateSelect() {
+        var $select = $('#v1_result_template_select');
+        $select.find('option:not(:first)').remove();
+        _v1TemplateData.forEach(function(group) {
+            var $optgroup = $('<optgroup>').attr('label', group.category);
+            group.templates.forEach(function(t) {
+                $optgroup.append($('<option>').val(t.id).text(t.name).data('content', t.content));
+            });
+            $select.append($optgroup);
+        });
+    }
+
+    // Enable/disable insert button based on selection
+    $(document).on('change', '#v1_result_template_select', function() {
+        $('#v1_insert_template_btn').prop('disabled', !$(this).val());
+    });
+
+    // Load templates when the modal is first shown
+    $(document).on('show.bs.modal', '#investResModal', function() {
+        window._loadV1ResultTemplates();
+    });
+})();
+
+/**
+ * Insert the selected V1 result template content directly into the CKEditor.
+ * No preview — it populates immediately.
+ */
+function insertV1ResultTemplate() {
+    var $select = $('#v1_result_template_select');
+    var $selectedOption = $select.find('option:selected');
+    var content = $selectedOption.data('content');
+    if (!content) return;
+
+    if (window.investResEditor) {
+        var currentContent = window.investResEditor.getData();
+        if (currentContent && currentContent.trim() !== '' && currentContent !== '<p>&nbsp;</p>') {
+            window.investResEditor.setData(currentContent + content);
+        } else {
+            window.investResEditor.setData(content);
+        }
+    }
+
+    // Reset select
+    $select.val('');
+    $('#v1_insert_template_btn').prop('disabled', true);
+}
+
+/**
+ * V1/V2 toggle handler — switch template mode when user clicks the toggle.
+ */
+$(document).on('change', 'input[name="template_version_toggle"]', function() {
+    var version = $(this).val();
+    InvestResultEntry.switchTemplateVersion(version);
+});
 </script>

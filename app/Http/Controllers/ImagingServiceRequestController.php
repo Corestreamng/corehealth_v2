@@ -189,7 +189,7 @@ class ImagingServiceRequestController extends Controller
                 $updateData['result_by'] = Auth::id();
             }
 
-            $req = ImagingServiceRequest::where('id', $request->imaging_res_entry_id)->update($updateData);
+            $imagingRequest->update($updateData);
             DB::commit();
 
             $message = $isEdit ? "Results Updated Successfully" : "Results Saved Successfully";
@@ -716,7 +716,10 @@ class ImagingServiceRequestController extends Controller
      */
     public function show($id)
     {
-        $req = ImagingServiceRequest::where('id', $id)->first();
+        $req = ImagingServiceRequest::with([
+            'patient.user', 'patient.hmo', 'service', 'doctor',
+            'resultBy', 'approver', 'encounter', 'productOrServiceRequest'
+        ])->findOrFail($id);
         return view('admin.imaging_service_requests.show', ['req' => $req]);
     }
 }

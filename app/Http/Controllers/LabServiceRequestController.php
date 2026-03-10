@@ -219,7 +219,7 @@ class LabServiceRequestController extends Controller
                 }
             }
 
-            $req = LabServiceRequest::where('id', $request->invest_res_entry_id)->update($updateData);
+            $labRequest->update($updateData);
             DB::commit();
 
             $message = $isEdit ? "Results Updated Successfully" : ($requiresApproval ? "Results saved — pending approval" : "Results Saved Successfully");
@@ -813,7 +813,10 @@ class LabServiceRequestController extends Controller
      */
     public function show($id)
     {
-        $req = LabServiceRequest::where('id', $id)->first();
+        $req = LabServiceRequest::with([
+            'patient.user', 'patient.hmo', 'service', 'doctor',
+            'resultBy', 'approver', 'encounter', 'productOrServiceRequest'
+        ])->findOrFail($id);
 
         return view('admin.lab_service_requests.show', ['req' => $req]);
     }

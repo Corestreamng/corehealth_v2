@@ -483,9 +483,10 @@
         font-weight: 600;
     }
     .enrollment-badge.active { background: #d4edda; color: #155724; }
-    .enrollment-badge.delivered { background: #cce5ff; color: #004085; }
     .enrollment-badge.postnatal { background: #fff3cd; color: #856404; }
     .enrollment-badge.completed { background: #e2e3e5; color: #383d41; }
+    .enrollment-badge.transferred { background: #d1ecf1; color: #0c5460; }
+    .enrollment-badge.deceased { background: #f8d7da; color: #721c24; }
     .enrollment-badge.high-risk { background: #f8d7da; color: #721c24; }
 
     /* Risk Level Indicator */
@@ -697,6 +698,10 @@
             <button class="quick-action-btn" id="btn-maternity-audit" disabled title="Enroll/select patient first">
                 <i class="mdi mdi-shield-search text-warning"></i>
                 <span>Audit Trail</span>
+            </button>
+            <button class="quick-action-btn" id="btn-discharge-patient" disabled title="Discharge maternity enrollment" style="display:none;">
+                <i class="mdi mdi-exit-run text-danger"></i>
+                <span>Discharge</span>
             </button>
         </div>
     </div>
@@ -1473,9 +1478,43 @@
 @include('admin.partials.re-prescribe-encounter-modal')
 @include('admin.partials.clinical_context_modal')
 @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
-@include('admin.partials.invest_res_js')
 @include('admin.partials.invest_res_view_imaging_modal')
 @include('admin.partials.invest_res_view_imaging_js')
+@include('admin.partials.invest_res_view_modal')
+@include('admin.partials.invest_res_view_js')
+
+<!-- Discharge Maternity Enrollment Modal -->
+<div class="modal fade" id="dischargeModal" tabindex="-1" aria-labelledby="dischargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="dischargeModalLabel"><i class="mdi mdi-exit-run"></i> Discharge Maternity Enrollment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="discharge-warnings-container" style="display:none;" class="mb-3"></div>
+                <div id="discharge-status-info" class="mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="mdi mdi-account me-2"></i>
+                        <strong id="discharge-patient-name"></strong>
+                        <span id="discharge-current-status" class="ms-2"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Outcome Summary <span class="text-danger">*</span></label>
+                    <textarea id="discharge-outcome-summary" class="form-control" rows="3" placeholder="Brief summary of maternity outcome (min 5 characters)..." required></textarea>
+                    <div class="form-text">Describe the overall outcome of this maternity episode (e.g., "Normal vaginal delivery, mother and baby well")</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-discharge" disabled>
+                    <i class="mdi mdi-exit-run"></i> Discharge Patient
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
 
@@ -1488,6 +1527,7 @@
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 {{-- SHARED partial: patient search JS with maternity context --}}
 @include('admin.partials.patient_search_js', ['search_context' => 'maternity'])
+@include('admin.partials.invest_res_js')
 
 <script>
 // ═══════════════════════════════════════════════════════════════
@@ -1713,9 +1753,16 @@ function loadPatient(patientId) {
             if (currentEnrollmentId) {
                 $('#btn-print-anc-card').show();
                 $('#btn-print-road-card').show();
+                // Show discharge button for active enrollments
+                if (data.enrollment && !['completed', 'transferred', 'deceased'].includes(data.enrollment.status)) {
+                    $('#btn-discharge-patient').show().prop('disabled', false);
+                } else {
+                    $('#btn-discharge-patient').hide();
+                }
             } else {
                 $('#btn-print-anc-card').hide();
                 $('#btn-print-road-card').hide();
+                $('#btn-discharge-patient').hide();
             }
 
             // Load overview
@@ -1871,10 +1918,51 @@ function populateOverviewTab(data) {
 
     let html = '';
 
-    // ── Pregnancy Progress Bar ──────────────────────────────────
-    if (e && e.lmp && e.edd) {
+    // ── Stage-Aware Progress Section ──────────────────────────────
+    if (e && e.status === 'completed') {
+        // Discharged — show completed summary
+        html += `
+        <div class="card-modern mb-3" style="border-left: 4px solid #6c757d;">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold small"><i class="mdi mdi-check-circle text-secondary"></i> Maternity Episode Completed</span>
+                    <span class="badge bg-secondary">DISCHARGED</span>
+                </div>
+                ${e.completed_at ? '<div class="small text-muted mt-1"><i class="mdi mdi-calendar-check"></i> Discharged: ' + e.completed_at + '</div>' : ''}
+                ${e.outcome_summary ? '<div class="small mt-1"><i class="mdi mdi-text-box-outline"></i> ' + e.outcome_summary + '</div>' : ''}
+            </div>
+        </div>`;
+    } else if (e && e.status === 'postnatal' && e.delivery_date) {
+        // Postnatal — show postpartum days + postnatal progress
+        const deliveryDate = new Date(e.delivery_date);
+        const today = new Date();
+        const postpartumDays = Math.floor((today - deliveryDate) / (1000 * 60 * 60 * 24));
+        const postpartumWeeks = Math.floor(postpartumDays / 7);
+        const postpartumRemDays = postpartumDays % 7;
+        // Standard postnatal period is 6 weeks (42 days)
+        const pnProgressPct = Math.min(100, Math.max(0, (postpartumDays / 42) * 100));
+        const pnColor = postpartumDays > 42 ? '#6c757d' : '#2196f3';
+
+        html += `
+        <div class="card-modern mb-3" style="border-left: 4px solid #2196f3;">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold small"><i class="mdi mdi-account-heart text-primary"></i> Postnatal Progress</span>
+                    <span class="small">${postpartumWeeks}w ${postpartumRemDays}d postpartum <span class="badge bg-primary">${e.postnatal_visit_count || 0} visits</span></span>
+                </div>
+                <div class="position-relative" style="height: 22px; background: #f0f0f0; border-radius: 11px; overflow: hidden;">
+                    <div style="position:absolute; left:0; top:0; height:100%; width:${pnProgressPct}%; background: ${pnColor}; border-radius:11px; transition: width 0.5s;"></div>
+                    <span style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:0.7rem; font-weight:600; color:#333; text-shadow: 0 0 3px #fff;">${postpartumDays}d / 42d (6 weeks)</span>
+                </div>
+                <div class="d-flex justify-content-between mt-1" style="font-size:0.65rem; color:#999;">
+                    <span>Delivered: ${e.delivery_date}</span>
+                    <span>6 weeks postpartum</span>
+                </div>
+            </div>
+        </div>`;
+    } else if (e && e.lmp && e.edd) {
+        // Active (ANC) — pregnancy progress bar
         const gaText = e.gestational_age || 'N/A';
-        // Parse GA weeks from text like "32 weeks, 4 days"
         const gaMatch = gaText.match(/(\d+)\s*weeks?/i);
         const gaWeeks = gaMatch ? parseInt(gaMatch[1]) : 0;
         const gaDayMatch = gaText.match(/(\d+)\s*days?/i);
@@ -2309,11 +2397,12 @@ function renderEnrollmentForm() {
 function renderEnrollmentDetails() {
     const e = currentEnrollment;
 
-    // Status transition bar
-    const statuses = ['active', 'delivered', 'postnatal', 'discharged'];
-    const statusLabels = ['Active (ANC)', 'Delivered', 'Postnatal', 'Discharged'];
-    const statusColors = ['#e91e63', '#4caf50', '#2196f3', '#6c757d'];
-    const currentIdx = statuses.indexOf(e.status);
+    // Status transition bar — 3-step: Active → Postnatal → Discharged
+    const statuses = ['active', 'postnatal', 'completed'];
+    const statusLabels = ['Active (ANC)', 'Postnatal', 'Discharged'];
+    const statusColors = ['#e91e63', '#2196f3', '#6c757d'];
+    const statusMap = { active: 0, postnatal: 1, completed: 2, transferred: 2, deceased: 2 };
+    const currentIdx = statusMap[e.status] !== undefined ? statusMap[e.status] : -1;
 
     let statusBarHtml = '<div class="d-flex align-items-center mb-3" style="gap:0;">';
     statuses.forEach((s, i) => {
@@ -2321,8 +2410,12 @@ function renderEnrollmentDetails() {
         const isCurrent = i === currentIdx;
         const bg = isActive ? statusColors[i] : '#e0e0e0';
         const textColor = isActive ? '#fff' : '#999';
-        statusBarHtml += `<div class="text-center px-2 py-1 flex-fill" style="background:${bg}; color:${textColor}; font-size:0.72rem; font-weight:${isCurrent ? '700' : '400'}; ${i === 0 ? 'border-radius:6px 0 0 6px;' : ''} ${i === 3 ? 'border-radius:0 6px 6px 0;' : ''}">
-            ${isCurrent ? '<i class="mdi mdi-chevron-right"></i> ' : ''}${statusLabels[i]}
+        // For terminal statuses that aren't 'completed', show actual label
+        let label = statusLabels[i];
+        if (i === 2 && isCurrent && e.status === 'transferred') label = 'Transferred';
+        if (i === 2 && isCurrent && e.status === 'deceased') label = 'Deceased';
+        statusBarHtml += `<div class="text-center px-2 py-1 flex-fill" style="background:${bg}; color:${textColor}; font-size:0.72rem; font-weight:${isCurrent ? '700' : '400'}; ${i === 0 ? 'border-radius:6px 0 0 6px;' : ''} ${i === 2 ? 'border-radius:0 6px 6px 0;' : ''}">
+            ${isCurrent ? '<i class="mdi mdi-chevron-right"></i> ' : ''}${label}
         </div>`;
     });
     statusBarHtml += '</div>';
@@ -2336,7 +2429,11 @@ function renderEnrollmentDetails() {
     <div class="card-modern">
         <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: var(--maternity-pink);">
             <h6 class="mb-0"><i class="mdi mdi-clipboard-check"></i> Enrollment Details</h6>
-            <span class="enrollment-badge ${e.status}" style="background: rgba(255,255,255,0.2); color: white;">${e.status.toUpperCase()}</span>
+            <div class="d-flex align-items-center" style="gap:6px;">
+                <button class="btn btn-sm btn-outline-light" onclick="editEnrollment()" title="Edit enrollment"><i class="mdi mdi-pencil"></i> Edit</button>
+                ${e.status !== 'completed' && e.status !== 'transferred' && e.status !== 'deceased' ? '<button class="btn btn-sm btn-outline-light" onclick="showDischargeModal()" title="Discharge patient"><i class="mdi mdi-exit-run"></i> Discharge</button>' : ''}
+                <span class="enrollment-badge ${e.status}" style="background: rgba(255,255,255,0.2); color: white;">${e.status.toUpperCase()}</span>
+            </div>
         </div>
         <div class="card-body">
             ${statusBarHtml}
@@ -2367,6 +2464,135 @@ function renderEnrollmentDetails() {
         </div>
     </div>`;
     $('#enrollment-content').html(html);
+}
+
+function editEnrollment() {
+    const e = currentEnrollment;
+    if (!e) return;
+
+    // Helper to format date for input[type=date]
+    function toDateInput(val) {
+        if (!val) return '';
+        const d = new Date(val);
+        if (isNaN(d)) return '';
+        return d.toISOString().split('T')[0];
+    }
+
+    function optionSelected(val, option) { return val === option ? 'selected' : ''; }
+
+    const html = `
+    <div class="card-modern">
+        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: var(--maternity-pink);">
+            <h6 class="mb-0"><i class="mdi mdi-pencil"></i> Edit Enrollment</h6>
+            <button class="btn btn-sm btn-outline-light" onclick="renderEnrollmentDetails()"><i class="mdi mdi-close"></i> Cancel</button>
+        </div>
+        <div class="card-body">
+            <form id="edit-enrollment-form">
+                <div class="form-section">
+                    <div class="form-section-title"><i class="mdi mdi-calendar"></i> Dates & Obstetric Formula</div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3"><label class="form-label">LMP <span class="text-danger">*</span></label><input type="date" name="lmp" class="form-control" id="edit-enroll-lmp" value="${toDateInput(e.lmp)}" required></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">EDD <small class="text-muted">(auto-calculated)</small></label><input type="date" name="edd" class="form-control" id="edit-enroll-edd" value="${toDateInput(e.edd)}"></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">GA</label><div class="form-control bg-light" id="edit-enroll-ga-display" style="font-weight:600; color:#555;">${e.gestational_age || '—'}</div></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Days to EDD</label><div class="form-control bg-light" id="edit-enroll-edd-countdown" style="font-weight:600; color:#555;">${e.remaining_days !== null ? e.remaining_days + ' days' : '—'}</div></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2 mb-3"><label class="form-label">Gravida <span class="text-danger">*</span></label><input type="number" name="gravida" class="form-control" min="1" value="${e.gravida || ''}" required></div>
+                        <div class="col-md-2 mb-3"><label class="form-label">Parity</label><input type="number" name="parity" class="form-control" min="0" value="${e.parity || 0}"></div>
+                        <div class="col-md-2 mb-3"><label class="form-label">Alive</label><input type="number" name="alive" class="form-control" min="0" value="${e.alive || 0}"></div>
+                        <div class="col-md-2 mb-3"><label class="form-label">Abortion / Miscarriage</label><input type="number" name="abortion_miscarriage" class="form-control" min="0" value="${e.abortion_miscarriage || 0}"></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="form-section-title"><i class="mdi mdi-human-pregnant"></i> Booking Measurements</div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3"><label class="form-label">Blood Group</label><select name="blood_group" class="form-select"><option value="">-- Select --</option><option ${optionSelected(e.blood_group,'A+')}>A+</option><option ${optionSelected(e.blood_group,'A-')}>A-</option><option ${optionSelected(e.blood_group,'B+')}>B+</option><option ${optionSelected(e.blood_group,'B-')}>B-</option><option ${optionSelected(e.blood_group,'AB+')}>AB+</option><option ${optionSelected(e.blood_group,'AB-')}>AB-</option><option ${optionSelected(e.blood_group,'O+')}>O+</option><option ${optionSelected(e.blood_group,'O-')}>O-</option></select></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Genotype</label><select name="genotype" class="form-select"><option value="">-- Select --</option><option ${optionSelected(e.genotype,'AA')}>AA</option><option ${optionSelected(e.genotype,'AS')}>AS</option><option ${optionSelected(e.genotype,'SS')}>SS</option><option ${optionSelected(e.genotype,'AC')}>AC</option><option ${optionSelected(e.genotype,'SC')}>SC</option><option ${optionSelected(e.genotype,'CC')}>CC</option></select></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Weight (kg)</label><input type="number" name="booking_weight_kg" id="edit-enroll-weight" class="form-control" step="0.1" value="${e.booking_weight_kg || ''}"></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Height (cm)</label><input type="number" name="height_cm" id="edit-enroll-height" class="form-control" step="0.1" value="${e.height_cm || ''}"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3"><label class="form-label">Booking BP</label><input type="text" name="booking_bp" class="form-control" value="${e.booking_bp || ''}" placeholder="e.g. 120/80"></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">BMI <small class="text-muted">(auto)</small></label><div class="form-control bg-light" id="edit-enroll-bmi-display" style="font-weight:600;">—</div></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Risk Level</label><select name="risk_level" class="form-select"><option value="low" ${optionSelected(e.risk_level,'low')}>Low</option><option value="moderate" ${optionSelected(e.risk_level,'moderate')}>Moderate</option><option value="high" ${optionSelected(e.risk_level,'high')}>High</option><option value="very_high" ${optionSelected(e.risk_level,'very_high')}>Very High</option></select></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3"><label class="form-label">Risk Factors</label><textarea name="risk_factors" class="form-control" rows="2">${e.risk_factors || ''}</textarea></div>
+                    </div>
+                </div>
+                <div class="p-3 text-end">
+                    <button type="button" class="btn btn-secondary me-2" onclick="renderEnrollmentDetails()"><i class="mdi mdi-close"></i> Cancel</button>
+                    <button type="submit" class="btn btn-lg text-white" style="background: var(--maternity-pink);"><i class="mdi mdi-check"></i> Update Enrollment</button>
+                </div>
+            </form>
+        </div>
+    </div>`;
+    $('#enrollment-content').html(html);
+
+    // Auto-calculate EDD from LMP
+    function editUpdateLmpCalcs() {
+        const lmpVal = $('#edit-enroll-lmp').val();
+        if (!lmpVal) return;
+        const lmp = new Date(lmpVal);
+        if (isNaN(lmp)) return;
+        const edd = new Date(lmp);
+        edd.setDate(edd.getDate() + 280);
+        $('#edit-enroll-edd').val(edd.toISOString().split('T')[0]);
+        const today = new Date();
+        const diffDays = Math.floor((today - lmp) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0) {
+            const weeks = Math.floor(diffDays / 7), days = diffDays % 7;
+            const tri = weeks < 13 ? '1st' : (weeks < 28 ? '2nd' : '3rd');
+            $('#edit-enroll-ga-display').html(`<span>${weeks}w ${days}d</span> <span class="badge bg-secondary" style="font-size:0.65rem;">${tri} trimester</span>`);
+        }
+        const daysToEdd = Math.floor((edd - today) / (1000 * 60 * 60 * 24));
+        $('#edit-enroll-edd-countdown').html(daysToEdd > 0 ? daysToEdd + ' days' : (daysToEdd === 0 ? '<span class="text-danger">DUE TODAY</span>' : `<span class="text-danger">${Math.abs(daysToEdd)}d overdue</span>`));
+    }
+    $('#edit-enroll-lmp').on('change', editUpdateLmpCalcs);
+
+    // Auto-calculate BMI
+    function editUpdateBmi() {
+        const wt = parseFloat($('#edit-enroll-weight').val()), ht = parseFloat($('#edit-enroll-height').val());
+        if (wt > 0 && ht > 0) {
+            const bmi = (wt / ((ht / 100) ** 2)).toFixed(1);
+            const cat = bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'));
+            const clr = bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'));
+            $('#edit-enroll-bmi-display').html(`<span style="color:${clr};">${bmi}</span> <span class="badge" style="background:${clr}; font-size:0.65rem;">${cat}</span>`);
+        }
+    }
+    $('#edit-enroll-weight, #edit-enroll-height').on('input', editUpdateBmi);
+    editUpdateBmi(); // initial calc
+
+    // Submit edit
+    $('#edit-enrollment-form').on('submit', function(ev) {
+        ev.preventDefault();
+        const formData = {};
+        $(this).serializeArray().forEach(f => formData[f.name] = f.value);
+        $.ajax({
+            url: `/maternity-workbench/enrollment/${currentEnrollmentId}`,
+            method: 'PUT',
+            data: formData,
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            success: function(resp) {
+                if (resp.success) {
+                    toastr.success(resp.message);
+                    currentEnrollment = resp.enrollment;
+                    currentPatientData.enrollment = resp.enrollment;
+                    loadPatient(currentPatient);
+                } else {
+                    toastr.error(resp.message || 'Update failed');
+                }
+            },
+            error: function(xhr) {
+                const errors = xhr.responseJSON?.errors;
+                if (errors) {
+                    Object.values(errors).flat().forEach(e => toastr.error(e));
+                } else {
+                    toastr.error(xhr.responseJSON?.message || 'Update failed');
+                }
+            }
+        });
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3757,8 +3983,12 @@ function renderDeliveryForm() {
                     destroyMaternityEditor('delivery_complications');
                     toastr.success(r.message);
                     currentEnrollment.has_delivery = true;
-                    currentEnrollment.status = 'delivered';
+                    currentEnrollment.status = 'postnatal';
+                    currentEnrollment.delivery_date = data.delivery_date || null;
                     loadDeliveryTab();
+                    renderEnrollmentDetails();
+                    populateOverviewTab(currentPatientData);
+                    loadQueueCounts();
                 } else toastr.error(r.message);
             },
             error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Failed to save'); }
@@ -5253,6 +5483,11 @@ $(document).ready(function() {
         switchWorkspaceTab('audit');
     });
 
+    // Quick action: Discharge
+    $('#btn-discharge-patient').on('click', function() {
+        showDischargeModal();
+    });
+
     $('#btn-close-reports').on('click', function() {
         $('#reports-view').removeClass('active').hide();
         if (currentPatient) {
@@ -5266,6 +5501,97 @@ $(document).ready(function() {
     // Auto-refresh queues every 5 minutes
     setInterval(loadQueueCounts, 300000);
 });
+
+// ═══════════════════════════════════════════════════════════════
+// DISCHARGE ENROLLMENT
+// ═══════════════════════════════════════════════════════════════
+function showDischargeModal() {
+    if (!currentEnrollmentId || !currentEnrollment) {
+        toastr.warning('No enrollment selected');
+        return;
+    }
+    if (['completed', 'transferred', 'deceased'].includes(currentEnrollment.status)) {
+        toastr.info('This enrollment is already ' + currentEnrollment.status);
+        return;
+    }
+
+    // Reset modal state
+    $('#discharge-outcome-summary').val('');
+    $('#discharge-warnings-container').hide().html('');
+    $('#btn-confirm-discharge').prop('disabled', true).data('confirmed', false);
+    $('#discharge-patient-name').text($('#patient-name').text().split('(')[0].trim());
+    $('#discharge-current-status').html(`<span class="enrollment-badge ${currentEnrollment.status}">${currentEnrollment.status.toUpperCase()}</span>`);
+
+    // Phase 1: Fetch warnings
+    $.ajax({
+        url: `/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`,
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+        data: { outcome_summary: 'checking warnings', confirm: 0 },
+        success: function(resp) {
+            if (resp.confirm && resp.warnings && resp.warnings.length > 0) {
+                let wHtml = '<div class="alert alert-warning py-2 px-3 mb-0"><h6 class="mb-2 small fw-bold"><i class="mdi mdi-alert"></i> Please review before discharging:</h6><ul class="mb-0 small">';
+                resp.warnings.forEach(w => { wHtml += `<li>${w}</li>`; });
+                wHtml += '</ul></div>';
+                $('#discharge-warnings-container').html(wHtml).show();
+            }
+            $('#btn-confirm-discharge').prop('disabled', false).data('confirmed', true);
+        },
+        error: function(xhr) {
+            const msg = xhr.responseJSON?.message || 'Cannot discharge this enrollment';
+            toastr.error(msg);
+            $('#modal-discharge').modal('hide');
+        }
+    });
+
+    const dischargeModalEl = document.getElementById('dischargeModal');
+    new bootstrap.Modal(dischargeModalEl).show();
+
+    // Bind confirm handler (off first to avoid duplicates)
+    $('#btn-confirm-discharge').off('click').on('click', function() {
+        const summary = $('#discharge-outcome-summary').val().trim();
+        if (summary.length < 5) {
+            toastr.warning('Outcome summary must be at least 5 characters');
+            return;
+        }
+
+        const $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Discharging...');
+
+        $.ajax({
+            url: `/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            data: { outcome_summary: summary, confirm: 1 },
+            success: function(resp) {
+                if (resp.success) {
+                    toastr.success(resp.message || 'Patient discharged successfully');
+                    bootstrap.Modal.getInstance(dischargeModalEl).hide();
+                    // Update local state
+                    currentEnrollment.status = 'completed';
+                    currentEnrollment.completed_at = resp.enrollment?.completed_at || new Date().toISOString().split('T')[0];
+                    currentEnrollment.outcome_summary = summary;
+                    // Refresh UI
+                    renderEnrollmentDetails();
+                    populateOverviewTab(currentPatientData);
+                    loadQueueCounts();
+                    // Update patient header badge
+                    displayPatientInfo(currentPatientData);
+                    // Hide discharge button in quick actions
+                    $('#btn-discharge-patient').hide();
+                } else {
+                    toastr.error(resp.message || 'Discharge failed');
+                }
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to discharge');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-exit-run"></i> Discharge Patient');
+            }
+        });
+    });
+}
 
 // ═══════════════════════════════════════════════════════════════
 // LAB & IMAGING RESULT ENTRY / EDIT  (shared InvestResultEntry)
@@ -5323,163 +5649,6 @@ InvestResultEntry.bindFormSubmit(function() {
     }
 });
 
-// ── View lab result in modal ──────────────────────────────────
-function setResViewInModal(obj) {
-    let res_obj = JSON.parse($(obj).attr('data-result-obj'));
-
-    // Basic service info
-    $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
-
-    // Patient information
-    let patientName = (res_obj.patient && res_obj.patient.user)
-        ? res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname
-        : 'N/A';
-    $('#res_patient_name').html(patientName);
-    $('#res_patient_id').html(res_obj.patient ? res_obj.patient.file_no : 'N/A');
-
-    // Calculate age from date of birth
-    let age = 'N/A';
-    if (res_obj.patient && res_obj.patient.date_of_birth) {
-        let dob = new Date(res_obj.patient.date_of_birth);
-        let today = new Date();
-        let ageYears = today.getFullYear() - dob.getFullYear();
-        let monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            ageYears--;
-        }
-        age = ageYears + ' years';
-    }
-    $('#res_patient_age').html(age);
-
-    // Gender
-    let gender = (res_obj.patient && res_obj.patient.gender) ? res_obj.patient.gender.toUpperCase() : 'N/A';
-    $('#res_patient_gender').html(gender);
-
-    // Test information
-    $('#res_test_id').html(res_obj.id);
-    $('#res_sample_date').html(res_obj.sample_date || 'N/A');
-    $('#res_result_date').html(res_obj.result_date || 'N/A');
-    $('#res_result_by').html(res_obj.results_person
-        ? res_obj.results_person.firstname + ' ' + res_obj.results_person.surname
-        : 'N/A');
-
-    // Signature date (use result date)
-    $('#res_signature_date').html(res_obj.result_date || '');
-
-    // Generated date (current date)
-    let now = new Date();
-    let generatedDate = now.toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
-    $('#res_generated_date').html(generatedDate);
-
-    // Handle V2 results (structured data)
-    if (res_obj.result_data) {
-        let resultData = res_obj.result_data;
-        if (typeof resultData === 'string') {
-            try { resultData = JSON.parse(resultData); } catch (e) { resultData = null; }
-        }
-
-        if (resultData && typeof resultData === 'object') {
-            let paramsArray = Array.isArray(resultData) ? resultData : [];
-
-            if (paramsArray.length > 0) {
-                let resultsHtml = '<table class="result-table"><thead><tr>';
-                resultsHtml += '<th style="width:40%;">Test Parameter</th>';
-                resultsHtml += '<th style="width:25%;">Results</th>';
-                resultsHtml += '<th style="width:25%;">Reference Range</th>';
-                resultsHtml += '<th style="width:10%;">Status</th>';
-                resultsHtml += '</tr></thead><tbody>';
-
-                paramsArray.forEach(function(param) {
-                    resultsHtml += '<tr>';
-                    resultsHtml += '<td><strong>' + param.name + '</strong>';
-                    if (param.code) resultsHtml += ' <span style="color:#999;">(' + param.code + ')</span>';
-                    resultsHtml += '</td>';
-
-                    let valueDisplay = param.value;
-                    if (param.unit) valueDisplay += ' ' + param.unit;
-                    resultsHtml += '<td>' + valueDisplay + '</td>';
-
-                    let refRange = 'N/A';
-                    if (param.reference_range) {
-                        if (param.type === 'integer' || param.type === 'float') {
-                            if (param.reference_range.min !== undefined && param.reference_range.max !== undefined) {
-                                refRange = param.reference_range.min + ' - ' + param.reference_range.max;
-                                if (param.unit) refRange += ' ' + param.unit;
-                            }
-                        } else if (param.type === 'boolean' || param.type === 'enum') {
-                            refRange = param.reference_range.reference_value || 'N/A';
-                        } else if (param.reference_range.text) {
-                            refRange = param.reference_range.text;
-                        }
-                    }
-                    resultsHtml += '<td>' + refRange + '</td>';
-
-                    let statusHtml = '';
-                    if (param.status) {
-                        let statusClass = 'status-' + param.status.toLowerCase().replace(' ', '-');
-                        statusHtml = '<span class="result-status-badge ' + statusClass + '">' + param.status + '</span>';
-                    }
-                    resultsHtml += '<td>' + statusHtml + '</td>';
-                    resultsHtml += '</tr>';
-                });
-
-                resultsHtml += '</tbody></table>';
-                $('#invest_res').html(resultsHtml);
-            } else {
-                $('#invest_res').html(res_obj.result);
-            }
-        } else {
-            $('#invest_res').html(res_obj.result);
-        }
-    } else {
-        // V1 results (HTML content)
-        $('#invest_res').html(res_obj.result);
-    }
-
-    // Handle attachments
-    $('#invest_attachments').html('');
-    if (res_obj.attachments) {
-        let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
-        if (attachments && attachments.length > 0) {
-            let attachHtml = '<div class="result-attachments"><h6 style="margin-bottom:15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
-            attachments.forEach(function(attachment) {
-                let url = '{{ asset("storage") }}/' + attachment.path;
-                let icon = getFileIcon(attachment.type);
-                attachHtml += `<div class="col-md-4 mb-2">
-                    <a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm btn-block">
-                        ${icon} ${attachment.name}
-                    </a>
-                </div>`;
-            });
-            attachHtml += '</div></div>';
-            $('#invest_attachments').html(attachHtml);
-        }
-    }
-
-    $('#investResViewModal').modal('show');
-}
-
-function PrintElem(elem) {
-    var mywindow = window.open('', 'PRINT', 'height=400,width=600');
-    mywindow.document.write('<html><head><title>' + document.title + '</title>');
-    mywindow.document.write('<style>body{font-family:"Segoe UI",sans-serif;} .result-table{width:100%;border-collapse:collapse;} .result-table th,.result-table td{border:1px solid #ddd;padding:8px;text-align:left;} .result-header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:20px;} .result-title-section{background:#eee;text-align:center;padding:10px;font-weight:bold;margin:20px 0;} .result-patient-info{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;} .result-info-row{display:flex;margin-bottom:5px;} .result-info-label{font-weight:bold;width:120px;} .result-footer{margin-top:50px;border-top:1px solid #ccc;padding-top:10px;text-align:center;font-size:12px;}</style>');
-    mywindow.document.write('</head><body>');
-    mywindow.document.write(document.getElementById(elem).innerHTML);
-    mywindow.document.write('</body></html>');
-    mywindow.document.close();
-    mywindow.focus();
-    mywindow.print();
-    mywindow.close();
-    return true;
-}
-
-function getFileIcon(type) {
-    if (type.includes('image')) return '<i class="fa fa-file-image-o"></i>';
-    if (type.includes('pdf')) return '<i class="fa fa-file-pdf-o"></i>';
-    return '<i class="fa fa-file-o"></i>';
-}
+// setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
 </script>
 @endsection

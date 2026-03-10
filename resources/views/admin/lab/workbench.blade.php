@@ -3391,97 +3391,8 @@
     </div>
 </div>
 
-<!-- Investigation Result View Modal -->
-<div class="modal fade" id="investResViewModal" tabindex="-1" role="dialog" aria-labelledby="investResViewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <style>
-                .result-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
-                .result-table tbody tr:hover { background: #f8f9fa; }
-                .result-table td, .result-table th { word-wrap: break-word; overflow-wrap: break-word; }
-                .result-status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
-                .status-normal { background: #d4edda; color: #155724; }
-                .status-high { background: #f8d7da; color: #721c24; }
-                .status-low { background: #fff3cd; color: #856404; }
-                .status-abnormal { background: #f8d7da; color: #721c24; }
-                .result-attachments { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
-                .result-footer { padding: 20px; border-top: 2px solid #eee; font-size: 12px; color: #999; text-align: center; }
-                @media print {
-                    .modal-header, .modal-footer, .result-print-btn { display: none !important; }
-                    .modal-dialog { max-width: 100% !important; margin: 0 !important; }
-                    .modal-content { border: none !important; box-shadow: none !important; }
-                    body { background: white !important; }
-                }
-            </style>
-
-            <div class="modal-header" style="background: {{ $hosColor }}; color: white;">
-                <h5 class="modal-title" id="investResViewModalLabel"><i class="mdi mdi-file-document-outline"></i> Test Results</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <div class="modal-body p-0">
-                <div id="resultViewTable">
-                    <div class="result-header">
-                        <div class="result-header-left">
-                            <img src="data:image/jpeg;base64,{{ $sett->logo ?? '' }}" alt="Hospital Logo" class="result-logo" />
-                            <div class="result-hospital-name">{{ $sett->site_name ?? 'Hospital Name' }}</div>
-                        </div>
-                        <div class="result-header-right">
-                            <div><strong>Address:</strong> {{ $sett->contact_address ?? 'N/A' }}</div>
-                            <div><strong>Phone:</strong> {{ $sett->contact_phones ?? 'N/A' }}</div>
-                            <div><strong>Email:</strong> {{ $sett->contact_emails ?? 'N/A' }}</div>
-                        </div>
-                    </div>
-
-                    <div class="result-title-section">TEST RESULTS</div>
-
-                    <div class="result-patient-info">
-                        <div class="result-info-box">
-                            <div class="result-info-row"><div class="result-info-label">Patient Name:</div><div class="result-info-value" id="res_patient_name"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Patient ID:</div><div class="result-info-value" id="res_patient_id"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Age:</div><div class="result-info-value" id="res_patient_age"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Gender:</div><div class="result-info-value" id="res_patient_gender"></div></div>
-                        </div>
-                        <div class="result-info-box">
-                            <div class="result-info-row"><div class="result-info-label">Test Name:</div><div class="result-info-value invest_res_service_name_view"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Test ID:</div><div class="result-info-value" id="res_test_id"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Lab Number:</div><div class="result-info-value" id="res_lab_number"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Sample Date:</div><div class="result-info-value" id="res_sample_date"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Result Date:</div><div class="result-info-value" id="res_result_date"></div></div>
-                        </div>
-                    </div>
-
-                    <div class="result-section">
-                        <div class="result-section-title">TEST RESULTS</div>
-                        <div id="invest_res"></div>
-                    </div>
-
-                    <div id="invest_attachments" style="margin: 0 20px;"></div>
-
-                    <div class="result-section" style="padding-top: 40px;">
-                        <div style="display: flex; justify-content: space-between; border-top: 2px solid #eee; padding-top: 20px;">
-                            <div><div style="margin-bottom: 5px;"><strong>Results By:</strong></div><div id="res_result_by" style="color: #666;"></div></div>
-                            <div style="text-align: right;"><div style="margin-bottom: 5px;"><strong>Authorized Signature:</strong></div><div style="border-top: 1px solid #333; min-width: 200px; padding-top: 5px;"><span id="res_signature_date"></span></div></div>
-                        </div>
-                    </div>
-
-                    <div class="result-footer">
-                        <div>{{ $sett->site_name ?? 'Hospital Name' }} | {{ $sett->contact_address ?? '' }}</div>
-                        <div>{{ $sett->contact_phones ?? '' }} | {{ $sett->contact_emails ?? '' }}</div>
-                        <div style="margin-top: 10px; font-size: 11px;">This is a computer-generated document. Report generated on <span id="res_generated_date"></span></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal"><i class="fa fa-times"></i> Close</button>
-                <button type="button" onclick="PrintElem('resultViewTable')" class="btn btn-primary"><i class="mdi mdi-printer"></i> Print Results</button>
-            </div>
-        </div>
-    </div>
-</div>
+@include('admin.partials.invest_res_view_modal', ['showLabNumber' => true])
+@include('admin.partials.invest_res_view_js')
 
 <!-- Sample Collection Modal (Lab Number Assignment) -->
 <div class="modal fade" id="sampleCollectionModal" tabindex="-1" role="dialog">
@@ -3921,7 +3832,9 @@
 
 <!-- Include Investigation Result Entry Modal -->
 @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
-@include('admin.partials.invest_res_js')
+
+<!-- Include Bulk Result Entry Modal -->
+@include('admin.partials.bulk_result_entry_modal')
 
 <!-- Result Approval Review Modal -->
 @if(($isApprover ?? false) && ($requiresApproval ?? false))
@@ -4038,6 +3951,8 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'lab'])
+@include('admin.partials.invest_res_js')
+@include('admin.partials.bulk_result_entry_js')
 <script>
 // Global state
 let currentPatient = null;
@@ -4589,6 +4504,16 @@ function displayPendingRequests(requests) {
     const totalPending = requests.billing.length + requests.sample.length + requests.results.length + approvalItems;
     $('#pending-badge').text(totalPending);
 
+    // Store pending results for bulk entry
+    window._pendingResultRequests = requests.results || [];
+    window._bulkResultConfig = {
+        fetchUrlPattern: '/lab-workbench/lab-service-requests/{id}',
+        attachUrlPattern: '/lab-workbench/lab-service-requests/{id}/attachments',
+        saveUrl: '{{ route("lab.saveResult") }}',
+        csrfToken: '{{ csrf_token() }}',
+        onAllSaved: function() { if (currentPatient) loadPatient(currentPatient); }
+    };
+
     updatePendingSubtabBadges(requests);
     renderPendingSubtabContent(currentPendingFilter);
 }
@@ -4681,16 +4606,20 @@ function renderPendingSubtabContent(filter) {
     if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
         const resultsHtml = `
             <div class="request-section" data-section="results">
-                <div class="request-section-header">
+                <div class="request-section-header d-flex justify-content-between align-items-center">
                     <h5>
                         <i class="mdi mdi-file-document-edit"></i>
                         Result Entry (${requests.results.length})
                     </h5>
+                    ${requests.results.length > 1 ? `
+                    <button class="btn btn-sm btn-primary" onclick="openBulkResultEntry()">
+                        <i class="mdi mdi-file-multiple"></i> Bulk Result Entry
+                    </button>` : ''}
                 </div>
                 <div class="request-cards-container" id="results-cards"></div>
                 <div class="section-actions-footer">
                     <div class="select-all-container">
-                        <span class="text-muted"><i class="mdi mdi-information"></i> Results must be entered individually</span>
+                        <span class="text-muted"><i class="mdi mdi-information"></i> Results can be entered individually or in bulk</span>
                     </div>
                 </div>
             </div>
@@ -5637,190 +5566,7 @@ function editLabResult(obj) {
 }
 // ── End Result Entry ─────────────────────────────────────────────────
 
-function setResViewInModal(obj) {
-    let res_obj = JSON.parse($(obj).attr('data-result-obj'));
-
-    // Basic service info
-    $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
-
-    // Patient information
-    let patientName = res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname;
-    $('#res_patient_name').html(patientName);
-    $('#res_patient_id').html(res_obj.patient.file_no);
-
-    // Calculate age from date of birth
-    let age = 'N/A';
-    if (res_obj.patient.date_of_birth) {
-        let dob = new Date(res_obj.patient.date_of_birth);
-        let today = new Date();
-        let ageYears = today.getFullYear() - dob.getFullYear();
-        let monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            ageYears--;
-        }
-        age = ageYears + ' years';
-    }
-    $('#res_patient_age').html(age);
-
-    // Gender
-    let gender = res_obj.patient.gender ? res_obj.patient.gender.toUpperCase() : 'N/A';
-    $('#res_patient_gender').html(gender);
-
-    // Test information
-    $('#res_test_id').html(res_obj.id);
-    $('#res_lab_number').html(res_obj.lab_number || 'N/A');
-    $('#res_sample_date').html(res_obj.sample_date || 'N/A');
-    $('#res_result_date').html(res_obj.result_date || 'N/A');
-    $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
-
-    // Signature date (use result date)
-    $('#res_signature_date').html(res_obj.result_date || '');
-
-    // Generated date (current date)
-    let now = new Date();
-    let generatedDate = now.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    $('#res_generated_date').html(generatedDate);
-
-    // Handle V2 results (structured data)
-    if (res_obj.result_data) {
-        let resultData = res_obj.result_data;
-        if (typeof resultData === 'string') {
-            try {
-                resultData = JSON.parse(resultData);
-            } catch (e) {
-                console.error('Error parsing result data:', e);
-                resultData = null;
-            }
-        }
-
-        if (resultData && typeof resultData === 'object') {
-            // If it's an object but not an array (e.g. key-value pairs), convert to array if needed
-            // But based on previous code, it expects an array of parameters.
-            // Let's ensure it is an array.
-            let paramsArray = [];
-            if (Array.isArray(resultData)) {
-                paramsArray = resultData;
-            } else {
-                // If it's an object (key: value), we might need to map it back to the template structure
-                // For now, let's assume if it's not an array, we can't iterate it easily without the template
-                console.warn('Result data is not an array:', resultData);
-            }
-
-            if (paramsArray.length > 0) {
-                let resultsHtml = '<table class="result-table"><thead><tr>';
-                resultsHtml += '<th style="width: 40%;">Test Parameter</th>';
-                resultsHtml += '<th style="width: 25%;">Results</th>';
-                resultsHtml += '<th style="width: 25%;">Reference Range</th>';
-                resultsHtml += '<th style="width: 10%;">Status</th>';
-                resultsHtml += '</tr></thead><tbody>';
-
-                paramsArray.forEach(function(param) {
-                    resultsHtml += '<tr>';
-                    resultsHtml += '<td><strong>' + param.name + '</strong>';
-                    if (param.code) {
-                        resultsHtml += ' <span style="color: #999;">(' + param.code + ')</span>';
-                    }
-                    resultsHtml += '</td>';
-
-                    // Value with unit
-                    let valueDisplay = param.value;
-                    if (param.unit) {
-                        valueDisplay += ' ' + param.unit;
-                    }
-                    resultsHtml += '<td>' + valueDisplay + '</td>';
-
-                    // Reference range
-                    let refRange = 'N/A';
-                    if (param.reference_range) {
-                        if (param.type === 'integer' || param.type === 'float') {
-                            if (param.reference_range.min !== undefined && param.reference_range.max !== undefined) {
-                                refRange = param.reference_range.min + ' - ' + param.reference_range.max;
-                                if (param.unit) refRange += ' ' + param.unit;
-                            }
-                        } else if (param.type === 'boolean' || param.type === 'enum') {
-                            refRange = param.reference_range.reference_value || 'N/A';
-                        } else if (param.reference_range.text) {
-                            refRange = param.reference_range.text;
-                        }
-                    }
-                    resultsHtml += '<td>' + refRange + '</td>';
-
-                    // Status badge
-                    let statusHtml = '';
-                    if (param.status) {
-                        let statusClass = 'status-' + param.status.toLowerCase().replace(' ', '-');
-                        statusHtml = '<span class="result-status-badge ' + statusClass + '">' + param.status + '</span>';
-                    }
-                    resultsHtml += '<td>' + statusHtml + '</td>';
-                    resultsHtml += '</tr>';
-                });
-
-                resultsHtml += '</tbody></table>';
-                $('#invest_res').html(resultsHtml);
-            } else {
-                 // Fallback to V1 results (HTML content) if array is empty
-                 $('#invest_res').html(res_obj.result);
-            }
-        } else {
-             // Fallback to V1 results (HTML content)
-             $('#invest_res').html(res_obj.result);
-        }
-    } else {
-        // V1 results (HTML content)
-        $('#invest_res').html(res_obj.result);
-    }
-
-    // Handle attachments
-    $('#invest_attachments').html('');
-    if (res_obj.attachments) {
-        let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
-        if (attachments && attachments.length > 0) {
-            let attachHtml = '<div class="result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
-            attachments.forEach(function(attachment) {
-                let url = '{{ asset("storage") }}/' + attachment.path;
-                let icon = getFileIcon(attachment.type);
-                attachHtml += `<div class="col-md-4 mb-2">
-                    <a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm btn-block">
-                        ${icon} ${attachment.name}
-                    </a>
-                </div>`;
-            });
-            attachHtml += '</div></div>';
-            $('#invest_attachments').html(attachHtml);
-        }
-    }
-
-    $('#investResViewModal').modal('show');
-}
-
-function PrintElem(elem) {
-    var mywindow = window.open('', 'PRINT', 'height=400,width=600');
-    mywindow.document.write('<html><head><title>' + document.title + '</title>');
-    mywindow.document.write('<style>body{font-family: "Segoe UI", sans-serif;} .result-table {width: 100%; border-collapse: collapse;} .result-table th, .result-table td {border: 1px solid #ddd; padding: 8px; text-align: left;} .result-header {display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;} .result-title-section {background: #eee; text-align: center; padding: 10px; font-weight: bold; margin: 20px 0;} .result-patient-info {display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;} .result-info-row {display: flex; margin-bottom: 5px;} .result-info-label {font-weight: bold; width: 120px;} .result-footer {margin-top: 50px; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-size: 12px;}</style>');
-    mywindow.document.write('</head><body >');
-    mywindow.document.write(document.getElementById(elem).innerHTML);
-    mywindow.document.write('</body></html>');
-
-    mywindow.document.close(); // necessary for IE >= 10
-    mywindow.focus(); // necessary for IE >= 10*/
-
-    mywindow.print();
-    mywindow.close();
-
-    return true;
-}
-
-function getFileIcon(type) {
-    if (type.includes('image')) return '<i class="fa fa-file-image-o"></i>';
-    if (type.includes('pdf')) return '<i class="fa fa-file-pdf-o"></i>';
-    return '<i class="fa fa-file-o"></i>';
-}
+// setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
 
 // Delete Lab Request with Reason
 let deleteRequestId = null;

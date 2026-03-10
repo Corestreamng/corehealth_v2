@@ -283,6 +283,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('clinic-note-templates/{clinic_note_template}/toggle', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'toggle'])->name('clinic-note-templates.toggle');
         Route::delete('clinic-note-templates/{clinic_note_template}', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'destroy'])->name('clinic-note-templates.destroy');
 
+        // V1 Result Templates (for lab/imaging WYSIWYG result entry)
+        Route::get('v1-result-templates', [\App\Http\Controllers\V1ResultTemplateController::class, 'getTemplates'])->name('v1-result-templates.list');
+
         // Clinic Schedules & Doctor Availability Management
         Route::get('clinic-schedules', [\App\Http\Controllers\ClinicScheduleController::class, 'index'])->name('clinic-schedules.index');
 

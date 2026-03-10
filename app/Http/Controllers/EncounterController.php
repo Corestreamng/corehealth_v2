@@ -246,8 +246,12 @@ class EncounterController extends Controller
                     return $patient?->file_no;
                 })
                 ->addColumn('view', function ($queue) {
-                    $url = route('patient.show', $queue->patient_id);
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
+                    $url = url('encounters/create') . '?patient_id=' . $queue->patient_id;
+                    if ($queue->request_entry_id) {
+                        $url .= '&req_entry_id=' . $queue->request_entry_id;
+                    }
+                    $url .= '&queue_id=' . $queue->id;
+                    return '<a href="' . e($url) . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
                 })
                 ->addColumn('delivery_status', function () {
                     return '<span class="badge bg-secondary" title="Completed encounter">Completed</span>';
@@ -408,8 +412,12 @@ class EncounterController extends Controller
                     return $patient ? $patient->file_no : 'N/A';
                 })
                 ->addColumn('view', function ($queue) {
-                    $url = route('patient.show', $queue->patient_id);
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
+                    $url = url('encounters/create') . '?patient_id=' . $queue->patient_id;
+                    if ($queue->request_entry_id) {
+                        $url .= '&req_entry_id=' . $queue->request_entry_id;
+                    }
+                    $url .= '&queue_id=' . $queue->id;
+                    return '<a href="' . e($url) . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
                 })
                 ->rawColumns(['view'])
                 ->make(true);
