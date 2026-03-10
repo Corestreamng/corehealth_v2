@@ -3779,8 +3779,7 @@ class NursingWorkbenchController extends Controller{
 
             // Check for unpaid bills
             $unpaidBills = ProductOrServiceRequest::where('user_id', $admission->patient->user_id ?? 0)
-                ->where('payment_status', '!=', 'paid')
-                ->whereNull('voided_at')
+                ->whereNull('payment_id')
                 ->count();
 
             $waitMinutes = Carbon::parse($admission->updated_at)->diffInMinutes(Carbon::now());
