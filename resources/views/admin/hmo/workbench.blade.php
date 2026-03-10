@@ -475,7 +475,7 @@
         <!-- Queue Stats Cards -->
         <div class="row mb-4">
             <div class="col-md-2">
-                <div class="queue-card-modern text-white preset-card" data-preset="" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="queue-card-modern text-white" data-tab-target="pending" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); cursor: pointer;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -488,7 +488,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="queue-card-modern text-white preset-card" data-preset="" style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);">
+                <div class="queue-card-modern text-white" data-tab-target="express" style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%); cursor: pointer;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -1468,6 +1468,18 @@ $(function() {
             $(this).addClass('border border-dark border-3');
         }
         table.ajax.reload();
+    });
+
+    // Stat card → switch to its corresponding tab
+    $('[data-tab-target]').on('click', function() {
+        var targetTab = $(this).data('tab-target');
+        if (targetTab) {
+            currentTab = targetTab;
+            currentPreset = '';
+            $('#workbenchTabs a.nav-link').removeClass('active');
+            $('#' + targetTab + '-tab').addClass('active');
+            if (table) { table.ajax.reload(); }
+        }
     });
 
     // Apply filters
