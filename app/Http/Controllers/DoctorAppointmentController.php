@@ -108,25 +108,72 @@ class DoctorAppointmentController extends Controller
             ->addColumn('status_badge', function ($appt) {
                 return QueueStatus::badge($appt->status);
             })
+            ->addColumn('delivery_info', function ($appt) {
+                // Delivery check for active (checked-in) appointments
+                $canDeliver = true;
+                $deliveryReason = '';
+                $deliveryHint = '';
+                $isActive = in_array($appt->status, [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION]);
+
+                if ($isActive && $appt->doctor_queue_id) {
+                    $queueEntry = DoctorQueue::find($appt->doctor_queue_id);
+                    if ($queueEntry && $queueEntry->request_entry_id) {
+                        $reqEntry = ProductOrServiceRequest::find($queueEntry->request_entry_id);
+                        $check = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => '', 'hint' => ''];
+                        $canDeliver = $check['can_deliver'] ?? true;
+                        $deliveryReason = $check['reason'] ?? '';
+                        $deliveryHint = $check['hint'] ?? '';
+                    }
+                }
+
+                $nextStep = $this->nextStepHint($appt->status, $canDeliver, $deliveryReason, 'appointment');
+                $style = 'font-size:0.7rem;line-height:1.3;';
+                $hintLine = $nextStep ? '<br><span style="font-size:0.65rem;color:#0d6efd;font-style:italic;" title="' . e($nextStep) . '"><i class="mdi mdi-arrow-right-circle"></i> ' . e(\Illuminate\Support\Str::limit($nextStep, 40)) . '</span>' : '';
+
+                if ($appt->status == QueueStatus::SCHEDULED) {
+                    return '<span class="text-muted" style="' . $style . '"><i class="mdi mdi-clock-outline"></i> Pending</span>' . $hintLine;
+                }
+                if ($isActive) {
+                    if ($canDeliver) {
+                        return '<span class="text-success" style="' . $style . '" title="' . e($deliveryHint) . '"><i class="mdi mdi-check-circle"></i> Ready</span>' . $hintLine;
+                    }
+                    return '<span class="text-danger" style="' . $style . '" title="' . e($deliveryHint) . '"><i class="mdi mdi-alert-circle"></i> ' . e($deliveryReason) . '</span>' . $hintLine;
+                }
+                // Terminal states
+                return '<span class="text-muted" style="' . $style . '">—</span>';
+            })
             ->addColumn('actions', function ($appt) {
-                $buttons = '';
+                $buttons = '<div class="d-flex gap-1 flex-wrap">';
                 $clinicId = $appt->clinic_id;
                 $doctorId = $appt->staff_id;
                 $date = $appt->appointment_date;
                 $patientName = $appt->patient ? userfullname($appt->patient->user_id) : 'N/A';
+
                 if ($appt->status === QueueStatus::SCHEDULED) {
                     $buttons .= '<button class="btn btn-sm btn-success btn-check-in-appointment" data-id="' . $appt->id . '" title="Check In"><i class="mdi mdi-account-check"></i> Check In</button> ';
-                    $buttons .= '<button class="btn btn-sm btn-warning btn-reschedule-appointment" data-id="' . $appt->id . '" data-clinic="' . $clinicId . '" data-doctor="' . $doctorId . '" data-date="' . $date . '" data-patient="' . e($patientName) . '" data-reschedule-count="' . ($appt->reschedule_count ?? 0) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i></button> ';
-                    $buttons .= '<button class="btn btn-sm btn-purple btn-reassign-appointment" data-id="' . $appt->id . '" data-clinic="' . $clinicId . '" data-doctor="' . $doctorId . '" data-patient="' . e($patientName) . '" title="Change Doctor"><i class="mdi mdi-account-switch"></i></button> ';
-                    $buttons .= '<button class="btn btn-sm btn-danger btn-cancel-appointment" data-id="' . $appt->id . '" title="Cancel"><i class="mdi mdi-close-circle"></i></button> ';
-                    $buttons .= '<button class="btn btn-sm btn-info btn-noshow-appointment" data-id="' . $appt->id . '" title="Mark No-Show"><i class="mdi mdi-account-off"></i></button>';
+                    $buttons .= '<button class="btn btn-sm btn-warning btn-reschedule-appointment" data-id="' . $appt->id . '" data-clinic="' . $clinicId . '" data-doctor="' . $doctorId . '" data-date="' . $date . '" data-patient="' . e($patientName) . '" data-reschedule-count="' . ($appt->reschedule_count ?? 0) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</button> ';
+                    $buttons .= '<button class="btn btn-sm btn-purple btn-reassign-appointment" data-id="' . $appt->id . '" data-clinic="' . $clinicId . '" data-doctor="' . $doctorId . '" data-patient="' . e($patientName) . '" title="Change Doctor"><i class="mdi mdi-account-switch"></i> Reassign</button> ';
+                    $buttons .= '<button class="btn btn-sm btn-danger btn-cancel-appointment" data-id="' . $appt->id . '" title="Cancel"><i class="mdi mdi-close-circle"></i> Cancel</button> ';
+                    $buttons .= '<button class="btn btn-sm btn-secondary btn-noshow-appointment" data-id="' . $appt->id . '" title="Mark No-Show"><i class="mdi mdi-account-off"></i> No-Show</button> ';
                 }
-                if ($appt->status === QueueStatus::COMPLETED) {
-                    $buttons .= '<button class="btn btn-sm btn-purple btn-view-chain" data-id="' . $appt->id . '" title="View History"><i class="mdi mdi-link-variant"></i></button>';
+
+                // Active states: cancel still possible
+                if (in_array($appt->status, [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY])) {
+                    $buttons .= '<button class="btn btn-sm btn-danger btn-cancel-appointment" data-id="' . $appt->id . '" title="Cancel"><i class="mdi mdi-close-circle"></i> Cancel</button> ';
                 }
+
+                // No-show: allow reschedule
+                if ($appt->status === QueueStatus::NO_SHOW) {
+                    $buttons .= '<button class="btn btn-sm btn-warning btn-reschedule-appointment" data-id="' . $appt->id . '" data-clinic="' . $clinicId . '" data-doctor="' . $doctorId . '" data-date="' . $date . '" data-patient="' . e($patientName) . '" data-reschedule-count="' . ($appt->reschedule_count ?? 0) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</button> ';
+                }
+
+                // View history — always available
+                $buttons .= '<button class="btn btn-sm btn-outline-secondary btn-view-chain" data-id="' . $appt->id . '" title="View History"><i class="mdi mdi-link-variant"></i> History</button>';
+
+                $buttons .= '</div>';
                 return $buttons;
             })
-            ->rawColumns(['type_badge', 'status_badge', 'actions'])
+            ->rawColumns(['type_badge', 'status_badge', 'delivery_info', 'actions'])
             ->make(true);
     }
 
@@ -1216,6 +1263,31 @@ class DoctorAppointmentController extends Controller
             }
             $dateStr = $appt->appointment_date->format('Y-m-d');
 
+            // If checked-in (has linked queue), resolve encounter URL from the queue
+            $encounterUrl = null;
+            $canDeliver = true;
+            $deliveryReason = 'Scheduled';
+            $deliveryHint = 'Check in to start encounter';
+
+            if ($appt->doctor_queue_id && in_array($appt->status, [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION])) {
+                $linkedQueue = DoctorQueue::find($appt->doctor_queue_id);
+                if ($linkedQueue) {
+                    $reqEntry = ProductOrServiceRequest::find($linkedQueue->request_entry_id);
+                    $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => 'No service request linked.'];
+                    $canDeliver = $deliveryCheck['can_deliver'] ?? true;
+                    $deliveryReason = $deliveryCheck['reason'] ?? 'Ready';
+                    $deliveryHint = $deliveryCheck['hint'] ?? '';
+
+                    if ($canDeliver) {
+                        $encounterUrl = route('encounters.create', [
+                            'patient_id'   => $linkedQueue->patient_id,
+                            'req_entry_id' => $linkedQueue->request_entry_id,
+                            'queue_id'     => $linkedQueue->id,
+                        ]);
+                    }
+                }
+            }
+
             $events->push([
                 'id'              => 'appt-' . $appt->id,
                 'title'           => $patientName,
@@ -1244,11 +1316,11 @@ class DoctorAppointmentController extends Controller
                 'reason'          => $appt->reason ?? $appt->notes ?? '',
                 'queue_id'        => $appt->doctor_queue_id,
                 'reschedule_count' => $appt->reschedule_count ?? 0,
-                'encounter_url'   => null,
-                'can_deliver'     => true,
-                'delivery_reason' => 'Scheduled',
-                'delivery_hint'   => 'Check in to start encounter',
-                'next_step'       => $this->nextStepHint($appt->status, true, '', 'appointment'),
+                'encounter_url'   => $encounterUrl,
+                'can_deliver'     => $canDeliver,
+                'delivery_reason' => $deliveryReason,
+                'delivery_hint'   => $deliveryHint,
+                'next_step'       => $this->nextStepHint($appt->status, $canDeliver, $deliveryReason, 'appointment'),
             ]);
         }
 
@@ -1606,6 +1678,18 @@ class DoctorAppointmentController extends Controller
                     $btns .= '<button class="btn btn-sm btn-primary btn-checkin-appt" data-id="' . $row['record_id'] . '" title="Check-In"><i class="mdi mdi-login"></i> Check-In</button>';
                     $btns .= '<button class="btn btn-sm btn-warning btn-reschedule-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-doctor="' . ($row['doctor_id'] ?? '') . '" data-patient="' . e($row['patient_name']) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</button>';
                     $btns .= '<button class="btn btn-sm btn-purple btn-reassign-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-patient="' . e($row['patient_name']) . '" title="Change Doctor"><i class="mdi mdi-account-switch"></i> Reassign</button>';
+                }
+                // Cancel — available for scheduled and active appointments
+                if ($row['event_type'] === 'appointment' && in_array($row['status'], [QueueStatus::SCHEDULED, QueueStatus::WAITING, QueueStatus::VITALS_PENDING])) {
+                    $btns .= '<button class="btn btn-sm btn-danger btn-cancel-appt" data-id="' . $row['record_id'] . '" title="Cancel"><i class="mdi mdi-close-circle"></i> Cancel</button>';
+                }
+                // No-Show — only for scheduled
+                if ($row['event_type'] === 'appointment' && $row['status'] == QueueStatus::SCHEDULED) {
+                    $btns .= '<button class="btn btn-sm btn-secondary btn-noshow-appt" data-id="' . $row['record_id'] . '" title="Mark No-Show"><i class="mdi mdi-account-off"></i> No-Show</button>';
+                }
+                // Reschedule — also available for no-show
+                if ($row['event_type'] === 'appointment' && $row['status'] == QueueStatus::NO_SHOW) {
+                    $btns .= '<button class="btn btn-sm btn-warning btn-reschedule-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-doctor="' . ($row['doctor_id'] ?? '') . '" data-patient="' . e($row['patient_name']) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</button>';
                 }
                 $btns .= '</div>';
                 return $btns;

@@ -3309,279 +3309,16 @@
     </div>
 </div>
 
-<!-- Investigation Result View Modal -->
-<div class="modal fade" id="investResViewModal" tabindex="-1" role="dialog" aria-labelledby="investResViewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <style>
-                /* Result Modal Header & Branding */
-                .result-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    padding: 20px;
-                    border-bottom: 3px solid {{ $hosColor ?? '#0066cc' }};
-                    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-                }
-                .result-header-left {
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                }
-                .result-logo {
-                    width: 80px;
-                    height: 80px;
-                    object-fit: contain;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                }
-                .result-hospital-name {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: {{ $hosColor ?? '#0066cc' }};
-                    max-width: 300px;
-                    line-height: 1.3;
-                }
-                .result-header-right {
-                    text-align: right;
-                    font-size: 0.9rem;
-                    color: #495057;
-                    line-height: 1.6;
-                }
-                .result-header-right strong {
-                    color: #212529;
-                }
+@include('admin.partials.invest_res_view_modal', ['resultViewTitle' => 'Imaging Results'])
+@include('admin.partials.invest_res_view_js')
 
-                /* Result Title Section */
-                .result-title-section {
-                    background: {{ $hosColor ?? '#0066cc' }};
-                    color: white;
-                    text-align: center;
-                    padding: 12px 20px;
-                    font-size: 1.1rem;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                }
-
-                /* Patient Info Section */
-                .result-patient-info {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 20px;
-                    padding: 20px;
-                    background: #f8f9fa;
-                    border-bottom: 1px solid #dee2e6;
-                }
-                .result-info-box {
-                    background: white;
-                    padding: 15px;
-                    border-radius: 8px;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-                }
-                .result-info-row {
-                    display: flex;
-                    margin-bottom: 8px;
-                    padding-bottom: 8px;
-                    border-bottom: 1px dashed #eee;
-                }
-                .result-info-row:last-child {
-                    margin-bottom: 0;
-                    padding-bottom: 0;
-                    border-bottom: none;
-                }
-                .result-info-label {
-                    font-weight: 600;
-                    color: #6c757d;
-                    min-width: 120px;
-                    font-size: 0.9rem;
-                }
-                .result-info-value {
-                    color: #212529;
-                    font-weight: 500;
-                    flex: 1;
-                }
-
-                /* Result Section */
-                .result-section {
-                    padding: 20px;
-                }
-                .result-section-title {
-                    font-size: 1rem;
-                    font-weight: 700;
-                    color: {{ $hosColor ?? '#0066cc' }};
-                    margin-bottom: 15px;
-                    padding-bottom: 10px;
-                    border-bottom: 2px solid {{ $hosColor ?? '#0066cc' }};
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-
-                /* Result Table Styling */
-                .result-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 20px;
-                }
-                .result-table th {
-                    background: {{ $hosColor ?? '#0066cc' }};
-                    color: white;
-                    padding: 12px 15px;
-                    text-align: left;
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                }
-                .result-table td {
-                    padding: 12px 15px;
-                    border-bottom: 1px solid #dee2e6;
-                    vertical-align: middle;
-                }
-                .result-table tbody tr:hover {
-                    background: #f8f9fa;
-                }
-                .result-table td, .result-table th {
-                    word-wrap: break-word;
-                    overflow-wrap: break-word;
-                }
-
-                /* Status Badges */
-                .result-status-badge {
-                    display: inline-block;
-                    padding: 4px 10px;
-                    border-radius: 20px;
-                    font-size: 0.75rem;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                }
-                .status-normal { background: #d4edda; color: #155724; }
-                .status-high { background: #f8d7da; color: #721c24; }
-                .status-low { background: #fff3cd; color: #856404; }
-                .status-abnormal { background: #f8d7da; color: #721c24; }
-
-                /* Attachments Section */
-                .result-attachments {
-                    margin: 0 20px 20px 20px;
-                    padding: 15px;
-                    background: #f8f9fa;
-                    border-radius: 8px;
-                    border: 1px solid #dee2e6;
-                }
-                .result-attachments h6 {
-                    color: {{ $hosColor ?? '#0066cc' }};
-                    font-weight: 700;
-                    margin-bottom: 15px;
-                }
-
-                /* Result Footer */
-                .result-footer {
-                    padding: 20px;
-                    border-top: 2px solid #dee2e6;
-                    font-size: 0.85rem;
-                    color: #6c757d;
-                    text-align: center;
-                    background: #f8f9fa;
-                }
-
-                /* Print Styles */
-                @media print {
-                    .modal-header, .modal-footer, .result-print-btn { display: none !important; }
-                    .modal-dialog { max-width: 100% !important; margin: 0 !important; }
-                    .modal-content { border: none !important; box-shadow: none !important; }
-                    body { background: white !important; }
-                    .result-header { border-bottom: 3px solid #000 !important; }
-                    .result-title-section { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    .result-table th { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                }
-
-                /* Responsive */
-                @media (max-width: 768px) {
-                    .result-header {
-                        flex-direction: column;
-                        gap: 15px;
-                        text-align: center;
-                    }
-                    .result-header-left {
-                        flex-direction: column;
-                    }
-                    .result-header-right {
-                        text-align: center;
-                    }
-                    .result-patient-info {
-                        grid-template-columns: 1fr;
-                    }
-                }
-            </style>
-
-            <div class="modal-header" style="background: {{ $hosColor }}; color: white;">
-                <h5 class="modal-title" id="investResViewModalLabel"><i class="mdi mdi-file-document-outline"></i> Imaging Results</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-
-            <div class="modal-body p-0">
-                <div id="resultViewTable">
-                    <div class="result-header">
-                        <div class="result-header-left">
-                            <img src="data:image/jpeg;base64,{{ $sett->logo ?? '' }}" alt="Hospital Logo" class="result-logo" />
-                            <div class="result-hospital-name">{{ $sett->site_name ?? 'Hospital Name' }}</div>
-                        </div>
-                        <div class="result-header-right">
-                            <div><strong>Address:</strong> {{ $sett->contact_address ?? 'N/A' }}</div>
-                            <div><strong>Phone:</strong> {{ $sett->contact_phones ?? 'N/A' }}</div>
-                            <div><strong>Email:</strong> {{ $sett->contact_emails ?? 'N/A' }}</div>
-                        </div>
-                    </div>
-
-                    <div class="result-title-section">IMAGING RESULTS</div>
-
-                    <div class="result-patient-info">
-                        <div class="result-info-box">
-                            <div class="result-info-row"><div class="result-info-label">Patient Name:</div><div class="result-info-value" id="res_patient_name"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Patient ID:</div><div class="result-info-value" id="res_patient_id"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Age:</div><div class="result-info-value" id="res_patient_age"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Gender:</div><div class="result-info-value" id="res_patient_gender"></div></div>
-                        </div>
-                        <div class="result-info-box">
-                            <div class="result-info-row"><div class="result-info-label">Test Name:</div><div class="result-info-value invest_res_service_name_view"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Test ID:</div><div class="result-info-value" id="res_test_id"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Sample Date:</div><div class="result-info-value" id="res_sample_date"></div></div>
-                            <div class="result-info-row"><div class="result-info-label">Result Date:</div><div class="result-info-value" id="res_result_date"></div></div>
-                        </div>
-                    </div>
-
-                    <div class="result-section">
-                        <div class="result-section-title">IMAGING RESULTS</div>
-                        <div id="invest_res"></div>
-                    </div>
-
-                    <div id="invest_attachments" style="margin: 0 20px;"></div>
-
-                    <div class="result-section" style="padding-top: 40px;">
-                        <div style="display: flex; justify-content: space-between; border-top: 2px solid #eee; padding-top: 20px;">
-                            <div><div style="margin-bottom: 5px;"><strong>Results By:</strong></div><div id="res_result_by" style="color: #666;"></div></div>
-                            <div style="text-align: right;"><div style="margin-bottom: 5px;"><strong>Authorized Signature:</strong></div><div style="border-top: 1px solid #333; min-width: 200px; padding-top: 5px;"><span id="res_signature_date"></span></div></div>
-                        </div>
-                    </div>
-
-                    <div class="result-footer">
-                        <div>{{ $sett->site_name ?? 'Hospital Name' }} | {{ $sett->contact_address ?? '' }}</div>
-                        <div>{{ $sett->contact_phones ?? '' }} | {{ $sett->contact_emails ?? '' }}</div>
-                        <div style="margin-top: 10px; font-size: 11px;">This is a computer-generated document. Report generated on <span id="res_generated_date"></span></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal"><i class="fa fa-times"></i> Close</button>
-                <button type="button" onclick="PrintElem('resultViewTable')" class="btn btn-primary"><i class="mdi mdi-printer"></i> Print Results</button>
-            </div>
-        </div>
-    </div>
-</div>
+@include('admin.partials.invest_res_view_imaging_modal')
+@include('admin.partials.invest_res_view_imaging_js')
 
 @include('admin.partials.invest_res_modal', ['save_route' => 'imaging.saveResult'])
-@include('admin.partials.invest_res_js')
+
+<!-- Include Bulk Result Entry Modal -->
+@include('admin.partials.bulk_result_entry_modal')
 
 <!-- Result Approval Review Modal -->
 @if(($isApprover ?? false) && ($requiresApproval ?? false))
@@ -4084,6 +3821,8 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'imaging'])
+@include('admin.partials.invest_res_js')
+@include('admin.partials.bulk_result_entry_js')
 <script>
 // Global state
 let currentPatient = null;
@@ -4248,7 +3987,7 @@ function initializeHistoryDataTable(patientId) {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `/imaging-workbench/patient/${patientId}/history`,
+            url: `/imagingHistoryList/${patientId}`,
             type: 'GET'
         },
         columns: [
@@ -4267,10 +4006,12 @@ function initializeHistoryDataTable(patientId) {
             processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
         },
         drawCallback: function() {
-            // Add click handler for view result buttons
-            $('.view-invest-result-btn').off('click').on('click', function() {
-                const requestId = $(this).data('request-id');
-                viewInvestigationResult(requestId);
+            // Re-order button handler — add service to the new request tab
+            $('.re-order-btn').off('click').on('click', function() {
+                let svcId   = $(this).data('service-id');
+                let svcName = $(this).data('name');
+                let svcPrice = $(this).data('price') || 0;
+                addReorderServiceToCart(svcId, svcName, svcPrice);
             });
         }
     });
@@ -4730,6 +4471,16 @@ function displayPendingRequests(requests) {
     const totalPending = requests.billing.length + requests.results.length + approvalItems;
     $('#pending-badge').text(totalPending);
 
+    // Store pending results for bulk entry
+    window._pendingResultRequests = requests.results || [];
+    window._bulkResultConfig = {
+        fetchUrlPattern: '/imaging-workbench/imaging-service-requests/{id}',
+        attachUrlPattern: '/imaging-workbench/imaging-service-requests/{id}/attachments',
+        saveUrl: '{{ route("imaging.saveResult") }}',
+        csrfToken: '{{ csrf_token() }}',
+        onAllSaved: function() { if (currentPatient) loadPatient(currentPatient); }
+    };
+
     updatePendingSubtabBadges(requests);
     renderPendingSubtabContent(currentPendingFilter);
 }
@@ -4796,16 +4547,20 @@ function renderPendingSubtabContent(filter) {
     if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
         const resultsHtml = `
             <div class="request-section" data-section="results">
-                <div class="request-section-header">
+                <div class="request-section-header d-flex justify-content-between align-items-center">
                     <h5>
                         <i class="mdi mdi-file-document-edit"></i>
                         Result Entry (${requests.results.length})
                     </h5>
+                    ${requests.results.length > 1 ? `
+                    <button class="btn btn-sm btn-primary" onclick="openBulkResultEntry()">
+                        <i class="mdi mdi-file-multiple"></i> Bulk Result Entry
+                    </button>` : ''}
                 </div>
                 <div class="request-cards-container" id="results-cards"></div>
                 <div class="section-actions-footer">
                     <div class="select-all-container">
-                        <span class="text-muted"><i class="mdi mdi-information"></i> Results must be entered individually</span>
+                        <span class="text-muted"><i class="mdi mdi-information"></i> Results can be entered individually or in bulk</span>
                     </div>
                 </div>
             </div>
@@ -5564,225 +5319,60 @@ function editImagingResult(obj) {
     InvestResultEntry.editResult(
         requestId,
         `/imaging-workbench/imaging-service-requests/${requestId}`,
-        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+        '{{ route("imaging.saveResult") }}'
     );
 }
 
-function setResViewInModal(obj) {
-    let res_obj = JSON.parse($(obj).attr('data-result-obj'));
-
-    // Basic service info
-    $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
-
-    // Patient information
-    let patientName = res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname;
-    $('#res_patient_name').html(patientName);
-    $('#res_patient_id').html(res_obj.patient.file_no);
-
-    // Calculate age from date of birth
-    let age = 'N/A';
-    if (res_obj.patient.date_of_birth) {
-        let dob = new Date(res_obj.patient.date_of_birth);
-        let today = new Date();
-        let ageYears = today.getFullYear() - dob.getFullYear();
-        let monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            ageYears--;
-        }
-        age = ageYears + ' years';
-    }
-    $('#res_patient_age').html(age);
-
-    // Gender
-    let gender = res_obj.patient.gender ? res_obj.patient.gender.toUpperCase() : 'N/A';
-    $('#res_patient_gender').html(gender);
-
-    // Test information
-    $('#res_test_id').html(res_obj.id);
-    $('#res_sample_date').html(res_obj.sample_date || 'N/A');
-    $('#res_result_date').html(res_obj.result_date || 'N/A');
-    $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
-
-    // Signature date (use result date)
-    $('#res_signature_date').html(res_obj.result_date || '');
-
-    // Generated date (current date)
-    let now = new Date();
-    let generatedDate = now.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    $('#res_generated_date').html(generatedDate);
-
-    // Handle V2 results (structured data)
-    if (res_obj.result_data) {
-        let resultData = res_obj.result_data;
-        if (typeof resultData === 'string') {
-            try {
-                resultData = JSON.parse(resultData);
-            } catch (e) {
-                console.error('Error parsing result data:', e);
-                resultData = null;
-            }
-        }
-
-        if (resultData && typeof resultData === 'object') {
-            // If it's an object but not an array (e.g. key-value pairs), convert to array if needed
-            // But based on previous code, it expects an array of parameters.
-            // Let's ensure it is an array.
-            let paramsArray = [];
-            if (Array.isArray(resultData)) {
-                paramsArray = resultData;
-            } else {
-                // If it's an object (key: value), we might need to map it back to the template structure
-                // For now, let's assume if it's not an array, we can't iterate it easily without the template
-                console.warn('Result data is not an array:', resultData);
-            }
-
-            if (paramsArray.length > 0) {
-                let resultsHtml = '<table class="result-table"><thead><tr>';
-                resultsHtml += '<th style="width: 40%;">Test Parameter</th>';
-                resultsHtml += '<th style="width: 25%;">Results</th>';
-                resultsHtml += '<th style="width: 25%;">Reference Range</th>';
-                resultsHtml += '<th style="width: 10%;">Status</th>';
-                resultsHtml += '</tr></thead><tbody>';
-
-                paramsArray.forEach(function(param) {
-                    resultsHtml += '<tr>';
-                    resultsHtml += '<td><strong>' + param.name + '</strong>';
-                    if (param.code) {
-                        resultsHtml += ' <span style="color: #999;">(' + param.code + ')</span>';
-                    }
-                    resultsHtml += '</td>';
-
-                    // Value with unit
-                    let valueDisplay = param.value;
-                    if (param.unit) {
-                        valueDisplay += ' ' + param.unit;
-                    }
-                    resultsHtml += '<td>' + valueDisplay + '</td>';
-
-                    // Reference range
-                    let refRange = 'N/A';
-                    if (param.reference_range) {
-                        if (param.type === 'integer' || param.type === 'float') {
-                            if (param.reference_range.min !== undefined && param.reference_range.max !== undefined) {
-                                refRange = param.reference_range.min + ' - ' + param.reference_range.max;
-                                if (param.unit) refRange += ' ' + param.unit;
-                            }
-                        } else if (param.type === 'boolean' || param.type === 'enum') {
-                            refRange = param.reference_range.reference_value || 'N/A';
-                        } else if (param.reference_range.text) {
-                            refRange = param.reference_range.text;
-                        }
-                    }
-                    resultsHtml += '<td>' + refRange + '</td>';
-
-                    // Status badge
-                    let statusHtml = '';
-                    if (param.status) {
-                        let statusClass = 'status-' + param.status.toLowerCase().replace(' ', '-');
-                        statusHtml = '<span class="result-status-badge ' + statusClass + '">' + param.status + '</span>';
-                    }
-                    resultsHtml += '<td>' + statusHtml + '</td>';
-                    resultsHtml += '</tr>';
-                });
-
-                resultsHtml += '</tbody></table>';
-                $('#invest_res').html(resultsHtml);
-            } else {
-                 // Fallback to V1 results (HTML content) if array is empty
-                 $('#invest_res').html(res_obj.result);
-            }
-        } else {
-             // Fallback to V1 results (HTML content)
-             $('#invest_res').html(res_obj.result);
-        }
-    } else {
-        // V1 results (HTML content)
-        $('#invest_res').html(res_obj.result);
-    }
-
-    // Handle attachments
-    $('#invest_attachments').html('');
-    if (res_obj.attachments) {
-        let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
-        if (attachments && attachments.length > 0) {
-            let attachHtml = '<div class="result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
-            attachments.forEach(function(attachment) {
-                let url = '{{ asset("storage") }}/' + attachment.path;
-                let icon = getFileIcon(attachment.type);
-                attachHtml += `<div class="col-md-4 mb-2">
-                    <a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm btn-block">
-                        ${icon} ${attachment.name}
-                    </a>
-                </div>`;
-            });
-            attachHtml += '</div></div>';
-            $('#invest_attachments').html(attachHtml);
-        }
-    }
-
-    $('#investResViewModal').modal('show');
+function enterImagingResult(requestId) {
+    InvestResultEntry.enterResult(
+        requestId,
+        `/imaging-workbench/imaging-service-requests/${requestId}`,
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+        '{{ route("imaging.saveResult") }}'
+    );
 }
 
-function PrintElem(elem) {
-    var hosColor = '{{ $hosColor ?? "#0066cc" }}';
-    var mywindow = window.open('', 'PRINT', 'height=600,width=800');
-    mywindow.document.write('<html><head><title>' + document.title + ' - Imaging Results</title>');
-    mywindow.document.write(`<style>
-        body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-        .result-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px; border-bottom: 3px solid ${hosColor}; margin-bottom: 0; }
-        .result-header-left { display: flex; align-items: center; gap: 15px; }
-        .result-logo { width: 70px; height: 70px; object-fit: contain; }
-        .result-hospital-name { font-size: 1.4rem; font-weight: 700; color: ${hosColor}; max-width: 280px; line-height: 1.3; }
-        .result-header-right { text-align: right; font-size: 0.85rem; color: #495057; line-height: 1.6; }
-        .result-header-right strong { color: #212529; }
-        .result-title-section { background: ${hosColor}; color: white; text-align: center; padding: 10px 20px; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .result-patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
-        .result-info-box { background: white; padding: 12px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .result-info-row { display: flex; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #eee; }
-        .result-info-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-        .result-info-label { font-weight: 600; color: #6c757d; min-width: 100px; font-size: 0.85rem; }
-        .result-info-value { color: #212529; font-weight: 500; flex: 1; }
-        .result-section { padding: 15px 20px; }
-        .result-section-title { font-size: 0.95rem; font-weight: 700; color: ${hosColor}; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid ${hosColor}; text-transform: uppercase; }
-        .result-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        .result-table th { background: ${hosColor}; color: white; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 0.85rem; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .result-table td { padding: 10px 12px; border-bottom: 1px solid #dee2e6; font-size: 0.9rem; }
-        .result-status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
-        .status-normal { background: #d4edda; color: #155724; }
-        .status-high { background: #f8d7da; color: #721c24; }
-        .status-low { background: #fff3cd; color: #856404; }
-        .status-abnormal { background: #f8d7da; color: #721c24; }
-        .result-attachments { margin: 0 20px 15px 20px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6; }
-        .result-attachments h6 { color: ${hosColor}; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; }
-        .result-footer { padding: 15px 20px; border-top: 2px solid #dee2e6; font-size: 0.8rem; color: #6c757d; text-align: center; background: #f8f9fa; }
-        @media print { body { padding: 0; } }
-    </style>`);
-    mywindow.document.write('</head><body>');
-    mywindow.document.write(document.getElementById(elem).innerHTML);
-    mywindow.document.write('</body></html>');
-
-    mywindow.document.close();
-    mywindow.focus();
-
-    setTimeout(function() {
-        mywindow.print();
-        mywindow.close();
-    }, 250);
-
-    return true;
+// Delete imaging request (created from encounter)
+function deleteImagingRequest(imagingId, encounterId, serviceName) {
+    deleteRequestId = imagingId;
+    $('#delete_service_name').text(serviceName);
+    $('#delete_request_id').text(imagingId);
+    $('#delete_reason').val('');
+    $('#deleteReasonModal').modal('show');
 }
 
-function getFileIcon(type) {
-    if (type.includes('image')) return '<i class="fa fa-file-image-o"></i>';
-    if (type.includes('pdf')) return '<i class="fa fa-file-pdf-o"></i>';
-    return '<i class="fa fa-file-o"></i>';
+// Delete nurse-created clinical request (no encounter)
+function deleteNurseClinicalRequest(type, id, name) {
+    deleteRequestId = id;
+    $('#delete_service_name').text(name);
+    $('#delete_request_id').text(id);
+    $('#delete_reason').val('');
+    $('#deleteReasonModal').modal('show');
 }
+
+// Re-order: add a service from history into the new request cart
+function addReorderServiceToCart(serviceId, serviceName, price) {
+    // Check if service is already selected
+    if ($('#selected-imaging-services tr[data-service-id="' + serviceId + '"]').length) {
+        toastr.info(serviceName + ' is already in the request list');
+        return;
+    }
+
+    let row = `<tr data-service-id="${serviceId}">
+        <td>${serviceName}<input type="hidden" name="service_ids[]" value="${serviceId}"></td>
+        <td>${parseFloat(price).toLocaleString()}</td>
+        <td><input type="text" class="form-control form-control-sm" name="notes[]" placeholder="Optional note"></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="$(this).closest('tr').remove(); updateFloatingCart();"><i class="fa fa-times"></i></button></td>
+    </tr>`;
+
+    $('#selected-imaging-services').append(row);
+    updateFloatingCart();
+    switchWorkspaceTab('new-request');
+    toastr.success(serviceName + ' added to new request');
+}
+
+// setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
 
 // Delete Lab Request with Reason
 let deleteRequestId = null;

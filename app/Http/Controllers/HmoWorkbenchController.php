@@ -85,21 +85,19 @@ class HmoWorkbenchController extends Controller
                 case 'pending':
                     $query->where('validation_status', 'pending')
                           ->whereIn('coverage_mode', ['primary', 'secondary'])
-                          ->where('claims_amount', '>', 0) // Skip items with 0 claims - no validation needed
-                          ->where(function($q) {
-                              $q->whereNull('payment_id')
-                                ->orWhereNotNull('payment_id'); // Include both paid and unpaid
-                          });
+                          ->where('claims_amount', '>', 0);
                     break;
                 case 'express':
                     $query->where('coverage_mode', 'express')
-                          ->whereNull('payment_id');
+                          ->where('validation_status', 'pending');
                     break;
                 case 'approved':
-                    $query->where('validation_status', 'approved');
+                    $query->where('validation_status', 'approved')
+                          ->where('claims_amount', '>', 0);
                     break;
                 case 'rejected':
-                    $query->where('validation_status', 'rejected');
+                    $query->where('validation_status', 'rejected')
+                          ->where('claims_amount', '>', 0);
                     break;
                 case 'claims':
                     $query->whereNotNull('payment_id')
@@ -1115,23 +1113,26 @@ class HmoWorkbenchController extends Controller
             'pending' => $baseQuery()
                 ->where('validation_status', 'pending')
                 ->whereIn('coverage_mode', ['primary', 'secondary'])
-                ->where('claims_amount', '>', 0) // Skip 0 claims - no validation needed
+                ->where('claims_amount', '>', 0)
                 ->count(),
 
             'express' => $baseQuery()
                 ->where('coverage_mode', 'express')
+                ->where('validation_status', 'pending')
                 ->count(),
 
             'approved' => $baseQuery()
                 ->where('validation_status', 'approved')
+                ->where('claims_amount', '>', 0)
                 ->count(),
 
             'rejected' => $baseQuery()
                 ->where('validation_status', 'rejected')
+                ->where('claims_amount', '>', 0)
                 ->count(),
 
             'claims' => $baseQuery()
-                ->whereIn('validation_status', ['approved', 'pending'])
+                ->whereNotNull('payment_id')
                 ->where('claims_amount', '>', 0)
                 ->count(),
 

@@ -168,6 +168,21 @@
                     </div>
                 </div>
 
+                {{-- Date Range Filter --}}
+                <div class="d-flex gap-2 mb-2 mt-2 px-2 flex-wrap align-items-end">
+                    <div>
+                        <label class="form-label mb-0 small text-muted">From</label>
+                        <input type="date" class="form-control form-control-sm" id="appt_start_date" value="{{ date('Y-m-d') }}" style="max-width:150px;">
+                    </div>
+                    <div>
+                        <label class="form-label mb-0 small text-muted">To</label>
+                        <input type="date" class="form-control form-control-sm" id="appt_end_date" value="{{ date('Y-m-d', strtotime('+30 days')) }}" style="max-width:150px;">
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-primary" id="appt_date_fetch_btn"><i class="mdi mdi-magnify"></i> Fetch</button>
+                    </div>
+                </div>
+
                 {{-- Toolbar: Status Pills + View Toggle --}}
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3 px-2">
                     <div class="status-pill-bar" id="statusPillBar">
@@ -608,6 +623,7 @@
 
     {{-- ══ Event Context Menu ════════════════════════════════════════════ --}}
     <div class="event-context-menu" id="eventContextMenu">
+        <div class="ctx-item text-muted" data-action="status-info" style="display:none;cursor:default;opacity:0.7;font-weight:600;"><i class="ctx-status-icon mdi mdi-information"></i> <span class="ctx-status-label">Status</span></div>
         <div class="ctx-item" data-action="encounter"><i class="fa fa-street-view text-success"></i> Open Encounter</div>
         <div class="ctx-item text-muted" data-action="encounter-blocked" style="display:none;cursor:default;opacity:0.6;"><i class="mdi mdi-alert-circle text-danger"></i> <span class="ctx-blocked-reason">Delivery Blocked</span></div>
         <div class="ctx-item" data-action="checkin"><i class="mdi mdi-login text-primary"></i> Check-In</div>
@@ -617,6 +633,103 @@
         <div class="ctx-divider"></div>
         <div class="ctx-item" data-action="cancel"><i class="mdi mdi-cancel text-danger"></i> Cancel</div>
         <div class="ctx-item" data-action="noshow"><i class="mdi mdi-account-remove text-secondary"></i> No-Show</div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item text-muted" data-action="next-step-hint" style="display:none;cursor:default;opacity:0.7;font-size:0.78rem;"><i class="mdi mdi-lightbulb-outline text-warning"></i> <span class="ctx-next-step"></span></div>
+    </div>
+
+    {{-- Reschedule Appointment Modal (Doctor Page) --}}
+    <div class="modal fade" id="docRescheduleAppointmentModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="mdi mdi-calendar-edit"></i> Reschedule Appointment</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form id="doc-reschedule-form">
+                    <div class="modal-body">
+                        <input type="hidden" id="doc-reschedule-appt-id">
+                        <div class="alert alert-light border mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span><strong>Patient:</strong> <span id="doc-reschedule-patient-name"></span></span>
+                                <span class="badge bg-secondary" id="doc-reschedule-count-info"></span>
+                            </div>
+                            <div class="text-muted small mt-1">Original: <span id="doc-reschedule-original-date"></span></div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label><i class="mdi mdi-calendar"></i> New Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="doc-reschedule-date" required min="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label><i class="mdi mdi-clock-outline"></i> Time Slot <span class="text-danger">*</span></label>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="doc-reschedule-custom-time-toggle">
+                                    <label class="form-check-label small text-muted" for="doc-reschedule-custom-time-toggle">Custom time</label>
+                                </div>
+                            </div>
+                            <select class="form-control" id="doc-reschedule-time">
+                                <option value="">-- Select date first --</option>
+                            </select>
+                            <input type="time" class="form-control d-none" id="doc-reschedule-custom-time-input" placeholder="HH:MM">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label><i class="mdi mdi-note-text"></i> Reason</label>
+                            <select class="form-control" id="doc-reschedule-reason">
+                                <option value="">-- Select reason --</option>
+                                <option value="Patient requested">Patient requested</option>
+                                <option value="Doctor schedule change">Doctor schedule change</option>
+                                <option value="Emergency rescheduling">Emergency rescheduling</option>
+                                <option value="Clinic unavailable">Clinic unavailable</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning"><i class="mdi mdi-calendar-edit"></i> Reschedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Reassign Doctor Modal (Doctor Page) --}}
+    <div class="modal fade" id="docReassignDoctorModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#6f42c1; color:#fff;">
+                    <h5 class="modal-title"><i class="mdi mdi-account-switch"></i> Reassign Doctor</h5>
+                    <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form id="doc-reassign-form">
+                    <div class="modal-body">
+                        <input type="hidden" id="doc-reassign-appt-id">
+                        <div class="alert alert-light border mb-3">
+                            <strong>Patient:</strong> <span id="doc-reassign-patient-name"></span>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label><i class="mdi mdi-doctor"></i> New Doctor <span class="text-danger">*</span></label>
+                            <select class="form-control" id="doc-reassign-doctor" required>
+                                <option value="">-- Select Doctor --</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label><i class="mdi mdi-note-text"></i> Reason</label>
+                            <select class="form-control" id="doc-reassign-reason">
+                                <option value="">-- Select reason --</option>
+                                <option value="Doctor on leave">Doctor on leave</option>
+                                <option value="Doctor unavailable">Doctor unavailable</option>
+                                <option value="Patient request">Patient request</option>
+                                <option value="Schedule conflict">Schedule conflict</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn" style="background:#6f42c1; color:#fff;"><i class="mdi mdi-account-switch"></i> Reassign</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
 @endsection
@@ -723,8 +836,8 @@
                 url: "{{ route('appointments.doctor.unified-list') }}",
                 type: 'GET',
                 data: function(d) {
-                    d.start_date = moment().format('YYYY-MM-DD');
-                    d.end_date   = moment().add(30, 'days').format('YYYY-MM-DD');
+                    d.start_date = $('#appt_start_date').val() || moment().format('YYYY-MM-DD');
+                    d.end_date   = $('#appt_end_date').val() || moment().add(30, 'days').format('YYYY-MM-DD');
                     d.status_filter = currentStatusFilter;
                 }
             },
@@ -751,6 +864,18 @@
         $(document).on('click', '.btn-checkin-appt', function() {
             var apptId = $(this).data('id');
             doCheckIn(apptId);
+        });
+
+        // Cancel from table action button
+        $(document).on('click', '.btn-cancel-appt', function() {
+            var apptId = $(this).data('id');
+            doCancelAppointment(apptId);
+        });
+
+        // No-Show from table action button
+        $(document).on('click', '.btn-noshow-appt', function() {
+            var apptId = $(this).data('id');
+            doNoShow(apptId);
         });
 
         // ═══════════════════════════════════════════════════════════════
@@ -929,15 +1054,28 @@
 
             // Show/hide items based on status/type + delivery
             var isActive = event.status == 1 || event.status == 2 || event.status == 3 || event.status == 4;
-            $menu.find('[data-action="encounter"]').toggle(!!event.encounter_url && event.can_deliver !== false);
+            var isTerminal = event.status == 0 || event.status == 5 || event.status == 7;
+            var hasEncounterAccess = (!!event.encounter_url || (isActive && event.queue_id)) && event.can_deliver !== false;
+
+            // Status info line for terminal states
+            if (isTerminal) {
+                var statusText = event.status == 0 ? 'Cancelled' : (event.status == 5 ? 'Completed' : 'No-Show');
+                var statusIcon = event.status == 0 ? 'mdi mdi-cancel text-danger' : (event.status == 5 ? 'mdi mdi-check-circle text-success' : 'mdi mdi-account-remove text-secondary');
+                $menu.find('.ctx-status-icon').attr('class', 'ctx-status-icon ' + statusIcon);
+                $menu.find('.ctx-status-label').text(statusText);
+            }
+            $menu.find('[data-action="status-info"]').toggle(isTerminal);
+
+            $menu.find('[data-action="encounter"]').toggle(hasEncounterAccess);
             $menu.find('[data-action="encounter-blocked"]').toggle(isActive && event.can_deliver === false);
             if (event.can_deliver === false) {
                 $menu.find('.ctx-blocked-reason').text(event.delivery_reason || 'Delivery Blocked');
             }
             $menu.find('[data-action="checkin"]').toggle(event.event_type === 'appointment' && event.status == 6);
-            $menu.find('[data-action="reschedule"]').toggle(event.event_type === 'appointment' && event.status == 6);
+            // Reschedule available for scheduled and no-show appointments
+            $menu.find('[data-action="reschedule"]').toggle(event.event_type === 'appointment' && (event.status == 6 || event.status == 7));
             $menu.find('[data-action="reassign"]').toggle(event.event_type === 'appointment' && event.status == 6);
-            $menu.find('[data-action="cancel"]').toggle(event.status != 5 && event.status != 0);
+            $menu.find('[data-action="cancel"]').toggle(event.event_type === 'appointment' && (event.status == 6 || event.status == 1 || event.status == 2));
             $menu.find('[data-action="noshow"]').toggle(event.event_type === 'appointment' && event.status == 6);
 
             // Next-step hint for non-obvious states
@@ -957,6 +1095,15 @@
             if (showHint) {
                 $menu.find('.ctx-next-step').text(event.next_step);
             }
+
+            // Hide dividers when their section is empty
+            $menu.find('.ctx-divider').each(function() {
+                var $prev = $(this).prevAll('.ctx-item:first');
+                var $next = $(this).nextAll('.ctx-item:first');
+                var prevVisible = $prev.length && $prev.css('display') !== 'none';
+                var nextVisible = $next.length && $next.css('display') !== 'none';
+                $(this).toggle(prevVisible && nextVisible);
+            });
 
             // Position near click
             var x = jsEvent.pageX, y = jsEvent.pageY;
@@ -1256,6 +1403,9 @@
         // See #history-lists-tab shown.bs.tab handler above
 
         // Fetch button handlers for all three tabs
+        $('#appt_date_fetch_btn').on('click', function() {
+            refreshCurrentView();
+        });
         $('#prev_fetch_btn').on('click', function() {
             if ($.fn.DataTable.isDataTable('#prev_consult_list')) {
                 $('#prev_consult_list').DataTable().ajax.reload(null, false);
@@ -1597,196 +1747,126 @@
         });
 
         function openReassignModal(appointmentId, patientName, clinicId) {
-            Swal.fire({
-                title: 'Reassign Doctor',
-                html: `
-                    <p class="text-start mb-2"><strong>Patient:</strong> ${patientName}</p>
-                    <div class="mb-3 text-start">
-                        <label class="form-label">New Doctor</label>
-                        <select id="swal-reassign-doctor" class="form-select">
-                            <option value="">Loading doctors...</option>
-                        </select>
-                    </div>
-                    <div class="mb-2 text-start">
-                        <label class="form-label">Reason (optional)</label>
-                        <input id="swal-reassign-reason" class="form-control" placeholder="Reason for reassignment">
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: '<i class="mdi mdi-account-switch"></i> Reassign',
-                confirmButtonColor: '#6f42c1',
-                didOpen: () => {
-                    // Load doctors from the same clinic
-                    $.get('{{ url("reception/clinics") }}/' + clinicId + '/doctors', function(doctors) {
-                        var $select = $('#swal-reassign-doctor');
-                        $select.empty().append('<option value="">-- Select Doctor --</option>');
-                        doctors.forEach(function(doc) {
-                            $select.append('<option value="' + doc.id + '">' + doc.name + '</option>');
-                        });
-                    }).fail(function() {
-                        $('#swal-reassign-doctor').empty().append('<option value="">Error loading doctors</option>');
-                    });
-                },
-                preConfirm: () => {
-                    var doctorId = $('#swal-reassign-doctor').val();
-                    if (!doctorId) {
-                        Swal.showValidationMessage('Please select a doctor');
-                        return false;
-                    }
-                    return { doctor_id: doctorId, reason: $('#swal-reassign-reason').val() };
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: "{{ route('appointments.reassign', ['appointment' => '__AID__']) }}".replace('__AID__', appointmentId),
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            doctor_id: result.value.doctor_id,
-                            reason: result.value.reason
-                        },
-                        success: function(res) {
-                            if (res.success) {
-                                toastr.success(res.message || 'Doctor reassigned successfully.');
-                                refreshAll();
-                            } else {
-                                toastr.error(res.message || 'Reassignment failed.');
-                            }
-                        },
-                        error: function(xhr) {
-                            toastr.error(xhr.responseJSON?.message || 'Reassignment failed.');
-                        }
+            $('#doc-reassign-appt-id').val(appointmentId);
+            $('#doc-reassign-patient-name').text(patientName);
+            $('#doc-reassign-doctor').empty().append('<option value="">Loading doctors...</option>');
+            $('#doc-reassign-reason').val('');
+            $('#docReassignDoctorModal').modal('show');
+
+            $.get('{{ url("reception/clinics") }}/' + clinicId + '/doctors', function(doctors) {
+                var $sel = $('#doc-reassign-doctor');
+                $sel.empty().append('<option value="">-- Select Doctor --</option>');
+                if (doctors && doctors.length) {
+                    doctors.forEach(function(doc) {
+                        $sel.append('<option value="' + doc.id + '">' + doc.name + '</option>');
                     });
                 }
+            }).fail(function() {
+                $('#doc-reassign-doctor').empty().append('<option value="">Error loading doctors</option>');
             });
         }
+
+        $(document).on('submit', '#doc-reassign-form', function(e) {
+            e.preventDefault();
+            var apptId = $('#doc-reassign-appt-id').val();
+            var doctorId = $('#doc-reassign-doctor').val();
+            if (!doctorId) { toastr.warning('Please select a doctor.'); return; }
+            var $btn = $(this).find('button[type="submit"]');
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Reassigning...');
+
+            $.ajax({
+                url: "{{ route('appointments.reassign', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}', doctor_id: doctorId, reason: $('#doc-reassign-reason').val() },
+                success: function(res) {
+                    if (res.success) { toastr.success(res.message || 'Doctor reassigned successfully.'); $('#docReassignDoctorModal').modal('hide'); refreshAll(); }
+                    else { toastr.error(res.message || 'Reassignment failed.'); }
+                },
+                error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Reassignment failed.'); },
+                complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-account-switch"></i> Reassign'); }
+            });
+        });
 
         // ═══════════════════════════════════════════════════════════════
         //  Reschedule Appointment (Doctor Page)
         // ═══════════════════════════════════════════════════════════════
+        var docReschClinicId = null;
+        var docReschDoctorId = null;
+
         function openRescheduleModal(appointmentId, patientName, clinicId, doctorId, currentDate, rescheduleCount) {
-            var useCustomTime = false;
+            docReschClinicId = clinicId;
+            docReschDoctorId = doctorId;
+            $('#doc-reschedule-appt-id').val(appointmentId);
+            $('#doc-reschedule-patient-name').text(patientName);
+            $('#doc-reschedule-original-date').text(currentDate ? moment(currentDate).format('YYYY-MM-DD') : '');
+            $('#doc-reschedule-count-info').text('Reschedule #' + (parseInt(rescheduleCount || 0) + 1));
+            $('#doc-reschedule-date').val('');
+            $('#doc-reschedule-time').empty().append('<option value="">-- Select date first --</option>').removeClass('d-none');
+            $('#doc-reschedule-custom-time-input').addClass('d-none').val('');
+            $('#doc-reschedule-custom-time-toggle').prop('checked', false);
+            $('#doc-reschedule-reason').val('');
+            $('#docRescheduleAppointmentModal').modal('show');
+        }
 
-            Swal.fire({
-                title: 'Reschedule Appointment',
-                width: 480,
-                html: `
-                    <p class="text-start mb-2"><strong>Patient:</strong> ${patientName}</p>
-                    <div class="mb-3 text-start">
-                        <label class="form-label">New Date <span class="text-danger">*</span></label>
-                        <input type="date" id="swal-resch-date" class="form-control" min="${new Date().toISOString().split('T')[0]}">
-                    </div>
-                    <div id="swal-time-group" class="mb-3 text-start">
-                        <label class="form-label d-flex justify-content-between align-items-center">
-                            <span>Time Slot <span class="text-danger">*</span></span>
-                            <span class="form-check form-switch ms-2">
-                                <input class="form-check-input" type="checkbox" id="swal-custom-time-toggle">
-                                <label class="form-check-label small" for="swal-custom-time-toggle">Custom</label>
-                            </span>
-                        </label>
-                        <select id="swal-resch-time" class="form-select">
-                            <option value="">-- pick a date first --</option>
-                        </select>
-                        <input type="time" id="swal-resch-custom-time" class="form-control d-none" placeholder="HH:MM">
-                    </div>
-                    <div class="mb-3 text-start">
-                        <label class="form-label">Reason</label>
-                        <select id="swal-resch-reason" class="form-select">
-                            <option value="">-- Select reason --</option>
-                            <option value="Patient requested">Patient requested</option>
-                            <option value="Doctor schedule change">Doctor schedule change</option>
-                            <option value="Emergency rescheduling">Emergency rescheduling</option>
-                            <option value="Clinic unavailable">Clinic unavailable</option>
-                        </select>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: '<i class="mdi mdi-calendar-edit"></i> Reschedule',
-                confirmButtonColor: '#f0ad4e',
-                didOpen: () => {
-                    // Fetch slots when date changes
-                    $(document).on('change.swal_resch', '#swal-resch-date', function() {
-                        if ($('#swal-custom-time-toggle').is(':checked')) return;
-                        var date = $(this).val();
-                        if (!date || !clinicId) return;
-                        $('#swal-resch-time').empty().append('<option value="">Loading...</option>');
-                        $.get('{{ route("appointments.available-slots") }}', { date: date, clinic_id: clinicId, doctor_id: doctorId }, function(resp) {
-                            var $sel = $('#swal-resch-time');
-                            $sel.empty().append('<option value="">-- Select Time --</option>');
-                            if (resp.success && resp.slots && resp.slots.length) {
-                                var hasSlots = false;
-                                resp.slots.forEach(function(slot) {
-                                    if (slot.available) {
-                                        hasSlots = true;
-                                        $sel.append('<option value="' + slot.time + '">' + slot.time + '</option>');
-                                    }
-                                });
-                                if (!hasSlots) $sel.append('<option value="" disabled>No slots — use custom time</option>');
-                            } else {
-                                $sel.append('<option value="" disabled>No slots configured — use custom time</option>');
-                            }
-                        });
+        $(document).on('change', '#doc-reschedule-date', function() {
+            if ($('#doc-reschedule-custom-time-toggle').is(':checked')) return;
+            var date = $(this).val();
+            if (!date || !docReschClinicId) return;
+            var $sel = $('#doc-reschedule-time');
+            $sel.empty().append('<option value="">Loading...</option>');
+            $.get('{{ route("appointments.available-slots") }}', { date: date, clinic_id: docReschClinicId, doctor_id: docReschDoctorId }, function(resp) {
+                $sel.empty().append('<option value="">-- Select Time --</option>');
+                if (resp.success && resp.slots && resp.slots.length) {
+                    var hasSlots = false;
+                    resp.slots.forEach(function(slot) {
+                        if (slot.available) { hasSlots = true; $sel.append('<option value="' + slot.time + '">' + slot.time + '</option>'); }
                     });
-
-                    $(document).on('change.swal_resch', '#swal-custom-time-toggle', function() {
-                        useCustomTime = $(this).is(':checked');
-                        if (useCustomTime) {
-                            $('#swal-resch-time').addClass('d-none');
-                            $('#swal-resch-custom-time').removeClass('d-none');
-                        } else {
-                            $('#swal-resch-custom-time').addClass('d-none').val('');
-                            $('#swal-resch-time').removeClass('d-none');
-                        }
-                    });
-                },
-                willClose: () => {
-                    $(document).off('change.swal_resch');
-                },
-                preConfirm: () => {
-                    var date = $('#swal-resch-date').val();
-                    var time = useCustomTime ? $('#swal-resch-custom-time').val() : $('#swal-resch-time').val();
-                    if (!date) {
-                        Swal.showValidationMessage('Please select a date');
-                        return false;
-                    }
-                    if (!time) {
-                        Swal.showValidationMessage('Please select or enter a time');
-                        return false;
-                    }
-                    return {
-                        date: date,
-                        time: time,
-                        custom_time: useCustomTime ? 1 : 0,
-                        reason: $('#swal-resch-reason').val()
-                    };
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: "{{ route('appointments.reschedule', ['appointment' => '__AID__']) }}".replace('__AID__', appointmentId),
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            appointment_date: result.value.date,
-                            start_time: result.value.time,
-                            custom_time: result.value.custom_time,
-                            reason: result.value.reason
-                        },
-                        success: function(res) {
-                            if (res.success) {
-                                toastr.success(res.message || 'Appointment rescheduled.');
-                                refreshAll();
-                            } else {
-                                Swal.fire('Failed', res.message || 'Could not reschedule', 'error');
-                            }
-                        },
-                        error: function(xhr) {
-                            Swal.fire('Error', xhr.responseJSON?.message || 'Reschedule failed', 'error');
-                        }
-                    });
+                    if (!hasSlots) $sel.append('<option value="" disabled>No slots — use custom time</option>');
+                } else {
+                    $sel.append('<option value="" disabled>No slots configured — use custom time</option>');
                 }
             });
-        }
+        });
+
+        $(document).on('change', '#doc-reschedule-custom-time-toggle', function() {
+            var isCustom = $(this).is(':checked');
+            if (isCustom) {
+                $('#doc-reschedule-time').addClass('d-none');
+                $('#doc-reschedule-custom-time-input').removeClass('d-none');
+            } else {
+                $('#doc-reschedule-custom-time-input').addClass('d-none').val('');
+                $('#doc-reschedule-time').removeClass('d-none');
+                if ($('#doc-reschedule-date').val()) $('#doc-reschedule-date').trigger('change');
+            }
+        });
+
+        $(document).on('submit', '#doc-reschedule-form', function(e) {
+            e.preventDefault();
+            var apptId = $('#doc-reschedule-appt-id').val();
+            var isCustomTime = $('#doc-reschedule-custom-time-toggle').is(':checked');
+            var startTime = isCustomTime ? $('#doc-reschedule-custom-time-input').val() : $('#doc-reschedule-time').val();
+            if (!startTime) { toastr.warning('Please select or enter a time.'); return; }
+            var $btn = $(this).find('button[type="submit"]');
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Rescheduling...');
+
+            $.ajax({
+                url: "{{ route('appointments.reschedule', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    appointment_date: $('#doc-reschedule-date').val(),
+                    start_time: startTime,
+                    custom_time: isCustomTime ? 1 : 0,
+                    reason: $('#doc-reschedule-reason').val()
+                },
+                success: function(res) {
+                    if (res.success) { toastr.success(res.message || 'Appointment rescheduled.'); $('#docRescheduleAppointmentModal').modal('hide'); refreshAll(); }
+                    else { toastr.error(res.message || 'Could not reschedule.'); }
+                },
+                error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Reschedule failed.'); },
+                complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-calendar-edit"></i> Reschedule'); }
+            });
+        });
 
         // ═══════════════════════════════════════════════════════════════
         //  Mini-Timers

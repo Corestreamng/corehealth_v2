@@ -4340,6 +4340,7 @@
                                 <th>Time</th>
                                 <th>Type</th>
                                 <th>Status</th>
+                                <th>Delivery</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -5267,6 +5268,7 @@
                                             <th>Doctor</th>
                                             <th>Type</th>
                                             <th>Status</th>
+                                            <th>Delivery</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -7472,34 +7474,23 @@ function displayUpcomingAppointments(appointments) {
  * Quick check-in for a pre-paid follow-up appointment (no billing needed)
  */
 function quickCheckInFollowUp(appointmentId) {
-    Swal.fire({
-        title: 'Check-In Follow-Up',
-        text: 'This is a pre-paid follow-up. Check in without billing?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, Check In',
-        confirmButtonColor: '#198754'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: "{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', appointmentId),
-                type: 'POST',
-                data: { _token: '{{ csrf_token() }}' },
-                success: function(res) {
-                    if (res.success) {
-                        toastr.success(res.message || 'Follow-up checked in successfully.');
-                        $('#upcoming-appointments-alert').remove();
-                        // Refresh queue
-                        if (typeof loadQueueEntries === 'function') loadQueueEntries();
-                        if (typeof loadTodayQueueList === 'function') loadTodayQueueList();
-                    } else {
-                        toastr.error(res.message || 'Check-in failed.');
-                    }
-                },
-                error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Check-in failed.');
-                }
-            });
+    if (!confirm('This is a pre-paid follow-up. Check in without billing?')) return;
+    $.ajax({
+        url: "{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', appointmentId),
+        type: 'POST',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(res) {
+            if (res.success) {
+                toastr.success(res.message || 'Follow-up checked in successfully.');
+                $('#upcoming-appointments-alert').remove();
+                if (typeof loadQueueEntries === 'function') loadQueueEntries();
+                if (typeof loadTodayQueueList === 'function') loadTodayQueueList();
+            } else {
+                toastr.error(res.message || 'Check-in failed.');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Check-in failed.');
         }
     });
 }
@@ -11295,7 +11286,16 @@ function showAppointmentContextMenu(event, jsEvent) {
     $('.appt-context-menu').remove();
 
     var status = event.status;
+    var isActive = status === 1 || status === 2 || status === 3 || status === 4;
+    var isTerminal = status === 0 || status === 5 || status === 7;
     var menuItems = '';
+
+    // Terminal state info line
+    if (isTerminal) {
+        var termText = status === 0 ? 'Cancelled' : (status === 5 ? 'Completed' : 'No-Show');
+        var termIcon = status === 0 ? 'mdi-cancel text-danger' : (status === 5 ? 'mdi-check-circle text-success' : 'mdi-account-remove text-secondary');
+        menuItems += '<a class="context-item" style="cursor:default;opacity:0.7;font-weight:600;" data-action="none"><i class="mdi ' + termIcon + '"></i> ' + termText + '</a>';
+    }
 
     // Start Visit - for WAITING or READY
     if (status === 1 || status === 3) {
@@ -11321,8 +11321,8 @@ function showAppointmentContextMenu(event, jsEvent) {
     if (status === 6) {
         menuItems += '<a class="context-item text-info" data-action="checkin"><i class="mdi mdi-account-check"></i> Patient Arrived / Check-In</a>';
     }
-    // Reschedule - for SCHEDULED
-    if (status === 6) {
+    // Reschedule - for SCHEDULED and NO-SHOW
+    if (status === 6 || status === 7) {
         menuItems += '<a class="context-item text-warning" data-action="reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</a>';
     }
     // Change Doctor - for SCHEDULED
@@ -11339,6 +11339,11 @@ function showAppointmentContextMenu(event, jsEvent) {
     }
     // View History
     menuItems += '<a class="context-item text-secondary" data-action="history"><i class="mdi mdi-link-variant"></i> View History</a>';
+
+    // Next-step hint for non-obvious states
+    if (event.next_step && (status === 1 || status === 2 || status === 3 || status === 6)) {
+        menuItems += '<a class="context-item text-muted" style="cursor:default;opacity:0.7;font-size:0.78rem;" data-action="none"><i class="mdi mdi-lightbulb-outline text-warning"></i> ' + event.next_step + '</a>';
+    }
 
     var menu = $('<div class="appt-context-menu" data-appt-id="' + (event.appointment_id || event.record_id || '') +
         '" data-event-type="' + (event.event_type || 'appointment') +
@@ -11492,6 +11497,9 @@ function refreshAppointmentViews() {
     if (appointmentsGlobalDataTable) {
         appointmentsGlobalDataTable.ajax.reload(null, false);
     }
+    if (typeof patientAppointmentsDataTable !== 'undefined' && patientAppointmentsDataTable) {
+        patientAppointmentsDataTable.ajax.reload(null, false);
+    }
 }
 
 function initAppointmentsGlobalDataTable() {
@@ -11523,6 +11531,7 @@ function initAppointmentsGlobalDataTable() {
             { data: 'time_slot', name: 'start_time' },
             { data: 'type_badge', name: 'appointment_type', orderable: false },
             { data: 'status_badge', name: 'status', orderable: false },
+            { data: 'delivery_info', name: 'delivery_info', orderable: false, searchable: false },
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
         ],
         order: [[6, 'asc'], [7, 'asc']],
@@ -11551,8 +11560,7 @@ $(document).on('click', '.btn-check-in-appointment', function() {
     $.post("{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
         if (res.success) {
             toastr.success(res.message);
-            loadQueueCounts();
-            if (appointmentsDataTable) appointmentsDataTable.ajax.reload(null, false);
+            refreshAppointmentViews();
         } else {
             toastr.error(res.message);
         }
@@ -11568,8 +11576,7 @@ $(document).on('click', '.btn-cancel-appointment', function() {
     $.post("{{ route('appointments.cancel', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}', reason: reason }, function(res) {
         if (res.success) {
             toastr.success(res.message);
-            loadQueueCounts();
-            if (appointmentsDataTable) appointmentsDataTable.ajax.reload(null, false);
+            refreshAppointmentViews();
         } else {
             toastr.error(res.message);
         }
@@ -11584,8 +11591,7 @@ $(document).on('click', '.btn-noshow-appointment', function() {
     $.post("{{ route('appointments.no-show', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
         if (res.success) {
             toastr.success(res.message);
-            loadQueueCounts();
-            if (appointmentsDataTable) appointmentsDataTable.ajax.reload(null, false);
+            refreshAppointmentViews();
         } else {
             toastr.error(res.message);
         }
@@ -12302,6 +12308,7 @@ function loadPatientAppointments(patientId) {
             { data: 'doctor_name', name: 'doctor_name' },
             { data: 'type_badge', name: 'appointment_type', orderable: false },
             { data: 'status_badge', name: 'status', orderable: false },
+            { data: 'delivery_info', name: 'delivery_info', orderable: false, searchable: false },
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
         ],
         order: [[1, 'desc']],
