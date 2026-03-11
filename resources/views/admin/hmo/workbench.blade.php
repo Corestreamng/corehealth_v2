@@ -739,72 +739,158 @@
 
 <!-- View Details Modal -->
 <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content" style="border-radius: 12px; border: none;">
-            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                <h5 class="modal-title"><i class="mdi mdi-file-document-outline mr-2"></i>Request Details</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-primary font-weight-bold mb-3"><i class="mdi mdi-account mr-1"></i>Patient Information</h6>
-                        <table class="table table-sm table-borderless">
-                            <tr><th width="40%">Name:</th><td id="detail_patient_name"></td></tr>
-                            <tr><th>File No:</th><td id="detail_file_no"></td></tr>
-                            <tr><th>HMO No:</th><td id="detail_hmo_no"></td></tr>
-                            <tr><th>HMO:</th><td id="detail_hmo_name"></td></tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-primary font-weight-bold mb-3"><i class="mdi mdi-clipboard-list mr-1"></i>Request Information</h6>
-                        <table class="table table-sm table-borderless">
-                            <tr><th width="40%">Request ID:</th><td id="detail_request_id"></td></tr>
-                            <tr><th>Date:</th><td id="detail_created_at"></td></tr>
-                            <tr><th>Type:</th><td id="detail_item_type"></td></tr>
-                            <tr><th>Item:</th><td id="detail_item_name"></td></tr>
-                            <tr><th>Quantity:</th><td id="detail_qty"></td></tr>
-                        </table>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-12">
-                        <h6 class="text-primary font-weight-bold mb-3"><i class="mdi mdi-cash mr-1"></i>Pricing & Coverage</h6>
-                        <table class="table table-sm table-bordered" style="border-radius: 8px;">
-                            <tr class="bg-light">
-                                <th>Original Price</th>
-                                <th>HMO Covers (Claims)</th>
-                                <th>Patient Pays</th>
-                                <th>Coverage Mode</th>
-                            </tr>
-                            <tr>
-                                <td>₦<span id="detail_original_price"></span></td>
-                                <td>₦<span id="detail_claims_amount"></span></td>
-                                <td>₦<span id="detail_payable_amount"></span></td>
-                                <td><span id="detail_coverage_mode"></span></td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-12">
-                        <h6 class="text-primary font-weight-bold mb-3"><i class="mdi mdi-check-decagram mr-1"></i>Validation Information</h6>
-                        <table class="table table-sm table-borderless">
-                            <tr><th width="20%">Status:</th><td><span id="detail_validation_status"></span></td></tr>
-                            <tr><th>Auth Code:</th><td id="detail_auth_code">-</td></tr>
-                            <tr><th>Validated By:</th><td id="detail_validated_by">-</td></tr>
-                            <tr><th>Validated At:</th><td id="detail_validated_at">-</td></tr>
-                            <tr><th>Notes:</th><td id="detail_validation_notes">-</td></tr>
-                        </table>
-                    </div>
+            <div class="modal-header py-2 text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h6 class="modal-title mb-0"><i class="mdi mdi-file-document-outline mr-1"></i>Request <span id="detail_request_id" class="font-weight-bold"></span></h6>
+                <div class="ml-auto d-flex align-items-center">
+                    <span id="detail_validation_status" class="mr-3"></span>
+                    <span id="detail_coverage_mode" class="mr-3"></span>
+                    <button type="button" class="close text-white ml-2" data-bs-dismiss="modal"><span>&times;</span></button>
                 </div>
             </div>
-            <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
-                <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Close</button>
+            <div class="modal-body p-3" style="font-size: 0.88rem;">
+                {{-- Row 1: Patient + HMO + Request context --}}
+                <div class="row mb-2">
+                    {{-- Patient card --}}
+                    <div class="col-md-4">
+                        <div class="card-modern mb-0 h-100">
+                            <div class="card-header py-1 px-2">
+                                <strong class="text-primary"><i class="mdi mdi-account mr-1"></i>Patient</strong>
+                            </div>
+                            <div class="card-body p-2">
+                                <p class="mb-1 font-weight-bold" id="detail_patient_name" style="font-size:1rem;"></p>
+                                <div class="d-flex flex-wrap" style="gap:4px 12px; font-size:0.82rem;">
+                                    <span><i class="mdi mdi-folder-account text-muted"></i> <span id="detail_file_no"></span></span>
+                                    <span><i class="mdi mdi-card-account-details text-muted"></i> <span id="detail_hmo_no"></span></span>
+                                    <span><i class="mdi mdi-gender-male-female text-muted"></i> <span id="detail_gender"></span></span>
+                                    <span><i class="mdi mdi-cake-variant text-muted"></i> <span id="detail_age"></span></span>
+                                    <span><i class="mdi mdi-phone text-muted"></i> <span id="detail_phone"></span></span>
+                                </div>
+                                <div id="detail_allergies_row" class="mt-1" style="display:none;">
+                                    <small class="text-danger"><i class="mdi mdi-alert-circle"></i> Allergies: <span id="detail_allergies"></span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- HMO card --}}
+                    <div class="col-md-4">
+                        <div class="card-modern mb-0 h-100">
+                            <div class="card-header py-1 px-2">
+                                <strong class="text-primary"><i class="mdi mdi-hospital-building mr-1"></i>HMO / Scheme</strong>
+                            </div>
+                            <div class="card-body p-2">
+                                <p class="mb-1 font-weight-bold" id="detail_hmo_name"></p>
+                                <div style="font-size:0.82rem;">
+                                    <span id="detail_scheme_row"><i class="mdi mdi-tag-outline text-muted"></i> Scheme: <span id="detail_hmo_scheme" class="font-weight-bold"></span> <small class="text-muted" id="detail_hmo_scheme_code"></small></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Context card --}}
+                    <div class="col-md-4">
+                        <div class="card-modern mb-0 h-100">
+                            <div class="card-header py-1 px-2">
+                                <strong class="text-primary"><i class="mdi mdi-clipboard-text mr-1"></i>Request Context</strong>
+                            </div>
+                            <div class="card-body p-2" style="font-size:0.82rem;">
+                                <div><i class="mdi mdi-calendar text-muted"></i> <span id="detail_created_at"></span></div>
+                                <div><i class="mdi mdi-account-tie text-muted"></i> Requested by: <strong id="detail_requested_by"></strong></div>
+                                <div id="detail_doctor_row"><i class="mdi mdi-doctor text-muted"></i> Doctor: <strong id="detail_encounter_doctor"></strong></div>
+                                <div id="detail_admission_row" style="display:none;"><i class="mdi mdi-bed text-muted"></i> Admitted — <span id="detail_admission_status" class="badge badge-info"></span></div>
+                                <div id="detail_procedure_row" style="display:none;"><i class="mdi mdi-medical-bag text-muted"></i> Procedure: <span id="detail_procedure_name"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Row 2: Item + Pricing --}}
+                <div class="card-modern mb-2">
+                    <div class="card-header py-1 px-2 d-flex align-items-center">
+                        <strong class="text-primary"><i class="mdi mdi-cash-multiple mr-1"></i>Item & Pricing</strong>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="row mb-2" style="font-size:0.85rem;">
+                            <div class="col-md-6">
+                                <span class="badge badge-secondary" id="detail_item_type"></span>
+                                <span id="detail_category" class="text-muted ml-1" style="font-size:0.8rem;"></span>
+                                <div class="font-weight-bold mt-1" id="detail_item_name" style="font-size:0.95rem;"></div>
+                                <small class="text-muted" id="detail_item_code"></small>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <span class="text-muted">Qty:</span> <strong id="detail_qty"></strong>
+                                <span class="ml-2 text-muted">Unit Price:</span> <strong>₦<span id="detail_unit_price"></span></strong>
+                                <span class="ml-2 text-muted">Total:</span> <strong>₦<span id="detail_total_price"></span></strong>
+                            </div>
+                        </div>
+                        <table class="table table-sm table-bordered mb-0" style="font-size:0.85rem;">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th></th>
+                                    <th class="text-center">Per Unit</th>
+                                    <th class="text-center">Total (×<span id="detail_qty2"></span>)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><i class="mdi mdi-hospital text-info"></i> <strong>HMO Covers (Claims)</strong></td>
+                                    <td class="text-center">₦<span id="detail_unit_claims"></span></td>
+                                    <td class="text-center font-weight-bold text-info">₦<span id="detail_claims_amount"></span></td>
+                                </tr>
+                                <tr>
+                                    <td><i class="mdi mdi-account-cash text-warning"></i> <strong>Patient Pays</strong></td>
+                                    <td class="text-center">₦<span id="detail_unit_payable"></span></td>
+                                    <td class="text-center font-weight-bold text-warning">₦<span id="detail_payable_amount"></span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Row 3: Validation + Submission --}}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card-modern mb-0 h-100">
+                            <div class="card-header py-1 px-2">
+                                <strong class="text-primary"><i class="mdi mdi-check-decagram mr-1"></i>Validation</strong>
+                            </div>
+                            <div class="card-body p-2" style="font-size:0.85rem;">
+                                <div class="mb-1"><strong>Auth Code:</strong> <span id="detail_auth_code">-</span></div>
+                                <div class="mb-1"><strong>Validated By:</strong> <span id="detail_validated_by">-</span></div>
+                                <div class="mb-1"><strong>Validated At:</strong> <span id="detail_validated_at">-</span></div>
+                                <div><strong>Notes:</strong> <span id="detail_validation_notes" class="text-muted">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-modern mb-0 h-100">
+                            <div class="card-header py-1 px-2">
+                                <strong class="text-primary"><i class="mdi mdi-send mr-1"></i>Submission / Billing</strong>
+                            </div>
+                            <div class="card-body p-2" style="font-size:0.85rem;">
+                                <div class="mb-1"><strong>Payment ID:</strong> <span id="detail_payment_id">-</span></div>
+                                <div class="mb-1"><strong>Submitted to HMO:</strong> <span id="detail_submitted_at">-</span></div>
+                                <div><strong>Batch:</strong> <span id="detail_batch">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Audit trail (collapsible) --}}
+                <div class="mt-2">
+                    <a data-toggle="collapse" href="#auditTrailCollapse" class="text-muted" style="font-size:0.82rem;">
+                        <i class="mdi mdi-history"></i> Audit Trail <i class="mdi mdi-chevron-down"></i>
+                    </a>
+                    <div class="collapse" id="auditTrailCollapse">
+                        <table class="table table-sm table-striped mt-1 mb-0" style="font-size:0.8rem;">
+                            <thead><tr><th>Event</th><th>By</th><th>Date</th><th>Changes</th></tr></thead>
+                            <tbody id="detail_audit_tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-1" style="border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -1241,6 +1327,155 @@
     </div>
 </div>
 
+<!-- Validate by Group Modal -->
+<div class="modal fade" id="validateGroupModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div>
+                    <h5 class="modal-title mb-0"><i class="mdi mdi-account-check-outline mr-2"></i>Validate Patient Requests — <span id="vg_patient_name"></span></h5>
+                    <small id="vg_patient_subtitle" class="text-white-50"></small>
+                </div>
+                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body p-3">
+                {{-- Summary bar --}}
+                <div class="card card-modern mb-3">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between">
+                            <div>
+                                <span class="badge badge-warning mr-1" id="vg_primary_badge">0 Primary</span>
+                                <span class="badge badge-danger mr-1" id="vg_secondary_badge">0 Secondary</span>
+                                <span class="text-muted small ml-2">Total: <strong id="vg_total_count">0</strong> pending</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="small text-muted">Claims: </span><strong class="text-success" id="vg_total_claims">₦0</strong>
+                                <span class="small text-muted ml-2">Payable: </span><strong class="text-info" id="vg_total_payable">₦0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Grouping toolbar --}}
+                <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
+                    <span class="small font-weight-bold mr-2">Group By:</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary active" id="vg_group_encounter">
+                            <i class="mdi mdi-stethoscope mr-1"></i>Encounter
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="vg_group_date">
+                            <i class="mdi mdi-calendar-range mr-1"></i>Date Range
+                        </button>
+                    </div>
+                    <div id="vg_date_range_controls" class="ml-2" style="display:none;">
+                        <select class="form-control form-control-sm" id="vg_date_filter" style="width:160px; border-radius:6px;">
+                            <option value="all">All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="3days">Last 3 Days</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                    <div class="ml-auto">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="vg_select_all_btn">
+                            <i class="mdi mdi-checkbox-multiple-marked-outline mr-1"></i>Select All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="vg_deselect_all_btn">
+                            <i class="mdi mdi-checkbox-multiple-blank-outline mr-1"></i>Deselect All
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Loading spinner --}}
+                <div id="vg_loading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="text-muted mt-2 small">Loading patient requests...</p>
+                </div>
+
+                {{-- Empty state --}}
+                <div id="vg_empty" class="text-center py-5" style="display:none;">
+                    <i class="mdi mdi-check-circle-outline text-success" style="font-size:48px;"></i>
+                    <p class="text-muted mt-2">No pending requests for this patient.</p>
+                </div>
+
+                {{-- Request groups container --}}
+                <div id="vg_groups_container"></div>
+
+                {{-- Auth code section --}}
+                <div id="vg_auth_section" class="card card-modern mt-3" style="display:none;">
+                    <div class="card-header py-2 px-3">
+                        <strong class="small"><i class="mdi mdi-key-variant mr-1"></i>Authorization Codes</strong>
+                        <span class="badge badge-danger ml-1" id="vg_secondary_selected_count">0</span>
+                        <span class="small text-muted"> secondary items selected — auth code required</span>
+                    </div>
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="custom-control custom-radio mr-3">
+                                <input type="radio" class="custom-control-input" id="vg_auth_shared" name="vg_auth_mode" value="shared" checked>
+                                <label class="custom-control-label small" for="vg_auth_shared">One code for all secondary items</label>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                <input type="radio" class="custom-control-input" id="vg_auth_individual" name="vg_auth_mode" value="individual">
+                                <label class="custom-control-label small" for="vg_auth_individual">Individual codes per item</label>
+                            </div>
+                        </div>
+                        <div id="vg_shared_auth_input">
+                            <input type="text" class="form-control form-control-sm" id="vg_shared_auth_code" placeholder="Enter shared authorization code" style="border-radius:6px; max-width:400px;">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Validation notes --}}
+                <div class="form-group mt-3 mb-0">
+                    <label class="small font-weight-bold">Validation Notes (Optional)</label>
+                    <textarea class="form-control form-control-sm" id="vg_validation_notes" rows="2" placeholder="Applied to all approved/rejected items..." style="border-radius:6px;"></textarea>
+                </div>
+
+                {{-- Reject inline section (hidden) --}}
+                <div id="vg_reject_section" class="card border-danger mt-3" style="display:none;">
+                    <div class="card-header py-2 px-3 bg-danger text-white">
+                        <strong class="small"><i class="mdi mdi-close-circle mr-1"></i>Reject Selected Items</strong>
+                    </div>
+                    <div class="card-body py-2 px-3">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold">Rejection Reason <span class="text-danger">*</span></label>
+                            <select class="form-control form-control-sm" id="vg_rejection_reason" style="border-radius:6px;">
+                                <option value="">Select reason...</option>
+                                @foreach($rejectionReasons as $key => $reason)
+                                    <option value="{{ $key }}">{{ $reason }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold">Additional Notes</label>
+                            <textarea class="form-control form-control-sm" id="vg_reject_notes" rows="2" placeholder="Optional..." style="border-radius:6px;"></textarea>
+                        </div>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-sm btn-outline-secondary mr-1" id="vg_cancel_reject_btn">Cancel</button>
+                            <button type="button" class="btn btn-sm btn-danger" id="vg_confirm_reject_btn">
+                                <i class="mdi mdi-close-circle mr-1"></i>Confirm Reject (<span class="vg-selected-count">0</span>)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                <div class="d-flex align-items-center mr-auto">
+                    <span class="small text-muted">Selected: <strong class="vg-selected-count">0</strong> of <strong id="vg_footer_total">0</strong></span>
+                    <span class="small text-muted ml-3">Claims: <strong class="text-success vg-selected-claims">₦0</strong></span>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="border-radius:6px;">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm" id="vg_reject_btn" disabled style="border-radius:6px;">
+                    <i class="mdi mdi-close-circle mr-1"></i>Reject (<span class="vg-selected-count">0</span>)
+                </button>
+                <button type="button" class="btn btn-success btn-sm" id="vg_approve_btn" disabled style="border-radius:6px;">
+                    <i class="mdi mdi-check-all mr-1"></i>Approve (<span class="vg-selected-count">0</span>)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Patient History Modal -->
 <div class="modal fade" id="patientHistoryModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-xl" role="document">
@@ -1311,6 +1546,19 @@
 <script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
 <script>
 $(function() {
+    // Toastr options
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: 'toast-top-right',
+        timeOut: 4000,
+        extendedTimeOut: 2000,
+        showEasing: 'swing',
+        hideEasing: 'linear',
+        showMethod: 'fadeIn',
+        hideMethod: 'fadeOut'
+    };
+
     let currentTab = 'pending';
     let currentPreset = '';
     let table;
@@ -1530,35 +1778,112 @@ $(function() {
         let id = $(this).data('id');
 
         $.get("{{ url('hmo/requests') }}/" + id, function(response) {
-            let data = response.data;
+            let d = response.data;
 
-            $('#detail_request_id').text(data.id);
-            $('#detail_patient_name').text(data.patient_name);
-            $('#detail_file_no').text(data.file_no);
-            $('#detail_hmo_no').text(data.hmo_no || 'N/A');
-            $('#detail_hmo_name').text(data.hmo_name);
-            $('#detail_item_type').text(data.item_type);
-            $('#detail_item_name').text(data.item_name);
-            $('#detail_qty').text(data.qty);
-            $('#detail_original_price').text(formatNumber(data.original_price || 0));
-            $('#detail_claims_amount').text(formatNumber(data.claims_amount || 0));
-            $('#detail_payable_amount').text(formatNumber(data.payable_amount || 0));
+            // Header
+            $('#detail_request_id').text('#' + d.id);
 
-            let coverageBadge = data.coverage_mode === 'express' ? '<span class="badge badge-success">EXPRESS</span>' :
-                               data.coverage_mode === 'primary' ? '<span class="badge badge-warning">PRIMARY</span>' :
-                               '<span class="badge badge-danger">SECONDARY</span>';
-            $('#detail_coverage_mode').html(coverageBadge);
-
-            let statusBadge = data.validation_status === 'approved' ? '<span class="badge badge-success">APPROVED</span>' :
-                             data.validation_status === 'rejected' ? '<span class="badge badge-danger">REJECTED</span>' :
+            let statusBadge = d.validation_status === 'approved' ? '<span class="badge badge-success">APPROVED</span>' :
+                             d.validation_status === 'rejected' ? '<span class="badge badge-danger">REJECTED</span>' :
                              '<span class="badge badge-warning">PENDING</span>';
             $('#detail_validation_status').html(statusBadge);
 
-            $('#detail_auth_code').text(data.auth_code || '-');
-            $('#detail_validated_by').text(data.validated_by_name || '-');
-            $('#detail_validated_at').text(data.validated_at || '-');
-            $('#detail_validation_notes').text(data.validation_notes || '-');
-            $('#detail_created_at').text(data.created_at);
+            let coverageBadge = d.coverage_mode === 'express' ? '<span class="badge badge-success">EXPRESS</span>' :
+                               d.coverage_mode === 'primary' ? '<span class="badge badge-warning">PRIMARY</span>' :
+                               '<span class="badge badge-danger">SECONDARY</span>';
+            $('#detail_coverage_mode').html(coverageBadge);
+
+            // Patient
+            $('#detail_patient_name').text(d.patient_name);
+            $('#detail_file_no').text(d.file_no);
+            $('#detail_hmo_no').text(d.hmo_no || 'N/A');
+            $('#detail_gender').text(d.gender || 'N/A');
+            $('#detail_age').text(d.age || 'N/A');
+            $('#detail_phone').text(d.phone || 'N/A');
+
+            if (d.allergies && (Array.isArray(d.allergies) ? d.allergies.length : String(d.allergies).trim())) {
+                $('#detail_allergies').text(Array.isArray(d.allergies) ? d.allergies.join(', ') : d.allergies);
+                $('#detail_allergies_row').show();
+            } else {
+                $('#detail_allergies_row').hide();
+            }
+
+            // HMO
+            $('#detail_hmo_name').text(d.hmo_name);
+            if (d.hmo_scheme) {
+                $('#detail_hmo_scheme').text(d.hmo_scheme);
+                $('#detail_hmo_scheme_code').text(d.hmo_scheme_code ? '(' + d.hmo_scheme_code + ')' : '');
+                $('#detail_scheme_row').show();
+            } else {
+                $('#detail_scheme_row').hide();
+            }
+
+            // Context
+            $('#detail_created_at').text(d.created_at || 'N/A');
+            $('#detail_requested_by').text(d.requested_by || 'N/A');
+            if (d.encounter_doctor) {
+                $('#detail_encounter_doctor').text(d.encounter_doctor);
+                $('#detail_doctor_row').show();
+            } else {
+                $('#detail_doctor_row').hide();
+            }
+            if (d.is_admitted) {
+                $('#detail_admission_status').text(d.admission_status || 'admitted');
+                $('#detail_admission_row').show();
+            } else {
+                $('#detail_admission_row').hide();
+            }
+            if (d.procedure_name) {
+                $('#detail_procedure_name').text(d.procedure_name);
+                $('#detail_procedure_row').show();
+            } else {
+                $('#detail_procedure_row').hide();
+            }
+
+            // Item & Pricing
+            $('#detail_item_type').text(d.item_type);
+            $('#detail_item_name').text(d.item_name);
+            $('#detail_item_code').text(d.item_code || '');
+            $('#detail_category').text(d.category ? '/ ' + d.category : '');
+            $('#detail_qty').text(d.qty);
+            $('#detail_qty2').text(d.qty);
+            $('#detail_unit_price').text(formatNumber(d.unit_price || 0));
+            $('#detail_total_price').text(formatNumber(d.total_price || 0));
+            $('#detail_unit_claims').text(formatNumber(d.unit_claims || 0));
+            $('#detail_unit_payable').text(formatNumber(d.unit_payable || 0));
+            $('#detail_claims_amount').text(formatNumber(d.claims_amount || 0));
+            $('#detail_payable_amount').text(formatNumber(d.payable_amount || 0));
+
+            // Validation
+            $('#detail_auth_code').text(d.auth_code || '-');
+            $('#detail_validated_by').text(d.validated_by_name || '-');
+            $('#detail_validated_at').text(d.validated_at || '-');
+            $('#detail_validation_notes').text(d.validation_notes || '-');
+
+            // Submission
+            $('#detail_payment_id').text(d.payment_id || '-');
+            $('#detail_submitted_at').text(d.submitted_to_hmo_at || '-');
+            $('#detail_batch').text(d.hmo_submission_batch || '-');
+
+            // Audit trail
+            let $tbody = $('#detail_audit_tbody').empty();
+            if (d.audits && d.audits.length) {
+                d.audits.forEach(function(a) {
+                    let changes = [];
+                    if (a.new_values) {
+                        Object.keys(a.new_values).forEach(function(k) {
+                            let oldVal = a.old_values && a.old_values[k] !== undefined ? a.old_values[k] : '—';
+                            changes.push(k + ': ' + oldVal + ' → ' + a.new_values[k]);
+                        });
+                    }
+                    $tbody.append('<tr><td>' + a.event + '</td><td>' + a.user + '</td><td>' + a.created_at + '</td><td><small>' + changes.join('<br>') + '</small></td></tr>');
+                });
+            } else {
+                $tbody.append('<tr><td colspan="4" class="text-muted text-center">No audit records</td></tr>');
+            }
+
+            // Collapse audit trail by default
+            $('#auditTrailCollapse').collapse('hide');
 
             $('#detailsModal').modal('show');
         });
@@ -1941,7 +2266,7 @@ $(function() {
         if (window.currentClinicalPatientId) {
             loadClinicalContext(window.currentClinicalPatientId);
         } else {
-            swal('Info', 'Click the Clinical button on a patient row to refresh data', 'info');
+            toastr.info('Click the Clinical button on a patient row to refresh data');
         }
     });
 
@@ -2120,7 +2445,7 @@ $(function() {
             success: function(resp) { deferred.resolve(resp); },
             error: function(xhr) {
                 let msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to update tariff';
-                swal('Tariff Update Error', msg, 'error');
+                toastr.error(msg, 'Tariff Update Error');
                 deferred.reject(msg);
             }
         });
@@ -2201,7 +2526,7 @@ $(function() {
                     table.ajax.reload();
                     loadQueueCounts();
                     loadFinancialSummary();
-                    swal('Success', response.message, 'success');
+                    toastr.success(response.message);
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false);
@@ -2211,7 +2536,7 @@ $(function() {
                             $('#error_' + key).text(value[0]);
                         });
                     } else {
-                        swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                        toastr.error(xhr.responseJSON.message || 'An error occurred');
                     }
                 }
             });
@@ -2253,14 +2578,14 @@ $(function() {
                     table.ajax.reload();
                     loadQueueCounts();
                     loadFinancialSummary();
-                    swal('Success', response.message, 'success');
+                    toastr.success(response.message);
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false);
                     if (xhr.status === 422) {
                         $('#error_rejection_reason').text(xhr.responseJSON.message);
                     } else {
-                        swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                        toastr.error(xhr.responseJSON.message || 'An error occurred');
                     }
                 }
             });
@@ -2291,10 +2616,10 @@ $(function() {
                 table.ajax.reload();
                 loadQueueCounts();
                 loadFinancialSummary();
-                swal('Success', response.message, 'success');
+                toastr.success(response.message);
             },
             error: function(xhr) {
-                swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                toastr.error(xhr.responseJSON.message || 'An error occurred');
             }
         });
     });
@@ -2340,11 +2665,11 @@ $(function() {
                     table.ajax.reload();
                     loadQueueCounts();
                     loadFinancialSummary();
-                    swal('Success', response.message, 'success');
+                    toastr.success(response.message);
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false);
-                    swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                    toastr.error(xhr.responseJSON.message || 'An error occurred');
                 }
             });
         }).fail(function() {
@@ -2355,7 +2680,7 @@ $(function() {
     // Batch approve button
     $('#batchApproveBtn').on('click', function() {
         if (selectedIds.length === 0) {
-            swal('Warning', 'Please select at least one request', 'warning');
+            toastr.warning('Please select at least one request');
             return;
         }
         $('#batchApproveCount').text(selectedIds.length);
@@ -2381,10 +2706,10 @@ $(function() {
                 table.ajax.reload();
                 loadQueueCounts();
                 loadFinancialSummary();
-                swal('Success', response.message, 'success');
+                toastr.success(response.message);
             },
             error: function(xhr) {
-                swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                toastr.error(xhr.responseJSON.message || 'An error occurred');
             }
         });
     });
@@ -2392,7 +2717,7 @@ $(function() {
     // Batch reject button
     $('#batchRejectBtn').on('click', function() {
         if (selectedIds.length === 0) {
-            swal('Warning', 'Please select at least one request', 'warning');
+            toastr.warning('Please select at least one request');
             return;
         }
         $('#batchRejectCount').text(selectedIds.length);
@@ -2419,12 +2744,614 @@ $(function() {
                 table.ajax.reload();
                 loadQueueCounts();
                 loadFinancialSummary();
-                swal('Success', response.message, 'success');
+                toastr.success(response.message);
             },
             error: function(xhr) {
-                swal('Error', xhr.responseJSON.message || 'An error occurred', 'error');
+                toastr.error(xhr.responseJSON.message || 'An error occurred');
             }
         });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // VALIDATE BY GROUP — Full JS logic
+    // ═══════════════════════════════════════════════════════════
+    let vgData = null;          // raw response from server
+    let vgSelectedIds = [];     // currently checked request ids
+    let vgGroupMode = 'encounter'; // 'encounter' or 'date'
+    let vgIndividualCodes = {};  // {requestId: authCode} — persists across re-renders
+
+    // Format currency
+    function vgMoney(val) {
+        return '₦' + parseFloat(val || 0).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    // SLA color: green <2h, yellow <4h, red >4h
+    function vgSlaColor(hoursAgo) {
+        if (!hoursAgo) return 'secondary';
+        if (hoursAgo < 2) return 'success';
+        if (hoursAgo < 4) return 'warning';
+        return 'danger';
+    }
+
+    // Open modal
+    $(document).on('click', '.validate-group-btn', function() {
+        let patientId = $(this).data('patient-id');
+        let patientName = $(this).data('patient-name');
+
+        // Reset state
+        vgData = null;
+        vgSelectedIds = [];
+        vgGroupMode = 'encounter';
+        $('#vg_patient_name').text(patientName);
+        $('#vg_patient_subtitle').text('');
+        $('#vg_groups_container').empty();
+        $('#vg_loading').show();
+        $('#vg_empty').hide();
+        $('#vg_auth_section').hide();
+        $('#vg_reject_section').hide();
+        $('#vg_shared_auth_code').val('');
+        $('#vg_validation_notes').val('');
+        $('#vg_rejection_reason').val('');
+        $('#vg_reject_notes').val('');
+        vgIndividualCodes = {};
+        $('input[name="vg_auth_mode"][value="shared"]').prop('checked', true);
+        $('#vg_shared_auth_input').show();
+        $('#vg_group_encounter').addClass('active');
+        $('#vg_group_date').removeClass('active');
+        $('#vg_date_range_controls').hide();
+        $('#vg_date_filter').val('all');
+        vgUpdateFooter();
+
+        $('#validateGroupModal').modal('show');
+
+        // Fetch data
+        $.ajax({
+            url: "{{ url('hmo/patient') }}/" + patientId + "/pending-requests",
+            type: 'GET',
+            success: function(resp) {
+                $('#vg_loading').hide();
+                if (!resp.success || resp.summary.total_count === 0) {
+                    $('#vg_empty').show();
+                    return;
+                }
+                vgData = resp;
+
+                // Header info
+                let p = resp.patient;
+                let sub = 'HMO: ' + p.hmo_name;
+                if (p.scheme_name) sub += ' • Scheme: ' + p.scheme_name + (p.scheme_code ? ' (' + p.scheme_code + ')' : '');
+                sub += ' • File: ' + p.file_no;
+                if (p.hmo_no) sub += ' • HMO#: ' + p.hmo_no;
+                $('#vg_patient_subtitle').text(sub);
+
+                // Summary badges
+                let s = resp.summary;
+                $('#vg_primary_badge').text(s.primary_count + ' Primary');
+                $('#vg_secondary_badge').text(s.secondary_count + ' Secondary');
+                $('#vg_total_count').text(s.total_count);
+                $('#vg_total_claims').text(vgMoney(s.total_claims));
+                $('#vg_total_payable').text(vgMoney(s.total_payable));
+
+                // Select all by default
+                vgSelectAllRequests();
+                vgRenderGroups();
+                vgUpdateFooter();
+            },
+            error: function() {
+                $('#vg_loading').hide();
+                toastr.error('Failed to load patient requests');
+            }
+        });
+    });
+
+    // Collect all request objects flat
+    function vgAllRequests() {
+        if (!vgData) return [];
+        let all = [];
+        vgData.encounters.forEach(function(enc) {
+            enc.requests.forEach(function(r) { all.push(r); });
+        });
+        return all;
+    }
+
+    // Select/deselect all
+    function vgSelectAllRequests() {
+        vgSelectedIds = vgAllRequests().map(function(r) { return r.id; });
+    }
+
+    $('#vg_select_all_btn').on('click', function() {
+        // Select all visible (respecting date filter)
+        let visible = vgGetVisibleRequests();
+        visible.forEach(function(r) {
+            if (vgSelectedIds.indexOf(r.id) === -1) vgSelectedIds.push(r.id);
+        });
+        vgRefreshCheckboxes();
+        vgUpdateGroupSubtotals();
+        vgUpdateFooter();
+    });
+
+    $('#vg_deselect_all_btn').on('click', function() {
+        // Only deselect visible items (if in date mode with filter)
+        if (vgGroupMode === 'date' && $('#vg_date_filter').val() !== 'all') {
+            let visible = vgGetVisibleRequests();
+            let visibleIds = visible.map(function(r) { return r.id; });
+            vgSelectedIds = vgSelectedIds.filter(function(id) { return visibleIds.indexOf(id) === -1; });
+        } else {
+            vgSelectedIds = [];
+        }
+        vgRefreshCheckboxes();
+        vgUpdateGroupSubtotals();
+        vgUpdateFooter();
+    });
+
+    // Grouping toggle
+    $('#vg_group_encounter').on('click', function() {
+        vgGroupMode = 'encounter';
+        $(this).addClass('active');
+        $('#vg_group_date').removeClass('active');
+        $('#vg_date_range_controls').hide();
+        vgRenderGroups();
+    });
+
+    $('#vg_group_date').on('click', function() {
+        vgGroupMode = 'date';
+        $(this).addClass('active');
+        $('#vg_group_encounter').removeClass('active');
+        $('#vg_date_range_controls').show();
+        vgRenderGroups();
+    });
+
+    $('#vg_date_filter').on('change', function() {
+        vgRenderGroups();
+    });
+
+    // Get visible requests based on date filter
+    function vgGetVisibleRequests() {
+        let all = vgAllRequests();
+        if (vgGroupMode !== 'date') return all;
+
+        let filter = $('#vg_date_filter').val();
+        if (filter === 'all') return all;
+
+        let now = new Date();
+        let cutoff = new Date();
+        if (filter === 'today') {
+            cutoff.setHours(0, 0, 0, 0);
+        } else if (filter === '3days') {
+            cutoff.setDate(now.getDate() - 3);
+        } else if (filter === 'week') {
+            cutoff.setDate(now.getDate() - (now.getDay() || 7) + 1);
+            cutoff.setHours(0, 0, 0, 0);
+        } else if (filter === 'month') {
+            cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+
+        return all.filter(function(r) {
+            if (!r.created_at) return true;
+            let d = new Date(r.created_at);
+            if (isNaN(d.getTime())) return true;
+            return d >= cutoff;
+        });
+    }
+
+    // Render groups into the container
+    function vgRenderGroups() {
+        if (!vgData) return;
+        let container = $('#vg_groups_container');
+        container.empty();
+
+        if (vgGroupMode === 'encounter') {
+            vgData.encounters.forEach(function(enc, idx) {
+                let encLabel = enc.encounter_id
+                    ? 'Encounter #' + enc.encounter_id + (enc.doctor ? ' — ' + enc.doctor : '') + (enc.date ? ' — ' + enc.date : '')
+                    : 'Ungrouped Requests (no encounter)';
+                let card = vgBuildGroupCard(encLabel, enc.requests, 'enc_' + idx);
+                container.append(card);
+            });
+        } else {
+            let visible = vgGetVisibleRequests();
+            let card = vgBuildGroupCard('All Pending Requests (' + visible.length + ')', visible, 'date_all');
+            container.append(card);
+        }
+    }
+
+    // Build a single group card with table
+    function vgBuildGroupCard(title, requests, groupKey) {
+        let groupIds = requests.map(function(r) { return r.id; });
+        let allChecked = groupIds.every(function(id) { return vgSelectedIds.indexOf(id) !== -1; });
+
+        let html = '<div class="card card-modern mb-2">';
+        html += '<div class="card-header py-2 px-3 d-flex align-items-center justify-content-between cursor-pointer" data-toggle="collapse" data-target="#vg_collapse_' + groupKey + '">';
+        html += '<div><i class="mdi mdi-chevron-down mr-1"></i><strong class="small">' + title + '</strong>';
+        html += ' <span class="badge badge-light ml-1">' + requests.length + ' items</span></div>';
+        html += '<div class="custom-control custom-checkbox" onclick="event.stopPropagation();">';
+        html += '<input type="checkbox" class="custom-control-input vg-group-select" id="vg_grp_' + groupKey + '" data-group="' + groupKey + '" ' + (allChecked ? 'checked' : '') + '>';
+        html += '<label class="custom-control-label small" for="vg_grp_' + groupKey + '">Select All</label>';
+        html += '</div></div>';
+
+        html += '<div class="collapse show" id="vg_collapse_' + groupKey + '">';
+        html += '<div class="card-body p-0"><div class="table-responsive">';
+        html += '<table class="table table-sm table-hover mb-0" style="font-size:0.82rem;">';
+        html += '<thead class="thead-light"><tr>';
+        html += '<th style="width:30px;"></th>';
+        html += '<th>Type</th><th>Item</th><th class="text-center">Qty</th>';
+        html += '<th class="text-right">Claims (₦)</th><th class="text-right">Payable (₦)</th>';
+        html += '<th class="text-center">Coverage</th>';
+        html += '<th>Auth Code</th>';
+        html += '<th style="width:50px;"></th>';
+        html += '</tr></thead><tbody>';
+
+        requests.forEach(function(r) {
+            let checked = vgSelectedIds.indexOf(r.id) !== -1 ? 'checked' : '';
+            let typeBadge = r.type === 'Product'
+                ? '<span class="badge badge-primary">Product</span>'
+                : r.type === 'Procedure'
+                    ? '<span class="badge badge-warning text-dark">Procedure</span>'
+                    : '<span class="badge badge-info">Service</span>';
+            let coverageBadge = r.coverage_mode === 'secondary'
+                ? '<span class="badge badge-danger">SECONDARY</span>'
+                : '<span class="badge badge-warning">PRIMARY</span>';
+            let slaClass = vgSlaColor(r.hours_ago);
+            let slaDot = '<span class="badge badge-' + slaClass + '" style="width:8px;height:8px;padding:0;border-radius:50%;display:inline-block;" title="' + (r.hours_ago ? r.hours_ago + 'h ago' : '') + '"></span>';
+
+            // Auth code input (only for secondary)
+            let authCol = '—';
+            if (r.coverage_mode === 'secondary') {
+                let savedCode = (vgIndividualCodes[r.id] || '').replace(/"/g, '&quot;');
+                authCol = '<input type="text" class="form-control form-control-sm vg-individual-auth" data-id="' + r.id + '" value="' + savedCode + '" placeholder="Auth code" style="border-radius:4px;min-width:100px;font-size:0.78rem;" ' + ($('input[name="vg_auth_mode"]:checked').val() === 'shared' ? 'disabled' : '') + '>';
+            }
+
+            html += '<tr>';
+            html += '<td><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input vg-item-check" id="vg_item_' + r.id + '" data-id="' + r.id + '" data-group="' + groupKey + '" data-claims="' + r.claims_amount + '" data-coverage="' + r.coverage_mode + '" ' + checked + '><label class="custom-control-label" for="vg_item_' + r.id + '"></label></div></td>';
+            html += '<td>' + typeBadge + '</td>';
+            html += '<td>' + r.name + (r.category ? '<br><small class="text-muted">' + r.category + '</small>' : '') + '</td>';
+            html += '<td class="text-center">' + r.qty + '</td>';
+            html += '<td class="text-right">' + vgMoney(r.claims_amount) + '</td>';
+            html += '<td class="text-right">' + vgMoney(r.payable_amount) + '</td>';
+            html += '<td class="text-center">' + coverageBadge + '</td>';
+            html += '<td>' + authCol + '</td>';
+            html += '<td>' + slaDot + '</td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody>';
+
+        // Group subtotal row
+        let groupSelected = requests.filter(function(r) { return vgSelectedIds.indexOf(r.id) !== -1; });
+        let groupClaims = groupSelected.reduce(function(s, r) { return s + r.claims_amount; }, 0);
+        let groupPayable = groupSelected.reduce(function(s, r) { return s + r.payable_amount; }, 0);
+        html += '<tfoot><tr class="bg-light">';
+        html += '<td colspan="4" class="text-right small text-muted">Selected: ' + groupSelected.length + '/' + requests.length + '</td>';
+        html += '<td class="text-right small font-weight-bold">' + vgMoney(groupClaims) + '</td>';
+        html += '<td class="text-right small font-weight-bold">' + vgMoney(groupPayable) + '</td>';
+        html += '<td colspan="2"></td><td></td>';
+        html += '</tr></tfoot>';
+
+        html += '</table></div></div></div></div>';
+        return html;
+    }
+
+    // Checkbox: individual item
+    $(document).on('change', '.vg-item-check', function() {
+        let id = parseInt($(this).data('id'));
+        if ($(this).is(':checked')) {
+            if (vgSelectedIds.indexOf(id) === -1) vgSelectedIds.push(id);
+        } else {
+            vgSelectedIds = vgSelectedIds.filter(function(x) { return x !== id; });
+        }
+        vgUpdateGroupCheckbox($(this).data('group'));
+        vgUpdateGroupSubtotals();
+        vgUpdateFooter();
+    });
+
+    // Checkbox: group select all
+    $(document).on('change', '.vg-group-select', function() {
+        let groupKey = $(this).data('group');
+        let checked = $(this).is(':checked');
+        $('#vg_collapse_' + groupKey + ' .vg-item-check').each(function() {
+            let id = parseInt($(this).data('id'));
+            $(this).prop('checked', checked);
+            if (checked && vgSelectedIds.indexOf(id) === -1) {
+                vgSelectedIds.push(id);
+            } else if (!checked) {
+                vgSelectedIds = vgSelectedIds.filter(function(x) { return x !== id; });
+            }
+        });
+        vgUpdateGroupSubtotals();
+        vgUpdateFooter();
+    });
+
+    function vgUpdateGroupCheckbox(groupKey) {
+        let allInGroup = $('#vg_collapse_' + groupKey + ' .vg-item-check');
+        let allChecked = allInGroup.length > 0 && allInGroup.filter(':checked').length === allInGroup.length;
+        $('#vg_grp_' + groupKey).prop('checked', allChecked);
+    }
+
+    function vgRefreshCheckboxes() {
+        $('.vg-item-check').each(function() {
+            let id = parseInt($(this).data('id'));
+            $(this).prop('checked', vgSelectedIds.indexOf(id) !== -1);
+        });
+        $('.vg-group-select').each(function() {
+            vgUpdateGroupCheckbox($(this).data('group'));
+        });
+        vgUpdateGroupSubtotals();
+    }
+
+    // Update tfoot subtotals in each group card without full re-render
+    function vgUpdateGroupSubtotals() {
+        $('[id^="vg_collapse_"]').each(function() {
+            let $items = $(this).find('.vg-item-check');
+            let selectedCount = 0;
+            let totalCount = $items.length;
+            let groupClaims = 0;
+            let groupPayable = 0;
+            $items.each(function() {
+                if ($(this).is(':checked')) {
+                    selectedCount++;
+                    let id = parseInt($(this).data('id'));
+                    let req = vgFindRequest(id);
+                    if (req) {
+                        groupClaims += req.claims_amount;
+                        groupPayable += req.payable_amount;
+                    }
+                }
+            });
+            let $tfoot = $(this).find('tfoot td');
+            $tfoot.eq(0).html('Selected: ' + selectedCount + '/' + totalCount);
+            $tfoot.eq(1).html(vgMoney(groupClaims));
+            $tfoot.eq(2).html(vgMoney(groupPayable));
+        });
+    }
+
+    // Find a request by ID in vgData
+    function vgFindRequest(id) {
+        if (!vgData) return null;
+        for (let i = 0; i < vgData.encounters.length; i++) {
+            for (let j = 0; j < vgData.encounters[i].requests.length; j++) {
+                if (vgData.encounters[i].requests[j].id === id) return vgData.encounters[i].requests[j];
+            }
+        }
+        return null;
+    }
+
+    // Auth mode toggle
+    $('input[name="vg_auth_mode"]').on('change', function() {
+        let mode = $(this).val();
+        if (mode === 'shared') {
+            $('#vg_shared_auth_input').show();
+            $('.vg-individual-auth').prop('disabled', true);
+        } else {
+            $('#vg_shared_auth_input').hide();
+            $('.vg-individual-auth').prop('disabled', false);
+            // Pre-fill individual fields with shared code value
+            let sharedVal = $('#vg_shared_auth_code').val();
+            if (sharedVal) {
+                // Pre-fill map for all secondary items that don't have codes yet
+                vgAllRequests().forEach(function(r) {
+                    if (r.coverage_mode === 'secondary' && !vgIndividualCodes[r.id]) {
+                        vgIndividualCodes[r.id] = sharedVal;
+                    }
+                });
+                $('.vg-individual-auth').each(function() {
+                    if (!$(this).val()) $(this).val(sharedVal);
+                });
+            }
+        }
+    });
+
+    // Update footer counts, amounts, button states, auth section visibility
+    function vgUpdateFooter() {
+        let allReqs = vgAllRequests();
+        let selectedReqs = allReqs.filter(function(r) { return vgSelectedIds.indexOf(r.id) !== -1; });
+        let selectedClaims = selectedReqs.reduce(function(s, r) { return s + r.claims_amount; }, 0);
+        let secondarySelected = selectedReqs.filter(function(r) { return r.coverage_mode === 'secondary'; }).length;
+
+        $('.vg-selected-count').text(selectedReqs.length);
+        $('.vg-selected-claims').text(vgMoney(selectedClaims));
+        $('#vg_footer_total').text(allReqs.length);
+        $('#vg_secondary_selected_count').text(secondarySelected);
+
+        // Show/hide auth section
+        if (secondarySelected > 0) {
+            $('#vg_auth_section').show();
+        } else {
+            $('#vg_auth_section').hide();
+        }
+
+        // Enable/disable buttons
+        let hasSelection = selectedReqs.length > 0;
+        $('#vg_approve_btn').prop('disabled', !hasSelection);
+        $('#vg_reject_btn').prop('disabled', !hasSelection);
+    }
+
+    // APPROVE selected
+    $('#vg_approve_btn').on('click', function() {
+        if (vgSelectedIds.length === 0) return;
+
+        let allReqs = vgAllRequests();
+        let selectedReqs = allReqs.filter(function(r) { return vgSelectedIds.indexOf(r.id) !== -1; });
+        let secondarySelected = selectedReqs.filter(function(r) { return r.coverage_mode === 'secondary'; });
+        let authMode = $('input[name="vg_auth_mode"]:checked').val();
+
+        // Validate auth codes for secondary items
+        if (secondarySelected.length > 0) {
+            if (authMode === 'shared') {
+                let code = $('#vg_shared_auth_code').val().trim();
+                if (!code) {
+                    $('#vg_shared_auth_code').addClass('is-invalid').focus();
+                    toastr.warning('Enter an authorization code for ' + secondarySelected.length + ' secondary item(s)', 'Auth Code Required');
+                    return;
+                }
+            } else {
+                let missing = [];
+                secondarySelected.forEach(function(r) {
+                    let val = vgIndividualCodes[r.id];
+                    if (!val || !val.trim()) missing.push(r.name);
+                });
+                if (missing.length > 0) {
+                    toastr.warning('Missing auth codes for: ' + missing.join(', '), 'Auth Code Required');
+                    return;
+                }
+            }
+        }
+
+        // Build payload
+        let payload = {
+            _token: '{{ csrf_token() }}',
+            request_ids: vgSelectedIds,
+            auth_mode: authMode,
+            validation_notes: $('#vg_validation_notes').val()
+        };
+
+        if (authMode === 'shared') {
+            payload.shared_auth_code = $('#vg_shared_auth_code').val().trim();
+        } else {
+            let codes = {};
+            secondarySelected.forEach(function(r) {
+                codes[r.id] = (vgIndividualCodes[r.id] || '').trim();
+            });
+            payload.individual_auth_codes = codes;
+        }
+
+        let $btn = $(this);
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Approving...');
+
+        $.ajax({
+            url: "{{ route('hmo.group-approve') }}",
+            type: 'POST',
+            data: payload,
+            success: function(resp) {
+                if (resp.errors && resp.errors.length > 0) {
+                    toastr.warning(resp.message + '<br>' + resp.errors.join('<br>'), 'Partial Approval');
+                } else {
+                    toastr.success(resp.message);
+                }
+
+                // Remove approved items from vgData and refresh
+                if (resp.approved > 0) {
+                    vgRemoveApprovedItems();
+                }
+
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check-all mr-1"></i>Approve (<span class="vg-selected-count">0</span>)');
+
+                // If nothing left, close modal and reload table
+                if (vgAllRequests().length === 0) {
+                    $('#validateGroupModal').modal('hide');
+                }
+
+                table.ajax.reload();
+                loadQueueCounts();
+                loadFinancialSummary();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check-all mr-1"></i>Approve (<span class="vg-selected-count">' + vgSelectedIds.length + '</span>)');
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred');
+            }
+        });
+    });
+
+    // Remove approved/rejected items from local data
+    function vgRemoveApprovedItems() {
+        if (!vgData) return;
+        vgData.encounters.forEach(function(enc) {
+            enc.requests = enc.requests.filter(function(r) { return vgSelectedIds.indexOf(r.id) === -1; });
+        });
+        // Remove empty encounter groups
+        vgData.encounters = vgData.encounters.filter(function(enc) { return enc.requests.length > 0; });
+        // Update summary
+        let allReqs = vgAllRequests();
+        vgData.summary.total_count = allReqs.length;
+        vgData.summary.primary_count = allReqs.filter(function(r) { return r.coverage_mode === 'primary'; }).length;
+        vgData.summary.secondary_count = allReqs.filter(function(r) { return r.coverage_mode === 'secondary'; }).length;
+        vgData.summary.total_claims = allReqs.reduce(function(s, r) { return s + r.claims_amount; }, 0);
+        vgData.summary.total_payable = allReqs.reduce(function(s, r) { return s + r.payable_amount; }, 0);
+
+        // Update UI
+        vgSelectedIds = [];
+        if (allReqs.length === 0) {
+            $('#vg_groups_container').empty();
+            $('#vg_empty').show();
+        } else {
+            // Update badges
+            let s = vgData.summary;
+            $('#vg_primary_badge').text(s.primary_count + ' Primary');
+            $('#vg_secondary_badge').text(s.secondary_count + ' Secondary');
+            $('#vg_total_count').text(s.total_count);
+            $('#vg_total_claims').text(vgMoney(s.total_claims));
+            $('#vg_total_payable').text(vgMoney(s.total_payable));
+
+            // Re-select remaining and re-render
+            vgSelectAllRequests();
+            vgRenderGroups();
+        }
+        vgUpdateFooter();
+    }
+
+    // REJECT flow — show inline section
+    $('#vg_reject_btn').on('click', function() {
+        if (vgSelectedIds.length === 0) return;
+        $('#vg_reject_section').slideDown(200);
+        $('#vg_rejection_reason').focus();
+    });
+
+    $('#vg_cancel_reject_btn').on('click', function() {
+        $('#vg_reject_section').slideUp(200);
+    });
+
+    $('#vg_confirm_reject_btn').on('click', function() {
+        let reason = $('#vg_rejection_reason').val();
+        if (!reason) {
+            $('#vg_rejection_reason').addClass('is-invalid').focus();
+            return;
+        }
+
+        let $btn = $(this);
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Rejecting...');
+
+        $.ajax({
+            url: "{{ route('hmo.group-reject') }}",
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                request_ids: vgSelectedIds,
+                rejection_reason: reason,
+                validation_notes: $('#vg_reject_notes').val()
+            },
+            success: function(resp) {
+                toastr.success(resp.message);
+                $('#vg_reject_section').slideUp(200);
+
+                if (resp.rejected > 0) {
+                    vgRemoveApprovedItems();
+                }
+
+                $btn.prop('disabled', false).html('<i class="mdi mdi-close-circle mr-1"></i>Confirm Reject (<span class="vg-selected-count">0</span>)');
+
+                if (vgAllRequests().length === 0) {
+                    $('#validateGroupModal').modal('hide');
+                }
+
+                table.ajax.reload();
+                loadQueueCounts();
+                loadFinancialSummary();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-close-circle mr-1"></i>Confirm Reject (<span class="vg-selected-count">' + vgSelectedIds.length + '</span>)');
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred');
+            }
+        });
+    });
+
+    // Clear invalid state on input/change
+    $(document).on('input', '#vg_shared_auth_code', function() {
+        $(this).removeClass('is-invalid');
+    });
+    $(document).on('input', '.vg-individual-auth', function() {
+        vgIndividualCodes[parseInt($(this).data('id'))] = $(this).val();
+    });
+    $(document).on('change', '#vg_rejection_reason', function() {
+        $(this).removeClass('is-invalid');
     });
 
     // Auto-refresh counts every 30 seconds
@@ -2440,6 +3367,10 @@ $(function() {
     .tariff-edit-section .card-header.tariff-toggle:hover { background: #edf2f7 !important; }
     .tariff-edit-section .tariff-chevron { transition: transform 0.3s ease; }
     .tariff-edit-section .tariff-fields .form-control-sm { font-size: 0.82rem; }
+    #validateGroupModal .table th { font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+    #validateGroupModal .card-modern { transition: none; }
+    #validateGroupModal .card-modern:hover { transform: none; }
+    #validateGroupModal .custom-checkbox .custom-control-label::before { transform: scale(1.15); }
 </style>
 
 {{-- Emergency Intake Modal --}}

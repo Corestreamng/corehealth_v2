@@ -268,6 +268,9 @@ class HmoWorkbenchController extends Controller
                         <button type="button" class="btn btn-danger btn-sm reject-btn mb-1" data-id="' . $req->id . '">
                             <i class="fa fa-times"></i> Reject
                         </button>';
+                        $html .= '<button type="button" class="btn btn-outline-primary btn-sm validate-group-btn mb-1" data-patient-id="' . $patientId . '" data-patient-name="' . htmlspecialchars($name, ENT_QUOTES) . '">
+                            <i class="mdi mdi-account-check-outline"></i> Validate Patient
+                        </button>';
                     }
 
                     // Re-approve button for rejected requests
@@ -455,54 +458,112 @@ class HmoWorkbenchController extends Controller
      */
     public function show($id)
     {
-        $request = ProductOrServiceRequest::with([
-            'user.patient_profile.hmo',
+        $eagerLoads = [
+            'user.patient_profile.hmo.scheme',
             'service.price',
             'product.price',
+            'product.category',
+            'service.category',
             'validator',
-            'audits'
-        ])->findOrFail($id);
+            'staff',
+            'procedure.procedureDefinition',
+            'audits',
+        ];
 
-        // Get delivery status
+        $request = ProductOrServiceRequest::with($eagerLoads)->findOrFail($id);
+
+        // Load nullable FK relations only when a value exists
+        if ($request->encounter_id) {
+            $request->load('encounter.doctor');
+        }
+        if ($request->admission_request_id) {
+            $request->load('admissionRequest');
+        }
+
+        $pp = $request->user ? $request->user->patient_profile : null;
+        $hmo = $pp ? $pp->hmo : null;
         $deliveryStatus = $this->checkServiceDeliveryStatus($request);
+
+        // Unit price from catalogue
+        $unitPrice = 0;
+        $category = null;
+        if ($request->product_id && $request->product) {
+            $unitPrice = $request->product->price->current_sale_price ?? 0;
+            $category = $request->product->category->category_name ?? null;
+        } elseif ($request->service_id && $request->service) {
+            $unitPrice = $request->service->price->sale_price ?? 0;
+            $category = $request->service->category->category_name ?? null;
+        }
+
+        $qty = (int) ($request->qty ?? 1);
 
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $request->id,
+                // Patient
                 'patient_name' => $request->user ? userfullname($request->user_id) : 'N/A',
-                'patient_id' => $request->user && $request->user->patient_profile ? $request->user->patient_profile->id : null,
-                'file_no' => $request->user && $request->user->patient_profile ? $request->user->patient_profile->file_no : 'N/A',
-                'hmo_no' => $request->user && $request->user->patient_profile ? $request->user->patient_profile->hmo_no : '',
-                'hmo_name' => $request->user && $request->user->patient_profile && $request->user->patient_profile->hmo
-                    ? $request->user->patient_profile->hmo->name : 'N/A',
-                'item_type' => $request->product_id ? 'Product' : 'Service',
+                'patient_id' => $pp->id ?? null,
+                'file_no' => $pp->file_no ?? 'N/A',
+                'hmo_no' => $pp->hmo_no ?? '',
+                'gender' => $pp->gender ?? 'N/A',
+                'dob' => $pp->dob ? Carbon::parse($pp->dob)->format('d M Y') : 'N/A',
+                'age' => $pp->dob ? Carbon::parse($pp->dob)->age . ' yrs' : 'N/A',
+                'phone' => $pp->phone_no ?? 'N/A',
+                'allergies' => $pp->allergies ?? [],
+                // HMO
+                'hmo_name' => $hmo->name ?? 'N/A',
+                'hmo_scheme' => $hmo && $hmo->scheme ? $hmo->scheme->name : null,
+                'hmo_scheme_code' => $hmo && $hmo->scheme ? $hmo->scheme->code : null,
+                // Item
+                'item_type' => $request->product_id ? 'Product' : ($request->procedure ? 'Procedure' : 'Service'),
                 'item_name' => HmoHelper::getDisplayName($request),
-                'qty' => $request->qty,
-                'original_price' => $request->product_id && $request->product && $request->product->price
-                    ? $request->product->price->current_sale_price
-                    : ($request->service_id && $request->service && $request->service->price
-                        ? $request->service->price->sale_price
-                        : 0),
+                'item_code' => $request->product_id
+                    ? ($request->product->product_code ?? '')
+                    : ($request->service->service_code ?? ''),
+                'category' => $category,
+                'qty' => $qty,
+                'unit_price' => $unitPrice,
+                'total_price' => $unitPrice * $qty,
+                'unit_claims' => $qty > 0 ? round($request->claims_amount / $qty, 2) : 0,
+                'unit_payable' => $qty > 0 ? round($request->payable_amount / $qty, 2) : 0,
                 'claims_amount' => $request->claims_amount,
                 'payable_amount' => $request->payable_amount,
+                'discount' => $request->discount,
                 'coverage_mode' => $request->coverage_mode,
+                // Request context
+                'requested_by' => $request->staff ? userfullname($request->staff_user_id) : 'N/A',
+                'encounter_doctor' => $request->encounter && $request->encounter->doctor
+                    ? userfullname($request->encounter->doctor_id) : null,
+                'is_admitted' => (bool) $request->admission_request_id,
+                'admission_status' => $request->admission_request_id && $request->admissionRequest
+                    ? $request->admissionRequest->admission_status : null,
+                'procedure_name' => $request->procedure && $request->procedure->procedureDefinition
+                    ? $request->procedure->procedureDefinition->name : null,
+                'created_at' => $request->created_at ? Carbon::parse($request->created_at)->format('d M Y H:i') : null,
+                'order_date' => $request->order_date ? Carbon::parse($request->order_date)->format('d M Y') : null,
+                // Validation
                 'validation_status' => $request->validation_status,
                 'auth_code' => $request->auth_code,
                 'validation_notes' => $request->validation_notes,
                 'validated_by_name' => $request->validator ? userfullname($request->validated_by) : null,
-                'validated_at' => $request->validated_at ? Carbon::parse($request->validated_at)->format('Y-m-d H:i:s') : null,
-                'created_at' => $request->created_at ? Carbon::parse($request->created_at)->format('Y-m-d H:i:s') : null,
+                'validated_at' => $request->validated_at ? Carbon::parse($request->validated_at)->format('d M Y H:i') : null,
+                // Billing / remittance
                 'payment_id' => $request->payment_id,
+                'submitted_to_hmo_at' => $request->submitted_to_hmo_at
+                    ? Carbon::parse($request->submitted_to_hmo_at)->format('d M Y H:i') : null,
+                'hmo_submission_batch' => $request->hmo_submission_batch,
+                // Delivery
                 'can_reverse' => $deliveryStatus['can_reverse'],
                 'reverse_reason' => $deliveryStatus['reason'],
+                // Audit trail
                 'audits' => $request->audits ? $request->audits->map(function($audit) {
                     return [
                         'event' => $audit->event,
                         'old_values' => $audit->old_values,
                         'new_values' => $audit->new_values,
                         'user' => $audit->user ? userfullname($audit->user_id) : 'System',
-                        'created_at' => $audit->created_at->format('Y-m-d H:i:s'),
+                        'created_at' => $audit->created_at->format('d M Y H:i'),
                     ];
                 }) : [],
             ]
@@ -1378,11 +1439,15 @@ class HmoWorkbenchController extends Controller
      */
     public function getTariffDetails($id)
     {
-        $req = ProductOrServiceRequest::with(['product:id,product_name', 'service:id,service_name', 'hmo:id,name,hmo_scheme_id'])
+        $req = ProductOrServiceRequest::with(['product:id,product_name', 'service:id,service_name', 'hmo:id,name,hmo_scheme_id', 'user.patient_profile.hmo'])
             ->findOrFail($id);
 
+        // Resolve HMO: direct on POSR, or fall back to patient profile
+        $hmoId = $req->hmo_id ?: optional($req->user)->patient_profile->hmo_id ?? null;
+        $hmo   = $req->hmo ?? optional($req->user)->patient_profile->hmo ?? null;
+
         // Look up tariff
-        $tariff = HmoTariff::where('hmo_id', $req->hmo_id)
+        $tariff = HmoTariff::where('hmo_id', $hmoId)
             ->when($req->product_id, fn($q) => $q->where('product_id', $req->product_id)->whereNull('service_id'))
             ->when($req->service_id, fn($q) => $q->where('service_id', $req->service_id)->whereNull('product_id'))
             ->first();
@@ -1395,9 +1460,9 @@ class HmoWorkbenchController extends Controller
         // Scheme info for "apply to all HMOs" checkbox
         $scheme = null;
         $schemeHmoCount = 0;
-        if ($req->hmo && $req->hmo->hmo_scheme_id) {
-            $scheme = HmoScheme::find($req->hmo->hmo_scheme_id);
-            $schemeHmoCount = Hmo::where('hmo_scheme_id', $req->hmo->hmo_scheme_id)->count();
+        if ($hmo && $hmo->hmo_scheme_id) {
+            $scheme = HmoScheme::find($hmo->hmo_scheme_id);
+            $schemeHmoCount = Hmo::where('hmo_scheme_id', $hmo->hmo_scheme_id)->count();
         }
 
         return response()->json([
@@ -1410,7 +1475,7 @@ class HmoWorkbenchController extends Controller
                 'payable_amount' => (float) $tariff->payable_amount,
             ] : null,
             'original_name' => $originalName,
-            'hmo_name'      => $req->hmo->name ?? 'N/A',
+            'hmo_name'      => $hmo->name ?? 'N/A',
             'item_type'     => $req->product_id ? 'product' : 'service',
             'scheme'        => $scheme ? [
                 'id'        => $scheme->id,
@@ -1450,13 +1515,18 @@ class HmoWorkbenchController extends Controller
 
         DB::beginTransaction();
         try {
-            $posr = ProductOrServiceRequest::with('hmo')->findOrFail($id);
+            $posr = ProductOrServiceRequest::with(['hmo', 'user.patient_profile.hmo'])->findOrFail($id);
             $productId = $posr->product_id;
             $serviceId = $posr->service_id;
-            $hmoId     = $posr->hmo_id;
+            $hmoId     = $posr->hmo_id ?: optional($posr->user)->patient_profile->hmo_id ?? null;
 
             if (!$hmoId) {
                 return response()->json(['success' => false, 'message' => 'This request has no HMO association'], 422);
+            }
+
+            // Persist the resolved HMO on the POSR for future lookups
+            if (!$posr->hmo_id && $hmoId) {
+                $posr->hmo_id = $hmoId;
             }
 
             $newMode   = $request->coverage_mode;
@@ -1489,8 +1559,9 @@ class HmoWorkbenchController extends Controller
 
             // ── 3. Propagate to scheme if requested ──────────────────────
             $schemeUpdated = 0;
-            if ($request->apply_to_scheme && $posr->hmo && $posr->hmo->hmo_scheme_id) {
-                $schemeId = $posr->hmo->hmo_scheme_id;
+            $resolvedHmo = Hmo::find($hmoId);
+            if ($request->apply_to_scheme && $resolvedHmo && $resolvedHmo->hmo_scheme_id) {
+                $schemeId = $resolvedHmo->hmo_scheme_id;
                 $schemeHmoIds = Hmo::where('hmo_scheme_id', $schemeId)
                     ->where('id', '!=', $hmoId) // skip current HMO (already updated)
                     ->pluck('id');
@@ -1507,8 +1578,8 @@ class HmoWorkbenchController extends Controller
 
             DB::commit();
 
-            $schemeName = ($schemeUpdated > 0 && $posr->hmo->hmo_scheme_id)
-                ? (HmoScheme::find($posr->hmo->hmo_scheme_id)->name ?? 'scheme')
+            $schemeName = ($schemeUpdated > 0 && $resolvedHmo && $resolvedHmo->hmo_scheme_id)
+                ? (HmoScheme::find($resolvedHmo->hmo_scheme_id)->name ?? 'scheme')
                 : null;
 
             return response()->json([
@@ -1522,6 +1593,265 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating tariff. Please try again or contact support.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all pending requests for a patient, grouped by encounter.
+     */
+    public function getPatientPendingRequests($patientId)
+    {
+        $patient = Patient::with('hmo.scheme')->findOrFail($patientId);
+
+        $requests = ProductOrServiceRequest::with([
+                'service.price', 'service.category',
+                'product.price', 'product.category',
+                'encounter.doctor',
+                'procedure.procedureDefinition',
+                'hmo',
+            ])
+            ->where('user_id', $patient->user_id)
+            ->where('validation_status', 'pending')
+            ->whereIn('coverage_mode', ['primary', 'secondary'])
+            ->where('claims_amount', '>', 0)
+            ->orderBy('encounter_id')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Group by encounter_id
+        $grouped = [];
+        foreach ($requests as $req) {
+            $encId = $req->encounter_id ?? 'ungrouped';
+
+            if (!isset($grouped[$encId])) {
+                $doctor = null;
+                $encDate = null;
+                if ($req->encounter) {
+                    $doctor = $req->encounter->doctor ? userfullname($req->encounter->doctor_id) : null;
+                    $encDate = $req->encounter->created_at ? $req->encounter->created_at->format('d M Y, h:i A') : null;
+                }
+                $grouped[$encId] = [
+                    'encounter_id' => $req->encounter_id,
+                    'doctor' => $doctor,
+                    'date' => $encDate,
+                    'requests' => [],
+                ];
+            }
+
+            $itemType = 'Service';
+            $unitPrice = 0;
+            $category = null;
+            if ($req->product_id && $req->product) {
+                $itemType = 'Product';
+                $unitPrice = $req->product->price->current_sale_price ?? 0;
+                $category = $req->product->category->category_name ?? null;
+            } elseif ($req->service_id && $req->service) {
+                if ($req->procedure) {
+                    $itemType = 'Procedure';
+                }
+                $unitPrice = $req->service->price->sale_price ?? 0;
+                $category = $req->service->category->category_name ?? null;
+            }
+
+            $grouped[$encId]['requests'][] = [
+                'id' => $req->id,
+                'type' => $itemType,
+                'name' => HmoHelper::getDisplayName($req),
+                'category' => $category,
+                'qty' => (int) ($req->qty ?? 1),
+                'unit_price' => $unitPrice,
+                'claims_amount' => (float) $req->claims_amount,
+                'payable_amount' => (float) $req->payable_amount,
+                'coverage_mode' => $req->coverage_mode,
+                'created_at' => $req->created_at ? $req->created_at->format('d M Y, h:i A') : null,
+                'hours_ago' => $req->created_at ? round($req->created_at->diffInMinutes(now()) / 60, 1) : null,
+            ];
+        }
+
+        $primaryCount = $requests->where('coverage_mode', 'primary')->count();
+        $secondaryCount = $requests->where('coverage_mode', 'secondary')->count();
+
+        return response()->json([
+            'success' => true,
+            'patient' => [
+                'id' => $patient->id,
+                'name' => userfullname($patient->user_id),
+                'file_no' => $patient->file_no ?? 'N/A',
+                'hmo_no' => $patient->hmo_no ?? '',
+                'hmo_name' => $patient->hmo->name ?? 'N/A',
+                'scheme_name' => $patient->hmo && $patient->hmo->scheme ? $patient->hmo->scheme->name : null,
+                'scheme_code' => $patient->hmo && $patient->hmo->scheme ? $patient->hmo->scheme->code : null,
+            ],
+            'summary' => [
+                'total_count' => $requests->count(),
+                'primary_count' => $primaryCount,
+                'secondary_count' => $secondaryCount,
+                'total_claims' => $requests->sum('claims_amount'),
+                'total_payable' => $requests->sum('payable_amount'),
+            ],
+            'encounters' => array_values($grouped),
+        ]);
+    }
+
+    /**
+     * Group approve: approve multiple requests for a patient with auth code support.
+     */
+    public function groupApprove(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'request_ids' => 'required|array|min:1',
+            'request_ids.*' => 'exists:product_or_service_requests,id',
+            'auth_mode' => 'required|in:shared,individual',
+            'shared_auth_code' => 'nullable|string|max:100',
+            'individual_auth_codes' => 'nullable|array',
+            'individual_auth_codes.*' => 'nullable|string|max:100',
+            'validation_notes' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $approved = 0;
+            $skipped = 0;
+            $errors = [];
+
+            foreach ($request->request_ids as $id) {
+                $hmoRequest = ProductOrServiceRequest::find($id);
+
+                if (!$hmoRequest || $hmoRequest->validation_status !== 'pending') {
+                    $skipped++;
+                    continue;
+                }
+
+                // Resolve auth code for secondary coverage
+                $authCode = null;
+                if ($hmoRequest->coverage_mode === 'secondary') {
+                    if ($request->auth_mode === 'shared') {
+                        $authCode = $request->shared_auth_code;
+                    } else {
+                        $authCode = $request->individual_auth_codes[$id] ?? null;
+                    }
+
+                    if (empty($authCode)) {
+                        $errors[] = "Request #{$id} requires auth code (secondary coverage)";
+                        $skipped++;
+                        continue;
+                    }
+                }
+
+                $hmoRequest->update([
+                    'validation_status' => 'approved',
+                    'validated_by' => Auth::id(),
+                    'validated_at' => now(),
+                    'validation_notes' => $request->validation_notes ?? 'Group approved',
+                    'auth_code' => $authCode,
+                ]);
+
+                $approved++;
+            }
+
+            DB::commit();
+
+            if ($approved > 0) {
+                $this->sendHmoNotification(
+                    "Group Approval: {$approved} Requests",
+                    userfullname(Auth::id()) . " group approved {$approved} HMO requests"
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$approved} request(s) approved" . ($skipped > 0 ? ", {$skipped} skipped" : ""),
+                'approved' => $approved,
+                'skipped' => $skipped,
+                'errors' => $errors,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error in group approval: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Group reject: reject multiple requests for a patient.
+     */
+    public function groupReject(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'request_ids' => 'required|array|min:1',
+            'request_ids.*' => 'exists:product_or_service_requests,id',
+            'rejection_reason' => 'required|string',
+            'validation_notes' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed. Rejection reason is required.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $rejected = 0;
+            $skipped = 0;
+
+            $reasonText = self::REJECTION_REASONS[$request->rejection_reason] ?? $request->rejection_reason;
+            $fullNotes = $reasonText;
+            if ($request->validation_notes) {
+                $fullNotes .= "\n\nAdditional notes: " . $request->validation_notes;
+            }
+
+            foreach ($request->request_ids as $id) {
+                $hmoRequest = ProductOrServiceRequest::find($id);
+
+                if (!$hmoRequest || $hmoRequest->validation_status !== 'pending') {
+                    $skipped++;
+                    continue;
+                }
+
+                $hmoRequest->update([
+                    'validation_status' => 'rejected',
+                    'validated_by' => Auth::id(),
+                    'validated_at' => now(),
+                    'validation_notes' => $fullNotes,
+                ]);
+
+                $rejected++;
+            }
+
+            DB::commit();
+
+            if ($rejected > 0) {
+                $this->sendHmoNotification(
+                    "Group Rejection: {$rejected} Requests",
+                    userfullname(Auth::id()) . " group rejected {$rejected} HMO requests. Reason: " . $reasonText
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$rejected} request(s) rejected" . ($skipped > 0 ? ", {$skipped} skipped" : ""),
+                'rejected' => $rejected,
+                'skipped' => $skipped,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error in group rejection: ' . $e->getMessage()
             ], 500);
         }
     }

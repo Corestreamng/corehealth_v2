@@ -771,6 +771,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('hmo/patient/{patientId}/notes', [HmoWorkbenchController::class, 'getPatientNotes'])->name('hmo.patient.notes');
         Route::get('hmo/patient/{patientId}/medications', [HmoWorkbenchController::class, 'getPatientMedications'])->name('hmo.patient.medications');
         Route::get('hmo/patient/{patientId}/allergies', [HmoWorkbenchController::class, 'getPatientAllergies'])->name('hmo.patient.allergies');
+        Route::get('hmo/patient/{patientId}/pending-requests', [HmoWorkbenchController::class, 'getPatientPendingRequests'])->name('hmo.patient.pending-requests');
+        Route::post('hmo/group-approve', [HmoWorkbenchController::class, 'groupApprove'])->name('hmo.group-approve');
+        Route::post('hmo/group-reject', [HmoWorkbenchController::class, 'groupReject'])->name('hmo.group-reject');
 
         // Shared Clinical Context endpoints (used by all workbenches via clinical-context.js)
         Route::get('clinical-context/patient/{patientId}/vitals', [ClinicalContextController::class, 'getVitals'])->name('clinical-context.vitals');
