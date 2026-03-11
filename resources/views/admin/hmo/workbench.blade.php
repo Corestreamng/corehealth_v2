@@ -762,7 +762,6 @@
                                 <p class="mb-1 font-weight-bold" id="detail_patient_name" style="font-size:1rem;"></p>
                                 <div class="d-flex flex-wrap" style="gap:4px 12px; font-size:0.82rem;">
                                     <span><i class="mdi mdi-folder-account text-muted"></i> <span id="detail_file_no"></span></span>
-                                    <span><i class="mdi mdi-card-account-details text-muted"></i> <span id="detail_hmo_no"></span></span>
                                     <span><i class="mdi mdi-gender-male-female text-muted"></i> <span id="detail_gender"></span></span>
                                     <span><i class="mdi mdi-cake-variant text-muted"></i> <span id="detail_age"></span></span>
                                     <span><i class="mdi mdi-phone text-muted"></i> <span id="detail_phone"></span></span>
@@ -782,6 +781,7 @@
                             <div class="card-body p-2">
                                 <p class="mb-1 font-weight-bold" id="detail_hmo_name"></p>
                                 <div style="font-size:0.82rem;">
+                                    <div><i class="mdi mdi-card-account-details text-muted"></i> HMO#: <span id="detail_hmo_no" class="font-weight-bold"></span></div>
                                     <span id="detail_scheme_row"><i class="mdi mdi-tag-outline text-muted"></i> Scheme: <span id="detail_hmo_scheme" class="font-weight-bold"></span> <small class="text-muted" id="detail_hmo_scheme_code"></small></span>
                                 </div>
                             </div>
