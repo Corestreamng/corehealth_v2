@@ -8078,6 +8078,10 @@ function loadPatient(patientId) {
             // Load overview content using the already fetched data
             populateOverviewTab(data);
 
+            // Initialize Clinical Requests module early — search handlers must bind
+            // before any potentially-failing module init below
+            try { ClinicalRequests.init(patientId); } catch(e) { console.error('ClinicalRequests init error:', e); }
+
             // Initialize medication and I/O charts for this patient
             initMedicationChart(patientId);
             initIntakeOutputChart(patientId);
@@ -8097,9 +8101,6 @@ function loadPatient(patientId) {
 
             // Initialize procedures DataTable
             initializeProceduresDataTable(patientId);
-
-            // Initialize Clinical Requests module
-            ClinicalRequests.init(patientId);
 
             // Switch to overview tab
             switchWorkspaceTab('overview');
@@ -8167,6 +8168,13 @@ const ClinicalRequests = (function() {
         $('#cr-patient-badge').text('Patient #' + pid).removeClass('bg-info').addClass('bg-primary');
         selectedProcedures = [];
 
+        // Setup search handlers FIRST (only once) — must bind before any
+        // ClinicalOrdersKit calls that could throw and abort the rest of init()
+        if (!ClinicalRequests._searchBound) {
+            setupSearchHandlers();
+            ClinicalRequests._searchBound = true;
+        }
+
         // Clear selection tables
         $('#cr-selected-products').empty();
         $('#cr-selected-labs').empty();
@@ -8182,106 +8190,105 @@ const ClinicalRequests = (function() {
         // Clear duplicate tracking (Plan §4.4)
         ClinicalOrdersKit.clearAddedIds();
 
-        // Initialize dose mode toggle — structured by default (Plan §2.2)
-        if (!ClinicalRequests._doseToggleInit) {
-            var nurseDoseState = ClinicalOrdersKit.initDoseModeToggle({
-                prefix: 'cr_',
-                cssPrefix: 'cr-',
-                tableSelector: '#cr-selected-products',
-                idInputName: 'cr_presc_id[]',
-                doseInputName: 'cr_presc_dose[]',
-                onchange: 'ClinicalOrdersKit.updateDoseValue(this, "cr-")',
-                onToggle: function(isStructured) { crDoseStructuredMode = isStructured; }
-            });
-            crDoseStructuredMode = nurseDoseState.isStructured;
-
-            // Phase 2b (Plan §4.3): Register debounced dose auto-save for medications
-            ClinicalOrdersKit.onDoseUpdate('cr-', function(recordId, doseValue) {
-                ClinicalOrdersKit.debouncedUpdate({
-                    url: '/nursing-workbench/clinical-requests/prescriptions/' + recordId + '/dose',
-                    payload: { dose: doseValue },
-                    csrfToken: CSRF_TOKEN
+        // Initialize dose mode toggle, treatment plans, re-prescribe — wrapped in
+        // try-catch so errors here cannot block the rest of the workbench
+        try {
+            if (!ClinicalRequests._doseToggleInit) {
+                var nurseDoseState = ClinicalOrdersKit.initDoseModeToggle({
+                    prefix: 'cr_',
+                    cssPrefix: 'cr-',
+                    tableSelector: '#cr-selected-products',
+                    idInputName: 'cr_presc_id[]',
+                    doseInputName: 'cr_presc_dose[]',
+                    onchange: 'ClinicalOrdersKit.updateDoseValue(this, "cr-")',
+                    onToggle: function(isStructured) { crDoseStructuredMode = isStructured; }
                 });
-            });
+                crDoseStructuredMode = nurseDoseState.isStructured;
 
-            // Phase 4d (Plan §6.4): Initialize treatment plans module
-            ClinicalOrdersKit.initTreatmentPlans({
-                applyUrl: '/nursing-workbench/clinical-requests/apply-treatment-plan',
-                csrfToken: CSRF_TOKEN,
-                extraPayload: { patient_id: patientId },
-                onApplySuccess: function(response) {
-                    initLabHistory();
-                    initImagingHistory();
-                    initPrescHistory();
-                    initProcHistory();
-                },
-                currentItemsGatherer: function() {
-                    // Gather all auto-saved items from selection tables (all 4 types)
-                    var items = [];
-                    $('#cr-selected-labs tr[data-record-id]').each(function() {
-                        items.push({
-                            item_type: 'lab',
-                            reference_id: parseInt($(this).data('service-id')),
-                            display_name: $(this).find('td:first').text().trim(),
-                            note: $(this).find('input[name="cr_lab_note[]"]').val() || ''
-                        });
+                // Phase 2b (Plan §4.3): Register debounced dose auto-save for medications
+                ClinicalOrdersKit.onDoseUpdate('cr-', function(recordId, doseValue) {
+                    ClinicalOrdersKit.debouncedUpdate({
+                        url: '/nursing-workbench/clinical-requests/prescriptions/' + recordId + '/dose',
+                        payload: { dose: doseValue },
+                        csrfToken: CSRF_TOKEN
                     });
-                    $('#cr-selected-imaging tr[data-record-id]').each(function() {
-                        items.push({
-                            item_type: 'imaging',
-                            reference_id: parseInt($(this).data('service-id')),
-                            display_name: $(this).find('td:first').text().trim(),
-                            note: $(this).find('input[name="cr_imaging_note[]"]').val() || ''
+                });
+
+                // Phase 4d (Plan §6.4): Initialize treatment plans module
+                ClinicalOrdersKit.initTreatmentPlans({
+                    applyUrl: '/nursing-workbench/clinical-requests/apply-treatment-plan',
+                    csrfToken: CSRF_TOKEN,
+                    extraPayload: { patient_id: patientId },
+                    onApplySuccess: function(response) {
+                        initLabHistory();
+                        initImagingHistory();
+                        initPrescHistory();
+                        initProcHistory();
+                    },
+                    currentItemsGatherer: function() {
+                        // Gather all auto-saved items from selection tables (all 4 types)
+                        var items = [];
+                        $('#cr-selected-labs tr[data-record-id]').each(function() {
+                            items.push({
+                                item_type: 'lab',
+                                reference_id: parseInt($(this).data('service-id')),
+                                display_name: $(this).find('td:first').text().trim(),
+                                note: $(this).find('input[name="cr_lab_note[]"]').val() || ''
+                            });
                         });
-                    });
-                    $('#cr-selected-products tr[data-record-id]').each(function() {
-                        items.push({
-                            item_type: 'medication',
-                            reference_id: parseInt($(this).data('service-id')),
-                            display_name: $(this).find('td:first').text().trim(),
-                            dose: $(this).find('input[name="cr_presc_dose[]"]').val() || ''
+                        $('#cr-selected-imaging tr[data-record-id]').each(function() {
+                            items.push({
+                                item_type: 'imaging',
+                                reference_id: parseInt($(this).data('service-id')),
+                                display_name: $(this).find('td:first').text().trim(),
+                                note: $(this).find('input[name="cr_imaging_note[]"]').val() || ''
+                            });
                         });
-                    });
-                    $('#cr-selected-procedures tr[data-record-id]').each(function() {
-                        items.push({
-                            item_type: 'procedure',
-                            reference_id: parseInt($(this).data('service-id')),
-                            display_name: $(this).find('td:first').text().trim(),
-                            note: ''
+                        $('#cr-selected-products tr[data-record-id]').each(function() {
+                            items.push({
+                                item_type: 'medication',
+                                reference_id: parseInt($(this).data('service-id')),
+                                display_name: $(this).find('td:first').text().trim(),
+                                dose: $(this).find('input[name="cr_presc_dose[]"]').val() || ''
+                            });
                         });
-                    });
-                    return items;
-                }
-            });
+                        $('#cr-selected-procedures tr[data-record-id]').each(function() {
+                            items.push({
+                                item_type: 'procedure',
+                                reference_id: parseInt($(this).data('service-id')),
+                                display_name: $(this).find('td:first').text().trim(),
+                                note: ''
+                            });
+                        });
+                        return items;
+                    }
+                });
 
-            // Phase 3c (Plan §5.3): Initialize re-prescribe from encounter dropdown
-            ClinicalOrdersKit.initRePrescribeFromEncounter({
-                recentUrl: '/nursing-workbench/clinical-requests/recent-encounters',
-                encounterItemsUrl: '/nursing-workbench/clinical-requests/encounter-items/{id}',
-                rePrescribeUrl: '/nursing-workbench/clinical-requests/re-prescribe',
-                csrfToken: CSRF_TOKEN,
-                extraPayload: { patient_id: patientId },
-                dropdownSelector: '#cr-rp-encounter-dropdown',
-                onRePrescribed: function() {
-                    initLabHistory();
-                    initImagingHistory();
-                    initPrescHistory();
-                    initProcHistory();
-                }
-            });
+                // Phase 3c (Plan §5.3): Initialize re-prescribe from encounter dropdown
+                ClinicalOrdersKit.initRePrescribeFromEncounter({
+                    recentUrl: '/nursing-workbench/clinical-requests/recent-encounters',
+                    encounterItemsUrl: '/nursing-workbench/clinical-requests/encounter-items/{id}',
+                    rePrescribeUrl: '/nursing-workbench/clinical-requests/re-prescribe',
+                    csrfToken: CSRF_TOKEN,
+                    extraPayload: { patient_id: patientId },
+                    dropdownSelector: '#cr-rp-encounter-dropdown',
+                    onRePrescribed: function() {
+                        initLabHistory();
+                        initImagingHistory();
+                        initPrescHistory();
+                        initProcHistory();
+                    }
+                });
 
-            ClinicalRequests._doseToggleInit = true;
-        }
+                ClinicalRequests._doseToggleInit = true;
+            }
 
-        // A5 fix: Update treatment plan & re-prescribe config on EVERY patient switch
-        // (Plan §6.4 + §5.3) — keeps extraPayload.patient_id current
-        ClinicalOrdersKit.updateTreatmentPlanConfig({ extraPayload: { patient_id: patientId } });
-        ClinicalOrdersKit.updateRePrescribeConfig({ extraPayload: { patient_id: patientId } });
-
-        // Setup search handlers (only once)
-        if (!ClinicalRequests._searchBound) {
-            setupSearchHandlers();
-            ClinicalRequests._searchBound = true;
+            // A5 fix: Update treatment plan & re-prescribe config on EVERY patient switch
+            // (Plan §6.4 + §5.3) — keeps extraPayload.patient_id current
+            ClinicalOrdersKit.updateTreatmentPlanConfig({ extraPayload: { patient_id: patientId } });
+            ClinicalOrdersKit.updateRePrescribeConfig({ extraPayload: { patient_id: patientId } });
+        } catch (e) {
+            console.error('ClinicalRequests: error initializing ClinicalOrdersKit features:', e);
         }
     }
 
