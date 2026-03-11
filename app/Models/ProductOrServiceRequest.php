@@ -115,6 +115,16 @@ protected $fillable = [
         return $this->hasOne(Procedure::class, 'product_or_service_request_id', 'id');
     }
 
+    public function encounter()
+    {
+        return $this->belongsTo(Encounter::class, 'encounter_id');
+    }
+
+    public function admissionRequest()
+    {
+        return $this->belongsTo(AdmissionRequest::class, 'admission_request_id');
+    }
+
     /**
      * Get the HMO associated with this request.
      */
