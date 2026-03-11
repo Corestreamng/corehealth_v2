@@ -19,7 +19,8 @@ use App\Models\StockBatch;
 use App\Models\StoreStock;
 use Illuminate\Support\Facades\DB;
 
-$qty = 100;
+$minQty = 70;
+$targetQty = 100;
 $batchName = 'Initial Stock';
 $now = now();
 
@@ -45,7 +46,7 @@ if ($products->isEmpty()) {
 }
 
 echo "Found " . $products->count() . " active product(s).\n";
-echo "Creating '{$batchName}' batches with qty={$qty} ...\n\n";
+echo "Topping up products below {$minQty} units to {$targetQty} ...\n\n";
 
 // Use the first user (admin) as created_by fallback
 $adminId = DB::table('users')->orderBy('id')->value('id') ?? 1;
@@ -60,25 +61,28 @@ try {
         echo "Processing store: {$store->store_name} (ID: {$store->id})\n";
 
         foreach ($products as $product) {
-            // Check if an "Initial Stock" batch already exists for this store+product
-            $existing = StockBatch::where('store_id', $store->id)
-                ->where('product_id', $product->id)
-                ->where('batch_name', $batchName)
-                ->first();
+            // Check current stock level
+            $storeStock = StoreStock::firstOrNew([
+                'store_id'   => $store->id,
+                'product_id' => $product->id,
+            ]);
 
-            if ($existing) {
-                echo "  [SKIP] Batch already exists for product '{$product->product_name}' (batch #{$existing->id})\n";
-                continue;
+            $currentQty = (int) ($storeStock->current_quantity ?? 0);
+
+            if ($currentQty >= $minQty) {
+                continue; // Stock is sufficient
             }
 
-            // Create the stock batch
+            $topUpQty = $targetQty - $currentQty;
+
+            // Create a top-up stock batch
             $batch = StockBatch::create([
                 'product_id'    => $product->id,
                 'store_id'      => $store->id,
                 'batch_name'    => $batchName,
-                'batch_number'  => 'INIT-' . $store->id . '-' . $product->id,
-                'initial_qty'   => $qty,
-                'current_qty'   => $qty,
+                'batch_number'  => 'INIT-' . $store->id . '-' . $product->id . '-' . time(),
+                'initial_qty'   => $topUpQty,
+                'current_qty'   => $topUpQty,
                 'sold_qty'      => 0,
                 'cost_price'    => 0,
                 'received_date' => $now->toDateString(),
@@ -89,17 +93,14 @@ try {
 
             $createdBatches++;
 
-            // Update or create the store_stocks aggregate record
-            $storeStock = StoreStock::firstOrNew([
-                'store_id'   => $store->id,
-                'product_id' => $product->id,
-            ]);
-
-            $storeStock->initial_quantity = ($storeStock->initial_quantity ?? 0) + $qty;
-            $storeStock->current_quantity = ($storeStock->current_quantity ?? 0) + $qty;
+            // Update the store_stocks aggregate record
+            $storeStock->initial_quantity = ($storeStock->initial_quantity ?? 0) + $topUpQty;
+            $storeStock->current_quantity = $currentQty + $topUpQty;
             $storeStock->save();
 
             $updatedStoreStocks++;
+
+            echo "  [TOP-UP] {$product->product_name}: {$currentQty} → {$targetQty} (+{$topUpQty})\n";
         }
 
         echo "  Done.\n";
