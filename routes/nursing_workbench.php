@@ -76,6 +76,8 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/patient/{patientId}/service-requests-stats', [NursingWorkbenchController::class, 'getServiceRequestsStats'])->name('billing.service-requests-stats');
     Route::post('/add-service-bill', [NursingWorkbenchController::class, 'addServiceBill'])->name('billing.add-service');
     Route::post('/add-consumable-bill', [NursingWorkbenchController::class, 'addConsumableBill'])->name('billing.add-consumable');
+    Route::post('/add-lab-bill', [NursingWorkbenchController::class, 'addLabBill'])->name('billing.add-lab-bill');
+    Route::post('/add-imaging-bill', [NursingWorkbenchController::class, 'addImagingBill'])->name('billing.add-imaging-bill');
     Route::delete('/remove-bill/{id}', [NursingWorkbenchController::class, 'removeBillItem'])->name('billing.remove');
 
     // =====================================
