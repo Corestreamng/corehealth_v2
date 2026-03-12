@@ -1730,6 +1730,8 @@ class NursingWorkbenchController extends Controller{
             'product_id' => 'required|exists:products,id',
             'qty' => 'required|integer|min:1',
             'batch_id' => 'nullable|exists:stock_batches,id', // Optional batch selection
+            'is_medication' => 'nullable|boolean',
+            'dose' => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -1800,6 +1802,22 @@ class NursingWorkbenchController extends Controller{
                 );
             }
 
+            // If marked as medication, also create a ProductRequest (prescription) linked to the billing record
+            if ($request->boolean('is_medication')) {
+                $prodReq = new ProductRequest();
+                $prodReq->product_id = $product->id;
+                $prodReq->dose = $request->input('dose', '');
+                $prodReq->qty = $qty;
+                $prodReq->patient_id = $patient->id;
+                $prodReq->doctor_id = Auth::id();
+                $prodReq->product_request_id = $billReq->id;
+                $prodReq->status = 2; // Billed
+                $prodReq->billed_by = Auth::id();
+                $prodReq->billed_date = now();
+                $prodReq->dispensed_from_store_id = $storeId;
+                $prodReq->save();
+            }
+
             DB::commit();
 
             return response()->json([
@@ -1812,6 +1830,148 @@ class NursingWorkbenchController extends Controller{
             return response()->json([
                 'success' => false,
                 'message' => 'Error adding consumable: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Direct lab billing — creates both LabServiceRequest AND ProductOrServiceRequest in one step.
+     * The lab workbench will see it as already billed (status=2).
+     */
+    public function addLabBill(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'patient_id' => 'required|exists:patients,id',
+            'service_id' => 'required|exists:services,id',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $patient = Patient::findOrFail($request->patient_id);
+            $service = Service::with('price')->findOrFail($request->service_id);
+
+            // Create billing record (POSR)
+            $billReq = new ProductOrServiceRequest();
+            $billReq->user_id = $patient->user_id;
+            $billReq->staff_user_id = Auth::id();
+            $billReq->service_id = $service->id;
+
+            try {
+                $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $service->id);
+                if ($hmoData) {
+                    $billReq->payable_amount = $hmoData['payable_amount'];
+                    $billReq->claims_amount = $hmoData['claims_amount'];
+                    $billReq->coverage_mode = $hmoData['coverage_mode'];
+                    $billReq->validation_status = $hmoData['validation_status'];
+                }
+            } catch (\Exception $e) {
+                $billReq->payable_amount = $service->price ? $service->price->sale_price : 0;
+            }
+
+            $billReq->save();
+
+            // Create lab request linked to billing record (already billed)
+            $lab = new LabServiceRequest();
+            $lab->service_id = $service->id;
+            $lab->patient_id = $patient->id;
+            $lab->doctor_id = Auth::id();
+            $lab->note = $request->notes;
+            $lab->status = 2; // Billed
+            $lab->billed_by = Auth::id();
+            $lab->billed_date = now();
+            $lab->service_request_id = $billReq->id;
+            $lab->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab service billed successfully',
+                'bill' => $billReq,
+                'lab' => $lab,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error billing lab service: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Direct imaging billing — creates both ImagingServiceRequest AND ProductOrServiceRequest in one step.
+     * The imaging workbench will see it as already billed (status=2).
+     */
+    public function addImagingBill(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'patient_id' => 'required|exists:patients,id',
+            'service_id' => 'required|exists:services,id',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $patient = Patient::findOrFail($request->patient_id);
+            $service = Service::with('price')->findOrFail($request->service_id);
+
+            // Create billing record (POSR)
+            $billReq = new ProductOrServiceRequest();
+            $billReq->user_id = $patient->user_id;
+            $billReq->staff_user_id = Auth::id();
+            $billReq->service_id = $service->id;
+
+            try {
+                $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $service->id);
+                if ($hmoData) {
+                    $billReq->payable_amount = $hmoData['payable_amount'];
+                    $billReq->claims_amount = $hmoData['claims_amount'];
+                    $billReq->coverage_mode = $hmoData['coverage_mode'];
+                    $billReq->validation_status = $hmoData['validation_status'];
+                }
+            } catch (\Exception $e) {
+                $billReq->payable_amount = $service->price ? $service->price->sale_price : 0;
+            }
+
+            $billReq->save();
+
+            // Create imaging request linked to billing record (already billed)
+            $imaging = new ImagingServiceRequest();
+            $imaging->service_id = $service->id;
+            $imaging->patient_id = $patient->id;
+            $imaging->doctor_id = Auth::id();
+            $imaging->note = $request->notes;
+            $imaging->status = 2; // Billed
+            $imaging->billed_by = Auth::id();
+            $imaging->billed_date = now();
+            $imaging->service_request_id = $billReq->id;
+            $imaging->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Imaging service billed successfully',
+                'bill' => $billReq,
+                'imaging' => $imaging,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error billing imaging service: ' . $e->getMessage()
             ], 500);
         }
     }
