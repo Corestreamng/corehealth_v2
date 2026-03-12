@@ -5201,6 +5201,11 @@
                                         </div>
                                         <div class="tab-pane fade" id="cr-presc-new" role="tabpanel">
                                             <div id="cr_presc_message" class="mb-2"></div>
+                                            <div class="alert alert-light py-2 px-3 mb-3 small" style="border-left: 4px solid #17a2b8;">
+                                                <i class="mdi mdi-information-outline text-info"></i>
+                                                <strong>Note:</strong> Prescriptions added here are sent to the <strong>Pharmacy</strong> for dispensing and billing.
+                                                For quick/direct billing, use the <strong>Billing &rarr; Consumables</strong> tab instead.
+                                            </div>
                                             <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Prescription</h6>
 
                                             {{-- Dose Mode Toggle — Segmented button group (Plan §2.2, structured default) --}}
@@ -5258,6 +5263,11 @@
                                         </div>
                                         <div class="tab-pane fade" id="cr-lab-new" role="tabpanel">
                                             <div id="cr_lab_message" class="mb-2"></div>
+                                            <div class="alert alert-light py-2 px-3 mb-3 small" style="border-left: 4px solid #17a2b8;">
+                                                <i class="mdi mdi-information-outline text-info"></i>
+                                                <strong>Note:</strong> Lab requests added here are sent to the <strong>Laboratory</strong> for processing and billing.
+                                                For quick/direct billing, use the <strong>Billing &rarr; Labs</strong> tab instead.
+                                            </div>
                                             <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Lab Request</h6>
                                             <div class="form-group">
                                                 <label>Search lab services</label>
@@ -5311,6 +5321,11 @@
                                         </div>
                                         <div class="tab-pane fade" id="cr-imaging-new" role="tabpanel">
                                             <div id="cr_imaging_message" class="mb-2"></div>
+                                            <div class="alert alert-light py-2 px-3 mb-3 small" style="border-left: 4px solid #17a2b8;">
+                                                <i class="mdi mdi-information-outline text-info"></i>
+                                                <strong>Note:</strong> Imaging requests added here are sent to the <strong>Imaging</strong> department for processing and billing.
+                                                For quick/direct billing, use the <strong>Billing &rarr; Imaging</strong> tab instead.
+                                            </div>
                                             <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Imaging Request</h6>
                                             <div class="form-group">
                                                 <label>Search imaging services</label>
@@ -5432,6 +5447,16 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" id="billing-labs-tab" data-toggle="tab" href="#billing-labs" role="tab">
+                                <i class="mdi mdi-flask"></i> Labs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="billing-imaging-tab" data-toggle="tab" href="#billing-imaging" role="tab">
+                                <i class="mdi mdi-radioactive"></i> Imaging
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" id="billing-consumables-tab" data-toggle="tab" href="#billing-consumables" role="tab">
                                 <i class="mdi mdi-package-variant"></i> Consumables
                             </a>
@@ -5476,6 +5501,82 @@
                                         <div class="form-actions text-right">
                                             <button type="submit" class="btn btn-warning">
                                                 <i class="mdi mdi-plus"></i> Add Service
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Labs Direct Billing Sub-tab -->
+                        <div class="tab-pane fade" id="billing-labs" role="tabpanel">
+                            <div class="card-modern">
+                                <div class="card-header bg-success text-white py-2">
+                                    <h6 class="mb-0"><i class="mdi mdi-flask"></i> Direct Lab Billing</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-light py-2 px-3 mb-3 small" style="border-left: 4px solid #28a745;">
+                                        <i class="mdi mdi-information-outline text-success"></i>
+                                        This creates a lab request <strong>and bills it directly</strong>. The lab department will see it as already billed.
+                                    </div>
+                                    <form id="lab-billing-form">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-8" style="position: relative;">
+                                                <label for="lab-billing-search"><i class="mdi mdi-magnify"></i> Search Lab Service *</label>
+                                                <input type="text" class="form-control" id="lab-billing-search" placeholder="Type to search lab services..." autocomplete="off">
+                                                <input type="hidden" id="lab-billing-id">
+                                                <ul class="list-group" id="lab-billing-search-results" style="display: none; position: absolute; z-index: 1050; max-height: 280px; overflow-y: auto; width: 100%; left: 0;"></ul>
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <label for="lab-billing-price"><i class="mdi mdi-currency-ngn"></i> Price</label>
+                                                <input type="text" class="form-control" id="lab-billing-price" readonly placeholder="Auto-calculated">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="lab-billing-notes"><i class="mdi mdi-note-text"></i> Clinical Notes</label>
+                                            <textarea class="form-control" id="lab-billing-notes" rows="2" placeholder="Any clinical notes..."></textarea>
+                                        </div>
+                                        <div class="form-actions text-right">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="mdi mdi-flask-plus"></i> Add Lab Bill
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Imaging Direct Billing Sub-tab -->
+                        <div class="tab-pane fade" id="billing-imaging" role="tabpanel">
+                            <div class="card-modern">
+                                <div class="card-header py-2" style="background: #6f42c1; color: white;">
+                                    <h6 class="mb-0"><i class="mdi mdi-radioactive"></i> Direct Imaging Billing</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-light py-2 px-3 mb-3 small" style="border-left: 4px solid #6f42c1;">
+                                        <i class="mdi mdi-information-outline" style="color: #6f42c1;"></i>
+                                        This creates an imaging request <strong>and bills it directly</strong>. The imaging department will see it as already billed.
+                                    </div>
+                                    <form id="imaging-billing-form">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-8" style="position: relative;">
+                                                <label for="imaging-billing-search"><i class="mdi mdi-magnify"></i> Search Imaging Service *</label>
+                                                <input type="text" class="form-control" id="imaging-billing-search" placeholder="Type to search imaging services..." autocomplete="off">
+                                                <input type="hidden" id="imaging-billing-id">
+                                                <ul class="list-group" id="imaging-billing-search-results" style="display: none; position: absolute; z-index: 1050; max-height: 280px; overflow-y: auto; width: 100%; left: 0;"></ul>
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <label for="imaging-billing-price"><i class="mdi mdi-currency-ngn"></i> Price</label>
+                                                <input type="text" class="form-control" id="imaging-billing-price" readonly placeholder="Auto-calculated">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="imaging-billing-notes"><i class="mdi mdi-note-text"></i> Clinical Notes</label>
+                                            <textarea class="form-control" id="imaging-billing-notes" rows="2" placeholder="Any clinical notes..."></textarea>
+                                        </div>
+                                        <div class="form-actions text-right">
+                                            <button type="submit" class="btn" style="background: #6f42c1; color: white;">
+                                                <i class="mdi mdi-radioactive"></i> Add Imaging Bill
                                             </button>
                                         </div>
                                     </form>
@@ -5562,6 +5663,25 @@
                                             <div id="consumable-batch-info" class="mt-2 pt-2 border-top small" style="display: none;">
                                                 <i class="mdi mdi-information-outline text-info"></i>
                                                 <span id="consumable-batch-detail">FIFO batch will be auto-selected</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Is Medication checkbox + dose/frequency -->
+                                        <div class="form-group mb-3">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input" id="consumable-is-medication">
+                                                <label class="custom-control-label" for="consumable-is-medication">
+                                                    <i class="mdi mdi-pill"></i> This is a medication (add dose/frequency)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div id="consumable-dose-section" style="display: none;">
+                                            <div class="form-row">
+                                                <div class="form-group col-md-12">
+                                                    <label for="consumable-dose"><i class="mdi mdi-pencil-outline"></i> Dose / Frequency</label>
+                                                    <input type="text" class="form-control" id="consumable-dose" placeholder="e.g. 500mg BD x 5 days, 1 tab TDS x 7 days">
+                                                    <small class="form-text text-muted">This item will also appear in the patient's prescription history.</small>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -14067,6 +14187,12 @@ $(document).on('click', function(e) {
     if (!$(e.target).closest('#consumable-search, #consumable-search-results').length) {
         $('#consumable-search-results').hide();
     }
+    if (!$(e.target).closest('#lab-billing-search, #lab-billing-search-results').length) {
+        $('#lab-billing-search-results').hide();
+    }
+    if (!$(e.target).closest('#imaging-billing-search, #imaging-billing-search-results').length) {
+        $('#imaging-billing-search-results').hide();
+    }
 });
 
 // Service Billing Search
@@ -14125,6 +14251,171 @@ function selectService(id, name, price) {
     $('#service-price').val('₦' + parseFloat(price).toLocaleString());
     $('#service-search-results').hide();
 }
+
+// Shared search result renderer for billing dropdowns (lab, imaging)
+function renderBillingSearchResults(results, containerSelector, selectFnName) {
+    const $container = $(containerSelector);
+    if (!results.length) {
+        $container.html('<li class="list-group-item billing-search-no-results text-muted">No services found</li>').show();
+        return;
+    }
+    let html = '';
+    results.forEach(function(service) {
+        const price = parseFloat(service.price || 0);
+        const hmo = service.hmo;
+        const payable = hmo ? parseFloat(hmo.payable) : price;
+        const escapedName = (service.name || '').replace(/'/g, "\\'");
+        html += '<li class="list-group-item list-group-item-action" onclick="' + selectFnName + '(' + service.id + ', \'' + escapedName + '\', ' + payable + ')" style="cursor:pointer;">' +
+            '<div class="billing-search-item-name">' + service.name + '</div>' +
+            '<div class="billing-search-item-meta">' +
+                '<span class="billing-search-item-price">' + (hmo ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '</s>' : '₦' + price.toLocaleString()) + '</span>' +
+                (service.category ? '<span class="billing-search-item-badge">' + service.category + '</span>' : '') +
+                (service.code ? '<span class="billing-search-item-badge">' + service.code + '</span>' : '') +
+            '</div>' +
+            (hmo ? '<div class="billing-search-hmo-row">' +
+                '<span class="billing-search-hmo-label">HMO:</span>' +
+                '<span class="billing-search-hmo-payable">Pay ₦' + parseFloat(hmo.payable).toLocaleString() + '</span>' +
+                '<span class="billing-search-hmo-claims">Claim ₦' + parseFloat(hmo.claims).toLocaleString() + '</span>' +
+                '<span class="billing-search-hmo-mode mode-' + hmo.mode + '">' + hmo.mode + '</span>' +
+            '</div>' : '') +
+        '</li>';
+    });
+    $container.html(html).show();
+}
+
+// =====================================
+// Lab Direct Billing Search
+// =====================================
+let labBillingSearchTimer = null;
+let labBillingSearchXhr = null;
+$('#lab-billing-search').on('input', function() {
+    const query = $(this).val().trim();
+    clearTimeout(labBillingSearchTimer);
+    if (labBillingSearchXhr) { labBillingSearchXhr.abort(); labBillingSearchXhr = null; }
+    if (query.length < 2) { $('#lab-billing-search-results').hide(); return; }
+
+    labBillingSearchTimer = setTimeout(function() {
+        $('#lab-billing-search-results').html('<li class="list-group-item billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+        labBillingSearchXhr = $.ajax({
+            url: '{{ route("nursing-workbench.search-services") }}',
+            method: 'GET',
+            data: { term: query, patient_id: currentPatient || null, category_id: '{{ appsettings("investigation_category_id", "") }}' },
+            success: function(results) {
+                labBillingSearchXhr = null;
+                renderBillingSearchResults(results, '#lab-billing-search-results', 'selectLabBilling');
+            }
+        });
+    }, 300);
+});
+
+function selectLabBilling(id, name, price) {
+    $('#lab-billing-id').val(id);
+    $('#lab-billing-search').val(name);
+    $('#lab-billing-price').val('₦' + parseFloat(price).toLocaleString());
+    $('#lab-billing-search-results').hide();
+}
+
+// Lab Billing Form Submit
+$('#lab-billing-form').on('submit', function(e) {
+    e.preventDefault();
+    const data = {
+        patient_id: currentPatient,
+        service_id: $('#lab-billing-id').val(),
+        notes: $('#lab-billing-notes').val()
+    };
+    if (!data.service_id) {
+        showNotification('error', 'Please select a lab service');
+        return;
+    }
+    const $btn = $(this).find('button[type="submit"]');
+    const origHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+    $.ajax({
+        url: '{{ route("nursing-workbench.billing.add-lab-bill") }}',
+        method: 'POST',
+        data: data,
+        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+        success: function(response) {
+            $btn.prop('disabled', false).html(origHtml);
+            showNotification('success', response.message || 'Lab billed successfully');
+            if (billingHistoryLoaded) reloadBillingHistory();
+            $('#lab-billing-form')[0].reset();
+            $('#lab-billing-id').val('');
+            loadPendingBills(currentPatient);
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(origHtml);
+            showNotification('error', xhr.responseJSON?.message || 'Failed to bill lab service');
+        }
+    });
+});
+
+// =====================================
+// Imaging Direct Billing Search
+// =====================================
+let imagingBillingSearchTimer = null;
+let imagingBillingSearchXhr = null;
+$('#imaging-billing-search').on('input', function() {
+    const query = $(this).val().trim();
+    clearTimeout(imagingBillingSearchTimer);
+    if (imagingBillingSearchXhr) { imagingBillingSearchXhr.abort(); imagingBillingSearchXhr = null; }
+    if (query.length < 2) { $('#imaging-billing-search-results').hide(); return; }
+
+    imagingBillingSearchTimer = setTimeout(function() {
+        $('#imaging-billing-search-results').html('<li class="list-group-item billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+        imagingBillingSearchXhr = $.ajax({
+            url: '{{ route("nursing-workbench.search-services") }}',
+            method: 'GET',
+            data: { term: query, patient_id: currentPatient || null, category_id: 6 },
+            success: function(results) {
+                imagingBillingSearchXhr = null;
+                renderBillingSearchResults(results, '#imaging-billing-search-results', 'selectImagingBilling');
+            }
+        });
+    }, 300);
+});
+
+function selectImagingBilling(id, name, price) {
+    $('#imaging-billing-id').val(id);
+    $('#imaging-billing-search').val(name);
+    $('#imaging-billing-price').val('₦' + parseFloat(price).toLocaleString());
+    $('#imaging-billing-search-results').hide();
+}
+
+// Imaging Billing Form Submit
+$('#imaging-billing-form').on('submit', function(e) {
+    e.preventDefault();
+    const data = {
+        patient_id: currentPatient,
+        service_id: $('#imaging-billing-id').val(),
+        notes: $('#imaging-billing-notes').val()
+    };
+    if (!data.service_id) {
+        showNotification('error', 'Please select an imaging service');
+        return;
+    }
+    const $btn = $(this).find('button[type="submit"]');
+    const origHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+    $.ajax({
+        url: '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
+        method: 'POST',
+        data: data,
+        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+        success: function(response) {
+            $btn.prop('disabled', false).html(origHtml);
+            showNotification('success', response.message || 'Imaging billed successfully');
+            if (billingHistoryLoaded) reloadBillingHistory();
+            $('#imaging-billing-form')[0].reset();
+            $('#imaging-billing-id').val('');
+            loadPendingBills(currentPatient);
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(origHtml);
+            showNotification('error', xhr.responseJSON?.message || 'Failed to bill imaging service');
+        }
+    });
+});
 
 // Consumable Search
 let consumableSearchTimer = null;
@@ -14270,6 +14561,14 @@ $('#service-billing-form').on('submit', function(e) {
     });
 });
 
+// Is Medication Toggle
+$('#consumable-is-medication').on('change', function() {
+    $('#consumable-dose-section').toggle(this.checked);
+    if (!this.checked) {
+        $('#consumable-dose').val('');
+    }
+});
+
 // Consumable Billing Form Submit
 $('#consumable-billing-form').on('submit', function(e) {
     e.preventDefault();
@@ -14313,7 +14612,9 @@ $('#consumable-billing-form').on('submit', function(e) {
             product_id: productId,
             qty: quantity,
             store_id: storeId,
-            batch_id: $('#consumable-batch-select').val() || null // Send selected batch ID
+            batch_id: $('#consumable-batch-select').val() || null, // Send selected batch ID
+            is_medication: $('#consumable-is-medication').is(':checked') ? 1 : 0,
+            dose: $('#consumable-dose').val() || null
         };
 
         $.ajax({
@@ -14327,6 +14628,9 @@ $('#consumable-billing-form').on('submit', function(e) {
                 if (billingHistoryLoaded) reloadBillingHistory();
                 $('#consumable-billing-form')[0].reset();
                 $('#consumable-id').val('');
+                $('#consumable-is-medication').prop('checked', false);
+                $('#consumable-dose-section').hide();
+                $('#consumable-dose').val('');
                 $('#consumable-batch-select').html('<option value="">-- Select product first --</option>');
                 $('#consumable-batch-info').hide();
                 $('#consumable-store-stock-summary').html('<p class="text-muted mb-0">Select a product to see stock</p>');
