@@ -102,6 +102,10 @@ class HmoWorkbenchController extends Controller
                     $query->whereNotNull('payment_id')
                           ->where('claims_amount', '>', 0);
                     break;
+                case 'awaiting_code':
+                    $query->where('validation_status', 'awaiting_code')
+                          ->where('claims_amount', '>', 0);
+                    break;
                 case 'all':
                     $query->where('claims_amount', '>', 0); // Skip items with 0 claims
                     break;
@@ -293,6 +297,16 @@ class HmoWorkbenchController extends Controller
                         }
                     }
 
+                    // Enter auth code button for awaiting_code requests
+                    if ($req->validation_status === 'awaiting_code') {
+                        $html .= '<button type="button" class="btn btn-sm mb-1 submit-auth-code-btn" data-id="' . $req->id . '" style="background:#7c4dff;color:#fff;border:none;">
+                            <i class="mdi mdi-key-plus"></i> Enter Auth Code
+                        </button>';
+                        $html .= '<button type="button" class="btn btn-outline-danger btn-sm reject-btn mb-1" data-id="' . $req->id . '">
+                            <i class="fa fa-times"></i> Reject
+                        </button>';
+                    }
+
                     $html .= '</div>';
                     return $html;
                 }
@@ -399,10 +413,13 @@ class HmoWorkbenchController extends Controller
                 $statusMap = [
                     'pending' => 'warning',
                     'approved' => 'success',
-                    'rejected' => 'danger'
+                    'rejected' => 'danger',
+                    'awaiting_code' => 'purple'
                 ];
                 $statusColor = $statusMap[$req->validation_status] ?? 'secondary';
-                $statusBadge = '<span class="badge badge-' . $statusColor . '">' . strtoupper($req->validation_status) . '</span>';
+                $statusLabel = $req->validation_status === 'awaiting_code' ? 'AWAITING CODE' : strtoupper($req->validation_status);
+                $statusStyle = $statusColor === 'purple' ? ' style="background:#7c4dff;color:#fff;"' : '';
+                $statusBadge = '<span class="badge badge-' . $statusColor . '"' . $statusStyle . '>' . $statusLabel . '</span>';
 
                 $html = $statusBadge;
 
@@ -506,6 +523,7 @@ class HmoWorkbenchController extends Controller
                 'patient_id' => $pp->id ?? null,
                 'file_no' => $pp->file_no ?? 'N/A',
                 'hmo_no' => $pp->hmo_no ?? '',
+                'hmo_id' => $pp->hmo_id ?? null,
                 'gender' => $pp->gender ?? 'N/A',
                 'dob' => $pp->dob ? Carbon::parse($pp->dob)->format('d M Y') : 'N/A',
                 'age' => $pp->dob ? Carbon::parse($pp->dob)->age . ' yrs' : 'N/A',
@@ -761,7 +779,7 @@ class HmoWorkbenchController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'validation_notes' => 'nullable|string|max:500',
-            'auth_code' => 'required_if:coverage_mode,secondary|nullable|string|max:100',
+            'auth_code' => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -776,12 +794,27 @@ class HmoWorkbenchController extends Controller
         try {
             $hmoRequest = ProductOrServiceRequest::findOrFail($id);
 
-            // For secondary coverage, auth code is mandatory
+            // For secondary coverage without auth code → awaiting_code
             if ($hmoRequest->coverage_mode === 'secondary' && empty($request->auth_code)) {
+                $hmoRequest->update([
+                    'validation_status' => 'awaiting_code',
+                    'validated_by' => Auth::id(),
+                    'validated_at' => now(),
+                    'validation_notes' => $request->validation_notes,
+                ]);
+
+                DB::commit();
+
+                $this->sendHmoNotification(
+                    "Request #{$id} Awaiting Auth Code",
+                    "Secondary request for " . HmoHelper::getDisplayName($hmoRequest) . " approved, awaiting auth code — " . userfullname(Auth::id())
+                );
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Authorization code is required for secondary coverage'
-                ], 422);
+                    'success' => true,
+                    'message' => 'Request approved — awaiting authorization code',
+                    'awaiting_code' => true,
+                ]);
             }
 
             $hmoRequest->update([
@@ -963,15 +996,25 @@ class HmoWorkbenchController extends Controller
                 ], 422);
             }
 
-            // For secondary coverage, auth code is mandatory
-            if ($hmoRequest->coverage_mode === 'secondary' && empty($request->auth_code)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Authorization code is required for secondary coverage'
-                ], 422);
-            }
-
             $previousNotes = $hmoRequest->validation_notes;
+
+            // For secondary coverage without auth code → awaiting_code (same as approveRequest)
+            if ($hmoRequest->coverage_mode === 'secondary' && empty($request->auth_code)) {
+                $hmoRequest->update([
+                    'validation_status' => 'awaiting_code',
+                    'validated_by' => Auth::id(),
+                    'validated_at' => now(),
+                    'validation_notes' => "Re-approved by " . userfullname(Auth::id()) . " on " . now()->format('Y-m-d H:i') . ($request->validation_notes ? "\nNotes: " . $request->validation_notes : "") . "\n\nPrevious rejection: " . $previousNotes,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Request re-approved — awaiting authorization code',
+                    'awaiting_code' => true,
+                ]);
+            }
 
             $hmoRequest->update([
                 'validation_status' => 'approved',
@@ -1025,6 +1068,7 @@ class HmoWorkbenchController extends Controller
         try {
             $approved = 0;
             $skipped = 0;
+            $awaitingCode = 0;
             $errors = [];
 
             foreach ($request->request_ids as $id) {
@@ -1035,15 +1079,21 @@ class HmoWorkbenchController extends Controller
                     continue;
                 }
 
-                // Skip if not pending or if secondary without auth code
+                // Skip if not pending
                 if ($hmoRequest->validation_status !== 'pending') {
                     $skipped++;
                     continue;
                 }
 
+                // Secondary items → awaiting_code (no auth code in batch flow)
                 if ($hmoRequest->coverage_mode === 'secondary') {
-                    $errors[] = "Request #{$id} requires auth code (secondary coverage)";
-                    $skipped++;
+                    $hmoRequest->update([
+                        'validation_status' => 'awaiting_code',
+                        'validated_by' => Auth::id(),
+                        'validated_at' => now(),
+                        'validation_notes' => $request->validation_notes ?? 'Batch approved — awaiting auth code',
+                    ]);
+                    $awaitingCode++;
                     continue;
                 }
 
@@ -1067,10 +1117,15 @@ class HmoWorkbenchController extends Controller
                 );
             }
 
+            $msg = "{$approved} request(s) approved";
+            if ($awaitingCode > 0) $msg .= ", {$awaitingCode} awaiting auth code";
+            if ($skipped > 0) $msg .= ", {$skipped} skipped";
+
             return response()->json([
                 'success' => true,
-                'message' => "{$approved} request(s) approved" . ($skipped > 0 ? ", {$skipped} skipped" : ""),
+                'message' => $msg,
                 'approved' => $approved,
+                'awaiting_code' => $awaitingCode,
                 'skipped' => $skipped,
                 'errors' => $errors
             ]);
@@ -1117,7 +1172,7 @@ class HmoWorkbenchController extends Controller
             foreach ($request->request_ids as $id) {
                 $hmoRequest = ProductOrServiceRequest::find($id);
 
-                if (!$hmoRequest || $hmoRequest->validation_status !== 'pending') {
+                if (!$hmoRequest || !in_array($hmoRequest->validation_status, ['pending', 'awaiting_code'])) {
                     $skipped++;
                     continue;
                 }
@@ -1190,6 +1245,11 @@ class HmoWorkbenchController extends Controller
                 ->where('claims_amount', '>', 0)
                 ->count(),
 
+            'awaiting_code' => $baseQuery()
+                ->where('validation_status', 'awaiting_code')
+                ->where('claims_amount', '>', 0)
+                ->count(),
+
             'claims' => $baseQuery()
                 ->whereNotNull('payment_id')
                 ->where('claims_amount', '>', 0)
@@ -1258,7 +1318,7 @@ class HmoWorkbenchController extends Controller
             'pending_claims_total' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
                     $q->whereNotNull('hmo_id');
                 })
-                ->where('validation_status', 'pending')
+                ->whereIn('validation_status', ['pending', 'awaiting_code'])
                 ->whereNotNull('coverage_mode')
                 ->sum('claims_amount'),
 
@@ -1315,7 +1375,7 @@ class HmoWorkbenchController extends Controller
         ->whereHas('user.patient_profile', function($q) {
             $q->whereNotNull('hmo_id');
         })
-        ->where('validation_status', 'approved')
+        ->whereIn('validation_status', ['approved', 'awaiting_code'])
         ->whereNotNull('coverage_mode');
 
         // Apply date filters
@@ -1358,6 +1418,7 @@ class HmoWorkbenchController extends Controller
                 'Claims Amount',
                 'Payable Amount',
                 'Coverage Mode',
+                'Validation Status',
                 'Auth Code',
                 'Validated By',
                 'Validated At'
@@ -1377,6 +1438,7 @@ class HmoWorkbenchController extends Controller
                     $claim->claims_amount,
                     $claim->payable_amount,
                     $claim->coverage_mode,
+                    $claim->validation_status === 'awaiting_code' ? 'Awaiting Code' : ucfirst($claim->validation_status),
                     $claim->auth_code ?? '',
                     $claim->validator ? userfullname($claim->validated_by) : 'N/A',
                     $claim->validated_at ? Carbon::parse($claim->validated_at)->format('Y-m-d H:i') : ''
@@ -1702,7 +1764,7 @@ class HmoWorkbenchController extends Controller
         $validator = Validator::make($request->all(), [
             'request_ids' => 'required|array|min:1',
             'request_ids.*' => 'exists:product_or_service_requests,id',
-            'auth_mode' => 'required|in:shared,individual',
+            'auth_mode' => 'required|in:shared,individual,skip',
             'shared_auth_code' => 'nullable|string|max:100',
             'individual_auth_codes' => 'nullable|array',
             'individual_auth_codes.*' => 'nullable|string|max:100',
@@ -1721,6 +1783,7 @@ class HmoWorkbenchController extends Controller
         try {
             $approved = 0;
             $skipped = 0;
+            $awaitingCode = 0;
             $errors = [];
 
             foreach ($request->request_ids as $id) {
@@ -1734,15 +1797,31 @@ class HmoWorkbenchController extends Controller
                 // Resolve auth code for secondary coverage
                 $authCode = null;
                 if ($hmoRequest->coverage_mode === 'secondary') {
-                    if ($request->auth_mode === 'shared') {
+                    if ($request->auth_mode === 'skip') {
+                        // Approve without code → awaiting_code
+                        $hmoRequest->update([
+                            'validation_status' => 'awaiting_code',
+                            'validated_by' => Auth::id(),
+                            'validated_at' => now(),
+                            'validation_notes' => $request->validation_notes ?? 'Group approved — awaiting auth code',
+                        ]);
+                        $awaitingCode++;
+                        continue;
+                    } elseif ($request->auth_mode === 'shared') {
                         $authCode = $request->shared_auth_code;
                     } else {
                         $authCode = $request->individual_auth_codes[$id] ?? null;
                     }
 
                     if (empty($authCode)) {
-                        $errors[] = "Request #{$id} requires auth code (secondary coverage)";
-                        $skipped++;
+                        // No code provided → awaiting_code
+                        $hmoRequest->update([
+                            'validation_status' => 'awaiting_code',
+                            'validated_by' => Auth::id(),
+                            'validated_at' => now(),
+                            'validation_notes' => $request->validation_notes ?? 'Group approved — awaiting auth code',
+                        ]);
+                        $awaitingCode++;
                         continue;
                     }
                 }
@@ -1767,10 +1846,15 @@ class HmoWorkbenchController extends Controller
                 );
             }
 
+            $msg = "{$approved} request(s) approved";
+            if ($awaitingCode > 0) $msg .= ", {$awaitingCode} awaiting auth code";
+            if ($skipped > 0) $msg .= ", {$skipped} skipped";
+
             return response()->json([
                 'success' => true,
-                'message' => "{$approved} request(s) approved" . ($skipped > 0 ? ", {$skipped} skipped" : ""),
+                'message' => $msg,
                 'approved' => $approved,
+                'awaiting_code' => $awaitingCode,
                 'skipped' => $skipped,
                 'errors' => $errors,
             ]);
@@ -1817,7 +1901,7 @@ class HmoWorkbenchController extends Controller
             foreach ($request->request_ids as $id) {
                 $hmoRequest = ProductOrServiceRequest::find($id);
 
-                if (!$hmoRequest || $hmoRequest->validation_status !== 'pending') {
+                if (!$hmoRequest || !in_array($hmoRequest->validation_status, ['pending', 'awaiting_code'])) {
                     $skipped++;
                     continue;
                 }
@@ -1854,5 +1938,186 @@ class HmoWorkbenchController extends Controller
                 'message' => 'Error in group rejection: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Submit auth code for a request in awaiting_code status.
+     */
+    public function submitAuthCode(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'auth_code' => 'required|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $hmoRequest = ProductOrServiceRequest::findOrFail($id);
+
+        if ($hmoRequest->validation_status !== 'awaiting_code') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Request is not awaiting an auth code'
+            ], 422);
+        }
+
+        $hmoRequest->update([
+            'validation_status' => 'approved',
+            'auth_code' => $request->auth_code,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Auth code submitted — request is now fully approved',
+        ]);
+    }
+
+    /**
+     * Batch submit auth codes for multiple awaiting_code requests.
+     */
+    public function batchSubmitAuthCode(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'request_ids' => 'required|array|min:1',
+            'request_ids.*' => 'exists:product_or_service_requests,id',
+            'auth_mode' => 'required|in:shared,individual',
+            'shared_auth_code' => 'required_if:auth_mode,shared|nullable|string|max:100',
+            'individual_auth_codes' => 'required_if:auth_mode,individual|nullable|array',
+            'individual_auth_codes.*' => 'nullable|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $updated = 0;
+            $errors = [];
+
+            foreach ($request->request_ids as $id) {
+                $hmoRequest = ProductOrServiceRequest::find($id);
+                if (!$hmoRequest || $hmoRequest->validation_status !== 'awaiting_code') continue;
+
+                $authCode = $request->auth_mode === 'shared'
+                    ? $request->shared_auth_code
+                    : ($request->individual_auth_codes[$id] ?? null);
+
+                if (empty($authCode)) {
+                    $errors[] = "Request #{$id}: No auth code provided";
+                    continue;
+                }
+
+                $hmoRequest->update([
+                    'validation_status' => 'approved',
+                    'auth_code' => $authCode,
+                ]);
+                $updated++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$updated} request(s) updated to approved",
+                'updated' => $updated,
+                'errors' => $errors,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update patient HMO and HMO number (correction during validation).
+     */
+    public function updatePatientHmo(Request $request, $patient)
+    {
+        $validator = Validator::make($request->all(), [
+            'hmo_id' => 'required|exists:hmos,id',
+            'hmo_no' => 'required|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $patientModel = Patient::findOrFail($patient);
+        $oldHmoId = $patientModel->hmo_id;
+
+        $patientModel->update([
+            'hmo_id' => $request->hmo_id,
+            'hmo_no' => $request->hmo_no,
+        ]);
+
+        // Recalculate tariffs for pending/awaiting_code requests if HMO changed
+        $recalculated = 0;
+        if ($oldHmoId != $request->hmo_id) {
+            $recalculated = $this->recalculatePendingTariffs($patientModel);
+        }
+
+        $newHmo = Hmo::find($request->hmo_id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Patient HMO updated successfully'
+                . ($recalculated > 0 ? ". {$recalculated} pending request tariff(s) recalculated." : ''),
+            'new_hmo_name' => $newHmo->name ?? 'N/A',
+            'new_hmo_no' => $request->hmo_no,
+            'recalculated' => $recalculated,
+        ]);
+    }
+
+    /**
+     * Recalculate tariffs for pending/awaiting_code requests when patient HMO changes.
+     */
+    private function recalculatePendingTariffs(Patient $patient)
+    {
+        $pendingRequests = ProductOrServiceRequest::where('user_id', $patient->user_id)
+            ->whereIn('validation_status', ['pending', 'awaiting_code'])
+            ->get();
+
+        $count = 0;
+        foreach ($pendingRequests as $posr) {
+            $productId = $posr->product_id;
+            $serviceId = $posr->service_id;
+
+            $tariff = HmoTariff::where('hmo_id', $patient->hmo_id)
+                ->where(function($q) use ($productId, $serviceId) {
+                    if ($productId) {
+                        $q->where('product_id', $productId)->whereNull('service_id');
+                    } else {
+                        $q->where('service_id', $serviceId)->whereNull('product_id');
+                    }
+                })
+                ->first();
+
+            if ($tariff) {
+                $qty = (int) ($posr->qty ?? 1);
+                $posr->update([
+                    'claims_amount' => $tariff->claims_amount * $qty,
+                    'payable_amount' => $tariff->payable_amount * $qty,
+                    'coverage_mode' => $tariff->coverage_mode,
+                    'hmo_id' => $patient->hmo_id,
+                ]);
+                $count++;
+            }
+        }
+
+        return $count;
     }
 }
