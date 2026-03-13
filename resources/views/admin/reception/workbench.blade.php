@@ -4409,7 +4409,7 @@
                                     <label for="report-hmo-filter" class="small mb-1">HMO</label>
                                     <select class="form-control form-control-sm" id="report-hmo-filter" name="hmo_id">
                                         <option value="">All HMOs</option>
-                                        @foreach(\App\Models\Hmo::orderBy('name')->get() as $hmo)
+                                        @foreach(\App\Models\Hmo::where('status', 1)->orderBy('name')->get() as $hmo)
                                             <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
                                         @endforeach
                                     </select>

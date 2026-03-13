@@ -1547,6 +1547,7 @@ class LabWorkbenchController extends Controller
     {
         try {
             $hmos = \App\Models\Hmo::with('scheme')
+                ->where('status', 1)
                 ->orderBy('name')
                 ->get()
                 ->groupBy(function($hmo) {

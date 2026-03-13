@@ -27,7 +27,7 @@ class HmoReportsController extends Controller
      */
     public function index()
     {
-        $hmos = Hmo::orderBy('name')->get();
+        $hmos = Hmo::where('status', 1)->orderBy('name')->get();
         $serviceCategories = ServiceCategory::orderBy('category_name')->get();
         $productCategories = ProductCategory::orderBy('category_name')->get();
         $banks = Bank::where('is_active', true)->orderBy('name')->get();
@@ -186,7 +186,7 @@ class HmoReportsController extends Controller
      */
     public function getOutstandingReport(Request $request)
     {
-        $hmos = Hmo::all();
+        $hmos = Hmo::where('status', 1)->get();
 
         $outstandingData = [];
 

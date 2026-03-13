@@ -24,6 +24,8 @@
                                     <th>Name</th>
                                     <th>Scheme</th>
                                     <th>Discount</th>
+                                    <th>Status</th>
+                                    <th>Toggle</th>
                                     <th>Edit</th>
                                     <th>Delete</th>
                                 </tr>
@@ -105,6 +107,12 @@
                         "data": "discount"
                     },
                     {
+                        "data": "status_badge"
+                    },
+                    {
+                        "data": "toggle"
+                    },
+                    {
                         "data": "edit"
                     },
                     {
@@ -117,6 +125,28 @@
                 "ordering": true,
                 "info": true,
                 "autoWidth": true
+            });
+        });
+
+        // Toggle HMO status
+        jQuery(document).on('click', '.toggle-hmo-status', function() {
+            var btn = jQuery(this);
+            var hmoId = btn.data('id');
+            btn.prop('disabled', true);
+            jQuery.ajax({
+                headers: { 'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content') },
+                type: 'POST',
+                url: '/hmo/' + hmoId + '/toggle-status',
+                success: function(data) {
+                    if (data.success) {
+                        toastr.success(data.message);
+                        jQuery('#ghaji').DataTable().ajax.reload(null, false);
+                    }
+                },
+                error: function() {
+                    toastr.error('Failed to toggle HMO status');
+                    btn.prop('disabled', false);
+                }
             });
         });
 
