@@ -1675,6 +1675,7 @@ class PharmacyWorkbenchController extends Controller
     {
         $hmos = Hmo::select('id', 'name', 'hmo_scheme_id')
             ->with('scheme:id,name')
+            ->where('status', 1)
             ->orderBy('name')
             ->get()
             ->groupBy(function ($hmo) {
