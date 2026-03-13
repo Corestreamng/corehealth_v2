@@ -150,7 +150,7 @@ class LabWorkbenchController extends Controller
             $req->claims_amount = $psr ? (float) $psr->claims_amount : 0;
             $req->coverage_mode = $psr ? $psr->coverage_mode : null;
             $req->is_paid = $psr && $psr->payment_id ? true : false;
-            $req->is_validated = $psr && in_array($psr->validation_status, ['approved', 'validated']) ? true : false;
+            $req->is_validated = $psr && in_array($psr->validation_status, ['approved', 'validated', 'awaiting_code']) ? true : false;
             $req->validation_status = $psr ? $psr->validation_status : null;
 
             // Formatted meta for display

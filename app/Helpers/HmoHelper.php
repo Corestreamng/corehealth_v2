@@ -109,9 +109,9 @@ class HmoHelper
             return true;
         }
 
-        // Primary and Secondary - must be approved
+        // Primary and Secondary - must be approved or awaiting_code (validated but auth code pending)
         if (in_array($request->coverage_mode, ['primary', 'secondary'])) {
-            return $request->validation_status === 'approved';
+            return in_array($request->validation_status, ['approved', 'awaiting_code']);
         }
 
         return false;
@@ -163,6 +163,8 @@ class HmoHelper
                     )
                 ];
             }
+
+            // awaiting_code = validated by officer, auth code pending — allow delivery
         }
 
         // All checks passed
