@@ -126,7 +126,7 @@ class PharmacyWorkbenchController extends Controller
             })
             ->addColumn('is_validated', function ($item) {
                 $status = optional($item->productOrServiceRequest)->validation_status;
-                return in_array($status, ['validated', 'approved']);
+                return in_array($status, ['validated', 'approved', 'awaiting_code']);
             })
             ->addColumn('qty', function ($item) {
                 return $item->qty ?? 1;

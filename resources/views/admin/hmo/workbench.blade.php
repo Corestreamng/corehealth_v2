@@ -665,6 +665,9 @@
                         <button type="button" class="btn btn-sm btn-danger ml-2" id="batchRejectBtn" style="border-radius: 6px;">
                             <i class="mdi mdi-close-circle-multiple mr-1"></i>Batch Reject
                         </button>
+                        <button type="button" class="btn btn-sm ml-2" id="batchAuthCodeBtn" style="border-radius: 6px; background: #7c4dff; color: #fff; border: none; display: none;">
+                            <i class="mdi mdi-key-plus mr-1"></i>Enter Auth Codes
+                        </button>
                     </div>
                     <div>
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSelectionBtn" style="border-radius: 6px;">
@@ -692,6 +695,11 @@
                     <li class="nav-item">
                         <a class="nav-link" id="approved-tab" data-toggle="tab" href="#approved" role="tab">
                             <i class="mdi mdi-check-circle mr-1"></i>Approved <span class="badge badge-info ml-1" id="approved_badge" style="border-radius: 6px;">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="awaiting-code-tab" data-toggle="tab" href="#awaiting_code" role="tab">
+                            <i class="mdi mdi-key-alert mr-1"></i>Awaiting Code <span class="badge ml-1" id="awaiting_code_badge" style="border-radius: 6px; background:#7c4dff; color:#fff;">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -775,14 +783,42 @@
                     {{-- HMO card --}}
                     <div class="col-md-4">
                         <div class="card-modern mb-0 h-100">
-                            <div class="card-header py-1 px-2">
+                            <div class="card-header py-1 px-2 d-flex align-items-center justify-content-between">
                                 <strong class="text-primary"><i class="mdi mdi-hospital-building mr-1"></i>HMO / Scheme</strong>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-muted" id="detail_edit_hmo_btn" title="Correct patient HMO" style="font-size: 0.85rem;">
+                                    <i class="mdi mdi-pencil"></i>
+                                </button>
                             </div>
                             <div class="card-body p-2">
-                                <p class="mb-1 font-weight-bold" id="detail_hmo_name"></p>
-                                <div style="font-size:0.82rem;">
-                                    <div><i class="mdi mdi-card-account-details text-muted"></i> HMO#: <span id="detail_hmo_no" class="font-weight-bold"></span></div>
-                                    <span id="detail_scheme_row"><i class="mdi mdi-tag-outline text-muted"></i> Scheme: <span id="detail_hmo_scheme" class="font-weight-bold"></span> <small class="text-muted" id="detail_hmo_scheme_code"></small></span>
+                                <div id="detail_hmo_display">
+                                    <p class="mb-1 font-weight-bold" id="detail_hmo_name"></p>
+                                    <div style="font-size:0.82rem;">
+                                        <div><i class="mdi mdi-card-account-details text-muted"></i> HMO#: <span id="detail_hmo_no" class="font-weight-bold"></span></div>
+                                        <span id="detail_scheme_row"><i class="mdi mdi-tag-outline text-muted"></i> Scheme: <span id="detail_hmo_scheme" class="font-weight-bold"></span> <small class="text-muted" id="detail_hmo_scheme_code"></small></span>
+                                    </div>
+                                </div>
+                                <div id="detail_hmo_edit_section" style="display:none;" class="mt-1">
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold mb-1">HMO Provider</label>
+                                        <select class="form-control form-control-sm" id="detail_edit_hmo_id" style="border-radius:6px;">
+                                            @foreach($hmos as $hmo)
+                                                <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold mb-1">HMO Number</label>
+                                        <input type="text" class="form-control form-control-sm" id="detail_edit_hmo_no" placeholder="Enter HMO number" style="border-radius:6px;">
+                                    </div>
+                                    <div class="d-flex justify-content-end" style="gap:6px;">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="detail_cancel_hmo_edit">Cancel</button>
+                                        <button type="button" class="btn btn-sm btn-primary" id="detail_save_hmo_edit">
+                                            <i class="mdi mdi-content-save mr-1"></i>Save
+                                        </button>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="mdi mdi-information-outline"></i> Changing HMO will recalculate tariffs for pending requests.
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -980,10 +1016,10 @@
                         </div>
                     </div>
                     <div class="form-group" id="auth_code_div" style="display:none;">
-                        <label class="font-weight-bold">Authorization Code <span class="text-danger">*</span></label>
+                        <label class="font-weight-bold">Authorization Code <small class="text-muted font-weight-normal">(optional — enter later if not available)</small></label>
                         <input type="text" class="form-control" id="auth_code" name="auth_code" placeholder="Enter HMO auth code" style="border-radius: 6px;">
                         <small class="form-text text-danger" id="error_auth_code"></small>
-                        <small class="form-text text-muted">Required for secondary coverage</small>
+                        <small class="form-text text-muted">If left blank for secondary coverage, request moves to "Awaiting Code" queue</small>
                     </div>
                     <div class="form-group">
                         <label class="font-weight-bold">Validation Notes</label>
@@ -1327,6 +1363,96 @@
     </div>
 </div>
 
+<!-- Batch Auth Code Modal -->
+<div class="modal fade" id="batchAuthCodeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #7c4dff 0%, #b388ff 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-key-plus mr-2"></i>Batch Enter Auth Codes</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="batchAuthCodeForm">
+                @csrf
+                <div class="modal-body">
+                    <div class="alert" style="border-radius: 8px; border-left: 4px solid #7c4dff; background: #f3f0ff;">
+                        <i class="mdi mdi-information mr-1" style="color: #7c4dff;"></i>
+                        <strong>Auth Code Entry:</strong> You are submitting auth codes for <strong><span id="batchAuthCodeCount">0</span></strong> requests.
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Auth Code Mode</label>
+                        <div class="mt-2">
+                            <label class="mr-3">
+                                <input type="radio" name="batch_ac_mode" value="shared" checked> <strong>Shared</strong> — Same auth code for all
+                            </label>
+                            <label>
+                                <input type="radio" name="batch_ac_mode" value="individual"> <strong>Individual</strong> — Different code per request
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="batch_ac_shared_group">
+                        <label class="font-weight-bold">Auth Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="batch_ac_shared_code" placeholder="Enter auth code" style="border-radius: 6px;" required>
+                    </div>
+                    <div id="batch_ac_individual_group" style="display:none;">
+                        {{-- Populated by JS --}}
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn" style="border-radius: 6px; background: #7c4dff; color: #fff; border: none;">
+                        <i class="mdi mdi-key-plus mr-1"></i>Submit Auth Codes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Single Auth Code Modal -->
+<div class="modal fade" id="singleAuthCodeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #7c4dff 0%, #b388ff 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-key-plus mr-2"></i>Enter Auth Code</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="singleAuthCodeForm">
+                @csrf
+                <input type="hidden" id="single_ac_request_id">
+                <div class="modal-body">
+                    <div class="alert" style="border-radius: 8px; border-left: 4px solid #7c4dff; background: #f3f0ff;">
+                        <i class="mdi mdi-information mr-1" style="color: #7c4dff;"></i>
+                        Enter the authorization code for request <strong>#<span id="single_ac_request_label"></span></strong>.
+                    </div>
+                    <div id="single_ac_request_info" class="mb-3" style="display:none;">
+                        <div class="d-flex align-items-center p-2" style="background:#f8f9fa; border-radius:8px;">
+                            <div>
+                                <div class="font-weight-bold" id="single_ac_patient_name"></div>
+                                <small class="text-muted" id="single_ac_item_name"></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold">Auth Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="single_ac_code" placeholder="Enter authorization code" style="border-radius: 6px;" required>
+                        <small class="form-text text-muted">The HMO authorization code for this service request.</small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn" id="single_ac_submit_btn" style="border-radius: 6px; background: #7c4dff; color: #fff; border: none;">
+                        <i class="mdi mdi-key-plus mr-1"></i>Submit Auth Code
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Validate by Group Modal -->
 <div class="modal fade" id="validateGroupModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-xl" role="document">
@@ -1409,14 +1535,18 @@
                         <span class="small text-muted"> secondary items selected — auth code required</span>
                     </div>
                     <div class="card-body py-2 px-3">
-                        <div class="d-flex align-items-center mb-2">
+                        <div class="d-flex flex-wrap align-items-center mb-2" style="gap: 4px 0;">
                             <div class="custom-control custom-radio mr-3">
                                 <input type="radio" class="custom-control-input" id="vg_auth_shared" name="vg_auth_mode" value="shared" checked>
                                 <label class="custom-control-label small" for="vg_auth_shared">One code for all secondary items</label>
                             </div>
-                            <div class="custom-control custom-radio">
+                            <div class="custom-control custom-radio mr-3">
                                 <input type="radio" class="custom-control-input" id="vg_auth_individual" name="vg_auth_mode" value="individual">
                                 <label class="custom-control-label small" for="vg_auth_individual">Individual codes per item</label>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                <input type="radio" class="custom-control-input" id="vg_auth_skip" name="vg_auth_mode" value="skip">
+                                <label class="custom-control-label small" for="vg_auth_skip">Approve without code — enter later <span class="badge ml-1" style="background:#7c4dff;color:#fff;font-size:0.7rem;">Awaiting Code</span></label>
                             </div>
                         </div>
                         <div id="vg_shared_auth_input">
@@ -1563,6 +1693,7 @@ $(function() {
     let currentPreset = '';
     let table;
     let selectedIds = [];
+    let currentDetailData = null;
 
     // Initialize DataTable
     function initDataTable() {
@@ -1632,6 +1763,7 @@ $(function() {
             $('#pending_badge').text(data.pending || 0);
             $('#express_badge').text(data.express || 0);
             $('#approved_badge').text(data.approved || 0);
+            $('#awaiting_code_badge').text(data.awaiting_code || 0);
             $('#rejected_badge').text(data.rejected || 0);
             $('#claims_badge').text(data.claims || 0);
             $('#all_badge').text(data.all || 0);
@@ -1662,6 +1794,15 @@ $(function() {
         } else {
             $('#batchActionsBar').slideUp();
         }
+        // Show/hide buttons based on current tab
+        if (currentTab === 'awaiting_code') {
+            $('#batchApproveBtn').hide();
+            $('#batchRejectBtn').show();
+            $('#batchAuthCodeBtn').show();
+        } else {
+            $('#batchApproveBtn, #batchRejectBtn').show();
+            $('#batchAuthCodeBtn').hide();
+        }
     }
 
     function updateCheckboxStates() {
@@ -1679,7 +1820,7 @@ $(function() {
     // Auto-open queue/tab from URL parameter (e.g., from dashboard queue widget click)
     const urlParams = new URLSearchParams(window.location.search);
     const queueFilter = urlParams.get('queue_filter');
-    if (queueFilter && ['pending', 'approved', 'rejected'].includes(queueFilter)) {
+    if (queueFilter && ['pending', 'approved', 'rejected', 'awaiting_code'].includes(queueFilter)) {
         currentTab = queueFilter;
         $('#workbenchTabs a.nav-link').removeClass('active');
         $('#' + queueFilter + '-tab').addClass('active');
@@ -1785,6 +1926,7 @@ $(function() {
 
             let statusBadge = d.validation_status === 'approved' ? '<span class="badge badge-success">APPROVED</span>' :
                              d.validation_status === 'rejected' ? '<span class="badge badge-danger">REJECTED</span>' :
+                             d.validation_status === 'awaiting_code' ? '<span class="badge" style="background:#7c4dff;color:#fff;">AWAITING CODE</span>' :
                              '<span class="badge badge-warning">PENDING</span>';
             $('#detail_validation_status').html(statusBadge);
 
@@ -1884,6 +2026,10 @@ $(function() {
 
             // Collapse audit trail by default
             $('#auditTrailCollapse').collapse('hide');
+
+            // Store data for HMO edit
+            currentDetailData = d;
+            $('#detail_hmo_edit_section').hide();
 
             $('#detailsModal').modal('show');
         });
@@ -2283,6 +2429,7 @@ $(function() {
             response.history.forEach(function(h) {
                 let statusBadge = h.validation_status === 'approved' ? '<span class="badge badge-success">Approved</span>' :
                                  h.validation_status === 'rejected' ? '<span class="badge badge-danger">Rejected</span>' :
+                                 h.validation_status === 'awaiting_code' ? '<span class="badge" style="background:#7c4dff;color:#fff;">Awaiting Code</span>' :
                                  '<span class="badge badge-warning">Pending</span>';
                 tbody += `
                     <tr>
@@ -2496,7 +2643,7 @@ $(function() {
 
         if (mode === 'secondary') {
             $('#auth_code_div').show();
-            $('#auth_code').prop('required', true);
+            $('#auth_code').prop('required', false);
         } else {
             $('#auth_code_div').hide();
             $('#auth_code').prop('required', false);
@@ -2526,7 +2673,11 @@ $(function() {
                     table.ajax.reload();
                     loadQueueCounts();
                     loadFinancialSummary();
-                    toastr.success(response.message);
+                    if (response.awaiting_code) {
+                        toastr.info(response.message, 'Awaiting Auth Code');
+                    } else {
+                        toastr.success(response.message);
+                    }
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false);
@@ -2665,7 +2816,11 @@ $(function() {
                     table.ajax.reload();
                     loadQueueCounts();
                     loadFinancialSummary();
-                    toastr.success(response.message);
+                    if (response.awaiting_code) {
+                        toastr.info(response.message, 'Awaiting Auth Code');
+                    } else {
+                        toastr.success(response.message);
+                    }
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false);
@@ -3121,6 +3276,9 @@ $(function() {
         if (mode === 'shared') {
             $('#vg_shared_auth_input').show();
             $('.vg-individual-auth').prop('disabled', true);
+        } else if (mode === 'skip') {
+            $('#vg_shared_auth_input').hide();
+            $('.vg-individual-auth').prop('disabled', true);
         } else {
             $('#vg_shared_auth_input').hide();
             $('.vg-individual-auth').prop('disabled', false);
@@ -3175,7 +3333,7 @@ $(function() {
         let authMode = $('input[name="vg_auth_mode"]:checked').val();
 
         // Validate auth codes for secondary items
-        if (secondarySelected.length > 0) {
+        if (secondarySelected.length > 0 && authMode !== 'skip') {
             if (authMode === 'shared') {
                 let code = $('#vg_shared_auth_code').val().trim();
                 if (!code) {
@@ -3206,7 +3364,7 @@ $(function() {
 
         if (authMode === 'shared') {
             payload.shared_auth_code = $('#vg_shared_auth_code').val().trim();
-        } else {
+        } else if (authMode === 'individual') {
             let codes = {};
             secondarySelected.forEach(function(r) {
                 codes[r.id] = (vgIndividualCodes[r.id] || '').trim();
@@ -3359,6 +3517,199 @@ $(function() {
         loadQueueCounts();
         loadFinancialSummary();
     }, 30000);
+
+    // ==========================================
+    // Patient HMO Correction (View Details Modal)
+    // ==========================================
+    $('#detail_edit_hmo_btn').on('click', function() {
+        let $section = $('#detail_hmo_edit_section');
+        if ($section.is(':visible')) {
+            $section.slideUp(200);
+        } else {
+            if (currentDetailData) {
+                $('#detail_edit_hmo_id').val(currentDetailData.hmo_id);
+                $('#detail_edit_hmo_no').val(currentDetailData.hmo_no);
+            }
+            $section.slideDown(200);
+        }
+    });
+
+    $('#detail_cancel_hmo_edit').on('click', function() {
+        $('#detail_hmo_edit_section').slideUp(200);
+    });
+
+    $('#detail_save_hmo_edit').on('click', function() {
+        if (!currentDetailData || !currentDetailData.patient_id) {
+            toastr.error('Patient data not available');
+            return;
+        }
+        let $btn = $(this).prop('disabled', true);
+
+        $.ajax({
+            url: '{{ url("hmo/patient") }}/' + currentDetailData.patient_id + '/update-hmo',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                hmo_id: $('#detail_edit_hmo_id').val(),
+                hmo_no: $('#detail_edit_hmo_no').val()
+            },
+            success: function(resp) {
+                $btn.prop('disabled', false);
+                $('#detail_hmo_edit_section').slideUp(200);
+                $('#detail_hmo_name').text(resp.new_hmo_name);
+                $('#detail_hmo_no').text(resp.new_hmo_no);
+                currentDetailData.hmo_id = parseInt($('#detail_edit_hmo_id').val());
+                currentDetailData.hmo_no = resp.new_hmo_no;
+                currentDetailData.hmo_name = resp.new_hmo_name;
+                table.ajax.reload(null, false);
+                loadQueueCounts();
+                loadFinancialSummary();
+                toastr.success(resp.message);
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    let msg = Object.values(xhr.responseJSON.errors).flat().join(', ');
+                    toastr.error(msg);
+                } else {
+                    toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'Failed to update HMO');
+                }
+            }
+        });
+    });
+
+    // ==========================================
+    // Awaiting Code Tab: Submit Auth Code
+    // ==========================================
+
+    // Single auth code entry (modal)
+    $(document).on('click', '.submit-auth-code-btn', function() {
+        let id = $(this).data('id');
+        let $row = $(this).closest('tr');
+        $('#single_ac_request_id').val(id);
+        $('#single_ac_request_label').text(id);
+        $('#single_ac_code').val('').removeClass('is-invalid');
+        // Try to show request info from the row data
+        let rowData = table.row($row).data();
+        if (rowData) {
+            let patientName = rowData.patient_info ? $(rowData.patient_info).find('.font-weight-bold, strong').first().text() : '';
+            let itemName = rowData.request_info ? $(rowData.request_info).text().trim().split('\n')[0] : '';
+            if (patientName || itemName) {
+                $('#single_ac_patient_name').text(patientName);
+                $('#single_ac_item_name').text(itemName);
+                $('#single_ac_request_info').show();
+            } else {
+                $('#single_ac_request_info').hide();
+            }
+        } else {
+            $('#single_ac_request_info').hide();
+        }
+        $('#single_ac_submit_btn').prop('disabled', false);
+        $('#singleAuthCodeModal').modal('show');
+        setTimeout(function() { $('#single_ac_code').focus(); }, 500);
+    });
+
+    $('#singleAuthCodeForm').on('submit', function(e) {
+        e.preventDefault();
+        let id = $('#single_ac_request_id').val();
+        let code = $('#single_ac_code').val().trim();
+        if (!code) {
+            $('#single_ac_code').addClass('is-invalid').focus();
+            return;
+        }
+        $('#single_ac_submit_btn').prop('disabled', true);
+        $.ajax({
+            url: '{{ url("hmo/requests") }}/' + id + '/submit-auth-code',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}', auth_code: code },
+            success: function(resp) {
+                $('#singleAuthCodeModal').modal('hide');
+                table.ajax.reload(null, false);
+                loadQueueCounts();
+                loadFinancialSummary();
+                toastr.success(resp.message);
+            },
+            error: function(xhr) {
+                $('#single_ac_submit_btn').prop('disabled', false);
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'Failed to submit auth code');
+            }
+        });
+    });
+
+    // Batch auth code entry
+    $(document).on('click', '#batchAuthCodeBtn', function() {
+        if (selectedIds.length === 0) {
+            toastr.warning('Please select at least one request');
+            return;
+        }
+        $('#batchAuthCodeCount').text(selectedIds.length);
+        // Reset modal state
+        $('input[name="batch_ac_mode"][value="shared"]').prop('checked', true);
+        $('#batch_ac_shared_group').show();
+        $('#batch_ac_shared_code').val('').removeClass('is-invalid');
+        // Build individual inputs
+        let indHtml = '';
+        selectedIds.forEach(function(id) {
+            indHtml += '<div class="form-group"><label class="font-weight-bold">Request #' + id + '</label>' +
+                '<input type="text" class="form-control batch-ac-individual" data-id="' + id + '" placeholder="Auth code" style="border-radius:6px;"></div>';
+        });
+        $('#batch_ac_individual_group').html(indHtml).hide();
+        $('#batchAuthCodeModal').modal('show');
+    });
+
+    $('input[name="batch_ac_mode"]').on('change', function() {
+        if ($(this).val() === 'shared') {
+            $('#batch_ac_shared_group').show();
+            $('#batch_ac_individual_group').hide();
+        } else {
+            $('#batch_ac_shared_group').hide();
+            $('#batch_ac_individual_group').show();
+        }
+    });
+
+    $('#batchAuthCodeForm').submit(function(e) {
+        e.preventDefault();
+        let authMode = $('input[name="batch_ac_mode"]:checked').val();
+        let payload = {
+            _token: '{{ csrf_token() }}',
+            request_ids: selectedIds,
+            auth_mode: authMode
+        };
+        if (authMode === 'shared') {
+            let code = $('#batch_ac_shared_code').val().trim();
+            if (!code) {
+                $('#batch_ac_shared_code').addClass('is-invalid').focus();
+                return;
+            }
+            payload.shared_auth_code = code;
+        } else {
+            let codes = {};
+            $('.batch-ac-individual').each(function() {
+                codes[$(this).data('id')] = $(this).val().trim();
+            });
+            payload.individual_auth_codes = codes;
+        }
+        let $btn = $(this).find('[type="submit"]').prop('disabled', true);
+        $.ajax({
+            url: '{{ route("hmo.batch-submit-auth-code") }}',
+            type: 'POST',
+            data: payload,
+            success: function(resp) {
+                $btn.prop('disabled', false);
+                $('#batchAuthCodeModal').modal('hide');
+                selectedIds = [];
+                updateBatchActionBar();
+                table.ajax.reload();
+                loadQueueCounts();
+                loadFinancialSummary();
+                toastr.success(resp.message);
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred');
+            }
+        });
+    });
 });
 </script>
 <style>
