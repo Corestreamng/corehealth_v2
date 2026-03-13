@@ -59,7 +59,7 @@ class ReceptionWorkbenchController extends Controller
     public function index()
     {
         $clinics = Clinic::all();
-        $hmos = Hmo::with('scheme')->orderBy('name')->get();
+        $hmos = Hmo::with('scheme')->where('status', 1)->orderBy('name')->get();
 
         // Get registration services for optional registration fee
         $registrationCategoryId = appsettings('registration_category_id');

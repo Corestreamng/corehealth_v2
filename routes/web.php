@@ -824,6 +824,7 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('hmo', HmoController::class);
         Route::get('hmoList', [HmoController::class, 'listHmo'])->name('hmoList');
+        Route::post('hmo/{hmo}/toggle-status', [HmoController::class, 'toggleStatus'])->name('hmo.toggle-status');
     });
 
     Route::group(['middleware' => ['auth']], function () {
