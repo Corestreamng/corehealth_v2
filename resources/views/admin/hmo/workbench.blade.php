@@ -2511,8 +2511,8 @@ $(function() {
                     unitClaims  = parseFloat(current.claims_amount)  / qty;
                     unitPayable = parseFloat(current.payable_amount) / qty;
                 }
-                $section.find('.tariff-claims-amount').val(unitClaims ? parseFloat(unitClaims).toFixed(2) : '');
-                $section.find('.tariff-payable-amount').val(unitPayable ? parseFloat(unitPayable).toFixed(2) : '');
+                $section.find('.tariff-claims-amount').val(parseFloat(unitClaims || 0).toFixed(2));
+                $section.find('.tariff-payable-amount').val(parseFloat(unitPayable || 0).toFixed(2));
 
                 // Scheme checkbox
                 if (data.scheme) {

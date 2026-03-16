@@ -4692,6 +4692,27 @@ function createRequestCard(request, section) {
         `;
     }
 
+    // Tariff preview for unbilled HMO items
+    let tariffPreviewHtml = '';
+    if (section === 'billing' && request.tariff_preview) {
+        const tp = request.tariff_preview;
+        if (tp.no_tariff) {
+            tariffPreviewHtml = `<div class="alert alert-warning py-2 px-3 mb-2 mt-1" style="font-size:0.85rem;">
+                <i class="mdi mdi-alert-circle-outline"></i> <strong>No HMO tariff found</strong> — will use base price on billing
+            </div>`;
+        } else {
+            const modeLabel = (tp.coverage_mode || '').toUpperCase();
+            const payable = Number(tp.payable_amount || 0);
+            const claims = Number(tp.claims_amount || 0);
+            tariffPreviewHtml = `<div class="d-flex align-items-center gap-2 flex-wrap py-1 px-2 mb-2 mt-1 rounded" style="background:#e8f4fd; font-size:0.85rem;">
+                <span class="badge bg-info">${modeLabel}</span>
+                <span class="text-muted">Estimated:</span>
+                ${payable > 0 ? `<span class="text-danger fw-semibold">Pay ₦${payable.toLocaleString()}</span>` : ''}
+                ${claims > 0 ? `<span class="text-success fw-semibold">HMO ₦${claims.toLocaleString()}</span>` : ''}
+            </div>`;
+        }
+    }
+
     // Delivery check
     const deliveryCheck = request.delivery_check;
     const canDeliver = deliveryCheck ? deliveryCheck.can_deliver : true;
@@ -4790,6 +4811,7 @@ function createRequestCard(request, section) {
                 </div>
                 ${pendingAlerts}
                 ${hmoHtml}
+                ${tariffPreviewHtml}
                 ${noteHtml}
                 ${deliveryWarningHtml}
                 ${metaDetails}

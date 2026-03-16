@@ -95,6 +95,15 @@ class PharmacyWorkbenchController extends Controller
             ->orderBy('created_at', 'DESC')
             ->get();
 
+        // Batch-load tariff previews for unbilled items
+        $patient = Patient::find($patientId);
+        $tariffMap = [];
+        if ($patient && $patient->hmo_id) {
+            $productIds = $items->pluck('product_id')->unique()->filter()->values()->toArray();
+            $previews = HmoHelper::batchPreviewTariffs($patient->hmo_id, $productIds);
+            $tariffMap = $previews['products'];
+        }
+
         return DataTables::of($items)
             ->addIndexColumn()
             ->addColumn('id', function ($item) {
@@ -150,6 +159,17 @@ class PharmacyWorkbenchController extends Controller
             ->addColumn('is_bundled', function ($item) {
                 $procedureItem = $item->procedureItem;
                 return $procedureItem ? $procedureItem->is_bundled : false;
+            })
+            ->addColumn('tariff_preview', function ($item) use ($tariffMap, $patient) {
+                if (!$patient || !$patient->hmo_id) return null;
+                $t = $tariffMap[$item->product_id] ?? null;
+                if (!$t) return ['no_tariff' => true];
+                $qty = $item->qty ?? 1;
+                return [
+                    'payable_amount' => round($t['payable_amount'] * $qty, 2),
+                    'claims_amount'  => round($t['claims_amount'] * $qty, 2),
+                    'coverage_mode'  => $t['coverage_mode'],
+                ];
             })
             ->make(true);
     }
