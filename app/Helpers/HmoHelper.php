@@ -47,6 +47,54 @@ class HmoHelper
     }
 
     /**
+     * Batch-load tariff previews for unbilled items.
+     * Returns a map keyed by product_id or service_id.
+     *
+     * @param int $hmoId
+     * @param array $productIds
+     * @param array $serviceIds
+     * @return array ['products' => [product_id => tariff], 'services' => [service_id => tariff]]
+     */
+    public static function batchPreviewTariffs($hmoId, array $productIds = [], array $serviceIds = [])
+    {
+        $result = ['products' => [], 'services' => []];
+
+        if (!$hmoId) {
+            return $result;
+        }
+
+        if (!empty($productIds)) {
+            $tariffs = HmoTariff::where('hmo_id', $hmoId)
+                ->whereIn('product_id', $productIds)
+                ->whereNull('service_id')
+                ->get();
+            foreach ($tariffs as $t) {
+                $result['products'][$t->product_id] = [
+                    'payable_amount' => (float) $t->payable_amount,
+                    'claims_amount'  => (float) $t->claims_amount,
+                    'coverage_mode'  => $t->coverage_mode,
+                ];
+            }
+        }
+
+        if (!empty($serviceIds)) {
+            $tariffs = HmoTariff::where('hmo_id', $hmoId)
+                ->whereIn('service_id', $serviceIds)
+                ->whereNull('product_id')
+                ->get();
+            foreach ($tariffs as $t) {
+                $result['services'][$t->service_id] = [
+                    'payable_amount' => (float) $t->payable_amount,
+                    'claims_amount'  => (float) $t->claims_amount,
+                    'coverage_mode'  => $t->coverage_mode,
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Get the display name for a product/service in HMO context.
      *
      * If the HMO tariff has a custom display_name, use that;
