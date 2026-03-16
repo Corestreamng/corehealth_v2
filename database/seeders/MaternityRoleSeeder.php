@@ -28,11 +28,14 @@ class MaternityRoleSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
+        // Reset cached permissions so syncPermissions can find the new ones
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
         // Create MATERNITY role
-        $role = Role::firstOrCreate(['name' => 'MATERNITY']);
+        $role = Role::firstOrCreate(['name' => 'MATERNITY', 'guard_name' => 'web']);
 
         // Assign permissions to role
         $role->syncPermissions($permissions);

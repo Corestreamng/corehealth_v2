@@ -123,8 +123,16 @@ class LabWorkbenchController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Batch-load tariff previews for unbilled items
+        $tariffMap = [];
+        if ($patient->hmo_id) {
+            $serviceIds = $requests->where('status', 1)->pluck('service_id')->unique()->filter()->values()->toArray();
+            $previews = HmoHelper::batchPreviewTariffs($patient->hmo_id, [], $serviceIds);
+            $tariffMap = $previews['services'];
+        }
+
         // Enrich each request with delivery check, bundled info, payment/HMO fields
-        $requests = $requests->map(function ($req) {
+        $requests = $requests->map(function ($req) use ($patient, $tariffMap) {
             $deliveryCheck = null;
             $bundledInfo = null;
 
@@ -152,6 +160,12 @@ class LabWorkbenchController extends Controller
             $req->is_paid = $psr && $psr->payment_id ? true : false;
             $req->is_validated = $psr && in_array($psr->validation_status, ['approved', 'validated', 'awaiting_code']) ? true : false;
             $req->validation_status = $psr ? $psr->validation_status : null;
+
+            // Tariff preview for unbilled items
+            if ($req->status == 1 && $patient->hmo_id) {
+                $t = $tariffMap[$req->service_id] ?? null;
+                $req->tariff_preview = $t ?: ['no_tariff' => true];
+            }
 
             // Formatted meta for display
             $req->billed_by_name = $req->biller ? $req->biller->surname . ' ' . $req->biller->firstname : null;

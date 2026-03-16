@@ -7831,6 +7831,28 @@ function renderPrescCardPharmacy(row, type) {
         `;
     }
 
+    // Tariff preview for unbilled items (HMO estimate before billing)
+    let tariffPreviewHtml = '';
+    if (type === 'billing' && row.tariff_preview) {
+        const tp = row.tariff_preview;
+        if (tp.no_tariff) {
+            tariffPreviewHtml = `
+                <div class="small mt-1 p-2 rounded border border-warning bg-warning bg-opacity-10">
+                    <i class="mdi mdi-alert-outline text-warning me-1"></i>
+                    <span class="text-muted">No HMO tariff configured — patient may pay full price</span>
+                </div>`;
+        } else {
+            tariffPreviewHtml = `
+                <div class="small mt-1 p-2 rounded border border-info bg-info bg-opacity-10">
+                    <i class="mdi mdi-information-outline text-info me-1"></i>
+                    <span class="text-muted fw-semibold">HMO Estimate:</span>
+                    <span class="badge bg-info ms-1">${(tp.coverage_mode || '').toUpperCase()}</span>
+                    <span class="text-danger ms-2">Patient: ₦${formatMoneyPharmacy(tp.payable_amount)}</span>
+                    <span class="text-success ms-2">HMO: ₦${formatMoneyPharmacy(tp.claims_amount)}</span>
+                </div>`;
+        }
+    }
+
     // Meta info
     let metaInfo = `
         <div class="presc-card-meta small text-muted mt-2">
@@ -8023,6 +8045,7 @@ function renderPrescCardPharmacy(row, type) {
                 <div><strong>Dose/Freq:</strong> ${row.dose || 'N/A'}</div>
                 <div><strong>Qty:</strong> ${qty}</div>
                 ${hmoInfo}
+                ${tariffPreviewHtml}
                 ${stockInfo}
             </div>
             ${metaInfo}
