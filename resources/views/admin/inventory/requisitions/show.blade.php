@@ -738,6 +738,10 @@
                             <div class="mt-2">
                                 <span class="requested-badge">
                                     <i class="mdi mdi-cart"></i> Requested: <strong>{{ $item->requested_qty }}</strong>
+                                    {{ $item->product->base_unit_name ?? '' }}
+                                    @if($item->packaging)
+                                        <span class="text-info">({{ $item->packaging_qty }} {{ $item->packaging->name }})</span>
+                                    @endif
                                 </span>
                             </div>
                         </div>
@@ -847,8 +851,11 @@
                         <td style="border: 1px solid #333; padding: 8px;">
                             <strong>{{ $item->product->product_name }}</strong><br>
                             <small style="color: #666;">{{ $item->product->product_code }}</small>
+                            @if($item->packaging)
+                                <br><small style="color: #17a2b8;">({{ $item->packaging_qty }} {{ $item->packaging->name }})</small>
+                            @endif
                         </td>
-                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">{{ $item->product->unit_of_measure ?? 'Unit' }}</td>
+                        <td style="border: 1px solid #333; padding: 8px; text-align: center;">{{ $item->product->base_unit_name ?? $item->product->unit_of_measure ?? 'Unit' }}</td>
                         <td style="border: 1px solid #333; padding: 8px; text-align: center;">{{ $item->requested_qty }}</td>
                         <td style="border: 1px solid #333; padding: 8px; text-align: center;">{{ $item->approved_qty ?? '-' }}</td>
                         <td style="border: 1px solid #333; padding: 8px; text-align: center;">{{ $item->fulfilled_qty ?? 0 }}</td>
@@ -922,6 +929,11 @@
                                 <div class="qty-stage">
                                     <div class="qty-label">Requested</div>
                                     <div class="qty-value">{{ $item->requested_qty }}</div>
+                                    @if($item->packaging)
+                                        <div class="text-muted" style="font-size:0.7rem;">({{ $item->packaging_qty }} {{ $item->packaging->name }})</div>
+                                    @elseif($item->product && $item->product->base_unit_name)
+                                        <div class="text-muted" style="font-size:0.7rem;">{{ $item->product->base_unit_name }}</div>
+                                    @endif
                                 </div>
                                 <div class="qty-arrow"><i class="mdi mdi-arrow-right"></i></div>
                                 <div class="qty-stage {{ $item->approved_qty !== null && $item->approved_qty < $item->requested_qty ? 'adjusted' : '' }}">
@@ -1094,10 +1106,13 @@
                     <div>
                         <div class="h6 mb-1">{{ $item->product->product_name }}</div>
                         <small class="text-muted">{{ $item->product->product_code }}</small>
+                        @if($item->packaging)
+                            <br><small class="text-info"><i class="mdi mdi-package-variant"></i> Ordered as: {{ $item->packaging_qty }} {{ $item->packaging->name }}</small>
+                        @endif
                     </div>
                     <div class="text-right">
                         <span class="badge badge-{{ $totalAvailable >= $pendingQty ? 'success' : 'warning' }}">
-                            {{ $totalAvailable }} available
+                            {{ $totalAvailable }} {{ $item->product->base_unit_name ?? '' }} available
                         </span>
                     </div>
                 </div>

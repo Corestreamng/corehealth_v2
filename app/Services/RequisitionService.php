@@ -56,6 +56,8 @@ class RequisitionService
                     'store_requisition_id' => $requisition->id,
                     'product_id' => $itemData['product_id'],
                     'requested_qty' => $itemData['requested_qty'],
+                    'packaging_id' => $itemData['packaging_id'] ?? null,
+                    'packaging_qty' => $itemData['packaging_qty'] ?? null,
                     'status' => StoreRequisitionItem::STATUS_PENDING,
                     'notes' => $itemData['notes'] ?? null,
                 ]);
@@ -369,7 +371,7 @@ class RequisitionService
         return StoreRequisition::query()
             ->fromStore($storeId)
             ->fulfillable()
-            ->with(['items.product', 'toStore', 'requester'])
+            ->with(['items.product', 'items.packaging', 'toStore', 'requester'])
             ->orderBy('approved_at', 'asc')
             ->get();
     }
@@ -382,7 +384,7 @@ class RequisitionService
     public function getPendingApproval(): Collection
     {
         return StoreRequisition::pending()
-            ->with(['items.product', 'fromStore', 'toStore', 'requester'])
+            ->with(['items.product', 'items.packaging', 'fromStore', 'toStore', 'requester'])
             ->orderBy('created_at', 'asc')
             ->get();
     }
@@ -397,7 +399,7 @@ class RequisitionService
     {
         return StoreRequisition::query()
             ->toStore($storeId)
-            ->with(['items.product', 'fromStore', 'requester', 'approver', 'fulfiller'])
+            ->with(['items.product', 'items.packaging', 'fromStore', 'requester', 'approver', 'fulfiller'])
             ->orderBy('created_at', 'desc')
             ->get();
     }

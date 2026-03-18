@@ -31,6 +31,10 @@ class PurchaseOrderItem extends Model implements Auditable
         'actual_unit_cost',
         'status',
         'received_at',
+        'packaging_id',
+        'packaging_qty',
+        'received_packaging_id',
+        'received_packaging_qty',
     ];
 
     protected $casts = [
@@ -73,6 +77,22 @@ class PurchaseOrderItem extends Model implements Auditable
     public function stockBatches()
     {
         return $this->hasMany(StockBatch::class, 'purchase_order_item_id');
+    }
+
+    /**
+     * Get the packaging used when ordering.
+     */
+    public function packaging()
+    {
+        return $this->belongsTo(ProductPackaging::class, 'packaging_id');
+    }
+
+    /**
+     * Get the packaging used when receiving.
+     */
+    public function receivedPackaging()
+    {
+        return $this->belongsTo(ProductPackaging::class, 'received_packaging_id');
     }
 
     // ===== ACCESSORS =====

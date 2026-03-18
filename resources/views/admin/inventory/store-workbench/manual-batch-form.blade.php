@@ -139,7 +139,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="quantity">Quantity <span class="text-danger">*</span></label>
                                     <input type="number" name="quantity" id="quantity"
@@ -150,7 +150,16 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="batch_packaging">Packaging Unit</label>
+                                    <select name="batch_packaging" id="batch_packaging" class="form-control">
+                                        <option value="" data-base="1">Base Unit</option>
+                                    </select>
+                                    <small class="text-muted" id="batch-base-equiv" style="display:none;">= <strong id="batch-base-qty">0</strong> <span id="batch-base-unit-name">units</span></small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="received_date">Received Date</label>
                                     <input type="date" name="received_date" id="received_date"
@@ -323,6 +332,63 @@ $(function() {
     var newOption = new Option(preselectedProduct.text, preselectedProduct.id, true, true);
     productSelect.append(newOption).trigger('change');
     @endif
+
+    // Load packaging options when product changes
+    $('#product_id').on('change', function() {
+        var productId = $(this).val();
+        var $pkgSelect = $('#batch_packaging');
+        $pkgSelect.html('<option value="" data-base="1">Base Unit</option>');
+        $('#batch-base-equiv').hide();
+
+        if (!productId) return;
+
+        $.ajax({
+            url: '/products/' + productId + '/packagings',
+            method: 'GET',
+            success: function(response) {
+                var baseUnit = response.base_unit_name || 'units';
+                $pkgSelect.html('<option value="" data-base="1">' + baseUnit + ' (base)</option>');
+                $('#batch-base-unit-name').text(baseUnit);
+
+                if (response.packagings && response.packagings.length > 0) {
+                    response.packagings.forEach(function(pkg) {
+                        var sel = pkg.is_default_purchase ? ' selected' : '';
+                        $pkgSelect.append('<option value="' + pkg.id + '" data-base="' + pkg.base_unit_qty + '"' + sel + '>' + pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + baseUnit + ')</option>');
+                    });
+                    updateBatchBaseEquiv();
+                }
+
+                if (response.allow_decimal_qty) {
+                    $('#quantity').attr('step', 'any').attr('min', '0.01');
+                } else {
+                    $('#quantity').attr('step', '1').attr('min', '1');
+                }
+            }
+        });
+    });
+
+    function updateBatchBaseEquiv() {
+        var base = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
+        var qty = parseFloat($('#quantity').val()) || 0;
+        var total = qty * base;
+        if (base > 1) {
+            $('#batch-base-qty').text(parseFloat(total.toFixed(4)));
+            $('#batch-base-equiv').show();
+        } else {
+            $('#batch-base-equiv').hide();
+        }
+    }
+
+    $('#batch_packaging, #quantity').on('change input', updateBatchBaseEquiv);
+
+    // Convert to base units before form submission
+    $('form').on('submit', function() {
+        var base = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
+        if (base > 1) {
+            var qty = parseFloat($('#quantity').val()) || 0;
+            $('#quantity').val(Math.round(qty * base));
+        }
+    });
 });
 </script>
 @endsection

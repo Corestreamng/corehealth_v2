@@ -131,6 +131,8 @@ $(document).ready(function() {
                     return `<div>
                         <strong class="d-block">${row.po_number}</strong>
                         <small class="text-muted">${row.status_badge}</small>
+                        ${row.item_count ? `<br><small class="text-muted">${row.item_count}</small>` : ''}
+                        ${row.product_types ? `<div class="mt-1">${row.product_types}</div>` : ''}
                     </div>`;
                 }
             },

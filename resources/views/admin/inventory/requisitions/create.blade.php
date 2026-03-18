@@ -264,6 +264,18 @@
         border-radius: 6px;
         font-size: 0.85rem;
     }
+    .pkg-select {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.25rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        max-width: 115px;
+    }
+    .base-equiv-label {
+        font-size: 0.7rem;
+        color: #17a2b8;
+        text-align: center;
+    }
 
     /* Suggestions Panel */
     .suggestions-panel {
@@ -494,11 +506,11 @@
                                     <div class="store-name">{{ $store->store_name }}</div>
                                     <div class="store-stats">
                                         <div class="stat-item">
-                                            <span class="stat-value" data-stat="products">--</span>
+                                            <span class="stat-value" data-stat="products">{{ $storeStats[$store->id]['products'] ?? 0 }}</span>
                                             <span>Products</span>
                                         </div>
                                         <div class="stat-item">
-                                            <span class="stat-value" data-stat="stock">--</span>
+                                            <span class="stat-value" data-stat="stock">{{ number_format($storeStats[$store->id]['stock'] ?? 0) }}</span>
                                             <span>In Stock</span>
                                         </div>
                                     </div>
@@ -520,11 +532,11 @@
                                     <div class="store-name">{{ $store->store_name }}</div>
                                     <div class="store-stats">
                                         <div class="stat-item">
-                                            <span class="stat-value" data-stat="low">--</span>
+                                            <span class="stat-value" data-stat="low">{{ $storeStats[$store->id]['low'] ?? 0 }}</span>
                                             <span>Low Stock</span>
                                         </div>
                                         <div class="stat-item">
-                                            <span class="stat-value" data-stat="out">--</span>
+                                            <span class="stat-value" data-stat="out">{{ $storeStats[$store->id]['out'] ?? 0 }}</span>
                                             <span>Out of Stock</span>
                                         </div>
                                     </div>
@@ -846,16 +858,22 @@ $(function() {
 
         $.get('{{ route("inventory.purchase-orders.search-products") }}', {
             search: '',
-            store_id: sourceStoreId
+            store_id: sourceStoreId,
+            limit: 500
         }).done(function(data) {
-            // Transform the data
-            productsData = (data.results || []).map(function(p) {
+            // Response is a flat array of products
+            var products = Array.isArray(data) ? data : (data.results || data.data || []);
+            productsData = products.map(function(p) {
                 return {
                     id: p.id,
-                    name: p.text,
-                    code: p.code,
+                    name: p.product_name || p.text,
+                    code: p.product_code || p.code || '',
                     category_id: p.category_id,
-                    source_qty: p.stock || 0
+                    source_qty: p.stock || 0,
+                    product_type: p.product_type || 'drug',
+                    base_unit_name: p.base_unit_name || 'Piece',
+                    packagings: p.packagings || [],
+                    allow_decimal_qty: p.allow_decimal_qty || false
                 };
             });
             renderProductGrid(productsData);
@@ -892,19 +910,34 @@ $(function() {
             var inCart = cartItems[p.id] ? true : false;
             var outOfStock = p.source_qty <= 0;
             var stockClass = outOfStock ? 'out' : (p.source_qty < 10 ? 'low' : 'good');
+            var typeBadge = {drug: '<span class="badge" style="background:#d4edda;color:#155724;font-size:0.65rem;">Drug</span>', consumable: '<span class="badge" style="background:#fff3cd;color:#856404;font-size:0.65rem;">Cons.</span>', utility: '<span class="badge" style="background:#d1ecf1;color:#0c5460;font-size:0.65rem;">Util.</span>'}[p.product_type] || '';
+            var unitLabel = p.base_unit_name || 'Piece';
 
             html += '<div class="product-card ' + (outOfStock ? 'out-of-stock' : '') + '" data-product-id="' + p.id + '">';
             html += '  <div class="product-info">';
-            html += '    <div class="product-name">' + escapeHtml(p.name) + '</div>';
+            html += '    <div class="product-name">' + escapeHtml(p.name) + ' ' + typeBadge + '</div>';
             html += '    <div class="product-code">' + escapeHtml(p.code || 'No code') + '</div>';
             html += '    <div class="stock-levels">';
-            html += '      <span class="stock-badge ' + stockClass + '"><i class="mdi mdi-store"></i> Available: ' + p.source_qty + '</span>';
+            html += '      <span class="stock-badge ' + stockClass + '"><i class="mdi mdi-store"></i> ' + p.source_qty + ' ' + unitLabel + '</span>';
             html += '    </div>';
             html += '  </div>';
             html += '  <div class="add-actions">';
             if (!outOfStock) {
-                html += '    <input type="number" class="qty-mini-input" value="' + (inCart ? cartItems[p.id].qty : 1) + '" min="1" max="' + p.source_qty + '" data-product-id="' + p.id + '">';
-                html += '    <button type="button" class="btn btn-sm ' + (inCart ? 'btn-success' : 'btn-primary') + ' btn-add-item" data-product-id="' + p.id + '" data-name="' + escapeHtml(p.name) + '" data-code="' + escapeHtml(p.code || '') + '" data-available="' + p.source_qty + '">';
+                var cartPkg = inCart && cartItems[p.id].packaging_id ? cartItems[p.id].packaging_id : '';
+                var defMax = p.source_qty;
+                if (inCart && cartItems[p.id].packaging_base_qty > 1) defMax = Math.floor(p.source_qty / cartItems[p.id].packaging_base_qty);
+                html += '    <input type="number" class="qty-mini-input" value="' + (inCart ? cartItems[p.id].qty : 1) + '" min="1" max="' + defMax + '" data-product-id="' + p.id + '">';
+                if (p.packagings && p.packagings.length > 0) {
+                    html += '    <select class="pkg-select" data-product-id="' + p.id + '">';
+                    html += '      <option value="" data-base-qty="1">' + escapeHtml(unitLabel) + '</option>';
+                    p.packagings.forEach(function(pkg) {
+                        var sel = (String(pkg.id) === String(cartPkg)) ? ' selected' : '';
+                        html += '      <option value="' + pkg.id + '" data-base-qty="' + pkg.base_unit_qty + '"' + sel + '>' + escapeHtml(pkg.name) + ' (' + parseFloat(pkg.base_unit_qty) + ')</option>';
+                    });
+                    html += '    </select>';
+                }
+                html += '    <span class="base-equiv-label" data-product-id="' + p.id + '"></span>';
+                html += '    <button type="button" class="btn btn-sm ' + (inCart ? 'btn-success' : 'btn-primary') + ' btn-add-item" data-product-id="' + p.id + '" data-name="' + escapeHtml(p.name) + '" data-code="' + escapeHtml(p.code || '') + '" data-available="' + p.source_qty + '" data-base-unit="' + escapeHtml(unitLabel) + '">';
                 html += '      <i class="mdi ' + (inCart ? 'mdi-check' : 'mdi-plus') + '"></i> ' + (inCart ? 'Update' : 'Add');
                 html += '    </button>';
             } else {
@@ -930,6 +963,31 @@ $(function() {
         renderProductGrid(productsData);
     });
 
+    // Packaging select change - update max qty and show base equivalence
+    $(document).on('change', '.pkg-select', function() {
+        var productId = $(this).data('product-id');
+        var baseQtyPerUnit = parseFloat($(this).find(':selected').data('base-qty')) || 1;
+        var product = productsData.find(function(pp) { return pp.id == productId; });
+        var $card = $(this).closest('.product-card');
+        var $qtyInput = $card.find('.qty-mini-input');
+        var maxPkgUnits = Math.floor((product ? product.source_qty : 9999) / baseQtyPerUnit);
+        $qtyInput.attr('max', maxPkgUnits);
+        if (parseInt($qtyInput.val()) > maxPkgUnits) $qtyInput.val(maxPkgUnits || 1);
+        var qty = parseInt($qtyInput.val()) || 0;
+        var $equiv = $card.find('.base-equiv-label');
+        if (baseQtyPerUnit > 1 && qty > 0) {
+            $equiv.text('= ' + parseFloat((qty * baseQtyPerUnit).toFixed(4)) + ' ' + (product ? product.base_unit_name : 'units'));
+        } else {
+            $equiv.text('');
+        }
+    });
+
+    $(document).on('input', '.product-card .qty-mini-input', function() {
+        var $card = $(this).closest('.product-card');
+        var $pkgSelect = $card.find('.pkg-select');
+        if ($pkgSelect.length) $pkgSelect.trigger('change');
+    });
+
     // Add item to cart
     $(document).on('click', '.btn-add-item', function() {
         var $btn = $(this);
@@ -937,10 +995,17 @@ $(function() {
         var name = $btn.data('name');
         var code = $btn.data('code');
         var available = parseInt($btn.data('available')) || 0;
-        var qty = parseInt($btn.closest('.add-actions').find('.qty-mini-input').val()) || 1;
+        var baseUnitName = $btn.data('base-unit') || 'units';
+        var $actions = $btn.closest('.add-actions');
+        var qty = parseInt($actions.find('.qty-mini-input').val()) || 1;
+        var $pkgSelect = $actions.find('.pkg-select');
+        var packagingId = $pkgSelect.length ? ($pkgSelect.val() || '') : '';
+        var packagingBaseQty = $pkgSelect.length ? (parseFloat($pkgSelect.find(':selected').data('base-qty')) || 1) : 1;
+        var packagingName = ($pkgSelect.length && $pkgSelect.val()) ? $pkgSelect.find(':selected').text().split(' (')[0] : '';
+        var baseQty = qty * packagingBaseQty;
 
-        if (qty > available) {
-            toastr.error('Quantity exceeds available stock (' + available + ')');
+        if (baseQty > available) {
+            toastr.error('Quantity exceeds available stock (' + available + ' ' + baseUnitName + ')');
             return;
         }
 
@@ -949,11 +1014,22 @@ $(function() {
             return;
         }
 
-        cartItems[productId] = { name: name, code: code, qty: qty, available: available };
+        var wasInCart = !!cartItems[productId];
+        cartItems[productId] = {
+            name: name, code: code,
+            qty: qty,
+            available: available,
+            packaging_id: packagingId,
+            packaging_base_qty: packagingBaseQty,
+            packaging_name: packagingName,
+            base_qty: baseQty,
+            base_unit_name: baseUnitName
+        };
 
         renderCart();
         renderProductGrid(productsData);
-        toastr.success((cartItems[productId] ? 'Updated' : 'Added') + ': ' + qty + 'x ' + name);
+        var label = packagingName ? (qty + ' ' + packagingName + ' (= ' + baseQty + ' ' + baseUnitName + ')') : (qty + ' ' + baseUnitName);
+        toastr.success((wasInCart ? 'Updated' : 'Added') + ': ' + label + ' of ' + name);
     });
 
     // Render cart
@@ -976,20 +1052,31 @@ $(function() {
         var idx = 0;
         for (var id in cartItems) {
             var item = cartItems[id];
+            var cartMax = item.packaging_base_qty > 1 ? Math.floor(item.available / item.packaging_base_qty) : item.available;
+            var pkgLabel = item.packaging_name ? (' <small class="text-info">' + escapeHtml(item.packaging_name) + '</small>') : '';
+            var equivLabel = (item.packaging_name && item.base_qty) ? ('<br><small class="text-muted">= ' + parseFloat(Number(item.base_qty).toFixed(4)) + ' ' + escapeHtml(item.base_unit_name || 'units') + '</small>') : '';
             html += '<div class="cart-item" data-product-id="' + id + '">';
             html += '  <div class="item-info">';
             html += '    <div class="item-name">' + escapeHtml(item.name) + '</div>';
             html += '    <small class="text-muted">' + escapeHtml(item.code) + '</small>';
             html += '  </div>';
             html += '  <div class="item-qty">';
-            html += '    <input type="number" class="qty-mini-input cart-qty-input" value="' + item.qty + '" min="1" max="' + item.available + '" data-product-id="' + id + '">';
-            html += '    <span class="remove-btn" data-product-id="' + id + '"><i class="mdi mdi-delete"></i></span>';
+            html += '    <div class="d-flex align-items-center">';
+            html += '      <input type="number" class="qty-mini-input cart-qty-input" value="' + item.qty + '" min="1" max="' + cartMax + '" data-product-id="' + id + '" data-pkg-base="' + (item.packaging_base_qty || 1) + '">';
+            html += '      ' + pkgLabel;
+            html += '      <span class="remove-btn ml-1" data-product-id="' + id + '"><i class="mdi mdi-delete"></i></span>';
+            html += '    </div>';
+            html += '    ' + equivLabel;
             html += '  </div>';
             html += '</div>';
 
-            // Hidden inputs for form submission
+            // Hidden inputs for form submission (requested_qty is always in base units)
             hiddenHtml += '<input type="hidden" name="items[' + idx + '][product_id]" value="' + id + '">';
-            hiddenHtml += '<input type="hidden" name="items[' + idx + '][requested_qty]" value="' + item.qty + '" class="hidden-qty-' + id + '">';
+            hiddenHtml += '<input type="hidden" name="items[' + idx + '][requested_qty]" value="' + (item.base_qty || item.qty) + '" class="hidden-qty-' + id + '">';
+            if (item.packaging_id) {
+                hiddenHtml += '<input type="hidden" name="items[' + idx + '][packaging_id]" value="' + item.packaging_id + '">';
+                hiddenHtml += '<input type="hidden" name="items[' + idx + '][packaging_qty]" value="' + item.qty + '">';
+            }
             idx++;
         }
 
@@ -1001,19 +1088,22 @@ $(function() {
     $(document).on('change', '.cart-qty-input', function() {
         var productId = $(this).data('product-id');
         var newQty = parseInt($(this).val()) || 1;
+        var pkgBase = parseFloat($(this).data('pkg-base')) || 1;
 
         if (cartItems[productId]) {
-            if (newQty > cartItems[productId].available) {
-                newQty = cartItems[productId].available;
+            var maxPkgQty = pkgBase > 1 ? Math.floor(cartItems[productId].available / pkgBase) : cartItems[productId].available;
+            if (newQty > maxPkgQty) {
+                newQty = maxPkgQty;
                 $(this).val(newQty);
-                toastr.warning('Maximum available: ' + cartItems[productId].available);
+                toastr.warning('Maximum available: ' + maxPkgQty + (cartItems[productId].packaging_name ? ' ' + cartItems[productId].packaging_name : ''));
             }
             if (newQty < 1) {
                 newQty = 1;
                 $(this).val(1);
             }
             cartItems[productId].qty = newQty;
-            $('.hidden-qty-' + productId).val(newQty);
+            cartItems[productId].base_qty = newQty * pkgBase;
+            renderCart();
             renderProductGrid(productsData);
         }
     });
@@ -1035,12 +1125,17 @@ $(function() {
 
         for (var id in cartItems) {
             var item = cartItems[id];
-            var warning = item.qty > item.available ? '<span class="text-danger ml-1"><i class="mdi mdi-alert"></i></span>' : '';
+            var baseQty = item.base_qty || item.qty;
+            var warning = baseQty > item.available ? '<span class="text-danger ml-1"><i class="mdi mdi-alert"></i></span>' : '';
+            var qtyDisplay = '<strong>' + baseQty + '</strong> ' + escapeHtml(item.base_unit_name || 'units');
+            if (item.packaging_name) {
+                qtyDisplay = '<strong>' + item.qty + '</strong> ' + escapeHtml(item.packaging_name) + '<br><small class="text-muted">= ' + baseQty + ' ' + escapeHtml(item.base_unit_name || 'units') + '</small>';
+            }
 
             html += '<tr data-product-id="' + id + '">';
             html += '  <td><strong>' + escapeHtml(item.name) + '</strong><br><small class="text-muted">' + escapeHtml(item.code) + '</small></td>';
-            html += '  <td class="text-center"><strong>' + item.qty + '</strong></td>';
-            html += '  <td class="text-center">' + item.available + warning + '</td>';
+            html += '  <td class="text-center">' + qtyDisplay + '</td>';
+            html += '  <td class="text-center">' + item.available + ' ' + escapeHtml(item.base_unit_name || '') + warning + '</td>';
             html += '  <td class="text-center"><span class="text-danger" style="cursor:pointer;" onclick="removeFromReview(\'' + id + '\')"><i class="mdi mdi-delete"></i></span></td>';
             html += '</tr>';
         }
@@ -1069,13 +1164,13 @@ $(function() {
 
     function updateSummary() {
         var itemCount = Object.keys(cartItems).length;
-        var totalQty = 0;
+        var totalBaseQty = 0;
         for (var id in cartItems) {
-            totalQty += cartItems[id].qty;
+            totalBaseQty += (cartItems[id].base_qty || cartItems[id].qty);
         }
 
         $('#summary-total-items').text(itemCount);
-        $('#summary-total-qty').text(totalQty);
+        $('#summary-total-qty').text(totalBaseQty + ' base units');
         $('#summary-priority').text(ucfirst($('select[name="priority"]').val() || 'normal'));
     }
 

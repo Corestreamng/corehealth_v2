@@ -578,13 +578,18 @@ class StoreWorkbenchController extends Controller
         $qty = $ss->current_quantity;
         $reorderLevel = $ss->reorder_level ?? 10;
 
+        // Show formatted qty with base unit name if product is loaded
+        $product = $ss->relationLoaded('product') ? $ss->product : null;
+        $unitLabel = $product ? ($product->base_unit_name ?? 'pcs') : 'pcs';
+        $formatted = $product && method_exists($product, 'formatQty') ? $product->formatQty($qty) : number_format($qty) . ' ' . $unitLabel;
+
         if ($qty <= 0) {
             return "<span class='badge badge-danger'>Out of Stock</span>";
         } elseif ($qty <= $reorderLevel) {
-            return "<span class='badge badge-warning'>{$qty}</span> <small class='text-muted'>(Low)</small>";
+            return "<span class='badge badge-warning'>{$formatted}</span> <small class='text-muted'>(Low)</small>";
         }
 
-        return "<span class='text-success'>{$qty}</span>";
+        return "<span class='text-success'>{$formatted}</span>";
     }
 
     /**
