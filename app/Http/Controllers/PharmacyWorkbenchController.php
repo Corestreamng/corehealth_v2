@@ -1253,7 +1253,8 @@ class PharmacyWorkbenchController extends Controller
             $patient = Patient::find($patientId);
         }
 
-        $products = Product::with(['category', 'price', 'stock'])
+        $products = Product::with(['category', 'price', 'stock', 'packagings'])
+            ->drugsOnly()
             ->where(function($q) use ($term) {
                 $q->where('product_name', 'like', "%{$term}%")
                   ->orWhere('product_code', 'like', "%{$term}%");
@@ -1308,13 +1309,28 @@ class PharmacyWorkbenchController extends Controller
                     'id' => $product->id,
                     'product_name' => $product->product_name,
                     'product_code' => $product->product_code,
+                    'product_type' => $product->product_type ?? 'drug',
+                    'base_unit_name' => $product->base_unit_name ?? 'Piece',
+                    'allow_decimal_qty' => $product->allow_decimal_qty ?? false,
                     'category_name' => optional($product->category)->category_name,
                     'price' => $basePrice,
                     'stock_qty' => $globalStock,
+                    'stock_formatted' => $product->formatQty($globalStock),
                     'store_stocks' => $storeStocks->toArray(),
                     'payable_amount' => $payableAmount,
                     'claims_amount' => $claimsAmount,
                     'coverage_mode' => $coverageMode,
+                    'packagings' => $product->packagings->sortBy('level')->map(function($pkg) {
+                        return [
+                            'id' => $pkg->id,
+                            'name' => $pkg->name,
+                            'level' => $pkg->level,
+                            'units_in_parent' => (float) $pkg->units_in_parent,
+                            'base_unit_qty' => (float) $pkg->base_unit_qty,
+                            'is_default_purchase' => (bool) $pkg->is_default_purchase,
+                            'is_default_dispense' => (bool) $pkg->is_default_dispense,
+                        ];
+                    })->values(),
                 ];
             });
 

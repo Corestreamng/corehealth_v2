@@ -589,6 +589,7 @@ class ReceptionWorkbenchController extends Controller
         $search = $request->get('q', '');
 
         $query = Product::with(['price', 'category'])
+            ->walkInSellable()
             ->where('status', 1);
 
         if ($search) {
@@ -606,6 +607,8 @@ class ReceptionWorkbenchController extends Controller
                     'id' => $p->id,
                     'name' => $p->product_name,
                     'code' => $p->product_code,
+                    'product_type' => $p->product_type ?? 'drug',
+                    'base_unit_name' => $p->base_unit_name ?? 'Piece',
                     'price' => $p->price->current_sale_price ?? 0,
                     'category' => $p->category->category_name ?? 'Product',
                     'stock' => $p->current_quantity ?? 0,

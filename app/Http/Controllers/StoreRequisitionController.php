@@ -155,7 +155,23 @@ class StoreRequisitionController extends Controller
             ->orderBy('product_name')
             ->get();
 
-        return view('admin.inventory.requisitions.create', compact('stores', 'products'));
+        // Compute per-store stats for store selection cards
+        $storeStats = [];
+        foreach ($stores as $store) {
+            $storeStockQuery = \App\Models\StoreStock::where('store_id', $store->id)->where('is_active', true);
+            $totalProducts = (clone $storeStockQuery)->where('current_quantity', '>', 0)->count();
+            $totalStock = (clone $storeStockQuery)->sum('current_quantity');
+            $lowStock = (clone $storeStockQuery)->whereColumn('current_quantity', '<=', 'reorder_level')->where('current_quantity', '>', 0)->count();
+            $outOfStock = (clone $storeStockQuery)->where('current_quantity', '<=', 0)->count();
+            $storeStats[$store->id] = [
+                'products' => $totalProducts,
+                'stock' => $totalStock,
+                'low' => $lowStock,
+                'out' => $outOfStock,
+            ];
+        }
+
+        return view('admin.inventory.requisitions.create', compact('stores', 'products', 'storeStats'));
     }
 
     /**
@@ -170,6 +186,8 @@ class StoreRequisitionController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.requested_qty' => 'required|integer|min:1',
+            'items.*.packaging_id' => 'nullable|exists:product_packagings,id',
+            'items.*.packaging_qty' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -204,6 +222,7 @@ class StoreRequisitionController extends Controller
             'approver',
             'fulfiller',
             'items.product',
+            'items.packaging',
             'items.sourceBatch',
             'items.destinationBatch',
         ]);

@@ -52,18 +52,19 @@ class EncounterController extends Controller
     public function NewEncounterList(Request $request)
     {
         try {
-            // Fetch the currently logged-in doctor
-            $doc = Staff::where('user_id', Auth::id())->first();
+            // Fetch the currently logged-in doctor (with user for display)
+            $doc = Staff::with('user')->where('user_id', Auth::id())->first();
 
             // Retrieve date range from the request
             $startDate = $request->input('start_date');
             $endDate = $request->input('end_date');
 
-            // Build the base query
-            $queueQuery = DoctorQueue::where(function ($q) use ($doc) {
-                $q->whereIn('clinic_id', $doc->all_clinic_ids)
-                    ->orWhere('staff_id', $doc->id);
-            })
+            // Build the base query — eager-load relationships to avoid N+1
+            $queueQuery = DoctorQueue::with(['patient.user', 'patient.hmo', 'clinic', 'request_entry'])
+                ->where(function ($q) use ($doc) {
+                    $q->whereIn('clinic_id', $doc->all_clinic_ids)
+                        ->orWhere('staff_id', $doc->id);
+                })
                 ->where('status', QueueStatus::WAITING);
 
             // Apply date filtering if both dates are provided
@@ -83,8 +84,9 @@ class EncounterController extends Controller
             return DataTables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
-                    $name = userfullname($patient->user_id);
+                    $patient = $queue->patient;
+                    $user = $patient ? $patient->user : null;
+                    $name = $user ? trim(($user->surname ?? '') . ' ' . ($user->firstname ?? '') . ' ' . ($user->othername ?? '')) : 'N/A';
                     if ($queue->priority === 'emergency') {
                         return '<span class="text-danger fw-bold"><i class="fa fa-exclamation-triangle"></i> ' . e($name) . '</span>';
                     }
@@ -106,22 +108,21 @@ class EncounterController extends Controller
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
-                    return Hmo::find($patient->hmo_id)->name ?? 'N/A';
+                    $hmo = $queue->patient ? $queue->patient->hmo : null;
+                    return $hmo->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
-                    $clinic = Clinic::find($queue->clinic_id);
-                    return $clinic->name ?? 'N/A';
+                    return $queue->clinic->name ?? 'N/A';
                 })
                 ->editColumn('staff_id', function ($queue) use ($doc) {
-                    return userfullname($doc->user_id);
+                    $docUser = $doc->user;
+                    return $docUser ? trim(($docUser->surname ?? '') . ' ' . ($docUser->firstname ?? '') . ' ' . ($docUser->othername ?? '')) : 'N/A';
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
-                    return $patient->file_no;
+                    return $queue->patient->file_no ?? 'N/A';
                 })
                 ->addColumn('view', function ($queue) {
-                    $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
+                    $reqEntry = $queue->request_entry;
                     $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
 
                     $url = route(
@@ -1964,16 +1965,17 @@ class EncounterController extends Controller
     {
         try {
             $doctor = Staff::where('user_id', Auth::id())->first();
-            $patient = Patient::find(request()->get('patient_id'));
+            $patient = Patient::with('user')->find(request()->get('patient_id'));
             $clinic = Clinic::find($doctor->clinic_id);
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
             $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
             $queue_id = $request->get('queue_id');
             $doctorQueue = $queue_id ? DoctorQueue::find($queue_id) : null;
 
+            // Single query — derive categories/subcategories in memory
             $reasons_for_encounter_list = ReasonForEncounter::all();
-            $reasons_for_encounter_cat_list = ReasonForEncounter::distinct()->get(['category']);
-            $reasons_for_encounter_sub_cat_list = ReasonForEncounter::distinct()->get(['sub_category', 'category']);
+            $reasons_for_encounter_cat_list = $reasons_for_encounter_list->unique('category')->values();
+            $reasons_for_encounter_sub_cat_list = $reasons_for_encounter_list->unique(fn($r) => $r->sub_category . '|' . $r->category)->values();
 
             // dd($reasons_for_encounter_cat_list);
 
@@ -2031,54 +2033,42 @@ class EncounterController extends Controller
                     $admission_exists_ = 0;
                 }
 
-                // dd($admission_exists_);
+                // Pre-load data for inline blade queries (avoid N+1 in view)
+                $allClinics = Clinic::orderBy('name')->get();
+                $doctorStaffList = Staff::whereHas('user', function ($q) {
+                    $q->whereHas('roles', fn($r) => $r->where('name', 'DOCTOR'));
+                })->with('user:id,surname,firstname,othername')->orderBy('id')->get();
+                $patientWeight = \App\Models\VitalSign::where('patient_id', $patient->id)
+                    ->whereNotNull('weight')->where('weight', '>', 0)
+                    ->orderBy('created_at', 'desc')->value('weight');
 
                 if ($request->get('admission_req_id') != '' || $admission_exists_ == 1) {
                     $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->where('discharged', 0)->first() ?? $admission_exists;
                     // for nursing notes
                     $patient_id = $patient->id;
-                    $patient = Patient::find($patient_id);
 
-                    $observation_note = NursingNote::with(['patient', 'createdBy', 'type'])
+                    // Single query for all nursing notes (types 1-5), keyed by type_id
+                    $nursingNotes = NursingNote::with(['patient', 'createdBy', 'type'])
                         ->where('patient_id', $patient_id)
                         ->where('completed', false)
-                        ->where('nursing_note_type_id', 1)
-                        ->first() ?? null;
+                        ->whereIn('nursing_note_type_id', [1, 2, 3, 4, 5])
+                        ->get()
+                        ->keyBy('nursing_note_type_id');
 
-                    $observation_note_template = NursingNoteType::find(1);
+                    $observation_note   = $nursingNotes->get(1);
+                    $treatment_sheet    = $nursingNotes->get(2);
+                    $io_chart           = $nursingNotes->get(3);
+                    $labour_record      = $nursingNotes->get(4);
+                    $others_record      = $nursingNotes->get(5);
 
-                    $treatment_sheet = NursingNote::with(['patient', 'createdBy', 'type'])
-                        ->where('patient_id', $patient_id)
-                        ->where('completed', false)
-                        ->where('nursing_note_type_id', 2)
-                        ->first() ?? null;
+                    // Single query for all nursing note templates
+                    $noteTemplates = NursingNoteType::whereIn('id', [1, 2, 3, 4, 5])->get()->keyBy('id');
 
-                    $treatment_sheet_template = NursingNoteType::find(2);
-
-                    $io_chart = NursingNote::with(['patient', 'createdBy', 'type'])
-                        ->where('patient_id', $patient_id)
-                        ->where('completed', false)
-                        ->where('nursing_note_type_id', 3)
-                        ->first() ?? null;
-
-                    $io_chart_template = NursingNoteType::find(3);
-                    // dd($io_chart_template);
-
-                    $labour_record = NursingNote::with(['patient', 'createdBy', 'type'])
-                        ->where('patient_id', $patient_id)
-                        ->where('completed', false)
-                        ->where('nursing_note_type_id', 4)
-                        ->first() ?? null;
-
-                    $labour_record_template = NursingNoteType::find(4);
-
-                    $others_record = NursingNote::with(['patient', 'createdBy', 'type'])
-                        ->where('patient_id', $patient_id)
-                        ->where('completed', false)
-                        ->where('nursing_note_type_id', 5)
-                        ->first() ?? null;
-
-                    $others_record_template = NursingNoteType::find(5);
+                    $observation_note_template = $noteTemplates->get(1);
+                    $treatment_sheet_template  = $noteTemplates->get(2);
+                    $io_chart_template         = $noteTemplates->get(3);
+                    $labour_record_template    = $noteTemplates->get(4);
+                    $others_record_template    = $noteTemplates->get(5);
 
                     return view('admin.doctors.new_encounter')->with([
                         'patient' => $patient,
@@ -2102,6 +2092,9 @@ class EncounterController extends Controller
                         'reasons_for_encounter_list' => $reasons_for_encounter_list,
                         'reasons_for_encounter_cat_list' => $reasons_for_encounter_cat_list,
                         'reasons_for_encounter_sub_cat_list' => $reasons_for_encounter_sub_cat_list,
+                        'allClinics' => $allClinics,
+                        'doctorStaffList' => $doctorStaffList,
+                        'patientWeight' => $patientWeight,
                     ]);
                 } else {
                     return view('admin.doctors.new_encounter')->with([
@@ -2115,6 +2108,9 @@ class EncounterController extends Controller
                         'reasons_for_encounter_list' => $reasons_for_encounter_list,
                         'reasons_for_encounter_cat_list' => $reasons_for_encounter_cat_list,
                         'reasons_for_encounter_sub_cat_list' => $reasons_for_encounter_sub_cat_list,
+                        'allClinics' => $allClinics,
+                        'doctorStaffList' => $doctorStaffList,
+                        'patientWeight' => $patientWeight,
                     ]);
                 }
             }
@@ -2610,10 +2606,21 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'consult_presc_id' => 'required|array|min:1',
-                'consult_presc_id.*' => 'required|integer',
+                'consult_presc_id.*' => 'required|integer|exists:products,id',
                 'consult_presc_dose' => 'required|array|min:1',
                 'consult_presc_dose.*' => 'nullable|string',
             ]);
+
+            // Validate all selected products are drugs (prescriptions should only contain drugs)
+            $nonDrugs = \App\Models\Product::whereIn('id', $request->consult_presc_id)
+                ->where('product_type', '!=', 'drug')
+                ->pluck('product_name');
+            if ($nonDrugs->isNotEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only drug-type products can be prescribed. Non-drug items: ' . $nonDrugs->implode(', ')
+                ], 422);
+            }
 
             if (count($request->consult_presc_id) !== count($request->consult_presc_dose)) {
                 return response()->json([

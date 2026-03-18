@@ -38,6 +38,8 @@ class ProductRequest extends Model implements Auditable
         'qty_adjustment_reason',
         'qty_adjusted_at',
         'qty_adjusted_by',
+        'packaging_id',
+        'packaging_qty',
     ];
 
     protected $casts = [
@@ -122,6 +124,14 @@ class ProductRequest extends Model implements Auditable
     public function adaptedFromProduct()
     {
         return $this->belongsTo(Product::class, 'adapted_from_product_id', 'id');
+    }
+
+    /**
+     * Get the packaging used for this prescription line.
+     */
+    public function packaging()
+    {
+        return $this->belongsTo(ProductPackaging::class, 'packaging_id');
     }
 
     /**

@@ -459,8 +459,8 @@
                                             </label>
                                             <select name="target_clinic_id" class="form-select form-select-sm">
                                                 <option value="">-- Select Clinic --</option>
-                                                @foreach(\App\Models\Clinic::orderBy('name')->get() as $clinic)
-                                                    <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                                                @foreach($allClinics as $c)
+                                                    <option value="{{ $c->id }}">{{ $c->name }}</option>
                                                 @endforeach
                                             </select>
                                             <small class="form-text text-muted">Required for internal referrals</small>
@@ -472,7 +472,7 @@
                                             </label>
                                             <select name="target_doctor_id" class="form-select form-select-sm">
                                                 <option value="">-- Any Available Doctor --</option>
-                                                @foreach(\App\Models\Staff::whereHas('user', function($q) { $q->whereHas('roles', fn($r) => $r->where('name', 'DOCTOR')); })->with('user:id,surname,firstname,othername')->orderBy('id')->get() as $staff)
+                                                @foreach($doctorStaffList as $staff)
                                                     <option value="{{ $staff->id }}">{{ $staff->user ? trim(($staff->user->surname ?? '').' '.($staff->user->firstname ?? '')) : 'Staff #'.$staff->id }}</option>
                                                 @endforeach
                                             </select>
@@ -842,7 +842,7 @@
                             </div>
                         </div>
                         <hr>
-                        @include('admin.doctors.partials.clinical_notes')
+                        {{-- clinical_notes partial already included in #clinical_notes tab --}}
             {{-- Conclusion tab removed - now handled by modal --}}
                 <style>
                     /* Custom Toggle Switch Styles */
@@ -3373,7 +3373,7 @@
         });
 
         // Patient weight from last vital that recorded a weight (for dose calculators)
-        window.patientWeight = <?php echo json_encode(\App\Models\VitalSign::where('patient_id', $patient->id)->whereNotNull('weight')->where('weight', '>', 0)->orderBy('created_at', 'desc')->value('weight')); ?>;
+        window.patientWeight = <?php echo json_encode($patientWeight ?? null); ?>;
 
         // Initialize dose mode toggle — structured by default (Plan §2.2)
         // Uses the shared ClinicalOrdersKit from clinical-orders-shared.js

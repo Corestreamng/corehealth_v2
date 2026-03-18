@@ -5634,6 +5634,13 @@
                                                 <input type="number" class="form-control" id="consumable-quantity" min="1" value="1" required>
                                             </div>
                                             <div class="form-group col-md-2">
+                                                <label for="consumable-packaging"><i class="mdi mdi-package-variant"></i> Unit</label>
+                                                <select class="form-control" id="consumable-packaging">
+                                                    <option value="" data-base="1">Base Unit</option>
+                                                </select>
+                                                <small class="text-muted" id="consumable-base-equiv" style="display:none;">= <strong id="consumable-base-qty">0</strong> <span id="consumable-base-unit-name">units</span></small>
+                                            </div>
+                                            <div class="form-group col-md-2">
                                                 <label for="consumable-price"><i class="mdi mdi-currency-ngn"></i> Total</label>
                                                 <input type="text" class="form-control" id="consumable-price" readonly placeholder="Auto">
                                             </div>
@@ -14491,6 +14498,9 @@ function selectConsumable(id, name, unitPrice, code) {
     $('#consumable-selected-stock').show();
     updateConsumableStockDisplay();
 
+    // Load packaging options for this product
+    loadConsumablePackagings(id);
+
     // Fetch and populate batch dropdown for this product
     fetchProductBatchesForSelect(id, storeId, '#consumable-batch-select', function(response) {
         if (response.success && response.total_available > 0) {
@@ -14527,6 +14537,59 @@ function updateConsumablePrice(unitPrice) {
     $('#consumable-price').val('₦' + total.toFixed(2));
     $('#consumable-quantity').data('unit-price', unitPrice);
 }
+
+// Load packaging options for selected consumable
+function loadConsumablePackagings(productId) {
+    const $select = $('#consumable-packaging');
+    $select.html('<option value="" data-base="1">Base Unit</option>');
+    $('#consumable-base-equiv').hide();
+
+    $.ajax({
+        url: '/products/' + productId + '/packagings',
+        method: 'GET',
+        success: function(response) {
+            const baseUnitName = response.base_unit_name || 'units';
+            $select.html(`<option value="" data-base="1">${baseUnitName} (base)</option>`);
+            $('#consumable-base-unit-name').text(baseUnitName);
+
+            if (response.packagings && response.packagings.length > 0) {
+                let defaultSelected = false;
+                response.packagings.forEach(function(pkg) {
+                    const isDefault = pkg.is_default_dispense ? ' selected' : '';
+                    if (pkg.is_default_dispense) defaultSelected = true;
+                    $select.append(`<option value="${pkg.id}" data-base="${pkg.base_unit_qty}"${isDefault}>${pkg.name} (${parseFloat(pkg.base_unit_qty)} ${baseUnitName})</option>`);
+                });
+                updateConsumableBaseEquiv();
+            }
+
+            // Set step for decimal qty support
+            if (response.allow_decimal_qty) {
+                $('#consumable-quantity').attr('step', 'any').attr('min', '0.01');
+            } else {
+                $('#consumable-quantity').attr('step', '1').attr('min', '1');
+            }
+        }
+    });
+}
+
+// Update base unit equivalent display
+function updateConsumableBaseEquiv() {
+    const $sel = $('#consumable-packaging');
+    const base = parseFloat($sel.find(':selected').data('base')) || 1;
+    const qty = parseFloat($('#consumable-quantity').val()) || 0;
+    const total = qty * base;
+
+    if (base > 1) {
+        $('#consumable-base-qty').text(parseFloat(total.toFixed(4)));
+        $('#consumable-base-equiv').show();
+    } else {
+        $('#consumable-base-equiv').hide();
+    }
+}
+
+$('#consumable-packaging, #consumable-quantity').on('change input', function() {
+    updateConsumableBaseEquiv();
+});
 
 // Service Billing Form Submit
 $('#service-billing-form').on('submit', function(e) {
@@ -14582,7 +14645,9 @@ $('#consumable-billing-form').on('submit', function(e) {
 
     const productId = $('#consumable-id').val();
     const productName = $('#consumable-search').val();
-    const quantity = parseInt($('#consumable-quantity').val()) || 1;
+    const pkgBase = parseFloat($('#consumable-packaging').find(':selected').data('base')) || 1;
+    const rawQty = parseFloat($('#consumable-quantity').val()) || 1;
+    const quantity = Math.round(rawQty * pkgBase); // Convert to base units
 
     if (!productId) {
         showNotification('error', 'Please select a consumable');
@@ -14614,7 +14679,9 @@ $('#consumable-billing-form').on('submit', function(e) {
             store_id: storeId,
             batch_id: $('#consumable-batch-select').val() || null, // Send selected batch ID
             is_medication: $('#consumable-is-medication').is(':checked') ? 1 : 0,
-            dose: $('#consumable-dose').val() || null
+            dose: $('#consumable-dose').val() || null,
+            packaging_id: $('#consumable-packaging').val() || null,
+            packaging_qty: rawQty
         };
 
         $.ajax({
@@ -14631,6 +14698,8 @@ $('#consumable-billing-form').on('submit', function(e) {
                 $('#consumable-is-medication').prop('checked', false);
                 $('#consumable-dose-section').hide();
                 $('#consumable-dose').val('');
+                $('#consumable-packaging').html('<option value="" data-base="1">Base Unit</option>');
+                $('#consumable-base-equiv').hide();
                 $('#consumable-batch-select').html('<option value="">-- Select product first --</option>');
                 $('#consumable-batch-info').hide();
                 $('#consumable-store-stock-summary').html('<p class="text-muted mb-0">Select a product to see stock</p>');

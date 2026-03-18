@@ -32,6 +32,8 @@ class StoreRequisitionItem extends Model implements Auditable
         'destination_batch_id',
         'status',
         'notes',
+        'packaging_id',
+        'packaging_qty',
     ];
 
     protected $casts = [
@@ -82,6 +84,14 @@ class StoreRequisitionItem extends Model implements Auditable
     public function destinationBatch()
     {
         return $this->belongsTo(StockBatch::class, 'destination_batch_id');
+    }
+
+    /**
+     * Get the packaging used for this requisition line.
+     */
+    public function packaging()
+    {
+        return $this->belongsTo(ProductPackaging::class, 'packaging_id');
     }
 
     // ===== ACCESSORS =====

@@ -135,7 +135,7 @@
                         @foreach($purchaseOrder->items as $index => $item)
                         <div class="item-row" data-index="{{ $index }}">
                             <div class="row align-items-end">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group mb-0">
                                         <label>Product <span class="text-danger">*</span></label>
                                         <select name="items[{{ $index }}][product_id]" class="form-control product-select" required>
@@ -145,9 +145,20 @@
                                 </div>
                                 <div class="col-md-2">
                                     <div class="form-group mb-0">
+                                        <label>Packaging</label>
+                                        <select name="items[{{ $index }}][packaging_id]" class="form-control packaging-select"
+                                                data-product-id="{{ $item->product_id }}" data-selected="{{ $item->packaging_id }}">
+                                            <option value="">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
+                                        </select>
+                                        <input type="hidden" name="items[{{ $index }}][packaging_qty]" class="packaging-qty-hidden" value="{{ $item->packaging_qty }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group mb-0">
                                         <label>Quantity <span class="text-danger">*</span></label>
                                         <input type="number" name="items[{{ $index }}][quantity_ordered]"
                                                class="form-control qty-input" value="{{ $item->quantity_ordered }}" min="1" required>
+                                        <small class="text-muted base-equiv-label"></small>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
@@ -163,7 +174,7 @@
                                         <input type="text" class="form-control line-total" readonly value="{{ number_format($item->line_total, 2) }}">
                                     </div>
                                 </div>
-                                <div class="col-md-2 text-right">
+                                <div class="col-md-1 text-right">
                                     <span class="remove-item-btn" onclick="removeItem(this)">
                                         <i class="mdi mdi-delete mdi-24px"></i>
                                     </span>
@@ -234,7 +245,7 @@
 <template id="item-row-template">
     <div class="item-row" data-index="__INDEX__">
         <div class="row align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group mb-0">
                     <label>Product <span class="text-danger">*</span></label>
                     <select name="items[__INDEX__][product_id]" class="form-control product-select" required>
@@ -244,9 +255,19 @@
             </div>
             <div class="col-md-2">
                 <div class="form-group mb-0">
+                    <label>Packaging</label>
+                    <select name="items[__INDEX__][packaging_id]" class="form-control packaging-select">
+                        <option value="">Base Unit</option>
+                    </select>
+                    <input type="hidden" name="items[__INDEX__][packaging_qty]" class="packaging-qty-hidden">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group mb-0">
                     <label>Quantity <span class="text-danger">*</span></label>
                     <input type="number" name="items[__INDEX__][quantity_ordered]"
                            class="form-control qty-input" value="1" min="1" required>
+                    <small class="text-muted base-equiv-label"></small>
                 </div>
             </div>
             <div class="col-md-2">
@@ -262,7 +283,7 @@
                     <input type="text" class="form-control line-total" readonly value="0.00">
                 </div>
             </div>
-            <div class="col-md-2 text-right">
+            <div class="col-md-1 text-right">
                 <span class="remove-item-btn" onclick="removeItem(this)">
                     <i class="mdi mdi-delete mdi-24px"></i>
                 </span>
@@ -307,6 +328,27 @@ $(function() {
     initProductSelect($('.product-select'));
     calculateTotals();
 
+    // Load packagings for existing items that have a product_id and data-selected
+    $('.packaging-select[data-product-id]').each(function() {
+        var select = $(this);
+        var productId = select.data('product-id');
+        var selectedId = select.data('selected');
+        if (productId) {
+            $.get('/products/' + productId + '/packagings', function(data) {
+                select.empty().append('<option value="">' + (data.base_unit_name || 'Base Unit') + '</option>');
+                var row = select.closest('.item-row');
+                row.data('base-unit-name', data.base_unit_name);
+                (data.packagings || []).forEach(function(pkg) {
+                    var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
+                    var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
+                    select.append(opt);
+                });
+                if (selectedId) select.val(selectedId);
+                updateBaseEquiv(row);
+            });
+        }
+    });
+
     // Add item
     $('#add-item-btn').on('click', function() {
         var template = $('#item-row-template').html();
@@ -326,7 +368,14 @@ $(function() {
         var qty = parseFloat(row.find('.qty-input').val()) || 0;
         var price = parseFloat(row.find('.price-input').val()) || 0;
         row.find('.line-total').val((qty * price).toFixed(2));
+        updateBaseEquiv(row);
         calculateTotals();
+    });
+
+    // Packaging dropdown change
+    $(document).on('change', '.packaging-select', function() {
+        var row = $(this).closest('.item-row');
+        updateBaseEquiv(row);
     });
 
     // Recalculate on tax/shipping change
@@ -360,7 +409,10 @@ function initProductSelect(element) {
                         return {
                             id: item.id,
                             text: item.product_name + ' (' + item.product_code + ')',
-                            price: item.purchase_price || item.unit_price || 0
+                            price: item.purchase_price || item.unit_price || 0,
+                            packagings: item.packagings || [],
+                            base_unit_name: item.base_unit_name || 'Piece',
+                            product_type: item.product_type || 'drug'
                         };
                     })
                 };
@@ -371,10 +423,25 @@ function initProductSelect(element) {
         var row = $(this).closest('.item-row');
         if (data.price) {
             row.find('.price-input').val(data.price);
-            var qty = parseFloat(row.find('.qty-input').val()) || 1;
-            row.find('.line-total').val((qty * data.price).toFixed(2));
-            calculateTotals();
         }
+        // Populate packaging dropdown
+        var pkgSelect = row.find('.packaging-select');
+        pkgSelect.empty().append('<option value="">' + data.base_unit_name + ' (base)</option>');
+        if (data.packagings && data.packagings.length) {
+            var defaultPurchase = null;
+            data.packagings.forEach(function(pkg) {
+                var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
+                var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
+                if (pkg.is_default_purchase) { defaultPurchase = pkg.id; opt.attr('selected', true); }
+                pkgSelect.append(opt);
+            });
+            if (defaultPurchase) pkgSelect.val(defaultPurchase).trigger('change');
+        }
+        // Store packagings data on the row for later use
+        row.data('packagings', data.packagings || []);
+        row.data('base-unit-name', data.base_unit_name);
+        updateBaseEquiv(row);
+        calculateTotals();
     });
 }
 
@@ -401,6 +468,22 @@ function calculateTotals() {
 
     $('#subtotal').text('₦' + subtotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
     $('#grand-total').text('₦' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+}
+
+function updateBaseEquiv(row) {
+    var pkgSelect = row.find('.packaging-select');
+    var selected = pkgSelect.find('option:selected');
+    var qty = parseFloat(row.find('.qty-input').val()) || 0;
+    var baseQty = parseFloat(selected.data('base-qty')) || 1;
+    var baseName = row.data('base-unit-name') || 'units';
+    var label = row.find('.base-equiv-label');
+    if (baseQty > 1 && qty > 0) {
+        label.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' ' + baseName);
+    } else {
+        label.text('');
+    }
+    // Update hidden packaging_qty
+    row.find('.packaging-qty-hidden').val(pkgSelect.val() ? qty : '');
 }
 
 function submitForm(action) {
@@ -434,7 +517,9 @@ function submitForm(action) {
         items.push({
             product_id: productId,
             ordered_qty: parseInt(quantity),
-            unit_cost: parseFloat(unitPrice)
+            unit_cost: parseFloat(unitPrice),
+            packaging_id: row.find('.packaging-select').val() || null,
+            packaging_qty: row.find('.packaging-select').val() ? parseFloat(quantity) : null
         });
     });
 

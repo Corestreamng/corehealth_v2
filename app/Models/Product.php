@@ -23,6 +23,13 @@ protected $fillable = [
         'status',
         'current_quantity',
         'promotion',
+        'product_type',
+        'base_unit_name',
+        'allow_decimal_qty',
+    ];
+
+    protected $casts = [
+        'allow_decimal_qty' => 'boolean',
     ];
 
     // public function stoke_other()
@@ -152,5 +159,71 @@ protected $fillable = [
             ->hasStock()
             ->expiringSoon($days)
             ->get();
+    }
+
+    // ===== PACKAGING RELATIONSHIPS =====
+
+    /**
+     * Get all packaging levels for this product
+     */
+    public function packagings()
+    {
+        return $this->hasMany(ProductPackaging::class);
+    }
+
+    // ===== SCOPES =====
+
+    public function scopeDrugsOnly($query)
+    {
+        return $query->where('product_type', 'drug');
+    }
+
+    public function scopeNonDrugs($query)
+    {
+        return $query->where('product_type', '!=', 'drug');
+    }
+
+    public function scopeConsumablesOnly($query)
+    {
+        return $query->where('product_type', 'consumable');
+    }
+
+    public function scopeUtilitiesOnly($query)
+    {
+        return $query->where('product_type', 'utility');
+    }
+
+    public function scopeNurseBillable($query)
+    {
+        return $query; // all types allowed in nurse billing
+    }
+
+    public function scopeWalkInSellable($query)
+    {
+        return $query; // all types sellable at walk-in/reception
+    }
+
+    // ===== PACKAGING HELPERS =====
+
+    /**
+     * Format a base-unit quantity with the product's base unit name.
+     * e.g. "120 Tablets" or "5.25 ml"
+     */
+    public function formatQty(float $qty): string
+    {
+        $label = $this->base_unit_name ?? 'units';
+        $formatted = $this->allow_decimal_qty
+            ? rtrim(rtrim(number_format($qty, 4), '0'), '.')
+            : number_format($qty, 0);
+
+        return "{$formatted} {$label}";
+    }
+
+    /**
+     * Return just the base unit label (e.g. "Tablets", "ml").
+     */
+    public function baseQtyLabel(): string
+    {
+        return $this->base_unit_name ?? 'units';
     }
 }

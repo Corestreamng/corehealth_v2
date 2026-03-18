@@ -111,11 +111,12 @@
                 <table class="table table-sm mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 35%">Product</th>
-                            <th class="text-center" style="width: 12%">Ordered</th>
-                            <th class="text-center" style="width: 12%">Received</th>
-                            <th class="text-center" style="width: 12%">Pending</th>
-                            <th class="text-center" style="width: 15%">Receive Now</th>
+                            <th style="width: 30%">Product</th>
+                            <th class="text-center" style="width: 10%">Ordered</th>
+                            <th class="text-center" style="width: 10%">Received</th>
+                            <th class="text-center" style="width: 10%">Pending</th>
+                            <th style="width: 14%">Receive As</th>
+                            <th class="text-center" style="width: 12%">Receive Now</th>
                             <th style="width: 14%">Batch #</th>
                         </tr>
                     </thead>
@@ -129,14 +130,36 @@
                             <td>
                                 <div>{{ $item->product->product_name ?? 'Unknown' }}</div>
                                 <small class="text-muted">{{ $item->product->product_code }}</small>
+                                @if($item->packaging)
+                                <br><small class="text-primary">Ordered as: {{ $item->packaging_qty }} {{ $item->packaging->name }}</small>
+                                @endif
                                 <br>
                                 <span class="toggle-batch" data-item-id="{{ $item->id }}">
                                     <i class="mdi mdi-chevron-down"></i> More details
                                 </span>
                             </td>
-                            <td class="text-center align-middle">{{ $item->ordered_qty }}</td>
+                            <td class="text-center align-middle">
+                                {{ $item->ordered_qty }}
+                                <br><small class="text-muted">{{ $item->product->base_unit_name ?? 'pcs' }}</small>
+                            </td>
                             <td class="text-center align-middle">{{ $item->received_qty ?? 0 }}</td>
                             <td class="text-center align-middle text-warning"><strong>{{ $pending }}</strong></td>
+                            <td class="align-middle">
+                                <select class="form-control form-control-sm receive-packaging-select"
+                                        data-item-id="{{ $item->id }}"
+                                        data-product-id="{{ $item->product_id }}">
+                                    <option value="" data-base-qty="1">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
+                                    @if($item->product->packagings)
+                                        @foreach($item->product->packagings->sortBy('level') as $pkg)
+                                        <option value="{{ $pkg->id }}" data-base-qty="{{ $pkg->base_unit_qty }}"
+                                            {{ ($item->packaging_id == $pkg->id) ? 'selected' : '' }}>
+                                            {{ $pkg->name }} ({{ $pkg->base_unit_qty == intval($pkg->base_unit_qty) ? intval($pkg->base_unit_qty) : $pkg->base_unit_qty }} {{ $item->product->base_unit_name ?? 'pcs' }})
+                                        </option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <small class="text-muted receive-base-equiv"></small>
+                            </td>
                             <td class="text-center align-middle">
                                 <input type="number"
                                        class="form-control form-control-sm qty-input receive-qty"
@@ -268,7 +291,29 @@ $(document).on('click', '.toggle-batch', function() {
 function fillAll() {
     $('.receive-qty').each(function() {
         $(this).val($(this).attr('max'));
+        updateReceiveBaseEquiv($(this).closest('tr'));
     });
+}
+
+// Update base-unit equivalent display on packaging/qty change
+$(document).on('change', '.receive-packaging-select', function() {
+    updateReceiveBaseEquiv($(this).closest('tr'));
+});
+$(document).on('input', '.receive-qty', function() {
+    updateReceiveBaseEquiv($(this).closest('tr'));
+});
+
+function updateReceiveBaseEquiv(row) {
+    var pkgSelect = row.find('.receive-packaging-select');
+    var selected = pkgSelect.find('option:selected');
+    var qty = parseFloat(row.find('.receive-qty').val()) || 0;
+    var baseQty = parseFloat(selected.data('base-qty')) || 1;
+    var label = row.find('.receive-base-equiv');
+    if (baseQty > 1 && qty > 0) {
+        label.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' base units');
+    } else {
+        label.text('');
+    }
 }
 
 function receiveItems() {
@@ -302,7 +347,9 @@ function receiveItems() {
                 expiry_date: expiryDate || null,
                 actual_cost: parseFloat(costPrice) || null,
                 selling_price: parseFloat(sellingPrice) || null,
-                manufacture_date: manufactureDate || null
+                manufacture_date: manufactureDate || null,
+                received_packaging_id: $(`.receive-packaging-select[data-item-id="${itemId}"]`).val() || null,
+                received_packaging_qty: $(`.receive-packaging-select[data-item-id="${itemId}"]`).val() ? qty : null
             });
         }
     });

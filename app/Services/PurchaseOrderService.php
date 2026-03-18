@@ -61,6 +61,8 @@ class PurchaseOrderService
                     'product_id' => $itemData['product_id'],
                     'ordered_qty' => $itemData['ordered_qty'],
                     'unit_cost' => $itemData['unit_cost'],
+                    'packaging_id' => $itemData['packaging_id'] ?? null,
+                    'packaging_qty' => $itemData['packaging_qty'] ?? null,
                     'status' => PurchaseOrderItem::STATUS_PENDING,
                 ]);
             }
@@ -103,6 +105,8 @@ class PurchaseOrderService
                         'product_id' => $itemData['product_id'],
                         'ordered_qty' => $itemData['ordered_qty'],
                         'unit_cost' => $itemData['unit_cost'],
+                        'packaging_id' => $itemData['packaging_id'] ?? null,
+                        'packaging_qty' => $itemData['packaging_qty'] ?? null,
                         'status' => PurchaseOrderItem::STATUS_PENDING,
                     ]);
                 }
@@ -133,6 +137,8 @@ class PurchaseOrderService
                 'product_id' => $itemData['product_id'],
                 'ordered_qty' => $itemData['ordered_qty'],
                 'unit_cost' => $itemData['unit_cost'],
+                'packaging_id' => $itemData['packaging_id'] ?? null,
+                'packaging_qty' => $itemData['packaging_qty'] ?? null,
                 'status' => PurchaseOrderItem::STATUS_PENDING,
             ]);
 
@@ -274,6 +280,13 @@ class PurchaseOrderService
                 ]);
 
                 $createdBatches[] = $batch;
+
+                // Save received packaging info if provided
+                if (!empty($receiveData['received_packaging_id'])) {
+                    $item->received_packaging_id = $receiveData['received_packaging_id'];
+                    $item->received_packaging_qty = $receiveData['received_packaging_qty'] ?? null;
+                    $item->save();
+                }
 
                 // Update item received qty
                 $item->receive($qty, $actualCost);

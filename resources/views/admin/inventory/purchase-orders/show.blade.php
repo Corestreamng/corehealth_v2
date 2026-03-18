@@ -331,7 +331,6 @@
     <div style="font-size: 10pt; margin-top: 5px;">{{ $purchaseOrder->po_number }}</div>
 </div>
 
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Header -->
@@ -473,12 +472,26 @@
                                     <td>
                                         <strong>{{ $item->product->product_name ?? 'Product Deleted' }}</strong>
                                         <br><small class="text-muted">{{ $item->product->product_code ?? 'N/A' }}</small>
+                                        @if($item->product && $item->product->product_type)
+                                        <span class="badge badge-{{ $item->product->product_type === 'drug' ? 'success' : ($item->product->product_type === 'consumable' ? 'warning' : 'info') }}" style="font-size:.65rem">{{ ucfirst($item->product->product_type) }}</span>
+                                        @endif
                                     </td>
-                                    <td class="text-center">{{ $item->ordered_qty }}</td>
+                                    <td class="text-center">
+                                        {{ $item->ordered_qty }}
+                                        @if($item->packaging)
+                                        <br><small class="text-primary">{{ $item->packaging_qty }} {{ $item->packaging->name }}</small>
+                                        @endif
+                                        @if($item->product)
+                                        <br><small class="text-muted">{{ $item->product->base_unit_name ?? 'pcs' }}</small>
+                                        @endif
+                                    </td>
                                     <td class="text-center">
                                         <span class="{{ $item->received_qty >= $item->ordered_qty ? 'text-success font-weight-bold' : '' }}">
                                             {{ $item->received_qty ?? 0 }}
                                         </span>
+                                        @if($item->receivedPackaging)
+                                        <br><small class="text-info">{{ $item->received_packaging_qty }} {{ $item->receivedPackaging->name }}</small>
+                                        @endif
                                     </td>
                                     <td class="text-right">₦{{ number_format($item->unit_cost, 2) }}</td>
                                     <td class="text-right">₦{{ number_format($item->line_total, 2) }}</td>
