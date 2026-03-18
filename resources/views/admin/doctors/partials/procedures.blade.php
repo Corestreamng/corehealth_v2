@@ -233,7 +233,7 @@
                                         @php
                                             $categoryName = $user->category->name ?? 'Staff';
                                             $specialty = $user->staff_profile->specialization->name ?? null;
-                                            $label = userfullname($user->id) . ' - ' . $categoryName;
+                                            $label = trim(($user->surname ?? '') . ' ' . ($user->firstname ?? '') . ' ' . ($user->othername ?? '')) . ' - ' . $categoryName;
                                             if ($specialty) {
                                                 $label .= ' (' . $specialty . ')';
                                             }

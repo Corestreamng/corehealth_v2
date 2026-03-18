@@ -71,8 +71,18 @@
                     <tbody>
                         @foreach($requisition->items as $item)
                         <tr>
-                            <td>{{ $item->product->product_name ?? 'Unknown' }}</td>
-                            <td class="text-center">{{ $item->requested_qty }}</td>
+                            <td>
+                                {{ $item->product->product_name ?? 'Unknown' }}
+                                @if($item->packaging)
+                                    <br><small class="text-info">({{ $item->packaging_qty }} {{ $item->packaging->name }})</small>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                {{ $item->requested_qty }}
+                                @if($item->product && $item->product->base_unit_name)
+                                    <small class="text-muted">{{ $item->product->base_unit_name }}</small>
+                                @endif
+                            </td>
                             <td class="text-center">
                                 @php
                                     $available = \App\Models\StockBatch::where('product_id', $item->product_id)

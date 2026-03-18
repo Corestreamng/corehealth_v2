@@ -13,6 +13,7 @@ use App\Models\Patient;
 use App\Models\Staff;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductPackaging;
 use App\Models\Price;
 use App\Models\Stock;
 use App\Models\StockBatch;
@@ -99,16 +100,19 @@ class ImportExportController extends Controller
             'A1' => 'product_name',
             'B1' => 'product_code',
             'C1' => 'category_name',
-            'D1' => 'description',
-            'E1' => 'unit',
-            'F1' => 'cost_price',
-            'G1' => 'sale_price',
-            'H1' => 'reorder_level',
-            'I1' => 'initial_quantity',
-            'J1' => 'store_name',
-            'K1' => 'batch_number',
-            'L1' => 'expiry_date',
-            'M1' => 'is_active',
+            'D1' => 'product_type',
+            'E1' => 'base_unit_name',
+            'F1' => 'allow_decimal_qty',
+            'G1' => 'description',
+            'H1' => 'cost_price',
+            'I1' => 'sale_price',
+            'J1' => 'reorder_level',
+            'K1' => 'initial_quantity',
+            'L1' => 'store_name',
+            'M1' => 'batch_number',
+            'N1' => 'expiry_date',
+            'O1' => 'is_active',
+            'P1' => 'packaging_levels',
         ];
 
         foreach ($headers as $cell => $value) {
@@ -116,12 +120,13 @@ class ImportExportController extends Controller
         }
 
         // Style headers
-        $this->styleHeaders($sheet, 'A1:M1');
+        $this->styleHeaders($sheet, 'A1:P1');
 
         // Get valid values for dropdowns
         $categories = ProductCategory::orderBy('category_name')->pluck('category_name')->toArray();
         $stores = Store::where('status', 1)->orderBy('store_name')->pluck('store_name')->toArray();
-        $units = ['tablets', 'capsules', 'bottles', 'vials', 'ampoules', 'sachets', 'tubes', 'boxes', 'packs', 'pieces'];
+        $productTypes = ['drug', 'consumable', 'utility'];
+        $yesNoOptions = ['1', '0'];
         $activeOptions = ['1', '0'];
 
         // Create a hidden sheet for dropdown values
@@ -144,15 +149,21 @@ class ImportExportController extends Controller
         $storeLastRow = $row - 1;
 
         $row = 1;
-        foreach ($units as $unit) {
-            $lookupSheet->setCellValue('C' . $row, $unit);
+        foreach ($productTypes as $type) {
+            $lookupSheet->setCellValue('C' . $row, $type);
             $row++;
         }
-        $unitLastRow = $row - 1;
+        $typeLastRow = $row - 1;
+
+        $row = 1;
+        foreach ($yesNoOptions as $opt) {
+            $lookupSheet->setCellValue('D' . $row, $opt);
+            $row++;
+        }
 
         $row = 1;
         foreach ($activeOptions as $opt) {
-            $lookupSheet->setCellValue('D' . $row, $opt);
+            $lookupSheet->setCellValue('E' . $row, $opt);
             $row++;
         }
 
@@ -161,27 +172,30 @@ class ImportExportController extends Controller
 
         // Add dropdown validations for 100 rows
         for ($i = 2; $i <= 101; $i++) {
-            // Category dropdown
+            // Category dropdown (C)
             if ($catLastRow > 0) {
                 $this->addDropdownValidation($sheet, "C{$i}", "'_Lookups'!\$A\$1:\$A\${$catLastRow}");
             }
 
-            // Store dropdown
+            // Product type dropdown (D)
+            $this->addDropdownValidation($sheet, "D{$i}", "'_Lookups'!\$C\$1:\$C\${$typeLastRow}");
+
+            // Allow decimal qty dropdown (F)
+            $this->addDropdownValidation($sheet, "F{$i}", "'_Lookups'!\$D\$1:\$D\$2");
+
+            // Store dropdown (L)
             if ($storeLastRow > 0) {
-                $this->addDropdownValidation($sheet, "J{$i}", "'_Lookups'!\$B\$1:\$B\${$storeLastRow}");
+                $this->addDropdownValidation($sheet, "L{$i}", "'_Lookups'!\$B\$1:\$B\${$storeLastRow}");
             }
 
-            // Unit dropdown
-            $this->addDropdownValidation($sheet, "E{$i}", "'_Lookups'!\$C\$1:\$C\${$unitLastRow}");
-
-            // Is Active dropdown
-            $this->addDropdownValidation($sheet, "M{$i}", "'_Lookups'!\$D\$1:\$D\$2");
+            // Is Active dropdown (O)
+            $this->addDropdownValidation($sheet, "O{$i}", "'_Lookups'!\$E\$1:\$E\$2");
         }
 
         // Add sample data
         $sampleData = [
-            ['Paracetamol 500mg', 'PARA-500', $categories[0] ?? 'General', 'Pain relief tablets', 'tablets', '50.00', '100.00', '100', '500', $stores[0] ?? '', 'BTH-001', '2027-12-31', '1'],
-            ['Amoxicillin 250mg', 'AMOX-250', $categories[0] ?? 'General', 'Antibiotic capsules', 'capsules', '80.00', '150.00', '50', '200', $stores[0] ?? '', 'BTH-002', '2026-06-30', '1'],
+            ['Paracetamol 500mg', 'PARA-500', $categories[0] ?? 'General', 'drug', 'Tablet', '0', 'Pain relief tablets', '50.00', '100.00', '100', '500', $stores[0] ?? '', 'BTH-001', '2027-12-31', '1', 'Strip:10;Box:200'],
+            ['Surgical Gloves (M)', 'GLV-M', $categories[0] ?? 'General', 'consumable', 'Piece', '0', 'Medium latex gloves', '5.00', '15.00', '50', '200', $stores[0] ?? '', 'BTH-002', '2026-06-30', '1', 'Box:100;Carton:1200'],
         ];
 
         $rowNum = 2;
@@ -195,7 +209,7 @@ class ImportExportController extends Controller
         }
 
         // Auto-size columns
-        foreach (range('A', 'M') as $col) {
+        foreach (range('A', 'P') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -750,6 +764,12 @@ class ImportExportController extends Controller
                         $reorderLevel = intval($row['reorder_level'] ?? 10);
                         $isActive = ($row['is_active'] ?? 1) == 1;
 
+                        // New fields
+                        $productType = in_array($row['product_type'] ?? '', ['drug', 'consumable', 'utility']) ? $row['product_type'] : 'drug';
+                        $baseUnitName = trim($row['base_unit_name'] ?? 'Piece') ?: 'Piece';
+                        $allowDecimalQty = ($row['allow_decimal_qty'] ?? 0) == 1;
+                        $packagingLevels = trim($row['packaging_levels'] ?? '');
+
                         // Check if product exists (update) or create new
                         if (isset($existingProducts[$productCode])) {
                             // UPDATE existing product
@@ -758,6 +778,9 @@ class ImportExportController extends Controller
                             Product::where('id', $productId)->update([
                                 'product_name' => $productName,
                                 'category_id' => $categoryId,
+                                'product_type' => $productType,
+                                'base_unit_name' => $baseUnitName,
+                                'allow_decimal_qty' => $allowDecimalQty,
                                 'reorder_alert' => $reorderLevel,
                                 'visible' => $isActive,
                             ]);
@@ -817,6 +840,11 @@ class ImportExportController extends Controller
 
                             $report['updated']++;
                             $report['updated_items'][] = $productCode;
+
+                            // Sync packaging levels for updated product
+                            if ($packagingLevels) {
+                                $this->syncImportPackagings($productId, $packagingLevels);
+                            }
                         } else {
                             // CREATE new product
                             $product = Product::create([
@@ -824,6 +852,9 @@ class ImportExportController extends Controller
                                 'category_id' => $categoryId,
                                 'product_name' => $productName,
                                 'product_code' => $productCode,
+                                'product_type' => $productType,
+                                'base_unit_name' => $baseUnitName,
+                                'allow_decimal_qty' => $allowDecimalQty,
                                 'reorder_alert' => $reorderLevel,
                                 'visible' => $isActive,
                                 'current_quantity' => $initialQty,
@@ -883,6 +914,11 @@ class ImportExportController extends Controller
                             // Cache the new product
                             $existingProducts[$productCode] = $product->id;
 
+                            // Sync packaging levels for new product
+                            if ($packagingLevels) {
+                                $this->syncImportPackagings($product->id, $packagingLevels);
+                            }
+
                             $report['created']++;
                             $report['created_items'][] = $productCode;
                         }
@@ -912,6 +948,47 @@ class ImportExportController extends Controller
         } catch (\Exception $e) {
             Log::error('Product import failed: ' . $e->getMessage());
             return back()->with('error', 'Import failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Parse packaging_levels string and sync to product_packagings table.
+     * Format: "Strip:10;Box:200;Carton:1200" where Name:base_unit_qty
+     */
+    private function syncImportPackagings(int $productId, string $packagingLevels): void
+    {
+        // Delete existing packagings for this product
+        ProductPackaging::where('product_id', $productId)->delete();
+
+        $levels = explode(';', $packagingLevels);
+        $previousBaseQty = 1;
+        $previousId = null;
+
+        foreach ($levels as $index => $level) {
+            $level = trim($level);
+            if (empty($level)) continue;
+
+            $parts = explode(':', $level, 2);
+            $name = trim($parts[0] ?? '');
+            $baseUnitQty = floatval($parts[1] ?? 1);
+
+            if (empty($name) || $baseUnitQty <= 0) continue;
+
+            $unitsInParent = $previousBaseQty > 0 ? $baseUnitQty / $previousBaseQty : $baseUnitQty;
+
+            $packaging = ProductPackaging::create([
+                'product_id' => $productId,
+                'name' => $name,
+                'level' => $index + 1,
+                'parent_packaging_id' => $previousId,
+                'units_in_parent' => $unitsInParent,
+                'base_unit_qty' => $baseUnitQty,
+                'is_default_purchase' => false,
+                'is_default_dispense' => false,
+            ]);
+
+            $previousBaseQty = $baseUnitQty;
+            $previousId = $packaging->id;
         }
     }
 
@@ -1696,7 +1773,7 @@ class ImportExportController extends Controller
         $categoryId = $request->category_id;
         $storeId = $request->store_id;
 
-        $query = Product::with(['category', 'price', 'stock', 'storeStock']);
+        $query = Product::with(['category', 'price', 'stock', 'storeStock', 'packagings']);
 
         if ($categoryId) {
             $query->where('category_id', $categoryId);
@@ -1705,22 +1782,32 @@ class ImportExportController extends Controller
         $products = $query->get();
 
         $headers = [
-            'id', 'product_name', 'product_code', 'category_name', 'cost_price',
-            'sale_price', 'reorder_level', 'current_quantity', 'is_active', 'created_at'
+            'id', 'product_name', 'product_code', 'category_name', 'product_type',
+            'base_unit_name', 'allow_decimal_qty', 'cost_price', 'sale_price',
+            'reorder_level', 'current_quantity', 'is_active', 'packaging_levels', 'created_at'
         ];
 
         $data = [];
         foreach ($products as $product) {
+            // Build packaging_levels string: "Strip:10;Box:200"
+            $pkgStr = $product->packagings->sortBy('level')->map(function ($p) {
+                return $p->name . ':' . rtrim(rtrim(number_format($p->base_unit_qty, 4), '0'), '.');
+            })->implode(';');
+
             $data[] = [
                 $product->id,
                 $product->product_name,
                 $product->product_code,
                 $product->category->category_name ?? '',
+                $product->product_type ?? 'drug',
+                $product->base_unit_name ?? 'Piece',
+                $product->allow_decimal_qty ? 1 : 0,
                 $product->price->pr_buy_price ?? 0,
                 $product->price->current_sale_price ?? 0,
                 $product->reorder_alert ?? 10,
                 $product->current_quantity ?? 0,
                 $product->visible ? 1 : 0,
+                $pkgStr,
                 $product->created_at->format('Y-m-d H:i:s'),
             ];
         }

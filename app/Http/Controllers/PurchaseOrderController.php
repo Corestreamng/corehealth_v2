@@ -128,6 +128,8 @@ class PurchaseOrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.ordered_qty' => 'required|integer|min:1',
             'items.*.unit_cost' => 'required|numeric|min:0',
+            'items.*.packaging_id' => 'nullable|exists:product_packagings,id',
+            'items.*.packaging_qty' => 'nullable|numeric|min:0',
             'action' => 'nullable|in:save,submit',
         ]);
 
@@ -168,7 +170,9 @@ class PurchaseOrderController extends Controller
             'targetStore',
             'creator',
             'approver',
-            'items.product',
+            'items.product.packagings',
+            'items.packaging',
+            'items.receivedPackaging',
             'expense',
             'payments.creator',
             'payments.bank'
@@ -187,7 +191,7 @@ class PurchaseOrderController extends Controller
                 ->with('error', 'This purchase order cannot be edited');
         }
 
-        $purchaseOrder->load(['items.product']);
+        $purchaseOrder->load(['items.product.packagings', 'items.packaging']);
         $suppliers = Supplier::orderBy('company_name')->get();
         $stores = Store::active()->orderBy('store_name')->get();
         $products = Product::with('price')
@@ -219,6 +223,8 @@ class PurchaseOrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.ordered_qty' => 'required|integer|min:1',
             'items.*.unit_cost' => 'required|numeric|min:0',
+            'items.*.packaging_id' => 'nullable|exists:product_packagings,id',
+            'items.*.packaging_qty' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -319,7 +325,7 @@ class PurchaseOrderController extends Controller
                 ->with('error', 'This purchase order cannot receive items');
         }
 
-        $purchaseOrder->load(['supplier', 'targetStore', 'items.product']);
+        $purchaseOrder->load(['supplier', 'targetStore', 'items.product.packagings', 'items.packaging']);
 
         return view('admin.inventory.purchase-orders.receive', compact('purchaseOrder'));
     }
@@ -344,6 +350,8 @@ class PurchaseOrderController extends Controller
             'items.*.expiry_date' => 'nullable|date',
             'items.*.actual_cost' => 'nullable|numeric|min:0',
             'items.*.manufacture_date' => 'nullable|date',
+            'items.*.received_packaging_id' => 'nullable|exists:product_packagings,id',
+            'items.*.received_packaging_qty' => 'nullable|numeric|min:0',
             'receiving_notes' => 'nullable|string',
             'invoice_number' => 'nullable|string|max:100',
             'create_expense' => 'nullable|boolean',
@@ -360,6 +368,8 @@ class PurchaseOrderController extends Controller
                         'expiry_date' => $item['expiry_date'] ?? null,
                         'manufacture_date' => $item['manufacture_date'] ?? null,
                         'batch_number' => $item['batch_number'],
+                        'received_packaging_id' => $item['received_packaging_id'] ?? null,
+                        'received_packaging_qty' => $item['received_packaging_qty'] ?? null,
                     ];
                 }
             }
@@ -411,7 +421,7 @@ class PurchaseOrderController extends Controller
         $storeId = $request->get('store_id');
         $limit = $request->get('limit', 50); // Allow higher limit for grid view
 
-        $query = Product::with(['price', 'category'])
+        $query = Product::with(['price', 'category', 'packagings'])
             ->where('status', true);
 
         if ($search) {
@@ -438,10 +448,23 @@ class PurchaseOrderController extends Controller
                     'text' => $p->product_name . ' (' . $p->product_code . ')',
                     'product_name' => $p->product_name,
                     'product_code' => $p->product_code,
+                    'product_type' => $p->product_type ?? 'drug',
+                    'base_unit_name' => $p->base_unit_name ?? 'Piece',
+                    'allow_decimal_qty' => $p->allow_decimal_qty ?? false,
                     'price' => $p->price->pr_buy_price ?? 0,
                     'category_id' => $p->category_id,
                     'category_name' => $p->category->category_name ?? null,
                     'stock' => $stock,
+                    'packagings' => $p->packagings->sortBy('level')->map(function($pkg) {
+                        return [
+                            'id' => $pkg->id,
+                            'name' => $pkg->name,
+                            'level' => $pkg->level,
+                            'units_in_parent' => $pkg->units_in_parent,
+                            'base_unit_qty' => $pkg->base_unit_qty,
+                            'is_default_purchase' => $pkg->is_default_purchase,
+                        ];
+                    })->values(),
                 ];
             });
 
@@ -521,7 +544,7 @@ class PurchaseOrderController extends Controller
         if ($request->ajax()) {
             $query = PurchaseOrder::whereIn('status', [PurchaseOrder::STATUS_PARTIAL, PurchaseOrder::STATUS_RECEIVED])
                 ->where('payment_status', '!=', PurchaseOrder::PAYMENT_PAID)
-                ->with(['supplier', 'targetStore', 'payments']);
+                ->with(['supplier', 'targetStore', 'payments', 'items.product']);
 
             return DataTables::of($query)
                 ->addColumn('supplier_name', fn($po) => $po->supplier->company_name ?? '-')
@@ -529,6 +552,19 @@ class PurchaseOrderController extends Controller
                 ->addColumn('formatted_total', fn($po) => '₦' . number_format($po->total_amount, 2))
                 ->addColumn('formatted_paid', fn($po) => '₦' . number_format($po->amount_paid, 2))
                 ->addColumn('formatted_balance', fn($po) => '₦' . number_format($po->balance_due, 2))
+                ->addColumn('item_count', fn($po) => $po->items->count() . ' item(s)')
+                ->addColumn('product_types', function($po) {
+                    $types = $po->items->pluck('product.product_type')->filter()->unique();
+                    $badges = $types->map(function($type) {
+                        $styles = [
+                            'drug' => 'background:#d4edda;color:#155724',
+                            'consumable' => 'background:#fff3cd;color:#856404',
+                            'utility' => 'background:#d1ecf1;color:#0c5460',
+                        ];
+                        return sprintf('<span class="badge badge-sm" style="%s">%s</span>', $styles[$type] ?? '', ucfirst($type));
+                    });
+                    return $badges->implode(' ');
+                })
                 ->addColumn('payment_status_badge', fn($po) => sprintf(
                     '<span class="badge %s">%s</span>',
                     $po->getPaymentStatusBadgeClass(),
@@ -554,7 +590,7 @@ class PurchaseOrderController extends Controller
                         route('inventory.purchase-orders.payment', $po->id)
                     );
                 })
-                ->rawColumns(['status_badge', 'payment_status_badge', 'actions'])
+                ->rawColumns(['status_badge', 'payment_status_badge', 'product_types', 'actions'])
                 ->make(true);
         }
 

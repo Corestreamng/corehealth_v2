@@ -218,6 +218,7 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('products', ProductController::class);
         Route::get('product-list', [ProductController::class, 'listProducts'])->name('product-list');
+        Route::get('products/{product}/packagings', [ProductController::class, 'getPackagings'])->name('products.packagings');
     });
 
     Route::group(['middleware' => ['auth']], function () {

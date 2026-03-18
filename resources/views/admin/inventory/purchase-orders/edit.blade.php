@@ -136,7 +136,7 @@
                     @foreach($purchaseOrder->items as $index => $item)
                     <div class="item-row" data-index="{{ $index }}">
                         <div class="row align-items-end">
-                            <div class="col-md-5">
+                            <div class="col-md-3">
                                 <div class="form-group mb-0">
                                     <label>Product <span class="text-danger">*</span></label>
                                     <select name="items[{{ $index }}][product_id]" class="form-control product-select" required>
@@ -151,9 +151,28 @@
                             </div>
                             <div class="col-md-2">
                                 <div class="form-group mb-0">
+                                    <label>Packaging</label>
+                                    <select name="items[{{ $index }}][packaging_id]" class="form-control packaging-select"
+                                            data-product-id="{{ $item->product_id }}" data-selected="{{ $item->packaging_id }}">
+                                        <option value="">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
+                                        @if($item->product->packagings)
+                                            @foreach($item->product->packagings->sortBy('level') as $pkg)
+                                            <option value="{{ $pkg->id }}" data-base-qty="{{ $pkg->base_unit_qty }}"
+                                                {{ $item->packaging_id == $pkg->id ? 'selected' : '' }}>
+                                                {{ $pkg->name }} ({{ $pkg->base_unit_qty == intval($pkg->base_unit_qty) ? intval($pkg->base_unit_qty) : $pkg->base_unit_qty }} {{ $item->product->base_unit_name ?? 'pcs' }})
+                                            </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <input type="hidden" name="items[{{ $index }}][packaging_qty]" class="packaging-qty-hidden" value="{{ $item->packaging_qty }}">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group mb-0">
                                     <label>Quantity <span class="text-danger">*</span></label>
                                     <input type="number" name="items[{{ $index }}][ordered_qty]" class="form-control qty-input"
                                            min="1" value="{{ $item->ordered_qty }}" required>
+                                    <small class="text-muted base-equiv-label"></small>
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -222,11 +241,46 @@ let itemIndex = {{ count($purchaseOrder->items) }};
 $(function() {
     initSelect2();
     calculateTotals();
+    loadExistingPackagings();
 
     $('#add-item-btn').on('click', addItem);
-    $(document).on('change keyup', '.qty-input, .cost-input', calculateTotals);
+    $(document).on('change keyup', '.qty-input, .cost-input', function() {
+        calculateTotals();
+        updateBaseEquiv($(this).closest('.item-row'));
+    });
+    $(document).on('change', '.packaging-select', function() {
+        updateBaseEquiv($(this).closest('.item-row'));
+    });
+    $(document).on('change', '.product-select', function() {
+        var row = $(this).closest('.item-row');
+        var productId = $(this).val();
+        if (productId) {
+            $.get('/products/' + productId + '/packagings', function(data) {
+                var pkgSelect = row.find('.packaging-select');
+                pkgSelect.empty().append('<option value="">' + (data.base_unit_name || 'Base Unit') + '</option>');
+                row.data('base-unit-name', data.base_unit_name);
+                (data.packagings || []).forEach(function(pkg) {
+                    var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
+                    var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
+                    if (pkg.is_default_purchase) opt.attr('selected', true);
+                    pkgSelect.append(opt);
+                });
+                updateBaseEquiv(row);
+            });
+        }
+    });
     $('#save-btn').on('click', submitForm);
 });
+
+function loadExistingPackagings() {
+    $('.packaging-select[data-product-id]').each(function() {
+        var row = $(this).closest('.item-row');
+        var selected = $(this).data('selected');
+        var baseQty = $(this).find('option:selected').data('base-qty') || 1;
+        row.data('base-unit-name', $(this).find('option:first').text().replace(' (base)', ''));
+        updateBaseEquiv(row);
+    });
+}
 
 function initSelect2() {
     $('.product-select').select2({
@@ -239,7 +293,7 @@ function addItem() {
     const template = `
         <div class="item-row" data-index="${itemIndex}">
             <div class="row align-items-end">
-                <div class="col-md-5">
+                <div class="col-md-3">
                     <div class="form-group mb-0">
                         <label>Product <span class="text-danger">*</span></label>
                         <select name="items[${itemIndex}][product_id]" class="form-control product-select" required>
@@ -252,8 +306,18 @@ function addItem() {
                 </div>
                 <div class="col-md-2">
                     <div class="form-group mb-0">
+                        <label>Packaging</label>
+                        <select name="items[${itemIndex}][packaging_id]" class="form-control packaging-select">
+                            <option value="">Base Unit</option>
+                        </select>
+                        <input type="hidden" name="items[${itemIndex}][packaging_qty]" class="packaging-qty-hidden">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group mb-0">
                         <label>Quantity <span class="text-danger">*</span></label>
                         <input type="number" name="items[${itemIndex}][ordered_qty]" class="form-control qty-input" min="1" value="1" required>
+                        <small class="text-muted base-equiv-label"></small>
                     </div>
                 </div>
                 <div class="col-md-2">
@@ -307,6 +371,21 @@ function calculateTotals() {
     $('#grand-total').text('₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
 }
 
+function updateBaseEquiv(row) {
+    var pkgSelect = row.find('.packaging-select');
+    var selected = pkgSelect.find('option:selected');
+    var qty = parseFloat(row.find('.qty-input').val()) || 0;
+    var baseQty = parseFloat(selected.data('base-qty')) || 1;
+    var baseName = row.data('base-unit-name') || 'units';
+    var label = row.find('.base-equiv-label');
+    if (baseQty > 1 && qty > 0) {
+        label.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' ' + baseName);
+    } else {
+        label.text('');
+    }
+    row.find('.packaging-qty-hidden').val(pkgSelect.val() ? qty : '');
+}
+
 function submitForm() {
     var form = $('#po-form');
     var items = [];
@@ -338,7 +417,9 @@ function submitForm() {
         items.push({
             product_id: productId,
             ordered_qty: parseInt(quantity),
-            unit_cost: parseFloat(unitCost)
+            unit_cost: parseFloat(unitCost),
+            packaging_id: row.find('.packaging-select').val() || null,
+            packaging_qty: row.find('.packaging-select').val() ? parseFloat(quantity) : null
         });
     });
 

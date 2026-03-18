@@ -692,8 +692,9 @@ class NursingWorkbenchController extends Controller{
             return response()->json([]);
         }
 
-        // Search products - you may want to filter by a specific category for injectables
+        // Search products - filter to drugs only for injectables
         $products = Product::with(['price', 'stock', 'category'])
+            ->drugsOnly()
             ->where(function ($q) use ($term) {
                 $q->where('product_name', 'like', "%{$term}%")
                   ->orWhere('product_code', 'like', "%{$term}%");
@@ -707,6 +708,8 @@ class NursingWorkbenchController extends Controller{
                 'id' => $product->id,
                 'name' => $product->product_name,
                 'code' => $product->product_code,
+                'product_type' => $product->product_type ?? 'drug',
+                'base_unit_name' => $product->base_unit_name ?? 'Piece',
                 'price' => $product->price ? $product->price->current_sale_price : 0,
                 'stock' => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
@@ -1053,8 +1056,9 @@ class NursingWorkbenchController extends Controller{
     {
         $term = $request->get('term', '');
 
-        // You may want to filter by a specific category for vaccines
+        // Vaccines are drugs
         $query = Product::with(['price', 'stock', 'category'])
+            ->drugsOnly()
             ->where('status', 1);
 
         if ($term) {
@@ -1071,6 +1075,8 @@ class NursingWorkbenchController extends Controller{
                 'id' => $product->id,
                 'name' => $product->product_name,
                 'code' => $product->product_code,
+                'product_type' => $product->product_type ?? 'drug',
+                'base_unit_name' => $product->base_unit_name ?? 'Piece',
                 'price' => $product->price ? $product->price->current_sale_price : 0,
                 'stock' => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
@@ -1388,7 +1394,8 @@ class NursingWorkbenchController extends Controller{
         $categoryId = $request->get('category_id');
         $patientId = $request->get('patient_id');
 
-        $query = Product::with(['price', 'stock', 'category'])
+        $query = Product::with(['price', 'stock', 'category', 'packagings'])
+            ->nurseBillable()
             ->where('status', 1);
 
         if ($term) {
@@ -1431,10 +1438,23 @@ class NursingWorkbenchController extends Controller{
                 'id'       => $product->id,
                 'name'     => $product->product_name,
                 'code'     => $product->product_code,
+                'product_type' => $product->product_type ?? 'drug',
+                'base_unit_name' => $product->base_unit_name ?? 'Piece',
                 'price'    => $product->price ? $product->price->current_sale_price : 0,
                 'stock'    => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
                 'hmo'      => $hmoMap[$product->id] ?? null,
+                'packagings' => $product->packagings->sortBy('level')->map(function($pkg) {
+                    return [
+                        'id' => $pkg->id,
+                        'name' => $pkg->name,
+                        'level' => $pkg->level,
+                        'units_in_parent' => (float) $pkg->units_in_parent,
+                        'base_unit_qty' => (float) $pkg->base_unit_qty,
+                        'is_default_purchase' => (bool) $pkg->is_default_purchase,
+                        'is_default_dispense' => (bool) $pkg->is_default_dispense,
+                    ];
+                })->values(),
             ];
         });
 

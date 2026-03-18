@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductPackaging;
 use App\Models\Sale;
 use App\Models\ApplicationStatu;
 use App\Models\Stock;
@@ -14,113 +15,104 @@ use Illuminate\Http\Response;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    public function listProducts()
+    public function listProducts(Request $request)
     {
-        $pc = Product::where('status', '=', 1)
-            ->with(['stock', 'category', 'stockBatches' => function($q) {
+        $query = Product::where('status', '=', 1)
+            ->with(['stock', 'category', 'price', 'packagings', 'stockBatches' => function($q) {
                 $q->active()->where('current_qty', '>', 0);
             }])
-            ->orderBy('product_name', 'ASC')
-            ->get();
+            ->orderBy('product_name', 'ASC');
+
+        // Type filter
+        if ($request->filled('product_type') && $request->product_type !== 'all') {
+            $query->where('product_type', $request->product_type);
+        }
+
+        // Category filter
+        if ($request->filled('category_id') && $request->category_id !== 'all') {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $pc = $query->get();
 
         return Datatables::of($pc)
             ->addIndexColumn()
-            ->addColumn('product_code', function ($pc) {
-                $product_code = '<span class="badge badge-pill badge-dark">' . $pc->product_code . '</sapn>';
-                return $product_code;
-            })
-            ->addColumn('category_id', function ($pc) {
-                $category_name = '<span class="badge badge-pill badge-dark">' . (($pc->category) ? $pc->category->category_code: 'N/A') . '</sapn>';
-                return $category_name;
-            })
-            ->addColumn('visible', function ($pc) {
+            ->addColumn('product_info', function ($pc) {
+                $typeIcons = ['drug' => 'mdi-pill', 'consumable' => 'mdi-bandage', 'utility' => 'mdi-broom'];
+                $typeColors = ['drug' => '#28a745', 'consumable' => '#ffc107', 'utility' => '#17a2b8'];
+                $type = $pc->product_type ?? 'drug';
+                $icon = $typeIcons[$type] ?? 'mdi-pill';
+                $color = $typeColors[$type] ?? '#28a745';
+                $catName = optional($pc->category)->category_name ?? 'N/A';
 
-                $active = '<span class="badge badge-pill badge-success">Active</sapn>';
-                $inactive = '<span class="badge badge-pill badge-dark">Inactive</sapn>';
-
-                return (($pc->status == 0) ? $inactive : $active);
+                return '<div class="d-flex align-items-center">'
+                    . '<i class="mdi ' . e($icon) . ' me-2 mr-2" style="font-size:1.4rem; color:' . $color . '"></i>'
+                    . '<div>'
+                    . '<strong>' . e($pc->product_name) . '</strong>'
+                    . '<br><small class="text-muted">' . e($pc->product_code) . '</small>'
+                    . ' <span class="badge badge-light">' . e($catName) . '</span>'
+                    . '</div></div>';
+            })
+            ->addColumn('type_badge', function ($pc) {
+                $type = $pc->product_type ?? 'drug';
+                $badges = [
+                    'drug' => '<span class="badge" style="background:#d4edda;color:#155724">Drug</span>',
+                    'consumable' => '<span class="badge" style="background:#fff3cd;color:#856404">Consumable</span>',
+                    'utility' => '<span class="badge" style="background:#d1ecf1;color:#0c5460">Utility</span>',
+                ];
+                return $badges[$type] ?? $badges['drug'];
             })
             ->editColumn('current_quantity', function ($pc) {
-                // Use eager-loaded stockBatches for efficiency
-                // Sum current_qty from the pre-filtered active batches
                 $batchTotal = $pc->stockBatches->sum('current_qty');
                 $oldTotal = optional($pc->stock)->current_quantity ?? 0;
-
-                // Show the batch total if available, else fallback to legacy
                 $qty = $batchTotal > 0 ? $batchTotal : $oldTotal;
                 $reorderLevel = $pc->reorder_alert ?? 10;
 
-                // Color code the quantity
+                $formatted = $pc->formatQty($qty);
+                $alert = '';
                 if ($qty <= 0) {
-                    return '<span class="badge badge-danger">' . $qty . '</span>';
+                    $alert = '<span class="badge badge-danger">' . e($formatted) . '</span>';
                 } elseif ($qty <= $reorderLevel) {
-                    return '<span class="badge badge-warning">' . $qty . '</span>';
-                }
-                return '<span class="badge badge-success">' . $qty . '</span>';
-            })
-            ->addColumn('addstoke', function ($pc) {
-                if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # Link to new workbench manual batch form with product pre-selected
-                    $url = route('inventory.store-workbench.manual-batch-form') . '?product_id=' . $pc->id;
-                    return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Add Batch</a>';
+                    $alert = '<span class="badge badge-warning">' . e($formatted) . '</span> <small class="text-danger"><i class="mdi mdi-alert"></i> Low</small>';
                 } else {
-                    # code...
-                    $label = '<button disabled class="btn btn-info btn-sm"> <i class="fa fa-plus"></i> Add Batch</button>';
-                    return $label;
+                    $alert = '<span class="badge badge-success">' . e($formatted) . '</span>';
                 }
+                return $alert;
             })
-            ->addColumn('adjust', function ($pc) {
-
-                if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # code...
-                    $url = route('prices.edit', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-secondary btn-sm"><i class="fa fa-info-circle"></i> Add/Adjust</a>';
-                } else {
-                    # code...
-                    $label = '<button disabled class="btn btn-secondary btn-sm"> <i class="fa fa-info-circle"></i> Add/Adjust</button>';
-                    return $label;
+            ->addColumn('sale_price', function ($pc) {
+                $price = optional($pc->price)->current_sale_price ?? optional($pc->price)->initial_sale_price;
+                return $price ? '₦' . number_format($price, 2) : '<span class="text-muted">—</span>';
+            })
+            ->addColumn('actions', function ($pc) {
+                $canManage = Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE']);
+                if (!$canManage) {
+                    return '<button disabled class="btn btn-sm btn-secondary"><i class="mdi mdi-eye"></i></button>';
                 }
+
+                $showUrl = route('products.show', $pc->id);
+                $editUrl = route('products.edit', $pc->id);
+                $batchUrl = route('inventory.store-workbench.manual-batch-form') . '?product_id=' . $pc->id;
+                $stockUrl = route('inventory.store-workbench.stock-overview') . '?product_id=' . $pc->id;
+                $batchesUrl = route('inventory.store-workbench.product-batches', $pc->id);
+                $priceUrl = route('prices.edit', $pc->id);
+
+                return '<div class="btn-group">'
+                    . '<a href="' . $showUrl . '" class="btn btn-sm btn-outline-primary" title="View"><i class="mdi mdi-eye"></i></a>'
+                    . '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="mdi mdi-pencil"></i></a>'
+                    . '<div class="btn-group">'
+                    . '<button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-vertical"></i></button>'
+                    . '<div class="dropdown-menu dropdown-menu-right">'
+                    . '<a class="dropdown-item" href="' . $batchUrl . '"><i class="mdi mdi-plus-box mr-1"></i> Add Batch</a>'
+                    . '<a class="dropdown-item" href="' . $priceUrl . '"><i class="mdi mdi-currency-ngn mr-1"></i> Adjust Price</a>'
+                    . '<a class="dropdown-item" href="' . $stockUrl . '"><i class="mdi mdi-warehouse mr-1"></i> Stock Overview</a>'
+                    . '<a class="dropdown-item" href="' . $batchesUrl . '"><i class="mdi mdi-history mr-1"></i> View Batches</a>'
+                    . '</div></div></div>';
             })
-            ->addColumn('store', function ($pc) {
-
-                if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # Link to workbench stock overview filtered by product
-                    $url = route('inventory.store-workbench.stock-overview') . '?product_id=' . $pc->id;
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-warehouse"></i> Stock</a>';
-                } else {
-                    # code...
-                    $label = '<button disabled class="btn btn-success btn-sm"> <i class="fa fa-warehouse"></i> Stock</button>';
-                    return $label;
-                }
-            })
-            ->addColumn('trans', function ($pc) {
-
-                if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # Link to product batches view showing movement history
-                    $url = route('inventory.store-workbench.product-batches', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-history"></i> Batches</a>';
-                } else {
-                    # code...
-                    $label = '<button disabled class="btn btn-info btn-sm"> <i class="fa fa-history"></i> Batches</button>';
-                    return $label;
-                }
-            })
-            ->addColumn('edit', function ($pc) {
-
-                if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-
-                    $url = route('products.edit', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-secondary btn-sm"><i class="fa fa-i-cursor"></i> Edit</a>';
-                } else {
-
-                    $label = '<button disabled class="btn btn-secondary btn-sm"> <i class="fa fa-i-cursor"></i> Edit</button>';
-                    return $label;
-                }
-            })
-            ->rawColumns(['product_code', 'category_id', 'visible', 'current_quantity', 'edit', 'adjust', 'addstoke', 'store', 'trans'])
+            ->rawColumns(['product_info', 'type_badge', 'current_quantity', 'sale_price', 'actions'])
             ->make(true);
     }
 
@@ -128,10 +120,16 @@ class ProductController extends Controller
     {
         $request->validate([
             'term' => 'nullable|string',
-            'patient_id' => 'nullable|integer'
+            'patient_id' => 'nullable|integer',
+            'type' => 'nullable|in:drug,consumable,utility',
         ]);
 
         $query = Product::query()->where('status', 1);
+
+        // Optional type filter
+        if ($request->filled('type')) {
+            $query->where('product_type', $request->type);
+        }
 
         if ($request->filled('term')) {
             $query->where(function ($q) use ($request) {
@@ -141,7 +139,7 @@ class ProductController extends Controller
         }
 
         $pc = $query
-            ->with(['stock', 'category', 'price'])
+            ->with(['stock', 'category', 'price', 'packagings'])
             ->orderBy('product_name', 'ASC')
             ->get()
             ->map(function ($product) use ($request) {
@@ -152,7 +150,7 @@ class ProductController extends Controller
                     try {
                         $coverage = \App\Helpers\HmoHelper::applyHmoTariff($request->patient_id, $product->id, null);
                     } catch (\Exception $e) {
-                        $coverage = null; // fallback to cash if tariff missing
+                        $coverage = null;
                     }
                 }
 
@@ -160,6 +158,9 @@ class ProductController extends Controller
                     'id' => $product->id,
                     'product_name' => $product->product_name,
                     'product_code' => $product->product_code,
+                    'product_type' => $product->product_type ?? 'drug',
+                    'base_unit_name' => $product->base_unit_name ?? 'Piece',
+                    'allow_decimal_qty' => (bool) $product->allow_decimal_qty,
                     'coverage_mode' => $coverage['coverage_mode'] ?? 'cash',
                     'payable_amount' => $coverage['payable_amount'] ?? ($basePrice ?? 0),
                     'claims_amount' => $coverage['claims_amount'] ?? 0,
@@ -167,6 +168,14 @@ class ProductController extends Controller
                     'category' => $product->category,
                     'stock' => $product->stock,
                     'price' => $product->price,
+                    'packagings' => $product->packagings->map(fn($p) => [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'level' => $p->level,
+                        'base_unit_qty' => (float) $p->base_unit_qty,
+                        'is_default_purchase' => (bool) $p->is_default_purchase,
+                        'is_default_dispense' => (bool) $p->is_default_dispense,
+                    ]),
                 ];
             });
 
@@ -215,7 +224,8 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return view('admin.product.index');
+        $categories = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+        return view('admin.product.index', compact('categories'));
     }
 
     /**
@@ -226,8 +236,8 @@ class ProductController extends Controller
     public function create()
     {
         $application = ApplicationStatu::whereId(1)->first();
-        $category       = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
-        return view('admin.product.create', compact('category','application'));
+        $category = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+        return view('admin.product.create', compact('category', 'application'));
     }
 
     /**
@@ -242,38 +252,32 @@ class ProductController extends Controller
         $application = ApplicationStatu::whereId(1)->first();
 
         $rules = [
-            'category_id'          => 'required',
-            'product_name'          => 'required',
-            'product_code'          => 'required',
-            'reorder_alert'         => 'required',
+            'category_id'       => 'required',
+            'product_name'      => 'required',
+            'product_code'      => 'required',
+            'reorder_alert'     => 'required',
+            'product_type'      => 'required|in:drug,consumable,utility',
+            'base_unit_name'    => 'required|string|max:50',
+            'packagings'        => 'nullable|array',
+            'packagings.*.name' => 'required_with:packagings|string|max:100',
+            'packagings.*.units_in_parent' => 'required_with:packagings|numeric|min:0.0001',
         ];
 
         if ($application->allow_piece_sale == 1) {
-            # code...
             if ($request->s1 == null) {
-                $rules += [
-                    // 's1.required'            => 'Allow Sale of Pieces',
-                    's1'            => 'required',
-                ];
+                $rules += ['s1' => 'required'];
             }
         }
 
         if ($application->allow_halve_sale == 1) {
-            # code...
             if ($request->s2 == null) {
-                $rules += [
-                    // 's2.required'            => 'Allow Sale of Half',
-                    's2'            => 'required',
-                ];
+                $rules += ['s2' => 'required'];
             }
         }
 
         if ($application->allow_piece_sale == 1 || $application->allow_halve_sale) {
-            # code...
             if ($request->quantity_in == null) {
-                $rules += [
-                    'quantity_in'   => 'required',
-                ];
+                $rules += ['quantity_in' => 'required'];
             }
         }
 
@@ -281,56 +285,55 @@ class ProductController extends Controller
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
-                // Alert::error('Error Title', 'One or more information is needed.');
-                // return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
-                // return redirect()->back()->withInput()->with('toast_error', $v->messages()->all()[0])->withInput();
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
-            } else {
-
-                $myproduct                      = new Product();
-                $myproduct->user_id             = Auth::user()->id;
-                $myproduct->category_id         = $request->category_id;
-                $myproduct->product_name        = trim($request->product_name);
-                $myproduct->product_code        = $request->product_code;
-                $myproduct->reorder_alert       = $request->reorder_alert;
-
-                if ($application->allow_halve_sale == 1) {
-                    $myproduct->has_have        = $request->s1;
-                    $myproduct->has_piece       = $request->s2;
-                    $myproduct->howmany_to      = $request->quantity_in;
-                } else {
-                    $myproduct->has_have        = 0;
-                    $myproduct->has_piece       = 0;
-                    $myproduct->howmany_to      = 0;
-                }
-
-                $myproduct->status             = 1;
-                $myproduct->current_quantity    = 0;
-
-                if ($myproduct->save()) {
-
-                    $msg = 'The Product  ' . $request->product_name . ' was Saved Successfully.';
-
-                    $stock                     = new Stock();
-                    $stock->product_id         = $myproduct->id;
-                    $stock->initial_quantity   = 0;
-                    $stock->order_quantity     = 0;
-                    $stock->current_quantity   = 0;
-                    $stock->quantity_sale      = 0;
-
-
-                    if ($stock->save()) {
-                        return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
-                    }
-                } else {
-                    $msg = 'Something is went wrong. Please try again later, Product not Saved.';
-                    //flash($msg, 'danger');
-                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
-                }
             }
-        } catch (\Exception $e) {
 
-            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
+            DB::beginTransaction();
+
+            $myproduct                      = new Product();
+            $myproduct->user_id             = Auth::user()->id;
+            $myproduct->category_id         = $request->category_id;
+            $myproduct->product_name        = trim($request->product_name);
+            $myproduct->product_code        = $request->product_code;
+            $myproduct->reorder_alert       = $request->reorder_alert;
+            $myproduct->product_type        = $request->product_type;
+            $myproduct->base_unit_name      = $request->base_unit_name;
+            $myproduct->allow_decimal_qty   = $request->has('allow_decimal_qty') ? 1 : 0;
+
+            if ($application->allow_halve_sale == 1) {
+                $myproduct->has_have        = $request->s1;
+                $myproduct->has_piece       = $request->s2;
+                $myproduct->howmany_to      = $request->quantity_in;
+            } else {
+                $myproduct->has_have        = 0;
+                $myproduct->has_piece       = 0;
+                $myproduct->howmany_to      = 0;
+            }
+
+            $myproduct->status             = 1;
+            $myproduct->current_quantity    = 0;
+            $myproduct->save();
+
+            // Save packaging levels
+            $this->syncPackagings($myproduct, $request->input('packagings', []));
+
+            // Create legacy stock record
+            $stock                     = new Stock();
+            $stock->product_id         = $myproduct->id;
+            $stock->initial_quantity   = 0;
+            $stock->order_quantity     = 0;
+            $stock->current_quantity   = 0;
+            $stock->quantity_sale      = 0;
+            $stock->save();
+
+            DB::commit();
+
+            $msg = 'The Product ' . $request->product_name . ' was Saved Successfully.';
+            return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->withMessage("An error occurred: " . $e->getMessage());
         }
     }
 
@@ -342,11 +345,20 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        $pc = Sale::where('product_id', '=', $id)->with('transaction', 'product', 'store')->sum('total_amount');
-        $qt = Sale::where('product_id', '=', $id)->with('transaction', 'product', 'store')->sum('quantity_buy');
-        $pp = Product::find($id);
+        $pp = Product::with(['category', 'price', 'stock', 'packagings' => function($q) {
+            $q->orderBy('level');
+        }, 'stockBatches' => function($q) {
+            $q->active()->where('current_qty', '>', 0);
+        }])->findOrFail($id);
 
-        return view('admin.product.product', compact('id', 'pp', 'pc', 'qt'));
+        $pc = Sale::where('product_id', '=', $id)->sum('total_amount');
+        $qt = Sale::where('product_id', '=', $id)->sum('quantity_buy');
+
+        $batchTotal = $pp->stockBatches->sum('current_qty');
+        $oldTotal = optional($pp->stock)->current_quantity ?? 0;
+        $totalQty = $batchTotal > 0 ? $batchTotal : $oldTotal;
+
+        return view('admin.product.product', compact('id', 'pp', 'pc', 'qt', 'totalQty'));
     }
 
     /**
@@ -357,14 +369,14 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-
         try {
             $application = ApplicationStatu::whereId(1)->first();
-            $product = Product::whereId($id)->first();
-            $category       = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+            $product = Product::with(['packagings' => function($q) {
+                $q->orderBy('level');
+            }])->findOrFail($id);
+            $category = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
             return view('admin.product.edit', compact('product', 'application', 'category'));
         } catch (\Exception $e) {
-
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -382,83 +394,158 @@ class ProductController extends Controller
             $application = ApplicationStatu::whereId(1)->first();
 
             $rules = [
-                'category_id'          => 'required',
-                'product_name'          => 'required',
-                'product_code'          => 'required',
-                'reorder_alert'         => 'required',
+                'category_id'       => 'required',
+                'product_name'      => 'required',
+                'product_code'      => 'required',
+                'reorder_alert'     => 'required',
+                'product_type'      => 'required|in:drug,consumable,utility',
+                'base_unit_name'    => 'required|string|max:50',
+                'packagings'        => 'nullable|array',
+                'packagings.*.name' => 'required_with:packagings|string|max:100',
+                'packagings.*.units_in_parent' => 'required_with:packagings|numeric|min:0.0001',
             ];
 
             if ($application->allow_piece_sale == 1) {
-                # code...
                 if ($request->s1 == null) {
-                    #  Making sure if password change was selected it's being validated
-                    $rules += [
-                        // 's1.required'            => 'Allow Sale of Pieces',
-                        's1'            => 'required',
-                    ];
+                    $rules += ['s1' => 'required'];
                 }
             }
 
             if ($application->allow_halve_sale == 1) {
-                # code...
                 if ($request->s2 == null) {
-                    #  Making sure if password change was selected it's being validated
-                    $rules += [
-                        // 's2.required'            => 'Allow Sale of Half',
-                        's2'            => 'required',
-                    ];
+                    $rules += ['s2' => 'required'];
                 }
             }
 
             if ($application->allow_piece_sale == 1 || $application->allow_halve_sale) {
-                # code...
                 if ($request->quantity_in == null) {
-                    #  Making sure if password change was selected it's being validated
-                    $rules += [
-                        'quantity_in'   => 'required',
-                    ];
+                    $rules += ['quantity_in' => 'required'];
                 }
             }
 
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
-
-                //  $msg = 'Please cheak Your Inputs .';
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
-            } else {
-
-                $myproduct                 = Product::whereId($id)->first();
-                $myproduct->user_id        = Auth::user()->id;
-                $myproduct->category_id    = $request->category_id;
-                $myproduct->product_name   = $request->product_name;
-                $myproduct->product_code   = $request->product_code;
-                $myproduct->reorder_alert  = $request->reorder_alert;
-
-                if ($request->s1) {
-                    $myproduct->has_have         = $request->s1;
-                }
-                if ($request->s2) {
-                    $myproduct->has_piece         = $request->s2;
-                }
-                if ($request->s1 || $request->s2) {
-                    $myproduct->howmany_to       = $request->quantity_in;
-                }
-                $myproduct->status            = 1;
-
-                if ($myproduct->update()) {
-                    $msg = 'The Product ' . $request->product_name . ' Was Updated Successfully.';
-                    return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
-                } else {
-                    $msg = 'Something is went wrong. Please try again later, information not save.';
-
-                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success')->withInput();
-                }
             }
-        } catch (Exception $e) {
 
-            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
+            DB::beginTransaction();
+
+            $myproduct                 = Product::whereId($id)->first();
+            $myproduct->user_id        = Auth::user()->id;
+            $myproduct->category_id    = $request->category_id;
+            $myproduct->product_name   = $request->product_name;
+            $myproduct->product_code   = $request->product_code;
+            $myproduct->reorder_alert  = $request->reorder_alert;
+            $myproduct->product_type   = $request->product_type;
+            $myproduct->base_unit_name = $request->base_unit_name;
+            $myproduct->allow_decimal_qty = $request->has('allow_decimal_qty') ? 1 : 0;
+
+            if ($request->s1) {
+                $myproduct->has_have = $request->s1;
+            }
+            if ($request->s2) {
+                $myproduct->has_piece = $request->s2;
+            }
+            if ($request->s1 || $request->s2) {
+                $myproduct->howmany_to = $request->quantity_in;
+            }
+            $myproduct->status = 1;
+            $myproduct->update();
+
+            // Sync packaging levels
+            $this->syncPackagings($myproduct, $request->input('packagings', []));
+
+            DB::commit();
+
+            $msg = 'The Product ' . $request->product_name . ' Was Updated Successfully.';
+            return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->withMessage("An error occurred: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Sync packaging levels for a product.
+     * Deletes removed levels, updates existing, creates new ones.
+     * Auto-computes base_unit_qty for each level.
+     */
+    private function syncPackagings(Product $product, array $packagings): void
+    {
+        // Collect IDs to keep
+        $keepIds = [];
+
+        $previousBaseQty = 1; // level 0 = 1 base unit
+        $previousPackagingId = null;
+
+        foreach ($packagings as $index => $pkgData) {
+            if (empty($pkgData['name']) || empty($pkgData['units_in_parent'])) {
+                continue;
+            }
+
+            $level = $index + 1;
+            $unitsInParent = (float) $pkgData['units_in_parent'];
+            $baseUnitQty = $unitsInParent * $previousBaseQty;
+
+            $data = [
+                'product_id' => $product->id,
+                'name' => trim($pkgData['name']),
+                'description' => $pkgData['description'] ?? null,
+                'level' => $level,
+                'parent_packaging_id' => $previousPackagingId,
+                'units_in_parent' => $unitsInParent,
+                'base_unit_qty' => $baseUnitQty,
+                'is_default_purchase' => !empty($pkgData['is_default_purchase']) ? 1 : 0,
+                'is_default_dispense' => !empty($pkgData['is_default_dispense']) ? 1 : 0,
+                'barcode' => $pkgData['barcode'] ?? null,
+            ];
+
+            if (!empty($pkgData['id'])) {
+                // Update existing
+                $pkg = ProductPackaging::find($pkgData['id']);
+                if ($pkg && $pkg->product_id === $product->id) {
+                    $pkg->update($data);
+                    $keepIds[] = $pkg->id;
+                    $previousPackagingId = $pkg->id;
+                }
+            } else {
+                // Create new
+                $pkg = ProductPackaging::create($data);
+                $keepIds[] = $pkg->id;
+                $previousPackagingId = $pkg->id;
+            }
+
+            $previousBaseQty = $baseUnitQty;
+        }
+
+        // Delete removed packagings
+        $product->packagings()->whereNotIn('id', $keepIds)->delete();
+    }
+
+    /**
+     * API: Get packagings for a product (used by AJAX in PO, billing, etc.)
+     */
+    public function getPackagings($productId)
+    {
+        $product = Product::with(['packagings' => function($q) {
+            $q->orderBy('level');
+        }])->findOrFail($productId);
+
+        return response()->json([
+            'base_unit_name' => $product->base_unit_name ?? 'Piece',
+            'allow_decimal_qty' => (bool) $product->allow_decimal_qty,
+            'packagings' => $product->packagings->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'level' => $p->level,
+                'units_in_parent' => (float) $p->units_in_parent,
+                'base_unit_qty' => (float) $p->base_unit_qty,
+                'is_default_purchase' => (bool) $p->is_default_purchase,
+                'is_default_dispense' => (bool) $p->is_default_dispense,
+            ]),
+        ]);
     }
 
     /**

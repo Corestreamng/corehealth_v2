@@ -86,7 +86,12 @@
                         @endphp
                         @if($remaining > 0)
                         <tr>
-                            <td>{{ $item->product->product_name ?? 'Unknown' }}</td>
+                            <td>
+                                {{ $item->product->product_name ?? 'Unknown' }}
+                                @if($item->packaging)
+                                    <br><small class="text-info">({{ $item->packaging_qty }} {{ $item->packaging->name }})</small>
+                                @endif
+                            </td>
                             <td class="text-center">{{ $item->approved_qty }}</td>
                             <td class="text-center">{{ $item->fulfilled_qty ?? 0 }}</td>
                             <td class="text-center text-warning">{{ $remaining }}</td>

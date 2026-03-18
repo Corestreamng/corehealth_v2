@@ -514,6 +514,10 @@
                                     <td>{{ $transaction->created_at->format('M d, H:i') }}</td>
                                     <td>
                                         <strong>{{ Str::limit($transaction->batch->product->product_name ?? 'N/A', 25) }}</strong>
+                                        @if($transaction->batch->product ?? false)
+                                            @php $pType = $transaction->batch->product->product_type ?? 'drug'; @endphp
+                                            <span class="badge badge-sm" style="{{ $pType === 'drug' ? 'background:#d4edda;color:#155724' : ($pType === 'consumable' ? 'background:#fff3cd;color:#856404' : 'background:#d1ecf1;color:#0c5460') }}">{{ ucfirst($pType) }}</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <span class="type-badge {{ $transaction->transaction_type }}">
@@ -585,9 +589,13 @@
                         <div class="alert-item-info">
                             <h6>{{ Str::limit($item->product->product_name ?? 'N/A', 28) }}</h6>
                             <small><i class="mdi mdi-package-variant mr-1"></i>{{ $item->product->product_code ?? 'N/A' }}</small>
+                            @if($item->product ?? false)
+                                @php $pType = $item->product->product_type ?? 'drug'; @endphp
+                                <span class="badge badge-sm" style="{{ $pType === 'drug' ? 'background:#d4edda;color:#155724' : ($pType === 'consumable' ? 'background:#fff3cd;color:#856404' : 'background:#d1ecf1;color:#0c5460') }}">{{ ucfirst($pType) }}</span>
+                            @endif
                         </div>
                         <div class="text-right">
-                            <span class="alert-badge warning">{{ $item->current_quantity ?? 0 }} left</span>
+                            <span class="alert-badge warning">{{ $item->product && method_exists($item->product, 'formatQty') ? $item->product->formatQty($item->current_quantity ?? 0) : ($item->current_quantity ?? 0) . ' left' }}</span>
                             @if($item->reorder_level)
                             <br><small class="text-muted">Min: {{ $item->reorder_level }}</small>
                             @endif

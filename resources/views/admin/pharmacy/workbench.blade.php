@@ -6449,6 +6449,22 @@ function displayProductSearchResults(results) {
         const claimsAmount = parseFloat(product.claims_amount || 0);
         const coverageMode = product.coverage_mode;
 
+        // Product type badge
+        const typeBadgeMap = {
+            drug: '<span class="badge" style="background:#d4edda;color:#155724;">Drug</span>',
+            consumable: '<span class="badge" style="background:#fff3cd;color:#856404;">Consumable</span>',
+            utility: '<span class="badge" style="background:#d1ecf1;color:#0c5460;">Utility</span>'
+        };
+        const typeBadge = typeBadgeMap[product.product_type] || typeBadgeMap.drug;
+
+        // Packaging chain info
+        let packagingInfo = '';
+        if (product.packagings && product.packagings.length > 0) {
+            const baseUnit = product.base_unit_name || 'Piece';
+            const chain = [baseUnit, ...product.packagings.sort((a,b) => a.level - b.level).map(p => p.name)];
+            packagingInfo = `<div class="mt-1 small text-muted"><i class="mdi mdi-package-variant-closed"></i> ${chain.join(' → ')}</div>`;
+        }
+
         // Build HMO coverage badge (like new_encounter)
         let coverageBadge = '';
         if (coverageMode) {
@@ -6492,8 +6508,10 @@ function displayProductSearchResults(results) {
                         <span class="text-muted">[${product.category_name || 'N/A'}]</span>
                         <strong>${product.product_name}</strong>
                         ${product.product_code ? `<span class="text-muted">[${product.product_code}]</span>` : ''}
+                        ${typeBadge}
                         ${stockBadge}
                         ${coverageBadge}
+                        ${packagingInfo}
                     </div>
                     <div class="text-right">
                         <strong>₦${price.toLocaleString()}</strong>

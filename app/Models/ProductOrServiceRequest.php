@@ -39,6 +39,8 @@ protected $fillable = [
         'hmo_remittance_id',
         'submitted_to_hmo_at',
         'hmo_submission_batch',
+        'packaging_id',
+        'packaging_qty',
     ];
 
     public function product()
@@ -105,6 +107,14 @@ protected $fillable = [
     public function dispensedFromStore()
     {
         return $this->belongsTo(Store::class, 'dispensed_from_store_id');
+    }
+
+    /**
+     * Get the packaging used for this billing line.
+     */
+    public function packaging()
+    {
+        return $this->belongsTo(ProductPackaging::class, 'packaging_id');
     }
 
     /**
