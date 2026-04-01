@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/encounter_api_service.dart';
+import '../../../core/dictation/dictation_button.dart';
 import '../../../core/models/encounter_models.dart';
 import '../../../core/widgets/service_search_field.dart';
 import '../../../core/widgets/status_badge.dart';
@@ -23,12 +24,59 @@ class ProceduresTab extends StatefulWidget {
 }
 
 class _ProceduresTabState extends State<ProceduresTab>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
+  late TabController _subTabCtrl;
   final List<_PendingProcedure> _pending = [];
   bool _isSaving = false;
 
+  // ── History state ──
+  List<Map<String, dynamic>> _history = [];
+  bool _loadingHistory = false;
+  int _historyPage = 1;
+  int _historyLastPage = 1;
+
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _subTabCtrl = TabController(length: 2, vsync: this, initialIndex: 1);
+    _loadHistory();
+  }
+
+  @override
+  void dispose() {
+    _subTabCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadHistory({bool append = false}) async {
+    if (!append) setState(() => _loadingHistory = true);
+    final res = await widget.api.getProcedureHistory(
+      widget.encounter.patientId,
+      page: _historyPage,
+    );
+    if (!mounted) return;
+    if (res.success && res.data != null) {
+      final list = res.data!['data'];
+      final meta = res.data!['meta'] ?? res.data!;
+      final items = list is List
+          ? List<Map<String, dynamic>>.from(list)
+          : <Map<String, dynamic>>[];
+      setState(() {
+        if (append) {
+          _history.addAll(items);
+        } else {
+          _history = items;
+        }
+        _historyLastPage = meta['last_page'] ?? 1;
+        _loadingHistory = false;
+      });
+    } else {
+      setState(() => _loadingHistory = false);
+    }
+  }
 
   void _addPending(Map<String, dynamic> item) {
     final id = item['id'] as int;
@@ -104,12 +152,29 @@ class _ProceduresTabState extends State<ProceduresTab>
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Cancel Procedure'),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            hintText: 'Reason for cancellation...',
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Reason',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                ),
+                DictationButton(
+                    controller: controller,
+                    fieldLabel: 'Cancellation Reason'),
+              ],
+            ),
+            const SizedBox(height: 4),
+            TextField(
+              controller: controller,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'Reason for cancellation...',
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -153,6 +218,69 @@ class _ProceduresTabState extends State<ProceduresTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    return Column(
+      children: [
+        TabBar(
+          controller: _subTabCtrl,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Colors.grey,
+          indicatorSize: TabBarIndicatorSize.tab,
+          tabs: const [Tab(text: 'History'), Tab(text: 'Request')],
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _subTabCtrl,
+            children: [
+              _buildHistoryTab(),
+              _buildEntryTab(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHistoryTab() {
+    if (_loadingHistory) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_history.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text('No procedure history for this patient.',
+              style: TextStyle(color: Colors.grey)),
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: () async {
+        _historyPage = 1;
+        await _loadHistory();
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: _history.length + (_historyPage < _historyLastPage ? 1 : 0),
+        itemBuilder: (context, i) {
+          if (i == _history.length) {
+            if (!_loadingHistory && _historyPage < _historyLastPage) {
+              _historyPage++;
+              _loadHistory(append: true);
+            }
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            );
+          }
+          final h = _history[i];
+          return _HistoryProcedureCard(item: h);
+        },
+      ),
+    );
+  }
+
+  Widget _buildEntryTab() {
     final procedures = widget.encounter.procedures;
     final readOnly = widget.encounter.completed;
 
@@ -586,10 +714,27 @@ class _ProcedureDetailPageState extends State<_ProcedureDetailPage> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Add Note'),
-        content: TextField(
-          controller: controller,
-          maxLines: 4,
-          decoration: const InputDecoration(hintText: 'Enter note...'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Note',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                ),
+                DictationButton(
+                    controller: controller,
+                    fieldLabel: 'Procedure Note'),
+              ],
+            ),
+            const SizedBox(height: 4),
+            TextField(
+              controller: controller,
+              maxLines: 4,
+              decoration: const InputDecoration(hintText: 'Enter note...'),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -776,4 +921,124 @@ class _PendingProcedure {
     required this.serviceId,
     required this.name,
   });
+}
+
+class _HistoryProcedureCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  const _HistoryProcedureCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = item['service_name']?.toString() ?? 'Unknown';
+    final statusLabel = item['status_label']?.toString() ?? '';
+    final priorityLabel = item['priority_label']?.toString() ?? '';
+    final preNotes = item['pre_notes']?.toString() ?? '';
+    final postNotes = item['post_notes']?.toString() ?? '';
+    final outcome = item['outcome']?.toString() ?? '';
+    final requestedBy = item['requested_by']?.toString() ?? '';
+    final scheduledDate = item['scheduled_date']?.toString() ?? '';
+    final createdAt = item['created_at']?.toString() ?? '';
+
+    String dateStr = createdAt;
+    try {
+      final dt = DateTime.parse(createdAt);
+      dateStr = '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {}
+
+    Color priorityColor;
+    switch (item['priority']?.toString()) {
+      case 'urgent':
+        priorityColor = Colors.red.shade700;
+        break;
+      case 'emergency':
+        priorityColor = Colors.red.shade900;
+        break;
+      default:
+        priorityColor = Colors.teal.shade600;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(name,
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+                if (statusLabel.isNotEmpty)
+                  StatusBadge(label: statusLabel, color: Colors.teal.shade600),
+              ],
+            ),
+            const SizedBox(height: 6),
+            if (priorityLabel.isNotEmpty)
+              Row(
+                children: [
+                  Icon(Icons.flag_outlined, size: 13, color: priorityColor),
+                  const SizedBox(width: 4),
+                  Text(priorityLabel,
+                      style: TextStyle(fontSize: 12, color: priorityColor)),
+                ],
+              ),
+            if (scheduledDate.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 12, color: Colors.grey.shade400),
+                    const SizedBox(width: 4),
+                    Text('Scheduled: $scheduledDate',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                  ],
+                ),
+              ),
+            if (preNotes.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('Pre-op: $preNotes',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              ),
+            if (postNotes.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('Post-op: $postNotes',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              ),
+            if (outcome.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text('Outcome: $outcome',
+                      style: TextStyle(fontSize: 12, color: Colors.green.shade800)),
+                ),
+              ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.person_outline, size: 12, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Text(requestedBy,
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                const Spacer(),
+                Icon(Icons.access_time, size: 12, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Text(dateStr,
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

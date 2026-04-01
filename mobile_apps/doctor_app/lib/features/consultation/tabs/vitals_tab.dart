@@ -37,6 +37,8 @@ class _VitalsTabState extends State<VitalsTab>
   final _heightCtrl = TextEditingController();
   final _sugarCtrl = TextEditingController();
   final _painCtrl = TextEditingController();
+  final _notesCtrl = TextEditingController();
+  String? _validationError;
 
   @override
   bool get wantKeepAlive => true;
@@ -53,29 +55,38 @@ class _VitalsTabState extends State<VitalsTab>
     _heightCtrl.dispose();
     _sugarCtrl.dispose();
     _painCtrl.dispose();
+    _notesCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _saveVitals() async {
-    // At least one field must be filled
-    final hasValue = [
-      _tempCtrl, _sysCtrl, _diaCtrl, _hrCtrl, _rrCtrl,
-      _spo2Ctrl, _weightCtrl, _heightCtrl, _sugarCtrl, _painCtrl,
-    ].any((c) => c.text.trim().isNotEmpty);
-
-    if (!hasValue) {
-      showErrorSnackBar(context, 'Please fill at least one vital sign');
+    // Validate: temperature is required matching web validation
+    final temp = double.tryParse(_tempCtrl.text);
+    if (_tempCtrl.text.trim().isEmpty) {
+      setState(() => _validationError = 'Temperature is required.');
+      return;
+    }
+    if (temp == null || temp < 34 || temp > 42) {
+      setState(() => _validationError = 'Temperature must be between 34°C and 42°C.');
       return;
     }
 
-    setState(() => _isSaving = true);
+    // Validate BP: if one is entered, both must be
+    final sys = int.tryParse(_sysCtrl.text);
+    final dia = int.tryParse(_diaCtrl.text);
+    if ((_sysCtrl.text.isNotEmpty || _diaCtrl.text.isNotEmpty) && (sys == null || dia == null)) {
+      setState(() => _validationError = 'Both systolic and diastolic BP are required.');
+      return;
+    }
+
+    setState(() { _validationError = null; _isSaving = true; });
 
     final res = await widget.api.recordVitals(
       patientId: widget.encounter.patientId,
       encounterId: widget.encounter.id,
-      temperature: double.tryParse(_tempCtrl.text),
-      systolicBp: int.tryParse(_sysCtrl.text),
-      diastolicBp: int.tryParse(_diaCtrl.text),
+      temperature: temp,
+      systolicBp: sys,
+      diastolicBp: dia,
       heartRate: int.tryParse(_hrCtrl.text),
       respiratoryRate: int.tryParse(_rrCtrl.text),
       spo2: int.tryParse(_spo2Ctrl.text),
@@ -83,6 +94,7 @@ class _VitalsTabState extends State<VitalsTab>
       height: double.tryParse(_heightCtrl.text),
       bloodSugar: double.tryParse(_sugarCtrl.text),
       painLevel: int.tryParse(_painCtrl.text),
+      otherNotes: _notesCtrl.text.trim(),
     );
 
     if (!mounted) return;
@@ -94,8 +106,18 @@ class _VitalsTabState extends State<VitalsTab>
       setState(() => _showForm = false);
       widget.onVitalsRecorded();
     } else {
-      showErrorSnackBar(
-          context, res.message.isNotEmpty ? res.message : 'Failed to save vitals');
+      // Show backend validation errors
+      final msg = res.message.isNotEmpty ? res.message : 'Failed to save vitals';
+      // Try to extract field-level errors from response
+      if (res.data != null && res.data!['errors'] is Map) {
+        final errors = res.data!['errors'] as Map;
+        final allErrors = errors.values
+            .expand((v) => v is List ? v.map((e) => e.toString()) : [v.toString()])
+            .join('\n');
+        setState(() => _validationError = allErrors);
+      } else {
+        setState(() => _validationError = msg);
+      }
     }
   }
 
@@ -103,9 +125,11 @@ class _VitalsTabState extends State<VitalsTab>
     for (final c in [
       _tempCtrl, _sysCtrl, _diaCtrl, _hrCtrl, _rrCtrl,
       _spo2Ctrl, _weightCtrl, _heightCtrl, _sugarCtrl, _painCtrl,
+      _notesCtrl,
     ]) {
       c.clear();
     }
+    _validationError = null;
   }
 
   @override
@@ -177,6 +201,37 @@ class _VitalsTabState extends State<VitalsTab>
               ),
             ),
             const SizedBox(height: 14),
+
+            // Validation error banner
+            if (_validationError != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.error_outline, size: 16, color: Colors.red.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _validationError!,
+                        style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => setState(() => _validationError = null),
+                      child: Icon(Icons.close, size: 14, color: Colors.red.shade400),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
 
             // Temperature + BP
             Row(
@@ -289,6 +344,15 @@ class _VitalsTabState extends State<VitalsTab>
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+
+            // Notes
+            _VitalField(
+              controller: _notesCtrl,
+              label: 'Other Notes',
+              icon: Icons.note_outlined,
+              keyboardType: TextInputType.text,
             ),
             const SizedBox(height: 16),
 

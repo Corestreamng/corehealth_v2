@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 /// Empty state placeholder with icon, title, subtitle, and optional action.
 class EmptyState extends StatelessWidget {
@@ -70,12 +71,16 @@ class StatusBadge extends StatelessWidget {
     } else if (s.contains('sample') ||
         s.contains('billed') ||
         s.contains('progress') ||
-        s.contains('schedul')) {
+        s.contains('schedul') ||
+        s.contains('pending') ||
+        s.contains('prescri')) {
       return StatusBadge(
           label: status,
           color: Colors.orange.shade800,
           bgColor: Colors.orange.shade50);
-    } else if (s.contains('cancel')) {
+    } else if (s.contains('cancel') ||
+        s.contains('reject') ||
+        s.contains('dismiss')) {
       return StatusBadge(
           label: status,
           color: Colors.red.shade800,
@@ -207,5 +212,67 @@ class VitalCard extends StatelessWidget {
       default:
         return Colors.blue.shade700;
     }
+  }
+}
+
+/// Renders text content, auto-detecting HTML vs plain text.
+/// If the content contains HTML tags, it uses flutter_html to render;
+/// otherwise it shows plain Text.
+class HtmlContent extends StatelessWidget {
+  final String data;
+  final TextStyle? style;
+  final int? maxLines;
+
+  const HtmlContent({
+    super.key,
+    required this.data,
+    this.style,
+    this.maxLines,
+  });
+
+  static final _htmlTagPattern = RegExp(r'<[a-z][\s\S]*?>', caseSensitive: false);
+
+  bool get _isHtml => _htmlTagPattern.hasMatch(data);
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.isEmpty) return const SizedBox.shrink();
+
+    if (!_isHtml) {
+      return Text(
+        data,
+        style: style ?? const TextStyle(fontSize: 13, height: 1.5),
+        maxLines: maxLines,
+        overflow: maxLines != null ? TextOverflow.ellipsis : null,
+      );
+    }
+
+    return Html(
+      data: data,
+      style: {
+        'body': Style(
+          margin: Margins.zero,
+          padding: HtmlPaddings.zero,
+          fontSize: FontSize(style?.fontSize ?? 13),
+          lineHeight: LineHeight(style?.height ?? 1.5),
+          color: style?.color,
+        ),
+        'p': Style(margin: Margins.only(bottom: 8)),
+        'ul': Style(margin: Margins.only(left: 16, bottom: 8)),
+        'ol': Style(margin: Margins.only(left: 16, bottom: 8)),
+        'table': Style(
+          border: Border.all(color: Colors.grey.shade300, width: 0.5),
+        ),
+        'th': Style(
+          padding: HtmlPaddings.all(6),
+          backgroundColor: Colors.grey.shade100,
+          fontWeight: FontWeight.bold,
+        ),
+        'td': Style(
+          padding: HtmlPaddings.all(6),
+          border: Border.all(color: Colors.grey.shade300, width: 0.5),
+        ),
+      },
+    );
   }
 }

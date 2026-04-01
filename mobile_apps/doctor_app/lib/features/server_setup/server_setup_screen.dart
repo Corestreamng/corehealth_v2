@@ -44,11 +44,14 @@ class _ServerSetupScreenState extends State<ServerSetupScreen> {
       final isValid = await client.verifyServer();
 
       if (!isValid) {
+        final detail = client.lastError != null
+            ? '\n\nDetails: ${client.lastError}'
+            : '';
         setState(() {
           _isLoading = false;
           _errorMessage =
               'Could not connect to a CoreHealth instance at this address. '
-              'Please check the URL and try again.';
+              'Please check the URL and try again.$detail';
         });
         return;
       }

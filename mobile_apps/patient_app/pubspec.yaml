@@ -36,6 +36,9 @@ dependencies:
   intl: ^0.19.0
   url_launcher: ^6.2.4
 
+  # HTML rendering
+  flutter_html: ^3.0.0-beta.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

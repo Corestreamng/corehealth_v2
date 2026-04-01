@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../storage/local_storage.dart';
 
 /// Lightweight API client for CoreHealth mobile endpoints.
 class ApiClient {
   final String baseUrl;
+
+  /// Stores the last error from [verifyServer] for UI display.
+  String? lastError;
 
   ApiClient(this.baseUrl);
 
@@ -30,16 +34,25 @@ class ApiClient {
 
   /// Verify the server URL is reachable and is a CoreHealth instance.
   Future<bool> verifyServer() async {
+    lastError = null;
+    final url = '$_apiBase/instance-info';
+    debugPrint('[ApiClient] verifyServer → GET $url');
     try {
       final res = await http
-          .get(Uri.parse('$_apiBase/instance-info'))
-          .timeout(const Duration(seconds: 10));
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 60));
+      debugPrint('[ApiClient] verifyServer ← ${res.statusCode} (${res.body.length} bytes)');
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
+        debugPrint('[ApiClient] verifyServer body.status = ${body['status']}');
         return body['status'] == true;
       }
+      lastError = 'Server returned HTTP ${res.statusCode}';
+      debugPrint('[ApiClient] verifyServer non-200: ${res.statusCode}');
       return false;
-    } catch (_) {
+    } catch (e) {
+      lastError = e.toString();
+      debugPrint('[ApiClient] verifyServer ERROR: $e');
       return false;
     }
   }
@@ -78,15 +91,19 @@ class ApiClient {
 
   Future<ApiResponse> _get(String path,
       {bool auth = false, String? token}) async {
+    final url = '$_apiBase$path';
+    debugPrint('[ApiClient] GET → $url');
     try {
       final res = await http
           .get(
-            Uri.parse('$_apiBase$path'),
+            Uri.parse(url),
             headers: _headers(auth: auth, token: token),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 30));
+      debugPrint('[ApiClient] GET ← ${res.statusCode} $url');
       return ApiResponse.fromHttpResponse(res);
     } catch (e) {
+      debugPrint('[ApiClient] GET ERROR $url: $e');
       return ApiResponse(
         success: false,
         statusCode: 0,
@@ -99,16 +116,20 @@ class ApiClient {
       {Map<String, dynamic>? body,
       bool auth = false,
       String? token}) async {
+    final url = '$_apiBase$path';
+    debugPrint('[ApiClient] POST → $url');
     try {
       final res = await http
           .post(
-            Uri.parse('$_apiBase$path'),
+            Uri.parse(url),
             headers: _headers(auth: auth, token: token),
             body: body != null ? jsonEncode(body) : null,
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 30));
+      debugPrint('[ApiClient] POST ← ${res.statusCode} $url');
       return ApiResponse.fromHttpResponse(res);
     } catch (e) {
+      debugPrint('[ApiClient] POST ERROR $url: $e');
       return ApiResponse(
         success: false,
         statusCode: 0,

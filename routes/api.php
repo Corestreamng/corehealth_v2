@@ -5,11 +5,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\DataEndpoint;
 use App\Http\Controllers\API\MobileAuthController;
 use App\Http\Controllers\API\MobileEncounterController;
+use App\Http\Controllers\API\MobileChatController;
 use App\Http\Controllers\API\MobilePatientController;
 use App\Http\Controllers\EncounterController;
+use App\Http\Controllers\SpecialistReferralController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VitalSignController;
+use App\Http\Controllers\ClinicNoteTemplateController;
+use App\Http\Controllers\MedicationChartController;
 use App\Http\Controllers\NursingWorkbenchController;
 use App\Models\Service;
 use App\Models\Product;
@@ -134,7 +138,7 @@ Route::get('get-facility-monthly-hospitalization/{year}', [DataEndpoint::class, 
 */
 
 // Public — no auth required (called before login)
-Route::prefix('mobile')->group(function () {
+Route::prefix('mobile')->middleware('throttle:10,1')->group(function () {
     Route::get('instance-info',  [MobileAuthController::class, 'instanceInfo']);
     Route::post('staff/login',   [MobileAuthController::class, 'staffLogin']);
     Route::post('patient/login', [MobileAuthController::class, 'patientLogin']);
@@ -161,6 +165,9 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
     Route::post('encounters/start', [MobileEncounterController::class, 'startEncounter']);
     Route::get('encounters/{encounter}', [MobileEncounterController::class, 'encounterDetail']);
 
+    // ── Queue Stats ──────────────────────────────────────────────
+    Route::get('queues/stats', [MobileEncounterController::class, 'queueStats']);
+
     // ── Reused: Diagnosis & Notes (already return JSON) ──────────
     Route::post('encounters/{encounter}/save-diagnosis', [EncounterController::class, 'saveDiagnosis']);
     Route::put('encounters/{encounter}/notes', [EncounterController::class, 'updateEncounterNotes']);
@@ -171,6 +178,22 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
     Route::post('encounters/{encounter}/save-imaging', [EncounterController::class, 'saveImaging']);
     Route::post('encounters/{encounter}/save-prescriptions', [EncounterController::class, 'savePrescriptions']);
     Route::post('encounters/{encounter}/save-procedures', [EncounterController::class, 'saveProcedures']);
+
+    // ── Single item add endpoints ────────────────────────────────
+    Route::post('encounters/{encounter}/add-lab', [EncounterController::class, 'addSingleLabRequest']);
+    Route::post('encounters/{encounter}/add-imaging', [EncounterController::class, 'addSingleImagingRequest']);
+    Route::post('encounters/{encounter}/add-prescription', [EncounterController::class, 'addSinglePrescriptionRequest']);
+    Route::post('encounters/{encounter}/add-procedure', [EncounterController::class, 'addSingleProcedureRequest']);
+
+    // ── Note updates ─────────────────────────────────────────────
+    Route::put('encounters/{encounter}/labs/{lab}/note', [EncounterController::class, 'updateLabNoteRequest']);
+    Route::put('encounters/{encounter}/imaging/{imaging}/note', [EncounterController::class, 'updateImagingNoteRequest']);
+    Route::put('encounters/{encounter}/prescriptions/{prescription}/dose', [EncounterController::class, 'updatePrescriptionDoseRequest']);
+
+    // ── Re-prescription ──────────────────────────────────────────
+    Route::get('encounters/{encounter}/recent-encounters', [EncounterController::class, 'recentEncounters']);
+    Route::get('encounters/{encounter}/encounter-items/{sourceEncounter}', [EncounterController::class, 'encounterItems']);
+    Route::post('encounters/{encounter}/re-prescribe', [EncounterController::class, 'rePrescribe']);
 
     // ── Reused: Finalize & Summary ──────────────────────────────
     Route::post('encounters/{encounter}/finalize', [EncounterController::class, 'finalizeEncounter']);
@@ -199,6 +222,32 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
     Route::get('patient/{patient}/imaging-history', [MobileEncounterController::class, 'imagingHistory']);
     Route::get('patient/{patient}/prescription-history', [MobileEncounterController::class, 'prescriptionHistory']);
     Route::get('patient/{patient}/procedure-history', [MobileEncounterController::class, 'procedureHistory']);
+    Route::get('patient/{patient}/allergies', [MobileEncounterController::class, 'getPatientAllergies']);
+    Route::post('patient/{patient}/allergies', [MobileEncounterController::class, 'addPatientAllergy']);
+    Route::delete('patient/{patient}/allergies/{index}', [MobileEncounterController::class, 'deletePatientAllergy']);
+
+    // ── Admissions ───────────────────────────────────────────────
+    Route::get('admissions', [MobileEncounterController::class, 'myAdmissions']);
+
+    // ── Referrals (reuse existing JSON-returning controller) ────
+    Route::get('encounters/{encounter}/referrals', [SpecialistReferralController::class, 'getEncounterReferrals']);
+    Route::post('encounters/{encounter}/referrals', [SpecialistReferralController::class, 'createReferral']);
+    Route::put('encounters/{encounter}/referrals/{referral}', [SpecialistReferralController::class, 'updateReferral']);
+    Route::delete('encounters/{encounter}/referrals/{referral}', [SpecialistReferralController::class, 'deleteReferral']);
+    Route::get('encounters/{encounter}/referrals/incoming', [SpecialistReferralController::class, 'getIncomingReferrals']);
+    Route::get('encounters/{encounter}/referrals/patient-all', [SpecialistReferralController::class, 'getPatientReferrals']);
+
+    // ── Clinics & Staff (for referral form dropdowns) ───────────
+    Route::get('clinics', [MobileEncounterController::class, 'getClinics']);
+    Route::get('doctors', [MobileEncounterController::class, 'getDoctors']);
+
+    // ── Doctor Profile & Settings ───────────────────────────────
+    Route::get('profile', [MobileEncounterController::class, 'doctorProfile']);
+    Route::put('profile', [MobileEncounterController::class, 'updateDoctorProfile']);
+    Route::post('change-password', [MobileEncounterController::class, 'changeDoctorPassword']);
+
+    // ── My Investigations (cross-patient) ───────────────────────
+    Route::get('my-investigations', [MobileEncounterController::class, 'myInvestigations']);
 
     // ── Search / Autocomplete (reused, already return JSON) ─────
     Route::get('search/diagnosis', [EncounterController::class, 'liveSearchReasons']);
@@ -208,6 +257,17 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
     // ── Vitals (reused, already JSON-aware) ─────────────────────
     Route::post('vitals', [VitalSignController::class, 'store']);
     Route::get('patient/{patientId}/vitals', [NursingWorkbenchController::class, 'getPatientVitals']);
+
+    // ── Nursing Notes (mobile-friendly JSON) ────────────────────
+    Route::get('patient/{patientId}/nursing-notes', [MobileEncounterController::class, 'getNursingNotes']);
+    Route::get('nursing-note-types', [MobileEncounterController::class, 'getNoteTypes']);
+
+    // ── Clinic Note Templates ───────────────────────────────────
+    Route::get('clinic-note-templates', [MobileEncounterController::class, 'getClinicNoteTemplates']);
+
+    // ── Medication Chart (reuse existing JSON controller) ────────
+    Route::get('patient/{patient}/medication-chart', [MedicationChartController::class, 'getPatientPrescribedDrugs']);
+    Route::get('patient/{patient}/medication-chart/overview', [MedicationChartController::class, 'overview']);
 });
 
 /*
@@ -217,6 +277,8 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
 */
 Route::prefix('mobile/patient')->middleware('auth:sanctum')->group(function () {
     Route::get('profile', [MobilePatientController::class, 'myProfile']);
+    Route::put('profile', [MobilePatientController::class, 'updateProfile']);
+    Route::post('change-password', [MobilePatientController::class, 'changePassword']);
     Route::get('encounters', [MobilePatientController::class, 'myEncounters']);
     Route::get('encounters/{encounter}', [MobilePatientController::class, 'encounterDetail']);
     Route::get('vitals', [MobilePatientController::class, 'myVitals']);
@@ -225,4 +287,40 @@ Route::prefix('mobile/patient')->middleware('auth:sanctum')->group(function () {
     Route::get('prescriptions', [MobilePatientController::class, 'myPrescriptions']);
     Route::get('procedures', [MobilePatientController::class, 'myProcedures']);
     Route::get('admissions', [MobilePatientController::class, 'myAdmissions']);
+    Route::get('referrals', [MobilePatientController::class, 'myReferrals']);
+    Route::get('appointments', [MobilePatientController::class, 'myAppointments']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Chat Routes — Doctor (full chat system)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('mobile/doctor/chat')->middleware('auth:sanctum')->group(function () {
+    Route::get('conversations',              [MobileChatController::class, 'getConversations']);
+    Route::get('messages/{conversationId}',  [MobileChatController::class, 'getMessages']);
+    Route::post('send',                      [MobileChatController::class, 'sendMessage']);
+    Route::post('create',                    [MobileChatController::class, 'createConversation']);
+    Route::post('mark-read/{conversationId}',[MobileChatController::class, 'markAsRead']);
+    Route::get('unread-count',               [MobileChatController::class, 'unreadCount']);
+    Route::delete('messages/{messageId}',    [MobileChatController::class, 'deleteMessage']);
+    Route::post('archive/{conversationId}',  [MobileChatController::class, 'archiveConversation']);
+    Route::post('unarchive/{conversationId}',[MobileChatController::class, 'unarchiveConversation']);
+    Route::get('search-users',               [MobileChatController::class, 'searchUsers']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Chat Routes — Patient (restricted to encounter doctors only)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('mobile/patient/chat')->middleware('auth:sanctum')->group(function () {
+    Route::get('my-doctors',                 [MobileChatController::class, 'myDoctors']);
+    Route::get('conversations',              [MobileChatController::class, 'getConversations']);
+    Route::get('messages/{conversationId}',  [MobileChatController::class, 'getMessages']);
+    Route::post('send',                      [MobileChatController::class, 'sendMessage']);
+    Route::post('create',                    [MobileChatController::class, 'createConversation']);
+    Route::post('mark-read/{conversationId}',[MobileChatController::class, 'markAsRead']);
+    Route::get('unread-count',               [MobileChatController::class, 'unreadCount']);
+    Route::delete('messages/{messageId}',    [MobileChatController::class, 'deleteMessage']);
 });

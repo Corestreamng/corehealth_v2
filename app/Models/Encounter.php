@@ -46,6 +46,16 @@ class Encounter extends Model implements Auditable
         return $this->hasMany(LabServiceRequest::class, 'encounter_id', 'id');
     }
 
+    public function imagingRequests()
+    {
+        return $this->hasMany(ImagingServiceRequest::class, 'encounter_id', 'id');
+    }
+
+    public function productRequests()
+    {
+        return $this->hasMany(ProductRequest::class, 'encounter_id', 'id');
+    }
+
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id', 'id');
