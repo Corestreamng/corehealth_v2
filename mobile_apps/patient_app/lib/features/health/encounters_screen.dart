@@ -109,12 +109,12 @@ class _EncounterCard extends StatelessWidget {
                 ],
               ),
 
-              // Diagnosis
+              // Diagnosis / Notes preview
               if (encounter.diagnosis != null &&
                   encounter.diagnosis!.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Text(
-                  encounter.diagnosis!,
+                  _stripHtml(encounter.diagnosis!),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
@@ -179,5 +179,18 @@ class _EncounterCard extends StatelessWidget {
     } catch (_) {
       return date;
     }
+  }
+
+  static String _stripHtml(String html) {
+    return html
+        .replaceAll(RegExp(r'<br\s*/?>'), '\n')
+        .replaceAll(RegExp(r'<p[^>]*>'), '\n')
+        .replaceAll(RegExp(r'</p>'), '')
+        .replaceAll(RegExp(r'<[^>]+>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .trim();
   }
 }

@@ -56,6 +56,7 @@ class PaginatedListState<T> extends State<PaginatedList<T>> {
   }
 
   void _onScroll() {
+    if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
         !_isLoadingMore &&
