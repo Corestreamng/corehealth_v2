@@ -7,10 +7,15 @@ class QueueItem {
   final String gender;
   final String? dob;
   final String hmoName;
+  final String hmoNo;
   final String clinicName;
-  final String status;
+  final String doctorName;
   final int statusCode;
+  final String statusLabel;
   final bool vitalsTaken;
+  final int? requestEntryId;
+  final String priority;
+  final String source;
   final bool canDeliver;
   final String deliveryReason;
   final String deliveryHint;
@@ -24,10 +29,15 @@ class QueueItem {
     required this.gender,
     this.dob,
     required this.hmoName,
+    required this.hmoNo,
     required this.clinicName,
-    required this.status,
+    required this.doctorName,
     required this.statusCode,
+    required this.statusLabel,
     required this.vitalsTaken,
+    this.requestEntryId,
+    required this.priority,
+    required this.source,
     required this.canDeliver,
     required this.deliveryReason,
     required this.deliveryHint,
@@ -38,21 +48,36 @@ class QueueItem {
     return QueueItem(
       queueId: json['queue_id'] ?? 0,
       patientId: json['patient_id'] ?? 0,
-      patientName: json['patient_name'] ?? 'Unknown',
-      fileNo: json['file_no'] ?? '',
-      gender: json['gender'] ?? '',
-      dob: json['dob'],
-      hmoName: json['hmo_name'] ?? 'N/A',
-      clinicName: json['clinic_name'] ?? '',
-      status: json['status'] ?? 'Unknown',
-      statusCode: json['status_code'] ?? 1,
+      patientName: json['patient_name']?.toString() ?? 'Unknown',
+      fileNo: json['file_no']?.toString() ?? '',
+      gender: json['gender']?.toString() ?? '',
+      dob: json['dob']?.toString(),
+      hmoName: json['hmo_name']?.toString() ?? 'N/A',
+      hmoNo: json['hmo_no']?.toString() ?? '',
+      clinicName: json['clinic_name']?.toString() ?? '',
+      doctorName: json['doctor_name']?.toString() ?? '',
+      statusCode: json['status'] is int ? json['status'] : int.tryParse('${json['status']}') ?? 1,
+      statusLabel: json['status_label']?.toString() ?? 'Unknown',
       vitalsTaken: json['vitals_taken'] == true || json['vitals_taken'] == 1,
+      requestEntryId: json['request_entry_id'],
+      priority: json['priority']?.toString() ?? 'normal',
+      source: json['source']?.toString() ?? 'walk-in',
       canDeliver: json['can_deliver'] == true,
-      deliveryReason: json['delivery_reason'] ?? '',
-      deliveryHint: json['delivery_hint'] ?? '',
-      createdAt: json['created_at'] ?? '',
+      deliveryReason: json['delivery_reason']?.toString() ?? '',
+      deliveryHint: json['delivery_hint']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? '',
     );
   }
+
+  /// Status constants matching backend QueueStatus enum.
+  static const int cancelled = 0;
+  static const int waiting = 1;
+  static const int vitalsPending = 2;
+  static const int ready = 3;
+  static const int inConsultation = 4;
+  static const int completed = 5;
+  static const int scheduled = 6;
+  static const int noShow = 7;
 
   /// Calculate age from dob.
   String get age {

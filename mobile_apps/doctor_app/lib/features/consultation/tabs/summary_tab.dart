@@ -142,17 +142,45 @@ class _SummaryTabState extends State<SummaryTab>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (diagnosis.toString().isNotEmpty)
-                      Text(diagnosis.toString(),
-                          style: const TextStyle(fontSize: 13, height: 1.5))
-                    else
-                      Text('No diagnosis recorded',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade500,
-                              fontStyle: FontStyle.italic)),
-                    if (enc.reasonsForEncounter.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                    if (enc.diagnosisEntries.isNotEmpty) ...[
+                      // Diagnosis table (matches clinical context modal)
+                      Table(
+                        columnWidths: const {
+                          0: FlexColumnWidth(1),   // Code
+                          1: FlexColumnWidth(2.5), // Diagnosis
+                          2: FlexColumnWidth(1.2), // Status
+                          3: FlexColumnWidth(1.2), // Course
+                        },
+                        border: TableBorder.all(
+                          color: Colors.grey.shade300,
+                          width: 0.5,
+                        ),
+                        children: [
+                          // Header row
+                          TableRow(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                            ),
+                            children: const [
+                              _TableHeaderCell('Code'),
+                              _TableHeaderCell('Diagnosis'),
+                              _TableHeaderCell('Status'),
+                              _TableHeaderCell('Course'),
+                            ],
+                          ),
+                          // Data rows
+                          ...enc.diagnosisEntries.map((entry) => TableRow(
+                            children: [
+                              _TableCell(entry.code),
+                              _TableCell(entry.name),
+                              _TableCell(entry.status, color: _statusColor(entry.status)),
+                              _TableCell(entry.course, color: _courseColor(entry.course)),
+                            ],
+                          )),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                    ] else if (enc.reasonsForEncounter.isNotEmpty) ...[
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
@@ -168,7 +196,17 @@ class _SummaryTabState extends State<SummaryTab>
                                 ))
                             .toList(),
                       ),
+                      const SizedBox(height: 8),
                     ],
+                    // Clinical notes (free text)
+                    if (diagnosis.toString().isNotEmpty)
+                      HtmlContent(data: diagnosis.toString())
+                    else if (enc.diagnosisEntries.isEmpty)
+                      Text('No diagnosis recorded',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade500,
+                              fontStyle: FontStyle.italic)),
                   ],
                 ),
               ),
@@ -348,6 +386,51 @@ class _SummaryItemTile extends StatelessWidget {
         trailing:
             StatusBadge.fromStatus(status),
       ),
+    );
+  }
+}
+
+Color _statusColor(String s) => switch (s) {
+  'Confirmed' => Colors.green.shade700,
+  'Query' => Colors.orange.shade700,
+  'Differential' => Colors.blue.shade700,
+  _ => Colors.grey.shade600,
+};
+
+Color _courseColor(String c) => switch (c) {
+  'Acute' => Colors.red.shade600,
+  'Chronic' => Colors.purple.shade600,
+  'Recurrent' => Colors.orange.shade600,
+  _ => Colors.grey.shade600,
+};
+
+class _TableHeaderCell extends StatelessWidget {
+  final String text;
+  const _TableHeaderCell(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+      child: Text(text,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+class _TableCell extends StatelessWidget {
+  final String text;
+  final Color? color;
+  const _TableCell(this.text, {this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+      child: Text(text,
+          style: TextStyle(
+              fontSize: 11,
+              color: color ?? Colors.grey.shade800)),
     );
   }
 }

@@ -80,6 +80,32 @@ class _ProceduresScreenState extends State<ProceduresScreen> {
                           'Outcome', proc.outcome!, Colors.green.shade700),
                   ],
                 ),
+                // Pre-operative notes
+                if (proc.preNotes != null && proc.preNotes!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Pre-operative Notes',
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue.shade700)),
+                        const SizedBox(height: 2),
+                        Text(proc.preNotes!,
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.blue.shade900)),
+                      ],
+                    ),
+                  ),
+                ],
                 if (proc.createdAt != null) ...[
                   const SizedBox(height: 6),
                   Text(_formatDate(proc.createdAt),

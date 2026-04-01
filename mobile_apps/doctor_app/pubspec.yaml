@@ -32,9 +32,16 @@ dependencies:
   flutter_svg: ^2.0.9
   lottie: ^3.1.0
 
+  # Voice Dictation
+  speech_to_text: ^7.0.0
+  permission_handler: ^11.3.0
+
   # Utilities
   intl: ^0.19.0
   url_launcher: ^6.2.4
+
+  # HTML rendering
+  flutter_html: ^3.0.0-beta.2
 
 dev_dependencies:
   flutter_test:
