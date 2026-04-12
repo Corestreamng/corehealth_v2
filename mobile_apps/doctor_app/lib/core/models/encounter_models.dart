@@ -805,14 +805,27 @@ class Referral {
   final String? toClinicName;
   final String? reason;
   final String? notes;
-  final int urgency;
-  final int status;
+  final String urgency; // 'routine', 'urgent', 'emergency'
+  final String status;  // 'pending', 'accepted', 'declined', 'completed'
   final String urgencyLabel;
   final String statusLabel;
   final String? appointmentDate;
   final String? responseNotes;
   final String createdAt;
   final String? updatedAt;
+  // New fields for web parity
+  final String referralType; // 'internal' or 'external'
+  final String? clinicalSummary;
+  final String? provisionalDiagnosis;
+  final String? externalFacility;
+  final String? externalDoctor;
+  final String? externalFacilityAddress;
+  final String? externalFacilityPhone;
+  final String? referringDoctor;
+  final String? referringClinic;
+  final bool isMine;
+  final bool canEdit;
+  final String? actionNotes;
 
   Referral({
     required this.id,
@@ -834,44 +847,100 @@ class Referral {
     this.responseNotes,
     required this.createdAt,
     this.updatedAt,
+    this.referralType = 'internal',
+    this.clinicalSummary,
+    this.provisionalDiagnosis,
+    this.externalFacility,
+    this.externalDoctor,
+    this.externalFacilityAddress,
+    this.externalFacilityPhone,
+    this.referringDoctor,
+    this.referringClinic,
+    this.isMine = false,
+    this.canEdit = false,
+    this.actionNotes,
   });
 
   factory Referral.fromJson(Map<String, dynamic> json) {
+    final rawUrgency = json['urgency'];
+    final rawStatus = json['status'];
     return Referral(
       id: json['id'] ?? 0,
       encounterId: json['encounter_id'] ?? 0,
       patientId: json['patient_id'] ?? 0,
-      fromDoctorId: json['from_doctor_id'] ?? 0,
-      toDoctorId: json['to_doctor_id'],
-      toClinicId: json['to_clinic_id'],
-      fromDoctorName: _str(json['from_doctor_name']),
-      toDoctorName: _str(json['to_doctor_name']),
-      toClinicName: _str(json['to_clinic_name']),
+      fromDoctorId: json['from_doctor_id'] ?? json['referring_doctor_id'] ?? 0,
+      toDoctorId: json['to_doctor_id'] ?? json['target_doctor_id'],
+      toClinicId: json['to_clinic_id'] ?? json['target_clinic_id'],
+      fromDoctorName: _str(json['from_doctor_name'] ?? json['referring_doctor']),
+      toDoctorName: _str(json['to_doctor_name'] ?? json['target_doctor']),
+      toClinicName: _str(json['to_clinic_name'] ?? json['target_clinic']),
       reason: _str(json['reason']),
-      notes: _str(json['notes']),
-      urgency: json['urgency'] is int ? json['urgency'] : 0,
-      status: json['status'] is int ? json['status'] : 0,
-      urgencyLabel: _str(json['urgency_label']) ?? _urgencyLabel(json['urgency']),
-      statusLabel: _str(json['status_label']) ?? _statusLabelRef(json['status']),
+      notes: _str(json['notes'] ?? json['clinical_summary']),
+      urgency: rawUrgency is String ? rawUrgency : _urgencyStr(rawUrgency),
+      status: rawStatus is String ? rawStatus : _statusStr(rawStatus),
+      urgencyLabel: _str(json['urgency_label']) ?? _urgencyLabelFromAny(rawUrgency),
+      statusLabel: _str(json['status_label']) ?? _statusLabelFromAny(rawStatus),
       appointmentDate: _str(json['appointment_date']),
-      responseNotes: _str(json['response_notes']),
+      responseNotes: _str(json['response_notes'] ?? json['action_notes']),
       createdAt: _str(json['created_at']) ?? '',
-      updatedAt: _str(json['updated_at']),
+      updatedAt: _str(json['updated_at'] ?? json['actioned_at']),
+      referralType: _str(json['type'] ?? json['referral_type']) ?? 'internal',
+      clinicalSummary: _str(json['clinical_summary']),
+      provisionalDiagnosis: _str(json['provisional_diagnosis']),
+      externalFacility: _str(json['external_facility']),
+      externalDoctor: _str(json['external_doctor']),
+      externalFacilityAddress: _str(json['external_facility_address']),
+      externalFacilityPhone: _str(json['external_facility_phone']),
+      referringDoctor: _str(json['referring_doctor']),
+      referringClinic: _str(json['referring_clinic']),
+      isMine: json['is_mine'] == true,
+      canEdit: json['can_edit'] == true,
+      actionNotes: _str(json['action_notes']),
     );
   }
 
-  static String _urgencyLabel(dynamic v) {
+  static String _urgencyStr(dynamic v) {
     switch (v) {
-      case 0: return 'Routine';
+      case 1: return 'urgent';
+      case 2: return 'emergency';
+      default: return 'routine';
+    }
+  }
+
+  static String _statusStr(dynamic v) {
+    switch (v) {
+      case 1: return 'accepted';
+      case 2: return 'declined';
+      case 3: return 'completed';
+      default: return 'pending';
+    }
+  }
+
+  static String _urgencyLabelFromAny(dynamic v) {
+    if (v is String) {
+      switch (v) {
+        case 'urgent': return 'Urgent';
+        case 'emergency': return 'Emergency';
+        default: return 'Routine';
+      }
+    }
+    switch (v) {
       case 1: return 'Urgent';
       case 2: return 'Emergency';
       default: return 'Routine';
     }
   }
 
-  static String _statusLabelRef(dynamic v) {
+  static String _statusLabelFromAny(dynamic v) {
+    if (v is String) {
+      switch (v) {
+        case 'accepted': return 'Accepted';
+        case 'declined': return 'Declined';
+        case 'completed': return 'Completed';
+        default: return 'Pending';
+      }
+    }
     switch (v) {
-      case 0: return 'Pending';
       case 1: return 'Accepted';
       case 2: return 'Declined';
       case 3: return 'Completed';
@@ -879,8 +948,9 @@ class Referral {
     }
   }
 
-  bool get isUrgent => urgency >= 1;
-  bool get isEmergency => urgency == 2;
+  bool get isExternal => referralType == 'external';
+  bool get isUrgent => urgency == 'urgent' || urgency == 'emergency';
+  bool get isEmergency => urgency == 'emergency';
 }
 
 /// Admission history item.

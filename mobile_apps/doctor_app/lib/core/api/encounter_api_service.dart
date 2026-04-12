@@ -181,30 +181,35 @@ class EncounterApiService {
   //  Finalize / Delete
   // ═══════════════════════════════════════════════════════════════
 
-  /// Finalize encounter (end consultation / admit / discharge).
+  /// Finalize encounter (end consultation / admit).
+  /// Backend only processes: end_consultation, consult_admit, admit_note, queue_id.
+  /// Follow-up scheduling is a separate call via [scheduleFollowUp].
   Future<ApiResult> finalizeEncounter(int encounterId, {
     required bool endConsultation,
     bool admit = false,
     String? admitNote,
-    bool discharge = false,
-    String? dischargeReason,
-    String? dischargeNote,
-    String? followUpDate,
-    String? followUpNotes,
-    String? closingNotes,
     int? queueId,
   }) async {
     return _post('$_api/encounters/$encounterId/finalize', body: {
       'end_consultation': endConsultation ? 1 : 0,
       if (admit) 'consult_admit': 1,
       if (admitNote != null) 'admit_note': admitNote,
-      if (discharge) 'discharge': 1,
-      if (dischargeReason != null) 'discharge_reason': dischargeReason,
-      if (dischargeNote != null) 'discharge_note': dischargeNote,
-      if (followUpDate != null) 'follow_up_date': followUpDate,
-      if (followUpNotes != null) 'follow_up_notes': followUpNotes,
-      if (closingNotes != null) 'closing_notes': closingNotes,
       if (queueId != null) 'queue_id': queueId,
+    });
+  }
+
+  /// Schedule a follow-up appointment after concluding an encounter.
+  Future<ApiResult> scheduleFollowUp(int encounterId, {
+    required String appointmentDate,
+    String? startTime,
+    String? reason,
+    bool isPrepaid = false,
+  }) async {
+    return _post('$_api/encounters/$encounterId/schedule-followup', body: {
+      'appointment_date': appointmentDate,
+      if (startTime != null) 'start_time': startTime,
+      if (reason != null) 'reason': reason,
+      'is_prepaid': isPrepaid ? 1 : 0,
     });
   }
 
@@ -214,14 +219,15 @@ class EncounterApiService {
   }
 
   /// Delete individual lab/imaging/prescription/procedure.
-  Future<ApiResult> deleteLab(int encounterId, int labId) =>
-      _delete('$_api/encounters/$encounterId/labs/$labId');
-  Future<ApiResult> deleteImaging(int encounterId, int imagingId) =>
-      _delete('$_api/encounters/$encounterId/imaging/$imagingId');
-  Future<ApiResult> deletePrescription(int encounterId, int rxId) =>
-      _delete('$_api/encounters/$encounterId/prescriptions/$rxId');
-  Future<ApiResult> deleteProcedure(int encounterId, int procId) =>
-      _delete('$_api/encounters/$encounterId/procedures/$procId');
+  /// Backend requires [reason] (max 500 chars) for all four.
+  Future<ApiResult> deleteLab(int encounterId, int labId, {required String reason}) =>
+      _delete('$_api/encounters/$encounterId/labs/$labId', body: {'reason': reason});
+  Future<ApiResult> deleteImaging(int encounterId, int imagingId, {required String reason}) =>
+      _delete('$_api/encounters/$encounterId/imaging/$imagingId', body: {'reason': reason});
+  Future<ApiResult> deletePrescription(int encounterId, int rxId, {required String reason}) =>
+      _delete('$_api/encounters/$encounterId/prescriptions/$rxId', body: {'reason': reason});
+  Future<ApiResult> deleteProcedure(int encounterId, int procId, {required String reason}) =>
+      _delete('$_api/encounters/$encounterId/procedures/$procId', body: {'reason': reason});
 
   // ═══════════════════════════════════════════════════════════════
   //  Procedure Sub-endpoints
@@ -333,6 +339,7 @@ class EncounterApiService {
   Future<ApiResult> getMyAdmissions({
     String? startDate,
     String? endDate,
+    int? hmoId,
     int page = 1,
     int perPage = 30,
   }) async {
@@ -342,6 +349,7 @@ class EncounterApiService {
     };
     if (startDate != null) params['start_date'] = startDate;
     if (endDate != null) params['end_date'] = endDate;
+    if (hmoId != null) params['hmo_id'] = '$hmoId';
     return _get(Uri.parse('$_api/admissions').replace(queryParameters: params));
   }
 
@@ -349,6 +357,8 @@ class EncounterApiService {
   Future<ApiResult> getPreviousEncounters({
     String? startDate,
     String? endDate,
+    int? clinicId,
+    int? hmoId,
     int page = 1,
     int perPage = 30,
   }) async {
@@ -359,6 +369,8 @@ class EncounterApiService {
     };
     if (startDate != null) params['start_date'] = startDate;
     if (endDate != null) params['end_date'] = endDate;
+    if (clinicId != null) params['clinic_id'] = '$clinicId';
+    if (hmoId != null) params['hmo_id'] = '$hmoId';
     return _get(Uri.parse('$_api/queues').replace(queryParameters: params));
   }
 
@@ -398,38 +410,36 @@ class EncounterApiService {
   }
 
   /// Add a single prescription to an encounter.
+  /// Backend only stores product_id + dose (pipe-delimited string).
   Future<ApiResult> addPrescription(int encounterId, {
     required int productId,
     String? dose,
-    String? frequency,
-    String? duration,
-    String? durationUnit,
-    String? route,
-    String? specialInstruction,
-    int? qty,
   }) async {
     return _post('$_api/encounters/$encounterId/add-prescription', body: {
       'product_id': productId,
       if (dose != null) 'dose': dose,
-      if (frequency != null) 'frequency': frequency,
-      if (duration != null) 'duration': duration,
-      if (durationUnit != null) 'duration_unit': durationUnit,
-      if (route != null) 'route': route,
-      if (specialInstruction != null) 'special_instruction': specialInstruction,
-      if (qty != null) 'qty': qty,
+    });
+  }
+
+  /// Update a single prescription's dose string.
+  Future<ApiResult> updatePrescriptionDose(int encounterId, int prescriptionId, {
+    required String dose,
+  }) async {
+    return _put('$_api/encounters/$encounterId/prescriptions/$prescriptionId/dose', body: {
+      'dose': dose,
     });
   }
 
   /// Add a single procedure request to an encounter.
   Future<ApiResult> addProcedure(int encounterId, {
     required int serviceId,
-    String? note,
+    String? preNotes,
     String? priority,
     String? scheduledDate,
   }) async {
     return _post('$_api/encounters/$encounterId/add-procedure', body: {
       'service_id': serviceId,
-      if (note != null) 'note': note,
+      if (preNotes != null) 'pre_notes': preNotes,
       if (priority != null) 'priority': priority,
       if (scheduledDate != null) 'scheduled_date': scheduledDate,
     });
@@ -468,15 +478,15 @@ class EncounterApiService {
   }
 
   /// Re-prescribe items from a previous encounter into current encounter.
+  /// Backend expects source_type (labs|imaging|prescriptions|procedures) + source_ids[].
+  /// Call once per item type.
   Future<ApiResult> rePrescribe(int currentEncounterId, {
-    required List<int> prescriptionIds,
-    required List<int> labIds,
-    required List<int> imagingIds,
+    required String sourceType,
+    required List<int> sourceIds,
   }) async {
     return _post('$_api/encounters/$currentEncounterId/re-prescribe', body: {
-      'prescription_ids': prescriptionIds,
-      'lab_ids': labIds,
-      'imaging_ids': imagingIds,
+      'source_type': sourceType,
+      'source_ids': sourceIds,
     });
   }
 
@@ -510,6 +520,11 @@ class EncounterApiService {
     return _get(Uri.parse('$_api/patient/$patientId/medication-chart'));
   }
 
+  /// Get fluid and solid intake/output chart data.
+  Future<ApiResult> getIntakeOutput(int patientId) async {
+    return _get(Uri.parse('$_api/patient/$patientId/intake-output'));
+  }
+
   // ═══════════════════════════════════════════════════════════════
   //  Referrals
   // ═══════════════════════════════════════════════════════════════
@@ -522,42 +537,62 @@ class EncounterApiService {
   /// Create a new referral.
   Future<ApiResult> createReferral(int encounterId, {
     required int patientId,
-    int? toDoctorId,
-    int? toClinicId,
+    required String referralType,
+    int? targetClinicId,
+    int? targetDoctorId,
+    String? externalFacilityName,
+    String? externalDoctorName,
+    String? externalFacilityAddress,
+    String? externalFacilityPhone,
     required String reason,
-    String? notes,
-    int urgency = 0,
-    String? appointmentDate,
+    String? clinicalSummary,
+    String? provisionalDiagnosis,
+    String urgency = 'routine',
   }) async {
     return _post('$_api/encounters/$encounterId/referrals', body: {
       'patient_id': patientId,
-      if (toDoctorId != null) 'to_doctor_id': toDoctorId,
-      if (toClinicId != null) 'to_clinic_id': toClinicId,
+      'referral_type': referralType,
+      if (targetClinicId != null) 'target_clinic_id': targetClinicId,
+      if (targetDoctorId != null) 'target_doctor_id': targetDoctorId,
+      if (externalFacilityName != null) 'external_facility_name': externalFacilityName,
+      if (externalDoctorName != null) 'external_doctor_name': externalDoctorName,
+      if (externalFacilityAddress != null) 'external_facility_address': externalFacilityAddress,
+      if (externalFacilityPhone != null) 'external_facility_phone': externalFacilityPhone,
       'reason': reason,
-      if (notes != null) 'notes': notes,
+      if (clinicalSummary != null) 'clinical_summary': clinicalSummary,
+      if (provisionalDiagnosis != null) 'provisional_diagnosis': provisionalDiagnosis,
       'urgency': urgency,
-      if (appointmentDate != null) 'appointment_date': appointmentDate,
     });
   }
 
   /// Update an existing referral.
   Future<ApiResult> updateReferral(int encounterId, int referralId, {
-    int? toDoctorId,
-    int? toClinicId,
+    String? referralType,
+    int? targetClinicId,
+    int? targetDoctorId,
+    String? externalFacilityName,
+    String? externalDoctorName,
+    String? externalFacilityAddress,
+    String? externalFacilityPhone,
     String? reason,
-    String? notes,
-    int? urgency,
-    String? appointmentDate,
+    String? clinicalSummary,
+    String? provisionalDiagnosis,
+    String? urgency,
     int? status,
     String? responseNotes,
   }) async {
     return _put('$_api/encounters/$encounterId/referrals/$referralId', body: {
-      if (toDoctorId != null) 'to_doctor_id': toDoctorId,
-      if (toClinicId != null) 'to_clinic_id': toClinicId,
+      if (referralType != null) 'referral_type': referralType,
+      if (targetClinicId != null) 'target_clinic_id': targetClinicId,
+      if (targetDoctorId != null) 'target_doctor_id': targetDoctorId,
+      if (externalFacilityName != null) 'external_facility_name': externalFacilityName,
+      if (externalDoctorName != null) 'external_doctor_name': externalDoctorName,
+      if (externalFacilityAddress != null) 'external_facility_address': externalFacilityAddress,
+      if (externalFacilityPhone != null) 'external_facility_phone': externalFacilityPhone,
       if (reason != null) 'reason': reason,
-      if (notes != null) 'notes': notes,
+      if (clinicalSummary != null) 'clinical_summary': clinicalSummary,
+      if (provisionalDiagnosis != null) 'provisional_diagnosis': provisionalDiagnosis,
       if (urgency != null) 'urgency': urgency,
-      if (appointmentDate != null) 'appointment_date': appointmentDate,
       if (status != null) 'status': status,
       if (responseNotes != null) 'response_notes': responseNotes,
     });
@@ -585,6 +620,20 @@ class EncounterApiService {
   /// Get list of clinics.
   Future<List<Map<String, dynamic>>> getClinics() async {
     final res = await _get(Uri.parse('$_api/clinics'));
+    if (res.success) {
+      final body = res.rawBody;
+      if (body is List) return List<Map<String, dynamic>>.from(body.whereType<Map>());
+      if (body is Map && body['data'] is List) {
+        return List<Map<String, dynamic>>.from(
+            (body['data'] as List).whereType<Map>());
+      }
+    }
+    return [];
+  }
+
+  /// Get list of HMOs for filter dropdowns.
+  Future<List<Map<String, dynamic>>> getHmos() async {
+    final res = await _get(Uri.parse('$_api/hmos'));
     if (res.success) {
       final body = res.rawBody;
       if (body is List) return List<Map<String, dynamic>>.from(body.whereType<Map>());
@@ -740,6 +789,164 @@ class EncounterApiService {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  //  Appointment Actions
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Check in a scheduled appointment.
+  Future<ApiResult> checkInAppointment(int appointmentId) =>
+      _post('$_api/appointments/$appointmentId/check-in');
+
+  /// Cancel an appointment.
+  Future<ApiResult> cancelAppointment(int appointmentId, {String? reason}) =>
+      _post('$_api/appointments/$appointmentId/cancel', body: {
+        if (reason != null) 'reason': reason,
+      });
+
+  /// Mark appointment as no-show.
+  Future<ApiResult> markNoShow(int appointmentId) =>
+      _post('$_api/appointments/$appointmentId/no-show');
+
+  /// Reschedule an appointment.
+  Future<ApiResult> rescheduleAppointment(int appointmentId, {
+    required String appointmentDate,
+    required String startTime,
+    String? endTime,
+    int? doctorId,
+    String? reason,
+  }) =>
+      _post('$_api/appointments/$appointmentId/reschedule', body: {
+        'appointment_date': appointmentDate,
+        'start_time': startTime,
+        if (endTime != null) 'end_time': endTime,
+        if (doctorId != null) 'doctor_id': doctorId,
+        if (reason != null) 'reason': reason,
+      });
+
+  /// Reassign appointment to a different doctor.
+  Future<ApiResult> reassignDoctor(int appointmentId, {
+    required int doctorId,
+    String? reason,
+  }) =>
+      _post('$_api/appointments/$appointmentId/reassign', body: {
+        'doctor_id': doctorId,
+        if (reason != null) 'reason': reason,
+      });
+
+  /// Get available time slots for a specific date/clinic/doctor.
+  Future<ApiResult> getAvailableSlots({
+    required int clinicId,
+    required String date,
+    int? doctorId,
+  }) {
+    final params = <String, String>{
+      'clinic_id': '$clinicId',
+      'date': date,
+    };
+    if (doctorId != null) params['doctor_id'] = '$doctorId';
+    return _get(Uri.parse('$_api/appointments/available-slots').replace(queryParameters: params));
+  }
+
+  /// Get doctors filtered by clinic (for reassign).
+  Future<List<Map<String, dynamic>>> getDoctorsForClinic(int clinicId) async {
+    final res = await _get(Uri.parse('$_api/doctors').replace(queryParameters: {'clinic_id': '$clinicId'}));
+    if (res.success) {
+      final body = res.rawBody;
+      if (body is List) return List<Map<String, dynamic>>.from(body.whereType<Map>());
+      if (body is Map && body['data'] is List) {
+        return List<Map<String, dynamic>>.from(
+            (body['data'] as List).whereType<Map>());
+      }
+    }
+    return [];
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Doctor Referral Lists (queue history)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Get my referrals (sent/received) with pagination.
+  Future<ApiResult> getMyReferralsList({
+    String? direction,
+    String? status,
+    String? referralType,
+    String? startDate,
+    String? endDate,
+    int page = 1,
+    int perPage = 20,
+  }) {
+    final params = <String, String>{
+      'page': '$page',
+      'per_page': '$perPage',
+    };
+    if (direction != null) params['direction'] = direction;
+    if (status != null) params['status'] = status;
+    if (referralType != null) params['referral_type'] = referralType;
+    if (startDate != null) params['start_date'] = startDate;
+    if (endDate != null) params['end_date'] = endDate;
+    return _get(Uri.parse('$_api/referrals/my-list').replace(queryParameters: params));
+  }
+
+  /// Get all referrals (hospital-wide) with pagination.
+  Future<ApiResult> getAllReferralsList({
+    String? status,
+    String? referralType,
+    int? clinicId,
+    int? doctorId,
+    String? startDate,
+    String? endDate,
+    int page = 1,
+    int perPage = 20,
+  }) {
+    final params = <String, String>{
+      'page': '$page',
+      'per_page': '$perPage',
+    };
+    if (status != null) params['status'] = status;
+    if (referralType != null) params['referral_type'] = referralType;
+    if (clinicId != null) params['clinic_id'] = '$clinicId';
+    if (doctorId != null) params['doctor_id'] = '$doctorId';
+    if (startDate != null) params['start_date'] = startDate;
+    if (endDate != null) params['end_date'] = endDate;
+    return _get(Uri.parse('$_api/referrals/all-list').replace(queryParameters: params));
+  }
+
+  /// Get referral detail.
+  Future<ApiResult> getReferralDetail(int referralId) =>
+      _get(Uri.parse('$_api/referrals/$referralId/detail'));
+
+  /// Accept a pending referral.
+  Future<ApiResult> acceptReferral(int referralId) =>
+      _post('$_api/referrals/$referralId/accept');
+
+  /// Decline a pending referral.
+  Future<ApiResult> declineReferral(int referralId, {required String reason}) =>
+      _post('$_api/referrals/$referralId/decline', body: {'reason': reason});
+
+  // ═══════════════════════════════════════════════════════════════
+  //  All Admissions (hospital-wide)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Get all admissions (hospital-wide, not just doctor's clinic).
+  Future<ApiResult> getAllAdmissions({
+    String? startDate,
+    String? endDate,
+    int? doctorId,
+    int? hmoId,
+    int page = 1,
+    int perPage = 20,
+  }) {
+    final params = <String, String>{
+      'page': '$page',
+      'per_page': '$perPage',
+    };
+    if (startDate != null) params['start_date'] = startDate;
+    if (endDate != null) params['end_date'] = endDate;
+    if (doctorId != null) params['doctor_id'] = '$doctorId';
+    if (hmoId != null) params['hmo_id'] = '$hmoId';
+    return _get(Uri.parse('$_api/admissions/all').replace(queryParameters: params));
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   //  HTTP Helpers
   // ═══════════════════════════════════════════════════════════════
 
@@ -788,12 +995,14 @@ class EncounterApiService {
     }
   }
 
-  Future<ApiResult> _delete(String url) async {
+  Future<ApiResult> _delete(String url, {Map<String, dynamic>? body}) async {
     debugPrint('[EncounterApi] DELETE → $url');
     try {
       final headers = await _authHeaders();
       final res = await http
-          .delete(Uri.parse(url), headers: headers)
+          .delete(Uri.parse(url),
+              headers: headers,
+              body: body != null ? jsonEncode(body) : null)
           .timeout(const Duration(seconds: 30));
       debugPrint('[EncounterApi] DELETE ← ${res.statusCode} $url');
       return ApiResult.fromResponse(res);

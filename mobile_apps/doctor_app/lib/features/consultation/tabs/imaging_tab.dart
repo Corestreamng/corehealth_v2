@@ -126,14 +126,14 @@ class _ImagingTabState extends State<ImagingTab>
   }
 
   Future<void> _deleteImaging(ImagingRequest img) async {
-    final confirmed = await showDeleteConfirmation(
+    final reason = await showDeleteWithReasonDialog(
       context,
       title: 'Delete Imaging Request',
       message: 'Remove "${img.serviceName}" from this encounter?',
     );
-    if (!confirmed || !mounted) return;
+    if (reason == null || !mounted) return;
 
-    final res = await widget.api.deleteImaging(widget.encounter.id, img.id);
+    final res = await widget.api.deleteImaging(widget.encounter.id, img.id, reason: reason);
     if (!mounted) return;
 
     if (res.success) {

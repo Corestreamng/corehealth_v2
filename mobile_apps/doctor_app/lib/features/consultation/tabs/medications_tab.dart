@@ -90,7 +90,6 @@ class _MedicationsTabState extends State<MedicationsTab>
         name: item['product_name']?.toString() ??
             item['display']?.toString() ??
             'Unknown',
-        dose: '',
         stock: item['stock'],
       ));
     });
@@ -102,7 +101,7 @@ class _MedicationsTabState extends State<MedicationsTab>
       return;
     }
     // Warn about empty doses
-    final emptyDoses = _pending.where((p) => p.dose.trim().isEmpty).length;
+    final emptyDoses = _pending.where((p) => p.combinedDose.trim().isEmpty).length;
     if (emptyDoses > 0) {
       final proceed = await showDialog<bool>(
         context: context,
@@ -130,7 +129,7 @@ class _MedicationsTabState extends State<MedicationsTab>
     final res = await widget.api.savePrescriptions(
       widget.encounter.id,
       productIds: _pending.map((p) => p.productId).toList(),
-      doses: _pending.map((p) => p.dose).toList(),
+      doses: _pending.map((p) => p.combinedDose).toList(),
     );
 
     if (!mounted) return;
@@ -148,15 +147,15 @@ class _MedicationsTabState extends State<MedicationsTab>
   }
 
   Future<void> _deleteRx(Prescription rx) async {
-    final confirmed = await showDeleteConfirmation(
+    final reason = await showDeleteWithReasonDialog(
       context,
       title: 'Delete Prescription',
       message: 'Remove "${rx.productName}" from this encounter?',
     );
-    if (!confirmed || !mounted) return;
+    if (reason == null || !mounted) return;
 
     final res =
-        await widget.api.deletePrescription(widget.encounter.id, rx.id);
+        await widget.api.deletePrescription(widget.encounter.id, rx.id, reason: reason);
     if (!mounted) return;
 
     if (res.success) {
@@ -277,65 +276,172 @@ class _MedicationsTabState extends State<MedicationsTab>
                       final p = entry.value;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(p.name,
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w500)),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(p.name,
+                                      style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500)),
+                                ),
+                                if (p.stock != null)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: (p.stock as num) > 0
+                                          ? Colors.green.shade100
+                                          : Colors.red.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'Stock: ${p.stock}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: (p.stock as num) > 0
+                                            ? Colors.green.shade800
+                                            : Colors.red.shade800,
                                       ),
-                                      if (p.stock != null)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: (p.stock as num) > 0
-                                                ? Colors.green.shade100
-                                                : Colors.red.shade100,
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            'Stock: ${p.stock}',
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: (p.stock as num) > 0
-                                                  ? Colors.green.shade800
-                                                  : Colors.red.shade800,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
+                                    ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  TextField(
-                                    onChanged: (v) => _pending[i].dose = v,
+                                IconButton(
+                                  icon: Icon(Icons.remove_circle,
+                                      color: Colors.red.shade400, size: 20),
+                                  onPressed: () =>
+                                      setState(() => _pending.removeAt(i)),
+                                ),
+                              ],
+                            ),
+                            // Amount + Unit row
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 80,
+                                  child: TextField(
+                                    onChanged: (v) => setState(() => p.amount = v),
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                     decoration: const InputDecoration(
-                                      hintText:
-                                          'Dose & frequency (e.g. 500mg TDS x 5 days)',
+                                      hintText: 'Amt',
                                       isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 8),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                                     ),
                                     style: const TextStyle(fontSize: 12),
                                   ),
-                                ],
+                                ),
+                                const SizedBox(width: 6),
+                                SizedBox(
+                                  width: 80,
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: p.unit,
+                                    isDense: true,
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                                    ),
+                                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                    items: _PendingRx.units.map((u) =>
+                                      DropdownMenuItem(value: u, child: Text(u, style: const TextStyle(fontSize: 12)))).toList(),
+                                    onChanged: (v) => setState(() => p.unit = v ?? 'mg'),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: p.route,
+                                    isDense: true,
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                                    ),
+                                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                    items: _PendingRx.routes.map((r) =>
+                                      DropdownMenuItem(value: r, child: Text(
+                                        _PendingRx.routeLabels[r] ?? r,
+                                        style: const TextStyle(fontSize: 12),
+                                      ))).toList(),
+                                    onChanged: (v) => setState(() => p.route = v ?? ''),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            // Frequency + Duration row
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: p.frequency,
+                                    isDense: true,
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                                    ),
+                                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                    items: _PendingRx.frequencies.map((f) =>
+                                      DropdownMenuItem(value: f, child: Text(
+                                        _PendingRx.freqLabels[f] ?? f,
+                                        style: const TextStyle(fontSize: 12),
+                                      ))).toList(),
+                                    onChanged: (v) => setState(() => p.frequency = v ?? ''),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                SizedBox(
+                                  width: 60,
+                                  child: TextField(
+                                    onChanged: (v) => setState(() => p.durationVal = v),
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Dur',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                    ),
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                SizedBox(
+                                  width: 84,
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: p.durationUnit,
+                                    isDense: true,
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                                    ),
+                                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                    items: _PendingRx.durationUnits.map((d) =>
+                                      DropdownMenuItem(value: d, child: Text(d, style: const TextStyle(fontSize: 12)))).toList(),
+                                    onChanged: (v) => setState(() => p.durationUnit = v ?? 'days'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Auto-calculated Qty display
+                            if (p.calculatedQty != null) ...[
+                              const SizedBox(height: 4),
+                              Text('Auto-calculated Qty: ${p.calculatedQty}',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
+                            ],
+                            // Preview of combined dose
+                            if (p.combinedDose.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(p.combinedDose,
+                                    style: TextStyle(fontSize: 11, color: Colors.blue.shade700)),
                               ),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.remove_circle,
-                                  color: Colors.red.shade400, size: 20),
-                              onPressed: () =>
-                                  setState(() => _pending.removeAt(i)),
-                            ),
+                            ],
+                            if (i < _pending.length - 1)
+                              Divider(color: Colors.orange.shade200, height: 16),
                           ],
                         ),
                       );
@@ -509,15 +615,63 @@ class _RxCard extends StatelessWidget {
 class _PendingRx {
   final int productId;
   final String name;
-  String dose;
   final dynamic stock;
+
+  // Structured dose fields
+  String amount = '';
+  String unit = 'mg';
+  String route = '';
+  String frequency = '';
+  String durationVal = '';
+  String durationUnit = 'days';
 
   _PendingRx({
     required this.productId,
     required this.name,
-    required this.dose,
     this.stock,
   });
+
+  String get combinedDose {
+    final parts = <String>[];
+    if (amount.isNotEmpty) parts.add('$amount$unit');
+    if (route.isNotEmpty) parts.add(route);
+    if (frequency.isNotEmpty) parts.add(frequency);
+    if (durationVal.isNotEmpty) parts.add('$durationVal $durationUnit');
+    final q = calculatedQty;
+    if (q != null && q > 0) parts.add('Qty: $q');
+    return parts.join(' | ');
+  }
+
+  int? get calculatedQty {
+    final amt = double.tryParse(amount);
+    final dur = int.tryParse(durationVal);
+    if (amt == null || dur == null || frequency.isEmpty) return null;
+    const freqMultiplier = {
+      'OD': 1, 'BD': 2, 'TDS': 3, 'QID': 4,
+      'Q4H': 6, 'Q6H': 4, 'Q8H': 3, 'Q12H': 2,
+      'PRN': 1, 'STAT': 1,
+    };
+    const durMultiplier = {'days': 1, 'weeks': 7, 'months': 30};
+    final perDay = freqMultiplier[frequency] ?? 1;
+    final totalDays = dur * (durMultiplier[durationUnit] ?? 1);
+    return (totalDays * perDay).ceil();
+  }
+
+  static const units = ['mg', 'g', 'ml', 'IU', 'mcg', 'units', 'drops', 'puffs'];
+  static const routes = ['', 'PO', 'IV', 'IM', 'SC', 'SL', 'PR', 'INH', 'Topical', 'Ophthalmic', 'Otic', 'NGT'];
+  static const frequencies = ['', 'OD', 'BD', 'TDS', 'QID', 'Q4H', 'Q6H', 'Q8H', 'Q12H', 'PRN', 'STAT'];
+  static const durationUnits = ['days', 'weeks', 'months'];
+  static const routeLabels = {
+    '': 'Route', 'PO': 'PO (Oral)', 'IV': 'IV', 'IM': 'IM', 'SC': 'SC',
+    'SL': 'SL', 'PR': 'PR', 'INH': 'Inhaled', 'Topical': 'Topical',
+    'Ophthalmic': 'Ophthalmic', 'Otic': 'Otic', 'NGT': 'NGT',
+  };
+  static const freqLabels = {
+    '': 'Frequency', 'OD': 'OD (Once daily)', 'BD': 'BD (Twice daily)',
+    'TDS': 'TDS (3x daily)', 'QID': 'QID (4x daily)', 'Q4H': 'Q4H',
+    'Q6H': 'Q6H', 'Q8H': 'Q8H', 'Q12H': 'Q12H', 'PRN': 'PRN (As needed)',
+    'STAT': 'STAT (Once)',
+  };
 }
 
 class _HistoryRxCard extends StatelessWidget {

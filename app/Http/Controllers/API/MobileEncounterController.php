@@ -19,6 +19,8 @@ use App\Models\Staff;
 use App\Models\NursingNote;
 use App\Models\NursingNoteType;
 use App\Models\ClinicNoteTemplate;
+use App\Models\DoctorAppointment;
+use App\Models\SpecialistReferral;
 use App\Models\VitalSign;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -58,14 +60,25 @@ class MobileEncounterController extends Controller
             $perPage = $request->input('per_page', 30);
 
             // Map legacy mobile status values to QueueStatus enum
+            // statusMap[1] = all active statuses (matches web unified list which
+            // excludes only COMPLETED / CANCELLED / NO_SHOW).
             $statusMap = [
-                1 => [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY],
+                1 => [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION],
                 2 => [QueueStatus::IN_CONSULTATION],
                 3 => [QueueStatus::COMPLETED],
             ];
 
+            // ── If filtering by SCHEDULED, query DoctorAppointment directly ──
+            // Scheduled appointments don't have a DoctorQueue entry until check-in.
+            // Matches web getUnifiedQueueList() which merges both models.
+            if ($filterStatus !== null && (int) $filterStatus === QueueStatus::SCHEDULED) {
+                return $this->scheduledAppointmentsList($doc, $startDate, $endDate, $perPage, $request);
+            }
+
             // Auto-close old continuing encounters
-            if ($filterStatus === null && $status == 2) {
+            // Trigger for: legacy "continuing" tab (status==2), exact IN_CONSULTATION
+            // filter, OR the "All" view (status==1) which now includes IN_CONSULTATION.
+            if ($filterStatus === null && in_array($status, [1, 2])) {
                 $this->endOldContinuingEncounters();
             } elseif ($filterStatus !== null && (int) $filterStatus === QueueStatus::IN_CONSULTATION) {
                 $this->endOldContinuingEncounters();
@@ -104,56 +117,37 @@ class MobileEncounterController extends Controller
                 ]);
             }
 
+            // Optional clinic + HMO filters (used by Previous Encounters tab)
+            if ($request->filled('clinic_id')) {
+                $query->where('clinic_id', $request->clinic_id);
+            }
+            if ($request->filled('hmo_id')) {
+                $query->whereHas('patient', function ($q) use ($request) {
+                    $q->where('hmo_id', $request->hmo_id);
+                });
+            }
+
             $paginated = $query->orderBy('created_at', 'DESC')->paginate($perPage);
 
             $items = $paginated->getCollection()->map(function ($queue) {
-                $patient = Patient::with('user', 'hmo')->find($queue->patient_id);
-                $clinic = Clinic::find($queue->clinic_id);
-                $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
-                $deliveryCheck = $reqEntry
-                    ? HmoHelper::canDeliverService($reqEntry)
-                    : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
-
-                $statusLabels = [
-                    QueueStatus::WAITING => 'New',
-                    QueueStatus::VITALS_PENDING => 'New',
-                    QueueStatus::READY => 'New',
-                    QueueStatus::IN_CONSULTATION => 'Continuing',
-                    QueueStatus::COMPLETED => 'Completed',
-                    QueueStatus::CANCELLED => 'Cancelled',
-                    QueueStatus::NO_SHOW => 'No-Show',
-                    QueueStatus::SCHEDULED => 'Scheduled',
-                ];
-
-                return [
-                    'queue_id'          => $queue->id,
-                    'patient_id'        => $queue->patient_id,
-                    'patient_name'      => $patient && $patient->user ? $patient->user->name : 'Unknown',
-                    'file_no'           => $patient->file_no ?? '',
-                    'gender'            => $patient->gender ?? '',
-                    'dob'               => $patient->dob ?? '',
-                    'hmo_name'          => $patient && $patient->hmo ? $patient->hmo->name : 'N/A',
-                    'hmo_no'            => $patient->hmo_no ?? '',
-                    'clinic_name'       => $clinic->name ?? 'N/A',
-                    'doctor_name'       => $queue->doctor ? userfullname($queue->doctor->user_id) : 'N/A',
-                    'status'            => (int) $queue->status,
-                    'status_label'      => $statusLabels[$queue->status] ?? 'Unknown',
-                    'vitals_taken'      => (bool) $queue->vitals_taken,
-                    'request_entry_id'  => $queue->request_entry_id,
-                    'priority'          => $queue->priority ?? 'normal',
-                    'source'            => $queue->source ?? 'walk-in',
-                    'can_deliver'       => $deliveryCheck['can_deliver'],
-                    'delivery_reason'   => $deliveryCheck['reason'] ?? '',
-                    'delivery_hint'     => $deliveryCheck['hint'] ?? '',
-                    'created_at'        => $queue->created_at->toIso8601String(),
-                ];
+                return $this->mapQueueRow($queue);
             });
+
+            // ── On page 1 of "All" view, prepend scheduled appointments (matches web) ──
+            $scheduledTotal = 0;
+            if ($filterStatus === null && $status == 1 && $paginated->currentPage() === 1) {
+                $apptItems = $this->fetchScheduledAppointmentRows($doc, $startDate, $endDate);
+                $scheduledTotal = $apptItems->count();
+                if ($scheduledTotal > 0) {
+                    $items = $apptItems->concat($items);
+                }
+            }
 
             return response()->json([
                 'status' => true,
-                'data'   => $items,
+                'data'   => $items->values(),
                 'meta'   => [
-                    'total'        => $paginated->total(),
+                    'total'        => $paginated->total() + $scheduledTotal,
                     'page'         => $paginated->currentPage(),
                     'per_page'     => $paginated->perPage(),
                     'last_page'    => $paginated->lastPage(),
@@ -165,6 +159,212 @@ class MobileEncounterController extends Controller
                 'status' => false,
                 'message' => 'Failed to load queues.',
             ], 500);
+        }
+    }
+
+    // ── Helper: map a DoctorQueue row to the unified JSON shape ────────
+    private function mapQueueRow($queue): array
+    {
+        $patient = Patient::with('user', 'hmo')->find($queue->patient_id);
+        $clinic  = Clinic::find($queue->clinic_id);
+        $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
+        $deliveryCheck = $reqEntry
+            ? HmoHelper::canDeliverService($reqEntry)
+            : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
+
+        $statusLabels = [
+            QueueStatus::WAITING         => 'New',
+            QueueStatus::VITALS_PENDING  => 'New',
+            QueueStatus::READY           => 'New',
+            QueueStatus::IN_CONSULTATION => 'Continuing',
+            QueueStatus::COMPLETED       => 'Completed',
+            QueueStatus::CANCELLED       => 'Cancelled',
+            QueueStatus::NO_SHOW         => 'No-Show',
+            QueueStatus::SCHEDULED       => 'Scheduled',
+        ];
+
+        $appointmentTime = null;
+        $appointmentDate = null;
+        $rescheduleCount = 0;
+        if ($queue->appointment_id) {
+            $appt = DoctorAppointment::find($queue->appointment_id);
+            if ($appt) {
+                $appointmentDate = $appt->appointment_date ? $appt->appointment_date->format('Y-m-d') : null;
+                $appointmentTime = $appt->start_time;
+                $rescheduleCount = (int) ($appt->reschedule_count ?? 0);
+            }
+        }
+
+        $canDeliver = $deliveryCheck['can_deliver'];
+
+        return [
+            'queue_id'          => $queue->id,
+            'patient_id'        => $queue->patient_id,
+            'patient_name'      => $patient && $patient->user ? $patient->user->name : 'Unknown',
+            'file_no'           => $patient->file_no ?? '',
+            'gender'            => $patient->gender ?? '',
+            'dob'               => $patient->dob ?? '',
+            'hmo_name'          => $patient && $patient->hmo ? $patient->hmo->name : 'N/A',
+            'hmo_no'            => $patient->hmo_no ?? '',
+            'clinic_id'         => $queue->clinic_id,
+            'clinic_name'       => $clinic->name ?? 'N/A',
+            'staff_id'          => $queue->staff_id,
+            'doctor_name'       => $queue->doctor ? userfullname($queue->doctor->user_id) : 'N/A',
+            'status'            => (int) $queue->status,
+            'status_label'      => $statusLabels[$queue->status] ?? 'Unknown',
+            'vitals_taken'      => (bool) $queue->vitals_taken,
+            'request_entry_id'  => $queue->request_entry_id,
+            'appointment_id'    => $queue->appointment_id,
+            'appointment_date'  => $appointmentDate,
+            'appointment_time'  => $appointmentTime,
+            'reschedule_count'  => $rescheduleCount,
+            'priority'          => $queue->priority ?? 'normal',
+            'source'            => $queue->source ?? 'walk-in',
+            'can_deliver'       => $canDeliver,
+            'delivery_reason'   => $deliveryCheck['reason'] ?? '',
+            'delivery_hint'     => $deliveryCheck['hint'] ?? '',
+            'created_at'        => $queue->created_at->toIso8601String(),
+            'consultation_started_at'     => $queue->consultation_started_at ? $queue->consultation_started_at->toIso8601String() : null,
+            'consultation_paused_seconds' => (int) ($queue->consultation_paused_seconds ?? 0),
+            'is_paused'                   => (bool) $queue->is_paused,
+            'last_paused_at'              => $queue->last_paused_at ? $queue->last_paused_at->toIso8601String() : null,
+            'next_step'         => $this->nextStepHint((int) $queue->status, $canDeliver, 'queue'),
+        ];
+    }
+
+    // ── Helper: map a DoctorAppointment row to the unified JSON shape ──
+    private function mapAppointmentRow($appt): array
+    {
+        $patient = $appt->relationLoaded('patient') ? $appt->patient : Patient::with('user', 'hmo')->find($appt->patient_id);
+        $clinic  = $appt->relationLoaded('clinic') ? $appt->clinic : Clinic::find($appt->clinic_id);
+
+        return [
+            'queue_id'          => 0,
+            'patient_id'        => $appt->patient_id,
+            'patient_name'      => $patient && $patient->user ? $patient->user->name : 'Unknown',
+            'file_no'           => $patient->file_no ?? '',
+            'gender'            => $patient->gender ?? '',
+            'dob'               => $patient->dob ?? '',
+            'hmo_name'          => $patient && $patient->hmo ? $patient->hmo->name : 'N/A',
+            'hmo_no'            => $patient->hmo_no ?? '',
+            'clinic_id'         => $appt->clinic_id,
+            'clinic_name'       => $clinic->name ?? 'N/A',
+            'staff_id'          => $appt->staff_id,
+            'doctor_name'       => $appt->doctor ? userfullname($appt->doctor->user_id) : 'N/A',
+            'status'            => QueueStatus::SCHEDULED,
+            'status_label'      => 'Scheduled',
+            'vitals_taken'      => false,
+            'request_entry_id'  => null,
+            'appointment_id'    => $appt->id,
+            'appointment_date'  => $appt->appointment_date ? $appt->appointment_date->format('Y-m-d') : null,
+            'appointment_time'  => $appt->start_time,
+            'reschedule_count'  => (int) ($appt->reschedule_count ?? 0),
+            'priority'          => $appt->priority ?? 'routine',
+            'source'            => 'appointment',
+            'can_deliver'       => true,
+            'delivery_reason'   => 'Scheduled',
+            'delivery_hint'     => 'Check in to start encounter',
+            'created_at'        => $appt->created_at ? $appt->created_at->toIso8601String() : now()->toIso8601String(),
+            'consultation_started_at'     => null,
+            'consultation_paused_seconds' => 0,
+            'is_paused'                   => false,
+            'last_paused_at'              => null,
+            'next_step'         => 'Check in the patient to begin',
+        ];
+    }
+
+    // ── Fetch scheduled appointments (not yet checked in) ──────────
+    private function fetchScheduledAppointmentRows($doc, $startDate, $endDate)
+    {
+        $query = DoctorAppointment::with(['patient.user', 'patient.hmo', 'clinic', 'doctor.user'])
+            ->where(function ($q) use ($doc) {
+                $q->where('staff_id', $doc->id);
+                if ($doc->clinic_id) {
+                    $q->orWhere('clinic_id', $doc->clinic_id);
+                }
+            })
+            ->where('status', QueueStatus::SCHEDULED)
+            ->whereNull('doctor_queue_id');
+
+        $today = Carbon::today();
+        if ($startDate && $endDate) {
+            $query->whereBetween('appointment_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ]);
+        } else {
+            $query->where('appointment_date', '>=', $today);
+        }
+
+        return $query->orderBy('appointment_date')
+            ->orderBy('start_time')
+            ->get()
+            ->map(fn($appt) => $this->mapAppointmentRow($appt));
+    }
+
+    // ── Paginated scheduled-only list (when filter_status=6) ───────
+    private function scheduledAppointmentsList($doc, $startDate, $endDate, $perPage, $request)
+    {
+        $query = DoctorAppointment::with(['patient.user', 'patient.hmo', 'clinic', 'doctor.user'])
+            ->where(function ($q) use ($doc) {
+                $q->where('staff_id', $doc->id);
+                if ($doc->clinic_id) {
+                    $q->orWhere('clinic_id', $doc->clinic_id);
+                }
+            })
+            ->where('status', QueueStatus::SCHEDULED);
+
+        $today = Carbon::today();
+        if ($startDate && $endDate) {
+            $query->whereBetween('appointment_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ]);
+        } else {
+            $query->where('appointment_date', '>=', $today);
+        }
+
+        $paginated = $query->orderBy('appointment_date')
+            ->orderBy('start_time')
+            ->paginate($perPage);
+
+        $items = $paginated->getCollection()->map(fn($appt) => $this->mapAppointmentRow($appt));
+
+        return response()->json([
+            'status' => true,
+            'data'   => $items->values(),
+            'meta'   => [
+                'total'     => $paginated->total(),
+                'page'      => $paginated->currentPage(),
+                'per_page'  => $paginated->perPage(),
+                'last_page' => $paginated->lastPage(),
+            ],
+        ]);
+    }
+
+    // ── Contextual hint matching web nextStepHint() ────────────────
+    private function nextStepHint(int $status, bool $canDeliver, string $eventType = 'queue'): string
+    {
+        if ($eventType === 'appointment' || $status === QueueStatus::SCHEDULED) {
+            return 'Check in the patient to begin';
+        }
+        switch ($status) {
+            case QueueStatus::WAITING:
+                return $canDeliver ? 'Patient is waiting — open encounter to begin consultation' : 'Payment pending — direct patient to billing';
+            case QueueStatus::VITALS_PENDING:
+                return 'Vitals in progress — waiting for nurse to complete';
+            case QueueStatus::READY:
+                return $canDeliver ? 'Vitals done — patient is ready for consultation' : 'Payment still pending — direct patient to billing';
+            case QueueStatus::IN_CONSULTATION:
+                return 'Consultation in progress';
+            case QueueStatus::COMPLETED:
+                return 'Visit completed';
+            case QueueStatus::CANCELLED:
+                return 'Appointment was cancelled';
+            case QueueStatus::NO_SHOW:
+                return 'Patient did not show up';
+            default:
+                return '';
         }
     }
 
@@ -751,10 +951,25 @@ class MobileEncounterController extends Controller
                 'vitals'     => (clone $base)->where('status', QueueStatus::VITALS_PENDING)->count(),
                 'ready'      => (clone $base)->where('status', QueueStatus::READY)->count(),
                 'in_consult' => (clone $base)->where('status', QueueStatus::IN_CONSULTATION)->count(),
-                'scheduled'  => (clone $base)->where('status', QueueStatus::SCHEDULED)->count(),
                 'completed'  => (clone $base)->where('status', QueueStatus::COMPLETED)->whereDate('created_at', today())->count(),
+                'no_show'    => (clone $base)->where('status', QueueStatus::NO_SHOW)->count(),
+                'cancelled'  => (clone $base)->where('status', QueueStatus::CANCELLED)->count(),
             ];
             $stats['total'] = $stats['waiting'] + $stats['vitals'] + $stats['ready'] + $stats['in_consult'];
+
+            // Scheduled breakdown: today vs future (matches web stat card)
+            $today = Carbon::today();
+            $apptBase = DoctorAppointment::where(function ($q) use ($doc) {
+                $q->where('staff_id', $doc->id);
+                if ($doc->clinic_id) {
+                    $q->orWhere('clinic_id', $doc->clinic_id);
+                }
+            })->where('appointment_date', '>=', $today)->where('status', QueueStatus::SCHEDULED);
+
+            $stats['scheduled_today']  = (clone $apptBase)->whereDate('appointment_date', $today)->count();
+            $stats['scheduled_future'] = (clone $apptBase)->where('appointment_date', '>', $today)->count();
+            // Total scheduled = all upcoming appointments (matches web getDoctorQueueCounts)
+            $stats['scheduled'] = $stats['scheduled_today'] + $stats['scheduled_future'];
 
             return response()->json(['status' => true, 'data' => $stats]);
         } catch (\Exception $e) {
@@ -791,6 +1006,13 @@ class MobileEncounterController extends Controller
                 ]);
             }
 
+            // Optional HMO filter (matches web)
+            if ($request->filled('hmo_id')) {
+                $query->whereHas('patient', function ($q) use ($request) {
+                    $q->where('hmo_id', $request->hmo_id);
+                });
+            }
+
             $admissions = $query->orderBy('created_at', 'DESC')->paginate(20);
 
             $items = $admissions->getCollection()->map(function ($adm) {
@@ -801,6 +1023,8 @@ class MobileEncounterController extends Controller
                     'file_no'          => $adm->patient->file_no ?? '',
                     'gender'           => $adm->patient->gender ?? '',
                     'dob'              => $adm->patient->dob ?? '',
+                    'hmo_name'         => $adm->patient?->hmo?->name ?? 'N/A',
+                    'hmo_no'           => $adm->patient->hmo_no ?? '',
                     'ward_name'        => $adm->bed?->ward?->name ?? 'N/A',
                     'bed_name'         => $adm->bed?->bed_name ?? 'N/A',
                     'admission_reason' => $adm->admission_reason,
@@ -866,6 +1090,16 @@ class MobileEncounterController extends Controller
     {
         $clinics = Clinic::orderBy('name')->get(['id', 'name']);
         return response()->json(['status' => true, 'data' => $clinics]);
+    }
+
+    /**
+     * GET /api/mobile/doctor/hmos
+     * Returns list of HMOs for filter dropdowns.
+     */
+    public function getHmos()
+    {
+        $hmos = Hmo::where('status', 1)->orderBy('name')->get(['id', 'name']);
+        return response()->json(['status' => true, 'data' => $hmos]);
     }
 
     /**
@@ -1323,5 +1557,252 @@ class MobileEncounterController extends Controller
             Log::error('Mobile getClinicNoteTemplates error: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Failed to load templates.'], 500);
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  All Admissions (hospital-wide)
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * GET /api/mobile/doctor/admissions/all
+     * Hospital-wide admissions list (not filtered by doctor's clinic).
+     */
+    public function allAdmissions(Request $request)
+    {
+        try {
+            $query = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed.ward', 'admittingDoctor'])
+                ->where('admission_status', '!=', 'discharged');
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($request->start_date)->startOfDay(),
+                    Carbon::parse($request->end_date)->endOfDay(),
+                ]);
+            }
+
+            if ($request->filled('hmo_id')) {
+                $query->whereHas('patient', function ($q) use ($request) {
+                    $q->where('hmo_id', $request->hmo_id);
+                });
+            }
+
+            if ($request->filled('doctor_id')) {
+                $query->where('admitting_doctor_id', $request->doctor_id);
+            }
+
+            $admissions = $query->orderBy('created_at', 'DESC')->paginate($request->input('per_page', 20));
+
+            $items = $admissions->getCollection()->map(function ($adm) {
+                return [
+                    'id'               => $adm->id,
+                    'patient_id'       => $adm->patient_id,
+                    'patient_name'     => $adm->patient && $adm->patient->user ? $adm->patient->user->name : 'Unknown',
+                    'file_no'          => $adm->patient->file_no ?? '',
+                    'gender'           => $adm->patient->gender ?? '',
+                    'dob'              => $adm->patient->dob ?? '',
+                    'hmo_name'         => $adm->patient?->hmo?->name ?? 'N/A',
+                    'hmo_no'           => $adm->patient->hmo_no ?? '',
+                    'ward_name'        => $adm->bed?->ward?->name ?? 'N/A',
+                    'bed_name'         => $adm->bed?->bed_name ?? 'N/A',
+                    'admission_reason' => $adm->admission_reason,
+                    'admission_status' => $adm->admission_status,
+                    'admitted_at'      => $adm->created_at?->toIso8601String(),
+                    'doctor_name'      => $adm->admittingDoctor ? $adm->admittingDoctor->name : 'N/A',
+                    'requested_by'     => $adm->requested_by_name ?? 'N/A',
+                ];
+            });
+
+            return response()->json([
+                'status' => true,
+                'data'   => $items,
+                'meta'   => [
+                    'total'     => $admissions->total(),
+                    'page'      => $admissions->currentPage(),
+                    'per_page'  => $admissions->perPage(),
+                    'last_page' => $admissions->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Mobile allAdmissions error: ' . $e->getMessage());
+            return response()->json(['status' => false, 'message' => 'Failed to load admissions.'], 500);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Doctor Referral Lists (mobile-friendly JSON, not DataTable)
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * GET /api/mobile/doctor/referrals/my-list
+     * My referrals (sent/received) with standard JSON pagination.
+     */
+    public function myReferralsList(Request $request)
+    {
+        try {
+            $staff = Staff::where('user_id', Auth::id())->first();
+            if (!$staff) {
+                return response()->json(['status' => false, 'message' => 'Staff profile not found.'], 404);
+            }
+
+            $query = SpecialistReferral::with([
+                'patient.user', 'referringDoctor.user', 'referringClinic',
+                'targetClinic', 'targetDoctor.user',
+            ]);
+
+            $direction = $request->input('direction', '');
+            if ($direction === 'sent') {
+                $query->where('referring_doctor_id', $staff->id);
+            } elseif ($direction === 'received') {
+                $query->where(function ($q) use ($staff) {
+                    $q->where('target_doctor_id', $staff->id)
+                      ->orWhere(function ($q2) use ($staff) {
+                          $q2->where('target_clinic_id', $staff->clinic_id)
+                             ->whereNull('target_doctor_id');
+                      });
+                });
+            } else {
+                $query->where(function ($q) use ($staff) {
+                    $q->where('referring_doctor_id', $staff->id)
+                      ->orWhere('target_doctor_id', $staff->id)
+                      ->orWhere(function ($q2) use ($staff) {
+                          $q2->where('target_clinic_id', $staff->clinic_id)
+                             ->whereNull('target_doctor_id');
+                      });
+                });
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+            if ($request->filled('referral_type')) {
+                $query->where('referral_type', $request->referral_type);
+            }
+            if ($request->filled('start_date')) {
+                $query->whereDate('created_at', '>=', $request->start_date);
+            }
+            if ($request->filled('end_date')) {
+                $query->whereDate('created_at', '<=', $request->end_date);
+            }
+
+            $query->orderByRaw("CASE urgency WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END ASC")
+                  ->orderBy('created_at', 'desc');
+
+            $referrals = $query->paginate($request->input('per_page', 20));
+
+            $items = $referrals->getCollection()->map(function ($ref) use ($staff) {
+                $isTargeted = $ref->target_doctor_id == $staff->id ||
+                    ($ref->target_clinic_id == $staff->clinic_id && !$ref->target_doctor_id);
+                return $this->formatReferralItem($ref, $staff, $isTargeted);
+            });
+
+            return response()->json([
+                'status' => true,
+                'data'   => $items,
+                'meta'   => [
+                    'total'     => $referrals->total(),
+                    'page'      => $referrals->currentPage(),
+                    'per_page'  => $referrals->perPage(),
+                    'last_page' => $referrals->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Mobile myReferralsList error: ' . $e->getMessage());
+            return response()->json(['status' => false, 'message' => 'Failed to load referrals.'], 500);
+        }
+    }
+
+    /**
+     * GET /api/mobile/doctor/referrals/all-list
+     * All referrals (hospital-wide) with standard JSON pagination.
+     */
+    public function allReferralsList(Request $request)
+    {
+        try {
+            $staff = Staff::where('user_id', Auth::id())->first();
+
+            $query = SpecialistReferral::with([
+                'patient.user', 'referringDoctor.user', 'referringClinic',
+                'targetClinic', 'targetDoctor.user',
+            ]);
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+            if ($request->filled('referral_type')) {
+                $query->where('referral_type', $request->referral_type);
+            }
+            if ($request->filled('clinic_id')) {
+                $cid = $request->clinic_id;
+                $query->where(function ($q) use ($cid) {
+                    $q->where('referring_clinic_id', $cid)
+                      ->orWhere('target_clinic_id', $cid);
+                });
+            }
+            if ($request->filled('doctor_id')) {
+                $did = $request->doctor_id;
+                $query->where(function ($q) use ($did) {
+                    $q->where('referring_doctor_id', $did)
+                      ->orWhere('target_doctor_id', $did);
+                });
+            }
+            if ($request->filled('start_date')) {
+                $query->whereDate('created_at', '>=', $request->start_date);
+            }
+            if ($request->filled('end_date')) {
+                $query->whereDate('created_at', '<=', $request->end_date);
+            }
+
+            $query->orderByRaw("CASE urgency WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END ASC")
+                  ->orderBy('created_at', 'desc');
+
+            $referrals = $query->paginate($request->input('per_page', 20));
+
+            $items = $referrals->getCollection()->map(function ($ref) use ($staff) {
+                $isTargeted = $staff && (
+                    $ref->target_doctor_id == $staff->id ||
+                    ($ref->target_clinic_id == $staff->clinic_id && !$ref->target_doctor_id)
+                );
+                return $this->formatReferralItem($ref, $staff, $isTargeted);
+            });
+
+            return response()->json([
+                'status' => true,
+                'data'   => $items,
+                'meta'   => [
+                    'total'     => $referrals->total(),
+                    'page'      => $referrals->currentPage(),
+                    'per_page'  => $referrals->perPage(),
+                    'last_page' => $referrals->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Mobile allReferralsList error: ' . $e->getMessage());
+            return response()->json(['status' => false, 'message' => 'Failed to load referrals.'], 500);
+        }
+    }
+
+    /**
+     * Format a single referral item for mobile JSON response.
+     */
+    private function formatReferralItem(SpecialistReferral $ref, ?Staff $staff, bool $isTargeted): array
+    {
+        return [
+            'id'                    => $ref->id,
+            'referral_type'         => $ref->referral_type,
+            'status'                => $ref->status,
+            'urgency'               => $ref->urgency,
+            'reason'                => $ref->reason,
+            'clinical_summary'      => $ref->clinical_summary,
+            'provisional_diagnosis' => $ref->provisional_diagnosis,
+            'patient_name'          => $ref->patient ? userfullname($ref->patient->user_id) : 'N/A',
+            'patient_file_no'       => $ref->patient->file_no ?? '',
+            'referring_doctor'      => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : 'N/A',
+            'referring_clinic'      => $ref->referringClinic->name ?? '',
+            'target_clinic'         => $ref->referral_type === 'internal' ? ($ref->targetClinic->name ?? 'Any Clinic') : ($ref->external_facility_name ?? 'External'),
+            'target_doctor'         => $ref->targetDoctor ? userfullname($ref->targetDoctor->user_id) : '',
+            'is_targeted_at_me'     => $isTargeted,
+            'can_accept'            => $isTargeted && $ref->status === 'pending',
+            'created_at'            => $ref->created_at?->format('M d, Y'),
+        ];
     }
 }

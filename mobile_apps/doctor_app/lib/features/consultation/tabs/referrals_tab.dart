@@ -22,9 +22,12 @@ class ReferralsTab extends StatefulWidget {
 }
 
 class _ReferralsTabState extends State<ReferralsTab>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
+  late TabController _subTabCtrl;
   late List<Referral> _referrals;
+  List<Referral> _incoming = [];
   bool _isLoading = false;
+  bool _loadingIncoming = false;
   List<dynamic> _clinics = [];
   List<dynamic> _doctors = [];
 
@@ -34,8 +37,16 @@ class _ReferralsTabState extends State<ReferralsTab>
   @override
   void initState() {
     super.initState();
+    _subTabCtrl = TabController(length: 2, vsync: this);
     _referrals = List<Referral>.from(widget.encounter.referrals);
     _loadClinicsDoctors();
+    _loadIncoming();
+  }
+
+  @override
+  void dispose() {
+    _subTabCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadClinicsDoctors() async {
@@ -54,6 +65,25 @@ class _ReferralsTabState extends State<ReferralsTab>
       setState(() => _isLoading = false);
       showErrorSnackBar(context, 'Failed to load clinics/doctors: $e');
     }
+  }
+
+  Future<void> _loadIncoming() async {
+    setState(() => _loadingIncoming = true);
+    try {
+      final result = await widget.api.getIncomingReferrals(widget.encounter.id);
+      if (!mounted) return;
+      if (result.success && result.data != null) {
+        final list = result.data!['referrals'];
+        if (list is List) {
+          setState(() {
+            _incoming = list
+                .map((r) => Referral.fromJson(r as Map<String, dynamic>))
+                .toList();
+          });
+        }
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loadingIncoming = false);
   }
 
   Future<void> _refresh() async {
@@ -87,18 +117,20 @@ class _ReferralsTabState extends State<ReferralsTab>
 
     if (result != null) {
       try {
-        final appointDate = result['appointment_date'];
         await widget.api.createReferral(
           widget.encounter.id,
           patientId: widget.encounter.patientId,
-          toDoctorId: result['to_doctor_id'],
-          toClinicId: result['to_clinic_id'],
+          referralType: result['referral_type'] ?? 'internal',
+          targetClinicId: result['target_clinic_id'],
+          targetDoctorId: result['target_doctor_id'],
+          externalFacilityName: result['external_facility_name'],
+          externalDoctorName: result['external_doctor_name'],
+          externalFacilityAddress: result['external_facility_address'],
+          externalFacilityPhone: result['external_facility_phone'],
           reason: result['reason'],
-          notes: result['notes'],
-          urgency: result['urgency'] ?? 0,
-          appointmentDate: appointDate is DateTime
-              ? appointDate.toIso8601String().split('T')[0]
-              : appointDate?.toString(),
+          clinicalSummary: result['clinical_summary'],
+          provisionalDiagnosis: result['provisional_diagnosis'],
+          urgency: result['urgency'] ?? 'routine',
         );
         if (!mounted) return;
         showSuccessSnackBar(context, 'Referral created successfully');
@@ -134,71 +166,6 @@ class _ReferralsTabState extends State<ReferralsTab>
     }
   }
 
-  Future<void> _updateStatus(Referral ref) async {
-    final statusOptions = {
-      0: 'Pending',
-      1: 'Accepted',
-      2: 'Declined',
-      3: 'Completed',
-    };
-
-    int? selectedStatus;
-    await showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: const Text('Update Referral Status'),
-          content: SingleChildScrollView(
-            child: RadioGroup<int>(
-              groupValue: selectedStatus ?? ref.status,
-              onChanged: (val) {
-                setState(() => selectedStatus = val);
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: statusOptions.entries.map((e) {
-                  return RadioListTile<int>(
-                    title: Text(e.value),
-                    value: e.key,
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: selectedStatus != null
-                  ? () async {
-                      Navigator.pop(ctx);
-                      try {
-                        await widget.api.updateReferral(
-                          widget.encounter.id,
-                          ref.id,
-                          status: selectedStatus!,
-                        );
-                        if (!mounted) return;
-                        await _refresh();
-                        if (!mounted) return;
-                        showSuccessSnackBar(context, 'Status updated');
-                        widget.onSaved();
-                      } catch (e) {
-                        if (!mounted) return;
-                        showErrorSnackBar(context, 'Failed to update: $e');
-                      }
-                    }
-                  : null,
-              child: const Text('Update'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -212,104 +179,131 @@ class _ReferralsTabState extends State<ReferralsTab>
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _refresh,
-              child: _referrals.isEmpty
-                  ? const SingleChildScrollView(
-                      physics: AlwaysScrollableScrollPhysics(),
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32.0),
-                          child: EmptyState(
-                            icon: Icons.local_hospital_outlined,
-                            title: 'No Referrals',
-                            subtitle: 'Create a referral to refer the patient',
-                          ),
-                        ),
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        children: _referrals
-                            .map((ref) => _ReferralCard(
-                                  referral: ref,
-                                  onUpdateStatus: () => _updateStatus(ref),
-                                  onDelete: () => _deleteReferral(ref),
-                                ))
-                            .toList(),
-                      ),
-                    ),
+          : Column(
+              children: [
+                TabBar(
+                  controller: _subTabCtrl,
+                  labelColor: Theme.of(context).colorScheme.primary,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  tabs: [
+                    Tab(text: 'Outgoing (${_referrals.length})'),
+                    Tab(text: 'Incoming (${_incoming.length})'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _subTabCtrl,
+                    children: [
+                      _buildOutgoing(),
+                      _buildIncoming(),
+                    ],
+                  ),
+                ),
+              ],
             ),
+    );
+  }
+
+  Widget _buildOutgoing() {
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: _referrals.isEmpty
+          ? const SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: EmptyState(
+                    icon: Icons.local_hospital_outlined,
+                    title: 'No Referrals',
+                    subtitle: 'Create a referral to refer the patient',
+                  ),
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                children: _referrals
+                    .map((ref) => _ReferralCard(
+                          referral: ref,
+                          onDelete: () => _deleteReferral(ref),
+                        ))
+                    .toList(),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildIncoming() {
+    if (_loadingIncoming) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_incoming.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _loadIncoming,
+        child: const SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: EmptyState(
+                icon: Icons.inbox_outlined,
+                title: 'No Incoming Referrals',
+                subtitle: 'No pending referrals addressed to you',
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _loadIncoming,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: _incoming.length,
+        itemBuilder: (context, i) => _IncomingReferralCard(referral: _incoming[i]),
+      ),
     );
   }
 }
 
+// ─── Outgoing Referral Card ─────────────────────────────────
+
 class _ReferralCard extends StatelessWidget {
   final Referral referral;
-  final VoidCallback onUpdateStatus;
   final VoidCallback onDelete;
 
   const _ReferralCard({
     required this.referral,
-    required this.onUpdateStatus,
     required this.onDelete,
   });
 
-  String _getUrgencyLabel(int? urgency) {
-    switch (urgency) {
-      case 2:
-        return 'Emergency';
-      case 1:
-        return 'Urgent';
-      default:
-        return 'Routine';
+  Color _urgencyColor(String? u) {
+    switch (u) {
+      case 'emergency': return Colors.red;
+      case 'urgent': return Colors.orange;
+      default: return Colors.blue;
     }
   }
 
-  Color _getUrgencyColor(int? urgency) {
-    switch (urgency) {
-      case 2:
-        return Colors.red;
-      case 1:
-        return Colors.orange;
-      default:
-        return Colors.blue;
-    }
-  }
-
-  String _getStatusLabel(int status) {
-    switch (status) {
-      case 1:
-        return 'Accepted';
-      case 2:
-        return 'Declined';
-      case 3:
-        return 'Completed';
-      default:
-        return 'Pending';
-    }
-  }
-
-  Color _getStatusColor(int status) {
-    switch (status) {
-      case 1:
-        return Colors.green;
-      case 2:
-        return Colors.red;
-      case 3:
-        return Colors.teal;
-      default:
-        return Colors.orange;
+  Color _statusColor(String? s) {
+    switch (s) {
+      case 'accepted': return Colors.green;
+      case 'declined': return Colors.red;
+      case 'completed': return Colors.teal;
+      default: return Colors.orange;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final destination = referral.toDoctorName ??
-        referral.toClinicName ??
-        'Specialist';
+    final isExt = referral.isExternal;
+    final destination = isExt
+        ? referral.externalFacility ?? 'External Facility'
+        : referral.toDoctorName ?? referral.toClinicName ?? 'Specialist';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -318,83 +312,88 @@ class _ReferralCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Type badge + destination
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    destination,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isExt ? Colors.purple.shade100 : Colors.blue.shade100,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ),
-                StatusBadge(
-                  label: _getUrgencyLabel(referral.urgency),
-                  color: _getUrgencyColor(referral.urgency),
+                  child: Text(isExt ? 'External' : 'Internal',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+                          color: isExt ? Colors.purple.shade800 : Colors.blue.shade800)),
                 ),
                 const SizedBox(width: 8),
-                StatusBadge(
-                  label: _getStatusLabel(referral.status),
-                  color: _getStatusColor(referral.status),
+                Expanded(
+                  child: Text(destination,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
+            // Urgency + Status badges
+            Row(
+              children: [
+                StatusBadge(
+                  label: referral.urgencyLabel,
+                  color: _urgencyColor(referral.urgency),
+                ),
+                const SizedBox(width: 8),
+                StatusBadge(
+                  label: referral.statusLabel,
+                  color: _statusColor(referral.status),
+                ),
+                const Spacer(),
+                Text(referral.createdAt,
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Reason
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(
-                referral.reason ?? 'No reason provided',
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 14,
-                ),
-              ),
+              child: Text(referral.reason ?? 'No reason provided',
+                  style: TextStyle(color: Colors.grey[700], fontSize: 14)),
             ),
-            if (referral.notes != null && referral.notes!.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Notes:',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+            // External details
+            if (isExt) ...[
+              if (referral.externalDoctor != null) ...[
+                const SizedBox(height: 6),
+                _DetailRow(Icons.person_outline, 'Doctor', referral.externalDoctor!),
+              ],
+              if (referral.externalFacilityAddress != null) ...[
+                const SizedBox(height: 4),
+                _DetailRow(Icons.location_on_outlined, 'Address', referral.externalFacilityAddress!),
+              ],
+              if (referral.externalFacilityPhone != null) ...[
+                const SizedBox(height: 4),
+                _DetailRow(Icons.phone_outlined, 'Phone', referral.externalFacilityPhone!),
+              ],
+            ],
+            // Provisional diagnosis
+            if (referral.provisionalDiagnosis != null && referral.provisionalDiagnosis!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _DetailRow(Icons.medical_services_outlined, 'Diagnosis', referral.provisionalDiagnosis!),
+            ],
+            // Clinical summary
+            if (referral.clinicalSummary != null && referral.clinicalSummary!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text('Clinical Summary:', style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
-              Text(
-                referral.notes!,
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 13,
-                ),
-              ),
+              Text(referral.clinicalSummary!, style: TextStyle(color: Colors.grey[700], fontSize: 13)),
             ],
-            if (referral.appointmentDate != null) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(Icons.event, size: 18, color: Colors.grey[600]),
-                  const SizedBox(width: 6),
-                  Text(
-                    referral.appointmentDate.toString().split(' ')[0],
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            if (referral.responseNotes != null &&
-                referral.responseNotes!.isNotEmpty) ...[
+            // Response notes
+            if (referral.responseNotes != null && referral.responseNotes!.isNotEmpty) ...[
               const SizedBox(height: 10),
               Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
                   color: Colors.green[50],
@@ -404,53 +403,109 @@ class _ReferralCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Response:',
-                      style: TextStyle(
-                        color: Colors.green[700],
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    Text('Response:', style: TextStyle(color: Colors.green[700], fontSize: 12, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
-                    Text(
-                      referral.responseNotes!,
-                      style: TextStyle(
-                        color: Colors.green[700],
-                        fontSize: 13,
-                      ),
-                    ),
+                    Text(referral.responseNotes!, style: TextStyle(color: Colors.green[700], fontSize: 13)),
                   ],
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: onUpdateStatus,
-                  icon: const Icon(Icons.edit, size: 18),
-                  label: const Text('Status'),
+            // Delete action
+            if (referral.canEdit || referral.status == 'pending') ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete, size: 18),
+                  label: const Text('Delete'),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                 ),
-                const SizedBox(width: 8),
-                if (referral.status == 0)
-                  OutlinedButton.icon(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete, size: 18),
-                    label: const Text('Delete'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 }
+
+// ─── Incoming Referral Card ─────────────────────────────────
+
+class _IncomingReferralCard extends StatelessWidget {
+  final Referral referral;
+  const _IncomingReferralCard({required this.referral});
+
+  Color _urgencyColor(String? u) {
+    switch (u) {
+      case 'emergency': return Colors.red;
+      case 'urgent': return Colors.orange;
+      default: return Colors.blue;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final patientName = referral.fromDoctorName ?? 'Unknown Patient';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                StatusBadge(label: referral.urgencyLabel, color: _urgencyColor(referral.urgency)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('From: $patientName',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+            if (referral.referringClinic != null) ...[
+              const SizedBox(height: 4),
+              Text(referral.referringClinic!, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            ],
+            const SizedBox(height: 8),
+            Text(referral.reason ?? '', style: const TextStyle(fontSize: 13)),
+            if (referral.provisionalDiagnosis != null && referral.provisionalDiagnosis!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              _DetailRow(Icons.medical_services_outlined, 'Dx', referral.provisionalDiagnosis!),
+            ],
+            const SizedBox(height: 6),
+            Text(referral.createdAt, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Detail row helper ──────────────────────────────────────
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _DetailRow(this.icon, this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: Colors.grey.shade500),
+        const SizedBox(width: 4),
+        Text('$label: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey.shade600)),
+        Expanded(child: Text(value, style: TextStyle(fontSize: 12, color: Colors.grey.shade700))),
+      ],
+    );
+  }
+}
+
+// ─── Referral Form Dialog ───────────────────────────────────
 
 class _ReferralFormDialog extends StatefulWidget {
   final List<dynamic> clinics;
@@ -467,145 +522,217 @@ class _ReferralFormDialog extends StatefulWidget {
 
 class _ReferralFormDialogState extends State<_ReferralFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _reasonController;
-  late TextEditingController _notesController;
-  DateTime? _selectedDate;
+  late TextEditingController _reasonCtrl;
+  late TextEditingController _summaryCtrl;
+  late TextEditingController _diagnosisCtrl;
+  // External-only
+  late TextEditingController _extFacilityCtrl;
+  late TextEditingController _extDoctorCtrl;
+  late TextEditingController _extAddressCtrl;
+  late TextEditingController _extPhoneCtrl;
+
+  String _referralType = 'internal';
+  String _urgency = 'routine';
   int? _selectedDoctorId;
   int? _selectedClinicId;
-  int _selectedUrgency = 0;
 
   @override
   void initState() {
     super.initState();
-    _reasonController = TextEditingController();
-    _notesController = TextEditingController();
-    _selectedDate = DateTime.now().add(const Duration(days: 1));
+    _reasonCtrl = TextEditingController();
+    _summaryCtrl = TextEditingController();
+    _diagnosisCtrl = TextEditingController();
+    _extFacilityCtrl = TextEditingController();
+    _extDoctorCtrl = TextEditingController();
+    _extAddressCtrl = TextEditingController();
+    _extPhoneCtrl = TextEditingController();
   }
 
   @override
   void dispose() {
-    _reasonController.dispose();
-    _notesController.dispose();
+    _reasonCtrl.dispose();
+    _summaryCtrl.dispose();
+    _diagnosisCtrl.dispose();
+    _extFacilityCtrl.dispose();
+    _extDoctorCtrl.dispose();
+    _extAddressCtrl.dispose();
+    _extPhoneCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isExternal = _referralType == 'external';
+
     return AlertDialog(
       title: const Text('Create Referral'),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<int>(
-                hint: const Text('Select Doctor'),
-                initialValue: _selectedDoctorId,
-                items: widget.doctors
-                    .map<DropdownMenuItem<int>>((doc) {
-                      final docId = doc['id'] ?? doc.id;
-                      final docName = doc['name'] ?? doc.name ?? 'Unknown';
-                      return DropdownMenuItem<int>(
-                        value: docId,
-                        child: Text(docName.toString()),
-                      );
-                    })
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedDoctorId = val),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<int>(
-                hint: const Text('Select Clinic'),
-                initialValue: _selectedClinicId,
-                items: widget.clinics
-                    .map<DropdownMenuItem<int>>((clinic) {
-                      final clinicId = clinic['id'] ?? clinic.id;
-                      final clinicName = clinic['name'] ?? clinic.name ?? 'Unknown';
-                      return DropdownMenuItem<int>(
-                        value: clinicId,
-                        child: Text(clinicName.toString()),
-                      );
-                    })
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedClinicId = val),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text('Reason *',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Type toggle
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(label: Text('Internal'), value: 'internal',
+                        icon: Icon(Icons.business, size: 16)),
+                    ButtonSegment(label: Text('External'), value: 'external',
+                        icon: Icon(Icons.open_in_new, size: 16)),
+                  ],
+                  selected: {_referralType},
+                  onSelectionChanged: (v) => setState(() => _referralType = v.first),
+                ),
+                const SizedBox(height: 16),
+
+                // Internal fields
+                if (!isExternal) ...[
+                  DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(
+                      labelText: 'Target Clinic *',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    initialValue: _selectedClinicId,
+                    items: widget.clinics.map<DropdownMenuItem<int>>((c) {
+                      final id = c['id'] ?? c.id;
+                      final name = c['name'] ?? c.name ?? 'Unknown';
+                      return DropdownMenuItem(value: id as int, child: Text(name.toString(), style: const TextStyle(fontSize: 13)));
+                    }).toList(),
+                    onChanged: (v) => setState(() => _selectedClinicId = v),
+                    validator: (_) => !isExternal && _selectedClinicId == null ? 'Required' : null,
                   ),
-                  DictationButton(
-                      controller: _reasonController,
-                      fieldLabel: 'Referral Reason'),
-                ],
-              ),
-              const SizedBox(height: 4),
-              TextFormField(
-                controller: _reasonController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter reason...',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
-                validator: (val) =>
-                    val?.isEmpty ?? true ? 'Reason is required' : null,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text('Notes',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(
+                      labelText: 'Target Doctor (optional)',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    initialValue: _selectedDoctorId,
+                    items: [
+                      const DropdownMenuItem<int>(value: null, child: Text('Any Available Doctor', style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic))),
+                      ...widget.doctors.map<DropdownMenuItem<int>>((d) {
+                        final id = d['id'] ?? d.id;
+                        final name = d['name'] ?? d.name ?? 'Unknown';
+                        return DropdownMenuItem(value: id as int, child: Text(name.toString(), style: const TextStyle(fontSize: 13)));
+                      }),
+                    ],
+                    onChanged: (v) => setState(() => _selectedDoctorId = v),
                   ),
-                  DictationButton(
-                      controller: _notesController,
-                      fieldLabel: 'Referral Notes'),
                 ],
-              ),
-              const SizedBox(height: 4),
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  hintText: 'Additional notes...',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              SegmentedButton<int>(
-                segments: const [
-                  ButtonSegment(label: Text('Routine'), value: 0),
-                  ButtonSegment(label: Text('Urgent'), value: 1),
-                  ButtonSegment(label: Text('Emergency'), value: 2),
+
+                // External fields
+                if (isExternal) ...[
+                  TextFormField(
+                    controller: _extFacilityCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Facility Name *',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    validator: (v) => isExternal && (v?.isEmpty ?? true) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _extDoctorCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Doctor Name',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _extAddressCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Facility Address',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _extPhoneCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Facility Phone',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
                 ],
-                selected: {_selectedUrgency},
-                onSelectionChanged: (val) =>
-                    setState(() => _selectedUrgency = val.first),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (picked != null) {
-                    setState(() => _selectedDate = picked);
-                  }
-                },
-                icon: const Icon(Icons.calendar_today),
-                label: Text(
-                  _selectedDate != null
-                      ? _selectedDate.toString().split(' ')[0]
-                      : 'Select Date',
+                const SizedBox(height: 16),
+
+                // Urgency
+                const Text('Urgency', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 6),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(label: Text('Routine'), value: 'routine'),
+                    ButtonSegment(label: Text('Urgent'), value: 'urgent'),
+                    ButtonSegment(label: Text('Emergency'), value: 'emergency'),
+                  ],
+                  selected: {_urgency},
+                  onSelectionChanged: (v) => setState(() => _urgency = v.first),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+
+                // Provisional Diagnosis
+                TextFormField(
+                  controller: _diagnosisCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Provisional Diagnosis',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Reason
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text('Reason *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                    ),
+                    DictationButton(controller: _reasonCtrl, fieldLabel: 'Referral Reason'),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                TextFormField(
+                  controller: _reasonCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'Reason for referral...',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+
+                // Clinical Summary
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text('Clinical Summary', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                    ),
+                    DictationButton(controller: _summaryCtrl, fieldLabel: 'Clinical Summary'),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                TextFormField(
+                  controller: _summaryCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'Brief clinical summary...',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -616,17 +743,19 @@ class _ReferralFormDialogState extends State<_ReferralFormDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            if (_formKey.currentState!.validate() &&
-                (_selectedDoctorId != null || _selectedClinicId != null)) {
+            if (_formKey.currentState!.validate()) {
               Navigator.pop(context, {
-                'to_doctor_id': _selectedDoctorId,
-                'to_clinic_id': _selectedClinicId,
-                'reason': _reasonController.text,
-                'notes': _notesController.text.isNotEmpty
-                    ? _notesController.text
-                    : null,
-                'urgency': _selectedUrgency,
-                'appointment_date': _selectedDate,
+                'referral_type': _referralType,
+                if (!isExternal) 'target_clinic_id': _selectedClinicId,
+                if (!isExternal) 'target_doctor_id': _selectedDoctorId,
+                if (isExternal) 'external_facility_name': _extFacilityCtrl.text,
+                if (isExternal && _extDoctorCtrl.text.isNotEmpty) 'external_doctor_name': _extDoctorCtrl.text,
+                if (isExternal && _extAddressCtrl.text.isNotEmpty) 'external_facility_address': _extAddressCtrl.text,
+                if (isExternal && _extPhoneCtrl.text.isNotEmpty) 'external_facility_phone': _extPhoneCtrl.text,
+                'reason': _reasonCtrl.text,
+                if (_summaryCtrl.text.isNotEmpty) 'clinical_summary': _summaryCtrl.text,
+                if (_diagnosisCtrl.text.isNotEmpty) 'provisional_diagnosis': _diagnosisCtrl.text,
+                'urgency': _urgency,
               });
             }
           },

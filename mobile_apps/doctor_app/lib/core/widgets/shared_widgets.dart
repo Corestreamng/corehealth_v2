@@ -90,6 +90,99 @@ Future<bool> showDeleteConfirmation(
   return result == true;
 }
 
+/// General confirmation dialog. Returns true if confirmed, false/null otherwise.
+Future<bool?> showConfirmDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+  String confirmText = 'Confirm',
+  Color? confirmColor,
+}) async {
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: confirmColor != null
+              ? FilledButton.styleFrom(backgroundColor: confirmColor)
+              : null,
+          child: Text(confirmText),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Delete dialog that requires a reason. Returns the reason string or null if cancelled.
+Future<String?> showDeleteWithReasonDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+  String confirmText = 'Delete',
+  String reasonHint = 'Reason for deletion',
+}) async {
+  final controller = TextEditingController();
+  final result = await showDialog<String>(
+    context: context,
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final isValid = controller.text.trim().isNotEmpty;
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(title),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(message),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLength: 500,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: reasonHint,
+                    border: const OutlineInputBorder(),
+                    counterText: '',
+                  ),
+                  onChanged: (_) => setDialogState(() {}),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: isValid
+                    ? () => Navigator.pop(ctx, controller.text.trim())
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text(confirmText),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+  controller.dispose();
+  return result;
+}
+
 /// Snackbar helpers.
 void showSuccessSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
