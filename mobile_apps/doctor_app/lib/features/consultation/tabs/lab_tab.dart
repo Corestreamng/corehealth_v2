@@ -126,14 +126,14 @@ class _LabTabState extends State<LabTab>
   }
 
   Future<void> _deleteLab(LabRequest lab) async {
-    final confirmed = await showDeleteConfirmation(
+    final reason = await showDeleteWithReasonDialog(
       context,
       title: 'Delete Lab Request',
       message: 'Remove "${lab.serviceName}" from this encounter?',
     );
-    if (!confirmed || !mounted) return;
+    if (reason == null || !mounted) return;
 
-    final res = await widget.api.deleteLab(widget.encounter.id, lab.id);
+    final res = await widget.api.deleteLab(widget.encounter.id, lab.id, reason: reason);
     if (!mounted) return;
 
     if (res.success) {

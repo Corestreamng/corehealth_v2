@@ -197,6 +197,7 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
 
     // ── Reused: Finalize & Summary ──────────────────────────────
     Route::post('encounters/{encounter}/finalize', [EncounterController::class, 'finalizeEncounter']);
+    Route::post('encounters/{encounter}/schedule-followup', [\App\Http\Controllers\DoctorAppointmentController::class, 'scheduleFollowUp']);
     Route::get('encounters/{encounter}/summary', [EncounterController::class, 'getEncounterSummary']);
 
     // ── Reused: Delete endpoints ────────────────────────────────
@@ -237,9 +238,10 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
     Route::get('encounters/{encounter}/referrals/incoming', [SpecialistReferralController::class, 'getIncomingReferrals']);
     Route::get('encounters/{encounter}/referrals/patient-all', [SpecialistReferralController::class, 'getPatientReferrals']);
 
-    // ── Clinics & Staff (for referral form dropdowns) ───────────
+    // ── Clinics, Doctors & HMOs (for form/filter dropdowns) ─────
     Route::get('clinics', [MobileEncounterController::class, 'getClinics']);
     Route::get('doctors', [MobileEncounterController::class, 'getDoctors']);
+    Route::get('hmos', [MobileEncounterController::class, 'getHmos']);
 
     // ── Doctor Profile & Settings ───────────────────────────────
     Route::get('profile', [MobileEncounterController::class, 'doctorProfile']);
@@ -268,6 +270,27 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
     // ── Medication Chart (reuse existing JSON controller) ────────
     Route::get('patient/{patient}/medication-chart', [MedicationChartController::class, 'getPatientPrescribedDrugs']);
     Route::get('patient/{patient}/medication-chart/overview', [MedicationChartController::class, 'overview']);
+
+    // ── Intake/Output Charts (reuse existing JSON controller) ────
+    Route::get('patient/{patient}/intake-output', [\App\Http\Controllers\IntakeOutputChartController::class, 'index']);
+
+    // ── Appointment Actions (reuse existing DoctorAppointmentController) ──
+    Route::post('appointments/{appointment}/check-in', [\App\Http\Controllers\DoctorAppointmentController::class, 'checkIn']);
+    Route::post('appointments/{appointment}/cancel', [\App\Http\Controllers\DoctorAppointmentController::class, 'cancel']);
+    Route::post('appointments/{appointment}/no-show', [\App\Http\Controllers\DoctorAppointmentController::class, 'markNoShow']);
+    Route::post('appointments/{appointment}/reschedule', [\App\Http\Controllers\DoctorAppointmentController::class, 'reschedule']);
+    Route::post('appointments/{appointment}/reassign', [\App\Http\Controllers\DoctorAppointmentController::class, 'reassignDoctor']);
+    Route::get('appointments/available-slots', [\App\Http\Controllers\DoctorAppointmentController::class, 'getAvailableSlots']);
+
+    // ── Doctor Referral Lists (mobile JSON, not DataTable) ─────
+    Route::get('referrals/my-list', [MobileEncounterController::class, 'myReferralsList']);
+    Route::get('referrals/all-list', [MobileEncounterController::class, 'allReferralsList']);
+    Route::get('referrals/{referral}/detail', [SpecialistReferralController::class, 'getReferralDetail']);
+    Route::post('referrals/{referral}/accept', [SpecialistReferralController::class, 'acceptReferral']);
+    Route::post('referrals/{referral}/decline', [SpecialistReferralController::class, 'declineReferral']);
+
+    // ── Other Admissions (hospital-wide) ─────────────────────────
+    Route::get('admissions/all', [MobileEncounterController::class, 'allAdmissions']);
 });
 
 /*

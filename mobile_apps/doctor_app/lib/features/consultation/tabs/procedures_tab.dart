@@ -126,14 +126,14 @@ class _ProceduresTabState extends State<ProceduresTab>
   }
 
   Future<void> _deleteProcedure(ProcedureData proc) async {
-    final confirmed = await showDeleteConfirmation(
+    final reason = await showDeleteWithReasonDialog(
       context,
       title: 'Delete Procedure',
       message: 'Remove "${proc.serviceName}" from this encounter?',
     );
-    if (!confirmed || !mounted) return;
+    if (reason == null || !mounted) return;
 
-    final res = await widget.api.deleteProcedure(widget.encounter.id, proc.id);
+    final res = await widget.api.deleteProcedure(widget.encounter.id, proc.id, reason: reason);
     if (!mounted) return;
 
     if (res.success) {

@@ -25,6 +25,7 @@ class _VitalsTabState extends State<VitalsTab>
     with AutomaticKeepAliveClientMixin {
   bool _showForm = false;
   bool _isSaving = false;
+  int _painLevel = -1; // -1 = not set
 
   // Form controllers
   final _tempCtrl = TextEditingController();
@@ -36,7 +37,6 @@ class _VitalsTabState extends State<VitalsTab>
   final _weightCtrl = TextEditingController();
   final _heightCtrl = TextEditingController();
   final _sugarCtrl = TextEditingController();
-  final _painCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String? _validationError;
 
@@ -54,9 +54,29 @@ class _VitalsTabState extends State<VitalsTab>
     _weightCtrl.dispose();
     _heightCtrl.dispose();
     _sugarCtrl.dispose();
-    _painCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
+  }
+
+  double? get _bmi {
+    final w = double.tryParse(_weightCtrl.text);
+    final h = double.tryParse(_heightCtrl.text);
+    if (w == null || h == null || w <= 0 || h <= 0) return null;
+    return w / ((h / 100) * (h / 100));
+  }
+
+  String _bmiClassification(double bmi) {
+    if (bmi < 18.5) return 'Underweight';
+    if (bmi < 25) return 'Normal';
+    if (bmi < 30) return 'Overweight';
+    return 'Obese';
+  }
+
+  Color _bmiColor(double bmi) {
+    if (bmi < 18.5) return Colors.blue.shade600;
+    if (bmi < 25) return Colors.green.shade600;
+    if (bmi < 30) return Colors.orange.shade600;
+    return Colors.red.shade600;
   }
 
   Future<void> _saveVitals() async {
@@ -93,7 +113,7 @@ class _VitalsTabState extends State<VitalsTab>
       weight: double.tryParse(_weightCtrl.text),
       height: double.tryParse(_heightCtrl.text),
       bloodSugar: double.tryParse(_sugarCtrl.text),
-      painLevel: int.tryParse(_painCtrl.text),
+      painLevel: _painLevel >= 0 ? _painLevel : null,
       otherNotes: _notesCtrl.text.trim(),
     );
 
@@ -124,11 +144,12 @@ class _VitalsTabState extends State<VitalsTab>
   void _clearForm() {
     for (final c in [
       _tempCtrl, _sysCtrl, _diaCtrl, _hrCtrl, _rrCtrl,
-      _spo2Ctrl, _weightCtrl, _heightCtrl, _sugarCtrl, _painCtrl,
+      _spo2Ctrl, _weightCtrl, _heightCtrl, _sugarCtrl,
       _notesCtrl,
     ]) {
       c.clear();
     }
+    _painLevel = -1;
     _validationError = null;
   }
 
@@ -308,6 +329,7 @@ class _VitalsTabState extends State<VitalsTab>
                     label: 'Weight (kg)',
                     icon: Icons.monitor_weight_outlined,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -317,6 +339,7 @@ class _VitalsTabState extends State<VitalsTab>
                     label: 'Height (cm)',
                     icon: Icons.height,
                     keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
               ],
@@ -335,13 +358,86 @@ class _VitalsTabState extends State<VitalsTab>
                   ),
                 ),
                 const SizedBox(width: 10),
-                Expanded(
-                  child: _VitalField(
-                    controller: _painCtrl,
-                    label: 'Pain (0–10)',
-                    icon: Icons.sentiment_dissatisfied_outlined,
-                    keyboardType: TextInputType.number,
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // BMI Auto-calculation
+            Builder(builder: (_) {
+              final bmi = _bmi;
+              if (bmi == null) return const SizedBox.shrink();
+              final label = _bmiClassification(bmi);
+              final color = _bmiColor(bmi);
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: color.withValues(alpha: 0.4)),
+                ),
+                child: Row(children: [
+                  Icon(Icons.monitor_weight_outlined, size: 18, color: color),
+                  const SizedBox(width: 8),
+                  Text('BMI: ${bmi.toStringAsFixed(1)}',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
                   ),
+                ]),
+              );
+            }),
+            const SizedBox(height: 10),
+
+            // Visual Pain Scale
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.sentiment_dissatisfied_outlined, size: 18,
+                      color: Theme.of(context).hintColor),
+                  const SizedBox(width: 6),
+                  Text('Pain Scale',
+                      style: TextStyle(fontSize: 13, color: Theme.of(context).hintColor)),
+                ]),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: List.generate(11, (i) {
+                    final selected = _painLevel == i;
+                    final color = Color.lerp(
+                      Colors.green, Colors.red, i / 10)!;
+                    return GestureDetector(
+                      onTap: () => setState(() => _painLevel = selected ? -1 : i),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: selected ? color : color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: selected ? color : color.withValues(alpha: 0.3),
+                            width: selected ? 2 : 1,
+                          ),
+                        ),
+                        child: Text('$i',
+                          style: TextStyle(
+                            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 13,
+                            color: selected ? Colors.white : color,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
@@ -384,12 +480,14 @@ class _VitalField extends StatelessWidget {
   final String label;
   final IconData icon;
   final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
 
   const _VitalField({
     required this.controller,
     required this.label,
     required this.icon,
     this.keyboardType,
+    this.onChanged,
   });
 
   @override
@@ -397,6 +495,7 @@ class _VitalField extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(fontSize: 11),

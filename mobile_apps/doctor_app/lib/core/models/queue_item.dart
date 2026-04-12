@@ -8,18 +8,31 @@ class QueueItem {
   final String? dob;
   final String hmoName;
   final String hmoNo;
+  final int? clinicId;
   final String clinicName;
+  final int? staffId;
   final String doctorName;
   final int statusCode;
   final String statusLabel;
   final bool vitalsTaken;
   final int? requestEntryId;
+  final int? appointmentId;
+  final String? appointmentDate;
+  final String? appointmentTime;
+  final int rescheduleCount;
   final String priority;
   final String source;
   final bool canDeliver;
   final String deliveryReason;
   final String deliveryHint;
   final String createdAt;
+  // Timer fields for tracking in-consultation elapsed time
+  final String? consultationStartedAt;
+  final int consultationPausedSeconds;
+  final bool isPaused;
+  final String? lastPausedAt;
+  // Contextual next-step guidance (matches web)
+  final String nextStep;
 
   QueueItem({
     required this.queueId,
@@ -30,18 +43,29 @@ class QueueItem {
     this.dob,
     required this.hmoName,
     required this.hmoNo,
+    this.clinicId,
     required this.clinicName,
+    this.staffId,
     required this.doctorName,
     required this.statusCode,
     required this.statusLabel,
     required this.vitalsTaken,
     this.requestEntryId,
+    this.appointmentId,
+    this.appointmentDate,
+    this.appointmentTime,
+    this.rescheduleCount = 0,
     required this.priority,
     required this.source,
     required this.canDeliver,
     required this.deliveryReason,
     required this.deliveryHint,
     required this.createdAt,
+    this.consultationStartedAt,
+    this.consultationPausedSeconds = 0,
+    this.isPaused = false,
+    this.lastPausedAt,
+    this.nextStep = '',
   });
 
   factory QueueItem.fromJson(Map<String, dynamic> json) {
@@ -54,18 +78,29 @@ class QueueItem {
       dob: json['dob']?.toString(),
       hmoName: json['hmo_name']?.toString() ?? 'N/A',
       hmoNo: json['hmo_no']?.toString() ?? '',
+      clinicId: json['clinic_id'],
       clinicName: json['clinic_name']?.toString() ?? '',
+      staffId: json['staff_id'],
       doctorName: json['doctor_name']?.toString() ?? '',
       statusCode: json['status'] is int ? json['status'] : int.tryParse('${json['status']}') ?? 1,
       statusLabel: json['status_label']?.toString() ?? 'Unknown',
       vitalsTaken: json['vitals_taken'] == true || json['vitals_taken'] == 1,
       requestEntryId: json['request_entry_id'],
+      appointmentId: json['appointment_id'],
+      appointmentDate: json['appointment_date']?.toString(),
+      appointmentTime: json['appointment_time']?.toString(),
+      rescheduleCount: json['reschedule_count'] is int ? json['reschedule_count'] : int.tryParse('${json['reschedule_count']}') ?? 0,
       priority: json['priority']?.toString() ?? 'normal',
       source: json['source']?.toString() ?? 'walk-in',
       canDeliver: json['can_deliver'] == true,
       deliveryReason: json['delivery_reason']?.toString() ?? '',
       deliveryHint: json['delivery_hint']?.toString() ?? '',
       createdAt: json['created_at']?.toString() ?? '',
+      consultationStartedAt: json['consultation_started_at']?.toString(),
+      consultationPausedSeconds: json['consultation_paused_seconds'] is int ? json['consultation_paused_seconds'] : int.tryParse('${json['consultation_paused_seconds']}') ?? 0,
+      isPaused: json['is_paused'] == true || json['is_paused'] == 1,
+      lastPausedAt: json['last_paused_at']?.toString(),
+      nextStep: json['next_step']?.toString() ?? '',
     );
   }
 
