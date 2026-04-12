@@ -160,17 +160,21 @@ class _ConsultationScreenState extends State<ConsultationScreen>
     final action = result['action'] as String;
     setState(() => _isFinalizing = true);
 
+    // Schedule follow-up first (separate endpoint, like the web does)
+    final followUpDate = result['followUpDate'] as String?;
+    if (followUpDate != null) {
+      await _api.scheduleFollowUp(
+        widget.encounterId,
+        appointmentDate: followUpDate,
+        reason: result['followUpNotes'] as String?,
+      );
+    }
+
     final res = await _api.finalizeEncounter(
       widget.encounterId,
       endConsultation: true,
       admit: action == 'admit',
       admitNote: result['admitNote'] as String?,
-      discharge: action == 'discharge',
-      dischargeReason: result['dischargeReason'] as String?,
-      dischargeNote: result['dischargeNote'] as String?,
-      followUpDate: result['followUpDate'] as String?,
-      followUpNotes: result['followUpNotes'] as String?,
-      closingNotes: result['closingNotes'] as String?,
       queueId: widget.queueId,
     );
 
@@ -178,11 +182,9 @@ class _ConsultationScreenState extends State<ConsultationScreen>
     setState(() => _isFinalizing = false);
 
     if (res.success) {
-      final msg = switch (action) {
-        'admit' => 'Patient admitted successfully',
-        'discharge' => 'Patient discharged successfully',
-        _ => 'Encounter completed',
-      };
+      final msg = action == 'admit'
+          ? 'Patient admitted successfully'
+          : 'Encounter completed';
       showSuccessSnackBar(context, msg);
       Navigator.of(context).pop(true);
     } else {
@@ -413,20 +415,15 @@ class _ConcludeSheet extends StatefulWidget {
 }
 
 class _ConcludeSheetState extends State<_ConcludeSheet> {
-  final _closingNotesController = TextEditingController();
   final _followUpNotesController = TextEditingController();
   final _admitNoteController = TextEditingController();
-  final _dischargeNoteController = TextEditingController();
 
   DateTime? _followUpDate;
-  String? _dischargeReason;
 
   @override
   void dispose() {
-    _closingNotesController.dispose();
     _followUpNotesController.dispose();
     _admitNoteController.dispose();
-    _dischargeNoteController.dispose();
     super.dispose();
   }
 
@@ -540,30 +537,6 @@ class _ConcludeSheetState extends State<_ConcludeSheet> {
                   contentPadding: const EdgeInsets.all(12),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Closing notes
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text('Closing Notes',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                  ),
-                  DictationButton(
-                      controller: _closingNotesController,
-                      fieldLabel: 'Closing Notes'),
-                ],
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _closingNotesController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Final notes for this encounter...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.all(12),
-                ),
-              ),
               const SizedBox(height: 24),
 
               // Action buttons
@@ -582,33 +555,17 @@ class _ConcludeSheetState extends State<_ConcludeSheet> {
                 ),
               ),
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _showAdmitFields,
-                      icon: const Icon(Icons.local_hospital, size: 18),
-                      label: const Text('Admit'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _showAdmitFields,
+                  icon: const Icon(Icons.local_hospital, size: 18),
+                  label: const Text('Admit Patient'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _showDischargeFields,
-                      icon: Icon(Icons.exit_to_app, size: 18, color: Colors.red.shade700),
-                      label: Text('Discharge', style: TextStyle(color: Colors.red.shade700)),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: Colors.red.shade300),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(height: 24),
             ],
@@ -618,15 +575,12 @@ class _ConcludeSheetState extends State<_ConcludeSheet> {
     );
   }
 
-  void _submit(String action, {String? admitNote, String? dischargeReason, String? dischargeNote}) {
+  void _submit(String action, {String? admitNote}) {
     Navigator.of(context).pop({
       'action': action,
-      'closingNotes': _closingNotesController.text.isNotEmpty ? _closingNotesController.text : null,
       'followUpDate': _followUpDate?.toIso8601String().split('T').first,
       'followUpNotes': _followUpNotesController.text.isNotEmpty ? _followUpNotesController.text : null,
       'admitNote': admitNote,
-      'dischargeReason': dischargeReason,
-      'dischargeNote': dischargeNote,
     });
   }
 
@@ -666,64 +620,6 @@ class _ConcludeSheetState extends State<_ConcludeSheet> {
               _submit('admit', admitNote: _admitNoteController.text);
             },
             child: const Text('Admit'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDischargeFields() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Discharge Patient'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: _dischargeReason,
-              decoration: const InputDecoration(labelText: 'Reason'),
-              items: const [
-                DropdownMenuItem(value: 'recovered', child: Text('Recovered')),
-                DropdownMenuItem(value: 'transferred', child: Text('Transferred')),
-                DropdownMenuItem(value: 'against_advice', child: Text('Against Medical Advice')),
-                DropdownMenuItem(value: 'observation_complete', child: Text('Observation Complete')),
-                DropdownMenuItem(value: 'other', child: Text('Other')),
-              ],
-              onChanged: (v) => _dischargeReason = v,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Expanded(
-                  child: Text('Discharge Notes',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                ),
-                DictationButton(
-                    controller: _dischargeNoteController,
-                    fieldLabel: 'Discharge Notes'),
-              ],
-            ),
-            const SizedBox(height: 4),
-            TextField(
-              controller: _dischargeNoteController,
-              maxLines: 3,
-              decoration: const InputDecoration(hintText: 'Discharge notes...'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _submit('discharge',
-                  dischargeReason: _dischargeReason,
-                  dischargeNote: _dischargeNoteController.text);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
-            child: const Text('Discharge'),
           ),
         ],
       ),
