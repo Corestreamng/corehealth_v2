@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.1deb3
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Mar 13, 2026 at 09:29 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Host: localhost:3306
+-- Generation Time: Apr 12, 2026 at 07:30 PM
+-- Server version: 8.0.45-0ubuntu0.24.04.1
+-- PHP Version: 8.3.6
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -28,15 +28,15 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `accounting_periods` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fiscal_year_id` bigint(20) UNSIGNED NOT NULL,
-  `period_number` tinyint(4) NOT NULL,
-  `period_name` varchar(50) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `fiscal_year_id` bigint UNSIGNED NOT NULL,
+  `period_number` tinyint NOT NULL,
+  `period_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `status` enum('open','closing','closed') NOT NULL DEFAULT 'open',
-  `is_adjustment_period` tinyint(1) NOT NULL DEFAULT 0,
-  `closed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `status` enum('open','closing','closed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open',
+  `is_adjustment_period` tinyint(1) NOT NULL DEFAULT '0',
+  `closed_by` bigint UNSIGNED DEFAULT NULL,
   `closed_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -80,16 +80,16 @@ INSERT INTO `accounting_periods` (`id`, `fiscal_year_id`, `period_number`, `peri
 --
 
 CREATE TABLE `accounts` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `account_group_id` bigint(20) UNSIGNED NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `description` text DEFAULT NULL,
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `is_system` tinyint(1) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `is_bank_account` tinyint(1) NOT NULL DEFAULT 0,
-  `cash_flow_category_override` enum('operating','investing','financing') DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `account_group_id` bigint UNSIGNED NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `is_system` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `is_bank_account` tinyint(1) NOT NULL DEFAULT '0',
+  `cash_flow_category_override` enum('operating','investing','financing') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -195,13 +195,13 @@ INSERT INTO `accounts` (`id`, `account_group_id`, `code`, `name`, `description`,
 --
 
 CREATE TABLE `account_classes` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `code` varchar(10) NOT NULL,
-  `name` varchar(50) NOT NULL,
-  `normal_balance` enum('debit','credit') NOT NULL,
-  `display_order` tinyint(4) NOT NULL,
-  `is_temporary` tinyint(1) NOT NULL DEFAULT 0,
-  `cash_flow_category` enum('operating','investing','financing') DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `code` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `normal_balance` enum('debit','credit') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `display_order` tinyint NOT NULL,
+  `is_temporary` tinyint(1) NOT NULL DEFAULT '0',
+  `cash_flow_category` enum('operating','investing','financing') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -224,12 +224,12 @@ INSERT INTO `account_classes` (`id`, `code`, `name`, `normal_balance`, `display_
 --
 
 CREATE TABLE `account_groups` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `account_class_id` bigint(20) UNSIGNED NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `description` text DEFAULT NULL,
-  `display_order` tinyint(4) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `account_class_id` bigint UNSIGNED NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `display_order` tinyint NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -265,18 +265,18 @@ INSERT INTO `account_groups` (`id`, `account_class_id`, `code`, `name`, `descrip
 --
 
 CREATE TABLE `account_sub_accounts` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
-  `code` varchar(30) NOT NULL,
-  `name` varchar(150) NOT NULL,
-  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_category_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_category_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
+  `code` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `service_id` bigint UNSIGNED DEFAULT NULL,
+  `product_category_id` bigint UNSIGNED DEFAULT NULL,
+  `service_category_id` bigint UNSIGNED DEFAULT NULL,
+  `supplier_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `hmo_id` bigint UNSIGNED DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -299,15 +299,15 @@ INSERT INTO `account_sub_accounts` (`id`, `account_id`, `code`, `name`, `product
 --
 
 CREATE TABLE `admission_checklists` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `admission_request_id` bigint(20) UNSIGNED NOT NULL,
-  `template_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','in_progress','completed','waived') NOT NULL DEFAULT 'pending',
+  `id` bigint UNSIGNED NOT NULL,
+  `admission_request_id` bigint UNSIGNED NOT NULL,
+  `template_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('pending','in_progress','completed','waived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `started_at` timestamp NULL DEFAULT NULL,
   `completed_at` timestamp NULL DEFAULT NULL,
-  `completed_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `waiver_reason` text DEFAULT NULL,
-  `waived_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `completed_by` bigint UNSIGNED DEFAULT NULL,
+  `waiver_reason` text COLLATE utf8mb4_unicode_ci,
+  `waived_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -329,15 +329,15 @@ INSERT INTO `admission_checklists` (`id`, `admission_request_id`, `template_id`,
 --
 
 CREATE TABLE `admission_checklist_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `admission_checklist_id` bigint(20) UNSIGNED NOT NULL,
-  `template_item_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `item_text` varchar(255) NOT NULL,
-  `is_required` tinyint(1) NOT NULL DEFAULT 1,
-  `is_completed` tinyint(1) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `admission_checklist_id` bigint UNSIGNED NOT NULL,
+  `template_item_id` bigint UNSIGNED DEFAULT NULL,
+  `item_text` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_required` tinyint(1) NOT NULL DEFAULT '1',
+  `is_completed` tinyint(1) NOT NULL DEFAULT '0',
   `completed_at` timestamp NULL DEFAULT NULL,
-  `completed_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `comment` text DEFAULT NULL COMMENT 'Notes when completing item',
+  `completed_by` bigint UNSIGNED DEFAULT NULL,
+  `comment` text COLLATE utf8mb4_unicode_ci COMMENT 'Notes when completing item',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -376,31 +376,31 @@ INSERT INTO `admission_checklist_items` (`id`, `admission_checklist_id`, `templa
 --
 
 CREATE TABLE `admission_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `billed_by` bigint UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `bed_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `preferred_ward_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `priority` varchar(255) NOT NULL DEFAULT 'routine',
-  `esi_level` tinyint(4) DEFAULT NULL COMMENT 'ESI triage level 1-5',
-  `chief_complaint` text DEFAULT NULL,
+  `service_id` bigint UNSIGNED DEFAULT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `bed_id` bigint UNSIGNED DEFAULT NULL,
+  `preferred_ward_id` bigint UNSIGNED DEFAULT NULL,
+  `priority` varchar(255) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'routine',
+  `esi_level` tinyint DEFAULT NULL COMMENT 'ESI triage level 1-5',
+  `chief_complaint` text COLLATE utf8mb4_general_ci,
   `bed_assign_date` timestamp NULL DEFAULT NULL,
-  `bed_assigned_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `discharged` tinyint(1) NOT NULL DEFAULT 0,
+  `bed_assigned_by` bigint UNSIGNED DEFAULT NULL,
+  `discharged` tinyint(1) NOT NULL DEFAULT '0',
   `discharge_date` timestamp NULL DEFAULT NULL,
-  `discharge_reason` varchar(255) DEFAULT NULL,
-  `discharge_note` text DEFAULT NULL,
-  `followup_instructions` text DEFAULT NULL,
-  `discharged_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `doctor_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `note` text DEFAULT NULL,
-  `admission_reason` text DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  `admission_status` enum('pending_checklist','checklist_complete','admitted','discharge_requested','discharge_checklist','discharged') NOT NULL DEFAULT 'admitted' COMMENT 'Workflow status for admission/discharge process',
+  `discharge_reason` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `discharge_note` text COLLATE utf8mb4_general_ci,
+  `followup_instructions` text COLLATE utf8mb4_general_ci,
+  `discharged_by` bigint UNSIGNED DEFAULT NULL,
+  `doctor_id` bigint UNSIGNED DEFAULT NULL,
+  `note` text COLLATE utf8mb4_general_ci,
+  `admission_reason` text COLLATE utf8mb4_general_ci,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `admission_status` enum('pending_checklist','checklist_complete','admitted','discharge_requested','discharge_checklist','discharged') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'admitted' COMMENT 'Workflow status for admission/discharge process',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -427,16 +427,16 @@ INSERT INTO `admission_requests` (`id`, `service_request_id`, `billed_by`, `bill
 --
 
 CREATE TABLE `anc_investigations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
-  `anc_visit_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `investigation_type` enum('lab','imaging','procedure') NOT NULL,
-  `lab_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `imaging_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `investigation_name` varchar(255) NOT NULL,
-  `result_summary` text DEFAULT NULL,
-  `gestational_age_weeks` smallint(6) DEFAULT NULL,
-  `is_routine` tinyint(1) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `enrollment_id` bigint UNSIGNED NOT NULL,
+  `anc_visit_id` bigint UNSIGNED DEFAULT NULL,
+  `investigation_type` enum('lab','imaging','procedure') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `lab_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `imaging_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `investigation_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `result_summary` text COLLATE utf8mb4_unicode_ci,
+  `gestational_age_weeks` smallint DEFAULT NULL,
+  `is_routine` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -449,39 +449,39 @@ CREATE TABLE `anc_investigations` (
 --
 
 CREATE TABLE `anc_visits` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `visit_number` smallint(6) NOT NULL,
-  `visit_type` enum('booking','routine','emergency','specialist_referral') NOT NULL DEFAULT 'routine',
+  `id` bigint UNSIGNED NOT NULL,
+  `enrollment_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `visit_number` smallint NOT NULL,
+  `visit_type` enum('booking','routine','emergency','specialist_referral') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'routine',
   `visit_date` date NOT NULL,
-  `gestational_age_weeks` smallint(6) DEFAULT NULL,
-  `gestational_age_days` smallint(6) DEFAULT NULL,
+  `gestational_age_weeks` smallint DEFAULT NULL,
+  `gestational_age_days` smallint DEFAULT NULL,
   `weight_kg` decimal(5,2) DEFAULT NULL,
-  `blood_pressure_systolic` smallint(6) DEFAULT NULL,
-  `blood_pressure_diastolic` smallint(6) DEFAULT NULL,
+  `blood_pressure_systolic` smallint DEFAULT NULL,
+  `blood_pressure_diastolic` smallint DEFAULT NULL,
   `fundal_height_cm` decimal(5,1) DEFAULT NULL,
-  `presentation` varchar(255) DEFAULT NULL,
-  `fetal_heart_rate` smallint(6) DEFAULT NULL,
-  `blood_pressure` varchar(255) DEFAULT NULL,
-  `height_of_fundus` varchar(255) DEFAULT NULL,
-  `presentation_and_position` varchar(255) DEFAULT NULL,
-  `foetal_heart_rate` smallint(6) DEFAULT NULL,
-  `foetal_movement` enum('present','absent','reduced') DEFAULT NULL,
-  `oedema` enum('none','mild','moderate','severe') DEFAULT NULL,
-  `urine_protein` enum('nil','trace','+','++','+++') DEFAULT NULL,
-  `urine_glucose` enum('nil','trace','+','++','+++') DEFAULT NULL,
+  `presentation` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fetal_heart_rate` smallint DEFAULT NULL,
+  `blood_pressure` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `height_of_fundus` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `presentation_and_position` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `foetal_heart_rate` smallint DEFAULT NULL,
+  `foetal_movement` enum('present','absent','reduced') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `oedema` enum('none','mild','moderate','severe') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `urine_protein` enum('nil','trace','+','++','+++') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `urine_glucose` enum('nil','trace','+','++','+++') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `haemoglobin` decimal(4,1) DEFAULT NULL,
-  `clinical_notes` text DEFAULT NULL,
-  `complaints` text DEFAULT NULL,
-  `examination_notes` text DEFAULT NULL,
-  `diagnosis` text DEFAULT NULL,
-  `treatment` text DEFAULT NULL,
-  `plan` text DEFAULT NULL,
+  `clinical_notes` text COLLATE utf8mb4_unicode_ci,
+  `complaints` text COLLATE utf8mb4_unicode_ci,
+  `examination_notes` text COLLATE utf8mb4_unicode_ci,
+  `diagnosis` text COLLATE utf8mb4_unicode_ci,
+  `treatment` text COLLATE utf8mb4_unicode_ci,
+  `plan` text COLLATE utf8mb4_unicode_ci,
   `next_appointment` date DEFAULT NULL,
-  `seen_by` bigint(20) UNSIGNED NOT NULL,
-  `notes` text DEFAULT NULL,
+  `seen_by` bigint UNSIGNED NOT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -502,76 +502,76 @@ INSERT INTO `anc_visits` (`id`, `enrollment_id`, `patient_id`, `encounter_id`, `
 --
 
 CREATE TABLE `application_status` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `site_name` varchar(255) NOT NULL,
-  `site_abbreviation` varchar(255) DEFAULT NULL,
-  `header_text` varchar(255) DEFAULT NULL,
-  `footer_text` varchar(255) DEFAULT NULL,
-  `logo` longtext DEFAULT NULL,
-  `favicon` longtext DEFAULT NULL,
-  `hos_color` varchar(7) DEFAULT '#011b33',
-  `contact_address` text DEFAULT NULL,
-  `contact_phones` text DEFAULT NULL,
-  `contact_emails` text DEFAULT NULL,
-  `social_links` text DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `version` varchar(255) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `debug_mode` tinyint(1) NOT NULL DEFAULT 1,
-  `allow_piece_sale` tinyint(1) NOT NULL DEFAULT 1,
-  `allow_halve_sale` tinyint(1) NOT NULL DEFAULT 1,
-  `bed_service_category_id` int(11) NOT NULL DEFAULT 3,
-  `investigation_category_id` int(11) NOT NULL DEFAULT 2,
-  `consultation_category_id` int(11) NOT NULL DEFAULT 1,
-  `nursing_service_category` int(11) NOT NULL DEFAULT 4,
-  `misc_service_category_id` int(11) NOT NULL DEFAULT 5,
-  `imaging_category_id` int(11) NOT NULL DEFAULT 6,
-  `consultation_cycle_duration` int(11) NOT NULL DEFAULT 24 COMMENT 'Hours before consultation expires',
-  `note_edit_window` int(11) NOT NULL DEFAULT 60 COMMENT 'Minutes after encounter note creation that editing is allowed',
-  `result_edit_duration` int(11) NOT NULL DEFAULT 60 COMMENT 'Minutes after result entry that editing is allowed',
-  `timezone` varchar(50) NOT NULL DEFAULT 'Africa/Lagos',
-  `goonline` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Enable DHIS2 patient enrollment',
-  `requirediagnosis` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Require diagnosis during consultation',
-  `enable_twakto` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Enable Tawk.to support',
-  `lab_results_require_approval` tinyint(1) NOT NULL DEFAULT 0,
-  `imaging_results_require_approval` tinyint(1) NOT NULL DEFAULT 0,
-  `smtp_host` varchar(255) DEFAULT NULL,
-  `smtp_port` int(10) UNSIGNED DEFAULT NULL,
-  `smtp_username` varchar(255) DEFAULT NULL,
-  `smtp_password` varchar(255) DEFAULT NULL,
-  `smtp_encryption` varchar(10) DEFAULT NULL,
-  `smtp_from_address` varchar(255) DEFAULT NULL,
-  `smtp_from_name` varchar(255) DEFAULT NULL,
-  `send_appointment_email_to_doctors` tinyint(1) NOT NULL DEFAULT 0,
-  `send_appointment_email_to_patients` tinyint(1) NOT NULL DEFAULT 0,
-  `doctor_can_enter_lab_result` tinyint(1) NOT NULL DEFAULT 0,
-  `nurse_can_enter_lab_result` tinyint(1) NOT NULL DEFAULT 0,
-  `doctor_can_enter_imaging_result` tinyint(1) NOT NULL DEFAULT 0,
-  `nurse_can_enter_imaging_result` tinyint(1) NOT NULL DEFAULT 0,
-  `dhis_api_url` varchar(255) DEFAULT NULL,
-  `dhis_org_unit` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_program` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_program_stage1` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_program_stage2` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_program_event_dataelement` varchar(255) DEFAULT NULL,
-  `dhis_username` varchar(255) DEFAULT NULL,
-  `dhis_pass` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_type` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_attr_fname` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_attr_lname` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_attr_gender` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_attr_dob` varchar(255) DEFAULT NULL,
-  `dhis_tracked_entity_attr_city` varchar(255) DEFAULT NULL,
-  `client_id` varchar(255) DEFAULT NULL,
-  `client_secret` varchar(255) DEFAULT NULL,
-  `corehms_superadmin_url` varchar(255) DEFAULT NULL,
-  `corehms_superadmin_username` varchar(255) DEFAULT NULL,
-  `corehms_superadmin_pass` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `site_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `site_abbreviation` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `header_text` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `footer_text` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `logo` longtext COLLATE utf8mb4_general_ci,
+  `favicon` longtext COLLATE utf8mb4_general_ci,
+  `hos_color` varchar(7) COLLATE utf8mb4_general_ci DEFAULT '#011b33',
+  `contact_address` text COLLATE utf8mb4_general_ci,
+  `contact_phones` text COLLATE utf8mb4_general_ci,
+  `contact_emails` text COLLATE utf8mb4_general_ci,
+  `social_links` text COLLATE utf8mb4_general_ci,
+  `description` text COLLATE utf8mb4_general_ci,
+  `version` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `debug_mode` tinyint(1) NOT NULL DEFAULT '1',
+  `allow_piece_sale` tinyint(1) NOT NULL DEFAULT '1',
+  `allow_halve_sale` tinyint(1) NOT NULL DEFAULT '1',
+  `bed_service_category_id` int NOT NULL DEFAULT '3',
+  `investigation_category_id` int NOT NULL DEFAULT '2',
+  `consultation_category_id` int NOT NULL DEFAULT '1',
+  `nursing_service_category` int NOT NULL DEFAULT '4',
+  `misc_service_category_id` int NOT NULL DEFAULT '5',
+  `imaging_category_id` int NOT NULL DEFAULT '6',
+  `consultation_cycle_duration` int NOT NULL DEFAULT '24' COMMENT 'Hours before consultation expires',
+  `note_edit_window` int NOT NULL DEFAULT '60' COMMENT 'Minutes after encounter note creation that editing is allowed',
+  `result_edit_duration` int NOT NULL DEFAULT '60' COMMENT 'Minutes after result entry that editing is allowed',
+  `timezone` varchar(50) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Africa/Lagos',
+  `goonline` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Enable DHIS2 patient enrollment',
+  `requirediagnosis` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Require diagnosis during consultation',
+  `enable_twakto` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Enable Tawk.to support',
+  `lab_results_require_approval` tinyint(1) NOT NULL DEFAULT '0',
+  `imaging_results_require_approval` tinyint(1) NOT NULL DEFAULT '0',
+  `smtp_host` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `smtp_port` int UNSIGNED DEFAULT NULL,
+  `smtp_username` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `smtp_password` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `smtp_encryption` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `smtp_from_address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `smtp_from_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `send_appointment_email_to_doctors` tinyint(1) NOT NULL DEFAULT '0',
+  `send_appointment_email_to_patients` tinyint(1) NOT NULL DEFAULT '0',
+  `doctor_can_enter_lab_result` tinyint(1) NOT NULL DEFAULT '0',
+  `nurse_can_enter_lab_result` tinyint(1) NOT NULL DEFAULT '0',
+  `doctor_can_enter_imaging_result` tinyint(1) NOT NULL DEFAULT '0',
+  `nurse_can_enter_imaging_result` tinyint(1) NOT NULL DEFAULT '0',
+  `dhis_api_url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_org_unit` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_program` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_program_stage1` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_program_stage2` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_program_event_dataelement` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_username` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_pass` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_type` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_attr_fname` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_attr_lname` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_attr_gender` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_attr_dob` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_tracked_entity_attr_city` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `client_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `client_secret` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `corehms_superadmin_url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `corehms_superadmin_username` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `corehms_superadmin_pass` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `notification_sound` tinyint(1) NOT NULL DEFAULT 1,
-  `registration_category_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `procedure_category_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `notification_sound` tinyint(1) NOT NULL DEFAULT '1',
+  `registration_category_id` bigint UNSIGNED DEFAULT NULL,
+  `procedure_category_id` bigint UNSIGNED DEFAULT NULL,
   `last_bed_billing_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -580,7 +580,7 @@ CREATE TABLE `application_status` (
 --
 
 INSERT INTO `application_status` (`id`, `site_name`, `site_abbreviation`, `header_text`, `footer_text`, `logo`, `favicon`, `hos_color`, `contact_address`, `contact_phones`, `contact_emails`, `social_links`, `description`, `version`, `active`, `debug_mode`, `allow_piece_sale`, `allow_halve_sale`, `bed_service_category_id`, `investigation_category_id`, `consultation_category_id`, `nursing_service_category`, `misc_service_category_id`, `imaging_category_id`, `consultation_cycle_duration`, `note_edit_window`, `result_edit_duration`, `timezone`, `goonline`, `requirediagnosis`, `enable_twakto`, `lab_results_require_approval`, `imaging_results_require_approval`, `smtp_host`, `smtp_port`, `smtp_username`, `smtp_password`, `smtp_encryption`, `smtp_from_address`, `smtp_from_name`, `send_appointment_email_to_doctors`, `send_appointment_email_to_patients`, `doctor_can_enter_lab_result`, `nurse_can_enter_lab_result`, `doctor_can_enter_imaging_result`, `nurse_can_enter_imaging_result`, `dhis_api_url`, `dhis_org_unit`, `dhis_tracked_entity_program`, `dhis_tracked_entity_program_stage1`, `dhis_tracked_entity_program_stage2`, `dhis_tracked_entity_program_event_dataelement`, `dhis_username`, `dhis_pass`, `dhis_tracked_entity_type`, `dhis_tracked_entity_attr_fname`, `dhis_tracked_entity_attr_lname`, `dhis_tracked_entity_attr_gender`, `dhis_tracked_entity_attr_dob`, `dhis_tracked_entity_attr_city`, `client_id`, `client_secret`, `corehms_superadmin_url`, `corehms_superadmin_username`, `corehms_superadmin_pass`, `created_at`, `updated_at`, `notification_sound`, `registration_category_id`, `procedure_category_id`, `last_bed_billing_date`) VALUES
-(1, 'Hospital Management System', 'HMS', 'Hospital Management System', 'HMS', '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', NULL, '#010732', 'P.M.B 204 Jos Plateau State Nigeria', '070-01010101', NULL, NULL, NULL, 'Ver. 1.0', 1, 0, 0, 0, 3, 2, 1, 4, 5, 6, 24, 360000000, 6000, 'Africa/Lagos', 1, 1, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 'http://localhost:8080/api', 'Rp268JB6Ne4', 'R4k4JrsNn3M', 'LH98MrAcWs9', 'kLcvsaaoJku', 'nZCumwgwlgf', 'admin', 'district', 'nEenWmSyUEp', 'w75KJ2mc4zz', 'zDhUuAYrxNC', 'cejWyOfXge6', 'gHGyrwKPzej', 'FO4sWYJ64LQ', '123', '123', 'https://corehms.com/api', 'CoreHMSAdmin', '123!@#$', NULL, '2026-02-23 08:43:08', 1, 7, 8, '2026-03-13');
+(1, 'Hospital Management System', 'HMS', 'Hospital Management System', 'HMS', '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', NULL, '#010732', 'P.M.B 204 Jos Plateau State Nigeria', '070-01010101', NULL, NULL, NULL, 'Ver. 1.0', 1, 0, 0, 0, 3, 2, 1, 4, 5, 6, 24, 360000000, 6000, 'Africa/Lagos', 1, 1, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 'http://localhost:8080/api', 'Rp268JB6Ne4', 'R4k4JrsNn3M', 'LH98MrAcWs9', 'kLcvsaaoJku', 'nZCumwgwlgf', 'admin', 'district', 'nEenWmSyUEp', 'w75KJ2mc4zz', 'zDhUuAYrxNC', 'cejWyOfXge6', 'gHGyrwKPzej', 'FO4sWYJ64LQ', '123', '123', 'https://corehms.com/api', 'CoreHMSAdmin', '123!@#$', NULL, '2026-02-23 08:43:08', 1, 7, 8, '2026-04-12');
 
 -- --------------------------------------------------------
 
@@ -589,18 +589,18 @@ INSERT INTO `application_status` (`id`, `site_name`, `site_abbreviation`, `heade
 --
 
 CREATE TABLE `audits` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `user_type` varchar(255) DEFAULT NULL,
-  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `event` varchar(255) NOT NULL,
-  `auditable_type` varchar(255) NOT NULL,
-  `auditable_id` bigint(20) UNSIGNED NOT NULL,
-  `old_values` longtext DEFAULT NULL,
-  `new_values` longtext DEFAULT NULL,
-  `url` text DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
-  `user_agent` varchar(1023) DEFAULT NULL,
-  `tags` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `user_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL,
+  `event` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `auditable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `auditable_id` bigint UNSIGNED NOT NULL,
+  `old_values` longtext COLLATE utf8mb4_unicode_ci,
+  `new_values` longtext COLLATE utf8mb4_unicode_ci,
+  `url` text COLLATE utf8mb4_unicode_ci,
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` varchar(1023) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tags` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2149,7 +2149,15 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (1531, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 60, '{\"validation_status\":\"approved\",\"auth_code\":\"hjggj\",\"validated_by\":1,\"validated_at\":\"2026-03-13 20:20:42\",\"validation_notes\":\"Group approved \\u2014 awaiting auth code\"}', '{\"validation_status\":\"pending\",\"auth_code\":null,\"validated_by\":null,\"validated_at\":null,\"validation_notes\":\"Reversed from \'approved\' by Admin System Ing on 2026-03-13 20:26\\nReason: sdaksdka\\n\\nPrevious notes: Group approved \\u2014 awaiting auth code\"}', 'http://localhost:8000/hmo/requests/60/reverse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36', NULL, '2026-03-13 19:26:25', '2026-03-13 19:26:25'),
 (1532, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 98, '[]', '{\"conversation_id\":6,\"user_id\":1,\"body\":\"\\ud83c\\udfe5 **Request #60 Reversed**\\n\\nHMO request approval has been reversed by Admin System Ing. Reason: sdaksdka\\n\\n_08:26 PM, Mar 13_\",\"type\":\"text\",\"id\":98}', 'http://localhost:8000/hmo/requests/60/reverse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36', NULL, '2026-03-13 19:26:25', '2026-03-13 19:26:25'),
 (1533, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 60, '{\"validation_status\":\"pending\",\"validated_by\":null,\"validated_at\":null,\"validation_notes\":\"Reversed from \'approved\' by Admin System Ing on 2026-03-13 20:26\\nReason: sdaksdka\\n\\nPrevious notes: Group approved \\u2014 awaiting auth code\"}', '{\"validation_status\":\"awaiting_code\",\"validated_by\":1,\"validated_at\":\"2026-03-13T20:26:49.047447Z\",\"validation_notes\":\"Group approved \\u2014 awaiting auth code\"}', 'http://localhost:8000/hmo/group-approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36', NULL, '2026-03-13 19:26:49', '2026-03-13 19:26:49'),
-(1534, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 60, '{\"validation_status\":\"awaiting_code\",\"auth_code\":null}', '{\"validation_status\":\"approved\",\"auth_code\":\"bsdhas\"}', 'http://localhost:8000/hmo/requests/60/submit-auth-code', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36', NULL, '2026-03-13 19:27:19', '2026-03-13 19:27:19');
+(1534, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 60, '{\"validation_status\":\"awaiting_code\",\"auth_code\":null}', '{\"validation_status\":\"approved\",\"auth_code\":\"bsdhas\"}', 'http://localhost:8000/hmo/requests/60/submit-auth-code', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36', NULL, '2026-03-13 19:27:19', '2026-03-13 19:27:19'),
+(1535, NULL, NULL, 'created', 'App\\Models\\Encounter', 9, '[]', '{\"doctor_id\":1,\"service_request_id\":58,\"service_id\":278,\"patient_id\":1,\"id\":9}', 'http://192.168.1.104:8000/api/mobile/doctor/encounters/start', '192.168.1.119', 'Dart/3.11 (dart:io)', NULL, '2026-04-10 15:24:06', '2026-04-10 15:24:06'),
+(1536, NULL, NULL, 'created', 'App\\Models\\LabServiceRequest', 14, '[]', '{\"service_id\":39,\"note\":null,\"encounter_id\":9,\"patient_id\":1,\"doctor_id\":1,\"id\":14}', 'http://192.168.1.104:8000/api/mobile/doctor/encounters/9/save-labs', '192.168.1.119', 'Dart/3.11 (dart:io)', NULL, '2026-04-10 15:25:31', '2026-04-10 15:25:31'),
+(1537, NULL, NULL, 'created', 'App\\Models\\ChatMessage', 99, '[]', '{\"conversation_id\":9,\"user_id\":1,\"body\":\"\\ud83e\\uddea **New Lab Request**\\n\\nPatient: **Apollos Walshak ** [ADMITTED]\\nLocation: special ward - bed specal 1\\nTests: 24hr urine Calcium\\nOrdered by: Dr. Admin System Ing\\n\\n_04:25 PM, Apr 10_\",\"type\":\"text\",\"id\":99}', 'http://192.168.1.104:8000/api/mobile/doctor/chat/unread-count', '192.168.1.119', 'Dart/3.11 (dart:io)', NULL, '2026-04-10 15:25:31', '2026-04-10 15:25:31'),
+(1538, NULL, NULL, 'created', 'App\\Models\\DoctorAppointment', 8, '[]', '{\"patient_id\":1,\"clinic_id\":1,\"staff_id\":1,\"appointment_date\":\"2026-04-18 00:00:00\",\"start_time\":\"09:00\",\"end_time\":\"09:15\",\"duration_minutes\":15,\"appointment_type\":\"follow_up\",\"status\":6,\"priority\":\"routine\",\"booked_by\":1,\"source\":\"follow_up\",\"notes\":null,\"parent_appointment_id\":null,\"is_prepaid_followup\":false,\"service_request_id\":null,\"id\":8}', 'http://192.168.1.104:8000/api/mobile/doctor/encounters/9/schedule-followup', '192.168.1.119', 'Dart/3.11 (dart:io)', NULL, '2026-04-10 15:26:49', '2026-04-10 15:26:49'),
+(1539, NULL, NULL, 'updated', 'App\\Models\\Encounter', 9, '{\"completed\":0,\"completed_at\":null}', '{\"completed\":true,\"completed_at\":\"2026-04-10 16:26:49\"}', 'http://192.168.1.104:8000/api/mobile/doctor/encounters/9/finalize', '192.168.1.119', 'Dart/3.11 (dart:io)', NULL, '2026-04-10 15:26:49', '2026-04-10 15:26:49'),
+(1540, NULL, NULL, 'updated', 'App\\Models\\DoctorQueue', 5, '{\"status\":3}', '{\"status\":5}', 'http://192.168.1.104:8000/api/mobile/doctor/encounters/9/finalize', '192.168.1.119', 'Dart/3.11 (dart:io)', NULL, '2026-04-10 15:26:49', '2026-04-10 15:26:49'),
+(1541, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Price', 646, '{\"initial_sale_date\":null,\"current_sale_date\":null}', '{\"initial_sale_date\":\"2026-04-12T19:23:06.062638Z\",\"current_sale_date\":\"2026-04-12T19:23:06.062638Z\"}', 'http://127.0.0.1:8000/prices/646', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', NULL, '2026-04-12 18:23:06', '2026-04-12 18:23:06'),
+(1542, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Product', 648, '{\"product_type\":\"drug\"}', '{\"product_type\":\"consumable\"}', 'http://127.0.0.1:8000/products/648', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', NULL, '2026-04-12 18:23:21', '2026-04-12 18:23:21');
 
 -- --------------------------------------------------------
 
@@ -2158,30 +2166,30 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 --
 
 CREATE TABLE `banks` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `account_number` varchar(255) DEFAULT NULL,
-  `account_name` varchar(255) DEFAULT NULL,
-  `bank_code` varchar(255) DEFAULT NULL,
-  `bank_type` enum('current','savings','fixed_deposit','money_market') NOT NULL DEFAULT 'current',
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `account_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `account_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_type` enum('current','savings','fixed_deposit','money_market') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'current',
   `last_statement_date` date DEFAULT NULL,
   `last_statement_balance` decimal(15,2) DEFAULT NULL,
-  `statement_closing_day` tinyint(4) NOT NULL DEFAULT 25,
-  `overdraft_limit` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `minimum_balance` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `swift_code` varchar(20) DEFAULT NULL,
-  `branch_name` varchar(255) DEFAULT NULL,
-  `branch_code` varchar(20) DEFAULT NULL,
-  `contact_person` varchar(255) DEFAULT NULL,
-  `contact_phone` varchar(50) DEFAULT NULL,
-  `contact_email` varchar(255) DEFAULT NULL,
-  `signatories` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`signatories`)),
-  `description` text DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `statement_closing_day` tinyint NOT NULL DEFAULT '25',
+  `overdraft_limit` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `minimum_balance` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `swift_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `branch_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `branch_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contact_person` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contact_phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contact_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `signatories` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `account_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `banks`
@@ -2198,11 +2206,11 @@ INSERT INTO `banks` (`id`, `name`, `account_number`, `account_name`, `bank_code`
 --
 
 CREATE TABLE `bank_reconciliations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `bank_id` bigint(20) UNSIGNED NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
-  `fiscal_period_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `reconciliation_number` varchar(50) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `bank_id` bigint UNSIGNED NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
+  `fiscal_period_id` bigint UNSIGNED DEFAULT NULL,
+  `reconciliation_number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `statement_date` date NOT NULL,
   `statement_period_from` date NOT NULL,
   `statement_period_to` date NOT NULL,
@@ -2210,27 +2218,27 @@ CREATE TABLE `bank_reconciliations` (
   `statement_closing_balance` decimal(15,2) NOT NULL,
   `gl_opening_balance` decimal(15,2) NOT NULL,
   `gl_closing_balance` decimal(15,2) NOT NULL,
-  `outstanding_deposits` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Deposits in GL not yet on statement',
-  `outstanding_checks` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Checks/withdrawals in GL not yet on statement',
-  `deposits_in_transit` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Deposits on statement not yet in GL',
-  `unrecorded_charges` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Bank charges not yet recorded in GL',
-  `unrecorded_credits` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Interest/credits not yet recorded in GL',
-  `bank_errors` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `book_errors` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `variance` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `status` enum('draft','in_progress','pending_review','approved','finalized') NOT NULL DEFAULT 'draft',
-  `adjustment_entry_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`adjustment_entry_ids`)),
-  `notes` text DEFAULT NULL,
-  `prepared_by` bigint(20) UNSIGNED NOT NULL,
-  `reviewed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `outstanding_deposits` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Deposits in GL not yet on statement',
+  `outstanding_checks` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Checks/withdrawals in GL not yet on statement',
+  `deposits_in_transit` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Deposits on statement not yet in GL',
+  `unrecorded_charges` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Bank charges not yet recorded in GL',
+  `unrecorded_credits` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Interest/credits not yet recorded in GL',
+  `bank_errors` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `book_errors` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `variance` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `status` enum('draft','in_progress','pending_review','approved','finalized') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `adjustment_entry_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `prepared_by` bigint UNSIGNED NOT NULL,
+  `reviewed_by` bigint UNSIGNED DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
   `finalized_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `bank_reconciliations`
@@ -2247,25 +2255,25 @@ INSERT INTO `bank_reconciliations` (`id`, `bank_id`, `account_id`, `fiscal_perio
 --
 
 CREATE TABLE `bank_reconciliation_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `reconciliation_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_line_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `source` enum('gl','statement','adjustment') NOT NULL COMMENT 'GL = from journal entries, Statement = from bank statement',
-  `item_type` enum('deposit','check','transfer','bank_charge','interest','other_credit','other_debit','adjustment') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `reconciliation_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_line_id` bigint UNSIGNED DEFAULT NULL,
+  `source` enum('gl','statement','adjustment') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'GL = from journal entries, Statement = from bank statement',
+  `item_type` enum('deposit','check','transfer','bank_charge','interest','other_credit','other_debit','adjustment') COLLATE utf8mb4_unicode_ci NOT NULL,
   `transaction_date` date NOT NULL,
-  `reference` varchar(100) DEFAULT NULL COMMENT 'Check number, transfer ref, etc.',
-  `description` text NOT NULL,
+  `reference` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Check number, transfer ref, etc.',
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `amount_type` enum('debit','credit') NOT NULL,
-  `is_matched` tinyint(1) NOT NULL DEFAULT 0,
-  `matched_with_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `amount_type` enum('debit','credit') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_matched` tinyint(1) NOT NULL DEFAULT '0',
+  `matched_with_id` bigint UNSIGNED DEFAULT NULL,
   `matched_date` date DEFAULT NULL,
-  `is_reconciled` tinyint(1) NOT NULL DEFAULT 0,
+  `is_reconciled` tinyint(1) NOT NULL DEFAULT '0',
   `cleared_date` date DEFAULT NULL COMMENT 'Date item cleared the bank',
-  `is_outstanding` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'True if item is not yet cleared',
+  `is_outstanding` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'True if item is not yet cleared',
   `expected_clear_date` date DEFAULT NULL,
-  `adjustment_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `adjustment_reason` text DEFAULT NULL,
+  `adjustment_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `adjustment_reason` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2284,23 +2292,23 @@ INSERT INTO `bank_reconciliation_items` (`id`, `reconciliation_id`, `journal_ent
 --
 
 CREATE TABLE `bank_statement_imports` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `bank_id` bigint(20) UNSIGNED NOT NULL,
-  `reconciliation_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `file_name` varchar(255) NOT NULL,
-  `file_path` varchar(255) NOT NULL,
-  `file_format` varchar(20) NOT NULL COMMENT 'csv, ofx, pdf, etc.',
+  `id` bigint UNSIGNED NOT NULL,
+  `bank_id` bigint UNSIGNED NOT NULL,
+  `reconciliation_id` bigint UNSIGNED DEFAULT NULL,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_format` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'csv, ofx, pdf, etc.',
   `statement_date` date NOT NULL,
   `period_from` date NOT NULL,
   `period_to` date NOT NULL,
   `opening_balance` decimal(15,2) NOT NULL,
   `closing_balance` decimal(15,2) NOT NULL,
-  `total_transactions` int(11) NOT NULL DEFAULT 0,
-  `imported_transactions` int(11) NOT NULL DEFAULT 0,
-  `failed_transactions` int(11) NOT NULL DEFAULT 0,
-  `status` enum('uploaded','parsing','parsed','imported','failed') NOT NULL DEFAULT 'uploaded',
-  `error_log` text DEFAULT NULL,
-  `imported_by` bigint(20) UNSIGNED NOT NULL,
+  `total_transactions` int NOT NULL DEFAULT '0',
+  `imported_transactions` int NOT NULL DEFAULT '0',
+  `failed_transactions` int NOT NULL DEFAULT '0',
+  `status` enum('uploaded','parsing','parsed','imported','failed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'uploaded',
+  `error_log` text COLLATE utf8mb4_unicode_ci,
+  `imported_by` bigint UNSIGNED NOT NULL,
   `parsed_at` timestamp NULL DEFAULT NULL,
   `imported_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -2321,16 +2329,16 @@ INSERT INTO `bank_statement_imports` (`id`, `bank_id`, `reconciliation_id`, `fil
 --
 
 CREATE TABLE `beds` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `ward_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `ward` varchar(255) DEFAULT NULL,
-  `unit` varchar(255) DEFAULT NULL,
-  `price` double(8,2) NOT NULL DEFAULT 0.00,
-  `status` int(11) NOT NULL DEFAULT 1,
-  `bed_status` enum('available','occupied','reserved','maintenance','out_of_service') NOT NULL DEFAULT 'available' COMMENT 'Detailed bed availability status',
-  `occupant_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `ward_id` bigint UNSIGNED DEFAULT NULL,
+  `service_id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `ward` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `unit` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `price` double(8,2) NOT NULL DEFAULT '0.00',
+  `status` int NOT NULL DEFAULT '1',
+  `bed_status` enum('available','occupied','reserved','maintenance','out_of_service') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'available' COMMENT 'Detailed bed availability status',
+  `occupant_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -2350,27 +2358,27 @@ INSERT INTO `beds` (`id`, `ward_id`, `service_id`, `name`, `ward`, `unit`, `pric
 --
 
 CREATE TABLE `budgets` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `budget_name` varchar(255) NOT NULL,
-  `fiscal_year_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `year` int(11) NOT NULL,
-  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `cost_center_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `budget_type` enum('operating','capital','revenue') NOT NULL DEFAULT 'operating',
-  `total_budgeted` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `total_actual` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `total_variance` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `status` enum('draft','pending_approval','approved','locked') NOT NULL DEFAULT 'draft',
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `budget_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fiscal_year_id` bigint UNSIGNED DEFAULT NULL,
+  `year` int NOT NULL,
+  `department_id` bigint UNSIGNED DEFAULT NULL,
+  `cost_center_id` bigint UNSIGNED DEFAULT NULL,
+  `budget_type` enum('operating','capital','revenue') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'operating',
+  `total_budgeted` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_actual` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_variance` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `status` enum('draft','pending_approval','approved','locked') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `created_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `unapproved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `unapproved_by` bigint UNSIGNED DEFAULT NULL,
   `unapproved_at` timestamp NULL DEFAULT NULL,
-  `unapproval_reason` text DEFAULT NULL,
-  `locked_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `unapproval_reason` text COLLATE utf8mb4_unicode_ci,
+  `locked_by` bigint UNSIGNED DEFAULT NULL,
   `locked_at` timestamp NULL DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -2392,19 +2400,19 @@ INSERT INTO `budgets` (`id`, `budget_name`, `fiscal_year_id`, `year`, `departmen
 --
 
 CREATE TABLE `budget_lines` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `budget_id` bigint(20) UNSIGNED NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
-  `period_type` enum('annual','monthly','quarterly') NOT NULL DEFAULT 'monthly',
-  `period_number` int(11) DEFAULT NULL,
-  `budgeted_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `actual_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `variance` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `variance_percentage` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `id` bigint UNSIGNED NOT NULL,
+  `budget_id` bigint UNSIGNED NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
+  `period_type` enum('annual','monthly','quarterly') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'monthly',
+  `period_number` int DEFAULT NULL,
+  `budgeted_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `actual_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `variance` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `variance_percentage` decimal(8,2) NOT NULL DEFAULT '0.00',
   `forecast_amount` decimal(15,2) DEFAULT NULL,
   `prior_year_actual` decimal(15,2) DEFAULT NULL,
-  `assumptions` text DEFAULT NULL,
-  `is_locked` tinyint(1) NOT NULL DEFAULT 0,
+  `assumptions` text COLLATE utf8mb4_unicode_ci,
+  `is_locked` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2425,17 +2433,17 @@ INSERT INTO `budget_lines` (`id`, `budget_id`, `account_id`, `period_type`, `per
 --
 
 CREATE TABLE `budget_revisions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `budget_id` bigint(20) UNSIGNED NOT NULL,
-  `budget_line_id` bigint(20) UNSIGNED NOT NULL,
-  `revision_number` int(11) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `budget_id` bigint UNSIGNED NOT NULL,
+  `budget_line_id` bigint UNSIGNED NOT NULL,
+  `revision_number` int NOT NULL,
   `previous_amount` decimal(15,2) NOT NULL,
   `new_amount` decimal(15,2) NOT NULL,
   `change_amount` decimal(15,2) NOT NULL,
-  `reason` text NOT NULL,
-  `requested_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `requested_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2447,11 +2455,11 @@ CREATE TABLE `budget_revisions` (
 --
 
 CREATE TABLE `capex_approval_history` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `capex_request_id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `action` enum('submitted','approved','rejected','revision_requested','started','completed','cancelled') NOT NULL,
-  `notes` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `capex_request_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `action` enum('submitted','approved','rejected','revision_requested','started','completed','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2478,27 +2486,27 @@ INSERT INTO `capex_approval_history` (`id`, `capex_request_id`, `user_id`, `acti
 --
 
 CREATE TABLE `capex_projects` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `reference_number` varchar(255) DEFAULT NULL,
-  `project_code` varchar(255) NOT NULL,
-  `fiscal_year` int(11) DEFAULT NULL,
-  `project_name` varchar(255) NOT NULL,
-  `title` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `project_type` enum('equipment','building','renovation','technology','vehicle','furniture','other') NOT NULL,
-  `category` varchar(255) DEFAULT NULL,
-  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `cost_center_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `vendor_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `fixed_asset_category_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `reference_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `project_code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fiscal_year` int DEFAULT NULL,
+  `project_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `project_type` enum('equipment','building','renovation','technology','vehicle','furniture','other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `department_id` bigint UNSIGNED DEFAULT NULL,
+  `cost_center_id` bigint UNSIGNED DEFAULT NULL,
+  `vendor_id` bigint UNSIGNED DEFAULT NULL,
+  `fixed_asset_category_id` bigint UNSIGNED DEFAULT NULL,
   `estimated_cost` decimal(15,2) NOT NULL,
   `requested_amount` decimal(15,2) DEFAULT NULL,
   `approved_budget` decimal(15,2) DEFAULT NULL,
   `approved_amount` decimal(15,2) DEFAULT NULL,
-  `actual_cost` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `actual_cost` decimal(15,2) NOT NULL DEFAULT '0.00',
   `actual_amount` decimal(15,2) DEFAULT NULL,
-  `committed_cost` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `remaining_budget` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `committed_cost` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `remaining_budget` decimal(15,2) NOT NULL DEFAULT '0.00',
   `proposed_date` date NOT NULL,
   `approved_date` date DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
@@ -2508,19 +2516,19 @@ CREATE TABLE `capex_projects` (
   `actual_start_date` date DEFAULT NULL,
   `actual_completion_date` date DEFAULT NULL,
   `completion_date` date DEFAULT NULL,
-  `requested_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `justification` text DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL,
-  `revision_notes` text DEFAULT NULL,
-  `status` enum('draft','pending','pending_approval','approved','in_progress','completed','cancelled','rejected','on_hold','revision') DEFAULT 'draft',
-  `priority` enum('low','medium','high','critical') NOT NULL DEFAULT 'medium',
-  `completion_percentage` int(11) NOT NULL DEFAULT 0,
-  `expected_benefits` text DEFAULT NULL,
+  `requested_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
+  `justification` text COLLATE utf8mb4_unicode_ci,
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
+  `revision_notes` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('draft','pending','pending_approval','approved','in_progress','completed','cancelled','rejected','on_hold','revision') COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
+  `priority` enum('low','medium','high','critical') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'medium',
+  `completion_percentage` int NOT NULL DEFAULT '0',
+  `expected_benefits` text COLLATE utf8mb4_unicode_ci,
   `expected_annual_savings` decimal(15,2) DEFAULT NULL,
-  `expected_payback_months` int(11) DEFAULT NULL,
+  `expected_payback_months` int DEFAULT NULL,
   `expected_roi_percentage` decimal(8,2) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -2542,20 +2550,20 @@ INSERT INTO `capex_projects` (`id`, `reference_number`, `project_code`, `fiscal_
 --
 
 CREATE TABLE `capex_project_expenses` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `project_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `purchase_order_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `project_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `purchase_order_id` bigint UNSIGNED DEFAULT NULL,
+  `expense_id` bigint UNSIGNED DEFAULT NULL,
   `expense_date` date NOT NULL,
-  `description` varchar(255) NOT NULL,
-  `vendor` varchar(255) DEFAULT NULL,
-  `invoice_number` varchar(255) DEFAULT NULL,
-  `payment_method` enum('cash','bank_transfer','cheque','card') NOT NULL DEFAULT 'bank_transfer',
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `cheque_number` varchar(255) DEFAULT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `vendor` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `invoice_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_method` enum('cash','bank_transfer','cheque','card') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'bank_transfer',
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `cheque_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `status` enum('pending','approved','paid','rejected') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','approved','paid','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2578,13 +2586,13 @@ INSERT INTO `capex_project_expenses` (`id`, `project_id`, `journal_entry_id`, `p
 --
 
 CREATE TABLE `capex_request_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `capex_request_id` bigint(20) UNSIGNED NOT NULL,
-  `description` varchar(255) NOT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `capex_request_id` bigint UNSIGNED NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `quantity` int NOT NULL DEFAULT '1',
   `unit_cost` decimal(15,2) NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `notes` text DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2608,17 +2616,17 @@ INSERT INTO `capex_request_items` (`id`, `capex_request_id`, `description`, `qua
 --
 
 CREATE TABLE `cash_flow_forecasts` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fiscal_year_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `forecast_name` varchar(255) NOT NULL,
-  `forecast_type` enum('weekly','monthly','quarterly','annual') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `fiscal_year_id` bigint UNSIGNED DEFAULT NULL,
+  `forecast_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `forecast_type` enum('weekly','monthly','quarterly','annual') COLLATE utf8mb4_unicode_ci NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `scenario` enum('base','optimistic','pessimistic') NOT NULL DEFAULT 'base',
-  `status` enum('draft','active','archived') NOT NULL DEFAULT 'draft',
-  `notes` text DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `scenario` enum('base','optimistic','pessimistic') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'base',
+  `status` enum('draft','active','archived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -2640,16 +2648,16 @@ INSERT INTO `cash_flow_forecasts` (`id`, `fiscal_year_id`, `forecast_name`, `for
 --
 
 CREATE TABLE `cash_flow_forecast_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `forecast_period_id` bigint(20) UNSIGNED NOT NULL,
-  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `cash_flow_category` enum('operating_inflow','operating_outflow','investing_inflow','investing_outflow','financing_inflow','financing_outflow') NOT NULL,
-  `item_description` varchar(255) NOT NULL,
-  `forecasted_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `id` bigint UNSIGNED NOT NULL,
+  `forecast_period_id` bigint UNSIGNED NOT NULL,
+  `account_id` bigint UNSIGNED DEFAULT NULL,
+  `cash_flow_category` enum('operating_inflow','operating_outflow','investing_inflow','investing_outflow','financing_inflow','financing_outflow') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `item_description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `forecasted_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `actual_amount` decimal(15,2) DEFAULT NULL,
-  `source_type` enum('manual','recurring','pattern','scheduled','historical','commitment') DEFAULT 'manual',
-  `source_reference` varchar(255) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `source_type` enum('manual','recurring','pattern','scheduled','historical','commitment') COLLATE utf8mb4_unicode_ci DEFAULT 'manual',
+  `source_reference` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2680,33 +2688,33 @@ INSERT INTO `cash_flow_forecast_items` (`id`, `forecast_period_id`, `account_id`
 --
 
 CREATE TABLE `cash_flow_forecast_periods` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `forecast_id` bigint(20) UNSIGNED NOT NULL,
-  `period_number` int(11) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `forecast_id` bigint UNSIGNED NOT NULL,
+  `period_number` int NOT NULL,
   `period_start_date` date NOT NULL,
   `period_end_date` date NOT NULL,
-  `opening_balance` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `closing_balance` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `patient_revenue_cash` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `patient_revenue_hmo` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `other_operating_receipts` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `operating_expenses` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `salary_wages` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `supplier_payments` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `net_operating_cash_flow` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `capex_payments` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `asset_disposals` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `net_investing_cash_flow` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `loan_receipts` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `loan_repayments` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `capital_contributions` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `dividends_drawings` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `net_financing_cash_flow` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `net_cash_flow` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `opening_balance` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `closing_balance` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `patient_revenue_cash` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `patient_revenue_hmo` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `other_operating_receipts` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `operating_expenses` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `salary_wages` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `supplier_payments` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `net_operating_cash_flow` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `capex_payments` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `asset_disposals` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `net_investing_cash_flow` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `loan_receipts` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `loan_repayments` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `capital_contributions` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `dividends_drawings` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `net_financing_cash_flow` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `net_cash_flow` decimal(15,2) NOT NULL DEFAULT '0.00',
   `actual_closing_balance` decimal(15,2) DEFAULT NULL,
   `variance` decimal(15,2) DEFAULT NULL,
-  `variance_explanation` text DEFAULT NULL,
-  `is_locked` tinyint(1) NOT NULL DEFAULT 0,
+  `variance_explanation` text COLLATE utf8mb4_unicode_ci,
+  `is_locked` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2753,16 +2761,16 @@ INSERT INTO `cash_flow_forecast_periods` (`id`, `forecast_id`, `period_number`, 
 --
 
 CREATE TABLE `cash_flow_recurring_patterns` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `pattern_name` varchar(255) NOT NULL,
-  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `cash_flow_category` enum('operating_inflow','operating_outflow','investing_inflow','investing_outflow','financing_inflow','financing_outflow') NOT NULL,
-  `frequency` enum('weekly','bi_weekly','monthly','quarterly','annually') NOT NULL,
-  `day_of_period` int(11) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `pattern_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `account_id` bigint UNSIGNED DEFAULT NULL,
+  `cash_flow_category` enum('operating_inflow','operating_outflow','investing_inflow','investing_outflow','financing_inflow','financing_outflow') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `frequency` enum('weekly','bi_weekly','monthly','quarterly','annually') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `day_of_period` int DEFAULT NULL,
   `expected_amount` decimal(15,2) NOT NULL,
-  `variance_percentage` decimal(5,2) NOT NULL DEFAULT 10.00,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `notes` text DEFAULT NULL,
+  `variance_percentage` decimal(5,2) NOT NULL DEFAULT '10.00',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -2783,12 +2791,12 @@ INSERT INTO `cash_flow_recurring_patterns` (`id`, `pattern_name`, `account_id`, 
 --
 
 CREATE TABLE `chat_attachments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `message_id` bigint(20) UNSIGNED NOT NULL,
-  `file_path` varchar(255) NOT NULL,
-  `file_name` varchar(255) NOT NULL,
-  `file_type` varchar(255) NOT NULL,
-  `file_size` int(11) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `message_id` bigint UNSIGNED NOT NULL,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` int NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2800,9 +2808,9 @@ CREATE TABLE `chat_attachments` (
 --
 
 CREATE TABLE `chat_conversations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `title` varchar(255) DEFAULT NULL,
-  `is_group` tinyint(1) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_group` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2831,10 +2839,10 @@ INSERT INTO `chat_conversations` (`id`, `title`, `is_group`, `created_at`, `upda
 --
 
 CREATE TABLE `chat_conversation_archives` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `conversation_id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `archived_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `archived_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2846,15 +2854,15 @@ CREATE TABLE `chat_conversation_archives` (
 --
 
 CREATE TABLE `chat_messages` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `conversation_id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `body` text DEFAULT NULL,
-  `type` varchar(255) NOT NULL DEFAULT 'text',
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `body` text COLLATE utf8mb4_unicode_ci,
+  `type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'text',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL
+  `deleted_by` bigint UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -2959,7 +2967,8 @@ INSERT INTO `chat_messages` (`id`, `conversation_id`, `user_id`, `body`, `type`,
 (95, 6, 1, '🏥 **Request #60 Awaiting Auth Code**\n\nSecondary request for Labour Ward Scanning approved, awaiting auth code — Admin System Ing\n\n_08:18 PM, Mar 13_', 'text', '2026-03-13 19:18:32', '2026-03-13 19:18:32', NULL, NULL),
 (96, 6, 1, '🏥 **Request #60 Reversed**\n\nHMO request approval has been reversed by Admin System Ing. Reason: hjj\n\n_08:20 PM, Mar 13_', 'text', '2026-03-13 19:20:10', '2026-03-13 19:20:10', NULL, NULL),
 (97, 6, 1, '🏥 **Group Approval: 2 Requests**\n\nAdmin System Ing group approved 2 HMO requests\n\n_08:20 PM, Mar 13_', 'text', '2026-03-13 19:20:42', '2026-03-13 19:20:42', NULL, NULL),
-(98, 6, 1, '🏥 **Request #60 Reversed**\n\nHMO request approval has been reversed by Admin System Ing. Reason: sdaksdka\n\n_08:26 PM, Mar 13_', 'text', '2026-03-13 19:26:25', '2026-03-13 19:26:25', NULL, NULL);
+(98, 6, 1, '🏥 **Request #60 Reversed**\n\nHMO request approval has been reversed by Admin System Ing. Reason: sdaksdka\n\n_08:26 PM, Mar 13_', 'text', '2026-03-13 19:26:25', '2026-03-13 19:26:25', NULL, NULL),
+(99, 9, 1, '🧪 **New Lab Request**\n\nPatient: **Apollos Walshak ** [ADMITTED]\nLocation: special ward - bed specal 1\nTests: 24hr urine Calcium\nOrdered by: Dr. Admin System Ing\n\n_04:25 PM, Apr 10_', 'text', '2026-04-10 15:25:31', '2026-04-10 15:25:31', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2968,9 +2977,9 @@ INSERT INTO `chat_messages` (`id`, `conversation_id`, `user_id`, `body`, `type`,
 --
 
 CREATE TABLE `chat_participants` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `conversation_id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
   `last_read_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -3219,13 +3228,13 @@ INSERT INTO `chat_participants` (`id`, `conversation_id`, `user_id`, `last_read_
 --
 
 CREATE TABLE `checklist_templates` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL COMMENT 'Template name',
-  `type` enum('admission','discharge') NOT NULL COMMENT 'Checklist type',
-  `description` text DEFAULT NULL,
-  `is_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Use by default for this type',
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Template name',
+  `type` enum('admission','discharge') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Checklist type',
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `is_default` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Use by default for this type',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3245,13 +3254,13 @@ INSERT INTO `checklist_templates` (`id`, `name`, `type`, `description`, `is_defa
 --
 
 CREATE TABLE `checklist_template_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `template_id` bigint(20) UNSIGNED NOT NULL,
-  `item_text` varchar(255) NOT NULL COMMENT 'Checklist item description',
-  `guidance` text DEFAULT NULL COMMENT 'Help text for completing item',
-  `is_required` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Must be completed',
-  `requires_comment` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Requires note when checked',
-  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `template_id` bigint UNSIGNED NOT NULL,
+  `item_text` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Checklist item description',
+  `guidance` text COLLATE utf8mb4_unicode_ci COMMENT 'Help text for completing item',
+  `is_required` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Must be completed',
+  `requires_comment` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Requires note when checked',
+  `sort_order` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3273,9 +3282,9 @@ INSERT INTO `checklist_template_items` (`id`, `template_id`, `item_text`, `guida
 --
 
 CREATE TABLE `child_growth_records` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `baby_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `baby_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
   `record_date` date NOT NULL,
   `age_months` decimal(5,1) DEFAULT NULL,
   `weight_kg` decimal(5,2) DEFAULT NULL,
@@ -3286,16 +3295,16 @@ CREATE TABLE `child_growth_records` (
   `length_for_age_z` decimal(5,2) DEFAULT NULL,
   `weight_for_length_z` decimal(5,2) DEFAULT NULL,
   `bmi_for_age_z` decimal(5,2) DEFAULT NULL,
-  `nutritional_status` enum('normal','mild_underweight','moderate_underweight','severe_underweight','overweight','obese') NOT NULL DEFAULT 'normal',
-  `milestones` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`milestones`)),
-  `feeding_method` enum('exclusive_breastfeeding','complementary','formula','mixed','family_food') DEFAULT NULL,
-  `dietary_notes` text DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `recorded_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `nutritional_status` enum('normal','mild_underweight','moderate_underweight','severe_underweight','overweight','obese') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'normal',
+  `milestones` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `feeding_method` enum('exclusive_breastfeeding','complementary','formula','mixed','family_food') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `dietary_notes` text COLLATE utf8mb4_unicode_ci,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `recorded_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `child_growth_records`
@@ -3315,13 +3324,13 @@ INSERT INTO `child_growth_records` (`id`, `baby_id`, `patient_id`, `record_date`
 --
 
 CREATE TABLE `clinics` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `status` int(11) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `template` longtext DEFAULT NULL,
-  `old_clinic_id` int(11) DEFAULT NULL
+  `template` longtext COLLATE utf8mb4_general_ci,
+  `old_clinic_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -3372,15 +3381,15 @@ INSERT INTO `clinics` (`id`, `name`, `status`, `created_at`, `updated_at`, `temp
 --
 
 CREATE TABLE `clinic_note_templates` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `clinic_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'NULL = global template available to all clinics',
-  `name` varchar(255) NOT NULL,
-  `description` varchar(500) DEFAULT NULL,
-  `content` longtext NOT NULL COMMENT 'HTML content for CKEditor',
-  `category` varchar(100) DEFAULT 'General' COMMENT 'Template category for grouping',
-  `sort_order` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'User who created the template',
+  `id` bigint UNSIGNED NOT NULL,
+  `clinic_id` bigint UNSIGNED DEFAULT NULL COMMENT 'NULL = global template available to all clinics',
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `content` longtext COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'HTML content for CKEditor',
+  `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'General' COMMENT 'Template category for grouping',
+  `sort_order` int UNSIGNED NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` bigint UNSIGNED DEFAULT NULL COMMENT 'User who created the template',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3441,14 +3450,14 @@ INSERT INTO `clinic_note_templates` (`id`, `clinic_id`, `name`, `description`, `
 --
 
 CREATE TABLE `clinic_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `clinic_id` bigint(20) UNSIGNED NOT NULL,
-  `day_of_week` tinyint(3) UNSIGNED NOT NULL COMMENT '0=Sun, 1=Mon … 6=Sat',
+  `id` bigint UNSIGNED NOT NULL,
+  `clinic_id` bigint UNSIGNED NOT NULL,
+  `day_of_week` tinyint UNSIGNED NOT NULL COMMENT '0=Sun, 1=Mon … 6=Sat',
   `open_time` time NOT NULL,
   `close_time` time NOT NULL,
-  `slot_duration_minutes` smallint(5) UNSIGNED NOT NULL DEFAULT 15,
-  `max_concurrent_slots` smallint(5) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'How many appointments per time slot',
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `slot_duration_minutes` smallint UNSIGNED NOT NULL DEFAULT '15',
+  `max_concurrent_slots` smallint UNSIGNED NOT NULL DEFAULT '1' COMMENT 'How many appointments per time slot',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3652,12 +3661,12 @@ INSERT INTO `clinic_schedules` (`id`, `clinic_id`, `day_of_week`, `open_time`, `
 --
 
 CREATE TABLE `cost_allocation_details` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `allocation_run_id` bigint(20) UNSIGNED NOT NULL,
-  `allocation_id` bigint(20) UNSIGNED NOT NULL,
-  `source_cost_center_id` bigint(20) UNSIGNED NOT NULL,
-  `target_cost_center_id` bigint(20) UNSIGNED NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `allocation_run_id` bigint UNSIGNED NOT NULL,
+  `allocation_id` bigint UNSIGNED NOT NULL,
+  `source_cost_center_id` bigint UNSIGNED NOT NULL,
+  `target_cost_center_id` bigint UNSIGNED NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
   `source_amount` decimal(15,2) NOT NULL,
   `allocation_percentage` decimal(8,4) NOT NULL,
   `allocated_amount` decimal(15,2) NOT NULL,
@@ -3672,17 +3681,17 @@ CREATE TABLE `cost_allocation_details` (
 --
 
 CREATE TABLE `cost_allocation_runs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
   `allocation_date` date NOT NULL,
-  `year` int(11) NOT NULL,
-  `month` int(11) NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `year` int NOT NULL,
+  `month` int NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
   `total_allocated` decimal(15,2) NOT NULL,
-  `allocations_count` int(11) NOT NULL,
-  `status` enum('pending','completed','reversed') NOT NULL DEFAULT 'pending',
-  `processed_by` bigint(20) UNSIGNED NOT NULL,
+  `allocations_count` int NOT NULL,
+  `status` enum('pending','completed','reversed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `processed_by` bigint UNSIGNED NOT NULL,
   `processed_at` timestamp NULL DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3694,16 +3703,16 @@ CREATE TABLE `cost_allocation_runs` (
 --
 
 CREATE TABLE `cost_centers` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `manager_user_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `parent_cost_center_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `center_type` enum('revenue','cost','service','project') NOT NULL DEFAULT 'cost',
-  `hierarchy_level` int(11) NOT NULL DEFAULT 1,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `description` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `department_id` bigint UNSIGNED DEFAULT NULL,
+  `manager_user_id` bigint UNSIGNED DEFAULT NULL,
+  `parent_cost_center_id` bigint UNSIGNED DEFAULT NULL,
+  `center_type` enum('revenue','cost','service','project') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'cost',
+  `hierarchy_level` int NOT NULL DEFAULT '1',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `description` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -3723,17 +3732,17 @@ INSERT INTO `cost_centers` (`id`, `code`, `name`, `department_id`, `manager_user
 --
 
 CREATE TABLE `cost_center_allocations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `allocation_name` varchar(255) NOT NULL,
-  `source_cost_center_id` bigint(20) UNSIGNED NOT NULL,
-  `target_cost_center_id` bigint(20) UNSIGNED NOT NULL,
-  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `allocation_method` enum('percentage','headcount','square_footage','revenue','direct_hours','custom') NOT NULL DEFAULT 'percentage',
+  `id` bigint UNSIGNED NOT NULL,
+  `allocation_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `source_cost_center_id` bigint UNSIGNED NOT NULL,
+  `target_cost_center_id` bigint UNSIGNED NOT NULL,
+  `account_id` bigint UNSIGNED DEFAULT NULL,
+  `allocation_method` enum('percentage','headcount','square_footage','revenue','direct_hours','custom') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'percentage',
   `allocation_percentage` decimal(8,4) DEFAULT NULL,
-  `allocation_driver` varchar(255) DEFAULT NULL,
-  `frequency` enum('monthly','quarterly','annually') NOT NULL DEFAULT 'monthly',
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `notes` text DEFAULT NULL,
+  `allocation_driver` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `frequency` enum('monthly','quarterly','annually') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'monthly',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -3746,18 +3755,18 @@ CREATE TABLE `cost_center_allocations` (
 --
 
 CREATE TABLE `cost_center_budgets` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `cost_center_id` bigint(20) UNSIGNED NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
-  `fiscal_year_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `year` int(11) NOT NULL,
-  `month` int(11) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `cost_center_id` bigint UNSIGNED NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
+  `fiscal_year_id` bigint UNSIGNED DEFAULT NULL,
+  `year` int NOT NULL,
+  `month` int DEFAULT NULL,
   `budgeted_amount` decimal(15,2) NOT NULL,
-  `actual_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `variance` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `variance_percentage` decimal(8,2) NOT NULL DEFAULT 0.00,
-  `is_locked` tinyint(1) NOT NULL DEFAULT 0,
-  `notes` text DEFAULT NULL,
+  `actual_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `variance` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `variance_percentage` decimal(8,2) NOT NULL DEFAULT '0.00',
+  `is_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3776,26 +3785,26 @@ INSERT INTO `cost_center_budgets` (`id`, `cost_center_id`, `account_id`, `fiscal
 --
 
 CREATE TABLE `credit_notes` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `credit_note_number` varchar(20) NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `original_payment_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `credit_note_number` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `original_payment_id` bigint UNSIGNED NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `reason` text NOT NULL,
-  `refund_method` enum('cash','bank','account_credit') NOT NULL,
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('draft','pending_approval','approved','processed','void') NOT NULL DEFAULT 'draft',
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `submitted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `refund_method` enum('cash','bank','account_credit') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('draft','pending_approval','approved','processed','void') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `submitted_by` bigint UNSIGNED DEFAULT NULL,
   `submitted_at` timestamp NULL DEFAULT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `processed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `processed_by` bigint UNSIGNED DEFAULT NULL,
   `processed_at` timestamp NULL DEFAULT NULL,
-  `voided_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `voided_by` bigint UNSIGNED DEFAULT NULL,
   `voided_at` timestamp NULL DEFAULT NULL,
-  `void_reason` text DEFAULT NULL,
+  `void_reason` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -3808,11 +3817,11 @@ CREATE TABLE `credit_notes` (
 --
 
 CREATE TABLE `credit_note_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `credit_note_id` bigint(20) UNSIGNED NOT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `credit_note_id` bigint UNSIGNED NOT NULL,
+  `product_or_service_request_id` bigint UNSIGNED NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3824,16 +3833,16 @@ CREATE TABLE `credit_note_items` (
 --
 
 CREATE TABLE `dashboard_configs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `dashboard_type` varchar(255) NOT NULL,
-  `widget_layout` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`widget_layout`)),
-  `kpi_selection` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`kpi_selection`)),
-  `preferences` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`preferences`)),
-  `is_default` tinyint(1) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `dashboard_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `widget_layout` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `kpi_selection` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `preferences` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 -- --------------------------------------------------------
 
@@ -3842,25 +3851,25 @@ CREATE TABLE `dashboard_configs` (
 --
 
 CREATE TABLE `delivery_partograph` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `delivery_record_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `delivery_record_id` bigint UNSIGNED NOT NULL,
   `recorded_at` datetime NOT NULL,
   `cervical_dilation_cm` decimal(3,1) DEFAULT NULL,
-  `descent_of_head` varchar(255) DEFAULT NULL,
-  `contractions_per_10_min` smallint(6) DEFAULT NULL,
-  `contraction_duration_sec` smallint(6) DEFAULT NULL,
-  `foetal_heart_rate` smallint(6) DEFAULT NULL,
-  `amniotic_fluid` enum('intact','clear','meconium_stained','bloody','absent') DEFAULT NULL,
-  `moulding` enum('none','+','++','+++') DEFAULT NULL,
-  `maternal_bp` varchar(255) DEFAULT NULL,
-  `maternal_pulse` smallint(6) DEFAULT NULL,
+  `descent_of_head` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `contractions_per_10_min` smallint DEFAULT NULL,
+  `contraction_duration_sec` smallint DEFAULT NULL,
+  `foetal_heart_rate` smallint DEFAULT NULL,
+  `amniotic_fluid` enum('intact','clear','meconium_stained','bloody','absent') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `moulding` enum('none','+','++','+++') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `maternal_bp` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `maternal_pulse` smallint DEFAULT NULL,
   `maternal_temp` decimal(4,1) DEFAULT NULL,
-  `urine_output_ml` int(11) DEFAULT NULL,
-  `urine_protein` enum('nil','trace','+','++','+++') DEFAULT NULL,
-  `oxytocin_dose` varchar(255) DEFAULT NULL,
-  `iv_fluids` varchar(255) DEFAULT NULL,
-  `medications` text DEFAULT NULL,
-  `recorded_by` bigint(20) UNSIGNED NOT NULL,
+  `urine_output_ml` int DEFAULT NULL,
+  `urine_protein` enum('nil','trace','+','++','+++') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `oxytocin_dose` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `iv_fluids` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `medications` text COLLATE utf8mb4_unicode_ci,
+  `recorded_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3879,29 +3888,29 @@ INSERT INTO `delivery_partograph` (`id`, `delivery_record_id`, `recorded_at`, `c
 --
 
 CREATE TABLE `delivery_records` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `enrollment_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
   `delivery_date` datetime DEFAULT NULL,
   `delivery_time` time DEFAULT NULL,
   `duration_of_labour_hours` decimal(5,1) DEFAULT NULL,
-  `place_of_delivery` varchar(255) DEFAULT NULL,
-  `type_of_delivery` enum('svd','assisted_vaginal','elective_cs','emergency_cs','vacuum','forceps') NOT NULL,
-  `episiotomy` enum('none','mediolateral','median') NOT NULL DEFAULT 'none',
-  `induction` tinyint(1) NOT NULL DEFAULT 0,
-  `induction_method` varchar(255) DEFAULT NULL,
-  `augmentation` tinyint(1) NOT NULL DEFAULT 0,
-  `complications` text DEFAULT NULL,
-  `blood_loss_ml` int(11) DEFAULT NULL,
-  `placenta_complete` tinyint(1) NOT NULL DEFAULT 1,
-  `placenta_notes` text DEFAULT NULL,
-  `perineal_tear_degree` varchar(255) DEFAULT NULL,
-  `oxytocin_given` tinyint(1) NOT NULL DEFAULT 0,
-  `number_of_babies` int(11) NOT NULL DEFAULT 1,
-  `delivered_by` bigint(20) UNSIGNED NOT NULL,
-  `anaesthesia_type` varchar(255) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `place_of_delivery` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type_of_delivery` enum('svd','assisted_vaginal','elective_cs','emergency_cs','vacuum','forceps') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `episiotomy` enum('none','mediolateral','median') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'none',
+  `induction` tinyint(1) NOT NULL DEFAULT '0',
+  `induction_method` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `augmentation` tinyint(1) NOT NULL DEFAULT '0',
+  `complications` text COLLATE utf8mb4_unicode_ci,
+  `blood_loss_ml` int DEFAULT NULL,
+  `placenta_complete` tinyint(1) NOT NULL DEFAULT '1',
+  `placenta_notes` text COLLATE utf8mb4_unicode_ci,
+  `perineal_tear_degree` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `oxytocin_given` tinyint(1) NOT NULL DEFAULT '0',
+  `number_of_babies` int NOT NULL DEFAULT '1',
+  `delivered_by` bigint UNSIGNED NOT NULL,
+  `anaesthesia_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -3922,12 +3931,12 @@ INSERT INTO `delivery_records` (`id`, `enrollment_id`, `patient_id`, `encounter_
 --
 
 CREATE TABLE `departments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `code` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `head_of_department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `head_of_department_id` bigint UNSIGNED DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -3983,11 +3992,11 @@ INSERT INTO `departments` (`id`, `name`, `code`, `description`, `head_of_departm
 --
 
 CREATE TABLE `details` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `service_rendered` varchar(255) NOT NULL,
-  `price` int(11) NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `has_paid` tinyint(1) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `service_rendered` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `price` int NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `has_paid` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -3999,13 +4008,13 @@ CREATE TABLE `details` (
 --
 
 CREATE TABLE `diagnosis_favorites` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `doctor_id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `diagnoses` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Array of {code, name, comment_1, comment_2}' CHECK (json_valid(`diagnoses`)),
+  `id` bigint UNSIGNED NOT NULL,
+  `doctor_id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `diagnoses` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Array of {code, name, comment_1, comment_2}',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `diagnosis_favorites`
@@ -4023,15 +4032,15 @@ INSERT INTO `diagnosis_favorites` (`id`, `doctor_id`, `name`, `diagnoses`, `crea
 --
 
 CREATE TABLE `discharge_checklists` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `admission_request_id` bigint(20) UNSIGNED NOT NULL,
-  `template_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','in_progress','completed','waived') NOT NULL DEFAULT 'pending',
+  `id` bigint UNSIGNED NOT NULL,
+  `admission_request_id` bigint UNSIGNED NOT NULL,
+  `template_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('pending','in_progress','completed','waived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `started_at` timestamp NULL DEFAULT NULL,
   `completed_at` timestamp NULL DEFAULT NULL,
-  `completed_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `waiver_reason` text DEFAULT NULL,
-  `waived_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `completed_by` bigint UNSIGNED DEFAULT NULL,
+  `waiver_reason` text COLLATE utf8mb4_unicode_ci,
+  `waived_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -4053,15 +4062,15 @@ INSERT INTO `discharge_checklists` (`id`, `admission_request_id`, `template_id`,
 --
 
 CREATE TABLE `discharge_checklist_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `discharge_checklist_id` bigint(20) UNSIGNED NOT NULL,
-  `template_item_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `item_text` varchar(255) NOT NULL,
-  `is_required` tinyint(1) NOT NULL DEFAULT 1,
-  `is_completed` tinyint(1) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `discharge_checklist_id` bigint UNSIGNED NOT NULL,
+  `template_item_id` bigint UNSIGNED DEFAULT NULL,
+  `item_text` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_required` tinyint(1) NOT NULL DEFAULT '1',
+  `is_completed` tinyint(1) NOT NULL DEFAULT '0',
   `completed_at` timestamp NULL DEFAULT NULL,
-  `completed_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `comment` text DEFAULT NULL,
+  `completed_by` bigint UNSIGNED DEFAULT NULL,
+  `comment` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -4087,23 +4096,23 @@ INSERT INTO `discharge_checklist_items` (`id`, `discharge_checklist_id`, `templa
 --
 
 CREATE TABLE `disciplinary_queries` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `query_number` varchar(255) NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `subject` varchar(255) NOT NULL,
-  `description` text NOT NULL,
-  `severity` enum('minor','moderate','major','gross_misconduct') NOT NULL DEFAULT 'minor',
+  `id` bigint UNSIGNED NOT NULL,
+  `query_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `subject` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `severity` enum('minor','moderate','major','gross_misconduct') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'minor',
   `incident_date` date DEFAULT NULL,
-  `expected_response` text DEFAULT NULL,
+  `expected_response` text COLLATE utf8mb4_unicode_ci,
   `response_deadline` date NOT NULL,
-  `status` enum('issued','response_received','under_review','closed') NOT NULL DEFAULT 'issued',
-  `staff_response` text DEFAULT NULL,
+  `status` enum('issued','response_received','under_review','closed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'issued',
+  `staff_response` text COLLATE utf8mb4_unicode_ci,
   `response_received_at` timestamp NULL DEFAULT NULL,
-  `hr_decision` text DEFAULT NULL,
-  `outcome` enum('warning','final_warning','suspension','termination','dismissed','no_action') DEFAULT NULL,
-  `decided_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `hr_decision` text COLLATE utf8mb4_unicode_ci,
+  `outcome` enum('warning','final_warning','suspension','termination','dismissed','no_action') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `decided_by` bigint UNSIGNED DEFAULT NULL,
   `decided_at` timestamp NULL DEFAULT NULL,
-  `issued_by` bigint(20) UNSIGNED NOT NULL,
+  `issued_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -4125,31 +4134,31 @@ INSERT INTO `disciplinary_queries` (`id`, `query_number`, `staff_id`, `subject`,
 --
 
 CREATE TABLE `doctor_appointments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `clinic_id` bigint(20) UNSIGNED NOT NULL,
-  `staff_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `booked_by` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `clinic_id` bigint UNSIGNED NOT NULL,
+  `staff_id` bigint UNSIGNED DEFAULT NULL,
+  `booked_by` bigint UNSIGNED NOT NULL,
   `appointment_date` date NOT NULL,
   `start_time` time NOT NULL,
   `end_time` time DEFAULT NULL COMMENT 'Calculated from slot duration',
-  `duration_minutes` smallint(5) UNSIGNED NOT NULL DEFAULT 15,
-  `status` tinyint(3) UNSIGNED NOT NULL DEFAULT 6 COMMENT 'Uses QueueStatus enum: 6=Scheduled',
-  `priority` varchar(20) NOT NULL DEFAULT 'routine' COMMENT 'routine|urgent|emergency',
-  `source` varchar(30) NOT NULL DEFAULT 'reception' COMMENT 'reception|phone|online|referral|follow_up',
-  `appointment_type` varchar(30) NOT NULL DEFAULT 'consultation' COMMENT 'consultation|follow_up|procedure|review',
-  `reason` text DEFAULT NULL COMMENT 'Reason for visit',
-  `notes` text DEFAULT NULL COMMENT 'Internal notes (receptionist)',
-  `cancellation_reason` text DEFAULT NULL,
-  `doctor_queue_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Set when appointment converts to live queue entry',
-  `service_request_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'ProductOrServiceRequest created at check-in',
-  `parent_appointment_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Self-ref: the original appointment this follow-up belongs to',
-  `is_prepaid_followup` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'True if billing is inherited from parent appointment',
-  `referral_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Links to specialist_referrals if booked from a referral',
-  `rescheduled_from_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Self-ref: original appointment if rescheduled',
-  `reschedule_count` smallint(5) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'How many times this appointment chain has been rescheduled',
-  `original_staff_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Original doctor before reassignment (null = never changed)',
-  `reassignment_reason` text DEFAULT NULL COMMENT 'Why the doctor was changed',
+  `duration_minutes` smallint UNSIGNED NOT NULL DEFAULT '15',
+  `status` tinyint UNSIGNED NOT NULL DEFAULT '6' COMMENT 'Uses QueueStatus enum: 6=Scheduled',
+  `priority` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'routine' COMMENT 'routine|urgent|emergency',
+  `source` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'reception' COMMENT 'reception|phone|online|referral|follow_up',
+  `appointment_type` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'consultation' COMMENT 'consultation|follow_up|procedure|review',
+  `reason` text COLLATE utf8mb4_unicode_ci COMMENT 'Reason for visit',
+  `notes` text COLLATE utf8mb4_unicode_ci COMMENT 'Internal notes (receptionist)',
+  `cancellation_reason` text COLLATE utf8mb4_unicode_ci,
+  `doctor_queue_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Set when appointment converts to live queue entry',
+  `service_request_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ProductOrServiceRequest created at check-in',
+  `parent_appointment_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Self-ref: the original appointment this follow-up belongs to',
+  `is_prepaid_followup` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'True if billing is inherited from parent appointment',
+  `referral_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Links to specialist_referrals if booked from a referral',
+  `rescheduled_from_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Self-ref: original appointment if rescheduled',
+  `reschedule_count` smallint UNSIGNED NOT NULL DEFAULT '0' COMMENT 'How many times this appointment chain has been rescheduled',
+  `original_staff_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Original doctor before reassignment (null = never changed)',
+  `reassignment_reason` text COLLATE utf8mb4_unicode_ci COMMENT 'Why the doctor was changed',
   `reassigned_at` timestamp NULL DEFAULT NULL,
   `checked_in_at` timestamp NULL DEFAULT NULL,
   `cancelled_at` timestamp NULL DEFAULT NULL,
@@ -4170,7 +4179,8 @@ INSERT INTO `doctor_appointments` (`id`, `patient_id`, `clinic_id`, `staff_id`, 
 (4, 1, 1, NULL, 1, '2026-03-07', '00:15:00', '00:30:00', 15, 0, 'routine', 'reception', 'scheduled', NULL, NULL, 'Rescheduled to 2026-03-13. ', NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, NULL, '2026-03-06 07:17:17', NULL, '2026-03-06 07:15:42', '2026-03-06 07:17:17', NULL),
 (5, 1, 1, 1, 1, '2026-03-13', '08:00:00', '08:15:00', 15, 2, 'routine', 'reception', 'scheduled', NULL, NULL, NULL, 9, 77, NULL, 0, NULL, 4, 1, NULL, NULL, '2026-03-06 07:17:36', '2026-03-06 07:18:33', NULL, NULL, '2026-03-06 07:17:17', '2026-03-06 07:25:47', NULL),
 (6, 1, 1, 1, 1, '2026-03-14', '12:30:00', '12:45:00', 15, 2, 'routine', 'follow_up', 'follow_up', NULL, NULL, NULL, 11, 84, NULL, 1, NULL, NULL, 0, NULL, NULL, NULL, '2026-03-10 05:05:22', NULL, NULL, '2026-03-06 07:19:48', '2026-03-10 08:00:54', NULL),
-(7, 1, 8, 84, 1, '2026-03-07', '09:00:00', '09:00:00', 0, 7, 'routine', 'referral', 'referral', NULL, 'Referral from Admin System Ing: khhsdfds', NULL, NULL, NULL, NULL, 0, 1, NULL, 0, NULL, NULL, NULL, NULL, NULL, '2026-03-10 05:05:22', '2026-03-06 07:46:42', '2026-03-10 05:05:22', NULL);
+(7, 1, 8, 84, 1, '2026-03-07', '09:00:00', '09:00:00', 0, 7, 'routine', 'referral', 'referral', NULL, 'Referral from Admin System Ing: khhsdfds', NULL, NULL, NULL, NULL, 0, 1, NULL, 0, NULL, NULL, NULL, NULL, NULL, '2026-03-10 05:05:22', '2026-03-06 07:46:42', '2026-03-10 05:05:22', NULL),
+(8, 1, 1, 1, 1, '2026-04-18', '09:00:00', '09:15:00', 15, 6, 'routine', 'follow_up', 'follow_up', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-10 15:26:49', '2026-04-10 15:26:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -4179,13 +4189,13 @@ INSERT INTO `doctor_appointments` (`id`, `patient_id`, `clinic_id`, `staff_id`, 
 --
 
 CREATE TABLE `doctor_availabilities` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `clinic_id` bigint(20) UNSIGNED NOT NULL,
-  `day_of_week` tinyint(3) UNSIGNED NOT NULL COMMENT '0=Sun, 1=Mon … 6=Sat',
+  `id` bigint UNSIGNED NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `clinic_id` bigint UNSIGNED NOT NULL,
+  `day_of_week` tinyint UNSIGNED NOT NULL COMMENT '0=Sun, 1=Mon … 6=Sat',
   `start_time` time NOT NULL,
   `end_time` time NOT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -4437,14 +4447,14 @@ INSERT INTO `doctor_availabilities` (`id`, `staff_id`, `clinic_id`, `day_of_week
 --
 
 CREATE TABLE `doctor_availability_overrides` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `clinic_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `clinic_id` bigint UNSIGNED DEFAULT NULL,
   `override_date` date NOT NULL,
   `start_time` time DEFAULT NULL COMMENT 'Null = unavailable entire day',
   `end_time` time DEFAULT NULL,
-  `is_available` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'false = blocked, true = extra slot',
-  `reason` varchar(255) DEFAULT NULL,
+  `is_available` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'false = blocked, true = extra slot',
+  `reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -4456,26 +4466,26 @@ CREATE TABLE `doctor_availability_overrides` (
 --
 
 CREATE TABLE `doctor_queues` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `clinic_id` bigint(20) UNSIGNED NOT NULL,
-  `staff_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `receptionist_id` bigint(20) UNSIGNED NOT NULL,
-  `request_entry_id` bigint(20) UNSIGNED NOT NULL,
-  `appointment_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Links back to doctor_appointments if this queue entry came from an appointment',
-  `status` int(11) NOT NULL DEFAULT 1,
-  `priority` varchar(20) NOT NULL DEFAULT 'routine' COMMENT 'routine|urgent|emergency',
-  `source` varchar(30) NOT NULL DEFAULT 'reception' COMMENT 'reception|emergency_intake|appointment',
-  `triage_note` text DEFAULT NULL COMMENT 'Triage narrative for queue_consultation path',
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `clinic_id` bigint UNSIGNED NOT NULL,
+  `staff_id` bigint UNSIGNED DEFAULT NULL,
+  `receptionist_id` bigint UNSIGNED NOT NULL,
+  `request_entry_id` bigint UNSIGNED NOT NULL,
+  `appointment_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Links back to doctor_appointments if this queue entry came from an appointment',
+  `status` int NOT NULL DEFAULT '1',
+  `priority` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'routine' COMMENT 'routine|urgent|emergency',
+  `source` varchar(30) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'reception' COMMENT 'reception|emergency_intake|appointment',
+  `triage_note` text COLLATE utf8mb4_general_ci COMMENT 'Triage narrative for queue_consultation path',
   `consultation_started_at` timestamp NULL DEFAULT NULL,
   `consultation_ended_at` timestamp NULL DEFAULT NULL,
-  `consultation_paused_seconds` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Accumulated pause time in seconds',
+  `consultation_paused_seconds` int UNSIGNED NOT NULL DEFAULT '0' COMMENT 'Accumulated pause time in seconds',
   `last_paused_at` timestamp NULL DEFAULT NULL,
   `last_resumed_at` timestamp NULL DEFAULT NULL,
-  `is_paused` tinyint(1) NOT NULL DEFAULT 0,
+  `is_paused` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `vitals_taken` tinyint(1) NOT NULL DEFAULT 0
+  `vitals_taken` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -4483,12 +4493,12 @@ CREATE TABLE `doctor_queues` (
 --
 
 INSERT INTO `doctor_queues` (`id`, `patient_id`, `clinic_id`, `staff_id`, `receptionist_id`, `request_entry_id`, `appointment_id`, `status`, `priority`, `source`, `triage_note`, `consultation_started_at`, `consultation_ended_at`, `consultation_paused_seconds`, `last_paused_at`, `last_resumed_at`, `is_paused`, `created_at`, `updated_at`, `vitals_taken`) VALUES
-(1, 1, 1, 1, 1, 8, NULL, 4, 'routine', 'reception', NULL, '2026-03-10 13:40:56', NULL, 0, NULL, NULL, 0, '2026-02-09 06:31:46', '2026-03-10 13:40:56', 1),
+(1, 1, 1, 1, 1, 8, NULL, 5, 'routine', 'reception', NULL, '2026-03-10 13:40:56', NULL, 0, NULL, NULL, 0, '2026-02-09 06:31:46', '2026-04-10 15:23:12', 1),
 (2, 1, 1, 1, 1, 28, NULL, 1, 'routine', 'reception', NULL, NULL, NULL, 0, NULL, NULL, 0, '2026-02-13 09:38:00', '2026-02-17 12:01:11', 1),
 (3, 1, 1, 1, 1, 37, NULL, 1, 'routine', 'reception', NULL, NULL, NULL, 0, NULL, NULL, 0, '2026-02-17 11:45:28', '2026-02-17 12:01:11', 1),
 (4, 3, 1, NULL, 1, 47, NULL, 1, 'emergency', 'emergency_intake', '[EMERGENCY INTAKE] ESI Level 2: Emergent - High risk, confused/lethargic, severe pain\nChief Complaint: Chest pain\nArrival Mode: Brought by Relative\nBrought By: em1 (0398283202)\nVitals: HR: 71 bpm | BP: 120/80 mmHg | SpO2: 99% | Temp: 36.8°C | RR: 17/min | BS: 99 mg/dL\nGCS: 14/15 (Mild) [E4 V5 M5]\nPain Scale: 7/10\nAllergies: ⚠ penta, nuts\nTriage Notes: gdhadadahda\nTriage Duration: 10m 1s\nIntake By: Admin System\nIntake Time: 2026-02-19 04:45:20', NULL, NULL, 0, NULL, NULL, 0, '2026-02-19 03:45:20', '2026-02-19 03:45:20', 0),
-(5, 1, 1, 1, 1, 58, NULL, 3, 'routine', 'reception', NULL, NULL, NULL, 0, NULL, NULL, 0, '2026-02-22 10:52:30', '2026-03-04 17:48:59', 0),
-(6, 1, 1, NULL, 1, 74, NULL, 4, 'routine', 'reception', NULL, '2026-03-06 05:40:17', NULL, 4544, '2026-03-06 05:57:16', '2026-03-06 06:57:35', 0, '2026-03-06 05:39:20', '2026-03-06 06:57:35', 0),
+(5, 1, 1, 1, 1, 58, NULL, 5, 'routine', 'reception', NULL, NULL, NULL, 0, NULL, NULL, 0, '2026-02-22 10:52:30', '2026-04-10 15:26:49', 0),
+(6, 1, 1, NULL, 1, 74, NULL, 5, 'routine', 'reception', NULL, '2026-03-06 05:40:17', NULL, 4544, '2026-03-06 05:57:16', '2026-03-06 06:57:35', 0, '2026-03-06 05:39:20', '2026-04-10 15:23:12', 0),
 (7, 1, 1, 1, 1, 75, 1, 1, 'routine', 'appointment', NULL, NULL, NULL, 0, NULL, NULL, 0, '2026-03-06 06:29:05', '2026-03-06 06:29:05', 0),
 (8, 1, 1, 1, 1, 76, 3, 1, 'routine', 'appointment', NULL, NULL, NULL, 0, NULL, NULL, 0, '2026-03-06 06:50:52', '2026-03-06 06:50:52', 0),
 (9, 1, 1, 1, 1, 77, 5, 2, 'routine', 'appointment', NULL, NULL, NULL, 0, NULL, NULL, 0, '2026-03-06 07:18:33', '2026-03-06 07:25:47', 0),
@@ -4502,28 +4512,28 @@ INSERT INTO `doctor_queues` (`id`, `patient_id`, `clinic_id`, `staff_id`, `recep
 --
 
 CREATE TABLE `encounters` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `doctor_id` bigint(20) UNSIGNED NOT NULL,
-  `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `queue_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Direct link to DoctorQueue entry',
-  `admission_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `reasons_for_encounter` longtext DEFAULT NULL,
-  `reasons_for_encounter_comment_2` varchar(255) DEFAULT NULL,
-  `reasons_for_encounter_comment_1` varchar(255) DEFAULT NULL,
-  `notes` longtext DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `doctor_id` bigint UNSIGNED NOT NULL,
+  `service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `service_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `queue_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Direct link to DoctorQueue entry',
+  `admission_request_id` bigint UNSIGNED DEFAULT NULL,
+  `reasons_for_encounter` longtext COLLATE utf8mb4_general_ci,
+  `reasons_for_encounter_comment_2` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `reasons_for_encounter_comment_1` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `notes` longtext COLLATE utf8mb4_general_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `old_medical_report_id` int(11) DEFAULT NULL,
-  `old_pharmacy` int(11) DEFAULT NULL,
-  `old_patient_lab_services` int(11) DEFAULT NULL,
-  `completed` tinyint(1) NOT NULL DEFAULT 0,
+  `old_medical_report_id` int DEFAULT NULL,
+  `old_pharmacy` int DEFAULT NULL,
+  `old_patient_lab_services` int DEFAULT NULL,
+  `completed` tinyint(1) NOT NULL DEFAULT '0',
   `started_at` timestamp NULL DEFAULT NULL COMMENT 'When doctor first opened encounter',
   `completed_at` timestamp NULL DEFAULT NULL COMMENT 'When encounter was finalized',
-  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `deletion_reason` text DEFAULT NULL
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
+  `deletion_reason` text COLLATE utf8mb4_general_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -4538,7 +4548,8 @@ INSERT INTO `encounters` (`id`, `doctor_id`, `service_request_id`, `service_id`,
 (5, 1, 74, 278, 1, 6, NULL, NULL, NULL, NULL, NULL, '2026-03-06 06:51:58', '2026-03-06 07:19:49', NULL, NULL, NULL, NULL, 1, '2026-03-06 06:51:58', '2026-03-06 07:19:49', NULL, NULL),
 (6, 1, 74, 278, 1, 6, NULL, '[{\"value\":\" F642-Gender identity disorder of childhood (ICD10: F642)\",\"display\":\" F642 - Gender identity disorder of childhood (ICD10: F642)\",\"code\":\" F642\",\"name\":\"Gender identity disorder of childhood (ICD10: F642)\",\"comment_1\":\"NA\",\"comment_2\":\"NA\"}]', 'NA', 'NA', '<p>nsadbasdbad &nbsp;\\</p><p>&nbsp;</p><p>adadasd</p>', '2026-03-06 07:20:09', '2026-03-06 08:43:56', NULL, NULL, NULL, NULL, 0, '2026-03-06 07:20:09', NULL, NULL, NULL),
 (7, 1, 52, 286, 1, NULL, NULL, NULL, NULL, NULL, '<p>Hello you are welcome to 7</p>', '2026-03-06 08:48:02', '2026-03-10 05:10:30', NULL, NULL, NULL, NULL, 0, '2026-03-06 08:48:02', NULL, NULL, NULL),
-(8, 1, 8, 278, 1, 1, NULL, NULL, NULL, NULL, NULL, '2026-03-10 13:40:23', '2026-03-10 13:40:23', NULL, NULL, NULL, NULL, 0, '2026-03-10 13:40:23', NULL, NULL, NULL);
+(8, 1, 8, 278, 1, 1, NULL, NULL, NULL, NULL, NULL, '2026-03-10 13:40:23', '2026-03-10 13:40:23', NULL, NULL, NULL, NULL, 0, '2026-03-10 13:40:23', NULL, NULL, NULL),
+(9, 1, 58, 278, 1, NULL, NULL, NULL, NULL, NULL, 'log k so this is a test of all of the dictation featureslog k so this is a test of all of the dictation features we are resuming the dictation and uh let\'s see how it goes we will understand', '2026-04-10 15:24:06', '2026-04-10 15:26:49', NULL, NULL, NULL, NULL, 1, NULL, '2026-04-10 15:26:49', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -4547,23 +4558,23 @@ INSERT INTO `encounters` (`id`, `doctor_id`, `service_request_id`, `service_id`,
 --
 
 CREATE TABLE `equipment_maintenance_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fixed_asset_id` bigint(20) UNSIGNED NOT NULL,
-  `schedule_number` varchar(255) NOT NULL,
-  `maintenance_type` enum('preventive','corrective','calibration','inspection','certification') NOT NULL,
-  `description` varchar(255) NOT NULL,
-  `frequency` enum('daily','weekly','monthly','quarterly','semi_annually','annually','as_needed') DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `fixed_asset_id` bigint UNSIGNED NOT NULL,
+  `schedule_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `maintenance_type` enum('preventive','corrective','calibration','inspection','certification') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `frequency` enum('daily','weekly','monthly','quarterly','semi_annually','annually','as_needed') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `scheduled_date` date NOT NULL,
   `actual_date` date DEFAULT NULL,
-  `service_provider_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `service_provider_id` bigint UNSIGNED DEFAULT NULL,
   `estimated_cost` decimal(15,2) DEFAULT NULL,
   `actual_cost` decimal(15,2) DEFAULT NULL,
-  `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('scheduled','in_progress','completed','overdue','cancelled') NOT NULL DEFAULT 'scheduled',
+  `expense_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('scheduled','in_progress','completed','overdue','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'scheduled',
   `next_scheduled_date` date DEFAULT NULL,
-  `findings` text DEFAULT NULL,
-  `actions_taken` text DEFAULT NULL,
-  `performed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `findings` text COLLATE utf8mb4_unicode_ci,
+  `actions_taken` text COLLATE utf8mb4_unicode_ci,
+  `performed_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -4576,31 +4587,31 @@ CREATE TABLE `equipment_maintenance_schedules` (
 --
 
 CREATE TABLE `expenses` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `expense_number` varchar(255) NOT NULL,
-  `category` enum('purchase_order','store_expense','maintenance','utilities','salaries','other') NOT NULL DEFAULT 'other',
-  `reference_type` varchar(255) DEFAULT NULL,
-  `reference_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `store_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `title` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `expense_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category` enum('purchase_order','store_expense','maintenance','utilities','salaries','other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'other',
+  `reference_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reference_id` bigint UNSIGNED DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `supplier_id` bigint UNSIGNED DEFAULT NULL,
+  `store_id` bigint UNSIGNED DEFAULT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
   `expense_date` date NOT NULL,
-  `recorded_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','approved','rejected','void','paid') NOT NULL DEFAULT 'pending',
-  `rejection_reason` text DEFAULT NULL,
+  `recorded_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('pending','approved','rejected','void','paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `voided_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `voided_by` bigint UNSIGNED DEFAULT NULL,
   `voided_at` timestamp NULL DEFAULT NULL,
-  `void_reason` text DEFAULT NULL,
-  `payment_method` varchar(255) DEFAULT NULL,
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `cheque_number` varchar(255) DEFAULT NULL,
-  `payment_reference` varchar(255) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `void_reason` text COLLATE utf8mb4_unicode_ci,
+  `payment_method` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `cheque_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_reference` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -4613,13 +4624,13 @@ CREATE TABLE `expenses` (
 --
 
 CREATE TABLE `failed_jobs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `uuid` varchar(255) NOT NULL,
-  `connection` text NOT NULL,
-  `queue` text NOT NULL,
-  `payload` longtext NOT NULL,
-  `exception` longtext NOT NULL,
-  `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `id` bigint UNSIGNED NOT NULL,
+  `uuid` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `connection` text COLLATE utf8mb4_general_ci NOT NULL,
+  `queue` text COLLATE utf8mb4_general_ci NOT NULL,
+  `payload` longtext COLLATE utf8mb4_general_ci NOT NULL,
+  `exception` longtext COLLATE utf8mb4_general_ci NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -4640,23 +4651,23 @@ INSERT INTO `failed_jobs` (`id`, `uuid`, `connection`, `queue`, `payload`, `exce
 --
 
 CREATE TABLE `financial_kpis` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `kpi_code` varchar(30) NOT NULL,
-  `kpi_name` varchar(255) NOT NULL,
-  `category` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `calculation_formula` text NOT NULL,
-  `unit` varchar(20) NOT NULL,
-  `frequency` enum('daily','weekly','monthly','quarterly','annually') NOT NULL DEFAULT 'monthly',
+  `id` bigint UNSIGNED NOT NULL,
+  `kpi_code` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kpi_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `calculation_formula` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `unit` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `frequency` enum('daily','weekly','monthly','quarterly','annually') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'monthly',
   `target_value` decimal(15,4) DEFAULT NULL,
   `warning_threshold_low` decimal(15,4) DEFAULT NULL,
   `warning_threshold_high` decimal(15,4) DEFAULT NULL,
   `critical_threshold_low` decimal(15,4) DEFAULT NULL,
   `critical_threshold_high` decimal(15,4) DEFAULT NULL,
-  `display_order` int(11) NOT NULL DEFAULT 0,
-  `show_on_dashboard` tinyint(1) NOT NULL DEFAULT 1,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `chart_type` varchar(255) DEFAULT NULL,
+  `display_order` int NOT NULL DEFAULT '0',
+  `show_on_dashboard` tinyint(1) NOT NULL DEFAULT '1',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `chart_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -4675,18 +4686,18 @@ INSERT INTO `financial_kpis` (`id`, `kpi_code`, `kpi_name`, `category`, `descrip
 --
 
 CREATE TABLE `financial_kpi_alerts` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `kpi_id` bigint(20) UNSIGNED NOT NULL,
-  `kpi_value_id` bigint(20) UNSIGNED NOT NULL,
-  `alert_type` enum('warning','critical') NOT NULL,
-  `direction` enum('above','below') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `kpi_id` bigint UNSIGNED NOT NULL,
+  `kpi_value_id` bigint UNSIGNED NOT NULL,
+  `alert_type` enum('warning','critical') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `direction` enum('above','below') COLLATE utf8mb4_unicode_ci NOT NULL,
   `threshold_value` decimal(15,4) NOT NULL,
   `actual_value` decimal(15,4) NOT NULL,
-  `message` text NOT NULL,
-  `is_acknowledged` tinyint(1) NOT NULL DEFAULT 0,
-  `acknowledged_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_acknowledged` tinyint(1) NOT NULL DEFAULT '0',
+  `acknowledged_by` bigint UNSIGNED DEFAULT NULL,
   `acknowledged_at` timestamp NULL DEFAULT NULL,
-  `acknowledgement_notes` text DEFAULT NULL,
+  `acknowledgement_notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -4698,21 +4709,21 @@ CREATE TABLE `financial_kpi_alerts` (
 --
 
 CREATE TABLE `financial_kpi_values` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `kpi_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `kpi_id` bigint UNSIGNED NOT NULL,
   `calculation_date` date NOT NULL,
-  `year` int(11) NOT NULL,
-  `month` int(11) DEFAULT NULL,
-  `week` int(11) DEFAULT NULL,
+  `year` int NOT NULL,
+  `month` int DEFAULT NULL,
+  `week` int DEFAULT NULL,
   `value` decimal(15,4) NOT NULL,
   `previous_value` decimal(15,4) DEFAULT NULL,
   `change_amount` decimal(15,4) DEFAULT NULL,
   `change_percentage` decimal(8,2) DEFAULT NULL,
-  `status` enum('normal','warning','critical') NOT NULL DEFAULT 'normal',
-  `calculation_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`calculation_details`)),
+  `status` enum('normal','warning','critical') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'normal',
+  `calculation_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `financial_kpi_values`
@@ -4728,14 +4739,14 @@ INSERT INTO `financial_kpi_values` (`id`, `kpi_id`, `calculation_date`, `year`, 
 --
 
 CREATE TABLE `fiscal_years` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `year_name` varchar(50) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `year_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `status` enum('open','closing','closed') NOT NULL DEFAULT 'open',
-  `closed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `status` enum('open','closing','closed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open',
+  `closed_by` bigint UNSIGNED DEFAULT NULL,
   `closed_at` timestamp NULL DEFAULT NULL,
-  `retained_earnings_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `retained_earnings_entry_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -4756,44 +4767,44 @@ INSERT INTO `fiscal_years` (`id`, `year_name`, `start_date`, `end_date`, `status
 --
 
 CREATE TABLE `fixed_assets` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `asset_number` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `category_id` bigint(20) UNSIGNED NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `source_type` varchar(255) DEFAULT NULL,
-  `source_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `asset_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `category_id` bigint UNSIGNED NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `source_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `source_id` bigint UNSIGNED DEFAULT NULL,
   `acquisition_cost` decimal(15,2) NOT NULL,
-  `additional_costs` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `additional_costs` decimal(15,2) NOT NULL DEFAULT '0.00',
   `total_cost` decimal(15,2) NOT NULL,
-  `salvage_value` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `salvage_value` decimal(15,2) NOT NULL DEFAULT '0.00',
   `depreciable_amount` decimal(15,2) NOT NULL,
-  `accumulated_depreciation` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `accumulated_depreciation` decimal(15,2) NOT NULL DEFAULT '0.00',
   `book_value` decimal(15,2) NOT NULL,
-  `depreciation_method` enum('straight_line','declining_balance','double_declining','sum_of_years','units_of_production') NOT NULL DEFAULT 'straight_line',
-  `useful_life_years` int(11) NOT NULL,
-  `useful_life_months` int(11) DEFAULT NULL,
-  `monthly_depreciation` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `depreciation_method` enum('straight_line','declining_balance','double_declining','sum_of_years','units_of_production') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'straight_line',
+  `useful_life_years` int NOT NULL,
+  `useful_life_months` int DEFAULT NULL,
+  `monthly_depreciation` decimal(15,2) NOT NULL DEFAULT '0.00',
   `acquisition_date` date NOT NULL,
   `in_service_date` date NOT NULL,
   `last_depreciation_date` date DEFAULT NULL,
   `disposal_date` date DEFAULT NULL,
-  `serial_number` varchar(255) DEFAULT NULL,
-  `model_number` varchar(255) DEFAULT NULL,
-  `manufacturer` varchar(255) DEFAULT NULL,
-  `location` varchar(255) DEFAULT NULL,
-  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `custodian_user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `serial_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `model_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `manufacturer` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `department_id` bigint UNSIGNED DEFAULT NULL,
+  `custodian_user_id` bigint UNSIGNED DEFAULT NULL,
   `warranty_expiry_date` date DEFAULT NULL,
-  `warranty_provider` varchar(255) DEFAULT NULL,
-  `insurance_policy_number` varchar(255) DEFAULT NULL,
+  `warranty_provider` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `insurance_policy_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `insurance_expiry_date` date DEFAULT NULL,
-  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `invoice_number` varchar(255) DEFAULT NULL,
-  `status` enum('active','fully_depreciated','disposed','impaired','under_maintenance','idle','voided') DEFAULT 'active',
-  `notes` text DEFAULT NULL,
+  `supplier_id` bigint UNSIGNED DEFAULT NULL,
+  `invoice_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('active','fully_depreciated','disposed','impaired','under_maintenance','idle','voided') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -4831,18 +4842,18 @@ INSERT INTO `fixed_assets` (`id`, `asset_number`, `name`, `description`, `catego
 --
 
 CREATE TABLE `fixed_asset_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `asset_account_id` bigint(20) UNSIGNED NOT NULL,
-  `depreciation_account_id` bigint(20) UNSIGNED NOT NULL,
-  `expense_account_id` bigint(20) UNSIGNED NOT NULL,
-  `default_useful_life_years` int(11) NOT NULL,
-  `default_depreciation_method` enum('straight_line','declining_balance','double_declining','sum_of_years','units_of_production') NOT NULL DEFAULT 'straight_line',
-  `default_salvage_percentage` decimal(5,2) NOT NULL DEFAULT 10.00,
-  `is_depreciable` tinyint(1) NOT NULL DEFAULT 1,
-  `description` text DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `asset_account_id` bigint UNSIGNED NOT NULL,
+  `depreciation_account_id` bigint UNSIGNED NOT NULL,
+  `expense_account_id` bigint UNSIGNED NOT NULL,
+  `default_useful_life_years` int NOT NULL,
+  `default_depreciation_method` enum('straight_line','declining_balance','double_declining','sum_of_years','units_of_production') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'straight_line',
+  `default_salvage_percentage` decimal(5,2) NOT NULL DEFAULT '10.00',
+  `is_depreciable` tinyint(1) NOT NULL DEFAULT '1',
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -4869,20 +4880,20 @@ INSERT INTO `fixed_asset_categories` (`id`, `code`, `name`, `asset_account_id`, 
 --
 
 CREATE TABLE `fixed_asset_depreciations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fixed_asset_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `fiscal_year_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `fixed_asset_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `fiscal_year_id` bigint UNSIGNED DEFAULT NULL,
   `depreciation_date` date NOT NULL,
-  `year_number` int(11) NOT NULL,
-  `month_number` int(11) NOT NULL,
+  `year_number` int NOT NULL,
+  `month_number` int NOT NULL,
   `opening_book_value` decimal(15,2) NOT NULL,
   `depreciation_amount` decimal(15,2) NOT NULL,
   `closing_book_value` decimal(15,2) NOT NULL,
   `accumulated_depreciation_to_date` decimal(15,2) NOT NULL,
-  `calculation_method` enum('scheduled','catch_up','adjustment','impairment') NOT NULL DEFAULT 'scheduled',
-  `notes` text DEFAULT NULL,
-  `processed_by` bigint(20) UNSIGNED NOT NULL,
+  `calculation_method` enum('scheduled','catch_up','adjustment','impairment') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'scheduled',
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `processed_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -4911,23 +4922,23 @@ INSERT INTO `fixed_asset_depreciations` (`id`, `fixed_asset_id`, `journal_entry_
 --
 
 CREATE TABLE `fixed_asset_disposals` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fixed_asset_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `fixed_asset_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
   `disposal_date` date NOT NULL,
-  `disposal_type` enum('sale','scrapped','donated','trade_in','theft_loss','insurance_claim') NOT NULL,
-  `disposal_proceeds` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `disposal_type` enum('sale','scrapped','donated','trade_in','theft_loss','insurance_claim') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `disposal_proceeds` decimal(15,2) NOT NULL DEFAULT '0.00',
   `book_value_at_disposal` decimal(15,2) NOT NULL,
   `gain_loss_on_disposal` decimal(15,2) NOT NULL,
-  `disposal_costs` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `buyer_name` varchar(255) DEFAULT NULL,
-  `invoice_number` varchar(255) DEFAULT NULL,
-  `reason` text DEFAULT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `disposal_costs` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `buyer_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `invoice_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `status` enum('pending','approved','completed','cancelled') NOT NULL DEFAULT 'pending',
-  `payment_method` varchar(20) DEFAULT NULL COMMENT 'cash or bank_transfer',
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `status` enum('pending','approved','completed','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `payment_method` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'cash or bank_transfer',
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -4952,21 +4963,21 @@ INSERT INTO `fixed_asset_disposals` (`id`, `fixed_asset_id`, `journal_entry_id`,
 --
 
 CREATE TABLE `fixed_asset_transfers` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fixed_asset_id` bigint(20) UNSIGNED NOT NULL,
-  `transfer_number` varchar(255) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `fixed_asset_id` bigint UNSIGNED NOT NULL,
+  `transfer_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `transfer_date` date NOT NULL,
-  `from_department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `from_custodian_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `from_location` varchar(255) DEFAULT NULL,
-  `to_department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `to_custodian_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `to_location` varchar(255) DEFAULT NULL,
-  `reason` text DEFAULT NULL,
-  `requested_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `from_department_id` bigint UNSIGNED DEFAULT NULL,
+  `from_custodian_id` bigint UNSIGNED DEFAULT NULL,
+  `from_location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `to_department_id` bigint UNSIGNED DEFAULT NULL,
+  `to_custodian_id` bigint UNSIGNED DEFAULT NULL,
+  `to_location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci,
+  `requested_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `status` enum('pending','approved','completed','rejected') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','approved','completed','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -4978,12 +4989,12 @@ CREATE TABLE `fixed_asset_transfers` (
 --
 
 CREATE TABLE `hmos` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `hmo_scheme_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `desc` text DEFAULT NULL,
-  `discount` double(8,2) NOT NULL DEFAULT 0.00,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `hmo_scheme_id` bigint UNSIGNED DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `desc` text COLLATE utf8mb4_general_ci,
+  `discount` double(8,2) NOT NULL DEFAULT '0.00',
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -5017,17 +5028,17 @@ INSERT INTO `hmos` (`id`, `hmo_scheme_id`, `name`, `desc`, `discount`, `status`,
 --
 
 CREATE TABLE `hmo_claims` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `hmo_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `payment_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `hmo_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `payment_id` bigint UNSIGNED NOT NULL,
   `claims_amount` decimal(10,2) NOT NULL COMMENT 'Total amount claimed from HMO',
-  `status` enum('pending','approved','rejected','paid') NOT NULL DEFAULT 'pending',
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `processed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `status` enum('pending','approved','rejected','paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `created_by` bigint UNSIGNED NOT NULL,
+  `processed_by` bigint UNSIGNED DEFAULT NULL,
   `processed_at` timestamp NULL DEFAULT NULL,
-  `payment_reference` varchar(100) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `payment_reference` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -5047,21 +5058,21 @@ INSERT INTO `hmo_claims` (`id`, `hmo_id`, `patient_id`, `payment_id`, `claims_am
 --
 
 CREATE TABLE `hmo_remittances` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `hmo_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `hmo_id` bigint UNSIGNED NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `reference_number` varchar(255) DEFAULT NULL,
-  `payment_method` varchar(255) DEFAULT NULL,
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `bank_name` varchar(255) DEFAULT NULL,
+  `reference_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payment_method` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `account_id` bigint UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `payment_date` date NOT NULL,
   `period_from` date DEFAULT NULL,
   `period_to` date DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `receipt_file` varchar(255) DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `receipt_file` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -5080,11 +5091,11 @@ INSERT INTO `hmo_remittances` (`id`, `hmo_id`, `amount`, `reference_number`, `pa
 --
 
 CREATE TABLE `hmo_schemes` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `description` text DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -5108,14 +5119,14 @@ INSERT INTO `hmo_schemes` (`id`, `name`, `code`, `description`, `status`, `creat
 --
 
 CREATE TABLE `hmo_tariffs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `hmo_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `claims_amount` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Amount the HMO will pay',
+  `id` bigint UNSIGNED NOT NULL,
+  `hmo_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `service_id` bigint UNSIGNED DEFAULT NULL,
+  `claims_amount` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT 'Amount the HMO will pay',
   `payable_amount` decimal(10,2) NOT NULL COMMENT 'Amount the patient must pay',
-  `coverage_mode` enum('express','primary','secondary') NOT NULL DEFAULT 'primary' COMMENT 'express: auto-approved, primary: requires validation, secondary: requires validation + auth code',
-  `display_name` varchar(255) DEFAULT NULL COMMENT 'Override name shown in claims reports and validation records; falls back to product_name/service_name when null',
+  `coverage_mode` enum('express','primary','secondary') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'primary' COMMENT 'express: auto-approved, primary: requires validation, secondary: requires validation + auth code',
+  `display_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Override name shown in claims reports and validation records; falls back to product_name/service_name when null',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -9384,7 +9395,10 @@ INSERT INTO `hmo_tariffs` (`id`, `hmo_id`, `product_id`, `service_id`, `claims_a
 (4249, 15, NULL, 140, 5000.00, 0.00, 'primary', NULL, '2026-03-12 07:04:10', '2026-03-12 07:04:10'),
 (4250, 15, NULL, 141, 15000.00, 0.00, 'primary', NULL, '2026-03-12 07:04:10', '2026-03-12 07:04:10'),
 (4251, 15, NULL, 142, 15000.00, 0.00, 'primary', NULL, '2026-03-12 07:04:10', '2026-03-12 07:04:10'),
-(4252, 15, NULL, 143, 25000.00, 0.00, 'primary', NULL, '2026-03-12 07:04:10', '2026-03-12 07:04:10');
+(4252, 15, NULL, 143, 25000.00, 0.00, 'primary', NULL, '2026-03-12 07:04:10', '2026-03-12 07:04:10'),
+(4253, 5, 648, NULL, 3.00, 820.00, 'primary', NULL, '2026-04-12 18:23:06', '2026-04-12 18:23:06'),
+(4254, 14, 648, NULL, 3.00, 820.00, 'primary', NULL, '2026-04-12 18:23:06', '2026-04-12 18:23:06'),
+(4255, 16, 648, NULL, 3.00, 820.00, 'primary', NULL, '2026-04-12 18:23:06', '2026-04-12 18:23:06');
 
 -- --------------------------------------------------------
 
@@ -9393,17 +9407,17 @@ INSERT INTO `hmo_tariffs` (`id`, `hmo_id`, `product_id`, `service_id`, `claims_a
 --
 
 CREATE TABLE `hr_attachments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `attachable_type` varchar(255) NOT NULL,
-  `attachable_id` bigint(20) UNSIGNED NOT NULL,
-  `filename` varchar(255) NOT NULL,
-  `original_filename` varchar(255) NOT NULL,
-  `file_path` varchar(255) NOT NULL,
-  `mime_type` varchar(255) NOT NULL,
-  `file_size` bigint(20) UNSIGNED NOT NULL,
-  `document_type` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `uploaded_by` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `attachable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attachable_id` bigint UNSIGNED NOT NULL,
+  `filename` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `original_filename` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mime_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` bigint UNSIGNED NOT NULL,
+  `document_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `uploaded_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -9429,36 +9443,36 @@ INSERT INTO `hr_attachments` (`id`, `attachable_type`, `attachable_id`, `filenam
 --
 
 CREATE TABLE `imaging_service_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `billed_by` bigint UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED NOT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `result` longtext DEFAULT NULL,
-  `pending_result` longtext DEFAULT NULL,
-  `result_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`result_data`)),
-  `pending_result_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`pending_result_data`)),
-  `attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`attachments`)),
-  `pending_attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`pending_attachments`)),
+  `service_id` bigint UNSIGNED NOT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `result` longtext COLLATE utf8mb4_unicode_ci,
+  `pending_result` longtext COLLATE utf8mb4_unicode_ci,
+  `result_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `pending_result_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `pending_attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
   `result_date` timestamp NULL DEFAULT NULL,
-  `result_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `doctor_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `note` text DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  `priority` varchar(20) NOT NULL DEFAULT 'routine' COMMENT 'routine|urgent|emergency',
+  `result_by` bigint UNSIGNED DEFAULT NULL,
+  `doctor_id` bigint UNSIGNED DEFAULT NULL,
+  `note` text COLLATE utf8mb4_unicode_ci,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `priority` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'routine' COMMENT 'routine|urgent|emergency',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `deletion_reason` text DEFAULT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
+  `deletion_reason` text COLLATE utf8mb4_unicode_ci,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `rejected_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `rejected_by` bigint UNSIGNED DEFAULT NULL,
   `rejected_at` timestamp NULL DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci
+) ;
 
 --
 -- Dumping data for table `imaging_service_requests`
@@ -9484,24 +9498,24 @@ INSERT INTO `imaging_service_requests` (`id`, `service_request_id`, `billed_by`,
 --
 
 CREATE TABLE `immunization_records` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `vaccine_name` varchar(200) NOT NULL,
-  `dose_number` int(11) NOT NULL DEFAULT 1,
-  `dose` varchar(100) DEFAULT NULL,
-  `route` enum('IM','SC','Oral','ID') NOT NULL DEFAULT 'IM',
-  `site` varchar(100) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `product_or_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `vaccine_name` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `dose_number` int NOT NULL DEFAULT '1',
+  `dose` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `route` enum('IM','SC','Oral','ID') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'IM',
+  `site` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `administered_at` datetime NOT NULL,
-  `administered_by` bigint(20) UNSIGNED NOT NULL,
-  `dispensed_from_store_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `batch_number` varchar(50) DEFAULT NULL,
-  `manufacturer` varchar(200) DEFAULT NULL,
+  `administered_by` bigint UNSIGNED NOT NULL,
+  `dispensed_from_store_id` bigint UNSIGNED DEFAULT NULL,
+  `batch_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `manufacturer` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `expiry_date` date DEFAULT NULL,
   `next_due_date` date DEFAULT NULL,
-  `adverse_reaction` text DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `adverse_reaction` text COLLATE utf8mb4_unicode_ci,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -9526,25 +9540,25 @@ INSERT INTO `immunization_records` (`id`, `patient_id`, `product_id`, `product_o
 --
 
 CREATE TABLE `injection_administrations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `dose` varchar(100) NOT NULL,
-  `route` enum('IM','IV','SC','ID') NOT NULL DEFAULT 'IM',
-  `site` varchar(100) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `product_or_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `dose` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `route` enum('IM','IV','SC','ID') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'IM',
+  `site` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `administered_at` datetime NOT NULL,
-  `administered_by` bigint(20) UNSIGNED NOT NULL,
-  `drug_source` enum('pharmacy_dispensed','patient_own','ward_stock') NOT NULL DEFAULT 'pharmacy_dispensed',
-  `product_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `external_drug_name` varchar(255) DEFAULT NULL,
+  `administered_by` bigint UNSIGNED NOT NULL,
+  `drug_source` enum('pharmacy_dispensed','patient_own','ward_stock') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pharmacy_dispensed',
+  `product_request_id` bigint UNSIGNED DEFAULT NULL,
+  `external_drug_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `external_qty` decimal(8,2) DEFAULT NULL,
-  `external_batch_number` varchar(50) DEFAULT NULL,
+  `external_batch_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `external_expiry_date` date DEFAULT NULL,
-  `external_source_note` text DEFAULT NULL,
-  `dispensed_from_store_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `batch_number` varchar(50) DEFAULT NULL,
+  `external_source_note` text COLLATE utf8mb4_unicode_ci,
+  `dispensed_from_store_id` bigint UNSIGNED DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `batch_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `expiry_date` date DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -9574,14 +9588,14 @@ INSERT INTO `injection_administrations` (`id`, `patient_id`, `product_id`, `prod
 --
 
 CREATE TABLE `intake_output_histories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `period_id` bigint(20) UNSIGNED NOT NULL,
-  `record_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `action` varchar(255) NOT NULL,
-  `reason` text DEFAULT NULL,
-  `original_values` text DEFAULT NULL,
-  `new_values` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `period_id` bigint UNSIGNED NOT NULL,
+  `record_id` bigint UNSIGNED DEFAULT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `action` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci,
+  `original_values` text COLLATE utf8mb4_unicode_ci,
+  `new_values` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -9593,13 +9607,13 @@ CREATE TABLE `intake_output_histories` (
 --
 
 CREATE TABLE `intake_output_periods` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `type` enum('fluid','solid') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `type` enum('fluid','solid') COLLATE utf8mb4_unicode_ci NOT NULL,
   `started_at` datetime NOT NULL,
   `ended_at` datetime DEFAULT NULL,
-  `ended_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `nurse_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `ended_by` bigint UNSIGNED DEFAULT NULL,
+  `nurse_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -9620,19 +9634,19 @@ INSERT INTO `intake_output_periods` (`id`, `patient_id`, `type`, `started_at`, `
 --
 
 CREATE TABLE `intake_output_records` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `period_id` bigint(20) UNSIGNED NOT NULL,
-  `type` enum('intake','output') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `period_id` bigint UNSIGNED NOT NULL,
+  `type` enum('intake','output') COLLATE utf8mb4_unicode_ci NOT NULL,
   `amount` decimal(8,2) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `recorded_at` datetime NOT NULL,
   `edited_at` timestamp NULL DEFAULT NULL,
-  `edited_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `edit_reason` varchar(255) DEFAULT NULL,
+  `edited_by` bigint UNSIGNED DEFAULT NULL,
+  `edit_reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `delete_reason` varchar(255) DEFAULT NULL,
-  `nurse_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
+  `delete_reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `nurse_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -9654,33 +9668,33 @@ INSERT INTO `intake_output_records` (`id`, `period_id`, `type`, `amount`, `descr
 --
 
 CREATE TABLE `inter_account_transfers` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `transfer_number` varchar(50) NOT NULL,
-  `from_bank_id` bigint(20) UNSIGNED NOT NULL,
-  `to_bank_id` bigint(20) UNSIGNED NOT NULL,
-  `from_account_id` bigint(20) UNSIGNED NOT NULL,
-  `to_account_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `transfer_number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `from_bank_id` bigint UNSIGNED NOT NULL,
+  `to_bank_id` bigint UNSIGNED NOT NULL,
+  `from_account_id` bigint UNSIGNED NOT NULL,
+  `to_account_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
   `transfer_date` date NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `reference` varchar(100) DEFAULT NULL COMMENT 'Bank reference number',
-  `description` text NOT NULL,
-  `transfer_method` enum('internal','wire','eft','cheque','rtgs','neft') NOT NULL DEFAULT 'internal',
-  `is_same_bank` tinyint(1) NOT NULL DEFAULT 0,
+  `reference` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Bank reference number',
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `transfer_method` enum('internal','wire','eft','cheque','rtgs','neft') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'internal',
+  `is_same_bank` tinyint(1) NOT NULL DEFAULT '0',
   `expected_clearance_date` date DEFAULT NULL,
   `actual_clearance_date` date DEFAULT NULL,
-  `transfer_fee` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `fee_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('draft','pending_approval','approved','initiated','in_transit','cleared','failed','cancelled') NOT NULL DEFAULT 'draft',
-  `initiated_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `transfer_fee` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `fee_account_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('draft','pending_approval','approved','initiated','in_transit','cleared','failed','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `initiated_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
   `initiated_at` timestamp NULL DEFAULT NULL,
   `cleared_at` timestamp NULL DEFAULT NULL,
-  `failure_reason` text DEFAULT NULL,
-  `cancelled_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `failure_reason` text COLLATE utf8mb4_unicode_ci,
+  `cancelled_by` bigint UNSIGNED DEFAULT NULL,
   `cancelled_at` timestamp NULL DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -9703,7 +9717,7 @@ INSERT INTO `inter_account_transfers` (`id`, `transfer_number`, `from_bank_id`, 
 --
 
 CREATE TABLE `invoices` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -9715,13 +9729,13 @@ CREATE TABLE `invoices` (
 --
 
 CREATE TABLE `jobs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `queue` varchar(255) NOT NULL,
-  `payload` longtext NOT NULL,
-  `attempts` tinyint(3) UNSIGNED NOT NULL,
-  `reserved_at` int(10) UNSIGNED DEFAULT NULL,
-  `available_at` int(10) UNSIGNED NOT NULL,
-  `created_at` int(10) UNSIGNED NOT NULL
+  `id` bigint UNSIGNED NOT NULL,
+  `queue` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attempts` tinyint UNSIGNED NOT NULL,
+  `reserved_at` int UNSIGNED DEFAULT NULL,
+  `available_at` int UNSIGNED NOT NULL,
+  `created_at` int UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -9731,28 +9745,28 @@ CREATE TABLE `jobs` (
 --
 
 CREATE TABLE `journal_entries` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `entry_number` varchar(20) NOT NULL,
-  `accounting_period_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `entry_number` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `accounting_period_id` bigint UNSIGNED NOT NULL,
   `entry_date` date NOT NULL,
-  `description` text NOT NULL,
-  `reference_type` varchar(100) DEFAULT NULL,
-  `reference_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `entry_type` enum('auto','manual','opening','closing','reversal','adjustment') DEFAULT NULL,
-  `status` enum('draft','pending_approval','approved','posted','reversed','rejected') DEFAULT 'draft',
-  `reversal_of_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `reversed_by_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `submitted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reference_type` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reference_id` bigint UNSIGNED DEFAULT NULL,
+  `entry_type` enum('auto','manual','opening','closing','reversal','adjustment') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('draft','pending_approval','approved','posted','reversed','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
+  `reversal_of_id` bigint UNSIGNED DEFAULT NULL,
+  `reversed_by_id` bigint UNSIGNED DEFAULT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `submitted_by` bigint UNSIGNED DEFAULT NULL,
   `submitted_at` timestamp NULL DEFAULT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `rejected_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `rejected_by` bigint UNSIGNED DEFAULT NULL,
   `rejected_at` timestamp NULL DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL,
-  `posted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
+  `posted_by` bigint UNSIGNED DEFAULT NULL,
   `posted_at` timestamp NULL DEFAULT NULL,
-  `edit_requires_approval` tinyint(1) NOT NULL DEFAULT 1,
+  `edit_requires_approval` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -9852,22 +9866,22 @@ INSERT INTO `journal_entries` (`id`, `entry_number`, `accounting_period_id`, `en
 --
 
 CREATE TABLE `journal_entry_edits` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED NOT NULL,
-  `original_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`original_data`)),
-  `edited_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`edited_data`)),
-  `edit_reason` text NOT NULL,
-  `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
-  `requested_by` bigint(20) UNSIGNED NOT NULL,
-  `requested_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED NOT NULL,
+  `original_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `edited_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `edit_reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `requested_by` bigint UNSIGNED NOT NULL,
+  `requested_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `rejected_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `rejected_by` bigint UNSIGNED DEFAULT NULL,
   `rejected_at` timestamp NULL DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL,
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 -- --------------------------------------------------------
 
@@ -9876,25 +9890,25 @@ CREATE TABLE `journal_entry_edits` (
 --
 
 CREATE TABLE `journal_entry_lines` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED NOT NULL,
-  `line_number` smallint(6) NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
-  `cost_center_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `sub_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_category_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_category_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `category` varchar(50) DEFAULT NULL COMMENT 'lab, pharmacy, imaging, consultation, procedure, admission, payroll, expense, po_payment, hmo_remittance',
-  `debit` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `credit` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `narration` varchar(255) DEFAULT NULL,
-  `cash_flow_category` enum('operating','investing','financing') DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED NOT NULL,
+  `line_number` smallint NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
+  `cost_center_id` bigint UNSIGNED DEFAULT NULL,
+  `sub_account_id` bigint UNSIGNED DEFAULT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `service_id` bigint UNSIGNED DEFAULT NULL,
+  `product_category_id` bigint UNSIGNED DEFAULT NULL,
+  `service_category_id` bigint UNSIGNED DEFAULT NULL,
+  `hmo_id` bigint UNSIGNED DEFAULT NULL,
+  `supplier_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `department_id` bigint UNSIGNED DEFAULT NULL,
+  `category` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'lab, pharmacy, imaging, consultation, procedure, admission, payroll, expense, po_payment, hmo_remittance',
+  `debit` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `credit` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `narration` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cash_flow_category` enum('operating','investing','financing') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -10091,45 +10105,45 @@ INSERT INTO `journal_entry_lines` (`id`, `journal_entry_id`, `line_number`, `acc
 --
 
 CREATE TABLE `lab_service_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `billed_by` bigint UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED NOT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `result` longtext DEFAULT NULL,
-  `pending_result` longtext DEFAULT NULL,
-  `result_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Structured result data for V2 templates' CHECK (json_valid(`result_data`)),
-  `pending_result_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`pending_result_data`)),
-  `attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`attachments`)),
-  `pending_attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`pending_attachments`)),
+  `service_id` bigint UNSIGNED NOT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `result` longtext COLLATE utf8mb4_general_ci,
+  `pending_result` longtext COLLATE utf8mb4_general_ci,
+  `result_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'Structured result data for V2 templates',
+  `pending_result_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `pending_attachments` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
   `result_date` timestamp NULL DEFAULT NULL,
-  `result_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `sample_taken` tinyint(1) NOT NULL DEFAULT 0,
+  `result_by` bigint UNSIGNED DEFAULT NULL,
+  `sample_taken` tinyint(1) NOT NULL DEFAULT '0',
   `sample_date` timestamp NULL DEFAULT NULL,
-  `sample_taken_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `lab_number` varchar(50) DEFAULT NULL,
-  `doctor_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `note` text DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  `priority` varchar(20) NOT NULL DEFAULT 'routine' COMMENT 'routine|urgent|emergency',
+  `sample_taken_by` bigint UNSIGNED DEFAULT NULL,
+  `lab_number` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `doctor_id` bigint UNSIGNED DEFAULT NULL,
+  `note` text COLLATE utf8mb4_general_ci,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `priority` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'routine' COMMENT 'routine|urgent|emergency',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_medical_report_id` int(11) DEFAULT NULL,
-  `old_patient_lab_services` int(11) DEFAULT NULL,
+  `old_medical_report_id` int DEFAULT NULL,
+  `old_patient_lab_services` int DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `deletion_reason` text DEFAULT NULL,
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
+  `deletion_reason` text COLLATE utf8mb4_general_ci,
   `dismissed_at` timestamp NULL DEFAULT NULL,
-  `dismissed_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `dismiss_reason` text DEFAULT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `dismissed_by` bigint UNSIGNED DEFAULT NULL,
+  `dismiss_reason` text COLLATE utf8mb4_general_ci,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `rejected_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `rejected_by` bigint UNSIGNED DEFAULT NULL,
   `rejected_at` timestamp NULL DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `rejection_reason` text COLLATE utf8mb4_general_ci
+) ;
 
 --
 -- Dumping data for table `lab_service_requests`
@@ -10148,7 +10162,8 @@ INSERT INTO `lab_service_requests` (`id`, `service_request_id`, `billed_by`, `bi
 (10, NULL, NULL, NULL, 126, 5, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 1, NULL, 1, 'routine', '2026-03-06 07:02:40', '2026-03-06 07:02:51', NULL, NULL, '2026-03-06 07:02:51', 1, 'Duplicate request', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (11, NULL, NULL, NULL, 126, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 1, NULL, 1, 'routine', '2026-03-06 07:26:19', '2026-03-06 07:26:26', NULL, NULL, '2026-03-06 07:26:26', 1, 'Patient refused', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (12, 86, 1, '2026-03-10 08:06:15', 126, NULL, 1, NULL, '<figure class=\"table\"><table><thead><tr><th>LFT</th><th>Result</th><th>Normal Range</th></tr></thead><tbody><tr><td>T. Protein</td><td>dhgajdgasd</td><td>60-80g/L</td></tr><tr><td>Albumin</td><td>&nbsp;</td><td>35-50g/L</td></tr><tr><td>Bilirubin-T</td><td>&nbsp;</td><td>&lt;1.0mg/dl</td></tr><tr><td>Bilirubin-C</td><td>&nbsp;</td><td>&lt;0.3mg/dl</td></tr><tr><td>Alk phos</td><td>&nbsp;</td><td>73-207u/L</td></tr><tr><td>ALT (SGPT)</td><td>&nbsp;</td><td>6-21u/L</td></tr><tr><td>AST (SGOT)</td><td>&nbsp;</td><td>7-21u/L</td></tr><tr><td>GGT</td><td>&nbsp;</td><td>4-20u/L</td></tr></tbody></table></figure>', NULL, NULL, NULL, NULL, '2026-03-10 08:08:30', 1, 1, '2026-03-10 08:06:31', 1, '003', 1, '', 5, 'routine', '2026-03-10 08:05:15', '2026-03-10 08:08:30', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(13, 85, 1, '2026-03-10 08:06:15', 39, NULL, 1, '<figure class=\"table\"><table><thead><tr><th>LFT</th><th>Result</th><th>Normal Range</th></tr></thead><tbody><tr><td>T. Protein</td><td>dgsad</td><td>60-80g/L</td></tr><tr><td>Albumin</td><td>&nbsp;</td><td>35-50g/L</td></tr><tr><td>Bilirubin-T</td><td>&nbsp;</td><td>&lt;1.0mg/dl</td></tr><tr><td>Bilirubin-C</td><td>&nbsp;</td><td>&lt;0.3mg/dl</td></tr><tr><td>Alk phos</td><td>&nbsp;</td><td>73-207u/L</td></tr><tr><td>ALT (SGPT)</td><td>&nbsp;</td><td>6-21u/L</td></tr><tr><td>AST (SGOT)</td><td>&nbsp;</td><td>7-21u/L</td></tr><tr><td>GGT</td><td>&nbsp;</td><td>4-20u/L</td></tr></tbody></table></figure>', NULL, NULL, NULL, NULL, NULL, '2026-03-10 08:08:39', 1, 1, '2026-03-10 08:06:31', 1, '003', 1, '', 4, 'routine', '2026-03-10 08:05:54', '2026-03-10 08:09:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-10 08:09:28', NULL, NULL, NULL);
+(13, 85, 1, '2026-03-10 08:06:15', 39, NULL, 1, '<figure class=\"table\"><table><thead><tr><th>LFT</th><th>Result</th><th>Normal Range</th></tr></thead><tbody><tr><td>T. Protein</td><td>dgsad</td><td>60-80g/L</td></tr><tr><td>Albumin</td><td>&nbsp;</td><td>35-50g/L</td></tr><tr><td>Bilirubin-T</td><td>&nbsp;</td><td>&lt;1.0mg/dl</td></tr><tr><td>Bilirubin-C</td><td>&nbsp;</td><td>&lt;0.3mg/dl</td></tr><tr><td>Alk phos</td><td>&nbsp;</td><td>73-207u/L</td></tr><tr><td>ALT (SGPT)</td><td>&nbsp;</td><td>6-21u/L</td></tr><tr><td>AST (SGOT)</td><td>&nbsp;</td><td>7-21u/L</td></tr><tr><td>GGT</td><td>&nbsp;</td><td>4-20u/L</td></tr></tbody></table></figure>', NULL, NULL, NULL, NULL, NULL, '2026-03-10 08:08:39', 1, 1, '2026-03-10 08:06:31', 1, '003', 1, '', 4, 'routine', '2026-03-10 08:05:54', '2026-03-10 08:09:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-03-10 08:09:28', NULL, NULL, NULL),
+(14, NULL, NULL, NULL, 39, 9, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, 1, NULL, 1, 'routine', '2026-04-10 15:25:31', '2026-04-10 15:25:31', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -10157,18 +10172,18 @@ INSERT INTO `lab_service_requests` (`id`, `service_request_id`, `billed_by`, `bi
 --
 
 CREATE TABLE `lab_workbench_audit_logs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `lab_service_request_id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `action` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `old_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`old_values`)),
-  `new_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`new_values`)),
-  `ip_address` varchar(255) DEFAULT NULL,
-  `user_agent` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `lab_service_request_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `action` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `old_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `new_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `ip_address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `lab_workbench_audit_logs`
@@ -10223,44 +10238,44 @@ INSERT INTO `lab_workbench_audit_logs` (`id`, `lab_service_request_id`, `user_id
 --
 
 CREATE TABLE `leases` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `lease_number` varchar(255) NOT NULL,
-  `lease_type` enum('operating','finance','short_term','low_value') NOT NULL,
-  `leased_item` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `lessor_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `lessor_name` varchar(255) DEFAULT NULL,
-  `lessor_contact` varchar(255) DEFAULT NULL,
-  `rou_asset_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `lease_liability_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `depreciation_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `interest_account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `lease_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `lease_type` enum('operating','finance','short_term','low_value') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `leased_item` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `lessor_id` bigint UNSIGNED DEFAULT NULL,
+  `lessor_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `lessor_contact` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `rou_asset_account_id` bigint UNSIGNED DEFAULT NULL,
+  `lease_liability_account_id` bigint UNSIGNED DEFAULT NULL,
+  `depreciation_account_id` bigint UNSIGNED DEFAULT NULL,
+  `interest_account_id` bigint UNSIGNED DEFAULT NULL,
   `commencement_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `lease_term_months` int(11) NOT NULL,
+  `lease_term_months` int NOT NULL,
   `monthly_payment` decimal(15,2) NOT NULL,
-  `annual_rent_increase_rate` decimal(5,2) NOT NULL DEFAULT 0.00,
-  `incremental_borrowing_rate` decimal(8,4) NOT NULL DEFAULT 10.0000,
+  `annual_rent_increase_rate` decimal(5,2) NOT NULL DEFAULT '0.00',
+  `incremental_borrowing_rate` decimal(8,4) NOT NULL DEFAULT '10.0000',
   `total_lease_payments` decimal(15,2) NOT NULL,
-  `initial_rou_asset_value` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `initial_lease_liability` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `current_rou_asset_value` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `accumulated_rou_depreciation` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `current_lease_liability` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `initial_direct_costs` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `lease_incentives_received` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `has_purchase_option` tinyint(1) NOT NULL DEFAULT 0,
+  `initial_rou_asset_value` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `initial_lease_liability` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `current_rou_asset_value` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `accumulated_rou_depreciation` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `current_lease_liability` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `initial_direct_costs` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `lease_incentives_received` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `has_purchase_option` tinyint(1) NOT NULL DEFAULT '0',
   `purchase_option_amount` decimal(15,2) DEFAULT NULL,
-  `purchase_option_reasonably_certain` tinyint(1) NOT NULL DEFAULT 0,
-  `has_termination_option` tinyint(1) NOT NULL DEFAULT 0,
+  `purchase_option_reasonably_certain` tinyint(1) NOT NULL DEFAULT '0',
+  `has_termination_option` tinyint(1) NOT NULL DEFAULT '0',
   `earliest_termination_date` date DEFAULT NULL,
   `termination_penalty` decimal(15,2) DEFAULT NULL,
-  `residual_value_guarantee` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `asset_location` varchar(255) DEFAULT NULL,
-  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('draft','active','expired','terminated','purchased') NOT NULL DEFAULT 'draft',
-  `notes` text DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `residual_value_guarantee` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `asset_location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `department_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('draft','active','expired','terminated','purchased') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10281,23 +10296,23 @@ INSERT INTO `leases` (`id`, `lease_number`, `lease_type`, `leased_item`, `descri
 --
 
 CREATE TABLE `lease_modifications` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `lease_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `lease_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
   `modification_date` date NOT NULL,
-  `modification_type` enum('term_extension','term_reduction','payment_change','scope_change','rate_change') NOT NULL,
-  `description` text NOT NULL,
+  `modification_type` enum('term_extension','term_reduction','payment_change','scope_change','rate_change') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `old_lease_liability` decimal(15,2) NOT NULL,
   `old_rou_asset` decimal(15,2) NOT NULL,
-  `old_remaining_term_months` int(11) NOT NULL,
+  `old_remaining_term_months` int NOT NULL,
   `old_monthly_payment` decimal(15,2) NOT NULL,
   `new_lease_liability` decimal(15,2) NOT NULL,
   `new_rou_asset` decimal(15,2) NOT NULL,
-  `new_remaining_term_months` int(11) NOT NULL,
+  `new_remaining_term_months` int NOT NULL,
   `new_monthly_payment` decimal(15,2) NOT NULL,
   `adjustment_amount` decimal(15,2) NOT NULL,
-  `notes` text DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -10309,10 +10324,10 @@ CREATE TABLE `lease_modifications` (
 --
 
 CREATE TABLE `lease_payment_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `lease_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `payment_number` int(11) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `lease_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `payment_number` int NOT NULL,
   `due_date` date NOT NULL,
   `payment_date` date DEFAULT NULL,
   `payment_amount` decimal(15,2) NOT NULL,
@@ -10321,12 +10336,12 @@ CREATE TABLE `lease_payment_schedules` (
   `actual_payment` decimal(15,2) DEFAULT NULL,
   `opening_liability` decimal(15,2) NOT NULL,
   `closing_liability` decimal(15,2) NOT NULL,
-  `rou_depreciation` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `rou_depreciation` decimal(15,2) NOT NULL DEFAULT '0.00',
   `opening_rou_value` decimal(15,2) DEFAULT NULL,
   `closing_rou_value` decimal(15,2) DEFAULT NULL,
-  `status` enum('scheduled','paid','partial','overdue') NOT NULL DEFAULT 'scheduled',
-  `payment_reference` varchar(255) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `status` enum('scheduled','paid','partial','overdue') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'scheduled',
+  `payment_reference` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -10392,14 +10407,14 @@ INSERT INTO `lease_payment_schedules` (`id`, `lease_id`, `journal_entry_id`, `pa
 --
 
 CREATE TABLE `leave_balances` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `leave_type_id` bigint(20) UNSIGNED NOT NULL,
-  `year` int(11) NOT NULL,
-  `entitled_days` decimal(5,1) NOT NULL DEFAULT 0.0,
-  `used_days` decimal(5,1) NOT NULL DEFAULT 0.0,
-  `pending_days` decimal(5,1) NOT NULL DEFAULT 0.0,
-  `carried_forward` decimal(5,1) NOT NULL DEFAULT 0.0,
+  `id` bigint UNSIGNED NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `leave_type_id` bigint UNSIGNED NOT NULL,
+  `year` int NOT NULL,
+  `entitled_days` decimal(5,1) NOT NULL DEFAULT '0.0',
+  `used_days` decimal(5,1) NOT NULL DEFAULT '0.0',
+  `pending_days` decimal(5,1) NOT NULL DEFAULT '0.0',
+  `carried_forward` decimal(5,1) NOT NULL DEFAULT '0.0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -10418,28 +10433,28 @@ INSERT INTO `leave_balances` (`id`, `staff_id`, `leave_type_id`, `year`, `entitl
 --
 
 CREATE TABLE `leave_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `request_number` varchar(255) NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `leave_type_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `request_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `leave_type_id` bigint UNSIGNED NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `total_days` int(11) NOT NULL,
-  `is_half_day` tinyint(1) NOT NULL DEFAULT 0,
-  `reason` text DEFAULT NULL,
-  `handover_notes` text DEFAULT NULL,
-  `contact_during_leave` varchar(255) DEFAULT NULL,
-  `relief_staff_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','supervisor_approved','approved','rejected','cancelled','recalled') NOT NULL DEFAULT 'pending',
-  `supervisor_approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `total_days` int NOT NULL,
+  `is_half_day` tinyint(1) NOT NULL DEFAULT '0',
+  `reason` text COLLATE utf8mb4_unicode_ci,
+  `handover_notes` text COLLATE utf8mb4_unicode_ci,
+  `contact_during_leave` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `relief_staff_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('pending','supervisor_approved','approved','rejected','cancelled','recalled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `supervisor_approved_by` bigint UNSIGNED DEFAULT NULL,
   `supervisor_approved_at` timestamp NULL DEFAULT NULL,
-  `supervisor_comments` text DEFAULT NULL,
-  `hr_approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `supervisor_comments` text COLLATE utf8mb4_unicode_ci,
+  `hr_approved_by` bigint UNSIGNED DEFAULT NULL,
   `hr_approved_at` timestamp NULL DEFAULT NULL,
-  `hr_comments` text DEFAULT NULL,
-  `reviewed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `hr_comments` text COLLATE utf8mb4_unicode_ci,
+  `reviewed_by` bigint UNSIGNED DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
-  `review_comments` text DEFAULT NULL,
+  `review_comments` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10452,28 +10467,28 @@ CREATE TABLE `leave_requests` (
 --
 
 CREATE TABLE `leave_types` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `code` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `max_days_per_year` int(11) NOT NULL DEFAULT 0,
-  `max_consecutive_days` int(11) NOT NULL DEFAULT 0,
-  `max_requests_per_year` int(11) NOT NULL DEFAULT 0,
-  `min_days_notice` int(11) NOT NULL DEFAULT 0,
-  `max_carry_forward` int(11) DEFAULT 0,
-  `min_service_months` int(11) DEFAULT 0,
-  `requires_attachment` tinyint(1) NOT NULL DEFAULT 0,
-  `is_paid` tinyint(1) NOT NULL DEFAULT 1,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `allow_half_day` tinyint(1) DEFAULT 0,
-  `allow_carry_forward` tinyint(1) DEFAULT 0,
-  `color` varchar(255) NOT NULL DEFAULT '#3498db',
-  `gender_specific` varchar(255) DEFAULT NULL,
-  `applicable_employment_types` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`applicable_employment_types`)),
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `max_days_per_year` int NOT NULL DEFAULT '0',
+  `max_consecutive_days` int NOT NULL DEFAULT '0',
+  `max_requests_per_year` int NOT NULL DEFAULT '0',
+  `min_days_notice` int NOT NULL DEFAULT '0',
+  `max_carry_forward` int DEFAULT '0',
+  `min_service_months` int DEFAULT '0',
+  `requires_attachment` tinyint(1) NOT NULL DEFAULT '0',
+  `is_paid` tinyint(1) NOT NULL DEFAULT '1',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `allow_half_day` tinyint(1) DEFAULT '0',
+  `allow_carry_forward` tinyint(1) DEFAULT '0',
+  `color` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '#3498db',
+  `gender_specific` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `applicable_employment_types` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `leave_types`
@@ -10489,22 +10504,22 @@ INSERT INTO `leave_types` (`id`, `name`, `code`, `description`, `max_days_per_ye
 --
 
 CREATE TABLE `liability_payment_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `liability_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `payment_number` int(11) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `liability_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `payment_number` int NOT NULL,
   `due_date` date NOT NULL,
   `payment_date` date DEFAULT NULL,
   `scheduled_payment` decimal(15,2) NOT NULL,
   `principal_portion` decimal(15,2) NOT NULL,
   `interest_portion` decimal(15,2) NOT NULL,
   `actual_payment` decimal(15,2) DEFAULT NULL,
-  `late_fee` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `late_fee` decimal(15,2) NOT NULL DEFAULT '0.00',
   `opening_balance` decimal(15,2) NOT NULL,
   `closing_balance` decimal(15,2) NOT NULL,
-  `status` enum('scheduled','paid','partial','overdue','waived') NOT NULL DEFAULT 'scheduled',
-  `payment_reference` varchar(255) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `status` enum('scheduled','paid','partial','overdue','waived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'scheduled',
+  `payment_reference` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -10534,33 +10549,33 @@ INSERT INTO `liability_payment_schedules` (`id`, `liability_id`, `journal_entry_
 --
 
 CREATE TABLE `liability_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `liability_number` varchar(255) NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
-  `interest_expense_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `bank_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `liability_type` varchar(255) NOT NULL,
-  `creditor_name` varchar(255) NOT NULL,
-  `creditor_contact` varchar(255) DEFAULT NULL,
-  `reference_number` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `liability_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
+  `interest_expense_account_id` bigint UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `bank_account_id` bigint UNSIGNED DEFAULT NULL,
+  `liability_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `creditor_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `creditor_contact` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reference_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `principal_amount` decimal(15,2) NOT NULL,
   `current_balance` decimal(15,2) NOT NULL,
   `interest_rate` decimal(8,4) NOT NULL,
-  `interest_type` enum('simple','compound','flat') NOT NULL DEFAULT 'compound',
+  `interest_type` enum('simple','compound','flat') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'compound',
   `start_date` date NOT NULL,
   `maturity_date` date NOT NULL,
-  `term_months` int(11) NOT NULL,
-  `payment_frequency` enum('weekly','bi_weekly','monthly','quarterly','semi_annually','annually','at_maturity') NOT NULL DEFAULT 'monthly',
+  `term_months` int NOT NULL,
+  `payment_frequency` enum('weekly','bi_weekly','monthly','quarterly','semi_annually','annually','at_maturity') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'monthly',
   `next_payment_date` date NOT NULL,
   `regular_payment_amount` decimal(15,2) NOT NULL,
-  `collateral_description` text DEFAULT NULL,
+  `collateral_description` text COLLATE utf8mb4_unicode_ci,
   `collateral_value` decimal(15,2) DEFAULT NULL,
-  `current_portion` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `non_current_portion` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `status` enum('active','paid_off','defaulted','restructured','written_off') NOT NULL DEFAULT 'active',
-  `notes` text DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `current_portion` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `non_current_portion` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `status` enum('active','paid_off','defaulted','restructured','written_off') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10580,31 +10595,31 @@ INSERT INTO `liability_schedules` (`id`, `liability_number`, `account_id`, `inte
 --
 
 CREATE TABLE `maternity_babies` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `birth_order` smallint(6) NOT NULL DEFAULT 1,
-  `sex` enum('male','female','ambiguous') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `enrollment_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `birth_order` smallint NOT NULL DEFAULT '1',
+  `sex` enum('male','female','ambiguous') COLLATE utf8mb4_unicode_ci NOT NULL,
   `birth_weight_kg` decimal(4,3) DEFAULT NULL,
   `length_cm` decimal(5,1) DEFAULT NULL,
   `head_circumference_cm` decimal(5,1) DEFAULT NULL,
   `chest_circumference_cm` decimal(5,1) DEFAULT NULL,
-  `apgar_1_min` smallint(6) DEFAULT NULL,
-  `apgar_5_min` smallint(6) DEFAULT NULL,
-  `apgar_10_min` smallint(6) DEFAULT NULL,
-  `resuscitation` tinyint(1) NOT NULL DEFAULT 0,
-  `resuscitation_details` text DEFAULT NULL,
-  `birth_defects` text DEFAULT NULL,
-  `feeding_method` enum('exclusive_breastfeeding','formula','mixed') NOT NULL DEFAULT 'exclusive_breastfeeding',
-  `bcg_given` tinyint(1) NOT NULL DEFAULT 0,
-  `opv0_given` tinyint(1) NOT NULL DEFAULT 0,
-  `hbv0_given` tinyint(1) NOT NULL DEFAULT 0,
-  `vitamin_k_given` tinyint(1) NOT NULL DEFAULT 0,
-  `eye_prophylaxis` tinyint(1) NOT NULL DEFAULT 0,
+  `apgar_1_min` smallint DEFAULT NULL,
+  `apgar_5_min` smallint DEFAULT NULL,
+  `apgar_10_min` smallint DEFAULT NULL,
+  `resuscitation` tinyint(1) NOT NULL DEFAULT '0',
+  `resuscitation_details` text COLLATE utf8mb4_unicode_ci,
+  `birth_defects` text COLLATE utf8mb4_unicode_ci,
+  `feeding_method` enum('exclusive_breastfeeding','formula','mixed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'exclusive_breastfeeding',
+  `bcg_given` tinyint(1) NOT NULL DEFAULT '0',
+  `opv0_given` tinyint(1) NOT NULL DEFAULT '0',
+  `hbv0_given` tinyint(1) NOT NULL DEFAULT '0',
+  `vitamin_k_given` tinyint(1) NOT NULL DEFAULT '0',
+  `eye_prophylaxis` tinyint(1) NOT NULL DEFAULT '0',
   `date_first_seen` date DEFAULT NULL,
-  `reasons_for_special_care` text DEFAULT NULL,
-  `status` enum('alive','deceased','nicu','discharged') NOT NULL DEFAULT 'alive',
-  `notes` text DEFAULT NULL,
+  `reasons_for_special_care` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('alive','deceased','nicu','discharged') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'alive',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10626,11 +10641,11 @@ INSERT INTO `maternity_babies` (`id`, `enrollment_id`, `patient_id`, `birth_orde
 --
 
 CREATE TABLE `maternity_encounter_links` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
-  `encounter_id` bigint(20) UNSIGNED NOT NULL,
-  `visit_type` enum('anc_booking','anc_followup','emergency','delivery','postnatal','immunization','growth_monitoring','other') NOT NULL,
-  `notes` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `enrollment_id` bigint UNSIGNED NOT NULL,
+  `encounter_id` bigint UNSIGNED NOT NULL,
+  `visit_type` enum('anc_booking','anc_followup','emergency','delivery','postnatal','immunization','growth_monitoring','other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10643,42 +10658,42 @@ CREATE TABLE `maternity_encounter_links` (
 --
 
 CREATE TABLE `maternity_enrollments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `enrolled_by` bigint(20) UNSIGNED NOT NULL,
-  `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `enrolled_by` bigint UNSIGNED NOT NULL,
+  `service_request_id` bigint UNSIGNED DEFAULT NULL,
   `enrollment_date` date NOT NULL,
   `booking_date` date DEFAULT NULL,
-  `entry_point` enum('anc','delivery','postnatal') NOT NULL DEFAULT 'anc',
+  `entry_point` enum('anc','delivery','postnatal') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'anc',
   `lmp` date DEFAULT NULL,
   `edd` date DEFAULT NULL,
-  `gestational_age_at_booking` smallint(6) DEFAULT NULL,
-  `gravida` smallint(6) DEFAULT NULL,
-  `parity` smallint(6) DEFAULT 0,
-  `alive` smallint(6) DEFAULT 0,
-  `abortion_miscarriage` smallint(6) DEFAULT 0,
-  `blood_group` enum('A+','A-','B+','B-','AB+','AB-','O+','O-') DEFAULT NULL,
-  `genotype` enum('AA','AS','AC','SS','SC','Others') DEFAULT NULL,
+  `gestational_age_at_booking` smallint DEFAULT NULL,
+  `gravida` smallint DEFAULT NULL,
+  `parity` smallint DEFAULT '0',
+  `alive` smallint DEFAULT '0',
+  `abortion_miscarriage` smallint DEFAULT '0',
+  `blood_group` enum('A+','A-','B+','B-','AB+','AB-','O+','O-') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `genotype` enum('AA','AS','AC','SS','SC','Others') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `height_cm` decimal(5,1) DEFAULT NULL,
   `booking_weight_kg` decimal(5,2) DEFAULT NULL,
   `booking_bmi` decimal(5,1) DEFAULT NULL,
-  `booking_bp` varchar(255) DEFAULT NULL,
-  `pelvis_assessment` varchar(255) DEFAULT NULL,
-  `nipple_assessment` varchar(255) DEFAULT NULL,
-  `general_condition` text DEFAULT NULL,
-  `risk_level` enum('low','moderate','high','very_high') NOT NULL DEFAULT 'low',
-  `risk_factors` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`risk_factors`)),
-  `birth_plan_notes` text DEFAULT NULL,
-  `preferred_delivery_place` varchar(255) DEFAULT NULL,
-  `ante_natal_records` enum('booked','un-booked') NOT NULL DEFAULT 'booked',
-  `status` enum('active','delivered','postnatal','completed','transferred','deceased') NOT NULL DEFAULT 'active',
+  `booking_bp` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pelvis_assessment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `nipple_assessment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `general_condition` text COLLATE utf8mb4_unicode_ci,
+  `risk_level` enum('low','moderate','high','very_high') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'low',
+  `risk_factors` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `birth_plan_notes` text COLLATE utf8mb4_unicode_ci,
+  `preferred_delivery_place` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ante_natal_records` enum('booked','un-booked') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'booked',
+  `status` enum('active','delivered','postnatal','completed','transferred','deceased') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
   `completed_at` timestamp NULL DEFAULT NULL,
-  `outcome_summary` text DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `outcome_summary` text COLLATE utf8mb4_unicode_ci,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `maternity_enrollments`
@@ -10695,12 +10710,12 @@ INSERT INTO `maternity_enrollments` (`id`, `patient_id`, `enrolled_by`, `service
 --
 
 CREATE TABLE `maternity_medical_history` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
-  `category` enum('medical','surgical','obstetric','family','social') NOT NULL,
-  `description` text NOT NULL,
-  `year` year(4) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `enrollment_id` bigint UNSIGNED NOT NULL,
+  `category` enum('medical','surgical','obstetric','family','social') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `year` year DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10722,27 +10737,27 @@ INSERT INTO `maternity_medical_history` (`id`, `enrollment_id`, `category`, `des
 --
 
 CREATE TABLE `maternity_previous_pregnancies` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
-  `year` year(4) DEFAULT NULL,
-  `place_of_delivery` varchar(255) DEFAULT NULL,
-  `duration_weeks` smallint(6) DEFAULT NULL,
-  `complications` text DEFAULT NULL,
-  `type_of_labour` text DEFAULT NULL,
-  `baby_alive` tinyint(1) NOT NULL DEFAULT 0,
-  `baby_dead` tinyint(1) NOT NULL DEFAULT 0,
-  `baby_stillbirth` tinyint(1) NOT NULL DEFAULT 0,
-  `baby_sex` enum('male','female') DEFAULT NULL,
-  `duration_of_pregnancy` varchar(255) DEFAULT NULL,
-  `ante_natal_complications` text DEFAULT NULL,
-  `labour_notes` text DEFAULT NULL,
-  `baby_alive_or_dead` enum('alive','dead','stillbirth') DEFAULT NULL,
-  `sex` enum('male','female') DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `enrollment_id` bigint UNSIGNED NOT NULL,
+  `year` year DEFAULT NULL,
+  `place_of_delivery` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `duration_weeks` smallint DEFAULT NULL,
+  `complications` text COLLATE utf8mb4_unicode_ci,
+  `type_of_labour` text COLLATE utf8mb4_unicode_ci,
+  `baby_alive` tinyint(1) NOT NULL DEFAULT '0',
+  `baby_dead` tinyint(1) NOT NULL DEFAULT '0',
+  `baby_stillbirth` tinyint(1) NOT NULL DEFAULT '0',
+  `baby_sex` enum('male','female') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `duration_of_pregnancy` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ante_natal_complications` text COLLATE utf8mb4_unicode_ci,
+  `labour_notes` text COLLATE utf8mb4_unicode_ci,
+  `baby_alive_or_dead` enum('alive','dead','stillbirth') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sex` enum('male','female') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `birth_weight_kg` decimal(4,2) DEFAULT NULL,
-  `present_health` varchar(255) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `age_at_death` varchar(255) DEFAULT NULL,
-  `sort_order` smallint(6) NOT NULL DEFAULT 0,
+  `present_health` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `age_at_death` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` smallint NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10763,14 +10778,14 @@ INSERT INTO `maternity_previous_pregnancies` (`id`, `enrollment_id`, `year`, `pl
 --
 
 CREATE TABLE `medical_reports` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `doctor_id` bigint(20) UNSIGNED NOT NULL,
-  `title` varchar(255) NOT NULL DEFAULT 'Medical Report',
-  `content` longtext NOT NULL COMMENT 'HTML content from WYSIWYG editor',
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `doctor_id` bigint UNSIGNED NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Medical Report',
+  `content` longtext COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'HTML content from WYSIWYG editor',
   `report_date` date NOT NULL,
-  `status` enum('draft','finalized') NOT NULL DEFAULT 'draft',
+  `status` enum('draft','finalized') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
   `finalized_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -10793,36 +10808,36 @@ INSERT INTO `medical_reports` (`id`, `patient_id`, `encounter_id`, `doctor_id`, 
 --
 
 CREATE TABLE `medication_administrations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `schedule_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `product_or_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `schedule_id` bigint UNSIGNED DEFAULT NULL,
   `administered_at` datetime NOT NULL,
-  `dose` varchar(255) NOT NULL,
-  `qty` decimal(8,2) DEFAULT 1.00 COMMENT 'Qty per administration (units consumed from prescribed total)',
-  `route` varchar(255) NOT NULL,
-  `comment` text DEFAULT NULL,
-  `administered_by` bigint(20) UNSIGNED NOT NULL,
-  `drug_source` enum('pharmacy_dispensed','patient_own','ward_stock') NOT NULL DEFAULT 'pharmacy_dispensed',
-  `product_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `external_drug_name` varchar(255) DEFAULT NULL,
+  `dose` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `qty` decimal(8,2) DEFAULT '1.00' COMMENT 'Qty per administration (units consumed from prescribed total)',
+  `route` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `comment` text COLLATE utf8mb4_unicode_ci,
+  `administered_by` bigint UNSIGNED NOT NULL,
+  `drug_source` enum('pharmacy_dispensed','patient_own','ward_stock') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pharmacy_dispensed',
+  `product_request_id` bigint UNSIGNED DEFAULT NULL,
+  `external_drug_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `external_qty` decimal(8,2) DEFAULT NULL,
-  `external_batch_number` varchar(50) DEFAULT NULL,
+  `external_batch_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `external_expiry_date` date DEFAULT NULL,
-  `external_source_note` text DEFAULT NULL,
-  `store_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `dispensed_from_batch_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `edited_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `external_source_note` text COLLATE utf8mb4_unicode_ci,
+  `store_id` bigint UNSIGNED DEFAULT NULL,
+  `dispensed_from_batch_id` bigint UNSIGNED DEFAULT NULL,
+  `edited_by` bigint UNSIGNED DEFAULT NULL,
   `edited_at` datetime DEFAULT NULL,
-  `edit_reason` text DEFAULT NULL,
-  `previous_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_data`)),
+  `edit_reason` text COLLATE utf8mb4_unicode_ci,
+  `previous_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `delete_reason` text DEFAULT NULL,
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
+  `delete_reason` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `medication_administrations`
@@ -10849,12 +10864,12 @@ INSERT INTO `medication_administrations` (`id`, `patient_id`, `product_id`, `pro
 --
 
 CREATE TABLE `medication_histories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED NOT NULL,
-  `action` enum('discontinue','resume') NOT NULL,
-  `reason` text NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `product_or_service_request_id` bigint UNSIGNED NOT NULL,
+  `action` enum('discontinue','resume') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -10876,16 +10891,16 @@ INSERT INTO `medication_histories` (`id`, `patient_id`, `product_or_service_requ
 --
 
 CREATE TABLE `medication_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `drug_source` varchar(30) NOT NULL DEFAULT 'pharmacy_dispensed',
-  `external_drug_name` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `product_or_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `drug_source` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pharmacy_dispensed',
+  `external_drug_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `scheduled_time` datetime NOT NULL,
-  `dose` varchar(255) DEFAULT NULL,
-  `route` varchar(255) DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `dose` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `route` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10957,10 +10972,10 @@ INSERT INTO `medication_schedules` (`id`, `patient_id`, `product_or_service_requ
 --
 
 CREATE TABLE `messages` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `thread_id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
-  `body` text NOT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `thread_id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
+  `body` text COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -10985,9 +11000,9 @@ INSERT INTO `messages` (`id`, `thread_id`, `user_id`, `body`, `created_at`, `upd
 --
 
 CREATE TABLE `migrations` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `migration` varchar(255) NOT NULL,
-  `batch` int(11) NOT NULL
+  `id` int UNSIGNED NOT NULL,
+  `migration` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `batch` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -11281,7 +11296,13 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (311, '2026_03_06_193701_add_can_see_clinic_queues_to_staff_table', 158),
 (312, '2026_03_09_100000_create_v1_result_templates_table', 159),
 (313, '2026_03_10_052831_add_soft_deletes_to_anc_investigations_table', 160),
-(314, '2026_03_13_000001_add_awaiting_code_to_validation_status_enum', 161);
+(314, '2026_03_13_000001_add_awaiting_code_to_validation_status_enum', 161),
+(315, '2026_03_17_100001_add_product_type_and_base_unit_to_products_table', 162),
+(316, '2026_03_17_100002_create_product_packagings_table', 162),
+(317, '2026_03_17_100003_add_packaging_fields_to_store_requisition_items', 162),
+(318, '2026_03_17_100004_add_packaging_fields_to_product_requests', 162),
+(319, '2026_03_17_100005_add_packaging_fields_to_product_or_service_requests', 162),
+(320, '2026_03_17_100006_add_packaging_fields_to_purchase_order_items', 162);
 
 -- --------------------------------------------------------
 
@@ -11290,15 +11311,15 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 --
 
 CREATE TABLE `misc_bills` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
   `creation_date` timestamp NULL DEFAULT NULL,
-  `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `billed_by` bigint UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `service_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -11310,9 +11331,9 @@ CREATE TABLE `misc_bills` (
 --
 
 CREATE TABLE `model_has_permissions` (
-  `permission_id` bigint(20) UNSIGNED NOT NULL,
-  `model_type` varchar(255) NOT NULL,
-  `model_id` bigint(20) UNSIGNED NOT NULL
+  `permission_id` bigint UNSIGNED NOT NULL,
+  `model_type` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `model_id` bigint UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -11330,9 +11351,9 @@ INSERT INTO `model_has_permissions` (`permission_id`, `model_type`, `model_id`) 
 --
 
 CREATE TABLE `model_has_roles` (
-  `role_id` bigint(20) UNSIGNED NOT NULL,
-  `model_type` varchar(255) NOT NULL,
-  `model_id` bigint(20) UNSIGNED NOT NULL
+  `role_id` bigint UNSIGNED NOT NULL,
+  `model_type` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `model_id` bigint UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -11341,90 +11362,13 @@ CREATE TABLE `model_has_roles` (
 
 INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (1, 'App\\Models\\User', 1),
-(1, 'App\\Models\\User', 4),
-(1, 'App\\Models\\User', 64710),
-(1, 'App\\Models\\User', 64711),
-(1, 'App\\Models\\User', 64712),
-(1, 'App\\Models\\User', 64713),
-(1, 'App\\Models\\User', 64714),
-(1, 'App\\Models\\User', 64715),
-(1, 'App\\Models\\User', 64716),
-(1, 'App\\Models\\User', 64717),
-(1, 'App\\Models\\User', 64718),
-(1, 'App\\Models\\User', 64719),
-(1, 'App\\Models\\User', 64720),
-(1, 'App\\Models\\User', 64721),
-(1, 'App\\Models\\User', 64722),
-(1, 'App\\Models\\User', 64723),
-(1, 'App\\Models\\User', 64724),
-(1, 'App\\Models\\User', 64725),
-(1, 'App\\Models\\User', 64726),
-(1, 'App\\Models\\User', 64727),
-(1, 'App\\Models\\User', 64728),
-(1, 'App\\Models\\User', 64729),
-(1, 'App\\Models\\User', 64730),
-(1, 'App\\Models\\User', 64731),
-(1, 'App\\Models\\User', 64732),
-(1, 'App\\Models\\User', 64733),
-(1, 'App\\Models\\User', 64734),
 (2, 'App\\Models\\User', 1),
-(2, 'App\\Models\\User', 64847),
-(2, 'App\\Models\\User', 64848),
-(2, 'App\\Models\\User', 64849),
-(2, 'App\\Models\\User', 64850),
-(2, 'App\\Models\\User', 64851),
-(2, 'App\\Models\\User', 64852),
-(2, 'App\\Models\\User', 64853),
-(2, 'App\\Models\\User', 64854),
-(2, 'App\\Models\\User', 64855),
-(2, 'App\\Models\\User', 64856),
-(2, 'App\\Models\\User', 64857),
-(2, 'App\\Models\\User', 64858),
-(2, 'App\\Models\\User', 64859),
-(2, 'App\\Models\\User', 64860),
-(2, 'App\\Models\\User', 64861),
-(2, 'App\\Models\\User', 64862),
-(2, 'App\\Models\\User', 64863),
-(2, 'App\\Models\\User', 64864),
-(2, 'App\\Models\\User', 64865),
-(2, 'App\\Models\\User', 64866),
-(2, 'App\\Models\\User', 64867),
-(2, 'App\\Models\\User', 64868),
-(2, 'App\\Models\\User', 64869),
-(2, 'App\\Models\\User', 64870),
-(2, 'App\\Models\\User', 64871),
-(2, 'App\\Models\\User', 64872),
-(2, 'App\\Models\\User', 64873),
-(2, 'App\\Models\\User', 64874),
-(2, 'App\\Models\\User', 64875),
 (3, 'App\\Models\\User', 1),
-(3, 'App\\Models\\User', 64687),
-(3, 'App\\Models\\User', 64688),
-(3, 'App\\Models\\User', 64689),
-(3, 'App\\Models\\User', 64690),
-(3, 'App\\Models\\User', 64691),
-(3, 'App\\Models\\User', 64692),
-(3, 'App\\Models\\User', 64693),
-(3, 'App\\Models\\User', 64694),
-(3, 'App\\Models\\User', 64695),
-(3, 'App\\Models\\User', 64696),
-(3, 'App\\Models\\User', 64697),
-(3, 'App\\Models\\User', 64698),
-(3, 'App\\Models\\User', 64699),
-(3, 'App\\Models\\User', 64700),
-(3, 'App\\Models\\User', 64701),
-(3, 'App\\Models\\User', 64702),
-(3, 'App\\Models\\User', 64703),
-(3, 'App\\Models\\User', 64704),
-(3, 'App\\Models\\User', 64705),
-(3, 'App\\Models\\User', 64706),
-(3, 'App\\Models\\User', 64707),
-(3, 'App\\Models\\User', 64708),
-(3, 'App\\Models\\User', 64709),
-(3, 'App\\Models\\User', 64740),
-(3, 'App\\Models\\User', 64741),
-(3, 'App\\Models\\User', 64845),
-(3, 'App\\Models\\User', 64846),
+(6, 'App\\Models\\User', 1),
+(7, 'App\\Models\\User', 1),
+(12, 'App\\Models\\User', 1),
+(16, 'App\\Models\\User', 1),
+(1, 'App\\Models\\User', 4),
 (4, 'App\\Models\\User', 4477),
 (4, 'App\\Models\\User', 4478),
 (4, 'App\\Models\\User', 4479),
@@ -13000,8 +12944,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 6049),
 (4, 'App\\Models\\User', 6050),
 (4, 'App\\Models\\User', 6051),
-(4, 'App\\Models\\User', 6052);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 6052),
 (4, 'App\\Models\\User', 6053),
 (4, 'App\\Models\\User', 6054),
 (4, 'App\\Models\\User', 6055),
@@ -13081,7 +13024,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 6129),
 (4, 'App\\Models\\User', 6130),
 (4, 'App\\Models\\User', 6131),
-(4, 'App\\Models\\User', 6132),
+(4, 'App\\Models\\User', 6132);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 6133),
 (4, 'App\\Models\\User', 6134),
 (4, 'App\\Models\\User', 6135),
@@ -14665,8 +14609,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 7760),
 (4, 'App\\Models\\User', 7761),
 (4, 'App\\Models\\User', 7762),
-(4, 'App\\Models\\User', 7763);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 7763),
 (4, 'App\\Models\\User', 7764),
 (4, 'App\\Models\\User', 7765),
 (4, 'App\\Models\\User', 7766),
@@ -14746,7 +14689,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 7840),
 (4, 'App\\Models\\User', 7841),
 (4, 'App\\Models\\User', 7842),
-(4, 'App\\Models\\User', 7843),
+(4, 'App\\Models\\User', 7843);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 7844),
 (4, 'App\\Models\\User', 7845),
 (4, 'App\\Models\\User', 7846),
@@ -16330,8 +16274,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 9424),
 (4, 'App\\Models\\User', 9425),
 (4, 'App\\Models\\User', 9426),
-(4, 'App\\Models\\User', 9427);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 9427),
 (4, 'App\\Models\\User', 9428),
 (4, 'App\\Models\\User', 9429),
 (4, 'App\\Models\\User', 9430),
@@ -16411,7 +16354,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 9504),
 (4, 'App\\Models\\User', 9505),
 (4, 'App\\Models\\User', 9506),
-(4, 'App\\Models\\User', 9507),
+(4, 'App\\Models\\User', 9507);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 9508),
 (4, 'App\\Models\\User', 9509),
 (4, 'App\\Models\\User', 9510),
@@ -17959,8 +17903,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 11094),
 (4, 'App\\Models\\User', 11095),
 (4, 'App\\Models\\User', 11096),
-(4, 'App\\Models\\User', 11097);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 11097),
 (4, 'App\\Models\\User', 11098),
 (4, 'App\\Models\\User', 11099),
 (4, 'App\\Models\\User', 11100),
@@ -18038,7 +17981,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 11172),
 (4, 'App\\Models\\User', 11173),
 (4, 'App\\Models\\User', 11174),
-(4, 'App\\Models\\User', 11175),
+(4, 'App\\Models\\User', 11175);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 11176),
 (4, 'App\\Models\\User', 11177),
 (4, 'App\\Models\\User', 11178),
@@ -19570,8 +19514,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 13049),
 (4, 'App\\Models\\User', 13050),
 (4, 'App\\Models\\User', 13051),
-(4, 'App\\Models\\User', 13052);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 13052),
 (4, 'App\\Models\\User', 13053),
 (4, 'App\\Models\\User', 13054),
 (4, 'App\\Models\\User', 13055),
@@ -19649,7 +19592,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 13127),
 (4, 'App\\Models\\User', 13128),
 (4, 'App\\Models\\User', 13129),
-(4, 'App\\Models\\User', 13130),
+(4, 'App\\Models\\User', 13130);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 13131),
 (4, 'App\\Models\\User', 13132),
 (4, 'App\\Models\\User', 13133),
@@ -21181,8 +21125,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 14659),
 (4, 'App\\Models\\User', 14660),
 (4, 'App\\Models\\User', 14661),
-(4, 'App\\Models\\User', 14662);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 14662),
 (4, 'App\\Models\\User', 14663),
 (4, 'App\\Models\\User', 14664),
 (4, 'App\\Models\\User', 14665),
@@ -21260,7 +21203,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 14737),
 (4, 'App\\Models\\User', 14738),
 (4, 'App\\Models\\User', 14739),
-(4, 'App\\Models\\User', 14740),
+(4, 'App\\Models\\User', 14740);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 14741),
 (4, 'App\\Models\\User', 14742),
 (4, 'App\\Models\\User', 14743),
@@ -22792,8 +22736,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 18160),
 (4, 'App\\Models\\User', 18161),
 (4, 'App\\Models\\User', 18162),
-(4, 'App\\Models\\User', 18163);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 18163),
 (4, 'App\\Models\\User', 18164),
 (4, 'App\\Models\\User', 18165),
 (4, 'App\\Models\\User', 18166),
@@ -22871,7 +22814,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 18238),
 (4, 'App\\Models\\User', 18239),
 (4, 'App\\Models\\User', 18240),
-(4, 'App\\Models\\User', 18241),
+(4, 'App\\Models\\User', 18241);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 18242),
 (4, 'App\\Models\\User', 18243),
 (4, 'App\\Models\\User', 18244),
@@ -24403,8 +24347,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 19791),
 (4, 'App\\Models\\User', 19792),
 (4, 'App\\Models\\User', 19793),
-(4, 'App\\Models\\User', 19794);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 19794),
 (4, 'App\\Models\\User', 19795),
 (4, 'App\\Models\\User', 19796),
 (4, 'App\\Models\\User', 19797),
@@ -24482,7 +24425,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 19869),
 (4, 'App\\Models\\User', 19870),
 (4, 'App\\Models\\User', 19871),
-(4, 'App\\Models\\User', 19872),
+(4, 'App\\Models\\User', 19872);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 19873),
 (4, 'App\\Models\\User', 19874),
 (4, 'App\\Models\\User', 19875),
@@ -26014,8 +25958,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 21401),
 (4, 'App\\Models\\User', 21402),
 (4, 'App\\Models\\User', 21403),
-(4, 'App\\Models\\User', 21404);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 21404),
 (4, 'App\\Models\\User', 21405),
 (4, 'App\\Models\\User', 21406),
 (4, 'App\\Models\\User', 21407),
@@ -26093,7 +26036,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 21479),
 (4, 'App\\Models\\User', 21480),
 (4, 'App\\Models\\User', 21481),
-(4, 'App\\Models\\User', 21482),
+(4, 'App\\Models\\User', 21482);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 21483),
 (4, 'App\\Models\\User', 21484),
 (4, 'App\\Models\\User', 21485),
@@ -27625,8 +27569,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 23011),
 (4, 'App\\Models\\User', 23012),
 (4, 'App\\Models\\User', 23013),
-(4, 'App\\Models\\User', 23014);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 23014),
 (4, 'App\\Models\\User', 23015),
 (4, 'App\\Models\\User', 23016),
 (4, 'App\\Models\\User', 23017),
@@ -27704,7 +27647,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 23089),
 (4, 'App\\Models\\User', 23090),
 (4, 'App\\Models\\User', 23091),
-(4, 'App\\Models\\User', 23092),
+(4, 'App\\Models\\User', 23092);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 23093),
 (4, 'App\\Models\\User', 23094),
 (4, 'App\\Models\\User', 23095),
@@ -29236,8 +29180,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 24630),
 (4, 'App\\Models\\User', 24631),
 (4, 'App\\Models\\User', 24632),
-(4, 'App\\Models\\User', 24633);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 24633),
 (4, 'App\\Models\\User', 24634),
 (4, 'App\\Models\\User', 24635),
 (4, 'App\\Models\\User', 24636),
@@ -29315,7 +29258,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 24708),
 (4, 'App\\Models\\User', 24709),
 (4, 'App\\Models\\User', 24710),
-(4, 'App\\Models\\User', 24711),
+(4, 'App\\Models\\User', 24711);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 24712),
 (4, 'App\\Models\\User', 24713),
 (4, 'App\\Models\\User', 24714),
@@ -30847,8 +30791,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 26240),
 (4, 'App\\Models\\User', 26241),
 (4, 'App\\Models\\User', 26242),
-(4, 'App\\Models\\User', 26243);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 26243),
 (4, 'App\\Models\\User', 26244),
 (4, 'App\\Models\\User', 26245),
 (4, 'App\\Models\\User', 26246),
@@ -30926,7 +30869,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 26318),
 (4, 'App\\Models\\User', 26319),
 (4, 'App\\Models\\User', 26320),
-(4, 'App\\Models\\User', 26321),
+(4, 'App\\Models\\User', 26321);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 26322),
 (4, 'App\\Models\\User', 26323),
 (4, 'App\\Models\\User', 26324),
@@ -32458,8 +32402,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 27850),
 (4, 'App\\Models\\User', 27851),
 (4, 'App\\Models\\User', 27852),
-(4, 'App\\Models\\User', 27853);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 27853),
 (4, 'App\\Models\\User', 27854),
 (4, 'App\\Models\\User', 27855),
 (4, 'App\\Models\\User', 27856),
@@ -32537,7 +32480,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 27928),
 (4, 'App\\Models\\User', 27929),
 (4, 'App\\Models\\User', 27930),
-(4, 'App\\Models\\User', 27931),
+(4, 'App\\Models\\User', 27931);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 27932),
 (4, 'App\\Models\\User', 27933),
 (4, 'App\\Models\\User', 27934),
@@ -34069,8 +34013,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 29460),
 (4, 'App\\Models\\User', 29461),
 (4, 'App\\Models\\User', 29462),
-(4, 'App\\Models\\User', 29463);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 29463),
 (4, 'App\\Models\\User', 29464),
 (4, 'App\\Models\\User', 29465),
 (4, 'App\\Models\\User', 29466),
@@ -34148,7 +34091,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 29538),
 (4, 'App\\Models\\User', 29539),
 (4, 'App\\Models\\User', 29540),
-(4, 'App\\Models\\User', 29541),
+(4, 'App\\Models\\User', 29541);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 29542),
 (4, 'App\\Models\\User', 29543),
 (4, 'App\\Models\\User', 29544),
@@ -35680,8 +35624,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 31070),
 (4, 'App\\Models\\User', 31071),
 (4, 'App\\Models\\User', 31072),
-(4, 'App\\Models\\User', 31073);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 31073),
 (4, 'App\\Models\\User', 31074),
 (4, 'App\\Models\\User', 31075),
 (4, 'App\\Models\\User', 31076),
@@ -35759,7 +35702,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 31148),
 (4, 'App\\Models\\User', 31149),
 (4, 'App\\Models\\User', 31150),
-(4, 'App\\Models\\User', 31151),
+(4, 'App\\Models\\User', 31151);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 31152),
 (4, 'App\\Models\\User', 31153),
 (4, 'App\\Models\\User', 31154),
@@ -37291,8 +37235,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 32680),
 (4, 'App\\Models\\User', 32681),
 (4, 'App\\Models\\User', 32682),
-(4, 'App\\Models\\User', 32683);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 32683),
 (4, 'App\\Models\\User', 32684),
 (4, 'App\\Models\\User', 32685),
 (4, 'App\\Models\\User', 32686),
@@ -37370,7 +37313,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 32758),
 (4, 'App\\Models\\User', 32759),
 (4, 'App\\Models\\User', 32760),
-(4, 'App\\Models\\User', 32761),
+(4, 'App\\Models\\User', 32761);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 32762),
 (4, 'App\\Models\\User', 32763),
 (4, 'App\\Models\\User', 32764),
@@ -38902,8 +38846,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 34290),
 (4, 'App\\Models\\User', 34291),
 (4, 'App\\Models\\User', 34292),
-(4, 'App\\Models\\User', 34293);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 34293),
 (4, 'App\\Models\\User', 34294),
 (4, 'App\\Models\\User', 34295),
 (4, 'App\\Models\\User', 34296),
@@ -38981,7 +38924,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 34368),
 (4, 'App\\Models\\User', 34369),
 (4, 'App\\Models\\User', 34370),
-(4, 'App\\Models\\User', 34371),
+(4, 'App\\Models\\User', 34371);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 34372),
 (4, 'App\\Models\\User', 34373),
 (4, 'App\\Models\\User', 34374),
@@ -40513,8 +40457,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 35900),
 (4, 'App\\Models\\User', 35901),
 (4, 'App\\Models\\User', 35902),
-(4, 'App\\Models\\User', 35903);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 35903),
 (4, 'App\\Models\\User', 35904),
 (4, 'App\\Models\\User', 35905),
 (4, 'App\\Models\\User', 35906),
@@ -40592,7 +40535,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 35978),
 (4, 'App\\Models\\User', 35979),
 (4, 'App\\Models\\User', 35980),
-(4, 'App\\Models\\User', 35981),
+(4, 'App\\Models\\User', 35981);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 35982),
 (4, 'App\\Models\\User', 35983),
 (4, 'App\\Models\\User', 35984),
@@ -42124,8 +42068,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 37510),
 (4, 'App\\Models\\User', 37511),
 (4, 'App\\Models\\User', 37512),
-(4, 'App\\Models\\User', 37513);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 37513),
 (4, 'App\\Models\\User', 37514),
 (4, 'App\\Models\\User', 37515),
 (4, 'App\\Models\\User', 37516),
@@ -42203,7 +42146,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 37588),
 (4, 'App\\Models\\User', 37589),
 (4, 'App\\Models\\User', 37590),
-(4, 'App\\Models\\User', 37591),
+(4, 'App\\Models\\User', 37591);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 37592),
 (4, 'App\\Models\\User', 37593),
 (4, 'App\\Models\\User', 37594),
@@ -43735,8 +43679,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 39120),
 (4, 'App\\Models\\User', 39121),
 (4, 'App\\Models\\User', 39122),
-(4, 'App\\Models\\User', 39123);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 39123),
 (4, 'App\\Models\\User', 39124),
 (4, 'App\\Models\\User', 39125),
 (4, 'App\\Models\\User', 39126),
@@ -43814,7 +43757,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 39198),
 (4, 'App\\Models\\User', 39199),
 (4, 'App\\Models\\User', 39200),
-(4, 'App\\Models\\User', 39201),
+(4, 'App\\Models\\User', 39201);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 39202),
 (4, 'App\\Models\\User', 39203),
 (4, 'App\\Models\\User', 39204),
@@ -45346,8 +45290,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 40765),
 (4, 'App\\Models\\User', 40766),
 (4, 'App\\Models\\User', 40767),
-(4, 'App\\Models\\User', 40768);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 40768),
 (4, 'App\\Models\\User', 40769),
 (4, 'App\\Models\\User', 40770),
 (4, 'App\\Models\\User', 40771),
@@ -45425,7 +45368,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 40843),
 (4, 'App\\Models\\User', 40844),
 (4, 'App\\Models\\User', 40845),
-(4, 'App\\Models\\User', 40846),
+(4, 'App\\Models\\User', 40846);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 40847),
 (4, 'App\\Models\\User', 40848),
 (4, 'App\\Models\\User', 40849),
@@ -46957,8 +46901,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 42403),
 (4, 'App\\Models\\User', 42404),
 (4, 'App\\Models\\User', 42405),
-(4, 'App\\Models\\User', 42406);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 42406),
 (4, 'App\\Models\\User', 42407),
 (4, 'App\\Models\\User', 42408),
 (4, 'App\\Models\\User', 42409),
@@ -47036,7 +46979,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 42481),
 (4, 'App\\Models\\User', 42482),
 (4, 'App\\Models\\User', 42483),
-(4, 'App\\Models\\User', 42484),
+(4, 'App\\Models\\User', 42484);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 42485),
 (4, 'App\\Models\\User', 42486),
 (4, 'App\\Models\\User', 42487),
@@ -48568,8 +48512,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 44013),
 (4, 'App\\Models\\User', 44014),
 (4, 'App\\Models\\User', 44015),
-(4, 'App\\Models\\User', 44016);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 44016),
 (4, 'App\\Models\\User', 44017),
 (4, 'App\\Models\\User', 44018),
 (4, 'App\\Models\\User', 44019),
@@ -48647,7 +48590,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 44091),
 (4, 'App\\Models\\User', 44092),
 (4, 'App\\Models\\User', 44093),
-(4, 'App\\Models\\User', 44094),
+(4, 'App\\Models\\User', 44094);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 44095),
 (4, 'App\\Models\\User', 44096),
 (4, 'App\\Models\\User', 44097),
@@ -50179,8 +50123,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 45623),
 (4, 'App\\Models\\User', 45624),
 (4, 'App\\Models\\User', 45625),
-(4, 'App\\Models\\User', 45626);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 45626),
 (4, 'App\\Models\\User', 45627),
 (4, 'App\\Models\\User', 45628),
 (4, 'App\\Models\\User', 45629),
@@ -50258,7 +50201,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 45701),
 (4, 'App\\Models\\User', 45702),
 (4, 'App\\Models\\User', 45703),
-(4, 'App\\Models\\User', 45704),
+(4, 'App\\Models\\User', 45704);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 45705),
 (4, 'App\\Models\\User', 45706),
 (4, 'App\\Models\\User', 45707),
@@ -51790,8 +51734,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 47233),
 (4, 'App\\Models\\User', 47234),
 (4, 'App\\Models\\User', 47235),
-(4, 'App\\Models\\User', 47236);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 47236),
 (4, 'App\\Models\\User', 47237),
 (4, 'App\\Models\\User', 47238),
 (4, 'App\\Models\\User', 47239),
@@ -51869,7 +51812,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 47311),
 (4, 'App\\Models\\User', 47312),
 (4, 'App\\Models\\User', 47313),
-(4, 'App\\Models\\User', 47314),
+(4, 'App\\Models\\User', 47314);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 47315),
 (4, 'App\\Models\\User', 47316),
 (4, 'App\\Models\\User', 47317),
@@ -53401,8 +53345,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 48843),
 (4, 'App\\Models\\User', 48844),
 (4, 'App\\Models\\User', 48845),
-(4, 'App\\Models\\User', 48846);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 48846),
 (4, 'App\\Models\\User', 48847),
 (4, 'App\\Models\\User', 48848),
 (4, 'App\\Models\\User', 48849),
@@ -53480,7 +53423,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 48921),
 (4, 'App\\Models\\User', 48922),
 (4, 'App\\Models\\User', 48923),
-(4, 'App\\Models\\User', 48924),
+(4, 'App\\Models\\User', 48924);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 48925),
 (4, 'App\\Models\\User', 48926),
 (4, 'App\\Models\\User', 48927),
@@ -55012,8 +54956,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 50453),
 (4, 'App\\Models\\User', 50454),
 (4, 'App\\Models\\User', 50455),
-(4, 'App\\Models\\User', 50456);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 50456),
 (4, 'App\\Models\\User', 50457),
 (4, 'App\\Models\\User', 50458),
 (4, 'App\\Models\\User', 50459),
@@ -55091,7 +55034,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 50531),
 (4, 'App\\Models\\User', 50532),
 (4, 'App\\Models\\User', 50533),
-(4, 'App\\Models\\User', 50534),
+(4, 'App\\Models\\User', 50534);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 50535),
 (4, 'App\\Models\\User', 50536),
 (4, 'App\\Models\\User', 50537),
@@ -56623,8 +56567,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 52063),
 (4, 'App\\Models\\User', 52064),
 (4, 'App\\Models\\User', 52065),
-(4, 'App\\Models\\User', 52066);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 52066),
 (4, 'App\\Models\\User', 52067),
 (4, 'App\\Models\\User', 52068),
 (4, 'App\\Models\\User', 52069),
@@ -56702,7 +56645,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 52141),
 (4, 'App\\Models\\User', 52142),
 (4, 'App\\Models\\User', 52143),
-(4, 'App\\Models\\User', 52144),
+(4, 'App\\Models\\User', 52144);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 52145),
 (4, 'App\\Models\\User', 52146),
 (4, 'App\\Models\\User', 52147),
@@ -58234,8 +58178,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 53673),
 (4, 'App\\Models\\User', 53674),
 (4, 'App\\Models\\User', 53675),
-(4, 'App\\Models\\User', 53676);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 53676),
 (4, 'App\\Models\\User', 53677),
 (4, 'App\\Models\\User', 53678),
 (4, 'App\\Models\\User', 53679),
@@ -58313,7 +58256,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 53751),
 (4, 'App\\Models\\User', 53752),
 (4, 'App\\Models\\User', 53753),
-(4, 'App\\Models\\User', 53754),
+(4, 'App\\Models\\User', 53754);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 53755),
 (4, 'App\\Models\\User', 53756),
 (4, 'App\\Models\\User', 53757),
@@ -59845,8 +59789,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 55450),
 (4, 'App\\Models\\User', 55451),
 (4, 'App\\Models\\User', 55452),
-(4, 'App\\Models\\User', 55453);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 55453),
 (4, 'App\\Models\\User', 55454),
 (4, 'App\\Models\\User', 55455),
 (4, 'App\\Models\\User', 55456),
@@ -59924,7 +59867,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 55528),
 (4, 'App\\Models\\User', 55529),
 (4, 'App\\Models\\User', 55530),
-(4, 'App\\Models\\User', 55531),
+(4, 'App\\Models\\User', 55531);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 55532),
 (4, 'App\\Models\\User', 55533),
 (4, 'App\\Models\\User', 55534),
@@ -61456,8 +61400,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 57060),
 (4, 'App\\Models\\User', 57061),
 (4, 'App\\Models\\User', 57062),
-(4, 'App\\Models\\User', 57063);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 57063),
 (4, 'App\\Models\\User', 57064),
 (4, 'App\\Models\\User', 57065),
 (4, 'App\\Models\\User', 57066),
@@ -61535,7 +61478,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 57138),
 (4, 'App\\Models\\User', 57139),
 (4, 'App\\Models\\User', 57140),
-(4, 'App\\Models\\User', 57141),
+(4, 'App\\Models\\User', 57141);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 57142),
 (4, 'App\\Models\\User', 57143),
 (4, 'App\\Models\\User', 57144),
@@ -63067,8 +63011,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 58670),
 (4, 'App\\Models\\User', 58671),
 (4, 'App\\Models\\User', 58672),
-(4, 'App\\Models\\User', 58673);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 58673),
 (4, 'App\\Models\\User', 58674),
 (4, 'App\\Models\\User', 58675),
 (4, 'App\\Models\\User', 58676),
@@ -63146,7 +63089,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 58748),
 (4, 'App\\Models\\User', 58749),
 (4, 'App\\Models\\User', 58750),
-(4, 'App\\Models\\User', 58751),
+(4, 'App\\Models\\User', 58751);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 58752),
 (4, 'App\\Models\\User', 58753),
 (4, 'App\\Models\\User', 58754),
@@ -64678,8 +64622,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 60280),
 (4, 'App\\Models\\User', 60281),
 (4, 'App\\Models\\User', 60282),
-(4, 'App\\Models\\User', 60283);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 60283),
 (4, 'App\\Models\\User', 60284),
 (4, 'App\\Models\\User', 60285),
 (4, 'App\\Models\\User', 60286),
@@ -64757,7 +64700,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 60358),
 (4, 'App\\Models\\User', 60359),
 (4, 'App\\Models\\User', 60360),
-(4, 'App\\Models\\User', 60361),
+(4, 'App\\Models\\User', 60361);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 60362),
 (4, 'App\\Models\\User', 60363),
 (4, 'App\\Models\\User', 60364),
@@ -66289,8 +66233,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 61890),
 (4, 'App\\Models\\User', 61891),
 (4, 'App\\Models\\User', 61892),
-(4, 'App\\Models\\User', 61893);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 61893),
 (4, 'App\\Models\\User', 61894),
 (4, 'App\\Models\\User', 61895),
 (4, 'App\\Models\\User', 61896),
@@ -66368,7 +66311,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 61968),
 (4, 'App\\Models\\User', 61969),
 (4, 'App\\Models\\User', 61970),
-(4, 'App\\Models\\User', 61971),
+(4, 'App\\Models\\User', 61971);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 61972),
 (4, 'App\\Models\\User', 61973),
 (4, 'App\\Models\\User', 61974),
@@ -67900,8 +67844,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 63500),
 (4, 'App\\Models\\User', 63501),
 (4, 'App\\Models\\User', 63502),
-(4, 'App\\Models\\User', 63503);
-INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
+(4, 'App\\Models\\User', 63503),
 (4, 'App\\Models\\User', 63504),
 (4, 'App\\Models\\User', 63505),
 (4, 'App\\Models\\User', 63506),
@@ -67979,7 +67922,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 63578),
 (4, 'App\\Models\\User', 63579),
 (4, 'App\\Models\\User', 63580),
-(4, 'App\\Models\\User', 63581),
+(4, 'App\\Models\\User', 63581);
+INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 63582),
 (4, 'App\\Models\\User', 63583),
 (4, 'App\\Models\\User', 63584),
@@ -68667,30 +68611,61 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 64681),
 (4, 'App\\Models\\User', 64682),
 (4, 'App\\Models\\User', 64683),
-(5, 'App\\Models\\User', 64828),
-(5, 'App\\Models\\User', 64829),
-(5, 'App\\Models\\User', 64830),
-(5, 'App\\Models\\User', 64831),
-(5, 'App\\Models\\User', 64832),
-(5, 'App\\Models\\User', 64833),
-(5, 'App\\Models\\User', 64834),
-(5, 'App\\Models\\User', 64835),
-(6, 'App\\Models\\User', 1),
-(6, 'App\\Models\\User', 64836),
-(6, 'App\\Models\\User', 64837),
-(6, 'App\\Models\\User', 64838),
-(6, 'App\\Models\\User', 64839),
-(6, 'App\\Models\\User', 64840),
-(6, 'App\\Models\\User', 64841),
-(6, 'App\\Models\\User', 64842),
-(6, 'App\\Models\\User', 64843),
-(6, 'App\\Models\\User', 64844),
-(7, 'App\\Models\\User', 1),
+(3, 'App\\Models\\User', 64687),
+(3, 'App\\Models\\User', 64688),
+(3, 'App\\Models\\User', 64689),
+(3, 'App\\Models\\User', 64690),
+(3, 'App\\Models\\User', 64691),
+(3, 'App\\Models\\User', 64692),
+(3, 'App\\Models\\User', 64693),
+(3, 'App\\Models\\User', 64694),
+(3, 'App\\Models\\User', 64695),
+(3, 'App\\Models\\User', 64696),
+(3, 'App\\Models\\User', 64697),
+(3, 'App\\Models\\User', 64698),
+(3, 'App\\Models\\User', 64699),
+(3, 'App\\Models\\User', 64700),
+(3, 'App\\Models\\User', 64701),
+(3, 'App\\Models\\User', 64702),
+(3, 'App\\Models\\User', 64703),
+(3, 'App\\Models\\User', 64704),
+(3, 'App\\Models\\User', 64705),
+(3, 'App\\Models\\User', 64706),
+(3, 'App\\Models\\User', 64707),
+(3, 'App\\Models\\User', 64708),
+(3, 'App\\Models\\User', 64709),
+(1, 'App\\Models\\User', 64710),
+(1, 'App\\Models\\User', 64711),
+(1, 'App\\Models\\User', 64712),
+(1, 'App\\Models\\User', 64713),
+(1, 'App\\Models\\User', 64714),
+(1, 'App\\Models\\User', 64715),
+(1, 'App\\Models\\User', 64716),
+(1, 'App\\Models\\User', 64717),
+(1, 'App\\Models\\User', 64718),
+(1, 'App\\Models\\User', 64719),
+(1, 'App\\Models\\User', 64720),
+(1, 'App\\Models\\User', 64721),
+(1, 'App\\Models\\User', 64722),
+(1, 'App\\Models\\User', 64723),
+(1, 'App\\Models\\User', 64724),
+(1, 'App\\Models\\User', 64725),
+(1, 'App\\Models\\User', 64726),
+(1, 'App\\Models\\User', 64727),
+(1, 'App\\Models\\User', 64728),
+(1, 'App\\Models\\User', 64729),
+(1, 'App\\Models\\User', 64730),
+(1, 'App\\Models\\User', 64731),
+(1, 'App\\Models\\User', 64732),
+(1, 'App\\Models\\User', 64733),
+(1, 'App\\Models\\User', 64734),
 (8, 'App\\Models\\User', 64735),
 (8, 'App\\Models\\User', 64736),
 (8, 'App\\Models\\User', 64737),
 (8, 'App\\Models\\User', 64738),
 (8, 'App\\Models\\User', 64739),
+(3, 'App\\Models\\User', 64740),
+(3, 'App\\Models\\User', 64741),
 (9, 'App\\Models\\User', 64742),
 (9, 'App\\Models\\User', 64743),
 (9, 'App\\Models\\User', 64744),
@@ -68777,8 +68752,54 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (9, 'App\\Models\\User', 64825),
 (9, 'App\\Models\\User', 64826),
 (9, 'App\\Models\\User', 64827),
-(12, 'App\\Models\\User', 1),
-(16, 'App\\Models\\User', 1);
+(5, 'App\\Models\\User', 64828),
+(5, 'App\\Models\\User', 64829),
+(5, 'App\\Models\\User', 64830),
+(5, 'App\\Models\\User', 64831),
+(5, 'App\\Models\\User', 64832),
+(5, 'App\\Models\\User', 64833),
+(5, 'App\\Models\\User', 64834),
+(5, 'App\\Models\\User', 64835),
+(6, 'App\\Models\\User', 64836),
+(6, 'App\\Models\\User', 64837),
+(6, 'App\\Models\\User', 64838),
+(6, 'App\\Models\\User', 64839),
+(6, 'App\\Models\\User', 64840),
+(6, 'App\\Models\\User', 64841),
+(6, 'App\\Models\\User', 64842),
+(6, 'App\\Models\\User', 64843),
+(6, 'App\\Models\\User', 64844),
+(3, 'App\\Models\\User', 64845),
+(3, 'App\\Models\\User', 64846),
+(2, 'App\\Models\\User', 64847),
+(2, 'App\\Models\\User', 64848),
+(2, 'App\\Models\\User', 64849),
+(2, 'App\\Models\\User', 64850),
+(2, 'App\\Models\\User', 64851),
+(2, 'App\\Models\\User', 64852),
+(2, 'App\\Models\\User', 64853),
+(2, 'App\\Models\\User', 64854),
+(2, 'App\\Models\\User', 64855),
+(2, 'App\\Models\\User', 64856),
+(2, 'App\\Models\\User', 64857),
+(2, 'App\\Models\\User', 64858),
+(2, 'App\\Models\\User', 64859),
+(2, 'App\\Models\\User', 64860),
+(2, 'App\\Models\\User', 64861),
+(2, 'App\\Models\\User', 64862),
+(2, 'App\\Models\\User', 64863),
+(2, 'App\\Models\\User', 64864),
+(2, 'App\\Models\\User', 64865),
+(2, 'App\\Models\\User', 64866),
+(2, 'App\\Models\\User', 64867),
+(2, 'App\\Models\\User', 64868),
+(2, 'App\\Models\\User', 64869),
+(2, 'App\\Models\\User', 64870),
+(2, 'App\\Models\\User', 64871),
+(2, 'App\\Models\\User', 64872),
+(2, 'App\\Models\\User', 64873),
+(2, 'App\\Models\\User', 64874),
+(2, 'App\\Models\\User', 64875);
 
 -- --------------------------------------------------------
 
@@ -68787,14 +68808,14 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 --
 
 CREATE TABLE `nursing_notes` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `nursing_note_type_id` bigint(20) UNSIGNED NOT NULL,
-  `note` longtext NOT NULL,
-  `completed` tinyint(1) NOT NULL DEFAULT 0,
-  `status` int(11) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `updated_by` bigint UNSIGNED DEFAULT NULL,
+  `nursing_note_type_id` bigint UNSIGNED NOT NULL,
+  `note` longtext COLLATE utf8mb4_general_ci NOT NULL,
+  `completed` tinyint(1) NOT NULL DEFAULT '0',
+  `status` int NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -68818,10 +68839,10 @@ INSERT INTO `nursing_notes` (`id`, `patient_id`, `created_by`, `updated_by`, `nu
 --
 
 CREATE TABLE `nursing_note_types` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `template` longtext NOT NULL,
-  `status` int(11) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `template` longtext COLLATE utf8mb4_general_ci NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -68847,25 +68868,25 @@ INSERT INTO `nursing_note_types` (`id`, `name`, `template`, `status`, `created_a
 --
 
 CREATE TABLE `nursing_shifts` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `ward_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `shift_type` enum('morning','afternoon','night') NOT NULL DEFAULT 'morning',
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `ward_id` bigint UNSIGNED DEFAULT NULL,
+  `shift_type` enum('morning','afternoon','night') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'morning',
   `started_at` datetime NOT NULL,
   `ended_at` datetime DEFAULT NULL,
   `scheduled_end_at` datetime NOT NULL COMMENT 'Auto-calculated: started_at + 12 hours',
-  `status` enum('active','completed','auto_ended','cancelled') NOT NULL DEFAULT 'active',
-  `handover_created` tinyint(1) NOT NULL DEFAULT 0,
-  `concluding_notes` text DEFAULT NULL,
-  `critical_notes` text DEFAULT NULL COMMENT 'Urgent items for incoming nurse',
-  `incoming_nurse_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `vitals_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `medications_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `notes_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `injections_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `immunizations_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `bills_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `patients_seen` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `status` enum('active','completed','auto_ended','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `handover_created` tinyint(1) NOT NULL DEFAULT '0',
+  `concluding_notes` text COLLATE utf8mb4_unicode_ci,
+  `critical_notes` text COLLATE utf8mb4_unicode_ci COMMENT 'Urgent items for incoming nurse',
+  `incoming_nurse_id` bigint UNSIGNED DEFAULT NULL,
+  `vitals_count` int UNSIGNED NOT NULL DEFAULT '0',
+  `medications_count` int UNSIGNED NOT NULL DEFAULT '0',
+  `notes_count` int UNSIGNED NOT NULL DEFAULT '0',
+  `injections_count` int UNSIGNED NOT NULL DEFAULT '0',
+  `immunizations_count` int UNSIGNED NOT NULL DEFAULT '0',
+  `bills_count` int UNSIGNED NOT NULL DEFAULT '0',
+  `patients_seen` int UNSIGNED NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -68897,9 +68918,9 @@ INSERT INTO `nursing_shifts` (`id`, `user_id`, `ward_id`, `shift_type`, `started
 --
 
 CREATE TABLE `participants` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `thread_id` int(10) UNSIGNED NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `thread_id` int UNSIGNED NOT NULL,
+  `user_id` int UNSIGNED NOT NULL,
   `last_read` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -68925,8 +68946,8 @@ INSERT INTO `participants` (`id`, `thread_id`, `user_id`, `last_read`, `created_
 --
 
 CREATE TABLE `password_resets` (
-  `email` varchar(255) NOT NULL,
-  `token` varchar(255) NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `token` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -68937,34 +68958,34 @@ CREATE TABLE `password_resets` (
 --
 
 CREATE TABLE `patients` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `file_no` varchar(255) DEFAULT NULL,
-  `insurance_scheme` bigint(20) UNSIGNED DEFAULT NULL,
-  `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `hmo_no` varchar(100) DEFAULT NULL,
-  `gender` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `file_no` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `insurance_scheme` bigint UNSIGNED DEFAULT NULL,
+  `hmo_id` bigint UNSIGNED DEFAULT NULL,
+  `hmo_no` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `gender` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `dob` date DEFAULT NULL,
-  `blood_group` varchar(255) DEFAULT NULL,
-  `genotype` varchar(255) DEFAULT NULL,
-  `disability` int(11) NOT NULL DEFAULT 0,
-  `address` varchar(255) DEFAULT NULL,
-  `phone_no` varchar(255) DEFAULT NULL,
-  `nationality` varchar(255) DEFAULT NULL,
-  `ethnicity` varchar(255) DEFAULT NULL,
-  `misc` text DEFAULT NULL,
-  `allergies` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`allergies`)),
-  `medical_history` text DEFAULT NULL,
-  `next_of_kin_name` varchar(255) DEFAULT NULL,
+  `blood_group` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `genotype` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `disability` int NOT NULL DEFAULT '0',
+  `address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `phone_no` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `nationality` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ethnicity` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `misc` text COLLATE utf8mb4_general_ci,
+  `allergies` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `medical_history` text COLLATE utf8mb4_general_ci,
+  `next_of_kin_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `next_of_kin_phone` varchar(255) DEFAULT NULL,
-  `next_of_kin_address` text DEFAULT NULL,
-  `old_patient_id` int(11) DEFAULT NULL,
-  `old_user_id` int(11) DEFAULT NULL,
-  `dhis_consult_enrollment_id` varchar(255) DEFAULT NULL,
-  `dhis_consult_tracker_id` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `next_of_kin_phone` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `next_of_kin_address` text COLLATE utf8mb4_general_ci,
+  `old_patient_id` int DEFAULT NULL,
+  `old_user_id` int DEFAULT NULL,
+  `dhis_consult_enrollment_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dhis_consult_tracker_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL
+) ;
 
 --
 -- Dumping data for table `patients`
@@ -68985,12 +69006,12 @@ INSERT INTO `patients` (`id`, `user_id`, `file_no`, `insurance_scheme`, `hmo_id`
 --
 
 CREATE TABLE `patient_accounts` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `balance` double(8,2) NOT NULL DEFAULT 0.00,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `balance` double(8,2) NOT NULL DEFAULT '0.00',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_patient_account_id` int(11) DEFAULT NULL
+  `old_patient_account_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -69009,30 +69030,30 @@ INSERT INTO `patient_accounts` (`id`, `patient_id`, `balance`, `created_at`, `up
 --
 
 CREATE TABLE `patient_deposits` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `admission_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `deposit_number` varchar(50) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `admission_id` bigint UNSIGNED DEFAULT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `deposit_number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `deposit_date` date NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `utilized_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `refunded_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `balance` decimal(15,2) GENERATED ALWAYS AS (`amount` - `utilized_amount` - `refunded_amount`) VIRTUAL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `source_payment_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `deposit_type` enum('admission','procedure','surgery','investigation','general','other') NOT NULL DEFAULT 'general',
-  `payment_method` enum('cash','pos','transfer','cheque') NOT NULL DEFAULT 'cash',
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `payment_reference` varchar(100) DEFAULT NULL,
-  `receipt_number` varchar(50) DEFAULT NULL,
-  `received_by` bigint(20) UNSIGNED NOT NULL,
-  `status` enum('active','fully_applied','refunded','expired','cancelled') NOT NULL DEFAULT 'active',
-  `refund_journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `refund_reason` text DEFAULT NULL,
-  `refunded_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `utilized_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `refunded_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `balance` decimal(15,2) GENERATED ALWAYS AS (((`amount` - `utilized_amount`) - `refunded_amount`)) VIRTUAL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `source_payment_id` bigint UNSIGNED DEFAULT NULL,
+  `deposit_type` enum('admission','procedure','surgery','investigation','general','other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'general',
+  `payment_method` enum('cash','pos','transfer','cheque') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'cash',
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `payment_reference` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `receipt_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `received_by` bigint UNSIGNED NOT NULL,
+  `status` enum('active','fully_applied','refunded','expired','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `refund_journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `refund_reason` text COLLATE utf8mb4_unicode_ci,
+  `refunded_by` bigint UNSIGNED DEFAULT NULL,
   `refunded_at` timestamp NULL DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -69053,24 +69074,24 @@ INSERT INTO `patient_deposits` (`id`, `patient_id`, `admission_id`, `encounter_i
 --
 
 CREATE TABLE `patient_deposit_applications` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `deposit_id` bigint(20) UNSIGNED NOT NULL,
-  `payment_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `bill_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `application_number` varchar(50) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `deposit_id` bigint UNSIGNED NOT NULL,
+  `payment_id` bigint UNSIGNED DEFAULT NULL,
+  `bill_id` bigint UNSIGNED DEFAULT NULL,
+  `application_number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `application_date` date NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `application_type` enum('bill_payment','refund') NOT NULL DEFAULT 'bill_payment',
-  `description` text DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `applied_by` bigint(20) UNSIGNED NOT NULL,
-  `status` enum('applied','reversed') NOT NULL DEFAULT 'applied',
-  `reversal_reason` text DEFAULT NULL,
+  `application_type` enum('bill_payment','refund') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'bill_payment',
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `applied_by` bigint UNSIGNED NOT NULL,
+  `status` enum('applied','reversed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'applied',
+  `reversal_reason` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `reversed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `reversed_by` bigint UNSIGNED DEFAULT NULL,
   `reversed_at` timestamp NULL DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -69089,16 +69110,16 @@ INSERT INTO `patient_deposit_applications` (`id`, `deposit_id`, `payment_id`, `b
 --
 
 CREATE TABLE `patient_immunization_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `schedule_item_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `schedule_item_id` bigint UNSIGNED NOT NULL,
   `due_date` date NOT NULL,
   `administered_date` date DEFAULT NULL,
-  `status` enum('pending','due','overdue','administered','skipped','contraindicated') NOT NULL DEFAULT 'pending',
-  `immunization_record_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `skip_reason` text DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `status` enum('pending','due','overdue','administered','skipped','contraindicated') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `immunization_record_id` bigint UNSIGNED DEFAULT NULL,
+  `skip_reason` text COLLATE utf8mb4_unicode_ci,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `updated_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -69248,16 +69269,16 @@ INSERT INTO `patient_immunization_schedules` (`id`, `patient_id`, `schedule_item
 --
 
 CREATE TABLE `patient_profiles` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `form_id` varchar(255) NOT NULL,
-  `form_name` varchar(255) DEFAULT NULL,
-  `form_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`form_data`)),
-  `filled_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `form_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `form_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `form_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `filled_by` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 -- --------------------------------------------------------
 
@@ -69266,21 +69287,21 @@ CREATE TABLE `patient_profiles` (
 --
 
 CREATE TABLE `payments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `reference_no` varchar(255) NOT NULL,
-  `total` varchar(255) NOT NULL,
-  `total_discount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `payment_type` varchar(255) NOT NULL,
-  `payment_method` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `reference_no` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `total` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `total_discount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `payment_type` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `payment_method` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `invoice_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `user_id` bigint(20) UNSIGNED DEFAULT NULL
+  `invoice_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `account_id` bigint UNSIGNED DEFAULT NULL,
+  `hmo_id` bigint UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -69317,39 +69338,39 @@ INSERT INTO `payments` (`id`, `reference_no`, `total`, `total_discount`, `paymen
 --
 
 CREATE TABLE `payroll_batches` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `batch_number` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `batch_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `pay_period_start` date NOT NULL,
   `pay_period_end` date NOT NULL,
   `work_period_start` date DEFAULT NULL,
   `work_period_end` date DEFAULT NULL,
-  `days_in_month` int(11) DEFAULT NULL,
-  `days_worked` int(11) DEFAULT NULL,
+  `days_in_month` int DEFAULT NULL,
+  `days_worked` int DEFAULT NULL,
   `payment_date` date NOT NULL,
-  `total_staff` int(11) NOT NULL DEFAULT 0,
-  `total_gross` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `total_additions` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `total_deductions` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `total_net` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `payment_method` varchar(255) NOT NULL DEFAULT 'bank_transfer',
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('draft','submitted','approved','rejected','paid') NOT NULL DEFAULT 'draft',
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `submitted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `total_staff` int NOT NULL DEFAULT '0',
+  `total_gross` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_additions` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_deductions` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_net` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `payment_method` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'bank_transfer',
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `account_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('draft','submitted','approved','rejected','paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `created_by` bigint UNSIGNED NOT NULL,
+  `submitted_by` bigint UNSIGNED DEFAULT NULL,
   `submitted_at` timestamp NULL DEFAULT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `approval_comments` text DEFAULT NULL,
-  `rejected_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `approval_comments` text COLLATE utf8mb4_unicode_ci,
+  `rejected_by` bigint UNSIGNED DEFAULT NULL,
   `rejected_at` timestamp NULL DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL,
-  `paid_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
+  `paid_by` bigint UNSIGNED DEFAULT NULL,
   `paid_at` timestamp NULL DEFAULT NULL,
-  `payment_comments` text DEFAULT NULL,
-  `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `payment_comments` text COLLATE utf8mb4_unicode_ci,
+  `expense_id` bigint UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -69362,22 +69383,22 @@ CREATE TABLE `payroll_batches` (
 --
 
 CREATE TABLE `payroll_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `payroll_batch_id` bigint(20) UNSIGNED NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `salary_profile_id` bigint(20) UNSIGNED NOT NULL,
-  `days_in_month` int(11) DEFAULT NULL,
-  `days_worked` int(11) DEFAULT NULL,
-  `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `id` bigint UNSIGNED NOT NULL,
+  `payroll_batch_id` bigint UNSIGNED NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `salary_profile_id` bigint UNSIGNED NOT NULL,
+  `days_in_month` int DEFAULT NULL,
+  `days_worked` int DEFAULT NULL,
+  `basic_salary` decimal(15,2) NOT NULL DEFAULT '0.00',
   `full_gross_salary` decimal(15,2) DEFAULT NULL,
-  `gross_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `total_additions` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `total_deductions` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `net_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `gross_salary` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_additions` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_deductions` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `net_salary` decimal(15,2) NOT NULL DEFAULT '0.00',
   `full_net_salary` decimal(15,2) DEFAULT NULL,
-  `bank_name` varchar(255) DEFAULT NULL,
-  `bank_account_number` varchar(255) DEFAULT NULL,
-  `bank_account_name` varchar(255) DEFAULT NULL,
+  `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_account_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_account_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -69389,12 +69410,12 @@ CREATE TABLE `payroll_items` (
 --
 
 CREATE TABLE `payroll_item_details` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `payroll_item_id` bigint(20) UNSIGNED NOT NULL,
-  `pay_head_id` bigint(20) UNSIGNED NOT NULL,
-  `type` enum('addition','deduction') NOT NULL,
-  `pay_head_name` varchar(255) NOT NULL,
-  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `id` bigint UNSIGNED NOT NULL,
+  `payroll_item_id` bigint UNSIGNED NOT NULL,
+  `pay_head_id` bigint UNSIGNED NOT NULL,
+  `type` enum('addition','deduction') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `pay_head_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -69406,20 +69427,20 @@ CREATE TABLE `payroll_item_details` (
 --
 
 CREATE TABLE `pay_heads` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `code` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `type` enum('addition','deduction') NOT NULL,
-  `calculation_type` enum('fixed','percentage','formula') NOT NULL DEFAULT 'fixed',
-  `percentage_of` varchar(255) DEFAULT NULL COMMENT 'basic, gross, basic_salary, gross_salary',
-  `calculation_base` varchar(255) DEFAULT NULL,
-  `default_value` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `is_taxable` tinyint(1) NOT NULL DEFAULT 1,
-  `is_mandatory` tinyint(1) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `liability_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `type` enum('addition','deduction') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `calculation_type` enum('fixed','percentage','formula') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
+  `percentage_of` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'basic, gross, basic_salary, gross_salary',
+  `calculation_base` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `default_value` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `is_taxable` tinyint(1) NOT NULL DEFAULT '1',
+  `is_mandatory` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `liability_account_id` bigint UNSIGNED DEFAULT NULL,
+  `sort_order` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -69440,9 +69461,9 @@ INSERT INTO `pay_heads` (`id`, `name`, `code`, `description`, `type`, `calculati
 --
 
 CREATE TABLE `permissions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `guard_name` varchar(255) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `guard_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -69633,12 +69654,12 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 --
 
 CREATE TABLE `personal_access_tokens` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `tokenable_type` varchar(255) NOT NULL,
-  `tokenable_id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `token` varchar(64) NOT NULL,
-  `abilities` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `tokenable_type` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `tokenable_id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `token` varchar(64) COLLATE utf8mb4_general_ci NOT NULL,
+  `abilities` text COLLATE utf8mb4_general_ci,
   `last_used_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -69650,7 +69671,7 @@ CREATE TABLE `personal_access_tokens` (
 
 INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `name`, `token`, `abilities`, `last_used_at`, `created_at`, `updated_at`) VALUES
 (5, 'App\\Models\\User', 64684, 'mobile-patient', '4a943ccbf72da0cdddd18cfcd72c6a6b1f623cccf830d6651445fe61027dfa7a', '[\"*\"]', '2026-02-13 09:07:39', '2026-02-13 09:05:18', '2026-02-13 09:07:39'),
-(6, 'App\\Models\\User', 1, 'mobile-doctor', '74428f672a4a3931d27c479658d7a1a7df63885adb5d6aab675b1799874c0f11', '[\"*\"]', '2026-02-13 09:42:19', '2026-02-13 09:31:33', '2026-02-13 09:42:19');
+(7, 'App\\Models\\User', 1, 'mobile-doctor', 'e0daf71d36348b1af5d95eceda15d7d678131b93c6db0f89a1368a4f0565f90f', '[\"*\"]', '2026-04-10 15:27:41', '2026-04-10 15:23:10', '2026-04-10 15:27:41');
 
 -- --------------------------------------------------------
 
@@ -69659,19 +69680,19 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 --
 
 CREATE TABLE `petty_cash_funds` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fund_name` varchar(255) NOT NULL,
-  `fund_code` varchar(20) NOT NULL,
-  `account_id` bigint(20) UNSIGNED NOT NULL,
-  `custodian_user_id` bigint(20) UNSIGNED NOT NULL,
-  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `fund_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fund_code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `account_id` bigint UNSIGNED NOT NULL,
+  `custodian_user_id` bigint UNSIGNED NOT NULL,
+  `department_id` bigint UNSIGNED DEFAULT NULL,
   `fund_limit` decimal(15,2) NOT NULL COMMENT 'Maximum fund balance',
   `transaction_limit` decimal(15,2) NOT NULL COMMENT 'Max per transaction',
-  `current_balance` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Cached balance, computed from JE',
-  `requires_approval` tinyint(1) NOT NULL DEFAULT 1,
-  `approval_threshold` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Amount above which needs approval',
-  `status` enum('active','suspended','closed') NOT NULL DEFAULT 'active',
-  `notes` text DEFAULT NULL,
+  `current_balance` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Cached balance, computed from JE',
+  `requires_approval` tinyint(1) NOT NULL DEFAULT '1',
+  `approval_threshold` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Amount above which needs approval',
+  `status` enum('active','suspended','closed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -69691,27 +69712,27 @@ INSERT INTO `petty_cash_funds` (`id`, `fund_name`, `fund_code`, `account_id`, `c
 --
 
 CREATE TABLE `petty_cash_reconciliations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fund_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `fund_id` bigint UNSIGNED NOT NULL,
   `reconciliation_date` date NOT NULL,
-  `reconciliation_number` varchar(50) NOT NULL,
+  `reconciliation_number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `expected_balance` decimal(15,2) NOT NULL COMMENT 'Balance per JE/system',
   `actual_cash_count` decimal(15,2) NOT NULL COMMENT 'Physical count',
   `variance` decimal(15,2) NOT NULL COMMENT 'expected - actual',
-  `denomination_breakdown` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Count by denomination' CHECK (json_valid(`denomination_breakdown`)),
-  `outstanding_vouchers` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `outstanding_voucher_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`outstanding_voucher_ids`)),
-  `status` enum('balanced','shortage','overage','pending') NOT NULL DEFAULT 'pending',
-  `approval_status` enum('pending_approval','approved','rejected') NOT NULL DEFAULT 'pending_approval' COMMENT 'Workflow status for variance approval',
-  `adjustment_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL,
-  `reconciled_by` bigint(20) UNSIGNED NOT NULL,
-  `reviewed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `denomination_breakdown` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'Count by denomination',
+  `outstanding_vouchers` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `outstanding_voucher_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `status` enum('balanced','shortage','overage','pending') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `approval_status` enum('pending_approval','approved','rejected') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending_approval' COMMENT 'Workflow status for variance approval',
+  `adjustment_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
+  `reconciled_by` bigint UNSIGNED NOT NULL,
+  `reviewed_by` bigint UNSIGNED DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `petty_cash_reconciliations`
@@ -69728,28 +69749,28 @@ INSERT INTO `petty_cash_reconciliations` (`id`, `fund_id`, `reconciliation_date`
 --
 
 CREATE TABLE `petty_cash_transactions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `fund_id` bigint(20) UNSIGNED NOT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `transaction_type` enum('disbursement','replenishment','adjustment') NOT NULL DEFAULT 'disbursement',
+  `id` bigint UNSIGNED NOT NULL,
+  `fund_id` bigint UNSIGNED NOT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `transaction_type` enum('disbursement','replenishment','adjustment') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'disbursement',
   `transaction_date` date NOT NULL,
-  `voucher_number` varchar(50) NOT NULL,
-  `description` text NOT NULL,
+  `voucher_number` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `expense_category` varchar(50) DEFAULT NULL,
-  `expense_account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `requested_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `expense_category` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `expense_account_id` bigint UNSIGNED DEFAULT NULL,
+  `requested_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `receipt_number` varchar(50) DEFAULT NULL,
-  `receipt_attached` tinyint(1) NOT NULL DEFAULT 0,
-  `receipt_path` varchar(255) DEFAULT NULL,
-  `payee_name` varchar(255) DEFAULT NULL,
-  `payee_type` varchar(20) DEFAULT NULL COMMENT 'staff, vendor, other',
-  `payment_method` varchar(20) DEFAULT NULL COMMENT 'Source: cash or bank_transfer (for replenishment)',
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','approved','disbursed','rejected','voided') NOT NULL DEFAULT 'pending',
-  `rejection_reason` text DEFAULT NULL,
+  `receipt_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `receipt_attached` tinyint(1) NOT NULL DEFAULT '0',
+  `receipt_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payee_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payee_type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'staff, vendor, other',
+  `payment_method` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Source: cash or bank_transfer (for replenishment)',
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('pending','approved','disbursed','rejected','voided') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -69772,23 +69793,23 @@ INSERT INTO `petty_cash_transactions` (`id`, `fund_id`, `journal_entry_id`, `tra
 --
 
 CREATE TABLE `pharmacy_damages` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `store_id` bigint(20) UNSIGNED NOT NULL,
-  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `store_id` bigint UNSIGNED NOT NULL,
+  `batch_id` bigint UNSIGNED DEFAULT NULL,
   `qty_damaged` decimal(10,2) NOT NULL,
   `unit_cost` decimal(10,2) NOT NULL COMMENT 'Cost per unit',
   `total_value` decimal(10,2) NOT NULL COMMENT 'Total loss value',
-  `damage_type` varchar(50) NOT NULL COMMENT 'expired, broken, contaminated, spoiled, theft, other',
-  `damage_reason` text NOT NULL,
+  `damage_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'expired, broken, contaminated, spoiled, theft, other',
+  `damage_reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `discovered_date` date NOT NULL,
-  `status` varchar(50) NOT NULL DEFAULT 'pending' COMMENT 'pending, approved, rejected, written_off',
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `status` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending' COMMENT 'pending, approved, rejected, written_off',
+  `created_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `approval_notes` text DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `stock_deducted` tinyint(1) NOT NULL DEFAULT 0,
+  `approval_notes` text COLLATE utf8mb4_unicode_ci,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `stock_deducted` tinyint(1) NOT NULL DEFAULT '0',
   `stock_deducted_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -69811,28 +69832,28 @@ INSERT INTO `pharmacy_damages` (`id`, `product_id`, `store_id`, `batch_id`, `qty
 --
 
 CREATE TABLE `pharmacy_returns` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `product_request_id` bigint(20) UNSIGNED NOT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `store_id` bigint(20) UNSIGNED NOT NULL,
-  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `product_request_id` bigint UNSIGNED NOT NULL,
+  `product_or_service_request_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `store_id` bigint UNSIGNED NOT NULL,
+  `batch_id` bigint UNSIGNED DEFAULT NULL,
   `qty_returned` decimal(10,2) NOT NULL,
   `original_qty` decimal(10,2) NOT NULL,
   `refund_amount` decimal(10,2) NOT NULL,
   `original_amount` decimal(10,2) NOT NULL,
-  `return_condition` varchar(50) NOT NULL COMMENT 'good, damaged, expired',
-  `return_reason` text NOT NULL,
-  `restock` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Can item be restocked?',
-  `refund_to_patient` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `refund_to_hmo` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `status` varchar(50) NOT NULL DEFAULT 'pending' COMMENT 'pending, approved, rejected, completed',
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `return_condition` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'good, damaged, expired',
+  `return_reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `restock` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Can item be restocked?',
+  `refund_to_patient` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `refund_to_hmo` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `status` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending' COMMENT 'pending, approved, rejected, completed',
+  `created_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `approval_notes` text DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `approval_notes` text COLLATE utf8mb4_unicode_ci,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -69855,34 +69876,34 @@ INSERT INTO `pharmacy_returns` (`id`, `product_request_id`, `product_or_service_
 --
 
 CREATE TABLE `postnatal_visits` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `visit_type` enum('within_24h','day_3','week_1_2','week_6','other') NOT NULL DEFAULT 'within_24h',
+  `id` bigint UNSIGNED NOT NULL,
+  `enrollment_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `visit_type` enum('within_24h','day_3','week_1_2','week_6','other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'within_24h',
   `visit_date` date NOT NULL,
-  `days_postpartum` int(11) DEFAULT NULL,
-  `general_condition` varchar(255) DEFAULT NULL,
-  `blood_pressure` varchar(255) DEFAULT NULL,
+  `days_postpartum` int DEFAULT NULL,
+  `general_condition` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `blood_pressure` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `temperature_c` decimal(4,1) DEFAULT NULL,
-  `uterus_assessment` varchar(255) DEFAULT NULL,
-  `lochia` enum('normal','offensive','heavy','absent') DEFAULT NULL,
-  `wound_assessment` varchar(255) DEFAULT NULL,
-  `breast_assessment` varchar(255) DEFAULT NULL,
-  `breastfeeding_support` text DEFAULT NULL,
-  `emotional_wellbeing` enum('good','mild_concern','moderate_concern','severe_concern') DEFAULT NULL,
-  `emotional_notes` text DEFAULT NULL,
+  `uterus_assessment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `lochia` enum('normal','offensive','heavy','absent') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `wound_assessment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `breast_assessment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `breastfeeding_support` text COLLATE utf8mb4_unicode_ci,
+  `emotional_wellbeing` enum('good','mild_concern','moderate_concern','severe_concern') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `emotional_notes` text COLLATE utf8mb4_unicode_ci,
   `baby_weight_kg` decimal(4,3) DEFAULT NULL,
-  `baby_feeding` enum('exclusive_breastfeeding','formula','mixed') DEFAULT NULL,
-  `cord_status` enum('clean','infected','separated') DEFAULT NULL,
-  `jaundice` tinyint(1) NOT NULL DEFAULT 0,
-  `baby_general_condition` varchar(255) DEFAULT NULL,
-  `baby_notes` text DEFAULT NULL,
-  `family_planning_counselled` tinyint(1) NOT NULL DEFAULT 0,
-  `family_planning_method` varchar(255) DEFAULT NULL,
-  `clinical_notes` text DEFAULT NULL,
+  `baby_feeding` enum('exclusive_breastfeeding','formula','mixed') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cord_status` enum('clean','infected','separated') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `jaundice` tinyint(1) NOT NULL DEFAULT '0',
+  `baby_general_condition` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `baby_notes` text COLLATE utf8mb4_unicode_ci,
+  `family_planning_counselled` tinyint(1) NOT NULL DEFAULT '0',
+  `family_planning_method` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `clinical_notes` text COLLATE utf8mb4_unicode_ci,
   `next_appointment` date DEFAULT NULL,
-  `seen_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `seen_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -69903,21 +69924,21 @@ INSERT INTO `postnatal_visits` (`id`, `enrollment_id`, `patient_id`, `encounter_
 --
 
 CREATE TABLE `prices` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `pr_buy_price` int(11) NOT NULL DEFAULT 0,
-  `initial_sale_price` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `pr_buy_price` int NOT NULL DEFAULT '0',
+  `initial_sale_price` int NOT NULL DEFAULT '0',
   `initial_sale_date` date DEFAULT NULL,
-  `current_sale_price` double(8,2) NOT NULL DEFAULT 0.00,
-  `half_price` int(11) NOT NULL DEFAULT 0,
-  `pieces_price` int(11) NOT NULL DEFAULT 0,
-  `pieces_max_discount` int(11) NOT NULL DEFAULT 0,
+  `current_sale_price` double(8,2) NOT NULL DEFAULT '0.00',
+  `half_price` int NOT NULL DEFAULT '0',
+  `pieces_price` int NOT NULL DEFAULT '0',
+  `pieces_max_discount` int NOT NULL DEFAULT '0',
   `current_sale_date` date DEFAULT NULL,
-  `max_discount` int(11) NOT NULL DEFAULT 0,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `max_discount` int NOT NULL DEFAULT '0',
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_price_id` int(11) DEFAULT NULL
+  `old_price_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -70413,7 +70434,7 @@ INSERT INTO `prices` (`id`, `product_id`, `pr_buy_price`, `initial_sale_price`, 
 (643, 645, 420, 420, NULL, 420.00, 0, 0, 0, NULL, 0, 1, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL),
 (644, 646, 264000, 264000, NULL, 264000.00, 0, 0, 0, NULL, 0, 1, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL),
 (645, 647, 2380, 2380, NULL, 2380.00, 0, 0, 0, NULL, 0, 1, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL),
-(646, 648, 820, 820, NULL, 820.00, 0, 0, 0, NULL, 0, 1, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL),
+(646, 648, 820, 820, '2026-04-12', 820.00, 0, 0, 0, '2026-04-12', 0, 1, '2026-01-28 08:01:29', '2026-04-12 18:23:06', NULL),
 (647, 649, 765, 765, NULL, 765.00, 0, 0, 0, NULL, 0, 1, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL),
 (648, 650, 1460, 1460, NULL, 1460.00, 0, 0, 0, NULL, 0, 1, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL),
 (649, 651, 820, 820, NULL, 820.00, 0, 0, 0, NULL, 0, 1, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL),
@@ -70589,35 +70610,35 @@ INSERT INTO `prices` (`id`, `product_id`, `pr_buy_price`, `initial_sale_price`, 
 --
 
 CREATE TABLE `procedures` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `procedure_definition_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `requested_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `admission_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `service_id` bigint UNSIGNED DEFAULT NULL,
+  `procedure_definition_id` bigint UNSIGNED DEFAULT NULL,
+  `requested_by` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `admission_request_id` bigint UNSIGNED DEFAULT NULL,
+  `product_or_service_request_id` bigint UNSIGNED DEFAULT NULL,
   `requested_on` timestamp NULL DEFAULT NULL,
-  `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `billed_by` bigint UNSIGNED DEFAULT NULL,
   `billed_on` timestamp NULL DEFAULT NULL,
-  `pre_notes` text DEFAULT NULL,
-  `pre_notes_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `post_notes` text DEFAULT NULL,
-  `post_notes_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `cancellation_reason` text DEFAULT NULL,
+  `pre_notes` text COLLATE utf8mb4_general_ci,
+  `pre_notes_by` bigint UNSIGNED DEFAULT NULL,
+  `post_notes` text COLLATE utf8mb4_general_ci,
+  `post_notes_by` bigint UNSIGNED DEFAULT NULL,
+  `cancellation_reason` text COLLATE utf8mb4_general_ci,
   `refund_amount` decimal(15,2) DEFAULT NULL,
   `cancelled_at` datetime DEFAULT NULL,
-  `cancelled_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  `procedure_status` enum('requested','scheduled','in_progress','completed','cancelled') NOT NULL DEFAULT 'requested',
-  `priority` enum('routine','urgent','emergency') NOT NULL DEFAULT 'routine',
+  `cancelled_by` bigint UNSIGNED DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `procedure_status` enum('requested','scheduled','in_progress','completed','cancelled') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'requested',
+  `priority` enum('routine','urgent','emergency') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'routine',
   `scheduled_date` date DEFAULT NULL,
   `scheduled_time` time DEFAULT NULL,
   `actual_start_time` datetime DEFAULT NULL,
   `actual_end_time` datetime DEFAULT NULL,
-  `operating_room` varchar(100) DEFAULT NULL,
-  `outcome` enum('successful','complications','aborted','converted') DEFAULT NULL,
-  `outcome_notes` text DEFAULT NULL,
+  `operating_room` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `outcome` enum('successful','complications','aborted','converted') COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `outcome_notes` text COLLATE utf8mb4_general_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -70645,11 +70666,11 @@ INSERT INTO `procedures` (`id`, `service_id`, `procedure_definition_id`, `reques
 --
 
 CREATE TABLE `procedure_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `description` text DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -70682,15 +70703,15 @@ INSERT INTO `procedure_categories` (`id`, `name`, `code`, `description`, `status
 --
 
 CREATE TABLE `procedure_definitions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `service_id` bigint(20) UNSIGNED NOT NULL,
-  `procedure_category_id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `code` varchar(50) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `is_surgical` tinyint(1) NOT NULL DEFAULT 0,
-  `estimated_duration_minutes` int(10) UNSIGNED DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `service_id` bigint UNSIGNED NOT NULL,
+  `procedure_category_id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `is_surgical` tinyint(1) NOT NULL DEFAULT '0',
+  `estimated_duration_minutes` int UNSIGNED DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -70709,14 +70730,14 @@ INSERT INTO `procedure_definitions` (`id`, `service_id`, `procedure_category_id`
 --
 
 CREATE TABLE `procedure_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `procedure_id` bigint(20) UNSIGNED NOT NULL,
-  `lab_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `imaging_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `misc_bill_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `is_bundled` tinyint(1) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `procedure_id` bigint UNSIGNED NOT NULL,
+  `lab_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `imaging_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `product_request_id` bigint UNSIGNED DEFAULT NULL,
+  `misc_bill_id` bigint UNSIGNED DEFAULT NULL,
+  `product_or_service_request_id` bigint UNSIGNED DEFAULT NULL,
+  `is_bundled` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -70746,12 +70767,12 @@ INSERT INTO `procedure_items` (`id`, `procedure_id`, `lab_service_request_id`, `
 --
 
 CREATE TABLE `procedure_notes` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `procedure_id` bigint(20) UNSIGNED NOT NULL,
-  `note_type` enum('pre_op','intra_op','post_op','anesthesia','nursing') NOT NULL,
-  `title` varchar(255) DEFAULT NULL,
-  `content` longtext NOT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `procedure_id` bigint UNSIGNED NOT NULL,
+  `note_type` enum('pre_op','intra_op','post_op','anesthesia','nursing') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `content` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -70771,13 +70792,13 @@ INSERT INTO `procedure_notes` (`id`, `procedure_id`, `note_type`, `title`, `cont
 --
 
 CREATE TABLE `procedure_team_members` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `procedure_id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `role` enum('chief_surgeon','assistant_surgeon','anesthesiologist','nurse_anesthetist','scrub_nurse','circulating_nurse','surgical_first_assistant','perfusionist','radiologist','pathologist','other') NOT NULL,
-  `custom_role` varchar(100) DEFAULT NULL,
-  `is_lead` tinyint(1) NOT NULL DEFAULT 0,
-  `notes` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `procedure_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `role` enum('chief_surgeon','assistant_surgeon','anesthesiologist','nurse_anesthetist','scrub_nurse','circulating_nurse','surgical_first_assistant','perfusionist','radiologist','pathologist','other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `custom_role` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_lead` tinyint(1) NOT NULL DEFAULT '0',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -70797,688 +70818,691 @@ INSERT INTO `procedure_team_members` (`id`, `procedure_id`, `user_id`, `role`, `
 --
 
 CREATE TABLE `products` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `category_id` bigint(20) UNSIGNED NOT NULL,
-  `product_name` varchar(255) NOT NULL,
-  `product_code` varchar(255) DEFAULT NULL,
-  `reorder_alert` varchar(255) DEFAULT NULL,
-  `has_have` varchar(255) DEFAULT NULL,
-  `has_piece` varchar(255) DEFAULT NULL,
-  `howmany_to` varchar(255) DEFAULT NULL,
-  `current_quantity` varchar(255) DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  `stock_assign` tinyint(1) NOT NULL DEFAULT 0,
-  `price_assign` tinyint(1) NOT NULL DEFAULT 0,
-  `promotion` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `category_id` bigint UNSIGNED NOT NULL,
+  `product_type` enum('drug','consumable','utility') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'drug',
+  `base_unit_name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Piece',
+  `allow_decimal_qty` tinyint(1) NOT NULL DEFAULT '0',
+  `product_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `product_code` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `reorder_alert` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `has_have` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `has_piece` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `howmany_to` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `current_quantity` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `stock_assign` tinyint(1) NOT NULL DEFAULT '0',
+  `price_assign` tinyint(1) NOT NULL DEFAULT '0',
+  `promotion` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_product_id` int(11) DEFAULT NULL,
-  `old_stock_id` int(11) DEFAULT NULL
+  `old_product_id` int DEFAULT NULL,
+  `old_stock_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_name`, `product_code`, `reorder_alert`, `has_have`, `has_piece`, `howmany_to`, `current_quantity`, `status`, `stock_assign`, `price_assign`, `promotion`, `created_at`, `updated_at`, `old_product_id`, `old_stock_id`) VALUES
-(161, 1, 1, 'Paracetamol 500mg', 'PARA-500', '100', NULL, NULL, NULL, '500', 1, 0, 0, 0, '2026-01-28 08:00:40', '2026-01-28 08:00:40', NULL, NULL),
-(162, 1, 2, 'Amoxicillin 250mg', 'AMOX-250', '50', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 08:00:40', '2026-01-28 08:00:40', NULL, NULL),
-(163, 1, 2, 'ACECLOFENAC  100MG', 'ACECLOFENAC  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:40', '2026-01-28 08:00:40', NULL, NULL),
-(164, 1, 2, 'ACECLOFENAC  PLUS 100mg', 'ACECLOFENAC  PLUS 100mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:40', '2026-01-28 08:00:40', NULL, NULL),
-(165, 1, 2, 'ACTIFED  (SINUFED)', 'ACTIFED  (SINUFED)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(166, 1, 2, 'ACTIFIED SYRUP', 'ACTIFIED SYRUP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(167, 1, 2, 'ACTIVATED  CHARCOAL TAB', 'ACTIVATED  CHARCOAL TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(168, 1, 2, 'ACYCLOVIR  400MG (ZOVIRAX)', 'ACYCLOVIR  400MG (ZOVIRAX)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(169, 1, 2, 'ACYCLOVIR CREAM', 'ACYCLOVIR CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(170, 1, 2, 'ADRENALINE INJ.', 'ADRENALINE INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(171, 1, 2, 'ALBENDAZOLE 400MG  (per pack)', 'ALBENDAZOLE 400MG  (per pack)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(172, 1, 2, 'ALBENDAZOLE SYRUP', 'ALBENDAZOLE SYRUP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(173, 1, 2, 'ALDACTONE 25MG TAB.', 'ALDACTONE 25MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(174, 1, 2, 'ALDOMET 250mg ( Methyldopa)', 'ALDOMET 250mg ( Methyldopa)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(175, 1, 2, 'ALLUPURINOL  100MG', 'ALLUPURINOL  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
-(176, 1, 2, 'ALPHABETIC', 'ALPHABETIC', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(177, 1, 2, 'AMLODIPINE  10MG', 'AMLODIPINE  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(178, 1, 2, 'AMLODIPINE  5MG', 'AMLODIPINE  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(179, 1, 2, 'AMINOPHYLINE 2.5% INJ.', 'AMINOPHYLINE 2.5% INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(180, 1, 2, 'AMOXYCILLIN 250MG CAPS', 'AMOXYCILLIN 250MG CAPS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(181, 1, 2, 'AMOXYCILLIN 500MG CAPS', 'AMOXYCILLIN 500MG CAPS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(182, 1, 2, 'AMOXYCILLIN 250MG (CHAN) DISP', 'AMOXYCILLIN 250MG (CHAN) DISP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(183, 1, 2, 'AMOXYCILLIN SUSP', 'AMOXYCILLIN SUSP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(184, 1, 2, 'AMPICLOX ( 100ml)   susp.', 'AMPICLOX ( 100ml)   susp.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(185, 1, 2, 'AMPICLOX 500MG CAP', 'AMPICLOX 500MG CAP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(186, 1, 2, 'AMPICLOX 500MG INJ.', 'AMPICLOX 500MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(187, 1, 2, 'ANATE 7-13YRS)', 'ANATE 7-13YRS)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(188, 1, 2, 'ANATE ABV 1YR', 'ANATE ABV 1YR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
-(189, 1, 2, 'ANATE BELOW 1 YEAR \"', 'ANATE BELOW 1 YEAR \"', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(190, 1, 2, 'ANNUSOL SUPP.', 'ANNUSOL SUPP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(191, 1, 2, 'ANTERLLERG', 'ANTERLLERG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(192, 1, 2, 'ANTI D (RHOGAM)', 'ANTI D (RHOGAM)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(193, 1, 2, 'ANTI- RABIES VACCINE', 'ANTI- RABIES VACCINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(194, 1, 2, 'AQUATEARS', 'AQUATEARS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(195, 1, 2, 'ARTANE 5MG TAB.', 'ARTANE 5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(196, 1, 2, 'ARTERSUNATE INJ. 60MG', 'ARTERSUNATE INJ. 60MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(197, 1, 2, 'ARTESUNATE  120MG', 'ARTESUNATE  120MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(198, 1, 2, 'ARTHEMETER 80 INJ.', 'ARTHEMETER 80 INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(199, 1, 2, 'ARTHOCARE  FORTE', 'ARTHOCARE  FORTE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
-(200, 1, 2, 'ARTHOCARE TAB.', 'ARTHOCARE TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(201, 1, 2, 'ARTOVASTATIN TAB  10MG', 'ARTOVASTATIN TAB  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(202, 1, 2, 'ARTOVASTATIN TAB  20MG', 'ARTOVASTATIN TAB  20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(203, 1, 2, 'ASTYFER  TONIC  200MLS', 'ASTYFER  TONIC  200MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(204, 1, 2, 'ASTYMIN SYR', 'ASTYMIN SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(205, 1, 2, 'ASTYFER TONIC  110mls', 'ASTYFER TONIC  110mls', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(206, 1, 2, 'ATENOLOL  TAB.  (50MG)', 'ATENOLOL  TAB.  (50MG)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(207, 1, 2, 'ARTEQUICK  PRICE PER PACK', 'ARTEQUICK  PRICE PER PACK', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(208, 1, 2, 'ATHROTEC CAP 75mg', 'ATHROTEC CAP 75mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(209, 1, 2, 'ATROPINE GUTT', 'ATROPINE GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(210, 1, 2, 'ATROPINE 0.5MG INJ.', 'ATROPINE 0.5MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(211, 1, 2, 'AUGMENTIN  1G', 'AUGMENTIN  1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
-(212, 1, 2, 'AUGMENTIN  (228mg/5ml)', 'AUGMENTIN  (228mg/5ml)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
-(213, 1, 2, 'AUGMENTIN  . 457MG', 'AUGMENTIN  . 457MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
-(214, 1, 2, 'AUGMENTIN 1.2 MG INJ.', 'AUGMENTIN 1.2 MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
-(215, 1, 2, 'AUGMENTIN 625MG', 'AUGMENTIN 625MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
-(216, 1, 2, 'AZITHROMYCIN 500MG', 'AZITHROMYCIN 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
-(217, 1, 2, 'AZITHROMYCIN SUSP.', 'AZITHROMYCIN SUSP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
-(218, 1, 2, 'AMIODARONE   200mg', 'AMIODARONE   200mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
-(219, 1, 2, 'AMLOZAR  H', 'AMLOZAR  H', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
-(220, 1, 2, 'ANASTRAZOLE  1MG', 'ANASTRAZOLE  1MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
-(221, 1, 2, 'ARBITEL   80mg', 'ARBITEL   80mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
-(222, 1, 2, 'ALLOPURINOL 300MG', 'ALLOPURINOL 300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
-(223, 1, 2, 'ANTALGEX TAB', 'ANTALGEX TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
-(224, 1, 2, 'BETOPTIC   (BETAZOLOL)', 'BETOPTIC   (BETAZOLOL)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
-(225, 1, 2, 'BENDROFLUAZIDE  5MG', 'BENDROFLUAZIDE  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
-(226, 1, 2, 'BENZYL BENZOATE', 'BENZYL BENZOATE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
-(227, 1, 2, 'BIOFLOR', 'BIOFLOR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
-(228, 1, 2, 'BIOPENTIN', 'BIOPENTIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
-(229, 1, 2, 'BISACODYL SUPP.', 'BISACODYL SUPP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
-(230, 1, 2, 'BISACODYL TAB 5MG', 'BISACODYL TAB 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
-(231, 1, 2, 'BISOPROLOL  5MG', 'BISOPROLOL  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
-(232, 1, 2, 'BRIMONIDINE  GUTT', 'BRIMONIDINE  GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
-(233, 1, 2, 'BROMOCRIPTINE (parlodel)', 'BROMOCRIPTINE (parlodel)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
-(234, 1, 2, 'BRONCHOLYTE ELIXIR 100ml', 'BRONCHOLYTE ELIXIR 100ml', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:48', '2026-01-28 08:00:48', NULL, NULL),
-(235, 1, 2, 'BUSCOPAN  10MG INJ.', 'BUSCOPAN  10MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
-(236, 1, 2, 'BUSCOPAN  10MG TAB', 'BUSCOPAN  10MG TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
-(237, 1, 2, 'BUSCOPAN  SYR', 'BUSCOPAN  SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
-(238, 1, 2, 'TAB BACLOFEN', 'TAB BACLOFEN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
-(239, 1, 2, 'GUTT BIMAPROST', 'GUTT BIMAPROST', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
-(240, 1, 2, 'GUTT BETAMETASONE+NEOMYCIN', 'GUTT BETAMETASONE+NEOMYCIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
-(241, 1, 2, 'CAFERGOT  TAB.', 'CAFERGOT  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
-(242, 1, 2, 'CALAMINE LOTION', 'CALAMINE LOTION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
-(243, 1, 2, 'CALCITROL', 'CALCITROL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
-(244, 1, 2, 'CALCIUM CARBONATE  TAB', 'CALCIUM CARBONATE  TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
-(245, 1, 2, 'CALCIUM GLUCONATE  INJ.', 'CALCIUM GLUCONATE  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
-(246, 1, 2, 'CALCIUM LACTATE  TAB.', 'CALCIUM LACTATE  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
-(247, 1, 2, 'CANDESARTAN  16MG', 'CANDESARTAN  16MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
-(248, 1, 2, 'CANDESARTAN  8MG', 'CANDESARTAN  8MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
-(249, 1, 2, 'CLOTRIMAZOLE CREAM  TOPICAL', 'CLOTRIMAZOLE CREAM  TOPICAL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
-(250, 1, 2, 'CANESTEN V PESSARIES  X 6s', 'CANESTEN V PESSARIES  X 6s', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
-(251, 1, 2, 'CANESTEN VAG. CREAM', 'CANESTEN VAG. CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
-(252, 1, 2, 'CARPIDOPA  (SINEMET)', 'CARPIDOPA  (SINEMET)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
-(253, 1, 2, 'CARBAGOLINE  0.4MG', 'CARBAGOLINE  0.4MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
-(254, 1, 2, 'CARBAMAZEPINE 200MG', 'CARBAMAZEPINE 200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
-(255, 1, 2, 'CARBIMAZOLE 5MG', 'CARBIMAZOLE 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
-(256, 1, 2, 'CARVEDILOL  3.12MG', 'CARVEDILOL  3.12MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
-(257, 1, 2, 'CARVEDILOL  6.25MG', 'CARVEDILOL  6.25MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
-(258, 1, 2, 'CEFIXIME  200MG', 'CEFIXIME  200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
-(259, 1, 2, 'CEFIXIME  400MG', 'CEFIXIME  400MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
-(260, 1, 2, 'CEFIXIME SUSP 100MLS', 'CEFIXIME SUSP 100MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(261, 1, 2, 'CEFOTAXIME 500MG', 'CEFOTAXIME 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(262, 1, 2, 'CEFTRIAZONE 1G', 'CEFTRIAZONE 1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(263, 1, 2, 'CEFTRIAZONE SULBACTAN  1.5G', 'CEFTRIAZONE SULBACTAN  1.5G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(264, 1, 2, 'CEFUROXIME  70MLs', 'CEFUROXIME  70MLs', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(265, 1, 2, 'CEFUROXIME  500MG', 'CEFUROXIME  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(266, 1, 2, 'CEFUROXIME INJ 750MG', 'CEFUROXIME INJ 750MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(267, 1, 2, 'CELEBREX  200MG  (per 1  cap)', 'CELEBREX  200MG  (per 1  cap)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(268, 1, 2, 'CHLORPROMAZIN 100mg tab', 'CHLORPROMAZIN 100mg tab', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(269, 1, 2, 'CHLOPROMAZINE 50MG INJ', 'CHLOPROMAZINE 50MG INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(270, 1, 2, 'CHLORAMPHENICOL  EYE Oint.', 'CHLORAMPHENICOL  EYE Oint.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
-(271, 1, 2, 'CHLORAMPHENICOL 250MG', 'CHLORAMPHENICOL 250MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(272, 1, 2, 'CHLORAMPHENICOL EYE/EAR', 'CHLORAMPHENICOL EYE/EAR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(273, 1, 2, 'CHLORAMPHENICOL INJ. 1G.', 'CHLORAMPHENICOL INJ. 1G.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(274, 1, 2, 'CHYMORAL TAB.', 'CHYMORAL TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(275, 1, 2, 'CIPROFLOXACIN  500mg', 'CIPROFLOXACIN  500mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(276, 1, 2, 'CIPROFLOXACIN I.V 200MG', 'CIPROFLOXACIN I.V 200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(277, 1, 2, 'CLARYTHROMYCIN 500MG', 'CLARYTHROMYCIN 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(278, 1, 2, 'CLINDAMYCIN  300MG', 'CLINDAMYCIN  300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(279, 1, 2, 'CLINDYMACIN INJ', 'CLINDYMACIN INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(280, 1, 2, 'CLOMIPHENE CITRATE (unbranded)', 'CLOMIPHENE CITRATE (unbranded)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(281, 1, 2, 'CLOPIDOGREL 75MG', 'CLOPIDOGREL 75MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
-(282, 1, 2, 'COCODAMOL', 'COCODAMOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
-(283, 1, 2, 'CO - DIOVAN 80MG/12.5MG  Branded', 'CO - DIOVAN 80MG/12.5MG  Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
-(284, 1, 2, 'CO- DIOVAN 160MG/12.5MG Branded', 'CO- DIOVAN 160MG/12.5MG Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
-(285, 1, 2, 'CO- DIOVAN 160MG/25MG Branded', 'CO- DIOVAN 160MG/25MG Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
-(286, 1, 2, 'COARTEM (ADULT) X 6 by  FIDSON', 'COARTEM (ADULT) X 6 by  FIDSON', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
-(287, 1, 2, 'COARTEM (DISPERSIBLE) X 1', 'COARTEM (DISPERSIBLE) X 1', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
-(288, 1, 2, 'COUGH SYRUP (ADULT)', 'COUGH SYRUP (ADULT)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
-(289, 1, 2, 'COUGH SYRUP (CHILD)', 'COUGH SYRUP (CHILD)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
-(290, 1, 2, 'COGNITOL', 'COGNITOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
-(291, 1, 2, 'COLCHICINE (OPACALCIUM)', 'COLCHICINE (OPACALCIUM)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
-(292, 1, 2, 'COTTON WOOL', 'COTTON WOOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
-(293, 1, 2, 'CRYSTALLINE PENICILLIN', 'CRYSTALLINE PENICILLIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
-(294, 1, 2, 'CIPROFLOXACIN   EYE  DROP', 'CIPROFLOXACIN   EYE  DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
-(295, 1, 2, 'CETRIZINE  10mg', 'CETRIZINE  10mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
-(296, 1, 2, 'CLOZAPINE  100mg', 'CLOZAPINE  100mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
-(297, 1, 2, 'CLOZAPINE   25mg', 'CLOZAPINE   25mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
-(298, 1, 2, 'CIPRO - DEX EYE DROP', 'CIPRO - DEX EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
-(299, 1, 2, 'CHEMIRON  TONIC   ( Ranferon)', 'CHEMIRON  TONIC   ( Ranferon)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
-(300, 1, 2, 'CHOLESTOFF TAB', 'CHOLESTOFF TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
-(301, 1, 2, 'CITICHOLINE', 'CITICHOLINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
-(302, 1, 2, 'CHLOXY-GEL', 'CHLOXY-GEL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
-(303, 1, 2, 'CALIBRATED DRAPES', 'CALIBRATED DRAPES', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
-(304, 1, 2, 'CALCIMAX', 'CALCIMAX', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
-(305, 1, 2, 'DAONIL 5MG TAB.', 'DAONIL 5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
-(306, 1, 2, 'DAFLON   500MG', 'DAFLON   500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
-(307, 1, 2, 'DAFLON   1000MG', 'DAFLON   1000MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
-(308, 1, 2, 'DEPO  PROVERA   INJ', 'DEPO  PROVERA   INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
-(309, 1, 2, 'DEQUADIN LOZ. SHALTOX', 'DEQUADIN LOZ. SHALTOX', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
-(310, 1, 2, 'DERMAZINE CREAM  25G BRANDED', 'DERMAZINE CREAM  25G BRANDED', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
-(311, 1, 2, 'DEXAMETHASONE   1MG  TAB.', 'DEXAMETHASONE   1MG  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
-(312, 1, 2, 'DEXAMETHASONE 4MG  INJ.', 'DEXAMETHASONE 4MG  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
-(313, 1, 2, 'DEXAMETHASONE EYE   (Stadex)', 'DEXAMETHASONE EYE   (Stadex)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
-(314, 1, 2, 'DIAMOX 250MG TAB', 'DIAMOX 250MG TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(315, 1, 2, 'DIAPRIDE PLUS -2', 'DIAPRIDE PLUS -2', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(316, 1, 2, 'DIAZEPAM  INJ.  10MG', 'DIAZEPAM  INJ.  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(317, 1, 2, 'DIAZEPAM  TAB. 5MG', 'DIAZEPAM  TAB. 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(318, 1, 2, 'DICLOFENAC  I NJ.', 'DICLOFENAC  I NJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(319, 1, 2, 'DICLOFENAC GEL', 'DICLOFENAC GEL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(320, 1, 2, 'DICLOFENAC POTT.  100Mg', 'DICLOFENAC POTT.  100Mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(321, 1, 2, 'DICLOFENAC POTT.  50Mg', 'DICLOFENAC POTT.  50Mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(322, 1, 2, 'DICLOFNAC  EYE DROP', 'DICLOFNAC  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
-(323, 1, 2, 'DIGOXIN 0.25MG TAB.', 'DIGOXIN 0.25MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(324, 1, 2, 'DONEPREZIL   5MG', 'DONEPREZIL   5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(325, 1, 2, 'DOXAZOCIN  4MG', 'DOXAZOCIN  4MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(326, 1, 2, 'DOPAMINE  INJ.', 'DOPAMINE  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(327, 1, 2, 'DOXYCYCLINE 100MG CAP.', 'DOXYCYCLINE 100MG CAP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(328, 1, 2, 'DUPHASTON   Tab', 'DUPHASTON   Tab', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(329, 1, 2, 'DUSTASIN   (SAMIFLOW)', 'DUSTASIN   (SAMIFLOW)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(330, 1, 2, 'DUCOLAX SUPP', 'DUCOLAX SUPP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(331, 1, 2, 'DOMPERIDONE', 'DOMPERIDONE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(332, 1, 2, 'DEQUADIN     (SHALTOUX)', 'DEQUADIN     (SHALTOUX)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(333, 1, 2, 'DABIGATRAN  110MG', 'DABIGATRAN  110MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(334, 1, 2, 'DAPZINE', 'DAPZINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(335, 1, 2, 'DORLPEN   Tab', 'DORLPEN   Tab', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
-(336, 1, 2, 'DABIGATRAN  150MG', 'DABIGATRAN  150MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(337, 1, 2, 'DYNAMOGEN', 'DYNAMOGEN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(338, 1, 2, 'DF118 (DIHYDROCODEINE)', 'DF118 (DIHYDROCODEINE)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(339, 1, 2, 'EMAL (PER AMP) 150MG   Branded', 'EMAL (PER AMP) 150MG   Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(340, 1, 2, 'EMAL (PER AMP) 150MG Unbranded', 'EMAL (PER AMP) 150MG Unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(341, 1, 2, 'EPILLIM  200MG', 'EPILLIM  200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(342, 1, 2, 'EPILLIM  500MG', 'EPILLIM  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(343, 1, 2, 'ERGOTMETRINE   INJ.', 'ERGOTMETRINE   INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(344, 1, 2, 'ERYTHROMYCIN  500mg tab.', 'ERYTHROMYCIN  500mg tab.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(345, 1, 2, 'ERYTHROMYCIN  susp.  125mg', 'ERYTHROMYCIN  susp.  125mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(346, 1, 2, 'ESIDREX   25MG TAB.', 'ESIDREX   25MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(347, 1, 2, 'ESCITALOPRAM    10MG', 'ESCITALOPRAM    10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
-(348, 1, 2, 'ESCITALOPRAM    20MG', 'ESCITALOPRAM    20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(349, 1, 2, 'EUSOL SOLUTION', 'EUSOL SOLUTION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(350, 1, 2, 'EXFORGE 10/160MG', 'EXFORGE 10/160MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(351, 1, 2, 'EXFORGE 5/160MG', 'EXFORGE 5/160MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(352, 1, 2, 'EXFORGE/HCT 10mg/160MG/12.5', 'EXFORGE/HCT 10mg/160MG/12.5', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(353, 1, 2, 'EXFORGE/HCT  10/160MG/25MG', 'EXFORGE/HCT  10/160MG/25MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(354, 1, 2, 'ESOFAG   D', 'ESOFAG   D', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(355, 1, 2, 'ESOFAG   D   KIT', 'ESOFAG   D   KIT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(356, 1, 2, 'EFEMOLINE GUTT', 'EFEMOLINE GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(357, 1, 2, 'EPROXEN 500MG', 'EPROXEN 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(358, 1, 2, 'FANSIDAR  X3', 'FANSIDAR  X3', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(359, 1, 2, 'FERROUS SULPHATE(fersolat)', 'FERROUS SULPHATE(fersolat)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
-(360, 1, 2, 'FINESTIRIDE  5mg', 'FINESTIRIDE  5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(361, 1, 2, 'FLAGYL  200MG TAB.', 'FLAGYL  200MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(362, 1, 2, 'FLAGYL 200mg /5ml susp.', 'FLAGYL 200mg /5ml susp.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(363, 1, 2, 'FLUCONAZOLE 200MG', 'FLUCONAZOLE 200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(364, 1, 2, 'FOLIC ACID  5MG TAB.', 'FOLIC ACID  5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(365, 1, 2, 'FRUSEMIDE 20MG INJ.', 'FRUSEMIDE 20MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(366, 1, 2, 'FRUSEMIDE 40MG TAB.', 'FRUSEMIDE 40MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(367, 1, 2, 'FRUSEMIDE   COUNTING  40mg', 'FRUSEMIDE   COUNTING  40mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(368, 1, 2, 'FULCIN . SYR', 'FULCIN . SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(369, 1, 2, 'FULCIN TAB. 500MG', 'FULCIN TAB. 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(370, 1, 2, 'FEBUXOSTAT  80mg', 'FEBUXOSTAT  80mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
-(371, 1, 2, 'FLUXETINE', 'FLUXETINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(372, 1, 2, 'FLOW WELL PLUS', 'FLOW WELL PLUS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(373, 1, 2, 'INJ. FLUPENTIXOL   40MG', 'INJ. FLUPENTIXOL   40MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(374, 1, 2, 'FLUEZZE', 'FLUEZZE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(375, 1, 2, 'FILGRASTIN 300MG', 'FILGRASTIN 300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(376, 1, 2, 'GASCOL 150ML', 'GASCOL 150ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(377, 1, 2, 'G.V PAINT', 'G.V PAINT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(378, 1, 2, 'GALVUSMET 50/500MG', 'GALVUSMET 50/500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(379, 1, 2, 'GALVUSMET  50/1000MG   Branded', 'GALVUSMET  50/1000MG   Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(380, 1, 2, 'GALVUSMET  50/1000mg Ubranded', 'GALVUSMET  50/1000mg Ubranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(381, 1, 2, 'GENTAMYCIN  (EYE/EAR ) DROP', 'GENTAMYCIN  (EYE/EAR ) DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(382, 1, 2, 'GENTAMYCIN  80MG  INJ.', 'GENTAMYCIN  80MG  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
-(383, 1, 2, 'GIVING SET', 'GIVING SET', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(384, 1, 2, 'GLIMEPERIDE      2mg', 'GLIMEPERIDE      2mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(385, 1, 2, 'GLIMEPERIDE     4mg', 'GLIMEPERIDE     4mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(386, 1, 2, 'GLYCERYL TRITRATE  500MCG', 'GLYCERYL TRITRATE  500MCG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(387, 1, 2, 'GABAPENTIN 300MG', 'GABAPENTIN 300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(388, 1, 2, 'GLICLAZIDE  30mg', 'GLICLAZIDE  30mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(389, 1, 2, 'GAZGO', 'GAZGO', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(390, 1, 2, 'GERCID', 'GERCID', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(391, 1, 2, 'HALDOL', 'HALDOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(392, 1, 2, 'HEPATITIS B IMMUNOGLOBIN', 'HEPATITIS B IMMUNOGLOBIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(393, 1, 2, 'HYDRALAZINE  20mg  Inj', 'HYDRALAZINE  20mg  Inj', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(394, 1, 2, 'HYDROCORTISONE  CREAM', 'HYDROCORTISONE  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
-(395, 1, 2, 'HYDROCORTISONE  inj.', 'HYDROCORTISONE  inj.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
-(396, 1, 2, 'HYDROGEN PERIOXIDE', 'HYDROGEN PERIOXIDE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
-(397, 1, 2, 'HYDROXY UREA  100MG', 'HYDROXY UREA  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
-(398, 1, 2, 'HYDROXY UREA  500MG', 'HYDROXY UREA  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
-(399, 1, 2, 'HYDROXYCHLOROQUINE', 'HYDROXYCHLOROQUINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
-(400, 1, 2, 'HYPONNID', 'HYPONNID', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
-(401, 1, 2, 'HEPATITIS B  VACCINE', 'HEPATITIS B  VACCINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
-(402, 1, 2, 'Tab HYDRALLAZINE  25mg', 'Tab HYDRALLAZINE  25mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
-(403, 1, 2, 'HAND SANITIZER (OLA)', 'HAND SANITIZER (OLA)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
-(404, 1, 2, 'IBUPROFEN  TAB 200MG', 'IBUPROFEN  TAB 200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
-(405, 1, 2, 'IBUPROFEN SYRUP  100MLS', 'IBUPROFEN SYRUP  100MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
-(406, 1, 2, 'IMIPRAMINE 25MG TAB.', 'IMIPRAMINE 25MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
-(407, 1, 2, 'INDERAL 40MG TAB. (PROPANOLOL)', 'INDERAL 40MG TAB. (PROPANOLOL)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
-(408, 1, 2, 'INSULIN SYRINGE', 'INSULIN SYRINGE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
-(409, 1, 2, 'IODINE', 'IODINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
-(410, 1, 2, 'ITRACONAZOLE  100MG', 'ITRACONAZOLE  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
-(411, 1, 2, 'IVERMECTIN  5mg   (MECTIZAN)', 'IVERMECTIN  5mg   (MECTIZAN)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(412, 1, 2, 'INDAPAMIDE  1.5MG', 'INDAPAMIDE  1.5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(413, 1, 2, 'IMMATINIB', 'IMMATINIB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(414, 1, 2, 'INSULIN PEN(REFILL CARTIGDE)', 'INSULIN PEN(REFILL CARTIGDE)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(415, 1, 2, 'INSULIN  30/70 100IU', 'INSULIN  30/70 100IU', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(416, 1, 2, 'ISODIL  DINITRATE  10MG', 'ISODIL  DINITRATE  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(417, 1, 2, 'K- Y JELLY', 'K- Y JELLY', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(418, 1, 2, 'KEROB  EYE DROP', 'KEROB  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(419, 1, 2, 'KETOCONAZOLE  CREAM', 'KETOCONAZOLE  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(420, 1, 2, 'KLOVINAL VAG. PESS X6', 'KLOVINAL VAG. PESS X6', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(421, 1, 2, 'KETOMOX  EYE DROP', 'KETOMOX  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
-(422, 1, 2, 'LABETALOL  50mg   INJ.', 'LABETALOL  50mg   INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(423, 1, 2, 'LABETALOL  200MG', 'LABETALOL  200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(424, 1, 2, 'LACTULOSE   300MLS', 'LACTULOSE   300MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(425, 1, 2, 'LEVETIVACETAM  500MG (suvitra)', 'LEVETIVACETAM  500MG (suvitra)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(426, 1, 2, 'LEVOFLOXACIN 500MG', 'LEVOFLOXACIN 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(427, 1, 2, 'LEVOTHYROXINE  100mcg', 'LEVOTHYROXINE  100mcg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(428, 1, 2, 'LEVOTHYROXINE  50mcg', 'LEVOTHYROXINE  50mcg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(429, 1, 2, 'LEXOTAN 1.5MG TAB.', 'LEXOTAN 1.5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(430, 1, 2, 'LEXOTAN    3MG TAB', 'LEXOTAN    3MG TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(431, 1, 2, 'LIQUID PARAFFIN', 'LIQUID PARAFFIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(432, 1, 2, 'LISINOPRIL  10MG', 'LISINOPRIL  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(433, 1, 2, 'LISINOPRIL  5MG', 'LISINOPRIL  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
-(434, 1, 2, 'LIVOLIN  FORTE  CAP', 'LIVOLIN  FORTE  CAP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(435, 1, 2, 'LO-FEMENAL (1CYCLE) TAB.', 'LO-FEMENAL (1CYCLE) TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(436, 1, 2, 'LORATIDI NE 10MG', 'LORATIDI NE 10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(437, 1, 2, 'LORATIDINE  SUSP.   (60MLS)', 'LORATIDINE  SUSP.   (60MLS)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(438, 1, 2, 'LOSARTAN 25MG', 'LOSARTAN 25MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(439, 1, 2, 'LOSARTAN 50MG', 'LOSARTAN 50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(440, 1, 2, 'LETROZOLE  2.5mg', 'LETROZOLE  2.5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(441, 1, 2, 'LOPERAMIDE  2mg', 'LOPERAMIDE  2mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(442, 1, 2, 'LYCOSET', 'LYCOSET', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(443, 1, 2, 'LEVOCETIRIZINE  5mG', 'LEVOCETIRIZINE  5mG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(444, 1, 2, 'LANTUS INSULIN', 'LANTUS INSULIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(445, 1, 2, 'LANTUS NEEDLE', 'LANTUS NEEDLE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
-(446, 1, 2, 'MEFENAMIC  500MG', 'MEFENAMIC  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(447, 1, 2, 'MAGNESUIM SULPHATE  (5G)', 'MAGNESUIM SULPHATE  (5G)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(448, 1, 2, 'MAX - OMEGA', 'MAX - OMEGA', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(449, 1, 2, 'MAXIDEX  (DEXATH) EYE DROP', 'MAXIDEX  (DEXATH) EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(450, 1, 2, 'MAXITROL EYE DROP', 'MAXITROL EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(451, 1, 2, 'MAXITROL EYE OINTMENT', 'MAXITROL EYE OINTMENT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(452, 1, 2, 'MEBENDAZOLE 100MG TAB.  X6', 'MEBENDAZOLE 100MG TAB.  X6', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(453, 1, 2, 'METFORMIN  500MG', 'METFORMIN  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(454, 1, 2, 'METHYLATED SPIRIT', 'METHYLATED SPIRIT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(455, 1, 2, 'MISOPROSTOL  PER 1 TABLET', 'MISOPROSTOL  PER 1 TABLET', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(456, 1, 2, 'MISOPROSTOL  PER TAB By CHAN', 'MISOPROSTOL  PER TAB By CHAN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
-(457, 1, 2, 'MISOPT EYE DROP', 'MISOPT EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(458, 1, 2, 'MIST POTASSIUM CITRATE', 'MIST POTASSIUM CITRATE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(459, 1, 2, 'MMT  SUSPENSION', 'MMT  SUSPENSION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(460, 1, 2, 'MOXIFLOXACIN GUTT', 'MOXIFLOXACIN GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(461, 1, 2, 'MODURETIC TAB', 'MODURETIC TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(462, 1, 2, 'MONTELUKAST   10MG', 'MONTELUKAST   10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(463, 1, 2, 'MULTIVITE  SYP.', 'MULTIVITE  SYP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(464, 1, 2, 'MULTIVITE DROP', 'MULTIVITE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(465, 1, 2, 'MULTIVITE TAB', 'MULTIVITE TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(466, 1, 2, 'MYDRIACYL  EYE DROP', 'MYDRIACYL  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(467, 1, 2, 'METOPROLOL      25MG', 'METOPROLOL      25MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(468, 1, 2, 'METOPROLOL      50MG', 'METOPROLOL      50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
-(469, 1, 2, 'METALAZONE  5mg', 'METALAZONE  5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(470, 1, 2, 'MUPIROCIN  CREAM', 'MUPIROCIN  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(471, 1, 2, 'MEMANTINE  HCL  20mg', 'MEMANTINE  HCL  20mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(472, 1, 2, 'MEROPENEM INJ 1G', 'MEROPENEM INJ 1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(473, 1, 2, 'MEDITRIOL TAB', 'MEDITRIOL TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(474, 1, 2, 'NATTO ENZYME', 'NATTO ENZYME', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(475, 1, 2, 'NEEDLES & SYRINGES   5ML', 'NEEDLES & SYRINGES   5ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(476, 1, 2, 'NEEDLES & SYRINGES  10ML', 'NEEDLES & SYRINGES  10ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(477, 1, 2, 'NEEDLES & SYRINGES  20ML', 'NEEDLES & SYRINGES  20ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(478, 1, 2, 'NEEDLES & SYRINGES  2ML', 'NEEDLES & SYRINGES  2ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(479, 1, 2, 'NEOMYCIN 500MG TAB.', 'NEOMYCIN 500MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
-(480, 1, 2, 'NEUROVITE FORTE', 'NEUROVITE FORTE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(481, 1, 2, 'NIFECARD 20MG TAB  SR', 'NIFECARD 20MG TAB  SR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL);
-INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_name`, `product_code`, `reorder_alert`, `has_have`, `has_piece`, `howmany_to`, `current_quantity`, `status`, `stock_assign`, `price_assign`, `promotion`, `created_at`, `updated_at`, `old_product_id`, `old_stock_id`) VALUES
-(482, 1, 2, 'NIFECARD 30MG TAB.  (M&B)', 'NIFECARD 30MG TAB.  (M&B)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(483, 1, 2, 'NITROFURANTOIN  TAB 100MG', 'NITROFURANTOIN  TAB 100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(484, 1, 2, 'NORFLEX  100MG', 'NORFLEX  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(485, 1, 2, 'NYSTATIN ORAL DROP', 'NYSTATIN ORAL DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(486, 1, 2, 'NICOTINIC ACID', 'NICOTINIC ACID', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(487, 1, 2, 'NEBILONG  H', 'NEBILONG  H', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(488, 1, 2, 'NEBILONG', 'NEBILONG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(489, 1, 2, 'NEOMDEXSOL  EYE DROP', 'NEOMDEXSOL  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(490, 1, 2, 'NEPAFENAC  EYE DROP', 'NEPAFENAC  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(491, 1, 2, 'Tab NORMAGUT', 'Tab NORMAGUT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
-(492, 1, 2, 'NITRIAXAM  1.5/ 5mg', 'NITRIAXAM  1.5/ 5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(493, 1, 2, 'NEUROGESIC B/s', 'NEUROGESIC B/s', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(494, 1, 2, 'O.R . S (SACTHET)', 'O.R . S (SACTHET)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(495, 1, 2, 'OFLOXACIN. 400MG', 'OFLOXACIN. 400MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(496, 1, 2, 'OMEPRAZOLE  Unbranded', 'OMEPRAZOLE  Unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(497, 1, 2, 'OMEPRAZOLE 40M G  INJECTION', 'OMEPRAZOLE 40M G  INJECTION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(498, 1, 2, 'ORPHENCIS  (ANOROL)', 'ORPHENCIS  (ANOROL)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(499, 1, 2, 'OTOMED', 'OTOMED', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(500, 1, 2, 'OTRIVIN DROP (ADULT)', 'OTRIVIN DROP (ADULT)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(501, 1, 2, 'OTRIVIN DROP (CHILD)', 'OTRIVIN DROP (CHILD)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(502, 1, 2, 'OXYTOCIN INJ. (5UNITS/5ML)  5.I.U', 'OXYTOCIN INJ. (5UNITS/5ML)  5.I.U', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(503, 1, 2, 'OXYTOCIN INJ. (5UNITS/5ML) BY CHAN', 'OXYTOCIN INJ. (5UNITS/5ML) BY CHAN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
-(504, 1, 2, 'OLANZEPINE 5MG', 'OLANZEPINE 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(505, 1, 2, 'OLANZEPINE 10MG', 'OLANZEPINE 10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(506, 1, 2, 'OCEXONE  1G', 'OCEXONE  1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(507, 1, 2, 'GUTT OCUPROLOL', 'GUTT OCUPROLOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(508, 1, 2, 'PARACETAMOL  INJ.  (300MG)', 'PARACETAMOL  INJ.  (300MG)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(509, 1, 2, 'PARACETAMOL  TAB.', 'PARACETAMOL  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(510, 1, 2, 'PARACETAMOL SYR. 60ML', 'PARACETAMOL SYR. 60ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(511, 1, 2, 'PENICILLIN SKIN OINT.', 'PENICILLIN SKIN OINT.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(512, 1, 2, 'PENTAZOCINE 30MG', 'PENTAZOCINE 30MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(513, 1, 2, 'PETHIDINE INJ. 100MG', 'PETHIDINE INJ. 100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(514, 1, 2, 'PHENOBARBITONE INJ.100mg/ml', 'PHENOBARBITONE INJ.100mg/ml', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
-(515, 1, 2, 'PHENOBARBITONE TAB', 'PHENOBARBITONE TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(516, 1, 2, 'PHENYTOIN INJ.', 'PHENYTOIN INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(517, 1, 2, 'PIOGLITASONE    30MG', 'PIOGLITASONE    30MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(518, 1, 2, 'PIRITON INJ. 10MLS', 'PIRITON INJ. 10MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(519, 1, 2, 'PIRITON SYR.', 'PIRITON SYR.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(520, 1, 2, 'PIRITON TAB', 'PIRITON TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(521, 1, 2, 'PLASIL  INJ. 10MG', 'PLASIL  INJ. 10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(522, 1, 2, 'PLASIL  TAB 10mg', 'PLASIL  TAB 10mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(523, 1, 2, 'POTTASIUM  CHLORIDE  INJ.', 'POTTASIUM  CHLORIDE  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(524, 1, 2, 'PRAZIQUNTEL 600MG TAB.', 'PRAZIQUNTEL 600MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(525, 1, 2, 'PREDNISOLONE 5MG TAB.', 'PREDNISOLONE 5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(526, 1, 2, 'PRIMOLUT N TAB', 'PRIMOLUT N TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
-(527, 1, 2, 'PROGUANIL (PALUDRINE) 100MG', 'PROGUANIL (PALUDRINE) 100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(528, 1, 2, 'PROMETHAZINE  INJ. 50MG', 'PROMETHAZINE  INJ. 50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(529, 1, 2, 'PROMETHAZINE  TAB.', 'PROMETHAZINE  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(530, 1, 2, 'PROMETHAZINE SYR.', 'PROMETHAZINE SYR.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(531, 1, 2, 'PROVERA 5MG TAB.', 'PROVERA 5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(532, 1, 2, 'PYRIODOXINE 50MG (VIT.B6) TAB.', 'PYRIODOXINE 50MG (VIT.B6) TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(533, 1, 2, 'PREGABALIN    75MG', 'PREGABALIN    75MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(534, 1, 2, 'PYRIDOSTIGMINE 60MG', 'PYRIDOSTIGMINE 60MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(535, 1, 2, 'PERMATRIN', 'PERMATRIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(536, 1, 2, 'PROPYTHOURACIL', 'PROPYTHOURACIL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
-(537, 1, 2, 'PAROXITEN  20mg', 'PAROXITEN  20mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(538, 1, 2, 'PRADAXA  (Dabigatran 150mg)', 'PRADAXA  (Dabigatran 150mg)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(539, 1, 2, 'PRADAXA  (Dabigatran 110mg)', 'PRADAXA  (Dabigatran 110mg)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(540, 1, 2, 'PREDNISOLONE GUTT', 'PREDNISOLONE GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(541, 1, 2, 'QUININE  INJ.  600MG', 'QUININE  INJ.  600MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(542, 1, 2, 'QUININE  TAB  300MG', 'QUININE  TAB  300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(543, 1, 2, 'RABEPRAZOLE TAB', 'RABEPRAZOLE TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(544, 1, 2, 'RISPERIDONE   2MG', 'RISPERIDONE   2MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(545, 1, 2, 'RISPERIDONE  1MG', 'RISPERIDONE  1MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(546, 1, 2, 'RIFAMPICIN CAPS 300MG', 'RIFAMPICIN CAPS 300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(547, 1, 2, 'ROBINAX', 'ROBINAX', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
-(548, 1, 2, 'ROSUVASTATIN  10MG', 'ROSUVASTATIN  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(549, 1, 2, 'ROSUVASTATIN 20MG', 'ROSUVASTATIN 20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(550, 1, 2, 'ROLITEN (Tolterodine)  2mg', 'ROLITEN (Tolterodine)  2mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(551, 1, 2, 'RAPIDON eye', 'RAPIDON eye', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(552, 1, 2, 'RIFAXIMIN  550mg', 'RIFAXIMIN  550mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(553, 1, 2, 'ROCEPHIN  1G', 'ROCEPHIN  1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(554, 1, 2, 'RANFERON SYR', 'RANFERON SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(555, 1, 2, 'RAMIPRIL  5MG', 'RAMIPRIL  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(556, 1, 2, 'RICONIA  FORTE', 'RICONIA  FORTE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(557, 1, 2, 'SALBUTAMOL  SUSPENSION', 'SALBUTAMOL  SUSPENSION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(558, 1, 2, 'SALBUTAMOL  INHALER  (AEROLIN)', 'SALBUTAMOL  INHALER  (AEROLIN)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(559, 1, 2, 'SALBUTAMOL Tab  4MG', 'SALBUTAMOL Tab  4MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
-(560, 1, 2, 'SEPTRIN  TAB   960MG', 'SEPTRIN  TAB   960MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(561, 1, 2, 'SEPTRIN  TAB 480MG', 'SEPTRIN  TAB 480MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(562, 1, 2, 'SEPTRIN SUSP.', 'SEPTRIN SUSP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(563, 1, 2, 'SERETIDE  INHLAER   BRANDED', 'SERETIDE  INHLAER   BRANDED', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(564, 1, 2, 'SETRALINE 50MG', 'SETRALINE 50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(565, 1, 2, 'SIMVASTATIN     10MG', 'SIMVASTATIN     10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(566, 1, 2, 'SIMVASTATIN  20MG', 'SIMVASTATIN  20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(567, 1, 2, 'SINEMET (Capidopa)', 'SINEMET (Capidopa)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(568, 1, 2, 'SIRDALUD   2mg', 'SIRDALUD   2mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(569, 1, 2, 'SLOW  - K  600mg', 'SLOW  - K  600mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(570, 1, 2, 'SODIUM CROMOGLYCATE  EYE DROP', 'SODIUM CROMOGLYCATE  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
-(571, 1, 2, 'SODIUM BICARBONATE', 'SODIUM BICARBONATE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(572, 1, 2, 'SIMETHICONE  200mg', 'SIMETHICONE  200mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(573, 1, 2, 'SIRDALUD   4mg', 'SIRDALUD   4mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(574, 1, 2, 'SOLIFENACIN   5MG', 'SOLIFENACIN   5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(575, 1, 2, 'SOLIFENACIN  10mg', 'SOLIFENACIN  10mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(576, 1, 2, 'SUVITRA  500MG', 'SUVITRA  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(577, 1, 2, 'STELAZINE   5mg', 'STELAZINE   5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(578, 1, 2, 'STEMETIL  TAB.', 'STEMETIL  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(579, 1, 2, 'STUGERON', 'STUGERON', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(580, 1, 2, 'SYLIBON  140MG', 'SYLIBON  140MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(581, 1, 2, 'SOLUBLE  INSULIN', 'SOLUBLE  INSULIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
-(582, 1, 2, 'SOLUBLE  INSULIN PER 1ML/100IU', 'SOLUBLE  INSULIN PER 1ML/100IU', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(583, 1, 2, 'SORAFENIB', 'SORAFENIB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(584, 1, 2, 'Tab TERBINAFINE', 'Tab TERBINAFINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(585, 1, 2, 'TERBINAFINE  CREAM', 'TERBINAFINE  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(586, 1, 2, 'TADALAFIL  PRICE PER TABLET', 'TADALAFIL  PRICE PER TABLET', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(587, 1, 2, 'TAMSULOCIN  0.4mg', 'TAMSULOCIN  0.4mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(588, 1, 2, 'TELMISARTAN  40mg', 'TELMISARTAN  40mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(589, 1, 2, 'TELMISARTAN  80MG', 'TELMISARTAN  80MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(590, 1, 2, 'TENOFOVIR   by   X  30    (TIN)', 'TENOFOVIR   by   X  30    (TIN)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(591, 1, 2, 'TETANUS  TOXIOD 0.5ML INJ.', 'TETANUS  TOXIOD 0.5ML INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(592, 1, 2, 'TETRACYCLINE  EYE OINT.', 'TETRACYCLINE  EYE OINT.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
-(593, 1, 2, 'TETRACYCLINE CAPS   250MG', 'TETRACYCLINE CAPS   250MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(594, 1, 2, 'THIAPRIL', 'THIAPRIL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(595, 1, 2, 'TIMOLOL EYE DROP', 'TIMOLOL EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(596, 1, 2, 'TINIDAZOLE  500MG    per tab', 'TINIDAZOLE  500MG    per tab', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(597, 1, 2, 'TORSEMIDE    20mg', 'TORSEMIDE    20mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(598, 1, 2, 'TORSEMIDE  INJ', 'TORSEMIDE  INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(599, 1, 2, 'TREVIAMET  5MG/1000MG', 'TREVIAMET  5MG/1000MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(600, 1, 2, 'TREVIAMET  5MG/500MG', 'TREVIAMET  5MG/500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(601, 1, 2, 'TRIAMCINOLONE  40MG  INJ.', 'TRIAMCINOLONE  40MG  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(602, 1, 2, 'TRIBOTAN CREAM (CHILD)', 'TRIBOTAN CREAM (CHILD)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(603, 1, 2, 'TRYPTIZOLE TAB.  (25MG)', 'TRYPTIZOLE TAB.  (25MG)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(604, 1, 2, 'TRAXANAMIC  ACID  500mg', 'TRAXANAMIC  ACID  500mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
-(605, 1, 2, 'TRAXANAMIC  ACID  INJ.', 'TRAXANAMIC  ACID  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(606, 1, 2, 'TRANEXAMIC ACID INJ BY CHAN', 'TRANEXAMIC ACID INJ BY CHAN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(607, 1, 2, 'THIAMINE  VIT B1', 'THIAMINE  VIT B1', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(608, 1, 2, 'TAMOXIFEN', 'TAMOXIFEN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(609, 1, 2, 'TROPICAMIDE   EYE DROP', 'TROPICAMIDE   EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(610, 1, 2, 'TRIPLE  ACTION  CREAM', 'TRIPLE  ACTION  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(611, 1, 2, 'TRAMADOL  50MG', 'TRAMADOL  50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(612, 1, 2, 'T.T 0.5ML INJ. BRANDED', 'T.T 0.5ML INJ. BRANDED', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(613, 1, 2, 'ULSAKIT  (PER PACK)', 'ULSAKIT  (PER PACK)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(614, 1, 2, 'UNDER  PAD  Price  /1', 'UNDER  PAD  Price  /1', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(615, 1, 2, 'VASOPRIM  75MG', 'VASOPRIM  75MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
-(616, 1, 2, 'VENTOLIN NEBULES 2.5MG', 'VENTOLIN NEBULES 2.5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(617, 1, 2, 'VENTOLIN NEBULES 5MG', 'VENTOLIN NEBULES 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(618, 1, 2, 'VITAMIN  B.  CO SYR.', 'VITAMIN  B.  CO SYR.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(619, 1, 2, 'VITAMIN  B. CO INJ.2MLS', 'VITAMIN  B. CO INJ.2MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(620, 1, 2, 'VITAMIN  B. CO TAB.', 'VITAMIN  B. CO TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(621, 1, 2, 'VITAMIN  C  SYR.', 'VITAMIN  C  SYR.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(622, 1, 2, 'VITAMIN  C TAB 100MG', 'VITAMIN  C TAB 100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(623, 1, 2, 'VITAMIN  E  TAB / CAPS', 'VITAMIN  E  TAB / CAPS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(624, 1, 2, 'VITAMIN A CAP', 'VITAMIN A CAP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(625, 1, 2, 'INJ VITAMIN  K 1', 'INJ VITAMIN  K 1', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(626, 1, 2, 'VITAMIN B12 INJ', 'VITAMIN B12 INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(627, 1, 2, 'VASTEREL', 'VASTEREL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
-(628, 1, 2, 'VALSARTAN  80mg Unbranded', 'VALSARTAN  80mg Unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(629, 1, 2, 'VALSARTAN  160mg Unbranded', 'VALSARTAN  160mg Unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(630, 1, 2, 'VILDAGLIPTINE  50mg', 'VILDAGLIPTINE  50mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(631, 1, 2, 'VERAPAMIL  40MG', 'VERAPAMIL  40MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(632, 1, 2, 'VINBLASTINE 10MG INJ', 'VINBLASTINE 10MG INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(633, 1, 2, 'VISION PLUS', 'VISION PLUS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(634, 1, 2, 'VITAMIN C 1G (PRODSERVIT C) SAT', 'VITAMIN C 1G (PRODSERVIT C) SAT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(635, 1, 2, 'WAFARIN  5mg', 'WAFARIN  5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(636, 1, 2, 'WATER FOR INJECTION', 'WATER FOR INJECTION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(637, 1, 2, 'WHITFEILD  OINTMENT.', 'WHITFEILD  OINTMENT.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(638, 1, 2, 'WELL WOMAN  price per pack', 'WELL WOMAN  price per pack', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
-(639, 1, 2, 'WINWELL', 'WINWELL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(640, 1, 2, 'XALATAN EYE DROP(LATANOPROST)', 'XALATAN EYE DROP(LATANOPROST)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(641, 1, 2, 'ZADITEN   TAB  2MG', 'ZADITEN   TAB  2MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(642, 1, 2, 'ZADITEN EYE DROP  unbranded', 'ZADITEN EYE DROP  unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(643, 1, 2, 'ZET - GEL CREAM', 'ZET - GEL CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(644, 1, 2, 'ZINC 20MG', 'ZINC 20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(645, 1, 2, 'ZOPICLONE  7.5MG', 'ZOPICLONE  7.5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(646, 1, 2, 'ZOLADEX     INJ', 'ZOLADEX     INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(647, 1, 2, 'ZEGEM SYR', 'ZEGEM SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(648, 1, 2, '10% DEXTROSE WATER  500MLS', '10% DEXTROSE WATER  500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
-(649, 1, 2, '10% MANITOL  500MLS', '10% MANITOL  500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(650, 1, 2, '20% MANITOL  500MLS', '20% MANITOL  500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(651, 1, 2, '4.3% DEXTROSESALINE 500MLS', '4.3% DEXTROSESALINE 500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(652, 1, 2, '5% DEXTROSE WATER 500MLS', '5% DEXTROSE WATER 500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(653, 1, 2, 'CIPROFLOXACIN 100MLS', 'CIPROFLOXACIN 100MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(654, 1, 2, '5% DEXTROSE SALINE 500MLS', '5% DEXTROSE SALINE 500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(655, 1, 2, 'FLAGYL I.V  100MLS', 'FLAGYL I.V  100MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(656, 1, 2, 'NORMAL SALINE 500ML', 'NORMAL SALINE 500ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(657, 1, 2, 'RINGERS LACTATE 500MLS', 'RINGERS LACTATE 500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(658, 1, 2, '50% DEXTROSE', '50% DEXTROSE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(659, 1, 2, 'FULL STRENGTH DARROWS', 'FULL STRENGTH DARROWS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(660, 1, 2, 'HALF STRENGTH DARROWS', 'HALF STRENGTH DARROWS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
-(661, 1, 3, '5ML SYRING /NEEDLE', '5ML SYRING /NEEDLE', '5', NULL, NULL, NULL, '11300', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
-(662, 1, 3, '2ML SYRING/NEEDLE', '2ML SYRING/NEEDLE', '5', NULL, NULL, NULL, '1900', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
-(663, 1, 3, '10MLS SYRINGE/NEEDLE', '10MLS SYRINGE/NEEDLE', '5', NULL, NULL, NULL, '5100', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
-(664, 1, 3, '20MLS SYRINGE/NEEDLE', '20MLS SYRINGE/NEEDLE', '5', NULL, NULL, NULL, '480', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
-(665, 1, 3, 'ABDOMINAL PACK', 'ABDOMINAL PACK', '5', NULL, NULL, NULL, '12', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
-(666, 1, 3, 'AIRWAYS', 'AIRWAYS', '5', NULL, NULL, NULL, '26', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
-(667, 1, 3, 'AIRWAYS DIFFERENT COLOUR', 'AIRWAYS DIFFERENT COLOUR', '5', NULL, NULL, NULL, '7', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(668, 1, 3, 'AUTOCLAVE TAPE', 'AUTOCLAVE TAPE', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(669, 1, 3, 'BULB SYRINGES', 'BULB SYRINGES', '5', NULL, NULL, NULL, '50', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(670, 1, 3, 'CANULAR ASH 16G', 'CANULAR ASH 16G', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(671, 1, 3, 'CANULAR GREEN 18G', 'CANULAR GREEN 18G', '5', NULL, NULL, NULL, '2150', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(672, 1, 3, 'CANULAR YELLOW 24G', 'CANULAR YELLOW 24G', '5', NULL, NULL, NULL, '950', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(673, 1, 3, 'CANULAR BLUE 22G', 'CANULAR BLUE 22G', '5', NULL, NULL, NULL, '950', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(674, 1, 3, 'CANULAR PINK 20G', 'CANULAR PINK 20G', '5', NULL, NULL, NULL, '1250', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(675, 1, 3, 'CATHETER 2 WAYS  16', 'CATHETER 2 WAYS  16', '5', NULL, NULL, NULL, '25', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(676, 1, 3, 'CATHETER 2 WAYS  18', 'CATHETER 2 WAYS  18', '5', NULL, NULL, NULL, '190', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(677, 1, 3, 'CATHETER 2WAY 6', 'CATHETER 2WAY 6', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
-(678, 1, 3, 'CATHETER 2 WAYS 8', 'CATHETER 2 WAYS 8', '5', NULL, NULL, NULL, '15', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(679, 1, 3, 'CATHETER 2 WAYS 20', 'CATHETER 2 WAYS 20', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(680, 1, 3, 'CATHETER 3 WAY 16', 'CATHETER 3 WAY 16', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(681, 1, 3, 'CATHETER 2 WAY 10', 'CATHETER 2 WAY 10', '5', NULL, NULL, NULL, '19', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(682, 1, 3, 'CERVICAL BRUSH', 'CERVICAL BRUSH', '5', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(683, 1, 3, 'CONDOM', 'CONDOM', '5', NULL, NULL, NULL, '96', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(684, 1, 3, 'CHROMIC 0', 'CHROMIC 0', '5', NULL, NULL, NULL, '12', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(685, 1, 3, 'CHROMIC  2', 'CHROMIC  2', '5', NULL, NULL, NULL, '120', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(686, 1, 3, 'CREPE BANDAGE  4\"', 'CREPE BANDAGE  4\"', '5', NULL, NULL, NULL, '367', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(687, 1, 3, 'CREPE BANDAGE 6\"', 'CREPE BANDAGE 6\"', '5', NULL, NULL, NULL, '93', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(688, 1, 3, 'DEVELOPER', 'DEVELOPER', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(689, 1, 3, 'DETERGENT', 'DETERGENT', '5', NULL, NULL, NULL, '64', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(690, 1, 3, 'DIGITAL X- RAY FILM 10/12', 'DIGITAL X- RAY FILM 10/12', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(691, 1, 3, 'DISPENSING ENVELOPE', 'DISPENSING ENVELOPE', '5', NULL, NULL, NULL, '16500', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(692, 1, 3, 'DISPOSABLE GLOVES', 'DISPOSABLE GLOVES', '5', NULL, NULL, NULL, '24800', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(693, 1, 3, 'ECG PAPPER BIG', 'ECG PAPPER BIG', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
-(694, 1, 3, 'ECG PAPPER SMALL', 'ECG PAPPER SMALL', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(695, 1, 3, 'ELBOW GLOVES', 'ELBOW GLOVES', '5', NULL, NULL, NULL, '20', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(696, 1, 3, 'E.T,T 6.0', 'E.T,T 6.0', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(697, 1, 3, 'E.T.T. 7.0', 'E.T.T. 7.0', '5', NULL, NULL, NULL, '68', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(698, 1, 3, 'FACE MASK', 'FACE MASK', '5', NULL, NULL, NULL, '2150', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(699, 1, 3, 'FLATUS TUBE', 'FLATUS TUBE', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(700, 1, 3, 'FROSTED SLIDE', 'FROSTED SLIDE', '5', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(701, 1, 3, 'GAUZE BANDAGE 4', 'GAUZE BANDAGE 4', '5', NULL, NULL, NULL, '132', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(702, 1, 3, 'GAUZE BANDAGE 6', 'GAUZE BANDAGE 6', '5', NULL, NULL, NULL, '144', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(703, 1, 3, 'GAUZE ROLL', 'GAUZE ROLL', '5', NULL, NULL, NULL, '22', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(704, 1, 3, 'INFRARED THERMOMETER', 'INFRARED THERMOMETER', '5', NULL, NULL, NULL, '0', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(705, 1, 3, 'KLIVE LOOP', 'KLIVE LOOP', '5', NULL, NULL, NULL, '34', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(706, 1, 3, 'LATEX GLOVES', 'LATEX GLOVES', '5', NULL, NULL, NULL, '1200', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(707, 1, 3, 'MICROSCOPE BULB', 'MICROSCOPE BULB', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(708, 1, 3, 'N.G TUBE 10', 'N.G TUBE 10', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(709, 1, 3, 'N.G TUBE 5', 'N.G TUBE 5', '5', NULL, NULL, NULL, '23', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
-(710, 1, 3, 'N.G TUBE 6', 'N.G TUBE 6', '5', NULL, NULL, NULL, '23', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(711, 1, 3, 'N.G TUBE 8', 'N.G TUBE 8', '5', NULL, NULL, NULL, '30', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(712, 1, 3, 'N.G TUBE 20', 'N.G TUBE 20', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(713, 1, 3, 'N.G TUBE 18', 'N.G TUBE 18', '5', NULL, NULL, NULL, '14', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(714, 1, 3, 'N.G TUBE 16', 'N.G TUBE 16', '5', NULL, NULL, NULL, '25', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(715, 1, 3, 'NYLON 0', 'NYLON 0', '5', NULL, NULL, NULL, '12', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(716, 1, 3, 'NYLON 1', 'NYLON 1', '5', NULL, NULL, NULL, '144', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(717, 1, 3, 'NYLON 2', 'NYLON 2', '5', NULL, NULL, NULL, '204', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(718, 1, 3, 'NYLON 2/0', 'NYLON 2/0', '5', NULL, NULL, NULL, '84', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(719, 1, 3, 'NYLON 3/0', 'NYLON 3/0', '5', NULL, NULL, NULL, '24', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(720, 1, 3, 'NYLON 10/0', 'NYLON 10/0', '5', NULL, NULL, NULL, '108', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(721, 1, 3, 'NASAL O2 PRONE  PAED', 'NASAL O2 PRONE  PAED', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(722, 1, 3, 'NASAL 02 PRONE CHILD', 'NASAL 02 PRONE CHILD', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(723, 1, 3, 'NURSES CAP', 'NURSES CAP', '5', NULL, NULL, NULL, '800', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(724, 1, 3, 'PLASTIBELL 1.2', 'PLASTIBELL 1.2', '5', NULL, NULL, NULL, '33', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(725, 1, 3, 'PLASTIBELL 1.3', 'PLASTIBELL 1.3', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
-(726, 1, 3, 'PLASTIBELL 1.4', 'PLASTIBELL 1.4', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(727, 1, 3, 'PLASTIBELL 1.5', 'PLASTIBELL 1.5', '5', NULL, NULL, NULL, '25', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(728, 1, 3, 'PLASTIBELL 1.7', 'PLASTIBELL 1.7', '5', NULL, NULL, NULL, '30', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(729, 1, 3, 'PLASTER 6\" AGARY', 'PLASTER 6\" AGARY', '5', NULL, NULL, NULL, '174', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(730, 1, 3, 'PILL CUTTER', 'PILL CUTTER', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(731, 1, 3, 'POLYTHENE  BIG', 'POLYTHENE  BIG', '5', NULL, NULL, NULL, '14200', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(732, 1, 3, 'POLYTHENE  SMALL', 'POLYTHENE  SMALL', '5', NULL, NULL, NULL, '12200', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(733, 1, 3, 'POP 6', 'POP 6', '5', NULL, NULL, NULL, '48', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(734, 1, 3, 'PULSE OXIMETER', 'PULSE OXIMETER', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(735, 1, 3, 'SCANNING PAPER', 'SCANNING PAPER', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(736, 1, 3, 'SKIN TRACTION CHILD', 'SKIN TRACTION CHILD', '5', NULL, NULL, NULL, '8', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(737, 1, 3, 'SKIN TRACTION  ADULT', 'SKIN TRACTION  ADULT', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(738, 1, 3, 'SOFT BAND 4', 'SOFT BAND 4', '5', NULL, NULL, NULL, '12', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(739, 1, 3, 'SOFT BAND 6', 'SOFT BAND 6', '5', NULL, NULL, NULL, '36', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(740, 1, 3, 'SOFRATULLE', 'SOFRATULLE', '5', NULL, NULL, NULL, '30', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(741, 1, 3, 'SPATULAR', 'SPATULAR', '5', NULL, NULL, NULL, '800', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(742, 1, 3, 'SPIGOT', 'SPIGOT', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(743, 1, 3, 'SPINAL NEEDLE 25', 'SPINAL NEEDLE 25', '5', NULL, NULL, NULL, '25', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
-(744, 1, 3, 'SPINAL NEEDLE 24', 'SPINAL NEEDLE 24', '5', NULL, NULL, NULL, '24', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(745, 1, 3, 'SPINAL NEEDLE 23', 'SPINAL NEEDLE 23', '5', NULL, NULL, NULL, '35', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(746, 1, 3, 'SPINAL NEEDLE 22', 'SPINAL NEEDLE 22', '5', NULL, NULL, NULL, '27', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(747, 1, 3, 'SPIRIT CONTAINER', 'SPIRIT CONTAINER', '5', NULL, NULL, NULL, '98', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(748, 1, 3, 'SOLUSET', 'SOLUSET', '5', NULL, NULL, NULL, '51', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(749, 1, 3, 'SUCTION TUBE', 'SUCTION TUBE', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(750, 1, 3, 'SURGICAL BLADE 10', 'SURGICAL BLADE 10', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(751, 1, 3, 'SURGICAL BLADE 11', 'SURGICAL BLADE 11', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(752, 1, 3, 'SURGICAL BLADE 23', 'SURGICAL BLADE 23', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(753, 1, 3, 'SURGICAL BLADE 24', 'SURGICAL BLADE 24', '5', NULL, NULL, NULL, '300', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(754, 1, 3, 'SURGICAL GLOVE 7.5', 'SURGICAL GLOVE 7.5', '5', NULL, NULL, NULL, '500', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(755, 1, 3, 'SURGICAL GLOVES 7', 'SURGICAL GLOVES 7', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(756, 1, 3, 'SURGICAL GLOVE 8', 'SURGICAL GLOVE 8', '5', NULL, NULL, NULL, '300', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(757, 1, 3, 'TOWEL UNDERPAD', 'TOWEL UNDERPAD', '5', NULL, NULL, NULL, '295', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(758, 1, 3, 'URINE BAG', 'URINE BAG', '5', NULL, NULL, NULL, '170', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(759, 1, 3, 'UMBLICAL CORD CLAMP', 'UMBLICAL CORD CLAMP', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
-(760, 1, 3, 'UMBLICAL CORD THREAD', 'UMBLICAL CORD THREAD', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(761, 1, 3, 'VICRYL 0', 'VICRYL 0', '5', NULL, NULL, NULL, '60', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(762, 1, 3, 'VICRYL 1', 'VICRYL 1', '5', NULL, NULL, NULL, '252', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(763, 1, 3, 'VICRYL 2', 'VICRYL 2', '5', NULL, NULL, NULL, '264', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(764, 1, 3, 'VICRYL 2/0', 'VICRYL 2/0', '5', NULL, NULL, NULL, '204', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(765, 1, 3, 'VICRYL 3/0', 'VICRYL 3/0', '5', NULL, NULL, NULL, '24', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(766, 1, 4, 'HYDROGEN PEROXIDE', 'HYDROGEN PEROXIDE', '5', NULL, NULL, NULL, '24', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(767, 1, 4, 'EUSOL', 'EUSOL', '5', NULL, NULL, NULL, '16', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(768, 1, 4, 'GENTIAL VIOLET', 'GENTIAL VIOLET', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
-(769, 1, 4, 'HYPO SMALL', 'HYPO SMALL', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(770, 1, 4, 'IZAL', 'IZAL', '5', NULL, NULL, NULL, '36', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(771, 1, 4, 'PURIT', 'PURIT', '5', NULL, NULL, NULL, '7', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(772, 1, 4, 'POVIDONE IODINE', 'POVIDONE IODINE', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(773, 1, 5, 'ALBUMIN', 'ALBUMIN', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(774, 1, 5, 'BLOOD BAG', 'BLOOD BAG', '5', NULL, NULL, NULL, '145', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(775, 1, 5, 'BOJOU BOTTLE', 'BOJOU BOTTLE', '5', NULL, NULL, NULL, '21', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(776, 1, 5, 'CAPILLARY TUBE', 'CAPILLARY TUBE', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(777, 1, 5, 'COMBI  9', 'COMBI  9', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(778, 1, 5, 'COBAS PRINTING PAPER', 'COBAS PRINTING PAPER', '5', NULL, NULL, NULL, '11', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(779, 1, 5, 'COVER GLASS', 'COVER GLASS', '5', NULL, NULL, NULL, '26', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(780, 1, 5, 'COVER SLIPS', 'COVER SLIPS', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(781, 1, 5, 'CUVETTE BOTTLE', 'CUVETTE BOTTLE', '5', NULL, NULL, NULL, '48', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(782, 1, 5, 'DOA STRIPS', 'DOA STRIPS', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(783, 1, 5, 'ERBA ROTOR 180', 'ERBA ROTOR 180', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
-(784, 1, 5, 'EVA WATER', 'EVA WATER', '5', NULL, NULL, NULL, '216', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(785, 1, 5, 'FILTER PAPER', 'FILTER PAPER', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(786, 1, 5, 'GLUCOSE', 'GLUCOSE', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(787, 1, 5, 'HALOGEN LAMP', 'HALOGEN LAMP', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(788, 1, 5, 'H PYLORIC', 'H PYLORIC', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(789, 1, 5, 'HBSAG STRIPS', 'HBSAG STRIPS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(790, 1, 5, 'HCV', 'HCV', '5', NULL, NULL, NULL, '0', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(791, 1, 5, 'HEALTH CHECK STRIPS', 'HEALTH CHECK STRIPS', '5', NULL, NULL, NULL, '33', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(792, 1, 5, 'ISE DEPROTEINIZER', 'ISE DEPROTEINIZER', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(793, 1, 5, 'TEST TUBE BRUSH', 'TEST TUBE BRUSH', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(794, 1, 5, 'TRIS BUFFER SALT', 'TRIS BUFFER SALT', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(795, 1, 5, 'TOTAL BILIRUBIN', 'TOTAL BILIRUBIN', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(796, 1, 5, 'TOTAL CHOLESTROL', 'TOTAL CHOLESTROL', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(797, 1, 5, 'PETRI DISH', 'PETRI DISH', '5', NULL, NULL, NULL, '77', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(798, 1, 5, 'PREGNANCY STRIPS', 'PREGNANCY STRIPS', '5', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(799, 1, 5, 'PT PROTHROMBIN', 'PT PROTHROMBIN', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(800, 1, 5, 'VACUTAINER GREEN', 'VACUTAINER GREEN', '5', NULL, NULL, NULL, '500', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
-(801, 1, 5, 'VACUTAINER PURPLE', 'VACUTAINER PURPLE', '5', NULL, NULL, NULL, '1100', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(802, 1, 5, 'VACUTAINER RED', 'VACUTAINER RED', '5', NULL, NULL, NULL, '500', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(803, 1, 5, 'VACUTAINER ASH', 'VACUTAINER ASH', '5', NULL, NULL, NULL, '400', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(804, 1, 5, 'VDRL', 'VDRL', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(805, 1, 5, 'SINGLE NEEDLE 21G', 'SINGLE NEEDLE 21G', '5', NULL, NULL, NULL, '900', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(806, 1, 5, 'SPECULUM', 'SPECULUM', '5', NULL, NULL, NULL, '30', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(807, 1, 5, 'SWAB STICK', 'SWAB STICK', '5', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(808, 1, 5, 'ANTI A RGT', 'ANTI A RGT', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(809, 1, 5, 'ANTI B', 'ANTI B', '5', NULL, NULL, NULL, '7', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(810, 1, 5, 'ANTI D RGT', 'ANTI D RGT', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(811, 1, 5, 'MARKER', 'MARKER', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(812, 1, 5, 'MINDRAY DILUENT', 'MINDRAY DILUENT', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL);
-INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_name`, `product_code`, `reorder_alert`, `has_have`, `has_piece`, `howmany_to`, `current_quantity`, `status`, `stock_assign`, `price_assign`, `promotion`, `created_at`, `updated_at`, `old_product_id`, `old_stock_id`) VALUES
-(813, 1, 5, 'PRE CHEM 2', 'PRE CHEM 2', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
-(814, 1, 5, 'WIDAL', 'WIDAL', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:39', '2026-01-28 09:38:39', NULL, NULL),
-(815, 1, 5, 'UNIVERSAL CONTAINER', 'UNIVERSAL CONTAINER', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:39', '2026-01-28 09:38:39', NULL, NULL);
+INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_type`, `base_unit_name`, `allow_decimal_qty`, `product_name`, `product_code`, `reorder_alert`, `has_have`, `has_piece`, `howmany_to`, `current_quantity`, `status`, `stock_assign`, `price_assign`, `promotion`, `created_at`, `updated_at`, `old_product_id`, `old_stock_id`) VALUES
+(161, 1, 1, 'drug', 'Piece', 0, 'Paracetamol 500mg', 'PARA-500', '100', NULL, NULL, NULL, '500', 1, 0, 0, 0, '2026-01-28 08:00:40', '2026-01-28 08:00:40', NULL, NULL),
+(162, 1, 2, 'drug', 'Piece', 0, 'Amoxicillin 250mg', 'AMOX-250', '50', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 08:00:40', '2026-01-28 08:00:40', NULL, NULL),
+(163, 1, 2, 'drug', 'Piece', 0, 'ACECLOFENAC  100MG', 'ACECLOFENAC  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:40', '2026-01-28 08:00:40', NULL, NULL),
+(164, 1, 2, 'drug', 'Piece', 0, 'ACECLOFENAC  PLUS 100mg', 'ACECLOFENAC  PLUS 100mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:40', '2026-01-28 08:00:40', NULL, NULL),
+(165, 1, 2, 'drug', 'Piece', 0, 'ACTIFED  (SINUFED)', 'ACTIFED  (SINUFED)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(166, 1, 2, 'drug', 'Piece', 0, 'ACTIFIED SYRUP', 'ACTIFIED SYRUP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(167, 1, 2, 'drug', 'Piece', 0, 'ACTIVATED  CHARCOAL TAB', 'ACTIVATED  CHARCOAL TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(168, 1, 2, 'drug', 'Piece', 0, 'ACYCLOVIR  400MG (ZOVIRAX)', 'ACYCLOVIR  400MG (ZOVIRAX)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(169, 1, 2, 'drug', 'Piece', 0, 'ACYCLOVIR CREAM', 'ACYCLOVIR CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(170, 1, 2, 'drug', 'Piece', 0, 'ADRENALINE INJ.', 'ADRENALINE INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(171, 1, 2, 'drug', 'Piece', 0, 'ALBENDAZOLE 400MG  (per pack)', 'ALBENDAZOLE 400MG  (per pack)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(172, 1, 2, 'drug', 'Piece', 0, 'ALBENDAZOLE SYRUP', 'ALBENDAZOLE SYRUP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(173, 1, 2, 'drug', 'Piece', 0, 'ALDACTONE 25MG TAB.', 'ALDACTONE 25MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(174, 1, 2, 'drug', 'Piece', 0, 'ALDOMET 250mg ( Methyldopa)', 'ALDOMET 250mg ( Methyldopa)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(175, 1, 2, 'drug', 'Piece', 0, 'ALLUPURINOL  100MG', 'ALLUPURINOL  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:41', '2026-01-28 08:00:41', NULL, NULL),
+(176, 1, 2, 'drug', 'Piece', 0, 'ALPHABETIC', 'ALPHABETIC', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(177, 1, 2, 'drug', 'Piece', 0, 'AMLODIPINE  10MG', 'AMLODIPINE  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(178, 1, 2, 'drug', 'Piece', 0, 'AMLODIPINE  5MG', 'AMLODIPINE  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(179, 1, 2, 'drug', 'Piece', 0, 'AMINOPHYLINE 2.5% INJ.', 'AMINOPHYLINE 2.5% INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(180, 1, 2, 'drug', 'Piece', 0, 'AMOXYCILLIN 250MG CAPS', 'AMOXYCILLIN 250MG CAPS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(181, 1, 2, 'drug', 'Piece', 0, 'AMOXYCILLIN 500MG CAPS', 'AMOXYCILLIN 500MG CAPS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(182, 1, 2, 'drug', 'Piece', 0, 'AMOXYCILLIN 250MG (CHAN) DISP', 'AMOXYCILLIN 250MG (CHAN) DISP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(183, 1, 2, 'drug', 'Piece', 0, 'AMOXYCILLIN SUSP', 'AMOXYCILLIN SUSP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(184, 1, 2, 'drug', 'Piece', 0, 'AMPICLOX ( 100ml)   susp.', 'AMPICLOX ( 100ml)   susp.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(185, 1, 2, 'drug', 'Piece', 0, 'AMPICLOX 500MG CAP', 'AMPICLOX 500MG CAP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(186, 1, 2, 'drug', 'Piece', 0, 'AMPICLOX 500MG INJ.', 'AMPICLOX 500MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(187, 1, 2, 'drug', 'Piece', 0, 'ANATE 7-13YRS)', 'ANATE 7-13YRS)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(188, 1, 2, 'drug', 'Piece', 0, 'ANATE ABV 1YR', 'ANATE ABV 1YR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:42', '2026-01-28 08:00:42', NULL, NULL),
+(189, 1, 2, 'drug', 'Piece', 0, 'ANATE BELOW 1 YEAR \"', 'ANATE BELOW 1 YEAR \"', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(190, 1, 2, 'drug', 'Piece', 0, 'ANNUSOL SUPP.', 'ANNUSOL SUPP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(191, 1, 2, 'drug', 'Piece', 0, 'ANTERLLERG', 'ANTERLLERG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(192, 1, 2, 'drug', 'Piece', 0, 'ANTI D (RHOGAM)', 'ANTI D (RHOGAM)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(193, 1, 2, 'drug', 'Piece', 0, 'ANTI- RABIES VACCINE', 'ANTI- RABIES VACCINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(194, 1, 2, 'drug', 'Piece', 0, 'AQUATEARS', 'AQUATEARS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(195, 1, 2, 'drug', 'Piece', 0, 'ARTANE 5MG TAB.', 'ARTANE 5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(196, 1, 2, 'drug', 'Piece', 0, 'ARTERSUNATE INJ. 60MG', 'ARTERSUNATE INJ. 60MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(197, 1, 2, 'drug', 'Piece', 0, 'ARTESUNATE  120MG', 'ARTESUNATE  120MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(198, 1, 2, 'drug', 'Piece', 0, 'ARTHEMETER 80 INJ.', 'ARTHEMETER 80 INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(199, 1, 2, 'drug', 'Piece', 0, 'ARTHOCARE  FORTE', 'ARTHOCARE  FORTE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:43', '2026-01-28 08:00:43', NULL, NULL),
+(200, 1, 2, 'drug', 'Piece', 0, 'ARTHOCARE TAB.', 'ARTHOCARE TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(201, 1, 2, 'drug', 'Piece', 0, 'ARTOVASTATIN TAB  10MG', 'ARTOVASTATIN TAB  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(202, 1, 2, 'drug', 'Piece', 0, 'ARTOVASTATIN TAB  20MG', 'ARTOVASTATIN TAB  20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(203, 1, 2, 'drug', 'Piece', 0, 'ASTYFER  TONIC  200MLS', 'ASTYFER  TONIC  200MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(204, 1, 2, 'drug', 'Piece', 0, 'ASTYMIN SYR', 'ASTYMIN SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(205, 1, 2, 'drug', 'Piece', 0, 'ASTYFER TONIC  110mls', 'ASTYFER TONIC  110mls', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(206, 1, 2, 'drug', 'Piece', 0, 'ATENOLOL  TAB.  (50MG)', 'ATENOLOL  TAB.  (50MG)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(207, 1, 2, 'drug', 'Piece', 0, 'ARTEQUICK  PRICE PER PACK', 'ARTEQUICK  PRICE PER PACK', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(208, 1, 2, 'drug', 'Piece', 0, 'ATHROTEC CAP 75mg', 'ATHROTEC CAP 75mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(209, 1, 2, 'drug', 'Piece', 0, 'ATROPINE GUTT', 'ATROPINE GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(210, 1, 2, 'drug', 'Piece', 0, 'ATROPINE 0.5MG INJ.', 'ATROPINE 0.5MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(211, 1, 2, 'drug', 'Piece', 0, 'AUGMENTIN  1G', 'AUGMENTIN  1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:44', '2026-01-28 08:00:44', NULL, NULL),
+(212, 1, 2, 'drug', 'Piece', 0, 'AUGMENTIN  (228mg/5ml)', 'AUGMENTIN  (228mg/5ml)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
+(213, 1, 2, 'drug', 'Piece', 0, 'AUGMENTIN  . 457MG', 'AUGMENTIN  . 457MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
+(214, 1, 2, 'drug', 'Piece', 0, 'AUGMENTIN 1.2 MG INJ.', 'AUGMENTIN 1.2 MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
+(215, 1, 2, 'drug', 'Piece', 0, 'AUGMENTIN 625MG', 'AUGMENTIN 625MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
+(216, 1, 2, 'drug', 'Piece', 0, 'AZITHROMYCIN 500MG', 'AZITHROMYCIN 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
+(217, 1, 2, 'drug', 'Piece', 0, 'AZITHROMYCIN SUSP.', 'AZITHROMYCIN SUSP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
+(218, 1, 2, 'drug', 'Piece', 0, 'AMIODARONE   200mg', 'AMIODARONE   200mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:45', '2026-01-28 08:00:45', NULL, NULL),
+(219, 1, 2, 'drug', 'Piece', 0, 'AMLOZAR  H', 'AMLOZAR  H', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
+(220, 1, 2, 'drug', 'Piece', 0, 'ANASTRAZOLE  1MG', 'ANASTRAZOLE  1MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
+(221, 1, 2, 'drug', 'Piece', 0, 'ARBITEL   80mg', 'ARBITEL   80mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
+(222, 1, 2, 'drug', 'Piece', 0, 'ALLOPURINOL 300MG', 'ALLOPURINOL 300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
+(223, 1, 2, 'drug', 'Piece', 0, 'ANTALGEX TAB', 'ANTALGEX TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
+(224, 1, 2, 'drug', 'Piece', 0, 'BETOPTIC   (BETAZOLOL)', 'BETOPTIC   (BETAZOLOL)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
+(225, 1, 2, 'drug', 'Piece', 0, 'BENDROFLUAZIDE  5MG', 'BENDROFLUAZIDE  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
+(226, 1, 2, 'drug', 'Piece', 0, 'BENZYL BENZOATE', 'BENZYL BENZOATE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:46', '2026-01-28 08:00:46', NULL, NULL),
+(227, 1, 2, 'drug', 'Piece', 0, 'BIOFLOR', 'BIOFLOR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
+(228, 1, 2, 'drug', 'Piece', 0, 'BIOPENTIN', 'BIOPENTIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
+(229, 1, 2, 'drug', 'Piece', 0, 'BISACODYL SUPP.', 'BISACODYL SUPP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
+(230, 1, 2, 'drug', 'Piece', 0, 'BISACODYL TAB 5MG', 'BISACODYL TAB 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
+(231, 1, 2, 'drug', 'Piece', 0, 'BISOPROLOL  5MG', 'BISOPROLOL  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
+(232, 1, 2, 'drug', 'Piece', 0, 'BRIMONIDINE  GUTT', 'BRIMONIDINE  GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
+(233, 1, 2, 'drug', 'Piece', 0, 'BROMOCRIPTINE (parlodel)', 'BROMOCRIPTINE (parlodel)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:47', '2026-01-28 08:00:47', NULL, NULL),
+(234, 1, 2, 'drug', 'Piece', 0, 'BRONCHOLYTE ELIXIR 100ml', 'BRONCHOLYTE ELIXIR 100ml', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:48', '2026-01-28 08:00:48', NULL, NULL),
+(235, 1, 2, 'drug', 'Piece', 0, 'BUSCOPAN  10MG INJ.', 'BUSCOPAN  10MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
+(236, 1, 2, 'drug', 'Piece', 0, 'BUSCOPAN  10MG TAB', 'BUSCOPAN  10MG TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
+(237, 1, 2, 'drug', 'Piece', 0, 'BUSCOPAN  SYR', 'BUSCOPAN  SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
+(238, 1, 2, 'drug', 'Piece', 0, 'TAB BACLOFEN', 'TAB BACLOFEN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
+(239, 1, 2, 'drug', 'Piece', 0, 'GUTT BIMAPROST', 'GUTT BIMAPROST', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
+(240, 1, 2, 'drug', 'Piece', 0, 'GUTT BETAMETASONE+NEOMYCIN', 'GUTT BETAMETASONE+NEOMYCIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:49', '2026-01-28 08:00:49', NULL, NULL),
+(241, 1, 2, 'drug', 'Piece', 0, 'CAFERGOT  TAB.', 'CAFERGOT  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
+(242, 1, 2, 'drug', 'Piece', 0, 'CALAMINE LOTION', 'CALAMINE LOTION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
+(243, 1, 2, 'drug', 'Piece', 0, 'CALCITROL', 'CALCITROL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
+(244, 1, 2, 'drug', 'Piece', 0, 'CALCIUM CARBONATE  TAB', 'CALCIUM CARBONATE  TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
+(245, 1, 2, 'drug', 'Piece', 0, 'CALCIUM GLUCONATE  INJ.', 'CALCIUM GLUCONATE  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
+(246, 1, 2, 'drug', 'Piece', 0, 'CALCIUM LACTATE  TAB.', 'CALCIUM LACTATE  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
+(247, 1, 2, 'drug', 'Piece', 0, 'CANDESARTAN  16MG', 'CANDESARTAN  16MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:50', '2026-01-28 08:00:50', NULL, NULL),
+(248, 1, 2, 'drug', 'Piece', 0, 'CANDESARTAN  8MG', 'CANDESARTAN  8MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
+(249, 1, 2, 'drug', 'Piece', 0, 'CLOTRIMAZOLE CREAM  TOPICAL', 'CLOTRIMAZOLE CREAM  TOPICAL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
+(250, 1, 2, 'drug', 'Piece', 0, 'CANESTEN V PESSARIES  X 6s', 'CANESTEN V PESSARIES  X 6s', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
+(251, 1, 2, 'drug', 'Piece', 0, 'CANESTEN VAG. CREAM', 'CANESTEN VAG. CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
+(252, 1, 2, 'drug', 'Piece', 0, 'CARPIDOPA  (SINEMET)', 'CARPIDOPA  (SINEMET)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
+(253, 1, 2, 'drug', 'Piece', 0, 'CARBAGOLINE  0.4MG', 'CARBAGOLINE  0.4MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
+(254, 1, 2, 'drug', 'Piece', 0, 'CARBAMAZEPINE 200MG', 'CARBAMAZEPINE 200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:51', '2026-01-28 08:00:51', NULL, NULL),
+(255, 1, 2, 'drug', 'Piece', 0, 'CARBIMAZOLE 5MG', 'CARBIMAZOLE 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
+(256, 1, 2, 'drug', 'Piece', 0, 'CARVEDILOL  3.12MG', 'CARVEDILOL  3.12MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
+(257, 1, 2, 'drug', 'Piece', 0, 'CARVEDILOL  6.25MG', 'CARVEDILOL  6.25MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
+(258, 1, 2, 'drug', 'Piece', 0, 'CEFIXIME  200MG', 'CEFIXIME  200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
+(259, 1, 2, 'drug', 'Piece', 0, 'CEFIXIME  400MG', 'CEFIXIME  400MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:52', '2026-01-28 08:00:52', NULL, NULL),
+(260, 1, 2, 'drug', 'Piece', 0, 'CEFIXIME SUSP 100MLS', 'CEFIXIME SUSP 100MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(261, 1, 2, 'drug', 'Piece', 0, 'CEFOTAXIME 500MG', 'CEFOTAXIME 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(262, 1, 2, 'drug', 'Piece', 0, 'CEFTRIAZONE 1G', 'CEFTRIAZONE 1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(263, 1, 2, 'drug', 'Piece', 0, 'CEFTRIAZONE SULBACTAN  1.5G', 'CEFTRIAZONE SULBACTAN  1.5G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(264, 1, 2, 'drug', 'Piece', 0, 'CEFUROXIME  70MLs', 'CEFUROXIME  70MLs', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(265, 1, 2, 'drug', 'Piece', 0, 'CEFUROXIME  500MG', 'CEFUROXIME  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(266, 1, 2, 'drug', 'Piece', 0, 'CEFUROXIME INJ 750MG', 'CEFUROXIME INJ 750MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(267, 1, 2, 'drug', 'Piece', 0, 'CELEBREX  200MG  (per 1  cap)', 'CELEBREX  200MG  (per 1  cap)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(268, 1, 2, 'drug', 'Piece', 0, 'CHLORPROMAZIN 100mg tab', 'CHLORPROMAZIN 100mg tab', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(269, 1, 2, 'drug', 'Piece', 0, 'CHLOPROMAZINE 50MG INJ', 'CHLOPROMAZINE 50MG INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(270, 1, 2, 'drug', 'Piece', 0, 'CHLORAMPHENICOL  EYE Oint.', 'CHLORAMPHENICOL  EYE Oint.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:53', '2026-01-28 08:00:53', NULL, NULL),
+(271, 1, 2, 'drug', 'Piece', 0, 'CHLORAMPHENICOL 250MG', 'CHLORAMPHENICOL 250MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(272, 1, 2, 'drug', 'Piece', 0, 'CHLORAMPHENICOL EYE/EAR', 'CHLORAMPHENICOL EYE/EAR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(273, 1, 2, 'drug', 'Piece', 0, 'CHLORAMPHENICOL INJ. 1G.', 'CHLORAMPHENICOL INJ. 1G.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(274, 1, 2, 'drug', 'Piece', 0, 'CHYMORAL TAB.', 'CHYMORAL TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(275, 1, 2, 'drug', 'Piece', 0, 'CIPROFLOXACIN  500mg', 'CIPROFLOXACIN  500mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(276, 1, 2, 'drug', 'Piece', 0, 'CIPROFLOXACIN I.V 200MG', 'CIPROFLOXACIN I.V 200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(277, 1, 2, 'drug', 'Piece', 0, 'CLARYTHROMYCIN 500MG', 'CLARYTHROMYCIN 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(278, 1, 2, 'drug', 'Piece', 0, 'CLINDAMYCIN  300MG', 'CLINDAMYCIN  300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(279, 1, 2, 'drug', 'Piece', 0, 'CLINDYMACIN INJ', 'CLINDYMACIN INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(280, 1, 2, 'drug', 'Piece', 0, 'CLOMIPHENE CITRATE (unbranded)', 'CLOMIPHENE CITRATE (unbranded)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(281, 1, 2, 'drug', 'Piece', 0, 'CLOPIDOGREL 75MG', 'CLOPIDOGREL 75MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:54', '2026-01-28 08:00:54', NULL, NULL),
+(282, 1, 2, 'drug', 'Piece', 0, 'COCODAMOL', 'COCODAMOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
+(283, 1, 2, 'drug', 'Piece', 0, 'CO - DIOVAN 80MG/12.5MG  Branded', 'CO - DIOVAN 80MG/12.5MG  Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
+(284, 1, 2, 'drug', 'Piece', 0, 'CO- DIOVAN 160MG/12.5MG Branded', 'CO- DIOVAN 160MG/12.5MG Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
+(285, 1, 2, 'drug', 'Piece', 0, 'CO- DIOVAN 160MG/25MG Branded', 'CO- DIOVAN 160MG/25MG Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
+(286, 1, 2, 'drug', 'Piece', 0, 'COARTEM (ADULT) X 6 by  FIDSON', 'COARTEM (ADULT) X 6 by  FIDSON', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
+(287, 1, 2, 'drug', 'Piece', 0, 'COARTEM (DISPERSIBLE) X 1', 'COARTEM (DISPERSIBLE) X 1', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
+(288, 1, 2, 'drug', 'Piece', 0, 'COUGH SYRUP (ADULT)', 'COUGH SYRUP (ADULT)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:55', '2026-01-28 08:00:55', NULL, NULL),
+(289, 1, 2, 'drug', 'Piece', 0, 'COUGH SYRUP (CHILD)', 'COUGH SYRUP (CHILD)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
+(290, 1, 2, 'drug', 'Piece', 0, 'COGNITOL', 'COGNITOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
+(291, 1, 2, 'drug', 'Piece', 0, 'COLCHICINE (OPACALCIUM)', 'COLCHICINE (OPACALCIUM)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
+(292, 1, 2, 'drug', 'Piece', 0, 'COTTON WOOL', 'COTTON WOOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
+(293, 1, 2, 'drug', 'Piece', 0, 'CRYSTALLINE PENICILLIN', 'CRYSTALLINE PENICILLIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
+(294, 1, 2, 'drug', 'Piece', 0, 'CIPROFLOXACIN   EYE  DROP', 'CIPROFLOXACIN   EYE  DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:56', '2026-01-28 08:00:56', NULL, NULL),
+(295, 1, 2, 'drug', 'Piece', 0, 'CETRIZINE  10mg', 'CETRIZINE  10mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
+(296, 1, 2, 'drug', 'Piece', 0, 'CLOZAPINE  100mg', 'CLOZAPINE  100mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
+(297, 1, 2, 'drug', 'Piece', 0, 'CLOZAPINE   25mg', 'CLOZAPINE   25mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
+(298, 1, 2, 'drug', 'Piece', 0, 'CIPRO - DEX EYE DROP', 'CIPRO - DEX EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
+(299, 1, 2, 'drug', 'Piece', 0, 'CHEMIRON  TONIC   ( Ranferon)', 'CHEMIRON  TONIC   ( Ranferon)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
+(300, 1, 2, 'drug', 'Piece', 0, 'CHOLESTOFF TAB', 'CHOLESTOFF TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:57', '2026-01-28 08:00:57', NULL, NULL),
+(301, 1, 2, 'drug', 'Piece', 0, 'CITICHOLINE', 'CITICHOLINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
+(302, 1, 2, 'drug', 'Piece', 0, 'CHLOXY-GEL', 'CHLOXY-GEL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
+(303, 1, 2, 'drug', 'Piece', 0, 'CALIBRATED DRAPES', 'CALIBRATED DRAPES', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
+(304, 1, 2, 'drug', 'Piece', 0, 'CALCIMAX', 'CALCIMAX', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
+(305, 1, 2, 'drug', 'Piece', 0, 'DAONIL 5MG TAB.', 'DAONIL 5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
+(306, 1, 2, 'drug', 'Piece', 0, 'DAFLON   500MG', 'DAFLON   500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:58', '2026-01-28 08:00:58', NULL, NULL),
+(307, 1, 2, 'drug', 'Piece', 0, 'DAFLON   1000MG', 'DAFLON   1000MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
+(308, 1, 2, 'drug', 'Piece', 0, 'DEPO  PROVERA   INJ', 'DEPO  PROVERA   INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
+(309, 1, 2, 'drug', 'Piece', 0, 'DEQUADIN LOZ. SHALTOX', 'DEQUADIN LOZ. SHALTOX', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
+(310, 1, 2, 'drug', 'Piece', 0, 'DERMAZINE CREAM  25G BRANDED', 'DERMAZINE CREAM  25G BRANDED', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
+(311, 1, 2, 'drug', 'Piece', 0, 'DEXAMETHASONE   1MG  TAB.', 'DEXAMETHASONE   1MG  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
+(312, 1, 2, 'drug', 'Piece', 0, 'DEXAMETHASONE 4MG  INJ.', 'DEXAMETHASONE 4MG  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
+(313, 1, 2, 'drug', 'Piece', 0, 'DEXAMETHASONE EYE   (Stadex)', 'DEXAMETHASONE EYE   (Stadex)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:00:59', '2026-01-28 08:00:59', NULL, NULL),
+(314, 1, 2, 'drug', 'Piece', 0, 'DIAMOX 250MG TAB', 'DIAMOX 250MG TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(315, 1, 2, 'drug', 'Piece', 0, 'DIAPRIDE PLUS -2', 'DIAPRIDE PLUS -2', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(316, 1, 2, 'drug', 'Piece', 0, 'DIAZEPAM  INJ.  10MG', 'DIAZEPAM  INJ.  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(317, 1, 2, 'drug', 'Piece', 0, 'DIAZEPAM  TAB. 5MG', 'DIAZEPAM  TAB. 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(318, 1, 2, 'drug', 'Piece', 0, 'DICLOFENAC  I NJ.', 'DICLOFENAC  I NJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(319, 1, 2, 'drug', 'Piece', 0, 'DICLOFENAC GEL', 'DICLOFENAC GEL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(320, 1, 2, 'drug', 'Piece', 0, 'DICLOFENAC POTT.  100Mg', 'DICLOFENAC POTT.  100Mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(321, 1, 2, 'drug', 'Piece', 0, 'DICLOFENAC POTT.  50Mg', 'DICLOFENAC POTT.  50Mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(322, 1, 2, 'drug', 'Piece', 0, 'DICLOFNAC  EYE DROP', 'DICLOFNAC  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:00', '2026-01-28 08:01:00', NULL, NULL),
+(323, 1, 2, 'drug', 'Piece', 0, 'DIGOXIN 0.25MG TAB.', 'DIGOXIN 0.25MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(324, 1, 2, 'drug', 'Piece', 0, 'DONEPREZIL   5MG', 'DONEPREZIL   5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(325, 1, 2, 'drug', 'Piece', 0, 'DOXAZOCIN  4MG', 'DOXAZOCIN  4MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(326, 1, 2, 'drug', 'Piece', 0, 'DOPAMINE  INJ.', 'DOPAMINE  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(327, 1, 2, 'drug', 'Piece', 0, 'DOXYCYCLINE 100MG CAP.', 'DOXYCYCLINE 100MG CAP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(328, 1, 2, 'drug', 'Piece', 0, 'DUPHASTON   Tab', 'DUPHASTON   Tab', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(329, 1, 2, 'drug', 'Piece', 0, 'DUSTASIN   (SAMIFLOW)', 'DUSTASIN   (SAMIFLOW)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(330, 1, 2, 'drug', 'Piece', 0, 'DUCOLAX SUPP', 'DUCOLAX SUPP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(331, 1, 2, 'drug', 'Piece', 0, 'DOMPERIDONE', 'DOMPERIDONE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(332, 1, 2, 'drug', 'Piece', 0, 'DEQUADIN     (SHALTOUX)', 'DEQUADIN     (SHALTOUX)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(333, 1, 2, 'drug', 'Piece', 0, 'DABIGATRAN  110MG', 'DABIGATRAN  110MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(334, 1, 2, 'drug', 'Piece', 0, 'DAPZINE', 'DAPZINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(335, 1, 2, 'drug', 'Piece', 0, 'DORLPEN   Tab', 'DORLPEN   Tab', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:01', '2026-01-28 08:01:01', NULL, NULL),
+(336, 1, 2, 'drug', 'Piece', 0, 'DABIGATRAN  150MG', 'DABIGATRAN  150MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(337, 1, 2, 'drug', 'Piece', 0, 'DYNAMOGEN', 'DYNAMOGEN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(338, 1, 2, 'drug', 'Piece', 0, 'DF118 (DIHYDROCODEINE)', 'DF118 (DIHYDROCODEINE)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(339, 1, 2, 'drug', 'Piece', 0, 'EMAL (PER AMP) 150MG   Branded', 'EMAL (PER AMP) 150MG   Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(340, 1, 2, 'drug', 'Piece', 0, 'EMAL (PER AMP) 150MG Unbranded', 'EMAL (PER AMP) 150MG Unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(341, 1, 2, 'drug', 'Piece', 0, 'EPILLIM  200MG', 'EPILLIM  200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(342, 1, 2, 'drug', 'Piece', 0, 'EPILLIM  500MG', 'EPILLIM  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(343, 1, 2, 'drug', 'Piece', 0, 'ERGOTMETRINE   INJ.', 'ERGOTMETRINE   INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(344, 1, 2, 'drug', 'Piece', 0, 'ERYTHROMYCIN  500mg tab.', 'ERYTHROMYCIN  500mg tab.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(345, 1, 2, 'drug', 'Piece', 0, 'ERYTHROMYCIN  susp.  125mg', 'ERYTHROMYCIN  susp.  125mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(346, 1, 2, 'drug', 'Piece', 0, 'ESIDREX   25MG TAB.', 'ESIDREX   25MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(347, 1, 2, 'drug', 'Piece', 0, 'ESCITALOPRAM    10MG', 'ESCITALOPRAM    10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:02', '2026-01-28 08:01:02', NULL, NULL),
+(348, 1, 2, 'drug', 'Piece', 0, 'ESCITALOPRAM    20MG', 'ESCITALOPRAM    20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(349, 1, 2, 'drug', 'Piece', 0, 'EUSOL SOLUTION', 'EUSOL SOLUTION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(350, 1, 2, 'drug', 'Piece', 0, 'EXFORGE 10/160MG', 'EXFORGE 10/160MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(351, 1, 2, 'drug', 'Piece', 0, 'EXFORGE 5/160MG', 'EXFORGE 5/160MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(352, 1, 2, 'drug', 'Piece', 0, 'EXFORGE/HCT 10mg/160MG/12.5', 'EXFORGE/HCT 10mg/160MG/12.5', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(353, 1, 2, 'drug', 'Piece', 0, 'EXFORGE/HCT  10/160MG/25MG', 'EXFORGE/HCT  10/160MG/25MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(354, 1, 2, 'drug', 'Piece', 0, 'ESOFAG   D', 'ESOFAG   D', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(355, 1, 2, 'drug', 'Piece', 0, 'ESOFAG   D   KIT', 'ESOFAG   D   KIT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(356, 1, 2, 'drug', 'Piece', 0, 'EFEMOLINE GUTT', 'EFEMOLINE GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(357, 1, 2, 'drug', 'Piece', 0, 'EPROXEN 500MG', 'EPROXEN 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(358, 1, 2, 'drug', 'Piece', 0, 'FANSIDAR  X3', 'FANSIDAR  X3', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(359, 1, 2, 'drug', 'Piece', 0, 'FERROUS SULPHATE(fersolat)', 'FERROUS SULPHATE(fersolat)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:03', '2026-01-28 08:01:03', NULL, NULL),
+(360, 1, 2, 'drug', 'Piece', 0, 'FINESTIRIDE  5mg', 'FINESTIRIDE  5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(361, 1, 2, 'drug', 'Piece', 0, 'FLAGYL  200MG TAB.', 'FLAGYL  200MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(362, 1, 2, 'drug', 'Piece', 0, 'FLAGYL 200mg /5ml susp.', 'FLAGYL 200mg /5ml susp.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(363, 1, 2, 'drug', 'Piece', 0, 'FLUCONAZOLE 200MG', 'FLUCONAZOLE 200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(364, 1, 2, 'drug', 'Piece', 0, 'FOLIC ACID  5MG TAB.', 'FOLIC ACID  5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(365, 1, 2, 'drug', 'Piece', 0, 'FRUSEMIDE 20MG INJ.', 'FRUSEMIDE 20MG INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(366, 1, 2, 'drug', 'Piece', 0, 'FRUSEMIDE 40MG TAB.', 'FRUSEMIDE 40MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(367, 1, 2, 'drug', 'Piece', 0, 'FRUSEMIDE   COUNTING  40mg', 'FRUSEMIDE   COUNTING  40mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(368, 1, 2, 'drug', 'Piece', 0, 'FULCIN . SYR', 'FULCIN . SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(369, 1, 2, 'drug', 'Piece', 0, 'FULCIN TAB. 500MG', 'FULCIN TAB. 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(370, 1, 2, 'drug', 'Piece', 0, 'FEBUXOSTAT  80mg', 'FEBUXOSTAT  80mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:04', '2026-01-28 08:01:04', NULL, NULL),
+(371, 1, 2, 'drug', 'Piece', 0, 'FLUXETINE', 'FLUXETINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(372, 1, 2, 'drug', 'Piece', 0, 'FLOW WELL PLUS', 'FLOW WELL PLUS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(373, 1, 2, 'drug', 'Piece', 0, 'INJ. FLUPENTIXOL   40MG', 'INJ. FLUPENTIXOL   40MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(374, 1, 2, 'drug', 'Piece', 0, 'FLUEZZE', 'FLUEZZE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(375, 1, 2, 'drug', 'Piece', 0, 'FILGRASTIN 300MG', 'FILGRASTIN 300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(376, 1, 2, 'drug', 'Piece', 0, 'GASCOL 150ML', 'GASCOL 150ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(377, 1, 2, 'drug', 'Piece', 0, 'G.V PAINT', 'G.V PAINT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(378, 1, 2, 'drug', 'Piece', 0, 'GALVUSMET 50/500MG', 'GALVUSMET 50/500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(379, 1, 2, 'drug', 'Piece', 0, 'GALVUSMET  50/1000MG   Branded', 'GALVUSMET  50/1000MG   Branded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(380, 1, 2, 'drug', 'Piece', 0, 'GALVUSMET  50/1000mg Ubranded', 'GALVUSMET  50/1000mg Ubranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(381, 1, 2, 'drug', 'Piece', 0, 'GENTAMYCIN  (EYE/EAR ) DROP', 'GENTAMYCIN  (EYE/EAR ) DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(382, 1, 2, 'drug', 'Piece', 0, 'GENTAMYCIN  80MG  INJ.', 'GENTAMYCIN  80MG  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:05', '2026-01-28 08:01:05', NULL, NULL),
+(383, 1, 2, 'drug', 'Piece', 0, 'GIVING SET', 'GIVING SET', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(384, 1, 2, 'drug', 'Piece', 0, 'GLIMEPERIDE      2mg', 'GLIMEPERIDE      2mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(385, 1, 2, 'drug', 'Piece', 0, 'GLIMEPERIDE     4mg', 'GLIMEPERIDE     4mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(386, 1, 2, 'drug', 'Piece', 0, 'GLYCERYL TRITRATE  500MCG', 'GLYCERYL TRITRATE  500MCG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(387, 1, 2, 'drug', 'Piece', 0, 'GABAPENTIN 300MG', 'GABAPENTIN 300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(388, 1, 2, 'drug', 'Piece', 0, 'GLICLAZIDE  30mg', 'GLICLAZIDE  30mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(389, 1, 2, 'drug', 'Piece', 0, 'GAZGO', 'GAZGO', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(390, 1, 2, 'drug', 'Piece', 0, 'GERCID', 'GERCID', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(391, 1, 2, 'drug', 'Piece', 0, 'HALDOL', 'HALDOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(392, 1, 2, 'drug', 'Piece', 0, 'HEPATITIS B IMMUNOGLOBIN', 'HEPATITIS B IMMUNOGLOBIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(393, 1, 2, 'drug', 'Piece', 0, 'HYDRALAZINE  20mg  Inj', 'HYDRALAZINE  20mg  Inj', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(394, 1, 2, 'drug', 'Piece', 0, 'HYDROCORTISONE  CREAM', 'HYDROCORTISONE  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:06', '2026-01-28 08:01:06', NULL, NULL),
+(395, 1, 2, 'drug', 'Piece', 0, 'HYDROCORTISONE  inj.', 'HYDROCORTISONE  inj.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
+(396, 1, 2, 'drug', 'Piece', 0, 'HYDROGEN PERIOXIDE', 'HYDROGEN PERIOXIDE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
+(397, 1, 2, 'drug', 'Piece', 0, 'HYDROXY UREA  100MG', 'HYDROXY UREA  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
+(398, 1, 2, 'drug', 'Piece', 0, 'HYDROXY UREA  500MG', 'HYDROXY UREA  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
+(399, 1, 2, 'drug', 'Piece', 0, 'HYDROXYCHLOROQUINE', 'HYDROXYCHLOROQUINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
+(400, 1, 2, 'drug', 'Piece', 0, 'HYPONNID', 'HYPONNID', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
+(401, 1, 2, 'drug', 'Piece', 0, 'HEPATITIS B  VACCINE', 'HEPATITIS B  VACCINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
+(402, 1, 2, 'drug', 'Piece', 0, 'Tab HYDRALLAZINE  25mg', 'Tab HYDRALLAZINE  25mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:07', '2026-01-28 08:01:07', NULL, NULL),
+(403, 1, 2, 'drug', 'Piece', 0, 'HAND SANITIZER (OLA)', 'HAND SANITIZER (OLA)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
+(404, 1, 2, 'drug', 'Piece', 0, 'IBUPROFEN  TAB 200MG', 'IBUPROFEN  TAB 200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
+(405, 1, 2, 'drug', 'Piece', 0, 'IBUPROFEN SYRUP  100MLS', 'IBUPROFEN SYRUP  100MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
+(406, 1, 2, 'drug', 'Piece', 0, 'IMIPRAMINE 25MG TAB.', 'IMIPRAMINE 25MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
+(407, 1, 2, 'drug', 'Piece', 0, 'INDERAL 40MG TAB. (PROPANOLOL)', 'INDERAL 40MG TAB. (PROPANOLOL)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
+(408, 1, 2, 'drug', 'Piece', 0, 'INSULIN SYRINGE', 'INSULIN SYRINGE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
+(409, 1, 2, 'drug', 'Piece', 0, 'IODINE', 'IODINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
+(410, 1, 2, 'drug', 'Piece', 0, 'ITRACONAZOLE  100MG', 'ITRACONAZOLE  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:08', '2026-01-28 08:01:08', NULL, NULL),
+(411, 1, 2, 'drug', 'Piece', 0, 'IVERMECTIN  5mg   (MECTIZAN)', 'IVERMECTIN  5mg   (MECTIZAN)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(412, 1, 2, 'drug', 'Piece', 0, 'INDAPAMIDE  1.5MG', 'INDAPAMIDE  1.5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(413, 1, 2, 'drug', 'Piece', 0, 'IMMATINIB', 'IMMATINIB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(414, 1, 2, 'drug', 'Piece', 0, 'INSULIN PEN(REFILL CARTIGDE)', 'INSULIN PEN(REFILL CARTIGDE)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(415, 1, 2, 'drug', 'Piece', 0, 'INSULIN  30/70 100IU', 'INSULIN  30/70 100IU', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(416, 1, 2, 'drug', 'Piece', 0, 'ISODIL  DINITRATE  10MG', 'ISODIL  DINITRATE  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(417, 1, 2, 'drug', 'Piece', 0, 'K- Y JELLY', 'K- Y JELLY', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(418, 1, 2, 'drug', 'Piece', 0, 'KEROB  EYE DROP', 'KEROB  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(419, 1, 2, 'drug', 'Piece', 0, 'KETOCONAZOLE  CREAM', 'KETOCONAZOLE  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(420, 1, 2, 'drug', 'Piece', 0, 'KLOVINAL VAG. PESS X6', 'KLOVINAL VAG. PESS X6', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(421, 1, 2, 'drug', 'Piece', 0, 'KETOMOX  EYE DROP', 'KETOMOX  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:09', '2026-01-28 08:01:09', NULL, NULL),
+(422, 1, 2, 'drug', 'Piece', 0, 'LABETALOL  50mg   INJ.', 'LABETALOL  50mg   INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(423, 1, 2, 'drug', 'Piece', 0, 'LABETALOL  200MG', 'LABETALOL  200MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(424, 1, 2, 'drug', 'Piece', 0, 'LACTULOSE   300MLS', 'LACTULOSE   300MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(425, 1, 2, 'drug', 'Piece', 0, 'LEVETIVACETAM  500MG (suvitra)', 'LEVETIVACETAM  500MG (suvitra)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(426, 1, 2, 'drug', 'Piece', 0, 'LEVOFLOXACIN 500MG', 'LEVOFLOXACIN 500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(427, 1, 2, 'drug', 'Piece', 0, 'LEVOTHYROXINE  100mcg', 'LEVOTHYROXINE  100mcg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(428, 1, 2, 'drug', 'Piece', 0, 'LEVOTHYROXINE  50mcg', 'LEVOTHYROXINE  50mcg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(429, 1, 2, 'drug', 'Piece', 0, 'LEXOTAN 1.5MG TAB.', 'LEXOTAN 1.5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(430, 1, 2, 'drug', 'Piece', 0, 'LEXOTAN    3MG TAB', 'LEXOTAN    3MG TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(431, 1, 2, 'drug', 'Piece', 0, 'LIQUID PARAFFIN', 'LIQUID PARAFFIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(432, 1, 2, 'drug', 'Piece', 0, 'LISINOPRIL  10MG', 'LISINOPRIL  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(433, 1, 2, 'drug', 'Piece', 0, 'LISINOPRIL  5MG', 'LISINOPRIL  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:10', '2026-01-28 08:01:10', NULL, NULL),
+(434, 1, 2, 'drug', 'Piece', 0, 'LIVOLIN  FORTE  CAP', 'LIVOLIN  FORTE  CAP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(435, 1, 2, 'drug', 'Piece', 0, 'LO-FEMENAL (1CYCLE) TAB.', 'LO-FEMENAL (1CYCLE) TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(436, 1, 2, 'drug', 'Piece', 0, 'LORATIDI NE 10MG', 'LORATIDI NE 10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(437, 1, 2, 'drug', 'Piece', 0, 'LORATIDINE  SUSP.   (60MLS)', 'LORATIDINE  SUSP.   (60MLS)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(438, 1, 2, 'drug', 'Piece', 0, 'LOSARTAN 25MG', 'LOSARTAN 25MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(439, 1, 2, 'drug', 'Piece', 0, 'LOSARTAN 50MG', 'LOSARTAN 50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(440, 1, 2, 'drug', 'Piece', 0, 'LETROZOLE  2.5mg', 'LETROZOLE  2.5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(441, 1, 2, 'drug', 'Piece', 0, 'LOPERAMIDE  2mg', 'LOPERAMIDE  2mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(442, 1, 2, 'drug', 'Piece', 0, 'LYCOSET', 'LYCOSET', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(443, 1, 2, 'drug', 'Piece', 0, 'LEVOCETIRIZINE  5mG', 'LEVOCETIRIZINE  5mG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(444, 1, 2, 'drug', 'Piece', 0, 'LANTUS INSULIN', 'LANTUS INSULIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL);
+INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_type`, `base_unit_name`, `allow_decimal_qty`, `product_name`, `product_code`, `reorder_alert`, `has_have`, `has_piece`, `howmany_to`, `current_quantity`, `status`, `stock_assign`, `price_assign`, `promotion`, `created_at`, `updated_at`, `old_product_id`, `old_stock_id`) VALUES
+(445, 1, 2, 'drug', 'Piece', 0, 'LANTUS NEEDLE', 'LANTUS NEEDLE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:11', '2026-01-28 08:01:11', NULL, NULL),
+(446, 1, 2, 'drug', 'Piece', 0, 'MEFENAMIC  500MG', 'MEFENAMIC  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(447, 1, 2, 'drug', 'Piece', 0, 'MAGNESUIM SULPHATE  (5G)', 'MAGNESUIM SULPHATE  (5G)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(448, 1, 2, 'drug', 'Piece', 0, 'MAX - OMEGA', 'MAX - OMEGA', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(449, 1, 2, 'drug', 'Piece', 0, 'MAXIDEX  (DEXATH) EYE DROP', 'MAXIDEX  (DEXATH) EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(450, 1, 2, 'drug', 'Piece', 0, 'MAXITROL EYE DROP', 'MAXITROL EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(451, 1, 2, 'drug', 'Piece', 0, 'MAXITROL EYE OINTMENT', 'MAXITROL EYE OINTMENT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(452, 1, 2, 'drug', 'Piece', 0, 'MEBENDAZOLE 100MG TAB.  X6', 'MEBENDAZOLE 100MG TAB.  X6', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(453, 1, 2, 'drug', 'Piece', 0, 'METFORMIN  500MG', 'METFORMIN  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(454, 1, 2, 'drug', 'Piece', 0, 'METHYLATED SPIRIT', 'METHYLATED SPIRIT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(455, 1, 2, 'drug', 'Piece', 0, 'MISOPROSTOL  PER 1 TABLET', 'MISOPROSTOL  PER 1 TABLET', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(456, 1, 2, 'drug', 'Piece', 0, 'MISOPROSTOL  PER TAB By CHAN', 'MISOPROSTOL  PER TAB By CHAN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:12', '2026-01-28 08:01:12', NULL, NULL),
+(457, 1, 2, 'drug', 'Piece', 0, 'MISOPT EYE DROP', 'MISOPT EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(458, 1, 2, 'drug', 'Piece', 0, 'MIST POTASSIUM CITRATE', 'MIST POTASSIUM CITRATE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(459, 1, 2, 'drug', 'Piece', 0, 'MMT  SUSPENSION', 'MMT  SUSPENSION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(460, 1, 2, 'drug', 'Piece', 0, 'MOXIFLOXACIN GUTT', 'MOXIFLOXACIN GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(461, 1, 2, 'drug', 'Piece', 0, 'MODURETIC TAB', 'MODURETIC TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(462, 1, 2, 'drug', 'Piece', 0, 'MONTELUKAST   10MG', 'MONTELUKAST   10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(463, 1, 2, 'drug', 'Piece', 0, 'MULTIVITE  SYP.', 'MULTIVITE  SYP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(464, 1, 2, 'drug', 'Piece', 0, 'MULTIVITE DROP', 'MULTIVITE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(465, 1, 2, 'drug', 'Piece', 0, 'MULTIVITE TAB', 'MULTIVITE TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(466, 1, 2, 'drug', 'Piece', 0, 'MYDRIACYL  EYE DROP', 'MYDRIACYL  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(467, 1, 2, 'drug', 'Piece', 0, 'METOPROLOL      25MG', 'METOPROLOL      25MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(468, 1, 2, 'drug', 'Piece', 0, 'METOPROLOL      50MG', 'METOPROLOL      50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:13', '2026-01-28 08:01:13', NULL, NULL),
+(469, 1, 2, 'drug', 'Piece', 0, 'METALAZONE  5mg', 'METALAZONE  5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(470, 1, 2, 'drug', 'Piece', 0, 'MUPIROCIN  CREAM', 'MUPIROCIN  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(471, 1, 2, 'drug', 'Piece', 0, 'MEMANTINE  HCL  20mg', 'MEMANTINE  HCL  20mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(472, 1, 2, 'drug', 'Piece', 0, 'MEROPENEM INJ 1G', 'MEROPENEM INJ 1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(473, 1, 2, 'drug', 'Piece', 0, 'MEDITRIOL TAB', 'MEDITRIOL TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(474, 1, 2, 'drug', 'Piece', 0, 'NATTO ENZYME', 'NATTO ENZYME', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(475, 1, 2, 'drug', 'Piece', 0, 'NEEDLES & SYRINGES   5ML', 'NEEDLES & SYRINGES   5ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(476, 1, 2, 'drug', 'Piece', 0, 'NEEDLES & SYRINGES  10ML', 'NEEDLES & SYRINGES  10ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(477, 1, 2, 'drug', 'Piece', 0, 'NEEDLES & SYRINGES  20ML', 'NEEDLES & SYRINGES  20ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(478, 1, 2, 'drug', 'Piece', 0, 'NEEDLES & SYRINGES  2ML', 'NEEDLES & SYRINGES  2ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(479, 1, 2, 'drug', 'Piece', 0, 'NEOMYCIN 500MG TAB.', 'NEOMYCIN 500MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:14', '2026-01-28 08:01:14', NULL, NULL),
+(480, 1, 2, 'drug', 'Piece', 0, 'NEUROVITE FORTE', 'NEUROVITE FORTE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(481, 1, 2, 'drug', 'Piece', 0, 'NIFECARD 20MG TAB  SR', 'NIFECARD 20MG TAB  SR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(482, 1, 2, 'drug', 'Piece', 0, 'NIFECARD 30MG TAB.  (M&B)', 'NIFECARD 30MG TAB.  (M&B)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(483, 1, 2, 'drug', 'Piece', 0, 'NITROFURANTOIN  TAB 100MG', 'NITROFURANTOIN  TAB 100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(484, 1, 2, 'drug', 'Piece', 0, 'NORFLEX  100MG', 'NORFLEX  100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(485, 1, 2, 'drug', 'Piece', 0, 'NYSTATIN ORAL DROP', 'NYSTATIN ORAL DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(486, 1, 2, 'drug', 'Piece', 0, 'NICOTINIC ACID', 'NICOTINIC ACID', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(487, 1, 2, 'drug', 'Piece', 0, 'NEBILONG  H', 'NEBILONG  H', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(488, 1, 2, 'drug', 'Piece', 0, 'NEBILONG', 'NEBILONG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(489, 1, 2, 'drug', 'Piece', 0, 'NEOMDEXSOL  EYE DROP', 'NEOMDEXSOL  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(490, 1, 2, 'drug', 'Piece', 0, 'NEPAFENAC  EYE DROP', 'NEPAFENAC  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(491, 1, 2, 'drug', 'Piece', 0, 'Tab NORMAGUT', 'Tab NORMAGUT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:15', '2026-01-28 08:01:15', NULL, NULL),
+(492, 1, 2, 'drug', 'Piece', 0, 'NITRIAXAM  1.5/ 5mg', 'NITRIAXAM  1.5/ 5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(493, 1, 2, 'drug', 'Piece', 0, 'NEUROGESIC B/s', 'NEUROGESIC B/s', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(494, 1, 2, 'drug', 'Piece', 0, 'O.R . S (SACTHET)', 'O.R . S (SACTHET)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(495, 1, 2, 'drug', 'Piece', 0, 'OFLOXACIN. 400MG', 'OFLOXACIN. 400MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(496, 1, 2, 'drug', 'Piece', 0, 'OMEPRAZOLE  Unbranded', 'OMEPRAZOLE  Unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(497, 1, 2, 'drug', 'Piece', 0, 'OMEPRAZOLE 40M G  INJECTION', 'OMEPRAZOLE 40M G  INJECTION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(498, 1, 2, 'drug', 'Piece', 0, 'ORPHENCIS  (ANOROL)', 'ORPHENCIS  (ANOROL)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(499, 1, 2, 'drug', 'Piece', 0, 'OTOMED', 'OTOMED', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(500, 1, 2, 'drug', 'Piece', 0, 'OTRIVIN DROP (ADULT)', 'OTRIVIN DROP (ADULT)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(501, 1, 2, 'drug', 'Piece', 0, 'OTRIVIN DROP (CHILD)', 'OTRIVIN DROP (CHILD)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(502, 1, 2, 'drug', 'Piece', 0, 'OXYTOCIN INJ. (5UNITS/5ML)  5.I.U', 'OXYTOCIN INJ. (5UNITS/5ML)  5.I.U', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(503, 1, 2, 'drug', 'Piece', 0, 'OXYTOCIN INJ. (5UNITS/5ML) BY CHAN', 'OXYTOCIN INJ. (5UNITS/5ML) BY CHAN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:16', '2026-01-28 08:01:16', NULL, NULL),
+(504, 1, 2, 'drug', 'Piece', 0, 'OLANZEPINE 5MG', 'OLANZEPINE 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(505, 1, 2, 'drug', 'Piece', 0, 'OLANZEPINE 10MG', 'OLANZEPINE 10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(506, 1, 2, 'drug', 'Piece', 0, 'OCEXONE  1G', 'OCEXONE  1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(507, 1, 2, 'drug', 'Piece', 0, 'GUTT OCUPROLOL', 'GUTT OCUPROLOL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(508, 1, 2, 'drug', 'Piece', 0, 'PARACETAMOL  INJ.  (300MG)', 'PARACETAMOL  INJ.  (300MG)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(509, 1, 2, 'drug', 'Piece', 0, 'PARACETAMOL  TAB.', 'PARACETAMOL  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(510, 1, 2, 'drug', 'Piece', 0, 'PARACETAMOL SYR. 60ML', 'PARACETAMOL SYR. 60ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(511, 1, 2, 'drug', 'Piece', 0, 'PENICILLIN SKIN OINT.', 'PENICILLIN SKIN OINT.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(512, 1, 2, 'drug', 'Piece', 0, 'PENTAZOCINE 30MG', 'PENTAZOCINE 30MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(513, 1, 2, 'drug', 'Piece', 0, 'PETHIDINE INJ. 100MG', 'PETHIDINE INJ. 100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(514, 1, 2, 'drug', 'Piece', 0, 'PHENOBARBITONE INJ.100mg/ml', 'PHENOBARBITONE INJ.100mg/ml', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:17', '2026-01-28 08:01:17', NULL, NULL),
+(515, 1, 2, 'drug', 'Piece', 0, 'PHENOBARBITONE TAB', 'PHENOBARBITONE TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(516, 1, 2, 'drug', 'Piece', 0, 'PHENYTOIN INJ.', 'PHENYTOIN INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(517, 1, 2, 'drug', 'Piece', 0, 'PIOGLITASONE    30MG', 'PIOGLITASONE    30MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(518, 1, 2, 'drug', 'Piece', 0, 'PIRITON INJ. 10MLS', 'PIRITON INJ. 10MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(519, 1, 2, 'drug', 'Piece', 0, 'PIRITON SYR.', 'PIRITON SYR.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(520, 1, 2, 'drug', 'Piece', 0, 'PIRITON TAB', 'PIRITON TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(521, 1, 2, 'drug', 'Piece', 0, 'PLASIL  INJ. 10MG', 'PLASIL  INJ. 10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(522, 1, 2, 'drug', 'Piece', 0, 'PLASIL  TAB 10mg', 'PLASIL  TAB 10mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(523, 1, 2, 'drug', 'Piece', 0, 'POTTASIUM  CHLORIDE  INJ.', 'POTTASIUM  CHLORIDE  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(524, 1, 2, 'drug', 'Piece', 0, 'PRAZIQUNTEL 600MG TAB.', 'PRAZIQUNTEL 600MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(525, 1, 2, 'drug', 'Piece', 0, 'PREDNISOLONE 5MG TAB.', 'PREDNISOLONE 5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(526, 1, 2, 'drug', 'Piece', 0, 'PRIMOLUT N TAB', 'PRIMOLUT N TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:18', '2026-01-28 08:01:18', NULL, NULL),
+(527, 1, 2, 'drug', 'Piece', 0, 'PROGUANIL (PALUDRINE) 100MG', 'PROGUANIL (PALUDRINE) 100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(528, 1, 2, 'drug', 'Piece', 0, 'PROMETHAZINE  INJ. 50MG', 'PROMETHAZINE  INJ. 50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(529, 1, 2, 'drug', 'Piece', 0, 'PROMETHAZINE  TAB.', 'PROMETHAZINE  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(530, 1, 2, 'drug', 'Piece', 0, 'PROMETHAZINE SYR.', 'PROMETHAZINE SYR.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(531, 1, 2, 'drug', 'Piece', 0, 'PROVERA 5MG TAB.', 'PROVERA 5MG TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(532, 1, 2, 'drug', 'Piece', 0, 'PYRIODOXINE 50MG (VIT.B6) TAB.', 'PYRIODOXINE 50MG (VIT.B6) TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(533, 1, 2, 'drug', 'Piece', 0, 'PREGABALIN    75MG', 'PREGABALIN    75MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(534, 1, 2, 'drug', 'Piece', 0, 'PYRIDOSTIGMINE 60MG', 'PYRIDOSTIGMINE 60MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(535, 1, 2, 'drug', 'Piece', 0, 'PERMATRIN', 'PERMATRIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(536, 1, 2, 'drug', 'Piece', 0, 'PROPYTHOURACIL', 'PROPYTHOURACIL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:19', '2026-01-28 08:01:19', NULL, NULL),
+(537, 1, 2, 'drug', 'Piece', 0, 'PAROXITEN  20mg', 'PAROXITEN  20mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(538, 1, 2, 'drug', 'Piece', 0, 'PRADAXA  (Dabigatran 150mg)', 'PRADAXA  (Dabigatran 150mg)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(539, 1, 2, 'drug', 'Piece', 0, 'PRADAXA  (Dabigatran 110mg)', 'PRADAXA  (Dabigatran 110mg)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(540, 1, 2, 'drug', 'Piece', 0, 'PREDNISOLONE GUTT', 'PREDNISOLONE GUTT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(541, 1, 2, 'drug', 'Piece', 0, 'QUININE  INJ.  600MG', 'QUININE  INJ.  600MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(542, 1, 2, 'drug', 'Piece', 0, 'QUININE  TAB  300MG', 'QUININE  TAB  300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(543, 1, 2, 'drug', 'Piece', 0, 'RABEPRAZOLE TAB', 'RABEPRAZOLE TAB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(544, 1, 2, 'drug', 'Piece', 0, 'RISPERIDONE   2MG', 'RISPERIDONE   2MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(545, 1, 2, 'drug', 'Piece', 0, 'RISPERIDONE  1MG', 'RISPERIDONE  1MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(546, 1, 2, 'drug', 'Piece', 0, 'RIFAMPICIN CAPS 300MG', 'RIFAMPICIN CAPS 300MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(547, 1, 2, 'drug', 'Piece', 0, 'ROBINAX', 'ROBINAX', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:20', '2026-01-28 08:01:20', NULL, NULL),
+(548, 1, 2, 'drug', 'Piece', 0, 'ROSUVASTATIN  10MG', 'ROSUVASTATIN  10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(549, 1, 2, 'drug', 'Piece', 0, 'ROSUVASTATIN 20MG', 'ROSUVASTATIN 20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(550, 1, 2, 'drug', 'Piece', 0, 'ROLITEN (Tolterodine)  2mg', 'ROLITEN (Tolterodine)  2mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(551, 1, 2, 'drug', 'Piece', 0, 'RAPIDON eye', 'RAPIDON eye', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(552, 1, 2, 'drug', 'Piece', 0, 'RIFAXIMIN  550mg', 'RIFAXIMIN  550mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(553, 1, 2, 'drug', 'Piece', 0, 'ROCEPHIN  1G', 'ROCEPHIN  1G', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(554, 1, 2, 'drug', 'Piece', 0, 'RANFERON SYR', 'RANFERON SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(555, 1, 2, 'drug', 'Piece', 0, 'RAMIPRIL  5MG', 'RAMIPRIL  5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(556, 1, 2, 'drug', 'Piece', 0, 'RICONIA  FORTE', 'RICONIA  FORTE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(557, 1, 2, 'drug', 'Piece', 0, 'SALBUTAMOL  SUSPENSION', 'SALBUTAMOL  SUSPENSION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(558, 1, 2, 'drug', 'Piece', 0, 'SALBUTAMOL  INHALER  (AEROLIN)', 'SALBUTAMOL  INHALER  (AEROLIN)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(559, 1, 2, 'drug', 'Piece', 0, 'SALBUTAMOL Tab  4MG', 'SALBUTAMOL Tab  4MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:21', '2026-01-28 08:01:21', NULL, NULL),
+(560, 1, 2, 'drug', 'Piece', 0, 'SEPTRIN  TAB   960MG', 'SEPTRIN  TAB   960MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(561, 1, 2, 'drug', 'Piece', 0, 'SEPTRIN  TAB 480MG', 'SEPTRIN  TAB 480MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(562, 1, 2, 'drug', 'Piece', 0, 'SEPTRIN SUSP.', 'SEPTRIN SUSP.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(563, 1, 2, 'drug', 'Piece', 0, 'SERETIDE  INHLAER   BRANDED', 'SERETIDE  INHLAER   BRANDED', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(564, 1, 2, 'drug', 'Piece', 0, 'SETRALINE 50MG', 'SETRALINE 50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(565, 1, 2, 'drug', 'Piece', 0, 'SIMVASTATIN     10MG', 'SIMVASTATIN     10MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(566, 1, 2, 'drug', 'Piece', 0, 'SIMVASTATIN  20MG', 'SIMVASTATIN  20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(567, 1, 2, 'drug', 'Piece', 0, 'SINEMET (Capidopa)', 'SINEMET (Capidopa)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(568, 1, 2, 'drug', 'Piece', 0, 'SIRDALUD   2mg', 'SIRDALUD   2mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(569, 1, 2, 'drug', 'Piece', 0, 'SLOW  - K  600mg', 'SLOW  - K  600mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(570, 1, 2, 'drug', 'Piece', 0, 'SODIUM CROMOGLYCATE  EYE DROP', 'SODIUM CROMOGLYCATE  EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:22', '2026-01-28 08:01:22', NULL, NULL),
+(571, 1, 2, 'drug', 'Piece', 0, 'SODIUM BICARBONATE', 'SODIUM BICARBONATE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(572, 1, 2, 'drug', 'Piece', 0, 'SIMETHICONE  200mg', 'SIMETHICONE  200mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(573, 1, 2, 'drug', 'Piece', 0, 'SIRDALUD   4mg', 'SIRDALUD   4mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(574, 1, 2, 'drug', 'Piece', 0, 'SOLIFENACIN   5MG', 'SOLIFENACIN   5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(575, 1, 2, 'drug', 'Piece', 0, 'SOLIFENACIN  10mg', 'SOLIFENACIN  10mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(576, 1, 2, 'drug', 'Piece', 0, 'SUVITRA  500MG', 'SUVITRA  500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(577, 1, 2, 'drug', 'Piece', 0, 'STELAZINE   5mg', 'STELAZINE   5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(578, 1, 2, 'drug', 'Piece', 0, 'STEMETIL  TAB.', 'STEMETIL  TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(579, 1, 2, 'drug', 'Piece', 0, 'STUGERON', 'STUGERON', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(580, 1, 2, 'drug', 'Piece', 0, 'SYLIBON  140MG', 'SYLIBON  140MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(581, 1, 2, 'drug', 'Piece', 0, 'SOLUBLE  INSULIN', 'SOLUBLE  INSULIN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:23', '2026-01-28 08:01:23', NULL, NULL),
+(582, 1, 2, 'drug', 'Piece', 0, 'SOLUBLE  INSULIN PER 1ML/100IU', 'SOLUBLE  INSULIN PER 1ML/100IU', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(583, 1, 2, 'drug', 'Piece', 0, 'SORAFENIB', 'SORAFENIB', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(584, 1, 2, 'drug', 'Piece', 0, 'Tab TERBINAFINE', 'Tab TERBINAFINE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(585, 1, 2, 'drug', 'Piece', 0, 'TERBINAFINE  CREAM', 'TERBINAFINE  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(586, 1, 2, 'drug', 'Piece', 0, 'TADALAFIL  PRICE PER TABLET', 'TADALAFIL  PRICE PER TABLET', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(587, 1, 2, 'drug', 'Piece', 0, 'TAMSULOCIN  0.4mg', 'TAMSULOCIN  0.4mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(588, 1, 2, 'drug', 'Piece', 0, 'TELMISARTAN  40mg', 'TELMISARTAN  40mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(589, 1, 2, 'drug', 'Piece', 0, 'TELMISARTAN  80MG', 'TELMISARTAN  80MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(590, 1, 2, 'drug', 'Piece', 0, 'TENOFOVIR   by   X  30    (TIN)', 'TENOFOVIR   by   X  30    (TIN)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(591, 1, 2, 'drug', 'Piece', 0, 'TETANUS  TOXIOD 0.5ML INJ.', 'TETANUS  TOXIOD 0.5ML INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(592, 1, 2, 'drug', 'Piece', 0, 'TETRACYCLINE  EYE OINT.', 'TETRACYCLINE  EYE OINT.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:24', '2026-01-28 08:01:24', NULL, NULL),
+(593, 1, 2, 'drug', 'Piece', 0, 'TETRACYCLINE CAPS   250MG', 'TETRACYCLINE CAPS   250MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(594, 1, 2, 'drug', 'Piece', 0, 'THIAPRIL', 'THIAPRIL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(595, 1, 2, 'drug', 'Piece', 0, 'TIMOLOL EYE DROP', 'TIMOLOL EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(596, 1, 2, 'drug', 'Piece', 0, 'TINIDAZOLE  500MG    per tab', 'TINIDAZOLE  500MG    per tab', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(597, 1, 2, 'drug', 'Piece', 0, 'TORSEMIDE    20mg', 'TORSEMIDE    20mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(598, 1, 2, 'drug', 'Piece', 0, 'TORSEMIDE  INJ', 'TORSEMIDE  INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(599, 1, 2, 'drug', 'Piece', 0, 'TREVIAMET  5MG/1000MG', 'TREVIAMET  5MG/1000MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(600, 1, 2, 'drug', 'Piece', 0, 'TREVIAMET  5MG/500MG', 'TREVIAMET  5MG/500MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(601, 1, 2, 'drug', 'Piece', 0, 'TRIAMCINOLONE  40MG  INJ.', 'TRIAMCINOLONE  40MG  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(602, 1, 2, 'drug', 'Piece', 0, 'TRIBOTAN CREAM (CHILD)', 'TRIBOTAN CREAM (CHILD)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(603, 1, 2, 'drug', 'Piece', 0, 'TRYPTIZOLE TAB.  (25MG)', 'TRYPTIZOLE TAB.  (25MG)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(604, 1, 2, 'drug', 'Piece', 0, 'TRAXANAMIC  ACID  500mg', 'TRAXANAMIC  ACID  500mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:25', '2026-01-28 08:01:25', NULL, NULL),
+(605, 1, 2, 'drug', 'Piece', 0, 'TRAXANAMIC  ACID  INJ.', 'TRAXANAMIC  ACID  INJ.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(606, 1, 2, 'drug', 'Piece', 0, 'TRANEXAMIC ACID INJ BY CHAN', 'TRANEXAMIC ACID INJ BY CHAN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(607, 1, 2, 'drug', 'Piece', 0, 'THIAMINE  VIT B1', 'THIAMINE  VIT B1', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(608, 1, 2, 'drug', 'Piece', 0, 'TAMOXIFEN', 'TAMOXIFEN', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(609, 1, 2, 'drug', 'Piece', 0, 'TROPICAMIDE   EYE DROP', 'TROPICAMIDE   EYE DROP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(610, 1, 2, 'drug', 'Piece', 0, 'TRIPLE  ACTION  CREAM', 'TRIPLE  ACTION  CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(611, 1, 2, 'drug', 'Piece', 0, 'TRAMADOL  50MG', 'TRAMADOL  50MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(612, 1, 2, 'drug', 'Piece', 0, 'T.T 0.5ML INJ. BRANDED', 'T.T 0.5ML INJ. BRANDED', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(613, 1, 2, 'drug', 'Piece', 0, 'ULSAKIT  (PER PACK)', 'ULSAKIT  (PER PACK)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(614, 1, 2, 'drug', 'Piece', 0, 'UNDER  PAD  Price  /1', 'UNDER  PAD  Price  /1', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(615, 1, 2, 'drug', 'Piece', 0, 'VASOPRIM  75MG', 'VASOPRIM  75MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:26', '2026-01-28 08:01:26', NULL, NULL),
+(616, 1, 2, 'drug', 'Piece', 0, 'VENTOLIN NEBULES 2.5MG', 'VENTOLIN NEBULES 2.5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(617, 1, 2, 'drug', 'Piece', 0, 'VENTOLIN NEBULES 5MG', 'VENTOLIN NEBULES 5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(618, 1, 2, 'drug', 'Piece', 0, 'VITAMIN  B.  CO SYR.', 'VITAMIN  B.  CO SYR.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(619, 1, 2, 'drug', 'Piece', 0, 'VITAMIN  B. CO INJ.2MLS', 'VITAMIN  B. CO INJ.2MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(620, 1, 2, 'drug', 'Piece', 0, 'VITAMIN  B. CO TAB.', 'VITAMIN  B. CO TAB.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(621, 1, 2, 'drug', 'Piece', 0, 'VITAMIN  C  SYR.', 'VITAMIN  C  SYR.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(622, 1, 2, 'drug', 'Piece', 0, 'VITAMIN  C TAB 100MG', 'VITAMIN  C TAB 100MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(623, 1, 2, 'drug', 'Piece', 0, 'VITAMIN  E  TAB / CAPS', 'VITAMIN  E  TAB / CAPS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(624, 1, 2, 'drug', 'Piece', 0, 'VITAMIN A CAP', 'VITAMIN A CAP', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(625, 1, 2, 'drug', 'Piece', 0, 'INJ VITAMIN  K 1', 'INJ VITAMIN  K 1', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(626, 1, 2, 'drug', 'Piece', 0, 'VITAMIN B12 INJ', 'VITAMIN B12 INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(627, 1, 2, 'drug', 'Piece', 0, 'VASTEREL', 'VASTEREL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:27', '2026-01-28 08:01:27', NULL, NULL),
+(628, 1, 2, 'drug', 'Piece', 0, 'VALSARTAN  80mg Unbranded', 'VALSARTAN  80mg Unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(629, 1, 2, 'drug', 'Piece', 0, 'VALSARTAN  160mg Unbranded', 'VALSARTAN  160mg Unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(630, 1, 2, 'drug', 'Piece', 0, 'VILDAGLIPTINE  50mg', 'VILDAGLIPTINE  50mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(631, 1, 2, 'drug', 'Piece', 0, 'VERAPAMIL  40MG', 'VERAPAMIL  40MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(632, 1, 2, 'drug', 'Piece', 0, 'VINBLASTINE 10MG INJ', 'VINBLASTINE 10MG INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(633, 1, 2, 'drug', 'Piece', 0, 'VISION PLUS', 'VISION PLUS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(634, 1, 2, 'drug', 'Piece', 0, 'VITAMIN C 1G (PRODSERVIT C) SAT', 'VITAMIN C 1G (PRODSERVIT C) SAT', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(635, 1, 2, 'drug', 'Piece', 0, 'WAFARIN  5mg', 'WAFARIN  5mg', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(636, 1, 2, 'drug', 'Piece', 0, 'WATER FOR INJECTION', 'WATER FOR INJECTION', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(637, 1, 2, 'drug', 'Piece', 0, 'WHITFEILD  OINTMENT.', 'WHITFEILD  OINTMENT.', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(638, 1, 2, 'drug', 'Piece', 0, 'WELL WOMAN  price per pack', 'WELL WOMAN  price per pack', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:28', '2026-01-28 08:01:28', NULL, NULL),
+(639, 1, 2, 'drug', 'Piece', 0, 'WINWELL', 'WINWELL', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(640, 1, 2, 'drug', 'Piece', 0, 'XALATAN EYE DROP(LATANOPROST)', 'XALATAN EYE DROP(LATANOPROST)', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(641, 1, 2, 'drug', 'Piece', 0, 'ZADITEN   TAB  2MG', 'ZADITEN   TAB  2MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(642, 1, 2, 'drug', 'Piece', 0, 'ZADITEN EYE DROP  unbranded', 'ZADITEN EYE DROP  unbranded', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(643, 1, 2, 'drug', 'Piece', 0, 'ZET - GEL CREAM', 'ZET - GEL CREAM', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(644, 1, 2, 'drug', 'Piece', 0, 'ZINC 20MG', 'ZINC 20MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(645, 1, 2, 'drug', 'Piece', 0, 'ZOPICLONE  7.5MG', 'ZOPICLONE  7.5MG', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(646, 1, 2, 'drug', 'Piece', 0, 'ZOLADEX     INJ', 'ZOLADEX     INJ', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(647, 1, 2, 'drug', 'Piece', 0, 'ZEGEM SYR', 'ZEGEM SYR', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-01-28 08:01:29', NULL, NULL),
+(648, 1, 2, 'consumable', 'Piece', 0, '10% DEXTROSE WATER  500MLS', '10% DEXTROSE WATER  500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:29', '2026-04-12 18:23:21', NULL, NULL),
+(649, 1, 2, 'drug', 'Piece', 0, '10% MANITOL  500MLS', '10% MANITOL  500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(650, 1, 2, 'drug', 'Piece', 0, '20% MANITOL  500MLS', '20% MANITOL  500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(651, 1, 2, 'drug', 'Piece', 0, '4.3% DEXTROSESALINE 500MLS', '4.3% DEXTROSESALINE 500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(652, 1, 2, 'drug', 'Piece', 0, '5% DEXTROSE WATER 500MLS', '5% DEXTROSE WATER 500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(653, 1, 2, 'drug', 'Piece', 0, 'CIPROFLOXACIN 100MLS', 'CIPROFLOXACIN 100MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(654, 1, 2, 'drug', 'Piece', 0, '5% DEXTROSE SALINE 500MLS', '5% DEXTROSE SALINE 500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(655, 1, 2, 'drug', 'Piece', 0, 'FLAGYL I.V  100MLS', 'FLAGYL I.V  100MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(656, 1, 2, 'drug', 'Piece', 0, 'NORMAL SALINE 500ML', 'NORMAL SALINE 500ML', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(657, 1, 2, 'drug', 'Piece', 0, 'RINGERS LACTATE 500MLS', 'RINGERS LACTATE 500MLS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(658, 1, 2, 'drug', 'Piece', 0, '50% DEXTROSE', '50% DEXTROSE', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(659, 1, 2, 'drug', 'Piece', 0, 'FULL STRENGTH DARROWS', 'FULL STRENGTH DARROWS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(660, 1, 2, 'drug', 'Piece', 0, 'HALF STRENGTH DARROWS', 'HALF STRENGTH DARROWS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 08:01:30', '2026-01-28 08:01:30', NULL, NULL),
+(661, 1, 3, 'drug', 'Piece', 0, '5ML SYRING /NEEDLE', '5ML SYRING /NEEDLE', '5', NULL, NULL, NULL, '11300', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
+(662, 1, 3, 'drug', 'Piece', 0, '2ML SYRING/NEEDLE', '2ML SYRING/NEEDLE', '5', NULL, NULL, NULL, '1900', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
+(663, 1, 3, 'drug', 'Piece', 0, '10MLS SYRINGE/NEEDLE', '10MLS SYRINGE/NEEDLE', '5', NULL, NULL, NULL, '5100', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
+(664, 1, 3, 'drug', 'Piece', 0, '20MLS SYRINGE/NEEDLE', '20MLS SYRINGE/NEEDLE', '5', NULL, NULL, NULL, '480', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
+(665, 1, 3, 'drug', 'Piece', 0, 'ABDOMINAL PACK', 'ABDOMINAL PACK', '5', NULL, NULL, NULL, '12', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
+(666, 1, 3, 'drug', 'Piece', 0, 'AIRWAYS', 'AIRWAYS', '5', NULL, NULL, NULL, '26', 1, 0, 0, 0, '2026-01-28 09:38:28', '2026-01-28 09:38:28', NULL, NULL),
+(667, 1, 3, 'drug', 'Piece', 0, 'AIRWAYS DIFFERENT COLOUR', 'AIRWAYS DIFFERENT COLOUR', '5', NULL, NULL, NULL, '7', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(668, 1, 3, 'drug', 'Piece', 0, 'AUTOCLAVE TAPE', 'AUTOCLAVE TAPE', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(669, 1, 3, 'drug', 'Piece', 0, 'BULB SYRINGES', 'BULB SYRINGES', '5', NULL, NULL, NULL, '50', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(670, 1, 3, 'drug', 'Piece', 0, 'CANULAR ASH 16G', 'CANULAR ASH 16G', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(671, 1, 3, 'drug', 'Piece', 0, 'CANULAR GREEN 18G', 'CANULAR GREEN 18G', '5', NULL, NULL, NULL, '2150', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(672, 1, 3, 'drug', 'Piece', 0, 'CANULAR YELLOW 24G', 'CANULAR YELLOW 24G', '5', NULL, NULL, NULL, '950', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(673, 1, 3, 'drug', 'Piece', 0, 'CANULAR BLUE 22G', 'CANULAR BLUE 22G', '5', NULL, NULL, NULL, '950', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(674, 1, 3, 'drug', 'Piece', 0, 'CANULAR PINK 20G', 'CANULAR PINK 20G', '5', NULL, NULL, NULL, '1250', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(675, 1, 3, 'drug', 'Piece', 0, 'CATHETER 2 WAYS  16', 'CATHETER 2 WAYS  16', '5', NULL, NULL, NULL, '25', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(676, 1, 3, 'drug', 'Piece', 0, 'CATHETER 2 WAYS  18', 'CATHETER 2 WAYS  18', '5', NULL, NULL, NULL, '190', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(677, 1, 3, 'drug', 'Piece', 0, 'CATHETER 2WAY 6', 'CATHETER 2WAY 6', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:29', '2026-01-28 09:38:29', NULL, NULL),
+(678, 1, 3, 'drug', 'Piece', 0, 'CATHETER 2 WAYS 8', 'CATHETER 2 WAYS 8', '5', NULL, NULL, NULL, '15', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(679, 1, 3, 'drug', 'Piece', 0, 'CATHETER 2 WAYS 20', 'CATHETER 2 WAYS 20', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(680, 1, 3, 'drug', 'Piece', 0, 'CATHETER 3 WAY 16', 'CATHETER 3 WAY 16', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(681, 1, 3, 'drug', 'Piece', 0, 'CATHETER 2 WAY 10', 'CATHETER 2 WAY 10', '5', NULL, NULL, NULL, '19', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(682, 1, 3, 'drug', 'Piece', 0, 'CERVICAL BRUSH', 'CERVICAL BRUSH', '5', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(683, 1, 3, 'drug', 'Piece', 0, 'CONDOM', 'CONDOM', '5', NULL, NULL, NULL, '96', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(684, 1, 3, 'drug', 'Piece', 0, 'CHROMIC 0', 'CHROMIC 0', '5', NULL, NULL, NULL, '12', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(685, 1, 3, 'drug', 'Piece', 0, 'CHROMIC  2', 'CHROMIC  2', '5', NULL, NULL, NULL, '120', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(686, 1, 3, 'drug', 'Piece', 0, 'CREPE BANDAGE  4\"', 'CREPE BANDAGE  4\"', '5', NULL, NULL, NULL, '367', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(687, 1, 3, 'drug', 'Piece', 0, 'CREPE BANDAGE 6\"', 'CREPE BANDAGE 6\"', '5', NULL, NULL, NULL, '93', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(688, 1, 3, 'drug', 'Piece', 0, 'DEVELOPER', 'DEVELOPER', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(689, 1, 3, 'drug', 'Piece', 0, 'DETERGENT', 'DETERGENT', '5', NULL, NULL, NULL, '64', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(690, 1, 3, 'drug', 'Piece', 0, 'DIGITAL X- RAY FILM 10/12', 'DIGITAL X- RAY FILM 10/12', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(691, 1, 3, 'drug', 'Piece', 0, 'DISPENSING ENVELOPE', 'DISPENSING ENVELOPE', '5', NULL, NULL, NULL, '16500', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(692, 1, 3, 'drug', 'Piece', 0, 'DISPOSABLE GLOVES', 'DISPOSABLE GLOVES', '5', NULL, NULL, NULL, '24800', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(693, 1, 3, 'drug', 'Piece', 0, 'ECG PAPPER BIG', 'ECG PAPPER BIG', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:30', '2026-01-28 09:38:30', NULL, NULL),
+(694, 1, 3, 'drug', 'Piece', 0, 'ECG PAPPER SMALL', 'ECG PAPPER SMALL', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(695, 1, 3, 'drug', 'Piece', 0, 'ELBOW GLOVES', 'ELBOW GLOVES', '5', NULL, NULL, NULL, '20', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(696, 1, 3, 'drug', 'Piece', 0, 'E.T,T 6.0', 'E.T,T 6.0', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(697, 1, 3, 'drug', 'Piece', 0, 'E.T.T. 7.0', 'E.T.T. 7.0', '5', NULL, NULL, NULL, '68', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(698, 1, 3, 'drug', 'Piece', 0, 'FACE MASK', 'FACE MASK', '5', NULL, NULL, NULL, '2150', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(699, 1, 3, 'drug', 'Piece', 0, 'FLATUS TUBE', 'FLATUS TUBE', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(700, 1, 3, 'drug', 'Piece', 0, 'FROSTED SLIDE', 'FROSTED SLIDE', '5', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(701, 1, 3, 'drug', 'Piece', 0, 'GAUZE BANDAGE 4', 'GAUZE BANDAGE 4', '5', NULL, NULL, NULL, '132', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(702, 1, 3, 'drug', 'Piece', 0, 'GAUZE BANDAGE 6', 'GAUZE BANDAGE 6', '5', NULL, NULL, NULL, '144', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(703, 1, 3, 'drug', 'Piece', 0, 'GAUZE ROLL', 'GAUZE ROLL', '5', NULL, NULL, NULL, '22', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(704, 1, 3, 'drug', 'Piece', 0, 'INFRARED THERMOMETER', 'INFRARED THERMOMETER', '5', NULL, NULL, NULL, '0', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(705, 1, 3, 'drug', 'Piece', 0, 'KLIVE LOOP', 'KLIVE LOOP', '5', NULL, NULL, NULL, '34', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(706, 1, 3, 'drug', 'Piece', 0, 'LATEX GLOVES', 'LATEX GLOVES', '5', NULL, NULL, NULL, '1200', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(707, 1, 3, 'drug', 'Piece', 0, 'MICROSCOPE BULB', 'MICROSCOPE BULB', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(708, 1, 3, 'drug', 'Piece', 0, 'N.G TUBE 10', 'N.G TUBE 10', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(709, 1, 3, 'drug', 'Piece', 0, 'N.G TUBE 5', 'N.G TUBE 5', '5', NULL, NULL, NULL, '23', 1, 0, 0, 0, '2026-01-28 09:38:31', '2026-01-28 09:38:31', NULL, NULL),
+(710, 1, 3, 'drug', 'Piece', 0, 'N.G TUBE 6', 'N.G TUBE 6', '5', NULL, NULL, NULL, '23', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(711, 1, 3, 'drug', 'Piece', 0, 'N.G TUBE 8', 'N.G TUBE 8', '5', NULL, NULL, NULL, '30', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(712, 1, 3, 'drug', 'Piece', 0, 'N.G TUBE 20', 'N.G TUBE 20', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(713, 1, 3, 'drug', 'Piece', 0, 'N.G TUBE 18', 'N.G TUBE 18', '5', NULL, NULL, NULL, '14', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(714, 1, 3, 'drug', 'Piece', 0, 'N.G TUBE 16', 'N.G TUBE 16', '5', NULL, NULL, NULL, '25', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(715, 1, 3, 'drug', 'Piece', 0, 'NYLON 0', 'NYLON 0', '5', NULL, NULL, NULL, '12', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(716, 1, 3, 'drug', 'Piece', 0, 'NYLON 1', 'NYLON 1', '5', NULL, NULL, NULL, '144', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(717, 1, 3, 'drug', 'Piece', 0, 'NYLON 2', 'NYLON 2', '5', NULL, NULL, NULL, '204', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(718, 1, 3, 'drug', 'Piece', 0, 'NYLON 2/0', 'NYLON 2/0', '5', NULL, NULL, NULL, '84', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(719, 1, 3, 'drug', 'Piece', 0, 'NYLON 3/0', 'NYLON 3/0', '5', NULL, NULL, NULL, '24', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(720, 1, 3, 'drug', 'Piece', 0, 'NYLON 10/0', 'NYLON 10/0', '5', NULL, NULL, NULL, '108', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(721, 1, 3, 'drug', 'Piece', 0, 'NASAL O2 PRONE  PAED', 'NASAL O2 PRONE  PAED', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(722, 1, 3, 'drug', 'Piece', 0, 'NASAL 02 PRONE CHILD', 'NASAL 02 PRONE CHILD', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(723, 1, 3, 'drug', 'Piece', 0, 'NURSES CAP', 'NURSES CAP', '5', NULL, NULL, NULL, '800', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(724, 1, 3, 'drug', 'Piece', 0, 'PLASTIBELL 1.2', 'PLASTIBELL 1.2', '5', NULL, NULL, NULL, '33', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(725, 1, 3, 'drug', 'Piece', 0, 'PLASTIBELL 1.3', 'PLASTIBELL 1.3', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:32', '2026-01-28 09:38:32', NULL, NULL),
+(726, 1, 3, 'drug', 'Piece', 0, 'PLASTIBELL 1.4', 'PLASTIBELL 1.4', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(727, 1, 3, 'drug', 'Piece', 0, 'PLASTIBELL 1.5', 'PLASTIBELL 1.5', '5', NULL, NULL, NULL, '25', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(728, 1, 3, 'drug', 'Piece', 0, 'PLASTIBELL 1.7', 'PLASTIBELL 1.7', '5', NULL, NULL, NULL, '30', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(729, 1, 3, 'drug', 'Piece', 0, 'PLASTER 6\" AGARY', 'PLASTER 6\" AGARY', '5', NULL, NULL, NULL, '174', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(730, 1, 3, 'drug', 'Piece', 0, 'PILL CUTTER', 'PILL CUTTER', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(731, 1, 3, 'drug', 'Piece', 0, 'POLYTHENE  BIG', 'POLYTHENE  BIG', '5', NULL, NULL, NULL, '14200', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL);
+INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_type`, `base_unit_name`, `allow_decimal_qty`, `product_name`, `product_code`, `reorder_alert`, `has_have`, `has_piece`, `howmany_to`, `current_quantity`, `status`, `stock_assign`, `price_assign`, `promotion`, `created_at`, `updated_at`, `old_product_id`, `old_stock_id`) VALUES
+(732, 1, 3, 'drug', 'Piece', 0, 'POLYTHENE  SMALL', 'POLYTHENE  SMALL', '5', NULL, NULL, NULL, '12200', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(733, 1, 3, 'drug', 'Piece', 0, 'POP 6', 'POP 6', '5', NULL, NULL, NULL, '48', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(734, 1, 3, 'drug', 'Piece', 0, 'PULSE OXIMETER', 'PULSE OXIMETER', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(735, 1, 3, 'drug', 'Piece', 0, 'SCANNING PAPER', 'SCANNING PAPER', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(736, 1, 3, 'drug', 'Piece', 0, 'SKIN TRACTION CHILD', 'SKIN TRACTION CHILD', '5', NULL, NULL, NULL, '8', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(737, 1, 3, 'drug', 'Piece', 0, 'SKIN TRACTION  ADULT', 'SKIN TRACTION  ADULT', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(738, 1, 3, 'drug', 'Piece', 0, 'SOFT BAND 4', 'SOFT BAND 4', '5', NULL, NULL, NULL, '12', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(739, 1, 3, 'drug', 'Piece', 0, 'SOFT BAND 6', 'SOFT BAND 6', '5', NULL, NULL, NULL, '36', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(740, 1, 3, 'drug', 'Piece', 0, 'SOFRATULLE', 'SOFRATULLE', '5', NULL, NULL, NULL, '30', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(741, 1, 3, 'drug', 'Piece', 0, 'SPATULAR', 'SPATULAR', '5', NULL, NULL, NULL, '800', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(742, 1, 3, 'drug', 'Piece', 0, 'SPIGOT', 'SPIGOT', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(743, 1, 3, 'drug', 'Piece', 0, 'SPINAL NEEDLE 25', 'SPINAL NEEDLE 25', '5', NULL, NULL, NULL, '25', 1, 0, 0, 0, '2026-01-28 09:38:33', '2026-01-28 09:38:33', NULL, NULL),
+(744, 1, 3, 'drug', 'Piece', 0, 'SPINAL NEEDLE 24', 'SPINAL NEEDLE 24', '5', NULL, NULL, NULL, '24', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(745, 1, 3, 'drug', 'Piece', 0, 'SPINAL NEEDLE 23', 'SPINAL NEEDLE 23', '5', NULL, NULL, NULL, '35', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(746, 1, 3, 'drug', 'Piece', 0, 'SPINAL NEEDLE 22', 'SPINAL NEEDLE 22', '5', NULL, NULL, NULL, '27', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(747, 1, 3, 'drug', 'Piece', 0, 'SPIRIT CONTAINER', 'SPIRIT CONTAINER', '5', NULL, NULL, NULL, '98', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(748, 1, 3, 'drug', 'Piece', 0, 'SOLUSET', 'SOLUSET', '5', NULL, NULL, NULL, '51', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(749, 1, 3, 'drug', 'Piece', 0, 'SUCTION TUBE', 'SUCTION TUBE', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(750, 1, 3, 'drug', 'Piece', 0, 'SURGICAL BLADE 10', 'SURGICAL BLADE 10', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(751, 1, 3, 'drug', 'Piece', 0, 'SURGICAL BLADE 11', 'SURGICAL BLADE 11', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(752, 1, 3, 'drug', 'Piece', 0, 'SURGICAL BLADE 23', 'SURGICAL BLADE 23', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(753, 1, 3, 'drug', 'Piece', 0, 'SURGICAL BLADE 24', 'SURGICAL BLADE 24', '5', NULL, NULL, NULL, '300', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(754, 1, 3, 'drug', 'Piece', 0, 'SURGICAL GLOVE 7.5', 'SURGICAL GLOVE 7.5', '5', NULL, NULL, NULL, '500', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(755, 1, 3, 'drug', 'Piece', 0, 'SURGICAL GLOVES 7', 'SURGICAL GLOVES 7', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(756, 1, 3, 'drug', 'Piece', 0, 'SURGICAL GLOVE 8', 'SURGICAL GLOVE 8', '5', NULL, NULL, NULL, '300', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(757, 1, 3, 'drug', 'Piece', 0, 'TOWEL UNDERPAD', 'TOWEL UNDERPAD', '5', NULL, NULL, NULL, '295', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(758, 1, 3, 'drug', 'Piece', 0, 'URINE BAG', 'URINE BAG', '5', NULL, NULL, NULL, '170', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(759, 1, 3, 'drug', 'Piece', 0, 'UMBLICAL CORD CLAMP', 'UMBLICAL CORD CLAMP', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:34', '2026-01-28 09:38:34', NULL, NULL),
+(760, 1, 3, 'drug', 'Piece', 0, 'UMBLICAL CORD THREAD', 'UMBLICAL CORD THREAD', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(761, 1, 3, 'drug', 'Piece', 0, 'VICRYL 0', 'VICRYL 0', '5', NULL, NULL, NULL, '60', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(762, 1, 3, 'drug', 'Piece', 0, 'VICRYL 1', 'VICRYL 1', '5', NULL, NULL, NULL, '252', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(763, 1, 3, 'drug', 'Piece', 0, 'VICRYL 2', 'VICRYL 2', '5', NULL, NULL, NULL, '264', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(764, 1, 3, 'drug', 'Piece', 0, 'VICRYL 2/0', 'VICRYL 2/0', '5', NULL, NULL, NULL, '204', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(765, 1, 3, 'drug', 'Piece', 0, 'VICRYL 3/0', 'VICRYL 3/0', '5', NULL, NULL, NULL, '24', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(766, 1, 4, 'drug', 'Piece', 0, 'HYDROGEN PEROXIDE', 'HYDROGEN PEROXIDE', '5', NULL, NULL, NULL, '24', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(767, 1, 4, 'drug', 'Piece', 0, 'EUSOL', 'EUSOL', '5', NULL, NULL, NULL, '16', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(768, 1, 4, 'drug', 'Piece', 0, 'GENTIAL VIOLET', 'GENTIAL VIOLET', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:35', '2026-01-28 09:38:35', NULL, NULL),
+(769, 1, 4, 'drug', 'Piece', 0, 'HYPO SMALL', 'HYPO SMALL', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(770, 1, 4, 'drug', 'Piece', 0, 'IZAL', 'IZAL', '5', NULL, NULL, NULL, '36', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(771, 1, 4, 'drug', 'Piece', 0, 'PURIT', 'PURIT', '5', NULL, NULL, NULL, '7', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(772, 1, 4, 'drug', 'Piece', 0, 'POVIDONE IODINE', 'POVIDONE IODINE', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(773, 1, 5, 'drug', 'Piece', 0, 'ALBUMIN', 'ALBUMIN', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(774, 1, 5, 'drug', 'Piece', 0, 'BLOOD BAG', 'BLOOD BAG', '5', NULL, NULL, NULL, '145', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(775, 1, 5, 'drug', 'Piece', 0, 'BOJOU BOTTLE', 'BOJOU BOTTLE', '5', NULL, NULL, NULL, '21', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(776, 1, 5, 'drug', 'Piece', 0, 'CAPILLARY TUBE', 'CAPILLARY TUBE', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(777, 1, 5, 'drug', 'Piece', 0, 'COMBI  9', 'COMBI  9', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(778, 1, 5, 'drug', 'Piece', 0, 'COBAS PRINTING PAPER', 'COBAS PRINTING PAPER', '5', NULL, NULL, NULL, '11', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(779, 1, 5, 'drug', 'Piece', 0, 'COVER GLASS', 'COVER GLASS', '5', NULL, NULL, NULL, '26', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(780, 1, 5, 'drug', 'Piece', 0, 'COVER SLIPS', 'COVER SLIPS', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(781, 1, 5, 'drug', 'Piece', 0, 'CUVETTE BOTTLE', 'CUVETTE BOTTLE', '5', NULL, NULL, NULL, '48', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(782, 1, 5, 'drug', 'Piece', 0, 'DOA STRIPS', 'DOA STRIPS', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(783, 1, 5, 'drug', 'Piece', 0, 'ERBA ROTOR 180', 'ERBA ROTOR 180', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:36', '2026-01-28 09:38:36', NULL, NULL),
+(784, 1, 5, 'drug', 'Piece', 0, 'EVA WATER', 'EVA WATER', '5', NULL, NULL, NULL, '216', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(785, 1, 5, 'drug', 'Piece', 0, 'FILTER PAPER', 'FILTER PAPER', '5', NULL, NULL, NULL, '100', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(786, 1, 5, 'drug', 'Piece', 0, 'GLUCOSE', 'GLUCOSE', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(787, 1, 5, 'drug', 'Piece', 0, 'HALOGEN LAMP', 'HALOGEN LAMP', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(788, 1, 5, 'drug', 'Piece', 0, 'H PYLORIC', 'H PYLORIC', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(789, 1, 5, 'drug', 'Piece', 0, 'HBSAG STRIPS', 'HBSAG STRIPS', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(790, 1, 5, 'drug', 'Piece', 0, 'HCV', 'HCV', '5', NULL, NULL, NULL, '0', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(791, 1, 5, 'drug', 'Piece', 0, 'HEALTH CHECK STRIPS', 'HEALTH CHECK STRIPS', '5', NULL, NULL, NULL, '33', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(792, 1, 5, 'drug', 'Piece', 0, 'ISE DEPROTEINIZER', 'ISE DEPROTEINIZER', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(793, 1, 5, 'drug', 'Piece', 0, 'TEST TUBE BRUSH', 'TEST TUBE BRUSH', '5', NULL, NULL, NULL, '2', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(794, 1, 5, 'drug', 'Piece', 0, 'TRIS BUFFER SALT', 'TRIS BUFFER SALT', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(795, 1, 5, 'drug', 'Piece', 0, 'TOTAL BILIRUBIN', 'TOTAL BILIRUBIN', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(796, 1, 5, 'drug', 'Piece', 0, 'TOTAL CHOLESTROL', 'TOTAL CHOLESTROL', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(797, 1, 5, 'drug', 'Piece', 0, 'PETRI DISH', 'PETRI DISH', '5', NULL, NULL, NULL, '77', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(798, 1, 5, 'drug', 'Piece', 0, 'PREGNANCY STRIPS', 'PREGNANCY STRIPS', '5', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(799, 1, 5, 'drug', 'Piece', 0, 'PT PROTHROMBIN', 'PT PROTHROMBIN', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(800, 1, 5, 'drug', 'Piece', 0, 'VACUTAINER GREEN', 'VACUTAINER GREEN', '5', NULL, NULL, NULL, '500', 1, 0, 0, 0, '2026-01-28 09:38:37', '2026-01-28 09:38:37', NULL, NULL),
+(801, 1, 5, 'drug', 'Piece', 0, 'VACUTAINER PURPLE', 'VACUTAINER PURPLE', '5', NULL, NULL, NULL, '1100', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(802, 1, 5, 'drug', 'Piece', 0, 'VACUTAINER RED', 'VACUTAINER RED', '5', NULL, NULL, NULL, '500', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(803, 1, 5, 'drug', 'Piece', 0, 'VACUTAINER ASH', 'VACUTAINER ASH', '5', NULL, NULL, NULL, '400', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(804, 1, 5, 'drug', 'Piece', 0, 'VDRL', 'VDRL', '5', NULL, NULL, NULL, '3', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(805, 1, 5, 'drug', 'Piece', 0, 'SINGLE NEEDLE 21G', 'SINGLE NEEDLE 21G', '5', NULL, NULL, NULL, '900', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(806, 1, 5, 'drug', 'Piece', 0, 'SPECULUM', 'SPECULUM', '5', NULL, NULL, NULL, '30', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(807, 1, 5, 'drug', 'Piece', 0, 'SWAB STICK', 'SWAB STICK', '5', NULL, NULL, NULL, '200', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(808, 1, 5, 'drug', 'Piece', 0, 'ANTI A RGT', 'ANTI A RGT', '5', NULL, NULL, NULL, '6', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(809, 1, 5, 'drug', 'Piece', 0, 'ANTI B', 'ANTI B', '5', NULL, NULL, NULL, '7', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(810, 1, 5, 'drug', 'Piece', 0, 'ANTI D RGT', 'ANTI D RGT', '5', NULL, NULL, NULL, '5', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(811, 1, 5, 'drug', 'Piece', 0, 'MARKER', 'MARKER', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(812, 1, 5, 'drug', 'Piece', 0, 'MINDRAY DILUENT', 'MINDRAY DILUENT', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(813, 1, 5, 'drug', 'Piece', 0, 'PRE CHEM 2', 'PRE CHEM 2', '5', NULL, NULL, NULL, '1', 1, 0, 0, 0, '2026-01-28 09:38:38', '2026-01-28 09:38:38', NULL, NULL),
+(814, 1, 5, 'drug', 'Piece', 0, 'WIDAL', 'WIDAL', '5', NULL, NULL, NULL, '4', 1, 0, 0, 0, '2026-01-28 09:38:39', '2026-01-28 09:38:39', NULL, NULL),
+(815, 1, 5, 'drug', 'Piece', 0, 'UNIVERSAL CONTAINER', 'UNIVERSAL CONTAINER', '5', NULL, NULL, NULL, '10', 1, 0, 0, 0, '2026-01-28 09:38:39', '2026-01-28 09:38:39', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -71487,11 +71511,11 @@ INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_name`, `product
 --
 
 CREATE TABLE `product_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `category_name` varchar(255) NOT NULL,
-  `category_code` varchar(255) DEFAULT NULL,
-  `category_description` varchar(255) DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `category_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `category_code` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `category_description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -71514,35 +71538,37 @@ INSERT INTO `product_categories` (`id`, `category_name`, `category_code`, `categ
 --
 
 CREATE TABLE `product_or_service_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `type` varchar(20) DEFAULT NULL COMMENT 'product or service',
-  `invoice_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `payment_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `hmo_remittance_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `admission_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `staff_user_id` bigint(20) UNSIGNED NOT NULL,
-  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `type` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'product or service',
+  `invoice_id` bigint UNSIGNED DEFAULT NULL,
+  `payment_id` bigint UNSIGNED DEFAULT NULL,
+  `hmo_remittance_id` bigint UNSIGNED DEFAULT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `admission_request_id` bigint UNSIGNED DEFAULT NULL,
+  `staff_user_id` bigint UNSIGNED NOT NULL,
+  `created_by` bigint UNSIGNED DEFAULT NULL,
   `order_date` timestamp NULL DEFAULT NULL,
-  `dispensed_from_store_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `qty` int(11) NOT NULL DEFAULT 1,
-  `amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `discount` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `dispensed_from_store_id` bigint UNSIGNED DEFAULT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `service_id` bigint UNSIGNED DEFAULT NULL,
+  `qty` int NOT NULL DEFAULT '1',
+  `packaging_id` bigint UNSIGNED DEFAULT NULL,
+  `packaging_qty` decimal(12,4) DEFAULT NULL,
+  `amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `discount` decimal(8,2) NOT NULL DEFAULT '0.00',
   `payable_amount` decimal(10,2) DEFAULT NULL COMMENT 'Amount patient must pay (from HMO tariff)',
-  `claims_amount` decimal(10,2) DEFAULT 0.00 COMMENT 'Amount HMO will pay (from tariff)',
-  `coverage_mode` varchar(20) DEFAULT NULL COMMENT 'express, primary, or secondary',
-  `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `validation_status` enum('pending','approved','rejected','awaiting_code') DEFAULT NULL COMMENT 'HMO validation status',
-  `auth_code` varchar(100) DEFAULT NULL COMMENT 'Authorization code for secondary coverage',
-  `validated_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'User ID of HMO executive who validated',
+  `claims_amount` decimal(10,2) DEFAULT '0.00' COMMENT 'Amount HMO will pay (from tariff)',
+  `coverage_mode` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'express, primary, or secondary',
+  `hmo_id` bigint UNSIGNED DEFAULT NULL,
+  `validation_status` enum('pending','approved','rejected','awaiting_code') COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'HMO validation status',
+  `auth_code` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Authorization code for secondary coverage',
+  `validated_by` bigint UNSIGNED DEFAULT NULL COMMENT 'User ID of HMO executive who validated',
   `validated_at` timestamp NULL DEFAULT NULL COMMENT 'When validation occurred',
-  `validation_notes` text DEFAULT NULL COMMENT 'Notes from HMO executive during validation',
+  `validation_notes` text COLLATE utf8mb4_general_ci COMMENT 'Notes from HMO executive during validation',
   `submitted_to_hmo_at` timestamp NULL DEFAULT NULL,
-  `hmo_submission_batch` varchar(255) DEFAULT NULL,
+  `hmo_submission_batch` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -71551,95 +71577,120 @@ CREATE TABLE `product_or_service_requests` (
 -- Dumping data for table `product_or_service_requests`
 --
 
-INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_id`, `hmo_remittance_id`, `user_id`, `patient_id`, `encounter_id`, `admission_request_id`, `staff_user_id`, `created_by`, `order_date`, `dispensed_from_store_id`, `product_id`, `service_id`, `qty`, `amount`, `discount`, `payable_amount`, `claims_amount`, `coverage_mode`, `hmo_id`, `validation_status`, `auth_code`, `validated_by`, `validated_at`, `validation_notes`, `submitted_to_hmo_at`, `hmo_submission_batch`, `created_at`, `updated_at`) VALUES
-(1, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, 0.00, 0.00, 7000.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-02 16:10:26'),
-(2, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 380, NULL, 3, 0.00, 0.00, 2055.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-09 09:19:05'),
-(3, NULL, NULL, 17, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 05:43:18', '2026-02-23 08:46:46'),
-(4, NULL, NULL, 9, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 23:00:08', '2026-02-09 10:23:17'),
-(5, NULL, NULL, 8, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-05 11:47:34', '2026-02-09 10:13:43'),
-(6, NULL, NULL, 8, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-06 05:52:16', '2026-02-09 10:13:43'),
-(7, NULL, NULL, 6, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 04:33:33', '2026-02-09 09:11:12'),
-(8, NULL, NULL, 4, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:31:45', '2026-02-09 06:33:35'),
-(9, NULL, NULL, 6, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:44:18', '2026-02-09 09:11:12'),
-(10, NULL, NULL, 9, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 9500.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:51:59', '2026-02-09 10:23:17'),
-(11, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:59:33', '2026-02-09 06:59:33'),
-(12, NULL, NULL, 5, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:59:49', '2026-02-09 07:48:08'),
-(13, NULL, NULL, 7, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 380, NULL, 3, 0.00, 0.00, 2055.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 09:19:22', '2026-02-09 16:19:50'),
-(14, NULL, NULL, 15, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 380, NULL, 2, 0.00, 0.00, 1370.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 10:12:23', '2026-02-22 09:24:00'),
-(15, NULL, NULL, 10, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'approved', NULL, 1, '2026-02-09 15:48:37', NULL, NULL, NULL, '2026-02-09 15:46:56', '2026-02-09 15:50:46'),
-(16, 'service', NULL, NULL, NULL, 64684, NULL, 1, NULL, 1, 1, '2026-02-09 15:55:19', NULL, NULL, 154, 1, 4000.00, 0.00, NULL, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 15:55:19', '2026-02-09 15:55:19'),
-(17, NULL, NULL, 15, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 380, NULL, 5, 0.00, 0.00, 3425.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:10:47', '2026-02-22 09:24:00'),
-(18, NULL, NULL, 11, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 379, NULL, 6, 0.00, 0.00, 5640.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:17:25', '2026-02-22 09:24:00'),
-(19, NULL, NULL, 11, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 342, NULL, 5, 0.00, 0.00, 2250.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:22:01', '2026-02-10 17:04:28'),
-(20, NULL, NULL, 11, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 420, NULL, 4, 0.00, 0.00, 14560.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:26:59', '2026-02-10 17:04:28'),
-(21, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 669, NULL, 7, 0.00, 0.00, 10500.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:33:57', '2026-02-09 16:33:57'),
-(22, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-10 12:09:05', '2026-02-10 12:09:05'),
-(23, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-11 05:26:16', '2026-02-11 05:26:16'),
-(24, NULL, NULL, 14, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 219, 1, 0.00, 0.00, 1500.00, 200.00, 'primary', NULL, 'approved', NULL, 1, '2026-02-11 08:39:31', NULL, NULL, NULL, '2026-02-11 08:38:27', '2026-02-11 08:40:25'),
-(25, NULL, NULL, 17, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-11 09:01:12', '2026-02-23 08:46:46'),
-(26, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-12 07:58:32', '2026-02-12 07:58:32'),
-(27, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-13 05:32:38', '2026-02-13 05:32:38'),
-(28, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-13 09:38:00', '2026-02-13 09:38:00'),
-(29, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-14 05:30:24', '2026-02-14 05:30:24'),
-(30, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-16 08:14:11', '2026-02-16 08:14:11'),
-(31, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 09:33:22', '2026-02-17 09:33:22'),
-(32, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 318, NULL, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:10:42', '2026-02-17 10:10:42'),
-(33, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 177, NULL, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:14:55', '2026-02-17 10:14:55'),
-(34, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 183, 1, 0.00, 0.00, 2000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:22:33', '2026-02-17 10:22:33'),
-(35, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 146, 1, 0.00, 0.00, 300.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:23:28', '2026-02-17 10:23:28'),
-(36, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 383, NULL, 4, 0.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:24:01', '2026-02-17 10:24:01'),
-(37, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 11:45:28', '2026-02-17 11:45:28'),
-(38, NULL, NULL, 15, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 318, NULL, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:26:22', '2026-02-22 09:22:32'),
-(39, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 183, 1, 0.00, 0.00, 2000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:28:22', '2026-02-17 12:28:22'),
-(40, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 318, NULL, 6, 0.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:29:04', '2026-02-17 12:29:04'),
-(41, NULL, NULL, 15, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 508, NULL, 1, 0.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:30:22', '2026-02-22 09:22:32'),
-(42, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 591, NULL, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:33:37', '2026-02-17 12:33:37'),
-(43, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 214, 1, 0.00, 0.00, 1000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:38:33', '2026-02-17 12:38:33'),
-(44, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-18 16:19:50', '2026-02-18 16:19:50'),
-(45, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-19 03:30:02', '2026-02-19 03:30:03'),
-(47, NULL, NULL, NULL, NULL, 64686, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 167, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-19 03:45:20', '2026-02-19 03:45:20'),
-(49, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 401, NULL, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-19 12:10:05', '2026-02-19 12:10:05'),
-(50, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 196, 1, 0.00, 0.00, 1000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-19 12:31:28', '2026-02-19 12:31:28'),
-(51, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-20 04:54:23', '2026-02-20 04:54:23'),
-(52, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-21 22:55:54', '2026-02-21 22:55:54'),
-(53, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-21 23:00:00', '2026-02-21 23:00:00'),
-(54, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 638, NULL, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-21 23:00:03', '2026-02-21 23:00:03'),
-(55, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 318, NULL, 2, 0.00, 0.00, 260.00, 60.00, 'primary', 8, 'approved', NULL, 1, '2026-03-13 19:20:42', 'Group approved', NULL, NULL, '2026-02-22 07:24:24', '2026-03-13 19:20:42'),
-(56, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 508, NULL, 1, 0.00, 0.00, 110.00, 0.00, 'none', 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:22:16', '2026-02-22 10:22:16'),
-(57, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 378, NULL, 1, 0.00, 0.00, 310.00, 0.00, 'none', 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:24:36', '2026-02-22 10:24:36'),
-(58, NULL, NULL, 16, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:52:30', '2026-02-22 10:53:00'),
-(59, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-23 02:56:37', '2026-02-23 02:56:37'),
-(60, NULL, NULL, 17, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 219, 1, 0.00, 0.00, 1.00, 200.01, 'secondary', 8, 'approved', 'bsdhas', 1, '2026-03-13 19:26:49', 'Group approved — awaiting auth code', NULL, NULL, '2026-02-23 04:21:40', '2026-03-13 19:27:19'),
-(61, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-24 05:39:07', '2026-02-24 05:39:07'),
-(62, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-25 08:51:59', '2026-02-25 08:51:59'),
-(63, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-26 01:37:51', '2026-02-26 01:37:52'),
-(64, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-27 07:53:13', '2026-02-27 07:53:13'),
-(65, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-01 12:31:20', '2026-03-01 12:31:20'),
-(66, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:10:30', '2026-03-02 10:10:30'),
-(67, NULL, NULL, 18, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 126, 1, 0.00, 0.00, 7000.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:23:29', '2026-03-02 10:23:50'),
-(68, NULL, NULL, 18, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 128, 1, 0.00, 0.00, 4000.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:23:29', '2026-03-02 10:23:50'),
-(69, NULL, NULL, 19, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 126, 1, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:30:47', '2026-03-02 10:34:14'),
-(70, NULL, NULL, 20, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 126, 1, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:39:53', '2026-03-02 10:40:18'),
-(71, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-04 09:00:29', '2026-03-04 09:00:29'),
-(72, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-05 05:50:22', '2026-03-05 05:50:22'),
-(73, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 04:48:06', '2026-03-06 04:48:07'),
-(74, NULL, NULL, 21, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 05:39:20', '2026-03-06 06:47:47'),
-(75, NULL, NULL, 21, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 06:29:05', '2026-03-06 06:47:47'),
-(76, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 06:50:52', '2026-03-06 06:50:52'),
-(77, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 07:18:33', '2026-03-06 07:18:33'),
-(78, NULL, NULL, NULL, NULL, 65194, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 19:31:39', '2026-03-06 19:31:39'),
-(79, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 23:00:01', '2026-03-06 23:00:01'),
-(80, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-07 23:00:36', '2026-03-07 23:00:36'),
-(81, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-09 16:16:50', '2026-03-09 16:16:50'),
-(82, NULL, NULL, NULL, NULL, 65195, NULL, NULL, NULL, 1, NULL, NULL, NULL, 420, NULL, 1, 0.00, 0.00, 3640.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-09 20:35:33', '2026-03-09 20:35:33'),
-(83, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-10 03:46:54', '2026-03-10 03:46:54'),
-(84, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-10 05:05:22', '2026-03-10 05:05:22'),
-(85, NULL, NULL, 22, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-10 08:06:15', '2026-03-10 08:06:55'),
-(86, NULL, NULL, 22, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 126, 1, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-10 08:06:15', '2026-03-10 08:06:55'),
-(87, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-11 05:42:59', '2026-03-11 05:42:59'),
-(88, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 318, NULL, 1, 0.00, 0.00, 130.00, 30.00, 'secondary', NULL, 'approved', 'dsagdsadsa', 1, '2026-03-12 06:57:13', 'Group approved', NULL, NULL, '2026-03-11 09:07:26', '2026-03-12 06:57:13'),
-(89, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 9.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-11 23:00:43', '2026-03-11 23:00:43'),
-(90, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, 0.00, 0.00, 0.00, 9500.00, 'primary', NULL, 'approved', NULL, 1, '2026-03-13 19:20:42', 'Group approved', NULL, NULL, '2026-03-13 07:47:38', '2026-03-13 19:20:42');
+INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_id`, `hmo_remittance_id`, `user_id`, `patient_id`, `encounter_id`, `admission_request_id`, `staff_user_id`, `created_by`, `order_date`, `dispensed_from_store_id`, `product_id`, `service_id`, `qty`, `packaging_id`, `packaging_qty`, `amount`, `discount`, `payable_amount`, `claims_amount`, `coverage_mode`, `hmo_id`, `validation_status`, `auth_code`, `validated_by`, `validated_at`, `validation_notes`, `submitted_to_hmo_at`, `hmo_submission_batch`, `created_at`, `updated_at`) VALUES
+(1, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, NULL, NULL, 0.00, 0.00, 7000.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-02 16:10:26'),
+(2, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 380, NULL, 3, NULL, NULL, 0.00, 0.00, 2055.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-09 09:19:05'),
+(3, NULL, NULL, 17, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 05:43:18', '2026-02-23 08:46:46'),
+(4, NULL, NULL, 9, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 23:00:08', '2026-02-09 10:23:17'),
+(5, NULL, NULL, 8, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-05 11:47:34', '2026-02-09 10:13:43'),
+(6, NULL, NULL, 8, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-06 05:52:16', '2026-02-09 10:13:43'),
+(7, NULL, NULL, 6, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 04:33:33', '2026-02-09 09:11:12'),
+(8, NULL, NULL, 4, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, NULL, NULL, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:31:45', '2026-02-09 06:33:35'),
+(9, NULL, NULL, 6, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:44:18', '2026-02-09 09:11:12'),
+(10, NULL, NULL, 9, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:51:59', '2026-02-09 10:23:17'),
+(11, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:59:33', '2026-02-09 06:59:33'),
+(12, NULL, NULL, 5, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 06:59:49', '2026-02-09 07:48:08'),
+(13, NULL, NULL, 7, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 380, NULL, 3, NULL, NULL, 0.00, 0.00, 2055.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 09:19:22', '2026-02-09 16:19:50'),
+(14, NULL, NULL, 15, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 380, NULL, 2, NULL, NULL, 0.00, 0.00, 1370.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 10:12:23', '2026-02-22 09:24:00'),
+(15, NULL, NULL, 10, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, NULL, NULL, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'approved', NULL, 1, '2026-02-09 15:48:37', NULL, NULL, NULL, '2026-02-09 15:46:56', '2026-02-09 15:50:46'),
+(16, 'service', NULL, NULL, NULL, 64684, NULL, 1, NULL, 1, 1, '2026-02-09 15:55:19', NULL, NULL, 154, 1, NULL, NULL, 4000.00, 0.00, NULL, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 15:55:19', '2026-02-09 15:55:19'),
+(17, NULL, NULL, 15, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 380, NULL, 5, NULL, NULL, 0.00, 0.00, 3425.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:10:47', '2026-02-22 09:24:00'),
+(18, NULL, NULL, 11, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 379, NULL, 6, NULL, NULL, 0.00, 0.00, 5640.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:17:25', '2026-02-22 09:24:00'),
+(19, NULL, NULL, 11, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 342, NULL, 5, NULL, NULL, 0.00, 0.00, 2250.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:22:01', '2026-02-10 17:04:28'),
+(20, NULL, NULL, 11, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 420, NULL, 4, NULL, NULL, 0.00, 0.00, 14560.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:26:59', '2026-02-10 17:04:28'),
+(21, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 669, NULL, 7, NULL, NULL, 0.00, 0.00, 10500.00, 0.00, 'none', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:33:57', '2026-02-09 16:33:57'),
+(22, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-10 12:09:05', '2026-02-10 12:09:05'),
+(23, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-11 05:26:16', '2026-02-11 05:26:16'),
+(24, NULL, NULL, 14, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 219, 1, NULL, NULL, 0.00, 0.00, 1500.00, 200.00, 'primary', NULL, 'approved', NULL, 1, '2026-02-11 08:39:31', NULL, NULL, NULL, '2026-02-11 08:38:27', '2026-02-11 08:40:25'),
+(25, NULL, NULL, 17, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, NULL, NULL, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-11 09:01:12', '2026-02-23 08:46:46'),
+(26, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-12 07:58:32', '2026-02-12 07:58:32'),
+(27, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-13 05:32:38', '2026-02-13 05:32:38'),
+(28, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, NULL, NULL, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-13 09:38:00', '2026-02-13 09:38:00'),
+(29, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-14 05:30:24', '2026-02-14 05:30:24'),
+(30, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-16 08:14:11', '2026-02-16 08:14:11'),
+(31, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 09:33:22', '2026-02-17 09:33:22'),
+(32, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 318, NULL, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:10:42', '2026-02-17 10:10:42'),
+(33, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 177, NULL, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:14:55', '2026-02-17 10:14:55'),
+(34, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 183, 1, NULL, NULL, 0.00, 0.00, 2000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:22:33', '2026-02-17 10:22:33'),
+(35, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 146, 1, NULL, NULL, 0.00, 0.00, 300.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:23:28', '2026-02-17 10:23:28'),
+(36, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 383, NULL, 4, NULL, NULL, 0.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 10:24:01', '2026-02-17 10:24:01'),
+(37, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, NULL, NULL, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 11:45:28', '2026-02-17 11:45:28'),
+(38, NULL, NULL, 15, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 318, NULL, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:26:22', '2026-02-22 09:22:32'),
+(39, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 183, 1, NULL, NULL, 0.00, 0.00, 2000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:28:22', '2026-02-17 12:28:22'),
+(40, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 318, NULL, 6, NULL, NULL, 0.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:29:04', '2026-02-17 12:29:04'),
+(41, NULL, NULL, 15, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 508, NULL, 1, NULL, NULL, 0.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:30:22', '2026-02-22 09:22:32'),
+(42, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 591, NULL, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:33:37', '2026-02-17 12:33:37'),
+(43, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 214, 1, NULL, NULL, 0.00, 0.00, 1000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-17 12:38:33', '2026-02-17 12:38:33'),
+(44, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-18 16:19:50', '2026-02-18 16:19:50'),
+(45, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-19 03:30:02', '2026-02-19 03:30:03'),
+(47, NULL, NULL, NULL, NULL, 64686, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 167, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-19 03:45:20', '2026-02-19 03:45:20'),
+(49, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 401, NULL, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-19 12:10:05', '2026-02-19 12:10:05'),
+(50, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 196, 1, NULL, NULL, 0.00, 0.00, 1000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-19 12:31:28', '2026-02-19 12:31:28'),
+(51, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-20 04:54:23', '2026-02-20 04:54:23'),
+(52, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-21 22:55:54', '2026-02-21 22:55:54'),
+(53, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-21 23:00:00', '2026-02-21 23:00:00'),
+(54, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 638, NULL, 1, NULL, NULL, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-21 23:00:03', '2026-02-21 23:00:03'),
+(55, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 318, NULL, 2, NULL, NULL, 0.00, 0.00, 260.00, 60.00, 'primary', 8, 'approved', NULL, 1, '2026-03-13 19:20:42', 'Group approved', NULL, NULL, '2026-02-22 07:24:24', '2026-03-13 19:20:42'),
+(56, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 508, NULL, 1, NULL, NULL, 0.00, 0.00, 110.00, 0.00, 'none', 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:22:16', '2026-02-22 10:22:16'),
+(57, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, 2, 378, NULL, 1, NULL, NULL, 0.00, 0.00, 310.00, 0.00, 'none', 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:24:36', '2026-02-22 10:24:36'),
+(58, NULL, NULL, 16, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, NULL, NULL, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:52:30', '2026-02-22 10:53:00'),
+(59, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-23 02:56:37', '2026-02-23 02:56:37'),
+(60, NULL, NULL, 17, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 219, 1, NULL, NULL, 0.00, 0.00, 1.00, 200.01, 'secondary', 8, 'approved', 'bsdhas', 1, '2026-03-13 19:26:49', 'Group approved — awaiting auth code', NULL, NULL, '2026-02-23 04:21:40', '2026-03-13 19:27:19'),
+(61, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-24 05:39:07', '2026-02-24 05:39:07'),
+(62, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-25 08:51:59', '2026-02-25 08:51:59'),
+(63, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-26 01:37:51', '2026-02-26 01:37:52'),
+(64, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-27 07:53:13', '2026-02-27 07:53:13'),
+(65, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-01 12:31:20', '2026-03-01 12:31:20'),
+(66, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:10:30', '2026-03-02 10:10:30'),
+(67, NULL, NULL, 18, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 126, 1, NULL, NULL, 0.00, 0.00, 7000.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:23:29', '2026-03-02 10:23:50'),
+(68, NULL, NULL, 18, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 128, 1, NULL, NULL, 0.00, 0.00, 4000.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:23:29', '2026-03-02 10:23:50'),
+(69, NULL, NULL, 19, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 126, 1, NULL, NULL, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:30:47', '2026-03-02 10:34:14'),
+(70, NULL, NULL, 20, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 126, 1, NULL, NULL, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-02 10:39:53', '2026-03-02 10:40:18'),
+(71, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-04 09:00:29', '2026-03-04 09:00:29'),
+(72, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-05 05:50:22', '2026-03-05 05:50:22'),
+(73, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 04:48:06', '2026-03-06 04:48:07'),
+(74, NULL, NULL, 21, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 278, 1, NULL, NULL, 0.00, 0.00, 2200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 05:39:20', '2026-03-06 06:47:47'),
+(75, NULL, NULL, 21, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, NULL, NULL, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 06:29:05', '2026-03-06 06:47:47'),
+(76, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, NULL, NULL, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 06:50:52', '2026-03-06 06:50:52'),
+(77, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, NULL, NULL, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 07:18:33', '2026-03-06 07:18:33'),
+(78, NULL, NULL, NULL, NULL, 65194, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, NULL, NULL, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 19:31:39', '2026-03-06 19:31:39'),
+(79, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-06 23:00:01', '2026-03-06 23:00:01'),
+(80, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-07 23:00:36', '2026-03-07 23:00:36'),
+(81, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-09 16:16:50', '2026-03-09 16:16:50'),
+(82, NULL, NULL, NULL, NULL, 65195, NULL, NULL, NULL, 1, NULL, NULL, NULL, 420, NULL, 1, NULL, NULL, 0.00, 0.00, 3640.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-09 20:35:33', '2026-03-09 20:35:33'),
+(83, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-10 03:46:54', '2026-03-10 03:46:54'),
+(84, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 266, 1, NULL, NULL, 0.00, 0.00, 6200.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-10 05:05:22', '2026-03-10 05:05:22'),
+(85, NULL, NULL, 22, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, NULL, NULL, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-10 08:06:15', '2026-03-10 08:06:55'),
+(86, NULL, NULL, 22, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 126, 1, NULL, NULL, 0.00, 0.00, 7000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-10 08:06:15', '2026-03-10 08:06:55'),
+(87, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-11 05:42:59', '2026-03-11 05:42:59'),
+(88, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 318, NULL, 1, NULL, NULL, 0.00, 0.00, 130.00, 30.00, 'secondary', NULL, 'approved', 'dsagdsadsa', 1, '2026-03-12 06:57:13', 'Group approved', NULL, NULL, '2026-03-11 09:07:26', '2026-03-12 06:57:13'),
+(89, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 9.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-11 23:00:43', '2026-03-11 23:00:43'),
+(90, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 0.00, 9500.00, 'primary', NULL, 'approved', NULL, 1, '2026-03-13 19:20:42', 'Group approved', NULL, NULL, '2026-03-13 07:47:38', '2026-03-13 19:20:42'),
+(91, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 0.00, 9500.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-09 15:03:12', '2026-04-09 15:03:12'),
+(92, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 0.00, 9500.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-10 15:18:13', '2026-04-10 15:18:13'),
+(93, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 286, 1, NULL, NULL, 0.00, 0.00, 0.00, 9500.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-12 12:02:01', '2026-04-12 12:02:01');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_packagings`
+--
+
+CREATE TABLE `product_packagings` (
+  `id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `level` tinyint UNSIGNED NOT NULL DEFAULT '1',
+  `parent_packaging_id` bigint UNSIGNED DEFAULT NULL,
+  `units_in_parent` decimal(12,4) UNSIGNED NOT NULL DEFAULT '1.0000',
+  `base_unit_qty` decimal(12,4) UNSIGNED NOT NULL DEFAULT '1.0000',
+  `is_default_purchase` tinyint(1) NOT NULL DEFAULT '0',
+  `is_default_dispense` tinyint(1) NOT NULL DEFAULT '0',
+  `barcode` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -71648,78 +71699,80 @@ INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_
 --
 
 CREATE TABLE `product_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `product_request_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `dispensed_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `returned_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `product_request_id` bigint UNSIGNED DEFAULT NULL,
+  `billed_by` bigint UNSIGNED DEFAULT NULL,
+  `dispensed_by` bigint UNSIGNED DEFAULT NULL,
+  `returned_by` bigint UNSIGNED DEFAULT NULL,
   `dispense_date` timestamp NULL DEFAULT NULL,
   `returned_date` timestamp NULL DEFAULT NULL,
-  `dispensed_from_store_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `dispensed_from_store_id` bigint UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `doctor_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `dose` text DEFAULT NULL,
-  `qty` int(11) NOT NULL DEFAULT 1,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `encounter_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `doctor_id` bigint UNSIGNED DEFAULT NULL,
+  `dose` text COLLATE utf8mb4_general_ci,
+  `qty` int NOT NULL DEFAULT '1',
+  `packaging_id` bigint UNSIGNED DEFAULT NULL,
+  `packaging_qty` decimal(12,4) DEFAULT NULL,
   `returned_qty` decimal(10,2) DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_medical_report_id` int(11) DEFAULT NULL,
+  `old_medical_report_id` int DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `deletion_reason` text DEFAULT NULL,
-  `dispensed_from_batch_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `original_product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `adapted_from_product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `original_qty` int(11) DEFAULT NULL,
-  `adaptation_note` text DEFAULT NULL,
-  `is_adapted` tinyint(1) NOT NULL DEFAULT 0,
-  `adapted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
+  `deletion_reason` text COLLATE utf8mb4_general_ci,
+  `dispensed_from_batch_id` bigint UNSIGNED DEFAULT NULL,
+  `original_product_id` bigint UNSIGNED DEFAULT NULL,
+  `adapted_from_product_id` bigint UNSIGNED DEFAULT NULL,
+  `original_qty` int DEFAULT NULL,
+  `adaptation_note` text COLLATE utf8mb4_general_ci,
+  `is_adapted` tinyint(1) NOT NULL DEFAULT '0',
+  `adapted_by` bigint UNSIGNED DEFAULT NULL,
   `adapted_at` timestamp NULL DEFAULT NULL,
-  `qty_adjusted_from` int(11) DEFAULT NULL,
-  `qty_adjustment_reason` text DEFAULT NULL,
+  `qty_adjusted_from` int DEFAULT NULL,
+  `qty_adjustment_reason` text COLLATE utf8mb4_general_ci,
   `qty_adjusted_at` timestamp NULL DEFAULT NULL,
-  `qty_adjusted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `qty_adjusted_by` bigint UNSIGNED DEFAULT NULL,
   `refund_amount` decimal(10,2) DEFAULT NULL,
-  `return_reason` text DEFAULT NULL,
-  `return_condition` varchar(50) DEFAULT NULL COMMENT 'good, damaged, expired',
-  `damaged_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `return_reason` text COLLATE utf8mb4_general_ci,
+  `return_condition` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'good, damaged, expired',
+  `damaged_by` bigint UNSIGNED DEFAULT NULL,
   `damaged_date` timestamp NULL DEFAULT NULL,
   `damaged_qty` decimal(10,2) DEFAULT NULL,
-  `damage_reason` text DEFAULT NULL,
-  `damage_type` varchar(50) DEFAULT NULL COMMENT 'expired, broken, contaminated, other',
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `damage_reason` text COLLATE utf8mb4_general_ci,
+  `damage_type` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'expired, broken, contaminated, other',
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `approval_notes` text DEFAULT NULL
+  `approval_notes` text COLLATE utf8mb4_general_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `product_requests`
 --
 
-INSERT INTO `product_requests` (`id`, `product_request_id`, `billed_by`, `dispensed_by`, `returned_by`, `dispense_date`, `returned_date`, `dispensed_from_store_id`, `billed_date`, `product_id`, `encounter_id`, `patient_id`, `doctor_id`, `dose`, `qty`, `returned_qty`, `status`, `created_at`, `updated_at`, `old_medical_report_id`, `deleted_at`, `deleted_by`, `deletion_reason`, `dispensed_from_batch_id`, `original_product_id`, `adapted_from_product_id`, `original_qty`, `adaptation_note`, `is_adapted`, `adapted_by`, `adapted_at`, `qty_adjusted_from`, `qty_adjustment_reason`, `qty_adjusted_at`, `qty_adjusted_by`, `refund_amount`, `return_reason`, `return_condition`, `damaged_by`, `damaged_date`, `damaged_qty`, `damage_reason`, `damage_type`, `approved_by`, `approved_at`, `approval_notes`) VALUES
-(1, 13, 1, 1, NULL, '2026-02-09 09:27:12', NULL, 2, '2026-02-09 09:19:22', 380, NULL, 1, NULL, NULL, 3, NULL, 4, '2026-02-02 16:05:40', '2026-02-10 13:36:30', NULL, NULL, NULL, NULL, 18, NULL, 649, NULL, 'Out of stock', 0, 1, '2026-02-09 09:18:26', 1, 'bh', '2026-02-09 09:19:05', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(2, 14, 1, 1, NULL, '2026-02-22 09:24:00', NULL, 2, '2026-02-09 10:12:23', 380, NULL, 1, 1, '6', 2, NULL, 3, '2026-02-09 10:12:00', '2026-02-22 09:24:00', NULL, NULL, NULL, NULL, 18, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, 'bhjbjhj', '2026-02-09 16:11:13', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(3, 17, 1, 1, NULL, '2026-02-22 09:24:00', NULL, 2, '2026-02-09 16:10:47', 380, NULL, 1, 1, '500mg TID', 5, NULL, 3, '2026-02-09 15:36:07', '2026-02-22 09:24:00', NULL, NULL, NULL, NULL, 18, NULL, NULL, NULL, NULL, 0, NULL, NULL, 4, 'bkb', '2026-02-09 16:10:16', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(4, 18, 1, 1, NULL, '2026-02-22 09:24:00', NULL, 2, '2026-02-09 16:17:25', 379, NULL, 1, 1, 'bffshdf', 6, NULL, 3, '2026-02-09 16:16:41', '2026-02-22 09:24:00', NULL, NULL, NULL, NULL, 238, NULL, NULL, NULL, NULL, 0, NULL, NULL, 3, 'khb', '2026-02-09 16:23:28', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(5, 19, 1, 1, NULL, '2026-02-10 17:04:28', NULL, 2, '2026-02-09 16:22:01', 342, NULL, 1, 1, 'jk', 5, NULL, 4, '2026-02-09 16:21:26', '2026-02-10 17:08:36', NULL, NULL, NULL, NULL, 201, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, 'knjknj', '2026-02-09 16:21:45', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(6, 20, 1, 1, NULL, '2026-02-10 17:04:28', NULL, 2, '2026-02-09 16:26:59', 420, NULL, 1, 1, 'jdad', 4, NULL, 4, '2026-02-09 16:26:12', '2026-02-10 17:17:50', NULL, NULL, NULL, NULL, 278, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, 'sdlkfsdf', '2026-02-09 16:26:33', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(7, 21, 1, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:33:58', 669, NULL, 1, 1, '668', 7, NULL, 2, '2026-02-09 16:33:00', '2026-02-09 16:33:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 3, 'ds', '2026-02-09 16:33:46', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 241, NULL, 1, 1, '', 1, NULL, 1, '2026-02-19 04:56:34', '2026-02-19 04:56:34', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 198, NULL, 1, 1, 'h362', 1, NULL, 1, '2026-02-19 05:24:36', '2026-02-19 05:24:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(10, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 180, 2, 3, 1, 'PO | TDS | 5 days', 1, NULL, 1, '2026-02-19 06:24:13', '2026-02-19 06:43:20', NULL, '2026-02-19 06:43:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(11, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 648, 2, 3, 1, '', 1, NULL, 1, '2026-02-19 06:24:13', '2026-02-19 06:43:20', NULL, '2026-02-19 06:43:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(12, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 361, 2, 3, 1, 'PO | TDS | 6 days', 1, NULL, 1, '2026-02-19 06:43:20', '2026-02-19 06:43:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 362, NULL, 1, 1, '200mg 3days tid', 1, NULL, 1, '2026-02-19 12:16:54', '2026-02-19 12:16:54', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(16, 55, 1, NULL, NULL, NULL, NULL, NULL, '2026-02-22 07:24:24', 318, NULL, 1, NULL, NULL, 2, NULL, 2, '2026-02-22 07:24:24', '2026-02-22 07:24:24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(17, 56, 1, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:22:16', 508, NULL, 1, NULL, NULL, 1, NULL, 2, '2026-02-22 10:22:16', '2026-02-22 10:22:16', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(18, 57, 1, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:24:36', 378, NULL, 1, NULL, NULL, 1, NULL, 2, '2026-02-22 10:24:36', '2026-02-22 10:24:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 378, NULL, 1, 1, '', 1, NULL, 1, '2026-02-26 05:33:50', '2026-03-06 07:02:09', NULL, '2026-03-06 07:02:09', 1, 'Ordered by mistake', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 378, NULL, 1, 1, '', 1, NULL, 1, '2026-03-06 07:25:59', '2026-03-06 07:26:10', NULL, '2026-03-06 07:26:10', 1, 'Duplicate request', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(21, 88, 1, NULL, NULL, NULL, NULL, NULL, '2026-03-11 09:07:26', 318, 8, 1, 1, '500 mg 2tice daily', 1, NULL, 2, '2026-03-11 09:05:10', '2026-03-11 09:07:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `product_requests` (`id`, `product_request_id`, `billed_by`, `dispensed_by`, `returned_by`, `dispense_date`, `returned_date`, `dispensed_from_store_id`, `billed_date`, `product_id`, `encounter_id`, `patient_id`, `doctor_id`, `dose`, `qty`, `packaging_id`, `packaging_qty`, `returned_qty`, `status`, `created_at`, `updated_at`, `old_medical_report_id`, `deleted_at`, `deleted_by`, `deletion_reason`, `dispensed_from_batch_id`, `original_product_id`, `adapted_from_product_id`, `original_qty`, `adaptation_note`, `is_adapted`, `adapted_by`, `adapted_at`, `qty_adjusted_from`, `qty_adjustment_reason`, `qty_adjusted_at`, `qty_adjusted_by`, `refund_amount`, `return_reason`, `return_condition`, `damaged_by`, `damaged_date`, `damaged_qty`, `damage_reason`, `damage_type`, `approved_by`, `approved_at`, `approval_notes`) VALUES
+(1, 13, 1, 1, NULL, '2026-02-09 09:27:12', NULL, 2, '2026-02-09 09:19:22', 380, NULL, 1, NULL, NULL, 3, NULL, NULL, NULL, 4, '2026-02-02 16:05:40', '2026-02-10 13:36:30', NULL, NULL, NULL, NULL, 18, NULL, 649, NULL, 'Out of stock', 0, 1, '2026-02-09 09:18:26', 1, 'bh', '2026-02-09 09:19:05', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 14, 1, 1, NULL, '2026-02-22 09:24:00', NULL, 2, '2026-02-09 10:12:23', 380, NULL, 1, 1, '6', 2, NULL, NULL, NULL, 3, '2026-02-09 10:12:00', '2026-02-22 09:24:00', NULL, NULL, NULL, NULL, 18, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, 'bhjbjhj', '2026-02-09 16:11:13', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, 17, 1, 1, NULL, '2026-02-22 09:24:00', NULL, 2, '2026-02-09 16:10:47', 380, NULL, 1, 1, '500mg TID', 5, NULL, NULL, NULL, 3, '2026-02-09 15:36:07', '2026-02-22 09:24:00', NULL, NULL, NULL, NULL, 18, NULL, NULL, NULL, NULL, 0, NULL, NULL, 4, 'bkb', '2026-02-09 16:10:16', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, 18, 1, 1, NULL, '2026-02-22 09:24:00', NULL, 2, '2026-02-09 16:17:25', 379, NULL, 1, 1, 'bffshdf', 6, NULL, NULL, NULL, 3, '2026-02-09 16:16:41', '2026-02-22 09:24:00', NULL, NULL, NULL, NULL, 238, NULL, NULL, NULL, NULL, 0, NULL, NULL, 3, 'khb', '2026-02-09 16:23:28', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, 19, 1, 1, NULL, '2026-02-10 17:04:28', NULL, 2, '2026-02-09 16:22:01', 342, NULL, 1, 1, 'jk', 5, NULL, NULL, NULL, 4, '2026-02-09 16:21:26', '2026-02-10 17:08:36', NULL, NULL, NULL, NULL, 201, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, 'knjknj', '2026-02-09 16:21:45', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(6, 20, 1, 1, NULL, '2026-02-10 17:04:28', NULL, 2, '2026-02-09 16:26:59', 420, NULL, 1, 1, 'jdad', 4, NULL, NULL, NULL, 4, '2026-02-09 16:26:12', '2026-02-10 17:17:50', NULL, NULL, NULL, NULL, 278, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, 'sdlkfsdf', '2026-02-09 16:26:33', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(7, 21, 1, NULL, NULL, NULL, NULL, NULL, '2026-02-09 16:33:58', 669, NULL, 1, 1, '668', 7, NULL, NULL, NULL, 2, '2026-02-09 16:33:00', '2026-02-09 16:33:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 3, 'ds', '2026-02-09 16:33:46', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 241, NULL, 1, 1, '', 1, NULL, NULL, NULL, 1, '2026-02-19 04:56:34', '2026-02-19 04:56:34', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 198, NULL, 1, 1, 'h362', 1, NULL, NULL, NULL, 1, '2026-02-19 05:24:36', '2026-02-19 05:24:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(10, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 180, 2, 3, 1, 'PO | TDS | 5 days', 1, NULL, NULL, NULL, 1, '2026-02-19 06:24:13', '2026-02-19 06:43:20', NULL, '2026-02-19 06:43:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(11, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 648, 2, 3, 1, '', 1, NULL, NULL, NULL, 1, '2026-02-19 06:24:13', '2026-02-19 06:43:20', NULL, '2026-02-19 06:43:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(12, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 361, 2, 3, 1, 'PO | TDS | 6 days', 1, NULL, NULL, NULL, 1, '2026-02-19 06:43:20', '2026-02-19 06:43:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 362, NULL, 1, 1, '200mg 3days tid', 1, NULL, NULL, NULL, 1, '2026-02-19 12:16:54', '2026-02-19 12:16:54', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(16, 55, 1, NULL, NULL, NULL, NULL, NULL, '2026-02-22 07:24:24', 318, NULL, 1, NULL, NULL, 2, NULL, NULL, NULL, 2, '2026-02-22 07:24:24', '2026-02-22 07:24:24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(17, 56, 1, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:22:16', 508, NULL, 1, NULL, NULL, 1, NULL, NULL, NULL, 2, '2026-02-22 10:22:16', '2026-02-22 10:22:16', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(18, 57, 1, NULL, NULL, NULL, NULL, NULL, '2026-02-22 10:24:36', 378, NULL, 1, NULL, NULL, 1, NULL, NULL, NULL, 2, '2026-02-22 10:24:36', '2026-02-22 10:24:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 378, NULL, 1, 1, '', 1, NULL, NULL, NULL, 1, '2026-02-26 05:33:50', '2026-03-06 07:02:09', NULL, '2026-03-06 07:02:09', 1, 'Ordered by mistake', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 378, NULL, 1, 1, '', 1, NULL, NULL, NULL, 1, '2026-03-06 07:25:59', '2026-03-06 07:26:10', NULL, '2026-03-06 07:26:10', 1, 'Duplicate request', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(21, 88, 1, NULL, NULL, NULL, NULL, NULL, '2026-03-11 09:07:26', 318, 8, 1, 1, '500 mg 2tice daily', 1, NULL, NULL, NULL, 2, '2026-03-11 09:05:10', '2026-03-11 09:07:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -71728,17 +71781,17 @@ INSERT INTO `product_requests` (`id`, `product_request_id`, `billed_by`, `dispen
 --
 
 CREATE TABLE `promotions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `promotion_name` varchar(255) NOT NULL,
-  `quantity_to_buy` int(11) NOT NULL DEFAULT 0,
-  `quantity_to_give` int(11) NOT NULL DEFAULT 0,
-  `promotion_total_quantity` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `promotion_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `quantity_to_buy` int NOT NULL DEFAULT '0',
+  `quantity_to_give` int NOT NULL DEFAULT '0',
+  `promotion_total_quantity` int NOT NULL DEFAULT '0',
   `start_date` timestamp NULL DEFAULT NULL,
   `end_date` timestamp NULL DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  `current_qt` int(11) NOT NULL DEFAULT 0,
-  `give_qt` int(11) NOT NULL DEFAULT 0,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `current_qt` int NOT NULL DEFAULT '0',
+  `give_qt` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -71750,21 +71803,21 @@ CREATE TABLE `promotions` (
 --
 
 CREATE TABLE `purchase_orders` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `po_number` varchar(255) NOT NULL,
-  `supplier_id` bigint(20) UNSIGNED NOT NULL,
-  `target_store_id` bigint(20) UNSIGNED NOT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('draft','submitted','approved','partial','received','cancelled') NOT NULL DEFAULT 'draft',
-  `payment_status` enum('unpaid','partial','paid') NOT NULL DEFAULT 'unpaid',
+  `id` bigint UNSIGNED NOT NULL,
+  `po_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `supplier_id` bigint UNSIGNED NOT NULL,
+  `target_store_id` bigint UNSIGNED NOT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('draft','submitted','approved','partial','received','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `payment_status` enum('unpaid','partial','paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'unpaid',
   `expected_date` date DEFAULT NULL,
-  `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `amount_paid` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `notes` text DEFAULT NULL,
+  `total_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `amount_paid` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `submitted_at` timestamp NULL DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -71777,18 +71830,22 @@ CREATE TABLE `purchase_orders` (
 --
 
 CREATE TABLE `purchase_order_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `purchase_order_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `item_type` enum('inventory','fixed_asset','expense') NOT NULL DEFAULT 'inventory',
-  `fixed_asset_category_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `asset_name` varchar(255) DEFAULT NULL,
-  `asset_serial_number` varchar(255) DEFAULT NULL,
-  `ordered_qty` int(11) NOT NULL,
-  `received_qty` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `purchase_order_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `packaging_id` bigint UNSIGNED DEFAULT NULL,
+  `packaging_qty` decimal(12,4) DEFAULT NULL,
+  `item_type` enum('inventory','fixed_asset','expense') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'inventory',
+  `fixed_asset_category_id` bigint UNSIGNED DEFAULT NULL,
+  `asset_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `asset_serial_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ordered_qty` int NOT NULL,
+  `received_qty` int NOT NULL DEFAULT '0',
+  `received_packaging_id` bigint UNSIGNED DEFAULT NULL,
+  `received_packaging_qty` decimal(12,4) DEFAULT NULL,
   `unit_cost` decimal(12,2) DEFAULT NULL,
   `actual_unit_cost` decimal(12,2) DEFAULT NULL,
-  `status` enum('pending','partial','received','cancelled') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','partial','received','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `received_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -71801,19 +71858,19 @@ CREATE TABLE `purchase_order_items` (
 --
 
 CREATE TABLE `purchase_order_payments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `purchase_order_id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `purchase_order_id` bigint UNSIGNED NOT NULL,
   `payment_date` date NOT NULL,
   `amount` decimal(15,2) NOT NULL,
-  `payment_method` enum('cash','bank_transfer','cheque','card') NOT NULL DEFAULT 'cash',
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `reference_number` varchar(255) DEFAULT NULL,
-  `cheque_number` varchar(255) DEFAULT NULL,
-  `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `payment_method` enum('cash','bank_transfer','cheque','card') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'cash',
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `account_id` bigint UNSIGNED DEFAULT NULL,
+  `reference_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cheque_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `expense_id` bigint UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -71826,11 +71883,11 @@ CREATE TABLE `purchase_order_payments` (
 --
 
 CREATE TABLE `reason_for_encounters` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `code` varchar(255) NOT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `category` varchar(255) DEFAULT NULL,
-  `sub_category` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `code` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `category` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `sub_category` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -84005,9 +84062,9 @@ INSERT INTO `reason_for_encounters` (`id`, `code`, `name`, `category`, `sub_cate
 --
 
 CREATE TABLE `roles` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `guard_name` varchar(255) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `guard_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -84042,8 +84099,8 @@ INSERT INTO `roles` (`id`, `name`, `guard_name`, `created_at`, `updated_at`) VAL
 --
 
 CREATE TABLE `role_has_permissions` (
-  `permission_id` bigint(20) UNSIGNED NOT NULL,
-  `role_id` bigint(20) UNSIGNED NOT NULL
+  `permission_id` bigint UNSIGNED NOT NULL,
+  `role_id` bigint UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -84052,643 +84109,643 @@ CREATE TABLE `role_has_permissions` (
 
 INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 (1, 1),
-(1, 2),
-(1, 4),
-(1, 7),
-(1, 10),
-(1, 12),
-(1, 16),
 (2, 1),
-(2, 5),
-(2, 8),
-(2, 11),
-(2, 12),
-(2, 16),
 (3, 1),
-(3, 5),
-(3, 8),
-(3, 11),
-(3, 12),
-(3, 16),
 (4, 1),
-(4, 8),
-(4, 11),
-(4, 12),
-(4, 16),
 (5, 1),
-(5, 8),
-(5, 11),
-(5, 12),
-(5, 16),
 (6, 1),
-(6, 12),
-(6, 16),
 (7, 1),
-(7, 12),
-(7, 16),
 (8, 1),
-(8, 2),
-(8, 5),
-(8, 8),
-(8, 11),
-(8, 12),
-(8, 16),
 (9, 1),
-(9, 2),
-(9, 3),
-(9, 9),
-(9, 12),
-(9, 16),
 (10, 1),
-(10, 2),
-(10, 8),
-(10, 12),
-(10, 16),
 (11, 1),
-(11, 2),
-(11, 3),
-(11, 9),
-(11, 12),
-(11, 16),
 (12, 1),
-(12, 2),
-(12, 3),
-(12, 12),
-(12, 16),
 (13, 1),
-(13, 2),
-(13, 3),
-(13, 9),
-(13, 12),
-(13, 16),
 (14, 1),
-(14, 2),
-(14, 3),
-(14, 5),
-(14, 9),
-(14, 10),
-(14, 12),
-(14, 16),
 (15, 1),
-(15, 2),
-(15, 3),
-(15, 5),
-(15, 9),
-(15, 12),
-(15, 16),
 (16, 1),
-(16, 2),
-(16, 3),
-(16, 6),
-(16, 9),
-(16, 10),
-(16, 12),
-(16, 16),
 (17, 1),
-(17, 3),
-(17, 9),
-(17, 12),
-(17, 16),
 (18, 1),
-(18, 12),
-(18, 13),
-(18, 16),
 (19, 1),
-(19, 12),
-(19, 13),
-(19, 16),
 (20, 1),
-(20, 12),
-(20, 13),
-(20, 16),
 (21, 1),
-(21, 12),
-(21, 13),
-(21, 16),
 (22, 1),
-(22, 12),
-(22, 13),
-(22, 16),
 (23, 1),
-(23, 5),
-(23, 12),
-(23, 16),
 (24, 1),
-(24, 12),
-(24, 16),
 (25, 1),
-(25, 12),
-(25, 16),
 (26, 1),
-(26, 12),
-(26, 16),
 (27, 1),
-(27, 12),
-(27, 16),
 (28, 1),
-(28, 12),
-(28, 16),
 (29, 1),
-(29, 12),
-(29, 16),
 (30, 1),
-(30, 12),
-(30, 16),
 (31, 1),
-(31, 5),
-(31, 9),
-(31, 12),
-(31, 16),
 (32, 1),
-(32, 5),
-(32, 9),
-(32, 12),
-(32, 16),
 (33, 1),
-(33, 12),
-(33, 16),
 (34, 1),
-(34, 12),
-(34, 16),
 (35, 1),
-(35, 12),
-(35, 16),
 (36, 1),
-(36, 12),
-(36, 16),
 (37, 1),
-(37, 5),
-(37, 12),
-(37, 16),
 (38, 1),
-(38, 12),
-(38, 16),
 (39, 1),
-(39, 12),
-(39, 16),
 (40, 1),
-(40, 12),
-(40, 16),
 (41, 1),
-(41, 12),
-(41, 16),
 (42, 1),
-(42, 12),
-(42, 16),
 (43, 1),
-(43, 12),
-(43, 16),
 (44, 1),
-(44, 12),
-(44, 16),
 (45, 1),
-(45, 12),
-(45, 16),
 (46, 1),
-(46, 12),
-(46, 16),
 (47, 1),
-(47, 12),
-(47, 16),
 (48, 1),
-(48, 12),
-(48, 16),
 (49, 1),
-(49, 12),
-(49, 16),
 (50, 1),
-(50, 12),
-(50, 16),
 (51, 1),
-(51, 5),
-(51, 9),
-(51, 12),
-(51, 16),
 (52, 1),
-(52, 12),
-(52, 16),
 (53, 1),
-(53, 5),
-(53, 12),
-(53, 16),
 (54, 1),
-(54, 12),
-(54, 14),
-(54, 16),
 (55, 1),
-(55, 12),
-(55, 14),
-(55, 16),
 (56, 1),
-(56, 12),
-(56, 14),
-(56, 16),
 (57, 1),
-(57, 12),
-(57, 14),
-(57, 16),
 (58, 1),
-(58, 12),
-(58, 14),
-(58, 16),
 (59, 1),
-(59, 2),
-(59, 3),
-(59, 5),
-(59, 6),
-(59, 8),
-(59, 9),
-(59, 10),
-(59, 12),
-(59, 14),
-(59, 16),
 (60, 1),
-(60, 12),
-(60, 14),
-(60, 16),
 (61, 1),
-(61, 2),
-(61, 3),
-(61, 5),
-(61, 6),
-(61, 8),
-(61, 9),
-(61, 10),
-(61, 12),
-(61, 14),
-(61, 16),
 (62, 1),
-(62, 12),
-(62, 14),
-(62, 16),
 (63, 1),
-(63, 12),
-(63, 14),
-(63, 16),
 (64, 1),
-(64, 2),
-(64, 3),
-(64, 5),
-(64, 6),
-(64, 8),
-(64, 9),
-(64, 10),
-(64, 12),
-(64, 14),
-(64, 16),
 (65, 1),
-(65, 12),
-(65, 14),
-(65, 16),
 (66, 1),
-(66, 12),
-(66, 14),
-(66, 16),
 (67, 1),
-(67, 2),
-(67, 3),
-(67, 5),
-(67, 6),
-(67, 8),
-(67, 9),
-(67, 10),
-(67, 12),
-(67, 14),
-(67, 16),
 (68, 1),
-(68, 12),
-(68, 14),
-(68, 16),
 (69, 1),
-(69, 12),
-(69, 14),
-(69, 16),
 (70, 1),
-(70, 12),
-(70, 14),
-(70, 16),
 (71, 1),
-(71, 12),
-(71, 14),
-(71, 16),
 (72, 1),
-(72, 12),
-(72, 14),
-(72, 16),
 (73, 1),
-(73, 12),
-(73, 14),
-(73, 16),
 (74, 1),
-(74, 12),
-(74, 14),
-(74, 16),
 (75, 1),
-(75, 2),
-(75, 3),
-(75, 5),
-(75, 6),
-(75, 8),
-(75, 9),
-(75, 10),
-(75, 12),
-(75, 14),
-(75, 16),
 (76, 1),
-(76, 12),
-(76, 14),
-(76, 16),
 (77, 1),
-(77, 12),
-(77, 14),
-(77, 16),
 (78, 1),
-(78, 12),
-(78, 14),
-(78, 16),
 (79, 1),
-(79, 12),
-(79, 14),
-(79, 16),
 (80, 1),
-(80, 12),
-(80, 14),
-(80, 16),
 (81, 1),
-(81, 12),
-(81, 14),
-(81, 16),
 (82, 1),
-(82, 12),
-(82, 14),
-(82, 16),
 (83, 1),
-(83, 12),
-(83, 14),
-(83, 16),
 (84, 1),
-(84, 12),
-(84, 14),
-(84, 16),
 (85, 1),
-(85, 12),
-(85, 14),
-(85, 16),
 (86, 1),
-(86, 12),
-(86, 14),
-(86, 16),
 (87, 1),
-(87, 12),
-(87, 14),
-(87, 16),
 (88, 1),
-(88, 12),
-(88, 14),
-(88, 16),
 (89, 1),
-(89, 12),
-(89, 14),
-(89, 16),
 (90, 1),
-(90, 12),
-(90, 14),
-(90, 16),
 (91, 1),
-(91, 12),
-(91, 14),
-(91, 15),
-(91, 16),
 (92, 1),
-(92, 12),
-(92, 14),
-(92, 16),
 (93, 1),
-(93, 12),
-(93, 14),
-(93, 16),
 (94, 1),
-(94, 12),
-(94, 14),
-(94, 16),
 (95, 1),
-(95, 12),
-(95, 14),
-(95, 16),
 (96, 1),
-(96, 12),
-(96, 15),
-(96, 16),
 (97, 1),
-(97, 12),
-(97, 15),
-(97, 16),
 (98, 1),
-(98, 12),
-(98, 14),
-(98, 15),
-(98, 16),
 (99, 1),
-(99, 12),
-(99, 14),
-(99, 16),
 (100, 1),
-(100, 12),
-(100, 14),
-(100, 16),
 (101, 1),
-(101, 2),
-(101, 3),
-(101, 5),
-(101, 6),
-(101, 8),
-(101, 9),
-(101, 10),
-(101, 12),
-(101, 14),
-(101, 16),
 (102, 1),
-(102, 2),
-(102, 3),
-(102, 5),
-(102, 6),
-(102, 8),
-(102, 9),
-(102, 10),
-(102, 12),
-(102, 14),
-(102, 16),
 (103, 1),
-(103, 12),
-(103, 16),
 (104, 1),
-(104, 12),
-(104, 16),
 (105, 1),
-(105, 12),
-(105, 16),
 (106, 1),
-(106, 12),
-(106, 16),
 (107, 1),
-(107, 12),
-(107, 16),
 (108, 1),
-(108, 12),
-(108, 16),
 (109, 1),
-(109, 12),
-(109, 16),
 (110, 1),
-(110, 12),
-(110, 16),
 (111, 1),
-(111, 12),
-(111, 16),
 (112, 1),
-(112, 12),
-(112, 16),
 (113, 1),
-(113, 12),
-(113, 16),
 (114, 1),
-(114, 12),
-(114, 16),
 (115, 1),
-(115, 12),
-(115, 16),
 (116, 1),
-(116, 12),
-(116, 16),
 (117, 1),
-(117, 12),
-(117, 16),
 (118, 1),
-(118, 12),
-(118, 16),
 (119, 1),
-(119, 12),
-(119, 16),
 (120, 1),
-(120, 12),
-(120, 16),
 (121, 1),
-(121, 12),
-(121, 16),
 (122, 1),
-(122, 12),
-(122, 16),
 (123, 1),
-(123, 12),
-(123, 16),
 (124, 1),
-(124, 12),
-(124, 16),
 (125, 1),
-(125, 12),
-(125, 16),
 (126, 1),
-(126, 12),
-(126, 16),
 (127, 1),
-(127, 12),
-(127, 16),
 (128, 1),
-(128, 12),
-(128, 16),
 (129, 1),
-(129, 12),
-(129, 16),
 (130, 1),
-(130, 12),
-(130, 16),
 (131, 1),
-(131, 12),
-(131, 16),
 (132, 1),
-(132, 12),
-(132, 16),
 (133, 1),
-(133, 12),
-(133, 16),
 (134, 1),
-(134, 12),
-(134, 16),
 (135, 1),
-(135, 12),
-(135, 16),
 (136, 1),
-(136, 12),
-(136, 16),
 (137, 1),
-(137, 12),
-(137, 16),
 (138, 1),
-(138, 12),
-(138, 16),
 (139, 1),
-(139, 12),
-(139, 16),
 (140, 1),
-(140, 12),
-(140, 16),
 (141, 1),
-(141, 12),
-(141, 16),
 (142, 1),
-(142, 12),
-(142, 16),
 (143, 1),
-(143, 12),
-(143, 16),
 (144, 1),
-(144, 12),
-(144, 16),
 (145, 1),
-(145, 12),
-(145, 16),
 (146, 1),
-(146, 12),
-(146, 16),
 (147, 1),
-(147, 12),
-(147, 16),
 (148, 1),
-(148, 12),
-(148, 16),
 (149, 1),
-(149, 12),
-(149, 16),
 (150, 1),
-(150, 12),
-(150, 16),
 (151, 1),
-(151, 12),
-(151, 16),
 (152, 1),
-(152, 12),
-(152, 16),
 (153, 1),
-(153, 5),
 (154, 1),
-(154, 5),
 (155, 1),
 (156, 1),
 (157, 1),
 (158, 1),
-(158, 5),
 (159, 1),
-(159, 5),
 (160, 1),
 (161, 1),
 (162, 1),
-(162, 5),
 (163, 1),
-(163, 5),
 (164, 1),
-(164, 5),
 (165, 1),
+(1, 2),
+(8, 2),
+(9, 2),
+(10, 2),
+(11, 2),
+(12, 2),
+(13, 2),
+(14, 2),
+(15, 2),
+(16, 2),
+(59, 2),
+(61, 2),
+(64, 2),
+(67, 2),
+(75, 2),
+(101, 2),
+(102, 2),
+(9, 3),
+(11, 3),
+(12, 3),
+(13, 3),
+(14, 3),
+(15, 3),
+(16, 3),
+(17, 3),
+(59, 3),
+(61, 3),
+(64, 3),
+(67, 3),
+(75, 3),
+(101, 3),
+(102, 3),
+(1, 4),
+(2, 5),
+(3, 5),
+(8, 5),
+(14, 5),
+(15, 5),
+(23, 5),
+(31, 5),
+(32, 5),
+(37, 5),
+(51, 5),
+(53, 5),
+(59, 5),
+(61, 5),
+(64, 5),
+(67, 5),
+(75, 5),
+(101, 5),
+(102, 5),
+(153, 5),
+(154, 5),
+(158, 5),
+(159, 5),
+(162, 5),
+(163, 5),
+(164, 5),
 (165, 5),
+(16, 6),
+(59, 6),
+(61, 6),
+(64, 6),
+(67, 6),
+(75, 6),
+(101, 6),
+(102, 6),
+(1, 7),
+(2, 8),
+(3, 8),
+(4, 8),
+(5, 8),
+(8, 8),
+(10, 8),
+(59, 8),
+(61, 8),
+(64, 8),
+(67, 8),
+(75, 8),
+(101, 8),
+(102, 8),
+(9, 9),
+(11, 9),
+(13, 9),
+(14, 9),
+(15, 9),
+(16, 9),
+(17, 9),
+(31, 9),
+(32, 9),
+(51, 9),
+(59, 9),
+(61, 9),
+(64, 9),
+(67, 9),
+(75, 9),
+(101, 9),
+(102, 9),
+(1, 10),
+(14, 10),
+(16, 10),
+(59, 10),
+(61, 10),
+(64, 10),
+(67, 10),
+(75, 10),
+(101, 10),
+(102, 10),
+(2, 11),
+(3, 11),
+(4, 11),
+(5, 11),
+(8, 11),
+(1, 12),
+(2, 12),
+(3, 12),
+(4, 12),
+(5, 12),
+(6, 12),
+(7, 12),
+(8, 12),
+(9, 12),
+(10, 12),
+(11, 12),
+(12, 12),
+(13, 12),
+(14, 12),
+(15, 12),
+(16, 12),
+(17, 12),
+(18, 12),
+(19, 12),
+(20, 12),
+(21, 12),
+(22, 12),
+(23, 12),
+(24, 12),
+(25, 12),
+(26, 12),
+(27, 12),
+(28, 12),
+(29, 12),
+(30, 12),
+(31, 12),
+(32, 12),
+(33, 12),
+(34, 12),
+(35, 12),
+(36, 12),
+(37, 12),
+(38, 12),
+(39, 12),
+(40, 12),
+(41, 12),
+(42, 12),
+(43, 12),
+(44, 12),
+(45, 12),
+(46, 12),
+(47, 12),
+(48, 12),
+(49, 12),
+(50, 12),
+(51, 12),
+(52, 12),
+(53, 12),
+(54, 12),
+(55, 12),
+(56, 12),
+(57, 12),
+(58, 12),
+(59, 12),
+(60, 12),
+(61, 12),
+(62, 12),
+(63, 12),
+(64, 12),
+(65, 12),
+(66, 12),
+(67, 12),
+(68, 12),
+(69, 12),
+(70, 12),
+(71, 12),
+(72, 12),
+(73, 12),
+(74, 12),
+(75, 12),
+(76, 12),
+(77, 12),
+(78, 12),
+(79, 12),
+(80, 12),
+(81, 12),
+(82, 12),
+(83, 12),
+(84, 12),
+(85, 12),
+(86, 12),
+(87, 12),
+(88, 12),
+(89, 12),
+(90, 12),
+(91, 12),
+(92, 12),
+(93, 12),
+(94, 12),
+(95, 12),
+(96, 12),
+(97, 12),
+(98, 12),
+(99, 12),
+(100, 12),
+(101, 12),
+(102, 12),
+(103, 12),
+(104, 12),
+(105, 12),
+(106, 12),
+(107, 12),
+(108, 12),
+(109, 12),
+(110, 12),
+(111, 12),
+(112, 12),
+(113, 12),
+(114, 12),
+(115, 12),
+(116, 12),
+(117, 12),
+(118, 12),
+(119, 12),
+(120, 12),
+(121, 12),
+(122, 12),
+(123, 12),
+(124, 12),
+(125, 12),
+(126, 12),
+(127, 12),
+(128, 12),
+(129, 12),
+(130, 12),
+(131, 12),
+(132, 12),
+(133, 12),
+(134, 12),
+(135, 12),
+(136, 12),
+(137, 12),
+(138, 12),
+(139, 12),
+(140, 12),
+(141, 12),
+(142, 12),
+(143, 12),
+(144, 12),
+(145, 12),
+(146, 12),
+(147, 12),
+(148, 12),
+(149, 12),
+(150, 12),
+(151, 12),
+(152, 12),
+(18, 13),
+(19, 13),
+(20, 13),
+(21, 13),
+(22, 13),
+(54, 14),
+(55, 14),
+(56, 14),
+(57, 14),
+(58, 14),
+(59, 14),
+(60, 14),
+(61, 14),
+(62, 14),
+(63, 14),
+(64, 14),
+(65, 14),
+(66, 14),
+(67, 14),
+(68, 14),
+(69, 14),
+(70, 14),
+(71, 14),
+(72, 14),
+(73, 14),
+(74, 14),
+(75, 14),
+(76, 14),
+(77, 14),
+(78, 14),
+(79, 14),
+(80, 14),
+(81, 14),
+(82, 14),
+(83, 14),
+(84, 14),
+(85, 14),
+(86, 14),
+(87, 14),
+(88, 14),
+(89, 14),
+(90, 14),
+(91, 14),
+(92, 14),
+(93, 14),
+(94, 14),
+(95, 14),
+(98, 14),
+(99, 14),
+(100, 14),
+(101, 14),
+(102, 14),
+(91, 15),
+(96, 15),
+(97, 15),
+(98, 15),
+(1, 16),
+(2, 16),
+(3, 16),
+(4, 16),
+(5, 16),
+(6, 16),
+(7, 16),
+(8, 16),
+(9, 16),
+(10, 16),
+(11, 16),
+(12, 16),
+(13, 16),
+(14, 16),
+(15, 16),
+(16, 16),
+(17, 16),
+(18, 16),
+(19, 16),
+(20, 16),
+(21, 16),
+(22, 16),
+(23, 16),
+(24, 16),
+(25, 16),
+(26, 16),
+(27, 16),
+(28, 16),
+(29, 16),
+(30, 16),
+(31, 16),
+(32, 16),
+(33, 16),
+(34, 16),
+(35, 16),
+(36, 16),
+(37, 16),
+(38, 16),
+(39, 16),
+(40, 16),
+(41, 16),
+(42, 16),
+(43, 16),
+(44, 16),
+(45, 16),
+(46, 16),
+(47, 16),
+(48, 16),
+(49, 16),
+(50, 16),
+(51, 16),
+(52, 16),
+(53, 16),
+(54, 16),
+(55, 16),
+(56, 16),
+(57, 16),
+(58, 16),
+(59, 16),
+(60, 16),
+(61, 16),
+(62, 16),
+(63, 16),
+(64, 16),
+(65, 16),
+(66, 16),
+(67, 16),
+(68, 16),
+(69, 16),
+(70, 16),
+(71, 16),
+(72, 16),
+(73, 16),
+(74, 16),
+(75, 16),
+(76, 16),
+(77, 16),
+(78, 16),
+(79, 16),
+(80, 16),
+(81, 16),
+(82, 16),
+(83, 16),
+(84, 16),
+(85, 16),
+(86, 16),
+(87, 16),
+(88, 16),
+(89, 16),
+(90, 16),
+(91, 16),
+(92, 16),
+(93, 16),
+(94, 16),
+(95, 16),
+(96, 16),
+(97, 16),
+(98, 16),
+(99, 16),
+(100, 16),
+(101, 16),
+(102, 16),
+(103, 16),
+(104, 16),
+(105, 16),
+(106, 16),
+(107, 16),
+(108, 16),
+(109, 16),
+(110, 16),
+(111, 16),
+(112, 16),
+(113, 16),
+(114, 16),
+(115, 16),
+(116, 16),
+(117, 16),
+(118, 16),
+(119, 16),
+(120, 16),
+(121, 16),
+(122, 16),
+(123, 16),
+(124, 16),
+(125, 16),
+(126, 16),
+(127, 16),
+(128, 16),
+(129, 16),
+(130, 16),
+(131, 16),
+(132, 16),
+(133, 16),
+(134, 16),
+(135, 16),
+(136, 16),
+(137, 16),
+(138, 16),
+(139, 16),
+(140, 16),
+(141, 16),
+(142, 16),
+(143, 16),
+(144, 16),
+(145, 16),
+(146, 16),
+(147, 16),
+(148, 16),
+(149, 16),
+(150, 16),
+(151, 16),
+(152, 16),
 (166, 17),
 (167, 17),
 (168, 17),
@@ -84705,23 +84762,23 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 --
 
 CREATE TABLE `route_metadata` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `route_name` varchar(100) DEFAULT NULL,
-  `url` varchar(255) NOT NULL,
-  `title` varchar(100) NOT NULL,
-  `description` text DEFAULT NULL,
-  `section` varchar(100) DEFAULT NULL,
-  `parent_section` varchar(100) DEFAULT NULL,
-  `icon` varchar(50) DEFAULT NULL,
-  `keywords` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`keywords`)),
-  `roles` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`roles`)),
-  `permissions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`permissions`)),
-  `hierarchy_path` varchar(500) DEFAULT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `route_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `section` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `parent_section` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `icon` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `keywords` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `roles` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `permissions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `hierarchy_path` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `route_metadata`
@@ -84796,25 +84853,25 @@ INSERT INTO `route_metadata` (`id`, `route_name`, `url`, `title`, `description`,
 --
 
 CREATE TABLE `sales` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `product_or_service_requests_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `budget_year_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `serial_no` varchar(255) DEFAULT NULL,
-  `quantity_buy` int(11) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `product_or_service_requests_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `service_id` bigint UNSIGNED DEFAULT NULL,
+  `budget_year_id` bigint UNSIGNED DEFAULT NULL,
+  `serial_no` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `quantity_buy` int NOT NULL,
   `sale_price` double(8,2) NOT NULL,
-  `pieces_quantity` int(11) DEFAULT NULL,
-  `pieces_sales_price` int(11) DEFAULT NULL,
-  `total_amount` int(11) NOT NULL,
-  `store_id` bigint(20) UNSIGNED NOT NULL,
-  `promo_qt` int(11) DEFAULT NULL,
+  `pieces_quantity` int DEFAULT NULL,
+  `pieces_sales_price` int DEFAULT NULL,
+  `total_amount` int NOT NULL,
+  `store_id` bigint UNSIGNED NOT NULL,
+  `promo_qt` int DEFAULT NULL,
   `gain` double(8,2) NOT NULL,
   `loss` double(8,2) NOT NULL,
-  `sale_date` timestamp NOT NULL DEFAULT current_timestamp(),
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `supply` int(11) NOT NULL,
-  `supply_date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `sale_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `supply` int NOT NULL,
+  `supply_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -84826,17 +84883,17 @@ CREATE TABLE `sales` (
 --
 
 CREATE TABLE `saved_report_filters` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `report_type` enum('trial_balance','profit_loss','balance_sheet','general_ledger','accounts_payable','accounts_receivable','cash_flow','daily_audit') NOT NULL,
-  `filters` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`filters`)),
-  `is_default` tinyint(1) NOT NULL DEFAULT 0,
-  `is_shared` tinyint(1) NOT NULL DEFAULT 0,
-  `description` text DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `report_type` enum('trial_balance','profit_loss','balance_sheet','general_ledger','accounts_payable','accounts_receivable','cash_flow','daily_audit') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `filters` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `is_shared` tinyint(1) NOT NULL DEFAULT '0',
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 -- --------------------------------------------------------
 
@@ -84845,19 +84902,19 @@ CREATE TABLE `saved_report_filters` (
 --
 
 CREATE TABLE `services` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `category_id` bigint(20) UNSIGNED NOT NULL,
-  `service_name` varchar(255) NOT NULL,
-  `service_code` varchar(255) DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  `price_assign` tinyint(1) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `category_id` bigint UNSIGNED NOT NULL,
+  `service_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `service_code` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `price_assign` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `template` longtext DEFAULT NULL,
-  `result_template_v2` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'New structured template format for lab test parameters' CHECK (json_valid(`result_template_v2`)),
-  `old_lab_services_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `template` longtext COLLATE utf8mb4_general_ci,
+  `result_template_v2` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'New structured template format for lab test parameters',
+  `old_lab_services_id` int DEFAULT NULL
+) ;
 
 --
 -- Dumping data for table `services`
@@ -85181,11 +85238,11 @@ INSERT INTO `services` (`id`, `user_id`, `category_id`, `service_name`, `service
 --
 
 CREATE TABLE `service_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `category_name` varchar(255) NOT NULL,
-  `category_code` varchar(255) DEFAULT NULL,
-  `category_description` varchar(255) DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `category_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `category_code` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `category_description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -85211,12 +85268,12 @@ INSERT INTO `service_categories` (`id`, `category_name`, `category_code`, `categ
 --
 
 CREATE TABLE `service_prices` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `service_id` bigint(20) UNSIGNED NOT NULL,
-  `cost_price` int(11) NOT NULL DEFAULT 0,
-  `sale_price` int(11) NOT NULL DEFAULT 0,
-  `max_discount` int(11) NOT NULL DEFAULT 0,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `service_id` bigint UNSIGNED NOT NULL,
+  `cost_price` int NOT NULL DEFAULT '0',
+  `sale_price` int NOT NULL DEFAULT '0',
+  `max_discount` int NOT NULL DEFAULT '0',
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -85543,21 +85600,21 @@ INSERT INTO `service_prices` (`id`, `service_id`, `cost_price`, `sale_price`, `m
 --
 
 CREATE TABLE `shift_actions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `shift_id` bigint(20) UNSIGNED NOT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `action_type` varchar(50) NOT NULL COMMENT 'vitals, medication, note, injection, immunization, bill, admission, discharge, other',
-  `action_subtype` varchar(50) DEFAULT NULL COMMENT 'More specific classification',
-  `description` varchar(255) NOT NULL,
-  `details` text DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_name` varchar(255) DEFAULT NULL COMMENT 'Denormalized for display',
-  `auditable_type` varchar(255) DEFAULT NULL,
-  `auditable_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
-  `is_critical` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Highlight in handover',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` bigint UNSIGNED NOT NULL,
+  `shift_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `action_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'vitals, medication, note, injection, immunization, bill, admission, discharge, other',
+  `action_subtype` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'More specific classification',
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `details` text COLLATE utf8mb4_unicode_ci,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `patient_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Denormalized for display',
+  `auditable_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `auditable_id` bigint UNSIGNED DEFAULT NULL,
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `is_critical` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Highlight in handover',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ;
 
 -- --------------------------------------------------------
 
@@ -85566,27 +85623,27 @@ CREATE TABLE `shift_actions` (
 --
 
 CREATE TABLE `shift_handovers` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `shift_id` bigint(20) UNSIGNED NOT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `received_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `ward_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `shift_type` enum('morning','afternoon','night') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `shift_id` bigint UNSIGNED NOT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `received_by` bigint UNSIGNED DEFAULT NULL,
+  `ward_id` bigint UNSIGNED DEFAULT NULL,
+  `shift_type` enum('morning','afternoon','night') COLLATE utf8mb4_unicode_ci NOT NULL,
   `shift_started_at` datetime NOT NULL,
   `shift_ended_at` datetime NOT NULL,
-  `summary` text DEFAULT NULL COMMENT 'Auto-generated from shift actions',
-  `critical_notes` text DEFAULT NULL COMMENT 'Urgent/important items',
-  `concluding_notes` text DEFAULT NULL COMMENT 'General shift notes',
-  `pending_tasks` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Tasks not completed' CHECK (json_valid(`pending_tasks`)),
-  `patient_highlights` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Key patient updates' CHECK (json_valid(`patient_highlights`)),
-  `action_summary` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Count of each action type' CHECK (json_valid(`action_summary`)),
-  `audit_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Detailed audit log changes with old/new values' CHECK (json_valid(`audit_details`)),
+  `summary` text COLLATE utf8mb4_unicode_ci COMMENT 'Auto-generated from shift actions',
+  `critical_notes` text COLLATE utf8mb4_unicode_ci COMMENT 'Urgent/important items',
+  `concluding_notes` text COLLATE utf8mb4_unicode_ci COMMENT 'General shift notes',
+  `pending_tasks` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'Tasks not completed',
+  `patient_highlights` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'Key patient updates',
+  `action_summary` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'Count of each action type',
+  `audit_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'Detailed audit log changes with old/new values',
   `acknowledged_at` datetime DEFAULT NULL,
-  `acknowledged_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `acknowledgment_notes` text DEFAULT NULL,
+  `acknowledged_by` bigint UNSIGNED DEFAULT NULL,
+  `acknowledgment_notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `shift_handovers`
@@ -85621,29 +85678,29 @@ INSERT INTO `shift_handovers` (`id`, `shift_id`, `created_by`, `received_by`, `w
 --
 
 CREATE TABLE `specialist_referrals` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `patient_id` bigint(20) UNSIGNED NOT NULL,
-  `encounter_id` bigint(20) UNSIGNED NOT NULL,
-  `referring_doctor_id` bigint(20) UNSIGNED NOT NULL,
-  `referring_clinic_id` bigint(20) UNSIGNED NOT NULL,
-  `referral_type` enum('internal','external') NOT NULL DEFAULT 'internal' COMMENT 'internal = in-hospital specialist, external = outside hospital',
-  `target_clinic_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `target_doctor_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `external_facility_name` varchar(255) DEFAULT NULL COMMENT 'For external referrals',
-  `external_doctor_name` varchar(255) DEFAULT NULL,
-  `external_facility_address` varchar(255) DEFAULT NULL,
-  `external_facility_phone` varchar(255) DEFAULT NULL,
-  `target_specialization_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `reason` text NOT NULL COMMENT 'Why the referral is being made',
-  `clinical_summary` text DEFAULT NULL COMMENT 'Summary of findings for the specialist',
-  `provisional_diagnosis` text DEFAULT NULL,
-  `urgency` enum('routine','urgent','emergency') NOT NULL DEFAULT 'routine',
-  `status` enum('pending','booked','referred_out','completed','declined','cancelled') NOT NULL DEFAULT 'pending',
-  `actioned_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `encounter_id` bigint UNSIGNED NOT NULL,
+  `referring_doctor_id` bigint UNSIGNED NOT NULL,
+  `referring_clinic_id` bigint UNSIGNED NOT NULL,
+  `referral_type` enum('internal','external') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'internal' COMMENT 'internal = in-hospital specialist, external = outside hospital',
+  `target_clinic_id` bigint UNSIGNED DEFAULT NULL,
+  `target_doctor_id` bigint UNSIGNED DEFAULT NULL,
+  `external_facility_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'For external referrals',
+  `external_doctor_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `external_facility_address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `external_facility_phone` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `target_specialization_id` bigint UNSIGNED DEFAULT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Why the referral is being made',
+  `clinical_summary` text COLLATE utf8mb4_unicode_ci COMMENT 'Summary of findings for the specialist',
+  `provisional_diagnosis` text COLLATE utf8mb4_unicode_ci,
+  `urgency` enum('routine','urgent','emergency') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'routine',
+  `status` enum('pending','booked','referred_out','completed','declined','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `actioned_by` bigint UNSIGNED DEFAULT NULL,
   `actioned_at` timestamp NULL DEFAULT NULL,
-  `action_notes` text DEFAULT NULL,
-  `appointment_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'DoctorAppointment created for internal referral',
-  `referral_letter_attachment_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Uploaded referral letter for external',
+  `action_notes` text COLLATE utf8mb4_unicode_ci,
+  `appointment_id` bigint UNSIGNED DEFAULT NULL COMMENT 'DoctorAppointment created for internal referral',
+  `referral_letter_attachment_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Uploaded referral letter for external',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -85666,9 +85723,9 @@ INSERT INTO `specialist_referrals` (`id`, `patient_id`, `encounter_id`, `referri
 --
 
 CREATE TABLE `specializations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `status` int(11) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -85688,43 +85745,43 @@ INSERT INTO `specializations` (`id`, `name`, `status`, `created_at`, `updated_at
 --
 
 CREATE TABLE `staff` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `employee_id` varchar(255) DEFAULT NULL,
-  `user_id` bigint(20) UNSIGNED NOT NULL,
-  `specialization_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `clinic_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `can_see_clinic_queues` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`can_see_clinic_queues`)),
-  `gender` enum('Male','Female','Others') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `employee_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `specialization_id` bigint UNSIGNED DEFAULT NULL,
+  `clinic_id` bigint UNSIGNED DEFAULT NULL,
+  `can_see_clinic_queues` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `gender` enum('Male','Female','Others') COLLATE utf8mb4_general_ci NOT NULL,
   `date_of_birth` date DEFAULT NULL,
-  `home_address` text DEFAULT NULL,
-  `phone_number` varchar(255) DEFAULT NULL,
-  `consultation_fee` double(8,2) NOT NULL DEFAULT 0.00,
-  `is_unit_head` tinyint(1) NOT NULL DEFAULT 0,
-  `is_dept_head` tinyint(1) NOT NULL DEFAULT 0,
-  `status` int(11) NOT NULL DEFAULT 1,
+  `home_address` text COLLATE utf8mb4_general_ci,
+  `phone_number` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `consultation_fee` double(8,2) NOT NULL DEFAULT '0.00',
+  `is_unit_head` tinyint(1) NOT NULL DEFAULT '0',
+  `is_dept_head` tinyint(1) NOT NULL DEFAULT '0',
+  `status` int NOT NULL DEFAULT '1',
   `date_hired` date DEFAULT NULL,
   `date_confirmed` date DEFAULT NULL,
-  `employment_type` enum('full_time','part_time','contract','intern') NOT NULL DEFAULT 'full_time',
-  `employment_status` enum('active','suspended','terminated','resigned') NOT NULL DEFAULT 'active',
-  `job_title` varchar(255) DEFAULT NULL,
-  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `bank_name` varchar(255) DEFAULT NULL,
-  `bank_account_number` varchar(255) DEFAULT NULL,
-  `bank_account_name` varchar(255) DEFAULT NULL,
-  `emergency_contact_name` varchar(255) DEFAULT NULL,
-  `emergency_contact_phone` varchar(255) DEFAULT NULL,
-  `emergency_contact_relationship` varchar(255) DEFAULT NULL,
-  `tax_id` varchar(255) DEFAULT NULL,
-  `pension_id` varchar(255) DEFAULT NULL,
-  `hr_notes` text DEFAULT NULL,
+  `employment_type` enum('full_time','part_time','contract','intern') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'full_time',
+  `employment_status` enum('active','suspended','terminated','resigned') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'active',
+  `job_title` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `department_id` bigint UNSIGNED DEFAULT NULL,
+  `bank_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `bank_account_number` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `bank_account_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `emergency_contact_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `emergency_contact_phone` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `emergency_contact_relationship` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tax_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `pension_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `hr_notes` text COLLATE utf8mb4_general_ci,
   `suspended_at` timestamp NULL DEFAULT NULL,
-  `suspended_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `suspension_reason` text DEFAULT NULL,
+  `suspended_by` bigint UNSIGNED DEFAULT NULL,
+  `suspension_reason` text COLLATE utf8mb4_general_ci,
   `suspension_end_date` date DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_user_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `old_user_id` int DEFAULT NULL
+) ;
 
 --
 -- Dumping data for table `staff`
@@ -85997,18 +86054,18 @@ INSERT INTO `staff` (`id`, `employee_id`, `user_id`, `specialization_id`, `clini
 --
 
 CREATE TABLE `staff_salary_profiles` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `id` bigint UNSIGNED NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `basic_salary` decimal(15,2) NOT NULL DEFAULT '0.00',
   `gross_salary` decimal(15,2) DEFAULT NULL,
   `total_deductions` decimal(15,2) DEFAULT NULL,
   `net_salary` decimal(15,2) DEFAULT NULL,
-  `pay_frequency` enum('monthly','bi_weekly','weekly') NOT NULL DEFAULT 'monthly',
+  `pay_frequency` enum('monthly','bi_weekly','weekly') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'monthly',
   `effective_from` date NOT NULL,
   `effective_to` date DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `notes` text DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -86021,12 +86078,12 @@ CREATE TABLE `staff_salary_profiles` (
 --
 
 CREATE TABLE `staff_salary_profile_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `salary_profile_id` bigint(20) UNSIGNED NOT NULL,
-  `pay_head_id` bigint(20) UNSIGNED NOT NULL,
-  `calculation_type` enum('fixed','percentage','formula') NOT NULL DEFAULT 'fixed',
-  `calculation_base` varchar(255) DEFAULT NULL,
-  `value` decimal(15,4) NOT NULL DEFAULT 0.0000,
+  `id` bigint UNSIGNED NOT NULL,
+  `salary_profile_id` bigint UNSIGNED NOT NULL,
+  `pay_head_id` bigint UNSIGNED NOT NULL,
+  `calculation_type` enum('fixed','percentage','formula') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
+  `calculation_base` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `value` decimal(15,4) NOT NULL DEFAULT '0.0000',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -86038,20 +86095,20 @@ CREATE TABLE `staff_salary_profile_items` (
 --
 
 CREATE TABLE `staff_suspensions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `suspension_number` varchar(255) NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `disciplinary_query_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `type` enum('paid','unpaid') NOT NULL DEFAULT 'unpaid',
+  `id` bigint UNSIGNED NOT NULL,
+  `suspension_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `disciplinary_query_id` bigint UNSIGNED DEFAULT NULL,
+  `type` enum('paid','unpaid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'unpaid',
   `start_date` date NOT NULL,
   `end_date` date DEFAULT NULL,
-  `reason` text NOT NULL,
-  `suspension_message` text NOT NULL,
-  `status` enum('active','lifted','expired') NOT NULL DEFAULT 'active',
-  `lifted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `suspension_message` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` enum('active','lifted','expired') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `lifted_by` bigint UNSIGNED DEFAULT NULL,
   `lifted_at` timestamp NULL DEFAULT NULL,
-  `lift_reason` text DEFAULT NULL,
-  `issued_by` bigint(20) UNSIGNED NOT NULL,
+  `lift_reason` text COLLATE utf8mb4_unicode_ci,
+  `issued_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -86064,21 +86121,21 @@ CREATE TABLE `staff_suspensions` (
 --
 
 CREATE TABLE `staff_terminations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `termination_number` varchar(255) NOT NULL,
-  `staff_id` bigint(20) UNSIGNED NOT NULL,
-  `disciplinary_query_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `type` enum('voluntary','involuntary','retirement','death','contract_end') NOT NULL DEFAULT 'voluntary',
-  `reason_category` enum('resignation','misconduct','poor_performance','redundancy','retirement','medical','death','contract_expiry','other') NOT NULL,
-  `reason_details` text NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `termination_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `staff_id` bigint UNSIGNED NOT NULL,
+  `disciplinary_query_id` bigint UNSIGNED DEFAULT NULL,
+  `type` enum('voluntary','involuntary','retirement','death','contract_end') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'voluntary',
+  `reason_category` enum('resignation','misconduct','poor_performance','redundancy','retirement','medical','death','contract_expiry','other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reason_details` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `notice_date` date NOT NULL,
   `effective_date` date NOT NULL,
   `last_working_day` date NOT NULL,
-  `exit_interview_conducted` tinyint(1) NOT NULL DEFAULT 0,
-  `exit_interview_notes` text DEFAULT NULL,
-  `clearance_completed` tinyint(1) NOT NULL DEFAULT 0,
-  `final_payment_processed` tinyint(1) NOT NULL DEFAULT 0,
-  `processed_by` bigint(20) UNSIGNED NOT NULL,
+  `exit_interview_conducted` tinyint(1) NOT NULL DEFAULT '0',
+  `exit_interview_notes` text COLLATE utf8mb4_unicode_ci,
+  `clearance_completed` tinyint(1) NOT NULL DEFAULT '0',
+  `final_payment_processed` tinyint(1) NOT NULL DEFAULT '0',
+  `processed_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -86091,32 +86148,32 @@ CREATE TABLE `staff_terminations` (
 --
 
 CREATE TABLE `statutory_remittances` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `pay_head_id` bigint(20) UNSIGNED NOT NULL,
-  `reference_number` varchar(30) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `pay_head_id` bigint UNSIGNED NOT NULL,
+  `reference_number` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
   `period_from` date NOT NULL COMMENT 'Payroll period start',
   `period_to` date NOT NULL COMMENT 'Payroll period end',
   `due_date` date DEFAULT NULL COMMENT 'When remittance is due',
   `remittance_date` date DEFAULT NULL COMMENT 'Actual payment date',
   `amount` decimal(15,2) NOT NULL,
-  `payee_name` varchar(255) NOT NULL COMMENT 'Statutory body name',
-  `payee_account_number` varchar(255) DEFAULT NULL COMMENT 'Their bank account',
-  `payee_bank_name` varchar(255) DEFAULT NULL COMMENT 'Their bank name',
-  `payment_method` enum('bank_transfer','cheque','cash') DEFAULT NULL,
-  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `cheque_number` varchar(50) DEFAULT NULL,
-  `transaction_reference` varchar(100) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `status` enum('draft','pending','approved','paid','voided') NOT NULL DEFAULT 'draft',
-  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `prepared_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `payee_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Statutory body name',
+  `payee_account_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Their bank account',
+  `payee_bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Their bank name',
+  `payment_method` enum('bank_transfer','cheque','cash') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_id` bigint UNSIGNED DEFAULT NULL,
+  `cheque_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `transaction_reference` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('draft','pending','approved','paid','voided') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `journal_entry_id` bigint UNSIGNED DEFAULT NULL,
+  `prepared_by` bigint UNSIGNED DEFAULT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
-  `paid_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `paid_by` bigint UNSIGNED DEFAULT NULL,
   `paid_at` timestamp NULL DEFAULT NULL,
-  `voided_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `voided_by` bigint UNSIGNED DEFAULT NULL,
   `voided_at` timestamp NULL DEFAULT NULL,
-  `void_reason` text DEFAULT NULL,
+  `void_reason` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -86129,15 +86186,15 @@ CREATE TABLE `statutory_remittances` (
 --
 
 CREATE TABLE `stocks` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `initial_quantity` int(11) NOT NULL DEFAULT 0,
-  `order_quantity` int(11) NOT NULL DEFAULT 0,
-  `current_quantity` int(11) NOT NULL DEFAULT 0,
-  `quantity_sale` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `initial_quantity` int NOT NULL DEFAULT '0',
+  `order_quantity` int NOT NULL DEFAULT '0',
+  `current_quantity` int NOT NULL DEFAULT '0',
+  `quantity_sale` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_stock_id` int(11) DEFAULT NULL
+  `old_stock_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -87056,23 +87113,23 @@ INSERT INTO `stocks` (`id`, `product_id`, `initial_quantity`, `order_quantity`, 
 --
 
 CREATE TABLE `stock_batches` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `store_id` bigint(20) UNSIGNED NOT NULL,
-  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `batch_name` varchar(255) NOT NULL,
-  `batch_number` varchar(255) DEFAULT NULL,
-  `initial_qty` int(11) NOT NULL,
-  `current_qty` int(11) NOT NULL,
-  `sold_qty` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `store_id` bigint UNSIGNED NOT NULL,
+  `supplier_id` bigint UNSIGNED DEFAULT NULL,
+  `batch_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `batch_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `initial_qty` int NOT NULL,
+  `current_qty` int NOT NULL,
+  `sold_qty` int NOT NULL DEFAULT '0',
   `cost_price` decimal(12,2) NOT NULL,
   `expiry_date` date DEFAULT NULL,
   `received_date` date NOT NULL,
-  `source` enum('purchase_order','manual','transfer_in') NOT NULL DEFAULT 'manual',
-  `purchase_order_item_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `source_requisition_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `source` enum('purchase_order','manual','transfer_in') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'manual',
+  `purchase_order_item_id` bigint UNSIGNED DEFAULT NULL,
+  `source_requisition_id` bigint UNSIGNED DEFAULT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -88417,15 +88474,15 @@ INSERT INTO `stock_batches` (`id`, `product_id`, `store_id`, `supplier_id`, `bat
 --
 
 CREATE TABLE `stock_batch_transactions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `stock_batch_id` bigint(20) UNSIGNED NOT NULL,
-  `type` enum('in','out','adjustment','transfer_out','transfer_in','return','expired','damaged') NOT NULL,
-  `qty` int(11) NOT NULL,
-  `balance_after` int(11) NOT NULL,
-  `reference_type` varchar(255) DEFAULT NULL,
-  `reference_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `performed_by` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `stock_batch_id` bigint UNSIGNED NOT NULL,
+  `type` enum('in','out','adjustment','transfer_out','transfer_in','return','expired','damaged') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `qty` int NOT NULL,
+  `balance_after` int NOT NULL,
+  `reference_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reference_id` bigint UNSIGNED DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `performed_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -88492,14 +88549,14 @@ INSERT INTO `stock_batch_transactions` (`id`, `stock_batch_id`, `type`, `qty`, `
 --
 
 CREATE TABLE `stock_invoices` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `invoice_no` varchar(255) NOT NULL,
-  `supplier_id` bigint(20) UNSIGNED NOT NULL,
-  `invoice_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `number_of_products` int(11) NOT NULL,
-  `total_amount` int(11) NOT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `invoice_no` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `supplier_id` bigint UNSIGNED NOT NULL,
+  `invoice_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `number_of_products` int NOT NULL,
+  `total_amount` int NOT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -88511,12 +88568,12 @@ CREATE TABLE `stock_invoices` (
 --
 
 CREATE TABLE `stock_orders` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `invoice_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `order_quantity` int(11) NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `invoice_id` bigint UNSIGNED DEFAULT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `order_quantity` int NOT NULL,
   `total_amount` double(8,2) NOT NULL,
-  `store_id` bigint(20) UNSIGNED NOT NULL,
+  `store_id` bigint UNSIGNED NOT NULL,
   `stock_date` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -88539,17 +88596,17 @@ INSERT INTO `stock_orders` (`id`, `invoice_id`, `product_id`, `order_quantity`, 
 --
 
 CREATE TABLE `stores` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `store_name` varchar(255) NOT NULL,
-  `location` varchar(255) DEFAULT NULL,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `store_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `location` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `code` varchar(10) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `store_type` enum('pharmacy','warehouse','theatre','ward','other') NOT NULL DEFAULT 'pharmacy',
-  `is_default` tinyint(1) NOT NULL DEFAULT 0,
-  `manager_id` bigint(20) UNSIGNED DEFAULT NULL
+  `code` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `store_type` enum('pharmacy','warehouse','theatre','ward','other') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pharmacy',
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `manager_id` bigint UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -88570,18 +88627,18 @@ INSERT INTO `stores` (`id`, `store_name`, `location`, `status`, `created_at`, `u
 --
 
 CREATE TABLE `store_requisitions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `requisition_number` varchar(255) NOT NULL,
-  `from_store_id` bigint(20) UNSIGNED NOT NULL,
-  `to_store_id` bigint(20) UNSIGNED NOT NULL,
-  `requested_by` bigint(20) UNSIGNED NOT NULL,
-  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `rejected_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `fulfilled_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','approved','rejected','partial','fulfilled','cancelled') NOT NULL DEFAULT 'pending',
-  `request_notes` text DEFAULT NULL,
-  `approval_notes` text DEFAULT NULL,
-  `rejection_reason` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `requisition_number` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `from_store_id` bigint UNSIGNED NOT NULL,
+  `to_store_id` bigint UNSIGNED NOT NULL,
+  `requested_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
+  `rejected_by` bigint UNSIGNED DEFAULT NULL,
+  `fulfilled_by` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('pending','approved','rejected','partial','fulfilled','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `request_notes` text COLLATE utf8mb4_unicode_ci,
+  `approval_notes` text COLLATE utf8mb4_unicode_ci,
+  `rejection_reason` text COLLATE utf8mb4_unicode_ci,
   `approved_at` timestamp NULL DEFAULT NULL,
   `rejected_at` timestamp NULL DEFAULT NULL,
   `fulfilled_at` timestamp NULL DEFAULT NULL,
@@ -88604,16 +88661,18 @@ INSERT INTO `store_requisitions` (`id`, `requisition_number`, `from_store_id`, `
 --
 
 CREATE TABLE `store_requisition_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `store_requisition_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `requested_qty` int(11) NOT NULL DEFAULT 0,
-  `approved_qty` int(11) DEFAULT NULL,
-  `fulfilled_qty` int(11) DEFAULT NULL,
-  `source_batch_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `destination_batch_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','approved','rejected','partial','fulfilled','cancelled') NOT NULL DEFAULT 'pending',
-  `notes` text DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `store_requisition_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `requested_qty` int NOT NULL DEFAULT '0',
+  `packaging_id` bigint UNSIGNED DEFAULT NULL,
+  `packaging_qty` decimal(12,4) DEFAULT NULL,
+  `approved_qty` int DEFAULT NULL,
+  `fulfilled_qty` int DEFAULT NULL,
+  `source_batch_id` bigint UNSIGNED DEFAULT NULL,
+  `destination_batch_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('pending','approved','rejected','partial','fulfilled','cancelled') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `notes` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -88622,9 +88681,9 @@ CREATE TABLE `store_requisition_items` (
 -- Dumping data for table `store_requisition_items`
 --
 
-INSERT INTO `store_requisition_items` (`id`, `store_requisition_id`, `product_id`, `requested_qty`, `approved_qty`, `fulfilled_qty`, `source_batch_id`, `destination_batch_id`, `status`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 1, 2, 33, 20, 20, 1, 8, 'fulfilled', NULL, '2026-01-22 10:45:19', '2026-01-22 11:13:55'),
-(2, 1, 3, 1, 4, 3, 3, 9, 'partial', NULL, '2026-01-22 10:45:19', '2026-01-22 11:13:55');
+INSERT INTO `store_requisition_items` (`id`, `store_requisition_id`, `product_id`, `requested_qty`, `packaging_id`, `packaging_qty`, `approved_qty`, `fulfilled_qty`, `source_batch_id`, `destination_batch_id`, `status`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 1, 2, 33, NULL, NULL, 20, 20, 1, 8, 'fulfilled', NULL, '2026-01-22 10:45:19', '2026-01-22 11:13:55'),
+(2, 1, 3, 1, NULL, NULL, 4, 3, 3, 9, 'partial', NULL, '2026-01-22 10:45:19', '2026-01-22 11:13:55');
 
 -- --------------------------------------------------------
 
@@ -88633,19 +88692,19 @@ INSERT INTO `store_requisition_items` (`id`, `store_requisition_id`, `product_id
 --
 
 CREATE TABLE `store_stocks` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `store_id` bigint(20) UNSIGNED NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `initial_quantity` int(11) NOT NULL DEFAULT 0,
-  `quantity_sale` int(11) NOT NULL DEFAULT 0,
-  `order_quantity` int(11) NOT NULL DEFAULT 0,
-  `current_quantity` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `store_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `initial_quantity` int NOT NULL DEFAULT '0',
+  `quantity_sale` int NOT NULL DEFAULT '0',
+  `order_quantity` int NOT NULL DEFAULT '0',
+  `current_quantity` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `reserved_qty` int(11) NOT NULL DEFAULT 0,
-  `reorder_level` int(11) NOT NULL DEFAULT 10,
-  `max_stock_level` int(11) DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `reserved_qty` int NOT NULL DEFAULT '0',
+  `reorder_level` int NOT NULL DEFAULT '10',
+  `max_stock_level` int DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `last_restocked_at` timestamp NULL DEFAULT NULL,
   `last_sold_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -89489,15 +89548,15 @@ INSERT INTO `store_stocks` (`id`, `store_id`, `product_id`, `initial_quantity`, 
 --
 
 CREATE TABLE `suppliers` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `company_name` varchar(255) NOT NULL,
-  `contact_person` varchar(255) DEFAULT NULL,
-  `email` varchar(255) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `phone` varchar(255) DEFAULT NULL,
-  `alt_phone` varchar(255) DEFAULT NULL,
-  `tax_number` varchar(255) DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `company_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `contact_person` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `phone` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `alt_phone` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tax_number` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
   `last_payment` double(8,2) DEFAULT NULL,
   `last_payment_date` timestamp NULL DEFAULT NULL,
   `last_buy_date` timestamp NULL DEFAULT NULL,
@@ -89507,17 +89566,17 @@ CREATE TABLE `suppliers` (
   `deposit_b4` double(8,2) DEFAULT NULL,
   `deposit` double(8,2) DEFAULT NULL,
   `total_deposite` double(8,2) DEFAULT NULL,
-  `date_line` timestamp NOT NULL DEFAULT current_timestamp(),
-  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `date_line` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_supplier_id` int(11) DEFAULT NULL,
-  `bank_name` varchar(255) DEFAULT NULL,
-  `bank_account_number` varchar(255) DEFAULT NULL,
-  `bank_account_name` varchar(255) DEFAULT NULL,
-  `payment_terms` varchar(255) DEFAULT NULL,
+  `old_supplier_id` int DEFAULT NULL,
+  `bank_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `bank_account_number` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `bank_account_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payment_terms` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `credit_limit` decimal(15,2) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_general_ci,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -89536,8 +89595,8 @@ INSERT INTO `suppliers` (`id`, `company_name`, `contact_person`, `email`, `addre
 --
 
 CREATE TABLE `threads` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `subject` varchar(255) NOT NULL,
+  `id` int UNSIGNED NOT NULL,
+  `subject` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -89559,13 +89618,13 @@ INSERT INTO `threads` (`id`, `subject`, `created_at`, `updated_at`, `deleted_at`
 --
 
 CREATE TABLE `treatment_plans` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `specialty` varchar(100) DEFAULT NULL,
-  `created_by` bigint(20) UNSIGNED NOT NULL,
-  `is_global` tinyint(1) NOT NULL DEFAULT 0,
-  `status` enum('active','archived') NOT NULL DEFAULT 'active',
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `specialty` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `is_global` tinyint(1) NOT NULL DEFAULT '0',
+  `status` enum('active','archived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -89577,14 +89636,14 @@ CREATE TABLE `treatment_plans` (
 --
 
 CREATE TABLE `treatment_plan_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `treatment_plan_id` bigint(20) UNSIGNED NOT NULL,
-  `item_type` enum('lab','imaging','medication','procedure') NOT NULL,
-  `reference_id` bigint(20) UNSIGNED NOT NULL,
-  `dose` varchar(500) DEFAULT NULL,
-  `note` text DEFAULT NULL,
-  `priority` varchar(20) DEFAULT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `id` bigint UNSIGNED NOT NULL,
+  `treatment_plan_id` bigint UNSIGNED NOT NULL,
+  `item_type` enum('lab','imaging','medication','procedure') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reference_id` bigint UNSIGNED NOT NULL,
+  `dose` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `note` text COLLATE utf8mb4_unicode_ci,
+  `priority` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sort_order` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -89596,28 +89655,28 @@ CREATE TABLE `treatment_plan_items` (
 --
 
 CREATE TABLE `users` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `is_admin` int(11) NOT NULL DEFAULT 20,
-  `email` varchar(255) NOT NULL,
-  `filename` varchar(255) DEFAULT NULL,
-  `old_records` varchar(255) DEFAULT NULL,
-  `surname` varchar(255) NOT NULL,
-  `firstname` varchar(255) NOT NULL,
-  `othername` varchar(255) DEFAULT NULL,
-  `assignRole` varchar(255) DEFAULT NULL,
-  `assignPermission` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `is_admin` int NOT NULL DEFAULT '20',
+  `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `filename` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `old_records` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `surname` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `firstname` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `othername` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `assignRole` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `assignPermission` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
-  `password` varchar(255) NOT NULL,
-  `status` int(11) NOT NULL DEFAULT 1,
-  `remember_token` varchar(100) DEFAULT NULL,
+  `password` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
+  `remember_token` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_user_id` int(11) DEFAULT NULL,
-  `old_dependant_id` int(11) DEFAULT NULL,
-  `next_of_kin_name` int(11) DEFAULT NULL,
-  `next_of_kin_phone` int(11) DEFAULT NULL,
-  `next_of_kin_address` int(11) DEFAULT NULL,
-  `next_of_kin` int(11) DEFAULT NULL
+  `old_user_id` int DEFAULT NULL,
+  `old_dependant_id` int DEFAULT NULL,
+  `next_of_kin_name` int DEFAULT NULL,
+  `next_of_kin_phone` int DEFAULT NULL,
+  `next_of_kin_address` int DEFAULT NULL,
+  `next_of_kin` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -89831,9 +89890,9 @@ INSERT INTO `users` (`id`, `is_admin`, `email`, `filename`, `old_records`, `surn
 --
 
 CREATE TABLE `user_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `status` int(11) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -89858,14 +89917,14 @@ INSERT INTO `user_categories` (`id`, `name`, `status`, `created_at`, `updated_at
 --
 
 CREATE TABLE `v1_result_templates` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL COMMENT 'Template display name e.g. Haematology (FBC, Genotype, etc.)',
-  `description` varchar(500) DEFAULT NULL COMMENT 'Brief description of what the template covers',
-  `content` longtext NOT NULL COMMENT 'HTML content for CKEditor WYSIWYG editor',
-  `category` varchar(100) NOT NULL DEFAULT 'General' COMMENT 'Category for grouping: Haematology, Chemistry, etc.',
-  `sort_order` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'User who created the template',
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Template display name e.g. Haematology (FBC, Genotype, etc.)',
+  `description` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Brief description of what the template covers',
+  `content` longtext COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'HTML content for CKEditor WYSIWYG editor',
+  `category` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'General' COMMENT 'Category for grouping: Haematology, Chemistry, etc.',
+  `sort_order` int UNSIGNED NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` bigint UNSIGNED DEFAULT NULL COMMENT 'User who created the template',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -89902,11 +89961,11 @@ INSERT INTO `v1_result_templates` (`id`, `name`, `description`, `content`, `cate
 --
 
 CREATE TABLE `vaccine_product_mappings` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `vaccine_name` varchar(255) NOT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `is_primary` tinyint(1) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `vaccine_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_id` bigint UNSIGNED NOT NULL,
+  `is_primary` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -89918,19 +89977,19 @@ CREATE TABLE `vaccine_product_mappings` (
 --
 
 CREATE TABLE `vaccine_schedule_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `template_id` bigint(20) UNSIGNED NOT NULL,
-  `vaccine_name` varchar(255) NOT NULL,
-  `vaccine_code` varchar(255) DEFAULT NULL,
-  `dose_number` int(11) NOT NULL DEFAULT 1,
-  `dose_label` varchar(255) DEFAULT NULL,
-  `age_days` int(11) NOT NULL DEFAULT 0,
-  `age_display` varchar(255) NOT NULL,
-  `route` varchar(255) DEFAULT NULL,
-  `site` varchar(255) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `is_required` tinyint(1) NOT NULL DEFAULT 1,
+  `id` bigint UNSIGNED NOT NULL,
+  `template_id` bigint UNSIGNED NOT NULL,
+  `vaccine_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `vaccine_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `dose_number` int NOT NULL DEFAULT '1',
+  `dose_label` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `age_days` int NOT NULL DEFAULT '0',
+  `age_display` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `route` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `site` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `sort_order` int NOT NULL DEFAULT '0',
+  `is_required` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -89970,13 +90029,13 @@ INSERT INTO `vaccine_schedule_items` (`id`, `template_id`, `vaccine_name`, `vacc
 --
 
 CREATE TABLE `vaccine_schedule_templates` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `is_default` tinyint(1) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `country` varchar(255) DEFAULT 'Nigeria',
-  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `country` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT 'Nigeria',
+  `created_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -89996,24 +90055,24 @@ INSERT INTO `vaccine_schedule_templates` (`id`, `name`, `description`, `is_defau
 --
 
 CREATE TABLE `vital_signs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `requested_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `taken_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `blood_pressure` varchar(255) DEFAULT NULL,
-  `temp` varchar(255) DEFAULT NULL,
-  `heart_rate` varchar(255) DEFAULT NULL,
-  `resp_rate` varchar(255) DEFAULT NULL,
-  `weight` varchar(255) DEFAULT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `requested_by` bigint UNSIGNED DEFAULT NULL,
+  `taken_by` bigint UNSIGNED DEFAULT NULL,
+  `patient_id` bigint UNSIGNED DEFAULT NULL,
+  `blood_pressure` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `temp` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `heart_rate` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `resp_rate` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `weight` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `height` decimal(5,2) DEFAULT NULL COMMENT 'Height in centimeters',
   `spo2` decimal(5,2) DEFAULT NULL COMMENT 'Oxygen saturation percentage',
   `blood_sugar` decimal(6,2) DEFAULT NULL COMMENT 'Blood glucose in mg/dL',
   `bmi` decimal(5,2) DEFAULT NULL COMMENT 'Body Mass Index',
-  `pain_score` tinyint(4) DEFAULT NULL COMMENT 'Pain score 0-10',
-  `other_notes` varchar(255) DEFAULT NULL,
+  `pain_score` tinyint DEFAULT NULL COMMENT 'Pain score 0-10',
+  `other_notes` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `time_taken` datetime DEFAULT NULL,
-  `status` int(11) NOT NULL DEFAULT 1,
-  `source` varchar(30) DEFAULT NULL COMMENT 'emergency_intake|nursing|doctor',
+  `status` int NOT NULL DEFAULT '1',
+  `source` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'emergency_intake|nursing|doctor',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -90034,19 +90093,19 @@ INSERT INTO `vital_signs` (`id`, `requested_by`, `taken_by`, `patient_id`, `bloo
 --
 
 CREATE TABLE `wards` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL COMMENT 'Ward display name (e.g., "Male Medical Ward")',
-  `code` varchar(20) DEFAULT NULL COMMENT 'Short code (e.g., "MMW", "ICU")',
-  `type` enum('general','icu','pediatric','maternity','emergency','psychiatric','isolation','recovery','private','other') NOT NULL DEFAULT 'general' COMMENT 'Ward type for categorization',
-  `capacity` int(11) NOT NULL DEFAULT 0 COMMENT 'Maximum bed capacity',
-  `bed_price` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `floor` varchar(50) DEFAULT NULL COMMENT 'Floor/level location',
-  `building` varchar(100) DEFAULT NULL COMMENT 'Building name if multi-building',
-  `nurse_station` varchar(255) DEFAULT NULL COMMENT 'Associated nurse station',
-  `contact_extension` varchar(20) DEFAULT NULL COMMENT 'Phone extension',
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Ward display name (e.g., "Male Medical Ward")',
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Short code (e.g., "MMW", "ICU")',
+  `type` enum('general','icu','pediatric','maternity','emergency','psychiatric','isolation','recovery','private','other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'general' COMMENT 'Ward type for categorization',
+  `capacity` int NOT NULL DEFAULT '0' COMMENT 'Maximum bed capacity',
+  `bed_price` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `floor` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Floor/level location',
+  `building` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Building name if multi-building',
+  `nurse_station` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Associated nurse station',
+  `contact_extension` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Phone extension',
   `nurse_patient_ratio` decimal(3,1) DEFAULT NULL COMMENT 'Recommended nurse:patient ratio (e.g., 1:4 = 0.25)',
-  `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Ward operational status',
-  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Ward operational status',
+  `created_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -90072,9 +90131,9 @@ INSERT INTO `wards` (`id`, `name`, `code`, `type`, `capacity`, `bed_price`, `flo
 --
 
 CREATE TABLE `who_growth_standards` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `indicator` enum('wfa','lhfa','hcfa','bfa') NOT NULL,
-  `sex` enum('M','F') NOT NULL,
+  `id` bigint UNSIGNED NOT NULL,
+  `indicator` enum('wfa','lhfa','hcfa','bfa') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sex` enum('M','F') COLLATE utf8mb4_unicode_ci NOT NULL,
   `age_months` decimal(4,1) NOT NULL,
   `l_value` decimal(8,4) NOT NULL,
   `m_value` decimal(8,4) NOT NULL,
@@ -92060,7 +92119,8 @@ ALTER TABLE `products`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_products_status_name` (`status`,`product_name`),
   ADD KEY `idx_products_code` (`product_code`),
-  ADD KEY `idx_products_category` (`category_id`);
+  ADD KEY `idx_products_category` (`category_id`),
+  ADD KEY `idx_products_type` (`product_type`);
 
 --
 -- Indexes for table `product_categories`
@@ -92080,7 +92140,18 @@ ALTER TABLE `product_or_service_requests`
   ADD KEY `product_or_service_requests_encounter_id_foreign` (`encounter_id`),
   ADD KEY `product_or_service_requests_admission_request_id_foreign` (`admission_request_id`),
   ADD KEY `product_or_service_requests_created_by_foreign` (`created_by`),
-  ADD KEY `product_or_service_requests_hmo_id_foreign` (`hmo_id`);
+  ADD KEY `product_or_service_requests_hmo_id_foreign` (`hmo_id`),
+  ADD KEY `product_or_service_requests_packaging_id_foreign` (`packaging_id`);
+
+--
+-- Indexes for table `product_packagings`
+--
+ALTER TABLE `product_packagings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_product_packaging_name` (`product_id`,`name`),
+  ADD UNIQUE KEY `uq_product_packaging_level` (`product_id`,`level`),
+  ADD KEY `product_packagings_parent_packaging_id_foreign` (`parent_packaging_id`),
+  ADD KEY `idx_product_packagings_product` (`product_id`);
 
 --
 -- Indexes for table `product_requests`
@@ -92103,7 +92174,8 @@ ALTER TABLE `product_requests`
   ADD KEY `product_requests_qty_adjusted_by_foreign` (`qty_adjusted_by`),
   ADD KEY `product_requests_returned_by_foreign` (`returned_by`),
   ADD KEY `product_requests_damaged_by_foreign` (`damaged_by`),
-  ADD KEY `product_requests_approved_by_foreign` (`approved_by`);
+  ADD KEY `product_requests_approved_by_foreign` (`approved_by`),
+  ADD KEY `product_requests_packaging_id_foreign` (`packaging_id`);
 
 --
 -- Indexes for table `promotions`
@@ -92131,7 +92203,9 @@ ALTER TABLE `purchase_order_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `purchase_order_items_purchase_order_id_status_index` (`purchase_order_id`,`status`),
   ADD KEY `purchase_order_items_product_id_index` (`product_id`),
-  ADD KEY `purchase_order_items_fixed_asset_category_id_foreign` (`fixed_asset_category_id`);
+  ADD KEY `purchase_order_items_fixed_asset_category_id_foreign` (`fixed_asset_category_id`),
+  ADD KEY `purchase_order_items_packaging_id_foreign` (`packaging_id`),
+  ADD KEY `purchase_order_items_received_packaging_id_foreign` (`received_packaging_id`);
 
 --
 -- Indexes for table `purchase_order_payments`
@@ -92392,7 +92466,8 @@ ALTER TABLE `store_requisition_items`
   ADD KEY `store_requisition_items_source_batch_id_foreign` (`source_batch_id`),
   ADD KEY `store_requisition_items_destination_batch_id_foreign` (`destination_batch_id`),
   ADD KEY `store_requisition_items_store_requisition_id_status_index` (`store_requisition_id`,`status`),
-  ADD KEY `store_requisition_items_product_id_status_index` (`product_id`,`status`);
+  ADD KEY `store_requisition_items_product_id_status_index` (`product_id`,`status`),
+  ADD KEY `store_requisition_items_packaging_id_foreign` (`packaging_id`);
 
 --
 -- Indexes for table `store_stocks`
@@ -92506,1141 +92581,1147 @@ ALTER TABLE `who_growth_standards`
 -- AUTO_INCREMENT for table `accounting_periods`
 --
 ALTER TABLE `accounting_periods`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
 
 --
 -- AUTO_INCREMENT for table `account_classes`
 --
 ALTER TABLE `account_classes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `account_groups`
 --
 ALTER TABLE `account_groups`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `account_sub_accounts`
 --
 ALTER TABLE `account_sub_accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `admission_checklists`
 --
 ALTER TABLE `admission_checklists`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `admission_checklist_items`
 --
 ALTER TABLE `admission_checklist_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `admission_requests`
 --
 ALTER TABLE `admission_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `anc_investigations`
 --
 ALTER TABLE `anc_investigations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `anc_visits`
 --
 ALTER TABLE `anc_visits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `application_status`
 --
 ALTER TABLE `application_status`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1535;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1543;
 
 --
 -- AUTO_INCREMENT for table `banks`
 --
 ALTER TABLE `banks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `bank_reconciliations`
 --
 ALTER TABLE `bank_reconciliations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `bank_reconciliation_items`
 --
 ALTER TABLE `bank_reconciliation_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `bank_statement_imports`
 --
 ALTER TABLE `bank_statement_imports`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `beds`
 --
 ALTER TABLE `beds`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `budgets`
 --
 ALTER TABLE `budgets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `budget_lines`
 --
 ALTER TABLE `budget_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `budget_revisions`
 --
 ALTER TABLE `budget_revisions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `capex_approval_history`
 --
 ALTER TABLE `capex_approval_history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `capex_projects`
 --
 ALTER TABLE `capex_projects`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `capex_project_expenses`
 --
 ALTER TABLE `capex_project_expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `capex_request_items`
 --
 ALTER TABLE `capex_request_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `cash_flow_forecasts`
 --
 ALTER TABLE `cash_flow_forecasts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `cash_flow_forecast_items`
 --
 ALTER TABLE `cash_flow_forecast_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `cash_flow_forecast_periods`
 --
 ALTER TABLE `cash_flow_forecast_periods`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `cash_flow_recurring_patterns`
 --
 ALTER TABLE `cash_flow_recurring_patterns`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `chat_attachments`
 --
 ALTER TABLE `chat_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `chat_conversations`
 --
 ALTER TABLE `chat_conversations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `chat_conversation_archives`
 --
 ALTER TABLE `chat_conversation_archives`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `chat_messages`
 --
 ALTER TABLE `chat_messages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100;
 
 --
 -- AUTO_INCREMENT for table `chat_participants`
 --
 ALTER TABLE `chat_participants`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
 
 --
 -- AUTO_INCREMENT for table `checklist_templates`
 --
 ALTER TABLE `checklist_templates`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `checklist_template_items`
 --
 ALTER TABLE `checklist_template_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `child_growth_records`
 --
 ALTER TABLE `child_growth_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `clinics`
 --
 ALTER TABLE `clinics`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `clinic_note_templates`
 --
 ALTER TABLE `clinic_note_templates`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `clinic_schedules`
 --
 ALTER TABLE `clinic_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=187;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=187;
 
 --
 -- AUTO_INCREMENT for table `cost_allocation_details`
 --
 ALTER TABLE `cost_allocation_details`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `cost_allocation_runs`
 --
 ALTER TABLE `cost_allocation_runs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `cost_centers`
 --
 ALTER TABLE `cost_centers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `cost_center_allocations`
 --
 ALTER TABLE `cost_center_allocations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `cost_center_budgets`
 --
 ALTER TABLE `cost_center_budgets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `credit_notes`
 --
 ALTER TABLE `credit_notes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `credit_note_items`
 --
 ALTER TABLE `credit_note_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `dashboard_configs`
 --
 ALTER TABLE `dashboard_configs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `delivery_partograph`
 --
 ALTER TABLE `delivery_partograph`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `delivery_records`
 --
 ALTER TABLE `delivery_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `departments`
 --
 ALTER TABLE `departments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `details`
 --
 ALTER TABLE `details`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `diagnosis_favorites`
 --
 ALTER TABLE `diagnosis_favorites`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `discharge_checklists`
 --
 ALTER TABLE `discharge_checklists`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `discharge_checklist_items`
 --
 ALTER TABLE `discharge_checklist_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `disciplinary_queries`
 --
 ALTER TABLE `disciplinary_queries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `doctor_appointments`
 --
 ALTER TABLE `doctor_appointments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `doctor_availabilities`
 --
 ALTER TABLE `doctor_availabilities`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=235;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=235;
 
 --
 -- AUTO_INCREMENT for table `doctor_availability_overrides`
 --
 ALTER TABLE `doctor_availability_overrides`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `doctor_queues`
 --
 ALTER TABLE `doctor_queues`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `encounters`
 --
 ALTER TABLE `encounters`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `equipment_maintenance_schedules`
 --
 ALTER TABLE `equipment_maintenance_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `financial_kpis`
 --
 ALTER TABLE `financial_kpis`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `financial_kpi_alerts`
 --
 ALTER TABLE `financial_kpi_alerts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `financial_kpi_values`
 --
 ALTER TABLE `financial_kpi_values`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `fiscal_years`
 --
 ALTER TABLE `fiscal_years`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `fixed_assets`
 --
 ALTER TABLE `fixed_assets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_categories`
 --
 ALTER TABLE `fixed_asset_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_depreciations`
 --
 ALTER TABLE `fixed_asset_depreciations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_disposals`
 --
 ALTER TABLE `fixed_asset_disposals`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_transfers`
 --
 ALTER TABLE `fixed_asset_transfers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `hmos`
 --
 ALTER TABLE `hmos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `hmo_claims`
 --
 ALTER TABLE `hmo_claims`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `hmo_remittances`
 --
 ALTER TABLE `hmo_remittances`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `hmo_schemes`
 --
 ALTER TABLE `hmo_schemes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `hmo_tariffs`
 --
 ALTER TABLE `hmo_tariffs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4253;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4256;
 
 --
 -- AUTO_INCREMENT for table `hr_attachments`
 --
 ALTER TABLE `hr_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `imaging_service_requests`
 --
 ALTER TABLE `imaging_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `immunization_records`
 --
 ALTER TABLE `immunization_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `injection_administrations`
 --
 ALTER TABLE `injection_administrations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `intake_output_histories`
 --
 ALTER TABLE `intake_output_histories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `intake_output_periods`
 --
 ALTER TABLE `intake_output_periods`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `intake_output_records`
 --
 ALTER TABLE `intake_output_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `inter_account_transfers`
 --
 ALTER TABLE `inter_account_transfers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
 
 --
 -- AUTO_INCREMENT for table `journal_entry_edits`
 --
 ALTER TABLE `journal_entry_edits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `journal_entry_lines`
 --
 ALTER TABLE `journal_entry_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=205;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=205;
 
 --
 -- AUTO_INCREMENT for table `lab_service_requests`
 --
 ALTER TABLE `lab_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `lab_workbench_audit_logs`
 --
 ALTER TABLE `lab_workbench_audit_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `leases`
 --
 ALTER TABLE `leases`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `lease_modifications`
 --
 ALTER TABLE `lease_modifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `lease_payment_schedules`
 --
 ALTER TABLE `lease_payment_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
 
 --
 -- AUTO_INCREMENT for table `leave_balances`
 --
 ALTER TABLE `leave_balances`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `leave_requests`
 --
 ALTER TABLE `leave_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `leave_types`
 --
 ALTER TABLE `leave_types`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `liability_payment_schedules`
 --
 ALTER TABLE `liability_payment_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `liability_schedules`
 --
 ALTER TABLE `liability_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `maternity_babies`
 --
 ALTER TABLE `maternity_babies`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `maternity_encounter_links`
 --
 ALTER TABLE `maternity_encounter_links`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `maternity_enrollments`
 --
 ALTER TABLE `maternity_enrollments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `maternity_medical_history`
 --
 ALTER TABLE `maternity_medical_history`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `maternity_previous_pregnancies`
 --
 ALTER TABLE `maternity_previous_pregnancies`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `medical_reports`
 --
 ALTER TABLE `medical_reports`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `medication_administrations`
 --
 ALTER TABLE `medication_administrations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `medication_histories`
 --
 ALTER TABLE `medication_histories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `medication_schedules`
 --
 ALTER TABLE `medication_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=315;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=321;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
 --
 ALTER TABLE `misc_bills`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `nursing_notes`
 --
 ALTER TABLE `nursing_notes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `nursing_note_types`
 --
 ALTER TABLE `nursing_note_types`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `nursing_shifts`
 --
 ALTER TABLE `nursing_shifts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `participants`
 --
 ALTER TABLE `participants`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `patient_accounts`
 --
 ALTER TABLE `patient_accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `patient_deposits`
 --
 ALTER TABLE `patient_deposits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `patient_deposit_applications`
 --
 ALTER TABLE `patient_deposit_applications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `patient_immunization_schedules`
 --
 ALTER TABLE `patient_immunization_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
 
 --
 -- AUTO_INCREMENT for table `patient_profiles`
 --
 ALTER TABLE `patient_profiles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `payroll_batches`
 --
 ALTER TABLE `payroll_batches`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `payroll_items`
 --
 ALTER TABLE `payroll_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `payroll_item_details`
 --
 ALTER TABLE `payroll_item_details`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `pay_heads`
 --
 ALTER TABLE `pay_heads`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=174;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=174;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `petty_cash_funds`
 --
 ALTER TABLE `petty_cash_funds`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `petty_cash_reconciliations`
 --
 ALTER TABLE `petty_cash_reconciliations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `petty_cash_transactions`
 --
 ALTER TABLE `petty_cash_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `pharmacy_damages`
 --
 ALTER TABLE `pharmacy_damages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `pharmacy_returns`
 --
 ALTER TABLE `pharmacy_returns`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `postnatal_visits`
 --
 ALTER TABLE `postnatal_visits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `prices`
 --
 ALTER TABLE `prices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=814;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=814;
 
 --
 -- AUTO_INCREMENT for table `procedures`
 --
 ALTER TABLE `procedures`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `procedure_categories`
 --
 ALTER TABLE `procedure_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `procedure_definitions`
 --
 ALTER TABLE `procedure_definitions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `procedure_items`
 --
 ALTER TABLE `procedure_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `procedure_notes`
 --
 ALTER TABLE `procedure_notes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `procedure_team_members`
 --
 ALTER TABLE `procedure_team_members`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=816;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=816;
 
 --
 -- AUTO_INCREMENT for table `product_categories`
 --
 ALTER TABLE `product_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=91;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
+
+--
+-- AUTO_INCREMENT for table `product_packagings`
+--
+ALTER TABLE `product_packagings`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `product_requests`
 --
 ALTER TABLE `product_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `promotions`
 --
 ALTER TABLE `promotions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `purchase_orders`
 --
 ALTER TABLE `purchase_orders`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `purchase_order_items`
 --
 ALTER TABLE `purchase_order_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `purchase_order_payments`
 --
 ALTER TABLE `purchase_order_payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `reason_for_encounters`
 --
 ALTER TABLE `reason_for_encounters`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12132;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12132;
 
 --
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `route_metadata`
 --
 ALTER TABLE `route_metadata`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `saved_report_filters`
 --
 ALTER TABLE `saved_report_filters`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=310;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `service_categories`
 --
 ALTER TABLE `service_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `service_prices`
 --
 ALTER TABLE `service_prices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=310;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=310;
 
 --
 -- AUTO_INCREMENT for table `shift_actions`
 --
 ALTER TABLE `shift_actions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `shift_handovers`
 --
 ALTER TABLE `shift_handovers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `specialist_referrals`
 --
 ALTER TABLE `specialist_referrals`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `specializations`
 --
 ALTER TABLE `specializations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `staff`
 --
 ALTER TABLE `staff`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=574;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `staff_salary_profiles`
 --
 ALTER TABLE `staff_salary_profiles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `staff_salary_profile_items`
 --
 ALTER TABLE `staff_salary_profile_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `staff_suspensions`
 --
 ALTER TABLE `staff_suspensions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `staff_terminations`
 --
 ALTER TABLE `staff_terminations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `statutory_remittances`
 --
 ALTER TABLE `statutory_remittances`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `stocks`
 --
 ALTER TABLE `stocks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=903;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=903;
 
 --
 -- AUTO_INCREMENT for table `stock_batches`
 --
 ALTER TABLE `stock_batches`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1327;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1327;
 
 --
 -- AUTO_INCREMENT for table `stock_batch_transactions`
 --
 ALTER TABLE `stock_batch_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `stock_invoices`
 --
 ALTER TABLE `stock_invoices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `stock_orders`
 --
 ALTER TABLE `stock_orders`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `stores`
 --
 ALTER TABLE `stores`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `store_requisitions`
 --
 ALTER TABLE `store_requisitions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `store_requisition_items`
 --
 ALTER TABLE `store_requisition_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `store_stocks`
 --
 ALTER TABLE `store_stocks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=841;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=841;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
 --
 ALTER TABLE `suppliers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `threads`
 --
 ALTER TABLE `threads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `treatment_plans`
 --
 ALTER TABLE `treatment_plans`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `treatment_plan_items`
 --
 ALTER TABLE `treatment_plan_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65198;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65198;
 
 --
 -- AUTO_INCREMENT for table `user_categories`
 --
 ALTER TABLE `user_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `v1_result_templates`
 --
 ALTER TABLE `v1_result_templates`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `vaccine_product_mappings`
 --
 ALTER TABLE `vaccine_product_mappings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `vaccine_schedule_items`
 --
 ALTER TABLE `vaccine_schedule_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `vaccine_schedule_templates`
 --
 ALTER TABLE `vaccine_schedule_templates`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `vital_signs`
 --
 ALTER TABLE `vital_signs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `wards`
 --
 ALTER TABLE `wards`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `who_growth_standards`
 --
 ALTER TABLE `who_growth_standards`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=489;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=489;
 
 --
 -- Constraints for dumped tables
@@ -94178,42 +94259,6 @@ ALTER TABLE `hr_attachments`
   ADD CONSTRAINT `hr_attachments_uploaded_by_foreign` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`);
 
 --
--- Constraints for table `imaging_service_requests`
---
-ALTER TABLE `imaging_service_requests`
-  ADD CONSTRAINT `imaging_service_requests_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `imaging_service_requests_billed_by_foreign` FOREIGN KEY (`billed_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `imaging_service_requests_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `imaging_service_requests_doctor_id_foreign` FOREIGN KEY (`doctor_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `imaging_service_requests_encounter_id_foreign` FOREIGN KEY (`encounter_id`) REFERENCES `encounters` (`id`),
-  ADD CONSTRAINT `imaging_service_requests_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
-  ADD CONSTRAINT `imaging_service_requests_rejected_by_foreign` FOREIGN KEY (`rejected_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `imaging_service_requests_result_by_foreign` FOREIGN KEY (`result_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `imaging_service_requests_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`),
-  ADD CONSTRAINT `imaging_service_requests_service_request_id_foreign` FOREIGN KEY (`service_request_id`) REFERENCES `product_or_service_requests` (`id`);
-
---
--- Constraints for table `immunization_records`
---
-ALTER TABLE `immunization_records`
-  ADD CONSTRAINT `immunization_records_administered_by_foreign` FOREIGN KEY (`administered_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `immunization_records_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `immunization_records_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `immunization_records_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `immunization_records_product_or_service_request_id_foreign` FOREIGN KEY (`product_or_service_request_id`) REFERENCES `product_or_service_requests` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `injection_administrations`
---
-ALTER TABLE `injection_administrations`
-  ADD CONSTRAINT `injection_administrations_administered_by_foreign` FOREIGN KEY (`administered_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `injection_administrations_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `injection_administrations_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `injection_administrations_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `injection_administrations_product_or_service_request_id_foreign` FOREIGN KEY (`product_or_service_request_id`) REFERENCES `product_or_service_requests` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `injection_administrations_product_request_id_foreign` FOREIGN KEY (`product_request_id`) REFERENCES `product_requests` (`id`) ON DELETE SET NULL;
-
---
 -- Constraints for table `intake_output_histories`
 --
 ALTER TABLE `intake_output_histories`
@@ -94468,15 +94513,6 @@ ALTER TABLE `patient_deposit_applications`
   ADD CONSTRAINT `patient_deposit_applications_reversed_by_foreign` FOREIGN KEY (`reversed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `patient_immunization_schedules`
---
-ALTER TABLE `patient_immunization_schedules`
-  ADD CONSTRAINT `patient_immunization_schedules_immunization_record_id_foreign` FOREIGN KEY (`immunization_record_id`) REFERENCES `immunization_records` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `patient_immunization_schedules_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `patient_immunization_schedules_schedule_item_id_foreign` FOREIGN KEY (`schedule_item_id`) REFERENCES `vaccine_schedule_items` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `patient_immunization_schedules_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
-
---
 -- Constraints for table `patient_profiles`
 --
 ALTER TABLE `patient_profiles`
@@ -94590,37 +94626,11 @@ ALTER TABLE `postnatal_visits`
   ADD CONSTRAINT `postnatal_visits_seen_by_foreign` FOREIGN KEY (`seen_by`) REFERENCES `users` (`id`);
 
 --
--- Constraints for table `procedures`
---
-ALTER TABLE `procedures`
-  ADD CONSTRAINT `procedures_admission_request_id_foreign` FOREIGN KEY (`admission_request_id`) REFERENCES `admission_requests` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `procedures_billed_by_foreign` FOREIGN KEY (`billed_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `procedures_cancelled_by_foreign` FOREIGN KEY (`cancelled_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `procedures_encounter_id_foreign` FOREIGN KEY (`encounter_id`) REFERENCES `encounters` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `procedures_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
-  ADD CONSTRAINT `procedures_post_notes_by_foreign` FOREIGN KEY (`post_notes_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `procedures_pre_notes_by_foreign` FOREIGN KEY (`pre_notes_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `procedures_procedure_definition_id_foreign` FOREIGN KEY (`procedure_definition_id`) REFERENCES `procedure_definitions` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `procedures_product_or_service_request_id_foreign` FOREIGN KEY (`product_or_service_request_id`) REFERENCES `product_or_service_requests` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `procedures_requested_by_foreign` FOREIGN KEY (`requested_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `procedures_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`);
-
---
 -- Constraints for table `procedure_definitions`
 --
 ALTER TABLE `procedure_definitions`
   ADD CONSTRAINT `procedure_definitions_procedure_category_id_foreign` FOREIGN KEY (`procedure_category_id`) REFERENCES `procedure_categories` (`id`),
   ADD CONSTRAINT `procedure_definitions_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `procedure_items`
---
-ALTER TABLE `procedure_items`
-  ADD CONSTRAINT `procedure_items_imaging_service_request_id_foreign` FOREIGN KEY (`imaging_service_request_id`) REFERENCES `imaging_service_requests` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `procedure_items_lab_service_request_id_foreign` FOREIGN KEY (`lab_service_request_id`) REFERENCES `lab_service_requests` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `procedure_items_procedure_id_foreign` FOREIGN KEY (`procedure_id`) REFERENCES `procedures` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `procedure_items_product_or_service_request_id_foreign` FOREIGN KEY (`product_or_service_request_id`) REFERENCES `product_or_service_requests` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `procedure_items_product_request_id_foreign` FOREIGN KEY (`product_request_id`) REFERENCES `product_requests` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `procedure_notes`
@@ -94645,8 +94655,16 @@ ALTER TABLE `product_or_service_requests`
   ADD CONSTRAINT `product_or_service_requests_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_or_service_requests_encounter_id_foreign` FOREIGN KEY (`encounter_id`) REFERENCES `encounters` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_or_service_requests_hmo_id_foreign` FOREIGN KEY (`hmo_id`) REFERENCES `hmos` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `product_or_service_requests_packaging_id_foreign` FOREIGN KEY (`packaging_id`) REFERENCES `product_packagings` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_or_service_requests_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `product_or_service_requests_validated_by_foreign` FOREIGN KEY (`validated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `product_packagings`
+--
+ALTER TABLE `product_packagings`
+  ADD CONSTRAINT `product_packagings_parent_packaging_id_foreign` FOREIGN KEY (`parent_packaging_id`) REFERENCES `product_packagings` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `product_packagings_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `product_requests`
@@ -94660,6 +94678,7 @@ ALTER TABLE `product_requests`
   ADD CONSTRAINT `product_requests_dispensed_from_batch_id_foreign` FOREIGN KEY (`dispensed_from_batch_id`) REFERENCES `stock_batches` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_requests_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_requests_original_product_id_foreign` FOREIGN KEY (`original_product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `product_requests_packaging_id_foreign` FOREIGN KEY (`packaging_id`) REFERENCES `product_packagings` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_requests_qty_adjusted_by_foreign` FOREIGN KEY (`qty_adjusted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_requests_returned_by_foreign` FOREIGN KEY (`returned_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
@@ -94678,8 +94697,10 @@ ALTER TABLE `purchase_orders`
 --
 ALTER TABLE `purchase_order_items`
   ADD CONSTRAINT `purchase_order_items_fixed_asset_category_id_foreign` FOREIGN KEY (`fixed_asset_category_id`) REFERENCES `fixed_asset_categories` (`id`),
+  ADD CONSTRAINT `purchase_order_items_packaging_id_foreign` FOREIGN KEY (`packaging_id`) REFERENCES `product_packagings` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `purchase_order_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
-  ADD CONSTRAINT `purchase_order_items_purchase_order_id_foreign` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `purchase_order_items_purchase_order_id_foreign` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `purchase_order_items_received_packaging_id_foreign` FOREIGN KEY (`received_packaging_id`) REFERENCES `product_packagings` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `purchase_order_payments`
@@ -94780,16 +94801,6 @@ ALTER TABLE `statutory_remittances`
   ADD CONSTRAINT `statutory_remittances_voided_by_foreign` FOREIGN KEY (`voided_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `stock_batches`
---
-ALTER TABLE `stock_batches`
-  ADD CONSTRAINT `stock_batches_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `stock_batches_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
-  ADD CONSTRAINT `stock_batches_purchase_order_item_id_foreign` FOREIGN KEY (`purchase_order_item_id`) REFERENCES `purchase_order_items` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `stock_batches_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`),
-  ADD CONSTRAINT `stock_batches_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL;
-
---
 -- Constraints for table `stock_batch_transactions`
 --
 ALTER TABLE `stock_batch_transactions`
@@ -94817,10 +94828,7 @@ ALTER TABLE `store_requisitions`
 -- Constraints for table `store_requisition_items`
 --
 ALTER TABLE `store_requisition_items`
-  ADD CONSTRAINT `store_requisition_items_destination_batch_id_foreign` FOREIGN KEY (`destination_batch_id`) REFERENCES `stock_batches` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `store_requisition_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
-  ADD CONSTRAINT `store_requisition_items_source_batch_id_foreign` FOREIGN KEY (`source_batch_id`) REFERENCES `stock_batches` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `store_requisition_items_store_requisition_id_foreign` FOREIGN KEY (`store_requisition_id`) REFERENCES `store_requisitions` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `store_requisition_items_packaging_id_foreign` FOREIGN KEY (`packaging_id`) REFERENCES `product_packagings` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `treatment_plans`
