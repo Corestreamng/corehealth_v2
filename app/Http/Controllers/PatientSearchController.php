@@ -127,6 +127,13 @@ class PatientSearchController extends Controller
                 $base['pending_count'] = $base['pending_meds'];
                 break;
 
+            case 'hmo':
+                $base['pending_count'] = \App\Models\ProductOrServiceRequest::where('user_id', $patient->user_id)
+                    ->whereNotNull('coverage_mode')
+                    ->where('validation_status', 'pending')
+                    ->where('claims_amount', '>', 0)->count();
+                break;
+
             default: // reception — no pending count needed
                 $base['allergies'] = $patient->allergies ?? [];
                 break;
