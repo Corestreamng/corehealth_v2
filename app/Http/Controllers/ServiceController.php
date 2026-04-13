@@ -23,83 +23,75 @@ class ServiceController extends Controller
 {
     public function listServices(Request $request)
     {
-        $query = Service::where('status', '=', 1)->with('category');
+        $query = Service::where('status', '=', 1)->with(['category' => function ($q) {
+            $q->select(['id', 'category_name']);
+        }, 'price']);
 
         // Filter by category if provided
-        if ($request->has('category') && $request->category) {
+        if ($request->filled('category') && $request->category !== 'all') {
             $query->where('category_id', $request->category);
         }
 
-        $pc = $query->orderBy('service_name', 'ASC')->get();
-
-        return Datatables::of($pc)
+        return Datatables::of($query->orderBy('service_name', 'ASC'))
             ->addIndexColumn()
-            ->addColumn('service_code', function ($pc) {
-                $service_code = '<span class="badge badge-pill badge-dark">' . $pc->service_code . '</sapn>';
-                return $service_code;
-            })
-            ->addColumn('category_id', function ($pc) {
-                $category_name = '<span class="badge badge-pill badge-dark">' . (($pc->category) ? $pc->category->category_name : 'N/A') . '</sapn>';
-                return $category_name;
-            })
-            ->addColumn('visible', function ($pc) {
+            ->addColumn('service_info', function ($pc) {
+                $catName = optional($pc->category)->category_name ?? 'N/A';
+                $catColors = [
+                    2 => ['#d4edda', '#155724'],   // Lab
+                    6 => ['#d1ecf1', '#0c5460'],   // Imaging
+                ];
+                $catBg = $catColors[$pc->category_id][0] ?? '#e9ecef';
+                $catFg = $catColors[$pc->category_id][1] ?? '#495057';
 
-                $active = '<span class="badge badge-pill badge-success">Active</sapn>';
-                $inactive = '<span class="badge badge-pill badge-dark">Inactive</sapn>';
-
-                return (($pc->status == 0) ? $inactive : $active);
-            })
-            ->addColumn('adjust', function ($pc) {
-
-                if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # code...
-                    $url = route('service-prices.edit', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-secondary btn-sm"><i class="fa fa-info-circle"></i> Add/Adjust</a>';
-                } else {
-                    # code...
-                    $label = '<button disabled class="btn btn-secondary btn-sm"> <i class="fa fa-info-circle"></i> Add/Adjust</button>';
-                    return $label;
-                }
-            })
-            ->addColumn('template', function ($pc) {
-                // Show template builder button only for Med Lab (2) and Imaging (6) categories
+                $templateBadge = '';
                 if (in_array($pc->category_id, [2, 6])) {
-                    $url = route('services.build-template', $pc->id);
+                    $templateBadge = !empty($pc->result_template_v2)
+                        ? ' <span class="badge badge-success" style="font-size:0.65rem"><i class="mdi mdi-check"></i> Template</span>'
+                        : ' <span class="badge badge-light text-muted" style="font-size:0.65rem"><i class="mdi mdi-alert-outline"></i> No Template</span>';
+                }
+
+                return '<div>'
+                    . '<strong>' . e($pc->service_name) . '</strong>'
+                    . '<br><small class="text-muted">' . e($pc->service_code) . '</small>'
+                    . ' <span class="badge" style="background:' . $catBg . ';color:' . $catFg . ';font-size:0.7rem">' . e($catName) . '</span>'
+                    . $templateBadge
+                    . '</div>';
+            })
+            ->addColumn('price_info', function ($pc) {
+                $price = optional($pc->price)->sale_price;
+                return $price ? '₦' . number_format($price, 2) : '<span class="text-muted">—</span>';
+            })
+            ->addColumn('actions', function ($pc) {
+                $canManage = Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE']);
+                if (!$canManage) {
+                    return '<button disabled class="btn btn-sm btn-secondary"><i class="mdi mdi-eye"></i></button>';
+                }
+                $viewUrl = route('services.show', $pc->id);
+                $editUrl = route('services.edit', $pc->id);
+                $priceUrl = route('service-prices.edit', $pc->id);
+                $tariffUrl = route('service-tariffs.view', $pc->id);
+
+                $templateBtn = '';
+                if (in_array($pc->category_id, [2, 6])) {
+                    $tmplUrl = route('services.build-template', $pc->id);
                     $hasTemplate = !empty($pc->result_template_v2);
-                    $icon = $hasTemplate ? 'fa-edit' : 'fa-plus';
-                    $text = $hasTemplate ? 'Edit' : 'Build';
-                    $badge = $hasTemplate ? '<span class="badge badge-success badge-sm ml-1">✓</span>' : '';
-
-                    return '<a href="' . $url . '" class="btn btn-warning btn-sm"><i class="fa ' . $icon . '"></i> ' . $text . '</a>' . $badge;
-                } else {
-                    return '<span class="text-muted">N/A</span>';
+                    $tmplIcon = $hasTemplate ? 'mdi-file-document-edit' : 'mdi-file-plus';
+                    $tmplTitle = $hasTemplate ? 'Edit Template' : 'Build Template';
+                    $templateBtn = '<a href="' . $tmplUrl . '" class="dropdown-item"><i class="mdi ' . $tmplIcon . ' mr-1"></i> ' . $tmplTitle . '</a>';
                 }
+
+                return '<div class="btn-group">'
+                    . '<a href="' . $viewUrl . '" class="btn btn-sm btn-outline-primary" title="View"><i class="mdi mdi-eye"></i></a>'
+                    . '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="mdi mdi-pencil"></i></a>'
+                    . '<div class="btn-group">'
+                    . '<button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-dots-vertical"></i></button>'
+                    . '<div class="dropdown-menu dropdown-menu-right">'
+                    . '<a href="' . $priceUrl . '" class="dropdown-item"><i class="mdi mdi-currency-ngn mr-1"></i> Adjust Price</a>'
+                    . '<a href="' . $tariffUrl . '" class="dropdown-item"><i class="mdi mdi-shield-check mr-1"></i> HMO Tariffs</a>'
+                    . $templateBtn
+                    . '</div></div></div>';
             })
-            ->addColumn('trans', function ($pc) {
-
-                if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # code...
-                    $url = route('services.show', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-map-pin"></i> View</a>';
-                } else {
-                    # code...
-                    $label = '<button disabled class="btn btn-info btn-sm"> <i class="fa fa-map-pin"></i> View</button>';
-                    return $label;
-                }
-            })
-            ->addColumn('edit', function ($pc) {
-
-                if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-
-                    $url = route('services.edit', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-secondary btn-sm"><i class="fa fa-i-cursor"></i> Edit</a>';
-                } else {
-
-                    $label = '<button disabled class="btn btn-secondary btn-sm"> <i class="fa fa-i-cursor"></i> Edit</button>';
-                    return $label;
-                }
-            })
-            ->rawColumns(['service_code', 'category_id', 'visible', 'edit', 'adjust', 'template', 'trans'])
+            ->rawColumns(['service_info', 'price_info', 'actions'])
             ->make(true);
     }
 
@@ -202,9 +194,12 @@ class ServiceController extends Controller
             $categoryName = $category ? $category->category_name : null;
         }
 
+        $categories = ServiceCategory::where('status', 1)->orderBy('category_name')->pluck('category_name', 'id')->all();
+
         return view('admin.service.index', [
             'filterCategory' => $categoryId,
-            'categoryName' => $categoryName
+            'categoryName' => $categoryName,
+            'categories' => $categories,
         ]);
     }
 
