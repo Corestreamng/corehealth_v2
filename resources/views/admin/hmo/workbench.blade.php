@@ -802,6 +802,9 @@
                                 <button class="btn btn-sm btn-outline-primary pf-view-clinical">
                                     <i class="mdi mdi-stethoscope mr-2"></i>Clinical Context
                                 </button>
+                                <button class="btn btn-sm btn-outline-warning" id="pfEditPatientBtn">
+                                    <i class="mdi mdi-account-edit mr-2"></i>Edit Patient
+                                </button>
                                 <button class="btn btn-sm btn-outline-info pf-view-history">
                                     <i class="mdi mdi-history mr-2"></i>Claim History
                                 </button>
@@ -1185,6 +1188,7 @@
     </div>
 </section>
 @include('admin.partials.clinical_context_modal')
+@include('admin.partials.patient-form-modal')
 
 <!-- View Details Modal -->
 <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog">
@@ -2116,6 +2120,20 @@
 @section('scripts')
 <script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
 <script>
+// Patient Form Config for the shared patient-form-modal partial
+window.patientFormConfig = {
+    nextFileNumberUrl: '{{ route("reception.patient.next-file-number") }}',
+    checkFileNumberUrl: '{{ route("reception.patient.check-file-number") }}',
+    updateUrl: '/reception/patient/__ID__/update',
+    registerUrl: '{{ route("reception.patient.quick-register") }}',
+    hmos: @json($hmos->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
+    onSuccess: function(patientId, mode) {
+        if (patientId && typeof window.loadPatientFocus === 'function') {
+            window.loadPatientFocus(patientId);
+        }
+    }
+};
+
 $(function() {
     // Toastr options
     toastr.options = {
@@ -4371,6 +4389,7 @@ $(function() {
         renderRecentPatients();
 
         // ── Load patient data ───────────────────────────────────
+        window.loadPatientFocus = loadPatientFocus; // Expose for patient form callback
         function loadPatientFocus(patientId) {
             pfPatientId = patientId;
             pfSelectedIds = [];
@@ -4832,6 +4851,25 @@ $(function() {
             if (typeof loadClinicalContext === 'function') {
                 loadClinicalContext(pfPatientId);
             }
+        });
+
+        // ── Edit Patient button ─────────────────────────────────
+        $(document).on('click', '#pfEditPatientBtn', function() {
+            if (!pfPatientId) return;
+            var $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i>Loading...');
+
+            $.get('/reception/patient/' + pfPatientId, function(resp) {
+                if (resp.patient) {
+                    showPatientFormModal('edit', resp.patient);
+                } else {
+                    toastr.error('Failed to load patient data');
+                }
+            }).fail(function() {
+                toastr.error('Failed to load patient data');
+            }).always(function() {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-account-edit mr-2"></i>Edit Patient');
+            });
         });
 
         $(document).on('click', '.pf-view-history', function() {

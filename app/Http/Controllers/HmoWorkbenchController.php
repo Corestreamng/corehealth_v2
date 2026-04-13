@@ -47,7 +47,7 @@ class HmoWorkbenchController extends Controller
      */
     public function index()
     {
-        $hmos = Hmo::where('status', 1)->orderBy('name', 'ASC')->get();
+        $hmos = Hmo::with('scheme')->where('status', 1)->orderBy('name', 'ASC')->get();
         $rejectionReasons = self::REJECTION_REASONS;
 
         // Users who have participated in validation (approved or rejected at least one request)

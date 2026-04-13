@@ -625,6 +625,14 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['auth']], function () {
+        // Shared Clinical Context endpoints (used by all workbenches via clinical-context.js)
+        Route::get('clinical-context/patient/{patientId}/vitals', [ClinicalContextController::class, 'getVitals'])->name('clinical-context.vitals');
+        Route::get('clinical-context/patient/{patientId}/notes', [ClinicalContextController::class, 'getNotes'])->name('clinical-context.notes');
+        Route::get('clinical-context/patient/{patientId}/medications', [ClinicalContextController::class, 'getMedications'])->name('clinical-context.medications');
+        Route::get('clinical-context/patient/{patientId}/allergies', [ClinicalContextController::class, 'getAllergies'])->name('clinical-context.allergies');
+        Route::get('clinical-context/patient/{patientId}/labs', [ClinicalContextController::class, 'getLabs'])->name('clinical-context.labs');
+        Route::get('clinical-context/patient/{patientId}/imaging', [ClinicalContextController::class, 'getImaging'])->name('clinical-context.imaging');
+
         // Creating and Listing Permissions
         Route::resource('services', ServiceController::class);
         Route::resource('beds', BedController::class);
@@ -786,12 +794,6 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('hmo/requests/batch-submit-auth-code', [HmoWorkbenchController::class, 'batchSubmitAuthCode'])->name('hmo.batch-submit-auth-code');
         Route::post('hmo/patient/{patient}/update-hmo', [HmoWorkbenchController::class, 'updatePatientHmo'])->name('hmo.update-patient-hmo');
         Route::get('hmo/patient/{patientId}/all-requests', [HmoWorkbenchController::class, 'getPatientAllRequests'])->name('hmo.patient.all-requests');
-
-        // Shared Clinical Context endpoints (used by all workbenches via clinical-context.js)
-        Route::get('clinical-context/patient/{patientId}/vitals', [ClinicalContextController::class, 'getVitals'])->name('clinical-context.vitals');
-        Route::get('clinical-context/patient/{patientId}/notes', [ClinicalContextController::class, 'getNotes'])->name('clinical-context.notes');
-        Route::get('clinical-context/patient/{patientId}/medications', [ClinicalContextController::class, 'getMedications'])->name('clinical-context.medications');
-        Route::get('clinical-context/patient/{patientId}/allergies', [ClinicalContextController::class, 'getAllergies'])->name('clinical-context.allergies');
 
         // HMO Reports
         Route::get('hmo/reports', [HmoReportsController::class, 'index'])->name('hmo.reports');
