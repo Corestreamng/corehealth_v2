@@ -2083,6 +2083,138 @@ class HmoWorkbenchController extends Controller
     }
 
     /**
+     * Get ALL HMO requests for a single patient, grouped by status tab.
+     * Used by the Patient Focus mode.
+     */
+    public function getPatientAllRequests($patientId)
+    {
+        $patient = Patient::with(['user', 'hmo.scheme', 'account'])->findOrFail($patientId);
+
+        $baseQuery = ProductOrServiceRequest::with([
+                'service.price', 'service.category',
+                'product.price', 'product.category',
+                'encounter.doctor',
+                'procedure.procedureDefinition',
+                'validator',
+                'hmo',
+            ])
+            ->where('user_id', $patient->user_id)
+            ->whereNotNull('coverage_mode');
+
+        // Fetch all in one query then partition in PHP
+        $allRequests = (clone $baseQuery)->orderBy('created_at', 'desc')->get();
+
+        $tabs = [
+            'pending'       => collect(),
+            'awaiting_code' => collect(),
+            'approved'      => collect(),
+            'express'       => collect(),
+            'rejected'      => collect(),
+            'past'          => collect(), // billed / paid
+        ];
+
+        foreach ($allRequests as $req) {
+            if ($req->coverage_mode === 'express') {
+                $tabs['express']->push($req);
+            } elseif ($req->payment_id && $req->claims_amount > 0) {
+                $tabs['past']->push($req);
+            } elseif ($req->validation_status === 'pending' && $req->claims_amount > 0) {
+                $tabs['pending']->push($req);
+            } elseif ($req->validation_status === 'awaiting_code') {
+                $tabs['awaiting_code']->push($req);
+            } elseif ($req->validation_status === 'approved' && $req->claims_amount > 0) {
+                $tabs['approved']->push($req);
+            } elseif ($req->validation_status === 'rejected' && $req->claims_amount > 0) {
+                $tabs['rejected']->push($req);
+            } else {
+                $tabs['past']->push($req);
+            }
+        }
+
+        $mapRequest = function ($req) {
+            $itemType = 'Service';
+            $unitPrice = 0;
+            $category = null;
+            $itemName = HmoHelper::getDisplayName($req);
+
+            if ($req->product_id && $req->product) {
+                $itemType = 'Product';
+                $unitPrice = $req->product->price->current_sale_price ?? 0;
+                $category = $req->product->category->category_name ?? null;
+            } elseif ($req->service_id && $req->service) {
+                if ($req->procedure) {
+                    $itemType = 'Procedure';
+                }
+                $unitPrice = $req->service->price->sale_price ?? 0;
+                $category = $req->service->category->category_name ?? null;
+            }
+
+            return [
+                'id'                => $req->id,
+                'type'              => $itemType,
+                'name'              => $itemName,
+                'category'          => $category,
+                'qty'               => (int) ($req->qty ?? 1),
+                'unit_price'        => (float) $unitPrice,
+                'claims_amount'     => (float) $req->claims_amount,
+                'payable_amount'    => (float) $req->payable_amount,
+                'coverage_mode'     => $req->coverage_mode,
+                'validation_status' => $req->validation_status,
+                'validation_notes'  => $req->validation_notes,
+                'auth_code'         => $req->auth_code,
+                'validated_by'      => $req->validator ? userfullname($req->validated_by) : null,
+                'validated_at'      => $req->validated_at ? Carbon::parse($req->validated_at)->format('d M Y, h:i A') : null,
+                'created_at'        => $req->created_at ? $req->created_at->format('d M Y, h:i A') : null,
+                'hours_ago'         => $req->created_at ? round($req->created_at->diffInMinutes(now()) / 60, 1) : null,
+                'encounter_id'      => $req->encounter_id,
+                'doctor'            => ($req->encounter && $req->encounter->doctor) ? userfullname($req->encounter->doctor_id) : null,
+            ];
+        };
+
+        $result = [];
+        $counts = [];
+        foreach ($tabs as $tabName => $collection) {
+            $result[$tabName] = $collection->map($mapRequest)->values();
+            $counts[$tabName] = $collection->count();
+        }
+
+        // Summary totals
+        $totalClaimsApproved = $allRequests->where('validation_status', 'approved')->sum('claims_amount');
+        $totalPayableApproved = $allRequests->where('validation_status', 'approved')->sum('payable_amount');
+        $pendingClaimsTotal = $tabs['pending']->sum('claims_amount');
+
+        return response()->json([
+            'success' => true,
+            'patient' => [
+                'id'          => $patient->id,
+                'user_id'     => $patient->user_id,
+                'name'        => userfullname($patient->user_id),
+                'file_no'     => $patient->file_no ?? 'N/A',
+                'phone'       => $patient->phone_no ?? 'N/A',
+                'gender'      => $patient->gender ?? 'N/A',
+                'dob'         => $patient->dob,
+                'hmo_name'    => optional($patient->hmo)->name ?? 'Private',
+                'hmo_no'      => $patient->hmo_no ?? '',
+                'hmo_id'      => $patient->hmo_id,
+                'scheme_name' => ($patient->hmo && $patient->hmo->scheme) ? $patient->hmo->scheme->name : null,
+                'scheme_code' => ($patient->hmo && $patient->hmo->scheme) ? $patient->hmo->scheme->code : null,
+                'photo'       => ($patient->user && $patient->user->filename)
+                                    ? asset('storage/image/user/' . $patient->user->filename)
+                                    : asset('assets/images/default-avatar.png'),
+                'balance'     => optional($patient->account)->balance ?? 0,
+            ],
+            'counts'  => $counts,
+            'tabs'    => $result,
+            'summary' => [
+                'total_requests'         => $allRequests->count(),
+                'total_claims_approved'  => $totalClaimsApproved,
+                'total_payable_approved' => $totalPayableApproved,
+                'pending_claims_total'   => $pendingClaimsTotal,
+            ],
+        ]);
+    }
+
+    /**
      * Recalculate tariffs for pending/awaiting_code requests when patient HMO changes.
      */
     private function recalculatePendingTariffs(Patient $patient)

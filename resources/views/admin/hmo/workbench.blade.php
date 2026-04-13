@@ -386,6 +386,84 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         transition: all 0.2s;
     }
+
+    /* ── Patient Focus Mode ─────────────────────────────────────── */
+    .pf-panel { display: none; }
+    .pf-panel.active { display: block; }
+    .pf-search-wrap { position: relative; z-index: 1060; }
+    .pf-search-wrap .pf-results {
+        position: absolute; top: 100%; left: 0; right: 0; z-index: 1070;
+        background: #fff; border: 1px solid #dee2e6; border-top: none;
+        border-radius: 0 0 8px 8px; max-height: 340px; overflow-y: auto;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15); display: none;
+    }
+    .pf-results .pf-result-item {
+        padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+        display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+    }
+    .pf-results .pf-result-item:hover { background: #f0f4ff; }
+    .pf-results .pf-result-item.pf-ri-active { background: #e8f0fe; }
+    .pf-results .pf-result-item img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .pf-results .pf-result-item .pf-ri-info { flex: 1; }
+    .pf-results .pf-result-item .pf-ri-name { font-weight: 600; font-size: 0.9rem; }
+    .pf-results .pf-result-item .pf-ri-meta { font-size: 0.78rem; color: #6c757d; }
+    .pf-results .pf-result-item .pf-ri-badge { font-size: 0.7rem; }
+
+    /* Recent patients chips */
+    .pf-recent-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .pf-recent-chip {
+        display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+        border-radius: 20px; background: #f0f4ff; border: 1px solid #d6e0f5;
+        font-size: 0.8rem; font-weight: 500; color: #4a5568; cursor: pointer;
+        transition: all 0.15s;
+    }
+    .pf-recent-chip:hover { background: #dbeafe; border-color: #93b4f5; }
+    .pf-recent-chip img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+
+    /* Welcome/empty state */
+    .pf-welcome {
+        text-align: center; padding: 4rem 2rem;
+        background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+        border-radius: 12px; border: 2px dashed #d6e0f5;
+    }
+    .pf-welcome i { font-size: 4rem; color: #93b4f5; margin-bottom: 1rem; display: block; }
+    .pf-welcome h5 { font-weight: 700; color: #4a5568; }
+    .pf-welcome p { color: #6c757d; font-size: 0.9rem; max-width: 400px; margin: 0 auto; }
+
+    .pf-patient-card {
+        border-radius: 12px; border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .pf-patient-card .pf-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid var(--hospital-primary); }
+    .pf-patient-card .pf-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 2px; }
+    .pf-patient-card .pf-detail { font-size: 0.82rem; color: #6c757d; }
+    .pf-patient-card .pf-detail i { width: 18px; text-align: center; }
+    .pf-patient-card .pf-balance-positive { color: #28a745; font-weight: 700; }
+    .pf-patient-card .pf-balance-negative { color: #dc3545; font-weight: 700; }
+    .pf-patient-card .pf-balance-zero { color: #6c757d; font-weight: 700; }
+    .pf-quick-actions { display: flex; flex-direction: column; gap: 6px; padding: 10px; }
+    .pf-quick-actions .btn { font-size: 0.8rem; border-radius: 8px; text-align: left; padding: 6px 12px; }
+
+    .pf-stats-row .pf-stat-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+        background: #f0f4ff; color: #4a5568; margin-right: 8px; margin-bottom: 6px;
+    }
+    .pf-stats-row .pf-stat-chip .pf-stat-count { font-size: 1rem; font-weight: 700; }
+
+    #pfTabs .nav-link { font-weight: 500; padding: 0.6rem 1rem; border-radius: 8px 8px 0 0; font-size: 0.88rem; }
+    #pfTabs .nav-link.active { background: var(--hospital-primary); color: #fff; border-color: var(--hospital-primary); }
+    #pfTabs .nav-link .badge { font-size: 0.72rem; }
+
+    .pf-request-table { font-size: 0.85rem; }
+    .pf-request-table th { font-size: 0.78rem; font-weight: 600; white-space: nowrap; background: #f8f9fa; }
+    .pf-request-table td { vertical-align: middle; }
+    .pf-request-table .btn-sm { font-size: 0.75rem; border-radius: 4px; white-space: nowrap; }
+    .pf-action-cell { display: flex; flex-direction: column; gap: 3px; min-width: 90px; }
+    .pf-action-cell .btn { display: block; width: 100%; text-align: left; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; }
+
+    .pf-empty-state { text-align: center; padding: 3rem 1rem; color: #adb5bd; }
+    .pf-empty-state i { font-size: 3rem; margin-bottom: 0.5rem; display: block; }
 </style>
 
 <section class="content">
@@ -398,16 +476,31 @@
                 </h3>
                 <p class="workbench-subtitle">Claims Validation & Management Dashboard</p>
             </div>
-            <div class="workbench-date">
-                <button class="btn btn-danger btn-sm me-2" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+            <div class="workbench-date d-flex align-items-center" style="gap: 8px;">
+                <div class="btn-group" id="viewSwitcher" style="border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                    <button class="btn btn-sm view-switch-btn active" data-view="patient" style="font-weight: 600; border: none; padding: 6px 14px;">
+                        <i class="mdi mdi-account-search mr-1"></i>Patient
+                    </button>
+                    <button class="btn btn-sm view-switch-btn" data-view="stats" style="font-weight: 600; border: none; padding: 6px 14px;">
+                        <i class="mdi mdi-chart-bar mr-1"></i>Stats
+                    </button>
+                    <button class="btn btn-sm view-switch-btn" data-view="queue" style="font-weight: 600; border: none; padding: 6px 14px;">
+                        <i class="mdi mdi-view-dashboard mr-1"></i>Queue
+                    </button>
+                </div>
+                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
                     <i class="mdi mdi-ambulance"></i> Emergency Intake
                 </button>
-                <i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}
+                <span><i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}</span>
             </div>
         </div>
 
-        <!-- Financial Summary Cards Row -->
-        <div class="row mb-4">
+        {{-- ═══════════════════════════════════════════════════════ --}}
+        {{-- STATS PANEL                                            --}}
+        {{-- ═══════════════════════════════════════════════════════ --}}
+        <div id="statsPanel" style="display: none;">
+            <!-- Financial Summary -->
+            <div class="row mb-4">
             <div class="col-md-3">
                 <div class="stat-card-modern text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <div class="card-body">
@@ -567,6 +660,355 @@
             </div>
         </div>
 
+            <!-- Admin & Report Shortcuts -->
+            <div class="card-modern border-0 mt-4" style="border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <div class="card-body">
+                    <h5 class="mb-3" style="font-weight: 700; color: var(--hospital-primary, #1a73e8);"><i class="mdi mdi-lightning-bolt mr-1"></i>Quick Access</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-2"><i class="mdi mdi-file-chart mr-1"></i>Reports</h6>
+                            <div class="list-group list-group-flush">
+                                <a href="{{ route('hmo.reports') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-chart-bar mr-2 text-primary"></i>Reports Dashboard</a>
+                                <a href="{{ route('hmo.reports.claims') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-clipboard-list mr-2 text-info"></i>Claims Report</a>
+                                <a href="{{ route('hmo.reports.outstanding') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-clock-alert mr-2 text-warning"></i>Outstanding Report</a>
+                                <a href="{{ route('hmo.reports.monthly') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-calendar-month mr-2 text-success"></i>Monthly Summary</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-2"><i class="mdi mdi-chart-line mr-1"></i>Analytics</h6>
+                            <div class="list-group list-group-flush">
+                                <a href="{{ route('hmo.reports.utilization') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-chart-pie mr-2 text-purple"></i>Utilization Report</a>
+                                <a href="{{ route('hmo.reports.auth-codes') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-key mr-2 text-danger"></i>Auth Codes</a>
+                                <a href="{{ route('hmo.reports.remittances') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-bank-transfer mr-2 text-success"></i>Remittances</a>
+                                <a href="{{ route('hmo.export-claims') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-download mr-2 text-secondary"></i>Export Claims</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-2"><i class="mdi mdi-cog mr-1"></i>Administration</h6>
+                            <div class="list-group list-group-flush">
+                                <a href="{{ route('hmo-tariffs.index') }}" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-currency-ngn mr-2 text-primary"></i>Tariff Management</a>
+                                <a href="{{ route('hmo.reports') }}#patient" class="list-group-item list-group-item-action border-0 px-2 py-2" style="border-radius:8px;"><i class="mdi mdi-account-group mr-2 text-info"></i>Patient Report</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> {{-- end #statsPanel --}}
+
+        {{-- ═══════════════════════════════════════════════════════ --}}
+        {{-- PATIENT FOCUS PANEL (primary/default view)             --}}
+        {{-- ═══════════════════════════════════════════════════════ --}}
+        <div id="patientFocusPanel" class="pf-panel active">
+            <!-- Search bar -->
+            <div class="card-modern border-0 mb-3" style="border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: visible; position: relative; z-index: 10;">
+                <div class="card-body py-3" style="overflow: visible;">
+                    <div class="pf-search-wrap">
+                        <div class="input-group input-group-lg">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" style="border-radius: 10px 0 0 10px; background: var(--hospital-primary); color: #fff; border: none;">
+                                    <i class="mdi mdi-account-search" style="font-size: 1.3rem;"></i>
+                                </span>
+                            </div>
+                            <input type="text" class="form-control" id="pfSearchInput" placeholder="Search patient by name, file number, phone number, or HMO number..." style="border-radius: 0 10px 10px 0; border-left: none; font-size: 1rem; padding: 10px 16px;" autocomplete="off">
+                        </div>
+                        <div class="pf-results" id="pfSearchResults"></div>
+                    </div>
+                    <!-- Recent patients -->
+                    <div class="pf-recent-bar" id="pfRecentBar" style="display: none;">
+                        <span class="text-muted small"><i class="mdi mdi-clock-outline mr-1"></i>Recent:</span>
+                        <div id="pfRecentChips"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Welcome state (shown when no patient selected) -->
+            <div id="pfWelcome" class="pf-welcome">
+                <i class="mdi mdi-account-search-outline"></i>
+                <h5>Search for a Patient</h5>
+                <p>Type a patient name, file number, or HMO number above to view and manage their HMO requests.</p>
+            </div>
+
+            <!-- Filter bar (shown after patient selection) -->
+            <div id="pfFilterBar" class="card-modern border-0 mb-3" style="display:none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div class="card-body py-2">
+                    <div class="row align-items-end" style="gap: 4px 0;">
+                        <div class="col-md-2">
+                            <label class="small text-muted mb-0">Date From</label>
+                            <input type="date" class="form-control form-control-sm pf-filter" id="pfFilterDateFrom" style="border-radius:8px;">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small text-muted mb-0">Date To</label>
+                            <input type="date" class="form-control form-control-sm pf-filter" id="pfFilterDateTo" style="border-radius:8px;">
+                        </div>
+                        <div class="col">
+                            <label class="small text-muted mb-0">Type</label>
+                            <select class="form-control form-control-sm pf-filter" id="pfFilterType" style="border-radius:8px;">
+                                <option value="">All Types</option>
+                                <option value="product">Product</option>
+                                <option value="service">Service</option>
+                                <option value="procedure">Procedure</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label class="small text-muted mb-0">Coverage</label>
+                            <select class="form-control form-control-sm pf-filter" id="pfFilterCoverage" style="border-radius:8px;">
+                                <option value="">All Modes</option>
+                                <option value="express">Express</option>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small text-muted mb-0">Search Requests</label>
+                            <input type="text" class="form-control form-control-sm pf-filter" id="pfFilterSearch" placeholder="Item name, code..." style="border-radius:8px;">
+                        </div>
+                        <div class="col-auto d-flex" style="gap:4px;">
+                            <button class="btn btn-sm btn-outline-info" id="pfShowAllDates" style="border-radius:8px;" title="Show all dates">
+                                <i class="mdi mdi-calendar-remove"></i> All
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="pfFilterReset" style="border-radius:8px;" title="Clear all filters">
+                                <i class="mdi mdi-filter-remove"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" id="pfRefreshData" style="border-radius:8px;" title="Refresh patient data">
+                                <i class="mdi mdi-refresh"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient card + requests (shown after selection) -->
+            <div id="pfContent" style="display: none;">
+                <div class="row">
+                    {{-- Left sidebar: Patient card --}}
+                    <div class="col-md-3">
+                        <div class="pf-patient-card card mb-3">
+                            <div class="card-body text-center">
+                                <img src="" id="pfPatientPhoto" class="pf-avatar mb-2" alt="Patient">
+                                <div class="pf-name" id="pfPatientName"></div>
+                                <div class="pf-detail mb-1"><i class="mdi mdi-folder-account"></i> <span id="pfPatientFileNo"></span></div>
+                                <div class="pf-detail mb-2" id="pfAgeRow"><i class="mdi mdi-cake-variant"></i> <span id="pfPatientAge"></span></div>
+                                <hr class="my-2">
+                                <div class="text-left">
+                                    <div class="pf-detail mb-1"><i class="mdi mdi-hospital-building"></i> HMO: <strong id="pfPatientHmo"></strong></div>
+                                    <div class="pf-detail mb-1"><i class="mdi mdi-card-account-details"></i> HMO#: <strong id="pfPatientHmoNo"></strong></div>
+                                    <div class="pf-detail mb-1" id="pfSchemeRow" style="display:none;"><i class="mdi mdi-tag-outline"></i> Scheme: <strong id="pfPatientScheme"></strong></div>
+                                    <div class="pf-detail mb-1"><i class="mdi mdi-phone"></i> <span id="pfPatientPhone"></span></div>
+                                    <div class="pf-detail mb-1"><i class="mdi mdi-gender-male-female"></i> <span id="pfPatientGender"></span></div>
+                                    <div class="pf-detail mb-1"><i class="mdi mdi-wallet"></i> Balance: <strong id="pfPatientBalance">₦0</strong></div>
+                                </div>
+                            </div>
+                            <div class="pf-quick-actions">
+                                <button class="btn btn-sm btn-outline-primary pf-view-clinical">
+                                    <i class="mdi mdi-stethoscope mr-2"></i>Clinical Context
+                                </button>
+                                <button class="btn btn-sm btn-outline-info pf-view-history">
+                                    <i class="mdi mdi-history mr-2"></i>Claim History
+                                </button>
+                                <a class="btn btn-sm btn-outline-success" id="pfPrintReportLink" href="#" target="_blank">
+                                    <i class="mdi mdi-printer mr-2"></i>Print Report
+                                </a>
+                                <a class="btn btn-sm btn-outline-secondary" id="pfOpenFileLink" href="#" target="_blank">
+                                    <i class="mdi mdi-folder-open mr-2"></i>Open Patient File
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Summary chips -->
+                        <div class="card border-0 mb-3" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-body py-2" id="pfSummaryChips">
+                                <div class="pf-stats-row">
+                                    <div class="pf-stat-chip" style="background: #fff3cd;"><span class="pf-stat-count" id="pfSumPending">0</span> Pending</div>
+                                    <div class="pf-stat-chip" style="background: #e8eaf6;"><span class="pf-stat-count" id="pfSumAwaiting">0</span> Awaiting</div>
+                                    <div class="pf-stat-chip" style="background: #d4edda;"><span class="pf-stat-count" id="pfSumApproved">0</span> Approved</div>
+                                    <div class="pf-stat-chip" style="background: #d1ecf1;"><span class="pf-stat-count" id="pfSumExpress">0</span> Express</div>
+                                    <div class="pf-stat-chip" style="background: #f8d7da;"><span class="pf-stat-count" id="pfSumRejected">0</span> Rejected</div>
+                                </div>
+                                <hr class="my-2">
+                                <div class="pf-detail"><i class="mdi mdi-sigma text-primary"></i> Total Requests: <strong id="pfSumTotal">0</strong></div>
+                                <div class="pf-detail"><i class="mdi mdi-cash-multiple text-success"></i> Approved Claims: <strong id="pfSumClaimsApproved">₦0</strong></div>
+                                <div class="pf-detail"><i class="mdi mdi-cash-check text-info"></i> Approved Payable: <strong id="pfSumPayableApproved">₦0</strong></div>
+                                <div class="pf-detail"><i class="mdi mdi-clock-alert text-warning"></i> Pending Claims: <strong id="pfSumClaimsPending">₦0</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Right panel: Request tabs --}}
+                    <div class="col-md-9">
+                        <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-radius: 12px 12px 0 0; border-bottom: 1px solid #e9ecef;">
+                                <ul class="nav nav-tabs card-header-tabs" id="pfTabs" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-toggle="tab" href="#pf-tab-pending" role="tab">
+                                            <i class="mdi mdi-clock-alert mr-1"></i>Pending <span class="badge badge-warning ml-1" id="pfBadgePending">0</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#pf-tab-awaiting" role="tab">
+                                            <i class="mdi mdi-key-alert mr-1"></i>Awaiting Code <span class="badge ml-1" id="pfBadgeAwaiting" style="background:#7c4dff; color:#fff;">0</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#pf-tab-approved" role="tab">
+                                            <i class="mdi mdi-check-circle mr-1"></i>Approved <span class="badge badge-success ml-1" id="pfBadgeApproved">0</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#pf-tab-express" role="tab">
+                                            <i class="mdi mdi-flash mr-1"></i>Express <span class="badge badge-info ml-1" id="pfBadgeExpress">0</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#pf-tab-rejected" role="tab">
+                                            <i class="mdi mdi-close-circle mr-1"></i>Rejected <span class="badge badge-danger ml-1" id="pfBadgeRejected">0</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#pf-tab-past" role="tab">
+                                            <i class="mdi mdi-cash mr-1"></i>Past/Billed <span class="badge badge-secondary ml-1" id="pfBadgePast">0</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="card-body p-0">
+                                <!-- Batch action bar (patient focus) -->
+                                <div id="pfBatchBar" class="px-3 py-2" style="display:none; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #e9ecef;">
+                                    <span class="mr-2 font-weight-bold"><span class="badge badge-primary" id="pfSelectedCount" style="border-radius:6px;">0</span> selected</span>
+                                    <button class="btn btn-sm btn-success pf-batch-approve" style="border-radius:6px;"><i class="mdi mdi-check-all mr-1"></i>Approve</button>
+                                    <button class="btn btn-sm btn-danger ml-1 pf-batch-reject" style="border-radius:6px;"><i class="mdi mdi-close-circle-multiple mr-1"></i>Reject</button>
+                                </div>
+
+                                <div class="tab-content">
+                                    <!-- Pending tab -->
+                                    <div class="tab-pane fade show active" id="pf-tab-pending" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover pf-request-table mb-0">
+                                                <thead><tr>
+                                                    <th width="30"><input type="checkbox" class="pf-select-all" data-tab="pending"></th>
+                                                    <th>Item</th><th>Type</th><th>Qty</th><th>Claims</th><th>Payable</th><th>Coverage</th><th>Date</th><th>Actions</th>
+                                                </tr></thead>
+                                                <tbody id="pfBodyPending"></tbody>
+                                            </table>
+                                        </div>
+                                        <div class="pf-pagination d-flex justify-content-between align-items-center px-3 py-2" data-tab="pending" style="border-top:1px solid #e9ecef; font-size:0.85rem;">
+                                            <span class="text-muted pf-page-info">Showing 0 of 0</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-prev" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-left"></i></button>
+                                                <span class="mx-2 pf-page-num">1</span>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-next" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-right"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Awaiting Code tab -->
+                                    <div class="tab-pane fade" id="pf-tab-awaiting" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover pf-request-table mb-0">
+                                                <thead><tr>
+                                                    <th width="30"><input type="checkbox" class="pf-select-all" data-tab="awaiting_code"></th>
+                                                    <th>Item</th><th>Type</th><th>Qty</th><th>Claims</th><th>Payable</th><th>Auth Code</th><th>Date</th><th>Actions</th>
+                                                </tr></thead>
+                                                <tbody id="pfBodyAwaiting"></tbody>
+                                            </table>
+                                        </div>
+                                        <div class="pf-pagination d-flex justify-content-between align-items-center px-3 py-2" data-tab="awaiting_code" style="border-top:1px solid #e9ecef; font-size:0.85rem;">
+                                            <span class="text-muted pf-page-info">Showing 0 of 0</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-prev" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-left"></i></button>
+                                                <span class="mx-2 pf-page-num">1</span>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-next" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-right"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Approved tab -->
+                                    <div class="tab-pane fade" id="pf-tab-approved" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover pf-request-table mb-0">
+                                                <thead><tr>
+                                                    <th>Item</th><th>Type</th><th>Qty</th><th>Claims</th><th>Payable</th><th>Auth Code</th><th>Validated By</th><th>Date</th><th>Actions</th>
+                                                </tr></thead>
+                                                <tbody id="pfBodyApproved"></tbody>
+                                            </table>
+                                        </div>
+                                        <div class="pf-pagination d-flex justify-content-between align-items-center px-3 py-2" data-tab="approved" style="border-top:1px solid #e9ecef; font-size:0.85rem;">
+                                            <span class="text-muted pf-page-info">Showing 0 of 0</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-prev" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-left"></i></button>
+                                                <span class="mx-2 pf-page-num">1</span>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-next" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-right"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Express tab -->
+                                    <div class="tab-pane fade" id="pf-tab-express" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover pf-request-table mb-0">
+                                                <thead><tr>
+                                                    <th>Item</th><th>Type</th><th>Qty</th><th>Claims</th><th>Payable</th><th>Date</th><th>Actions</th>
+                                                </tr></thead>
+                                                <tbody id="pfBodyExpress"></tbody>
+                                            </table>
+                                        </div>
+                                        <div class="pf-pagination d-flex justify-content-between align-items-center px-3 py-2" data-tab="express" style="border-top:1px solid #e9ecef; font-size:0.85rem;">
+                                            <span class="text-muted pf-page-info">Showing 0 of 0</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-prev" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-left"></i></button>
+                                                <span class="mx-2 pf-page-num">1</span>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-next" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-right"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Rejected tab -->
+                                    <div class="tab-pane fade" id="pf-tab-rejected" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover pf-request-table mb-0">
+                                                <thead><tr>
+                                                    <th>Item</th><th>Type</th><th>Qty</th><th>Claims</th><th>Payable</th><th>Reason</th><th>Validated By</th><th>Date</th><th>Actions</th>
+                                                </tr></thead>
+                                                <tbody id="pfBodyRejected"></tbody>
+                                            </table>
+                                        </div>
+                                        <div class="pf-pagination d-flex justify-content-between align-items-center px-3 py-2" data-tab="rejected" style="border-top:1px solid #e9ecef; font-size:0.85rem;">
+                                            <span class="text-muted pf-page-info">Showing 0 of 0</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-prev" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-left"></i></button>
+                                                <span class="mx-2 pf-page-num">1</span>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-next" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-right"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Past/Billed tab -->
+                                    <div class="tab-pane fade" id="pf-tab-past" role="tabpanel">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover pf-request-table mb-0">
+                                                <thead><tr>
+                                                    <th>Item</th><th>Type</th><th>Qty</th><th>Claims</th><th>Payable</th><th>Coverage</th><th>Status</th><th>Date</th><th>Actions</th>
+                                                </tr></thead>
+                                                <tbody id="pfBodyPast"></tbody>
+                                            </table>
+                                        </div>
+                                        <div class="pf-pagination d-flex justify-content-between align-items-center px-3 py-2" data-tab="past" style="border-top:1px solid #e9ecef; font-size:0.85rem;">
+                                            <span class="text-muted pf-page-info">Showing 0 of 0</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-prev" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-left"></i></button>
+                                                <span class="mx-2 pf-page-num">1</span>
+                                                <button class="btn btn-sm btn-outline-secondary pf-page-next" disabled style="border-radius:6px;"><i class="mdi mdi-chevron-right"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{-- END: Patient Focus Panel --}}
+
+        {{-- ═══════════════════════════════════════════════════════ --}}
+        {{-- MAIN QUEUE PANEL (toggled view)                        --}}
+        {{-- ═══════════════════════════════════════════════════════ --}}
+        <div id="mainQueuePanel" style="display: none;">
+
         <!-- Filters Card -->
         <div class="filter-card-modern mb-4">
             <div class="card-header text-white d-flex justify-content-between align-items-center">
@@ -722,7 +1164,7 @@
             <div class="card-body">
                 <div class="tab-content">
                     <div class="table-responsive">
-                        <table id="requestsTable" class="table table-sm table-bordered table-striped table-hover display">
+                        <table id="requestsTable" class="table table-sm table-bordered table-striped table-hover display" style="width: 100%;">
                             <thead>
                                 <tr>
                                     <th width="30"><input type="checkbox" id="selectAllCheckbox" title="Select All"></th>
@@ -739,10 +1181,9 @@
                 </div>
             </div>
         </div>
+        </div> {{-- END: mainQueuePanel --}}
     </div>
 </section>
-
-<!-- Include Clinical Context Modal -->
 @include('admin.partials.clinical_context_modal')
 
 <!-- View Details Modal -->
@@ -1851,6 +2292,10 @@ $(function() {
 
     // Preset card click
     $('.preset-card').on('click', function() {
+        // Switch to queue view if not already there
+        if (!$('#mainQueuePanel').is(':visible')) {
+            $('#viewSwitcher .view-switch-btn[data-view="queue"]').trigger('click');
+        }
         currentPreset = $(this).data('preset');
         if (currentPreset) {
             $('.preset-card').removeClass('border border-dark border-3');
@@ -1863,6 +2308,10 @@ $(function() {
     $('[data-tab-target]').on('click', function() {
         var targetTab = $(this).data('tab-target');
         if (targetTab) {
+            // Switch to queue view if not already there
+            if (!$('#mainQueuePanel').is(':visible')) {
+                $('#viewSwitcher .view-switch-btn[data-view="queue"]').trigger('click');
+            }
             currentTab = targetTab;
             currentPreset = '';
             $('#workbenchTabs a.nav-link').removeClass('active');
@@ -2673,6 +3122,7 @@ $(function() {
                     table.ajax.reload();
                     loadQueueCounts();
                     loadFinancialSummary();
+                    if (typeof window.pfReloadAfterAction === 'function') window.pfReloadAfterAction();
                     if (response.awaiting_code) {
                         toastr.info(response.message, 'Awaiting Auth Code');
                     } else {
@@ -2729,6 +3179,7 @@ $(function() {
                     table.ajax.reload();
                     loadQueueCounts();
                     loadFinancialSummary();
+                    if (typeof window.pfReloadAfterAction === 'function') window.pfReloadAfterAction();
                     toastr.success(response.message);
                 },
                 error: function(xhr) {
@@ -2767,6 +3218,7 @@ $(function() {
                 table.ajax.reload();
                 loadQueueCounts();
                 loadFinancialSummary();
+                if (typeof window.pfReloadAfterAction === 'function') window.pfReloadAfterAction();
                 toastr.success(response.message);
             },
             error: function(xhr) {
@@ -2816,6 +3268,7 @@ $(function() {
                     table.ajax.reload();
                     loadQueueCounts();
                     loadFinancialSummary();
+                    if (typeof window.pfReloadAfterAction === 'function') window.pfReloadAfterAction();
                     if (response.awaiting_code) {
                         toastr.info(response.message, 'Awaiting Auth Code');
                     } else {
@@ -2861,6 +3314,7 @@ $(function() {
                 table.ajax.reload();
                 loadQueueCounts();
                 loadFinancialSummary();
+                if (typeof window.pfReloadAfterAction === 'function') window.pfReloadAfterAction();
                 toastr.success(response.message);
             },
             error: function(xhr) {
@@ -2899,6 +3353,7 @@ $(function() {
                 table.ajax.reload();
                 loadQueueCounts();
                 loadFinancialSummary();
+                if (typeof window.pfReloadAfterAction === 'function') window.pfReloadAfterAction();
                 toastr.success(response.message);
             },
             error: function(xhr) {
@@ -3710,9 +4165,766 @@ $(function() {
             }
         });
     });
+
+    // ═══════════════════════════════════════════════════════════════
+    // PATIENT FOCUS MODE
+    // ═══════════════════════════════════════════════════════════════
+    (function() {
+        var pfActive = true; // Patient focus is the primary/default view
+        var pfPatientId = null;
+        var pfPatientData = null;
+        var pfSelectedIds = [];
+        var pfSearchTimer = null;
+
+        // ── Pagination & filter state ───────────────────────────
+        var PF_PAGE_SIZE = 15;
+        var pfPages = {}; // { pending: 1, awaiting_code: 1, ... }
+        var pfFilteredData = {}; // cached filtered rows per tab
+
+        // Expose reload for modal submit handlers
+        window.pfReloadAfterAction = function() {
+            if (pfActive && pfPatientId) {
+                loadPatientFocus(pfPatientId);
+            }
+        };
+
+        // ── 3-panel view switching ──────────────────────────────
+        function switchView(view) {
+            // view = 'patient' | 'stats' | 'queue'
+            $('#patientFocusPanel, #statsPanel, #mainQueuePanel').hide();
+            $('#patientFocusPanel').removeClass('active');
+            $('#viewSwitcher .view-switch-btn').removeClass('active').css({
+                'background': 'transparent',
+                'color': '#495057'
+            });
+            $('#viewSwitcher .view-switch-btn[data-view="' + view + '"]').addClass('active').css({
+                'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'color': '#fff'
+            });
+
+            switch (view) {
+                case 'patient':
+                    pfActive = true;
+                    $('#patientFocusPanel').show().addClass('active');
+                    $('#pfFilterBar').toggle(!!pfPatientId);
+                    setTimeout(function() { $('#pfSearchInput').focus(); }, 200);
+                    break;
+                case 'stats':
+                    pfActive = false;
+                    $('#statsPanel').show();
+                    break;
+                case 'queue':
+                    pfActive = false;
+                    $('#mainQueuePanel').show();
+                    if (typeof table !== 'undefined' && table) {
+                        setTimeout(function() {
+                            table.columns.adjust().draw(false);
+                            if (typeof table.responsive !== 'undefined' && table.responsive) {
+                                table.responsive.recalc();
+                            }
+                        }, 50);
+                    }
+                    break;
+            }
+        }
+
+        // View switcher button clicks
+        $('#viewSwitcher').on('click', '.view-switch-btn', function() {
+            switchView($(this).data('view'));
+        });
+
+        // Initialize the active button style on load
+        $('#viewSwitcher .view-switch-btn[data-view="patient"]').css({
+            'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'color': '#fff'
+        });
+        $('#viewSwitcher .view-switch-btn:not(.active)').css({
+            'background': 'transparent',
+            'color': '#495057'
+        });
+
+        // ── Patient search (debounced) ──────────────────────────
+        $('#pfSearchInput').on('input', function() {
+            var q = $(this).val().trim();
+            clearTimeout(pfSearchTimer);
+            if (q.length < 2) {
+                $('#pfSearchResults').hide().empty();
+                return;
+            }
+            pfSearchTimer = setTimeout(function() {
+                $.get("{{ route('patient-search') }}", { q: q, context: 'hmo' }, function(data) {
+                    renderSearchResults(data);
+                });
+            }, 300);
+        });
+
+        // Enter key selects first search result
+        $('#pfSearchInput').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var $first = $('#pfSearchResults .pf-result-item').first();
+                if ($first.length) {
+                    $first.trigger('click');
+                }
+            }
+            // Arrow key navigation
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                var $items = $('#pfSearchResults .pf-result-item');
+                var $active = $items.filter('.pf-ri-active');
+                var idx = $items.index($active);
+                $items.removeClass('pf-ri-active');
+                if (e.key === 'ArrowDown') {
+                    idx = (idx + 1) % $items.length;
+                } else {
+                    idx = idx <= 0 ? $items.length - 1 : idx - 1;
+                }
+                $items.eq(idx).addClass('pf-ri-active');
+                // Scroll into view
+                var el = $items.eq(idx)[0];
+                if (el) el.scrollIntoView({ block: 'nearest' });
+            }
+        });
+
+        // Close search results on outside click
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.pf-search-wrap').length) {
+                $('#pfSearchResults').hide();
+            }
+        });
+
+        function renderSearchResults(patients) {
+            var $r = $('#pfSearchResults').empty();
+            if (!patients.length) {
+                $r.append('<div class="p-3 text-center text-muted"><i class="mdi mdi-account-off mr-1"></i>No patients found</div>');
+                $r.show();
+                return;
+            }
+            patients.forEach(function(p) {
+                var hmoLabel = p.hmo || 'Private';
+                var pendingHtml = (p.pending_count && p.pending_count > 0)
+                    ? '<span class="badge badge-warning pf-ri-badge ml-2">' + p.pending_count + ' pending</span>' : '';
+                var $item = $('<div class="pf-result-item" data-id="' + p.id + '" data-name="' + escHtml(p.name) + '" data-photo="' + escHtml(p.photo) + '" data-fileno="' + escHtml(p.file_no) + '">' +
+                    '<img src="' + escHtml(p.photo) + '" alt="">' +
+                    '<div class="pf-ri-info">' +
+                        '<div class="pf-ri-name">' + escHtml(p.name) + pendingHtml + '</div>' +
+                        '<div class="pf-ri-meta">' + escHtml(p.file_no) + ' &middot; ' + escHtml(hmoLabel) +
+                        (p.hmo_no ? ' &middot; ' + escHtml(p.hmo_no) : '') + '</div>' +
+                    '</div>' +
+                '</div>');
+                $r.append($item);
+            });
+            $r.show();
+        }
+
+        // Select patient from search results
+        $(document).on('click', '.pf-result-item', function() {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            var photo = $(this).data('photo');
+            var fileno = $(this).data('fileno');
+            $('#pfSearchResults').hide();
+            $('#pfSearchInput').val('');
+            addRecentPatient(id, name, photo, fileno);
+            loadPatientFocus(id);
+        });
+
+        // ── Recent patients (localStorage) ──────────────────────
+        var PF_RECENT_KEY = 'pf_recent_patients';
+        var PF_RECENT_MAX = 5;
+
+        function getRecentPatients() {
+            try { return JSON.parse(localStorage.getItem(PF_RECENT_KEY)) || []; }
+            catch(e) { return []; }
+        }
+
+        function addRecentPatient(id, name, photo, fileno) {
+            var list = getRecentPatients().filter(function(r) { return r.id !== id; });
+            list.unshift({ id: id, name: name, photo: photo, fileno: fileno });
+            if (list.length > PF_RECENT_MAX) list = list.slice(0, PF_RECENT_MAX);
+            localStorage.setItem(PF_RECENT_KEY, JSON.stringify(list));
+            renderRecentPatients();
+        }
+
+        function renderRecentPatients() {
+            var list = getRecentPatients();
+            var $bar = $('#pfRecentBar');
+            var $chips = $('#pfRecentChips').empty();
+            if (!list.length) { $bar.hide(); return; }
+            list.forEach(function(p) {
+                var $chip = $('<span class="pf-recent-chip" data-id="' + p.id + '">' +
+                    '<img src="' + escHtml(p.photo) + '" alt="">' +
+                    escHtml(p.name.split(' ')[0]) +
+                    '<small class="text-muted">' + escHtml(p.fileno || '') + '</small>' +
+                '</span>');
+                $chips.append($chip);
+            });
+            $bar.show();
+        }
+
+        // Click recent chip to load patient
+        $(document).on('click', '.pf-recent-chip', function() {
+            loadPatientFocus($(this).data('id'));
+        });
+
+        // Render recent patients on page load
+        renderRecentPatients();
+
+        // ── Load patient data ───────────────────────────────────
+        function loadPatientFocus(patientId) {
+            pfPatientId = patientId;
+            pfSelectedIds = [];
+            pfPages = {};
+            pfFilteredData = {};
+            updatePfBatchBar();
+
+            // Default date range: last 30 days
+            var today = new Date();
+            var thirtyAgo = new Date();
+            thirtyAgo.setDate(today.getDate() - 30);
+            $('#pfFilterDateTo').val(today.toISOString().substring(0, 10));
+            $('#pfFilterDateFrom').val(thirtyAgo.toISOString().substring(0, 10));
+
+            // Hide welcome, show filter bar & content
+            $('#pfWelcome').hide();
+            $('#pfFilterBar').show();
+            $('#pfContent').show();
+            ['Pending','Awaiting','Approved','Express','Rejected','Past'].forEach(function(t) {
+                $('#pfBody' + t).html('<tr><td colspan="10" class="text-center py-3"><i class="mdi mdi-loading mdi-spin mr-1"></i>Loading...</td></tr>');
+            });
+
+            $.get("{{ url('hmo/patient') }}/" + patientId + '/all-requests', function(resp) {
+                if (!resp.success) {
+                    toastr.error('Failed to load patient data');
+                    return;
+                }
+                pfPatientData = resp;
+
+                // Populate patient card
+                var p = resp.patient;
+                $('#pfPatientPhoto').attr('src', p.photo);
+                $('#pfPatientName').text(p.name);
+                $('#pfPatientFileNo').text(p.file_no);
+                $('#pfPatientHmo').text(p.hmo_name);
+                $('#pfPatientHmoNo').text(p.hmo_no || 'N/A');
+                $('#pfPatientPhone').text(p.phone);
+                $('#pfPatientGender').text(p.gender);
+
+                // Age from DOB
+                if (p.dob) {
+                    var dob = new Date(p.dob);
+                    var age = Math.floor((new Date() - dob) / 31557600000);
+                    $('#pfPatientAge').text(age + ' years (' + p.dob + ')');
+                    $('#pfAgeRow').show();
+                } else {
+                    $('#pfAgeRow').hide();
+                }
+
+                // Balance with color coding
+                var bal = parseFloat(p.balance) || 0;
+                var $bal = $('#pfPatientBalance');
+                $bal.text('₦' + fmtN(bal));
+                $bal.removeClass('pf-balance-positive pf-balance-negative pf-balance-zero');
+                $bal.addClass(bal > 0 ? 'pf-balance-positive' : (bal < 0 ? 'pf-balance-negative' : 'pf-balance-zero'));
+
+                // Quick action links
+                $('#pfPrintReportLink').attr('href', "{{ url('hmo/reports/patient') }}/" + patientId);
+                $('#pfOpenFileLink').attr('href', "{{ url('admin/patient') }}/" + patientId);
+
+                if (p.scheme_name) {
+                    $('#pfSchemeRow').show();
+                    $('#pfPatientScheme').text(p.scheme_name + (p.scheme_code ? ' (' + p.scheme_code + ')' : ''));
+                } else {
+                    $('#pfSchemeRow').hide();
+                }
+
+                // Summary chips (enhanced)
+                var c = resp.counts;
+                $('#pfSumPending').text(c.pending || 0);
+                $('#pfSumAwaiting').text(c.awaiting_code || 0);
+                $('#pfSumApproved').text(c.approved || 0);
+                $('#pfSumExpress').text(c.express || 0);
+                $('#pfSumRejected').text(c.rejected || 0);
+                $('#pfSumTotal').text(resp.summary.total_requests || 0);
+                $('#pfSumClaimsApproved').text('₦' + fmtN(resp.summary.total_claims_approved));
+                $('#pfSumPayableApproved').text('₦' + fmtN(resp.summary.total_payable_approved));
+                $('#pfSumClaimsPending').text('₦' + fmtN(resp.summary.pending_claims_total));
+
+                // Tab badges
+                $('#pfBadgePending').text(c.pending || 0);
+                $('#pfBadgeAwaiting').text(c.awaiting_code || 0);
+                $('#pfBadgeApproved').text(c.approved || 0);
+                $('#pfBadgeExpress').text(c.express || 0);
+                $('#pfBadgeRejected').text(c.rejected || 0);
+                $('#pfBadgePast').text(c.past || 0);
+
+                // Render each tab (with filtering & pagination)
+                applyFiltersAndRender();
+
+            }).fail(function(xhr) {
+                toastr.error('Error loading patient requests');
+            });
+        }
+
+        // ── Filter & pagination engine ──────────────────────────
+        function getFilters() {
+            return {
+                dateFrom: $('#pfFilterDateFrom').val() || '',
+                dateTo: $('#pfFilterDateTo').val() || '',
+                type: $('#pfFilterType').val() || '',
+                coverage: ($('#pfFilterCoverage').val() || '').toLowerCase(),
+                search: ($('#pfFilterSearch').val() || '').toLowerCase().trim()
+            };
+        }
+
+        // Parse 'd M Y, h:i A' format (e.g. '12 Apr 2026, 02:30 PM') to Date
+        function parsePfDate(str) {
+            if (!str) return null;
+            var d = new Date(str.replace(',', ''));
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        function filterRows(rows, filters) {
+            if (!rows) return [];
+            var fromDate = filters.dateFrom ? new Date(filters.dateFrom + 'T00:00:00') : null;
+            var toDate = filters.dateTo ? new Date(filters.dateTo + 'T23:59:59') : null;
+            return rows.filter(function(r) {
+                // Date filter
+                if (fromDate || toDate) {
+                    var rd = parsePfDate(r.created_at);
+                    if (rd) {
+                        if (fromDate && rd < fromDate) return false;
+                        if (toDate && rd > toDate) return false;
+                    }
+                }
+                // Type filter
+                if (filters.type && r.type && r.type.toLowerCase() !== filters.type) return false;
+                // Coverage mode filter
+                if (filters.coverage && r.coverage_mode && r.coverage_mode.toLowerCase() !== filters.coverage) return false;
+                // Search text
+                if (filters.search) {
+                    var haystack = ((r.name || '') + ' ' + (r.category || '') + ' ' + (r.auth_code || '') + ' ' + (r.type || '')).toLowerCase();
+                    if (haystack.indexOf(filters.search) === -1) return false;
+                }
+                return true;
+            });
+        }
+
+        function applyFiltersAndRender() {
+            if (!pfPatientData) return;
+            var filters = getFilters();
+            var tabMap = {
+                pending: 'pending',
+                awaiting_code: 'awaiting',
+                approved: 'approved',
+                express: 'express',
+                rejected: 'rejected',
+                past: 'past'
+            };
+
+            Object.keys(tabMap).forEach(function(tabKey) {
+                var bodyKey = tabMap[tabKey];
+                var allRows = pfPatientData.tabs[tabKey] || [];
+                var filtered = filterRows(allRows, filters);
+                pfFilteredData[tabKey] = filtered;
+                if (!pfPages[tabKey]) pfPages[tabKey] = 1;
+                // Clamp page
+                var totalPages = Math.max(1, Math.ceil(filtered.length / PF_PAGE_SIZE));
+                if (pfPages[tabKey] > totalPages) pfPages[tabKey] = totalPages;
+                renderPfTabPage(tabKey, bodyKey);
+            });
+        }
+
+        function renderPfTabPage(tabKey, bodyKey) {
+            var filtered = pfFilteredData[tabKey] || [];
+            var page = pfPages[tabKey] || 1;
+            var totalPages = Math.max(1, Math.ceil(filtered.length / PF_PAGE_SIZE));
+            var start = (page - 1) * PF_PAGE_SIZE;
+            var pageRows = filtered.slice(start, start + PF_PAGE_SIZE);
+
+            renderPfTab(tabKey, pageRows, bodyKey);
+
+            // Update pagination controls
+            var $pag = $('.pf-pagination[data-tab="' + tabKey + '"]');
+            if ($pag.length) {
+                var showFrom = filtered.length ? start + 1 : 0;
+                var showTo = Math.min(start + PF_PAGE_SIZE, filtered.length);
+                $pag.find('.pf-page-info').text('Showing ' + showFrom + '-' + showTo + ' of ' + filtered.length);
+                $pag.find('.pf-page-num').text(page + ' / ' + totalPages);
+                $pag.find('.pf-page-prev').prop('disabled', page <= 1);
+                $pag.find('.pf-page-next').prop('disabled', page >= totalPages);
+            }
+        }
+
+        // Pagination button clicks
+        $(document).on('click', '.pf-pagination .pf-page-prev', function() {
+            var tabKey = $(this).closest('.pf-pagination').data('tab');
+            if (pfPages[tabKey] > 1) {
+                pfPages[tabKey]--;
+                var tabMap = { pending:'pending', awaiting_code:'awaiting', approved:'approved', express:'express', rejected:'rejected', past:'past' };
+                renderPfTabPage(tabKey, tabMap[tabKey]);
+            }
+        });
+
+        $(document).on('click', '.pf-pagination .pf-page-next', function() {
+            var tabKey = $(this).closest('.pf-pagination').data('tab');
+            var totalPages = Math.max(1, Math.ceil((pfFilteredData[tabKey] || []).length / PF_PAGE_SIZE));
+            if (pfPages[tabKey] < totalPages) {
+                pfPages[tabKey]++;
+                var tabMap = { pending:'pending', awaiting_code:'awaiting', approved:'approved', express:'express', rejected:'rejected', past:'past' };
+                renderPfTabPage(tabKey, tabMap[tabKey]);
+            }
+        });
+
+        // Filter change handlers
+        $(document).on('change input', '.pf-filter', function() {
+            // Reset to page 1 on any filter change
+            Object.keys(pfPages).forEach(function(k) { pfPages[k] = 1; });
+            applyFiltersAndRender();
+        });
+
+        // Filter reset
+        $('#pfFilterReset').on('click', function() {
+            $('#pfFilterDateFrom, #pfFilterDateTo, #pfFilterSearch').val('');
+            $('#pfFilterType, #pfFilterCoverage').val('');
+            Object.keys(pfPages).forEach(function(k) { pfPages[k] = 1; });
+            applyFiltersAndRender();
+        });
+
+        // Show all dates (clear date filters)
+        $('#pfShowAllDates').on('click', function() {
+            $('#pfFilterDateFrom, #pfFilterDateTo').val('');
+            Object.keys(pfPages).forEach(function(k) { pfPages[k] = 1; });
+            applyFiltersAndRender();
+        });
+
+        // Refresh patient data
+        $('#pfRefreshData').on('click', function() {
+            if (pfPatientId) loadPatientFocus(pfPatientId);
+        });
+
+        // ── Render tab table rows ───────────────────────────────
+        function renderPfTab(tabKey, rows, bodyKey) {
+            var $body = $('#pfBody' + capitalize(bodyKey));
+            $body.empty();
+
+            if (!rows || !rows.length) {
+                var cols = $body.closest('table').find('thead th').length;
+                $body.html('<tr><td colspan="' + cols + '"><div class="pf-empty-state"><i class="mdi mdi-inbox-outline"></i>No requests</div></td></tr>');
+                return;
+            }
+
+            rows.forEach(function(r) {
+                var tr = '';
+                switch (tabKey) {
+                    case 'pending':
+                        tr = '<tr>' +
+                            '<td><input type="checkbox" class="pf-row-check" data-id="' + r.id + '"></td>' +
+                            '<td><strong>' + escHtml(r.name) + '</strong>' + (r.category ? '<br><small class="text-muted">' + escHtml(r.category) + '</small>' : '') + '</td>' +
+                            '<td><span class="badge badge-' + typeBadge(r.type) + '">' + r.type + '</span></td>' +
+                            '<td>' + r.qty + '</td>' +
+                            '<td>₦' + fmtN(r.claims_amount) + '</td>' +
+                            '<td>₦' + fmtN(r.payable_amount) + '</td>' +
+                            '<td><span class="badge badge-outline-secondary" style="border:1px solid #adb5bd;">' + (r.coverage_mode || '') + '</span></td>' +
+                            '<td><small>' + (r.created_at || '') + '</small>' + (r.hours_ago !== null ? '<br><small class="text-muted">' + r.hours_ago + 'h ago</small>' : '') + '</td>' +
+                            '<td><div class="pf-action-cell">' +
+                                '<button class="btn btn-sm btn-success approve-btn" data-id="' + r.id + '" data-mode="' + (r.coverage_mode || 'primary') + '"><i class="mdi mdi-check mr-1"></i>Approve</button>' +
+                                '<button class="btn btn-sm btn-danger reject-btn" data-id="' + r.id + '"><i class="mdi mdi-close mr-1"></i>Reject</button>' +
+                                '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>' +
+                            '</div></td></tr>';
+                        break;
+
+                    case 'awaiting_code':
+                        tr = '<tr>' +
+                            '<td><input type="checkbox" class="pf-row-check" data-id="' + r.id + '"></td>' +
+                            '<td><strong>' + escHtml(r.name) + '</strong></td>' +
+                            '<td><span class="badge badge-' + typeBadge(r.type) + '">' + r.type + '</span></td>' +
+                            '<td>' + r.qty + '</td>' +
+                            '<td>₦' + fmtN(r.claims_amount) + '</td>' +
+                            '<td>₦' + fmtN(r.payable_amount) + '</td>' +
+                            '<td>' +
+                                '<div class="input-group input-group-sm" style="min-width:140px;">' +
+                                    '<input type="text" class="form-control pf-auth-code-input" data-id="' + r.id + '" placeholder="Auth code" value="' + escHtml(r.auth_code || '') + '" style="border-radius:4px 0 0 4px; font-size:0.78rem;">' +
+                                    '<div class="input-group-append"><button class="btn btn-sm pf-submit-auth" data-id="' + r.id + '" style="background:#7c4dff; color:#fff; border-radius:0 4px 4px 0;"><i class="mdi mdi-check mr-1"></i>Submit</button></div>' +
+                                '</div>' +
+                            '</td>' +
+                            '<td><small>' + (r.created_at || '') + '</small></td>' +
+                            '<td><div class="pf-action-cell">' +
+                                '<button class="btn btn-sm btn-danger reject-btn" data-id="' + r.id + '"><i class="mdi mdi-close mr-1"></i>Reject</button>' +
+                                '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>' +
+                            '</div></td></tr>';
+                        break;
+
+                    case 'approved':
+                        tr = '<tr>' +
+                            '<td><strong>' + escHtml(r.name) + '</strong></td>' +
+                            '<td><span class="badge badge-' + typeBadge(r.type) + '">' + r.type + '</span></td>' +
+                            '<td>' + r.qty + '</td>' +
+                            '<td>₦' + fmtN(r.claims_amount) + '</td>' +
+                            '<td>₦' + fmtN(r.payable_amount) + '</td>' +
+                            '<td>' + escHtml(r.auth_code || '-') + '</td>' +
+                            '<td><small>' + escHtml(r.validated_by || '-') + '</small></td>' +
+                            '<td><small>' + (r.validated_at || r.created_at || '') + '</small></td>' +
+                            '<td><div class="pf-action-cell">' +
+                                '<button class="btn btn-sm btn-warning reverse-btn" data-id="' + r.id + '"><i class="mdi mdi-undo mr-1"></i>Reverse</button>' +
+                                '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>' +
+                            '</div></td></tr>';
+                        break;
+
+                    case 'express':
+                        tr = '<tr>' +
+                            '<td><strong>' + escHtml(r.name) + '</strong></td>' +
+                            '<td><span class="badge badge-' + typeBadge(r.type) + '">' + r.type + '</span></td>' +
+                            '<td>' + r.qty + '</td>' +
+                            '<td>₦' + fmtN(r.claims_amount) + '</td>' +
+                            '<td>₦' + fmtN(r.payable_amount) + '</td>' +
+                            '<td><small>' + (r.created_at || '') + '</small></td>' +
+                            '<td><button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button></td>' +
+                            '</tr>';
+                        break;
+
+                    case 'rejected':
+                        tr = '<tr>' +
+                            '<td><strong>' + escHtml(r.name) + '</strong></td>' +
+                            '<td><span class="badge badge-' + typeBadge(r.type) + '">' + r.type + '</span></td>' +
+                            '<td>' + r.qty + '</td>' +
+                            '<td>₦' + fmtN(r.claims_amount) + '</td>' +
+                            '<td>₦' + fmtN(r.payable_amount) + '</td>' +
+                            '<td><small>' + escHtml(r.validation_notes || '-') + '</small></td>' +
+                            '<td><small>' + escHtml(r.validated_by || '-') + '</small></td>' +
+                            '<td><small>' + (r.validated_at || r.created_at || '') + '</small></td>' +
+                            '<td><div class="pf-action-cell">' +
+                                '<button class="btn btn-sm btn-info reapprove-btn" data-id="' + r.id + '" data-mode="' + (r.coverage_mode || 'primary') + '"><i class="mdi mdi-check-circle-outline mr-1"></i>Re-approve</button>' +
+                                '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>' +
+                            '</div></td></tr>';
+                        break;
+
+                    case 'past':
+                        tr = '<tr>' +
+                            '<td><strong>' + escHtml(r.name) + '</strong></td>' +
+                            '<td><span class="badge badge-' + typeBadge(r.type) + '">' + r.type + '</span></td>' +
+                            '<td>' + r.qty + '</td>' +
+                            '<td>₦' + fmtN(r.claims_amount) + '</td>' +
+                            '<td>₦' + fmtN(r.payable_amount) + '</td>' +
+                            '<td><span class="badge badge-outline-secondary" style="border:1px solid #adb5bd;">' + (r.coverage_mode || '') + '</span></td>' +
+                            '<td>' + statusBadge(r.validation_status) + '</td>' +
+                            '<td><small>' + (r.created_at || '') + '</small></td>' +
+                            '<td><button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button></td>' +
+                            '</tr>';
+                        break;
+                }
+                $body.append(tr);
+            });
+        }
+
+        // ── Inline actions ──────────────────────────────────────
+        // Approve, Reject, Reverse, Re-approve, and Details now reuse the existing
+        // queue modal handlers (.approve-btn, .reject-btn, .reverse-btn, .reapprove-btn,
+        // .view-details-btn) via the same CSS classes rendered in the tab rows above.
+        // The modal form submissions call table.ajax.reload() + loadQueueCounts() etc.,
+        // plus window.pfReloadAfterAction() to refresh the patient focus panel.
+
+        // Submit auth code (awaiting_code tab)
+        $(document).on('click', '.pf-submit-auth', function() {
+            var id = $(this).data('id');
+            var code = $(this).closest('.input-group').find('.pf-auth-code-input').val().trim();
+            if (!code) {
+                toastr.warning('Please enter an auth code');
+                return;
+            }
+            var $btn = $(this).prop('disabled', true);
+            $.post("{{ url('hmo/requests') }}/" + id + '/submit-auth-code', {
+                _token: '{{ csrf_token() }}',
+                auth_code: code
+            }, function(resp) {
+                toastr.success(resp.message || 'Auth code submitted');
+                loadPatientFocus(pfPatientId);
+                if (typeof table !== 'undefined' && table) { table.ajax.reload(null, false); }
+                if (typeof loadQueueCounts === 'function') loadQueueCounts();
+            }).fail(function(xhr) {
+                $btn.prop('disabled', false);
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'Error');
+            });
+        });
+
+        // ── Batch select ────────────────────────────────────────
+        $(document).on('change', '.pf-row-check', function() {
+            var id = $(this).data('id');
+            if ($(this).prop('checked')) {
+                if (pfSelectedIds.indexOf(id) === -1) pfSelectedIds.push(id);
+            } else {
+                pfSelectedIds = pfSelectedIds.filter(function(i) { return i !== id; });
+            }
+            updatePfBatchBar();
+        });
+
+        $(document).on('change', '.pf-select-all', function() {
+            var checked = $(this).prop('checked');
+            $(this).closest('table').find('.pf-row-check').each(function() {
+                $(this).prop('checked', checked);
+                var id = $(this).data('id');
+                if (checked && pfSelectedIds.indexOf(id) === -1) {
+                    pfSelectedIds.push(id);
+                } else if (!checked) {
+                    pfSelectedIds = pfSelectedIds.filter(function(i) { return i !== id; });
+                }
+            });
+            updatePfBatchBar();
+        });
+
+        function updatePfBatchBar() {
+            $('#pfSelectedCount').text(pfSelectedIds.length);
+            if (pfSelectedIds.length > 0) {
+                $('#pfBatchBar').slideDown();
+            } else {
+                $('#pfBatchBar').slideUp();
+            }
+        }
+
+        // Batch approve
+        $(document).on('click', '.pf-batch-approve', function() {
+            if (!pfSelectedIds.length) return;
+            if (!confirm('Approve ' + pfSelectedIds.length + ' selected request(s)?')) return;
+            var $btn = $(this).prop('disabled', true);
+            $.post("{{ route('hmo.batch-approve') }}", {
+                _token: '{{ csrf_token() }}',
+                request_ids: pfSelectedIds
+            }, function(resp) {
+                $btn.prop('disabled', false);
+                toastr.success(resp.message || 'Batch approved');
+                pfSelectedIds = [];
+                updatePfBatchBar();
+                loadPatientFocus(pfPatientId);
+                if (typeof table !== 'undefined' && table) { table.ajax.reload(null, false); }
+                if (typeof loadQueueCounts === 'function') loadQueueCounts();
+            }).fail(function(xhr) {
+                $btn.prop('disabled', false);
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'Error');
+            });
+        });
+
+        // Batch reject
+        $(document).on('click', '.pf-batch-reject', function() {
+            if (!pfSelectedIds.length) return;
+            var reason = prompt('Rejection reason for ' + pfSelectedIds.length + ' request(s):');
+            if (reason === null) return;
+            var $btn = $(this).prop('disabled', true);
+            $.post("{{ route('hmo.batch-reject') }}", {
+                _token: '{{ csrf_token() }}',
+                request_ids: pfSelectedIds,
+                rejection_reason: 'other',
+                validation_notes: reason
+            }, function(resp) {
+                $btn.prop('disabled', false);
+                toastr.success(resp.message || 'Batch rejected');
+                pfSelectedIds = [];
+                updatePfBatchBar();
+                loadPatientFocus(pfPatientId);
+                if (typeof table !== 'undefined' && table) { table.ajax.reload(null, false); }
+                if (typeof loadQueueCounts === 'function') loadQueueCounts();
+            }).fail(function(xhr) {
+                $btn.prop('disabled', false);
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'Error');
+            });
+        });
+
+        // ── Clinical context & history buttons ──────────────────
+        $(document).on('click', '.pf-view-clinical', function() {
+            if (!pfPatientId) return;
+            // Use the workbench's existing loadClinicalContext function
+            if (typeof loadClinicalContext === 'function') {
+                loadClinicalContext(pfPatientId);
+            }
+        });
+
+        $(document).on('click', '.pf-view-history', function() {
+            if (!pfPatientId) return;
+            // Load history data and show the existing modal
+            $.get("{{ url('hmo/patient') }}/" + pfPatientId + '/history', function(data) {
+                $('#history_total_claims').text('₦' + fmtN(data.summary.total_claims));
+                $('#history_month_claims').text('₦' + fmtN(data.summary.this_month_claims));
+                $('#history_total_visits').text(data.summary.total_visits);
+                var $tbody = $('#historyTableBody').empty();
+                if (data.history && data.history.length) {
+                    data.history.forEach(function(h) {
+                        $tbody.append('<tr>' +
+                            '<td>' + escHtml(h.date) + '</td>' +
+                            '<td><span class="badge badge-' + (h.type === 'Product' ? 'success' : 'info') + '">' + escHtml(h.type) + '</span></td>' +
+                            '<td>' + escHtml(h.item) + '</td>' +
+                            '<td><span class="badge badge-secondary">' + escHtml(h.coverage_mode || '') + '</span></td>' +
+                            '<td>₦' + fmtN(h.claims_amount) + '</td>' +
+                            '<td>₦' + fmtN(h.payable_amount) + '</td>' +
+                            '<td>' + statusBadge(h.validation_status) + '</td>' +
+                            '<td>' + escHtml(h.validated_by || '-') + '</td></tr>');
+                    });
+                } else {
+                    $tbody.html('<tr><td colspan="8" class="text-center text-muted py-3">No history found</td></tr>');
+                }
+                $('#patientHistoryModal').modal('show');
+            }).fail(function() {
+                toastr.error('Failed to load patient history');
+            });
+        });
+
+        // ── URL parameter support: auto-load patient ─────────
+        var urlParams = new URLSearchParams(window.location.search);
+        var focusPatientId = urlParams.get('patient_focus');
+        if (focusPatientId) {
+            loadPatientFocus(parseInt(focusPatientId));
+        }
+
+        // ── Helpers ─────────────────────────────────────────────
+        function fmtN(n) {
+            return parseFloat(n || 0).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        function capitalize(s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        function typeBadge(type) {
+            switch(type) {
+                case 'Product': return 'primary';
+                case 'Service': return 'info';
+                case 'Procedure': return 'dark';
+                default: return 'secondary';
+            }
+        }
+
+        function statusBadge(status) {
+            switch(status) {
+                case 'pending': return '<span class="badge badge-warning">Pending</span>';
+                case 'approved': return '<span class="badge badge-success">Approved</span>';
+                case 'rejected': return '<span class="badge badge-danger">Rejected</span>';
+                case 'awaiting_code': return '<span class="badge" style="background:#7c4dff;color:#fff;">Awaiting Code</span>';
+                default: return '<span class="badge badge-secondary">' + (status || 'N/A') + '</span>';
+            }
+        }
+    })();
 });
 </script>
 <style>
+    /* View switcher buttons */
+    .view-switch-btn { transition: all 0.2s ease; cursor: pointer; font-size: 0.85rem; }
+    .view-switch-btn:hover { opacity: 0.85; }
+    .view-switch-btn.active { box-shadow: 0 2px 6px rgba(102,126,234,0.3); }
+    /* Filter bar */
+    #pfFilterBar .form-control-sm { font-size: 0.82rem; }
+    #pfFilterBar label { font-size: 0.75rem; }
+    /* Pagination row */
+    .pf-pagination { background: #fafbfc; }
+    .pf-pagination .pf-page-info { font-size: 0.8rem; }
+    .pf-pagination .pf-page-num { font-size: 0.8rem; font-weight: 600; }
+    /* Stats shortcuts */
+    #statsPanel .list-group-item { font-size: 0.9rem; transition: background 0.15s; }
+    #statsPanel .list-group-item:hover { background: #f0f4ff; }
     .cursor-pointer { cursor: pointer; }
     .preset-card:hover { opacity: 0.9; transform: scale(1.02); transition: all 0.2s; }
     .tariff-edit-section .card-header.tariff-toggle:hover { background: #edf2f7 !important; }
