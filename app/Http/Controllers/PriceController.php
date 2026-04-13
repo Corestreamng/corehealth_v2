@@ -311,7 +311,7 @@ class PriceController extends Controller
                     if ($syncPayable || $syncClaims) {
                         $tariffMsg = $this->propagateTariffs(
                             $myprice->product_id,
-                            $syncPayable ? (float) $request->price : null,
+                            $syncPayable ? (float) $request->new_payable_amount : null,
                             $syncClaims  ? (float) $request->new_claims_amount : null,
                             $request->input('tariff_scope', 'none'),
                             $request->input('selected_scheme_ids', []),
@@ -445,6 +445,84 @@ class PriceController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    /**
+     * Show the HMO tariff view for a product.
+     */
+    public function tariffView($id)
+    {
+        try {
+            $product = Product::findOrFail($id);
+            $price = Price::where('product_id', $id)->first();
+            $salePrice = $price ? (float) $price->current_sale_price : 0;
+
+            $schemes = HmoScheme::with(['hmos' => fn($q) => $q->where('status', 1)])->get();
+            $tariffs = HmoTariff::where('product_id', $id)->whereNull('service_id')->get()->keyBy('hmo_id');
+
+            $schemeSummary = [];
+            foreach ($schemes as $scheme) {
+                $activeHmos = $scheme->hmos;
+                if ($activeHmos->isEmpty()) continue;
+
+                $payableValues = [];
+                $claimsValues = [];
+                $hmosData = [];
+
+                foreach ($activeHmos as $hmo) {
+                    $tariff = $tariffs->get($hmo->id);
+                    $payable = $tariff ? (float) $tariff->payable_amount : 0;
+                    $claims = $tariff ? (float) $tariff->claims_amount : 0;
+                    $payableValues[] = $payable;
+                    $claimsValues[] = $claims;
+                    $hmosData[] = [
+                        'id' => $hmo->id, 'name' => $hmo->name,
+                        'payable_amount' => $payable, 'claims_amount' => $claims,
+                        'coverage_mode' => $tariff ? $tariff->coverage_mode : 'primary',
+                        'has_tariff' => (bool) $tariff,
+                        'is_manual' => $tariff && $payable > 0,
+                    ];
+                }
+
+                $schemeSummary[] = [
+                    'id' => $scheme->id, 'name' => $scheme->name,
+                    'hmo_count' => count($hmosData), 'hmos' => $hmosData,
+                    'payable_min' => min($payableValues), 'payable_max' => max($payableValues),
+                    'payable_avg' => round(array_sum($payableValues) / count($payableValues), 2),
+                    'claims_min' => min($claimsValues), 'claims_max' => max($claimsValues),
+                    'claims_avg' => round(array_sum($claimsValues) / count($claimsValues), 2),
+                    'manual_count' => collect($hmosData)->where('is_manual', true)->count(),
+                    'auto_count' => collect($hmosData)->where('is_manual', false)->count(),
+                ];
+            }
+
+            $standaloneHmos = Hmo::where('status', 1)->whereNull('hmo_scheme_id')->get();
+            $standaloneData = [];
+            foreach ($standaloneHmos as $hmo) {
+                $tariff = $tariffs->get($hmo->id);
+                $standaloneData[] = [
+                    'id' => $hmo->id, 'name' => $hmo->name,
+                    'payable_amount' => $tariff ? (float) $tariff->payable_amount : 0,
+                    'claims_amount' => $tariff ? (float) $tariff->claims_amount : 0,
+                    'coverage_mode' => $tariff ? $tariff->coverage_mode : 'primary',
+                    'has_tariff' => (bool) $tariff,
+                    'is_manual' => $tariff && (float) $tariff->payable_amount > 0,
+                ];
+            }
+
+            return view('admin.partials.hmo-tariff-view', [
+                'itemName' => $product->product_name,
+                'itemType' => 'product',
+                'itemId' => $id,
+                'salePrice' => $salePrice,
+                'schemeSummary' => $schemeSummary,
+                'standaloneData' => $standaloneData,
+                'totalHmoCount' => Hmo::where('status', 1)->count(),
+                'backUrl' => route('products.index'),
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->withMessage('Error: ' . $e->getMessage());
+        }
+    }
+
     public function priceslist()
     {
         //
