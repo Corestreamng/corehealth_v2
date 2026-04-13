@@ -323,7 +323,7 @@ class ChatCore {
             if (this.activeConversationId === id) {
                 this.loadMessages(id, true);
             }
-        }, 3000);
+        }, 30000);
     }
 
     stopMessagePolling() {
@@ -339,10 +339,10 @@ class ChatCore {
         // Check immediately
         this.checkUnreadCount();
 
-        // Then poll every 5 seconds
+        // Then poll every 30 seconds
         this.unreadPollingInterval = setInterval(() => {
             this.checkUnreadCount();
-        }, 5000);
+        }, 30000);
     }
 
     stopUnreadPolling() {

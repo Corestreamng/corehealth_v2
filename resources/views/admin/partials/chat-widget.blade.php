@@ -104,25 +104,83 @@
 <!-- Notification Sound -->
 <audio id="chat-notification-sound" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU" preload="auto"></audio>
 
-<!-- Unread Message Modal -->
-<div id="unread-message-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h6 class="modal-title">New Messages</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Unread Message Bubble (Tawk.to style) -->
+<div id="unread-message-bubble" style="
+    display: none;
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    z-index: 9998;
+    max-width: 280px;
+    animation: bubbleSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+">
+    <div style="
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+        overflow: hidden;
+        border: 1px solid #e8e8e8;
+    ">
+        <div style="padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
+            <div style="
+                width: 40px; height: 40px; border-radius: 50%;
+                background: var(--chat-primary, #011b33);
+                display: flex; align-items: center; justify-content: center;
+                flex-shrink: 0;
+            ">
+                <i class="mdi mdi-message-text" style="color: #fff; font-size: 20px;"></i>
             </div>
-            <div class="modal-body text-center">
-                <i class="mdi mdi-email-alert text-primary mb-2" style="font-size: 48px;"></i>
-                <p class="mb-0">You have <strong id="unread-modal-count">0</strong> unread messages.</p>
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 13px; color: #333;">New Messages</div>
+                <div style="font-size: 12px; color: #666;">You have <strong id="unread-bubble-count">0</strong> unread message(s)</div>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="snoozeNotifications()">Snooze (5m)</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="acknowledgeMessages()">Open Chat</button>
-            </div>
+            <button onclick="dismissUnreadBubble()" style="
+                background: none; border: none; cursor: pointer;
+                color: #999; font-size: 18px; padding: 0 2px;
+                line-height: 1;
+            ">&times;</button>
+        </div>
+        <div style="display: flex; border-top: 1px solid #f0f0f0;">
+            <button onclick="snoozeNotifications()" style="
+                flex: 1; padding: 8px; border: none; background: #fafafa;
+                font-size: 12px; color: #888; cursor: pointer;
+                border-right: 1px solid #f0f0f0;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#fafafa'">
+                <i class="mdi mdi-bell-off-outline"></i> Snooze
+            </button>
+            <button onclick="acknowledgeMessages()" style="
+                flex: 1; padding: 8px; border: none;
+                background: var(--chat-primary, #011b33);
+                font-size: 12px; color: #fff; cursor: pointer;
+                font-weight: 600;
+                transition: opacity 0.2s;
+            " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <i class="mdi mdi-message-reply-text"></i> View
+            </button>
         </div>
     </div>
+    <!-- Triangle pointer toward the chat FAB -->
+    <div style="
+        position: absolute; bottom: -8px; right: 20px;
+        width: 0; height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 8px solid #fff;
+        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.08));
+    "></div>
 </div>
+
+<style>
+@keyframes bubbleSlideIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bubbleSlideOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(10px) scale(0.95); }
+}
+</style>
 
 <!-- Marked.js for Markdown Rendering -->
 <script src="{{ asset('assets/js/marked.min.js') }}"></script>
@@ -526,20 +584,28 @@
     }
 
     function showUnreadPopup(count) {
-        const window = document.getElementById('chat-window');
+        const chatWindow = document.getElementById('chat-window');
+        const bubble = document.getElementById('unread-message-bubble');
         // Only show if chat window is closed AND not snoozed
-        if ((window.style.display === 'none' || window.style.display === '') && (!snoozeUntil || new Date() > snoozeUntil)) {
-            document.getElementById('unread-modal-count').innerText = count;
-            if (typeof $ !== 'undefined') {
-                $('#unread-message-modal').modal('show');
-            }
+        if ((chatWindow.style.display === 'none' || chatWindow.style.display === '') && (!snoozeUntil || new Date() > snoozeUntil)) {
+            document.getElementById('unread-bubble-count').innerText = count;
+            bubble.style.display = 'block';
+            bubble.style.animation = 'bubbleSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+            // Auto-dismiss after 8 seconds
+            clearTimeout(window._bubbleDismissTimer);
+            window._bubbleDismissTimer = setTimeout(() => dismissUnreadBubble(), 8000);
         }
     }
 
+    function dismissUnreadBubble() {
+        const bubble = document.getElementById('unread-message-bubble');
+        if (!bubble || bubble.style.display === 'none') return;
+        bubble.style.animation = 'bubbleSlideOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+        setTimeout(() => { bubble.style.display = 'none'; }, 250);
+    }
+
     function acknowledgeMessages() {
-        if (typeof $ !== 'undefined') {
-            $('#unread-message-modal').modal('hide');
-        }
+        dismissUnreadBubble();
         toggleChatWindow();
     }
 
@@ -547,10 +613,7 @@
         const snoozeTime = new Date(new Date().getTime() + 5 * 60000); // 5 minutes
         snoozeUntil = snoozeTime;
         localStorage.setItem('chat_snooze_until', snoozeTime.toISOString());
-
-        if (typeof $ !== 'undefined') {
-            $('#unread-message-modal').modal('hide');
-        }
+        dismissUnreadBubble();
     }
 
     // ============================================
