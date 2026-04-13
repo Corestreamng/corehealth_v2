@@ -12,13 +12,23 @@
                 {{-- Tabs for different clinical data --}}
                 <ul class="nav nav-tabs" id="clinical-tabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="vitals-tab-btn" data-bs-toggle="tab" data-bs-target="#vitals-tab" type="button" role="tab" aria-controls="vitals-tab" aria-selected="true">
-                            <i class="mdi mdi-heart-pulse"></i> Vitals
+                        <button class="nav-link active" id="enc-notes-tab-btn" data-bs-toggle="tab" data-bs-target="#enc-notes-tab" type="button" role="tab" aria-controls="enc-notes-tab" aria-selected="true">
+                            <i class="mdi mdi-note-text"></i> Encounter Notes
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="enc-notes-tab-btn" data-bs-toggle="tab" data-bs-target="#enc-notes-tab" type="button" role="tab" aria-controls="enc-notes-tab" aria-selected="false">
-                            <i class="mdi mdi-note-text"></i> Encounter Notes
+                        <button class="nav-link" id="labs-tab-btn" data-bs-toggle="tab" data-bs-target="#labs-tab" type="button" role="tab" aria-controls="labs-tab" aria-selected="false">
+                            <i class="mdi mdi-flask"></i> Labs
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="imaging-tab-btn" data-bs-toggle="tab" data-bs-target="#imaging-tab" type="button" role="tab" aria-controls="imaging-tab" aria-selected="false">
+                            <i class="mdi mdi-radiology-box"></i> Imaging
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="vitals-tab-btn" data-bs-toggle="tab" data-bs-target="#vitals-tab" type="button" role="tab" aria-controls="vitals-tab" aria-selected="false">
+                            <i class="mdi mdi-heart-pulse"></i> Vitals
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -44,8 +54,65 @@
                 </ul>
 
                 <div class="tab-content" id="clinical-tab-content">
+                    {{-- Encounter Notes Tab (first/active) --}}
+                    <div class="tab-pane fade show active" id="enc-notes-tab" role="tabpanel" aria-labelledby="enc-notes-tab-btn">
+                        <div class="clinical-tab-header">
+                            <h6><i class="mdi mdi-note-text"></i> Encounter Notes</h6>
+                            <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="enc-notes">
+                                <i class="mdi mdi-refresh"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="clinical-tab-body" id="enc-notes-panel-body">
+                            <div id="clinical-enc-notes-container">
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                                    <p class="text-muted mt-2">Loading encounter notes...</p>
+                                </div>
+                            </div>
+                            <div id="clinical-enc-notes-show-all" class="text-center mt-3"></div>
+                        </div>
+                    </div>
+
+                    {{-- Labs Tab --}}
+                    <div class="tab-pane fade" id="labs-tab" role="tabpanel" aria-labelledby="labs-tab-btn">
+                        <div class="clinical-tab-header">
+                            <h6><i class="mdi mdi-flask"></i> Lab Investigations</h6>
+                            <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="labs">
+                                <i class="mdi mdi-refresh"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="clinical-tab-body" id="labs-panel-body">
+                            <div id="clinical-labs-container">
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                                    <p class="text-muted mt-2">Loading lab results...</p>
+                                </div>
+                            </div>
+                            <div id="clinical-labs-show-all" class="text-center mt-3"></div>
+                        </div>
+                    </div>
+
+                    {{-- Imaging Tab --}}
+                    <div class="tab-pane fade" id="imaging-tab" role="tabpanel" aria-labelledby="imaging-tab-btn">
+                        <div class="clinical-tab-header">
+                            <h6><i class="mdi mdi-radiology-box"></i> Imaging Studies</h6>
+                            <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="imaging">
+                                <i class="mdi mdi-refresh"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="clinical-tab-body" id="imaging-panel-body">
+                            <div id="clinical-imaging-container">
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                                    <p class="text-muted mt-2">Loading imaging results...</p>
+                                </div>
+                            </div>
+                            <div id="clinical-imaging-show-all" class="text-center mt-3"></div>
+                        </div>
+                    </div>
+
                     {{-- Vitals Tab --}}
-                    <div class="tab-pane fade show active" id="vitals-tab" role="tabpanel" aria-labelledby="vitals-tab-btn">
+                    <div class="tab-pane fade" id="vitals-tab" role="tabpanel" aria-labelledby="vitals-tab-btn">
                         <div class="clinical-tab-header">
                             <h6><i class="mdi mdi-heart-pulse"></i> Recent Vital Signs</h6>
                             <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="vitals">
@@ -62,25 +129,6 @@
                                     </thead>
                                 </table>
                             </div>
-                        </div>
-                    </div>
-
-                    {{-- Encounter Notes Tab --}}
-                    <div class="tab-pane fade" id="enc-notes-tab" role="tabpanel" aria-labelledby="enc-notes-tab-btn">
-                        <div class="clinical-tab-header">
-                            <h6><i class="mdi mdi-note-text"></i> Encounter Notes</h6>
-                            <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="enc-notes">
-                                <i class="mdi mdi-refresh"></i> Refresh
-                            </button>
-                        </div>
-                        <div class="clinical-tab-body" id="enc-notes-panel-body">
-                            <div id="clinical-enc-notes-container">
-                                <div class="text-center py-4">
-                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
-                                    <p class="text-muted mt-2">Loading encounter notes...</p>
-                                </div>
-                            </div>
-                            <div id="clinical-enc-notes-show-all" class="text-center mt-3"></div>
                         </div>
                     </div>
 
@@ -558,6 +606,121 @@
         padding-top: 0.75rem;
         border-top: 1px solid #e9ecef;
     }
+
+    /* Lab & Imaging Cards */
+    .lab-card, .imaging-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .lab-card:hover, .imaging-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .lab-card { border-left: 4px solid #6f42c1; }
+    .imaging-card { border-left: 4px solid #17a2b8; }
+
+    .lab-card.status-completed { border-left-color: #28a745; }
+    .lab-card.status-sample_taken { border-left-color: #ffc107; }
+    .lab-card.status-processing { border-left-color: #fd7e14; }
+
+    .imaging-card.status-completed { border-left-color: #28a745; }
+    .imaging-card.status-in_progress { border-left-color: #ffc107; }
+    .imaging-card.status-processing { border-left-color: #fd7e14; }
+
+    .lab-header, .imaging-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0.5rem;
+    }
+
+    .lab-name, .imaging-name {
+        font-weight: 600;
+        color: #212529;
+        font-size: 1rem;
+    }
+
+    .lab-status, .imaging-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .lab-status.status-requested, .imaging-status.status-requested { background: #e9ecef; color: #495057; }
+    .lab-status.status-sample_taken { background: #fff3cd; color: #856404; }
+    .lab-status.status-in_progress, .imaging-status.status-in_progress { background: #fff3cd; color: #856404; }
+    .lab-status.status-processing, .imaging-status.status-processing { background: #ffeeba; color: #856404; }
+    .lab-status.status-completed, .imaging-status.status-completed { background: #d4edda; color: #155724; }
+
+    .lab-meta, .imaging-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .lab-meta-item, .imaging-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .lab-result-preview, .imaging-result-preview {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 0.25rem;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+
+    .priority-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-badge.urgent { background: #f8d7da; color: #721c24; }
+    .priority-badge.stat { background: #dc3545; color: white; }
+    .priority-badge.routine { background: #e9ecef; color: #6c757d; }
+
+    /* Result detail expand area */
+    .lab-result-detail, .imaging-result-detail {
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .lab-result-detail .table, .imaging-result-detail .table {
+        margin-bottom: 0;
+    }
+
+    /* V2 structured result status badges */
+    .result-status-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .result-status-badge.status-normal { background: #d4edda; color: #155724; }
+    .result-status-badge.status-high { background: #f8d7da; color: #721c24; }
+    .result-status-badge.status-low { background: #fff3cd; color: #856404; }
+    .result-status-badge.status-abnormal { background: #f8d7da; color: #721c24; }
 </style>
 
 <script>
@@ -570,6 +733,27 @@
 
     const $ = jQuery;
     let clinicalEncounterNotesLoaded = false;
+
+    // Load when modal is shown — use both show.bs.modal (BS4) and shown.bs.modal for reliability
+    $(document).on('show.bs.modal shown.bs.modal', '#clinical-context-modal', function() {
+        if (!clinicalEncounterNotesLoaded) {
+            loadClinicalEncounterNotes();
+        }
+    });
+
+    // Fallback: observe modal visibility via class change (BS4/BS5 compatibility)
+    var _encNotesObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            if (m.attributeName === 'class') {
+                var el = document.getElementById('clinical-context-modal');
+                if (el && el.classList.contains('show') && !clinicalEncounterNotesLoaded) {
+                    loadClinicalEncounterNotes();
+                }
+            }
+        });
+    });
+    var _encModal = document.getElementById('clinical-context-modal');
+    if (_encModal) _encNotesObserver.observe(_encModal, { attributes: true });
 
     // Load when tab is shown (using multiple event bindings for reliability)
     $(document).on('shown.bs.tab', '#enc-notes-tab-btn', function() {
@@ -1264,6 +1448,398 @@
             </div>
         `);
         $('#clinical-procedures-show-all').html('');
+    });
+})();
+</script>
+
+{{-- Labs Tab JavaScript --}}
+<script>
+(function initClinicalLabsLoader() {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initClinicalLabsLoader, 100);
+        return;
+    }
+
+    const $ = jQuery;
+    let clinicalLabsLoaded = false;
+
+    $(document).on('shown.bs.tab', '#labs-tab-btn', function() {
+        if (!clinicalLabsLoaded) loadClinicalLabs();
+    });
+
+    $(document).on('click', '#labs-tab-btn', function() {
+        setTimeout(function() {
+            if (!clinicalLabsLoaded && $('#labs-tab').hasClass('show')) loadClinicalLabs();
+        }, 150);
+    });
+
+    $(document).on('click', '.refresh-clinical-btn[data-panel="labs"]', function() {
+        clinicalLabsLoaded = false;
+        loadClinicalLabs();
+    });
+
+    function getPatientId() {
+        if (typeof currentPatient !== 'undefined' && currentPatient) return currentPatient;
+        if (typeof selectedPatientId !== 'undefined' && selectedPatientId) return selectedPatientId;
+        if ($('#clinical-context-modal').data('patient-id')) return $('#clinical-context-modal').data('patient-id');
+        return null;
+    }
+
+    function escH(str) { if (!str) return ''; var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+    function renderResultData(resultData) {
+        var data = resultData;
+        if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e) { return ''; } }
+        if (!Array.isArray(data) || data.length === 0) return '';
+
+        var html = '<table class="table table-sm table-bordered mb-0" style="font-size:0.85rem;">';
+        html += '<thead><tr><th>Parameter</th><th>Result</th><th>Reference Range</th><th>Status</th></tr></thead><tbody>';
+        data.forEach(function(p) {
+            var val = (p.value !== undefined && p.value !== null) ? p.value : '';
+            if (p.unit) val += ' ' + p.unit;
+            var ref = 'N/A';
+            if (p.reference_range) {
+                if (p.reference_range.min !== undefined && p.reference_range.max !== undefined) {
+                    ref = p.reference_range.min + ' - ' + p.reference_range.max;
+                    if (p.unit) ref += ' ' + p.unit;
+                } else if (p.reference_range.reference_value) {
+                    ref = p.reference_range.reference_value;
+                } else if (p.reference_range.text) {
+                    ref = p.reference_range.text;
+                }
+            }
+            var sCls = p.status ? 'status-' + p.status.toLowerCase().replace(' ','-') : '';
+            var sBadge = p.status ? '<span class="result-status-badge ' + sCls + '">' + escH(p.status) + '</span>' : '';
+            html += '<tr><td><strong>' + escH(p.name) + '</strong>' + (p.code ? ' <small class="text-muted">(' + escH(p.code) + ')</small>' : '') + '</td>';
+            html += '<td>' + escH(val) + '</td><td>' + escH(ref) + '</td><td>' + sBadge + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        return html;
+    }
+
+    function renderAttachments(attachments) {
+        var data = attachments;
+        if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e) { return ''; } }
+        if (!Array.isArray(data) || data.length === 0) return '';
+        var html = '<div class="mt-2"><small><b><i class="mdi mdi-paperclip"></i> Attachments:</b></small><div class="d-flex flex-wrap gap-1 mt-1">';
+        data.forEach(function(att) {
+            var url = '/storage/' + att.path;
+            html += '<a href="' + url + '" target="_blank" class="btn btn-outline-info btn-sm"><i class="mdi mdi-file-document"></i> ' + escH(att.name || 'File') + '</a>';
+        });
+        html += '</div></div>';
+        return html;
+    }
+
+    function loadClinicalLabs() {
+        let patientId = getPatientId();
+        if (!patientId) {
+            $('#clinical-labs-container').html('<div class="alert alert-warning"><i class="mdi mdi-alert"></i> No patient selected.</div>');
+            return;
+        }
+
+        $('#clinical-labs-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i><p class="text-muted mt-2">Loading lab results...</p></div>');
+
+        $.ajax({
+            url: `/clinical-context/patient/${patientId}/labs`,
+            method: 'GET',
+            success: function(labs) {
+                if (!labs || labs.length === 0) {
+                    $('#clinical-labs-container').html('<div class="text-center py-4"><i class="mdi mdi-flask mdi-48px text-muted"></i><p class="text-muted mt-2">No lab investigations found for this patient</p></div>');
+                    $('#clinical-labs-show-all').html('');
+                    return;
+                }
+
+                let html = '';
+                labs.forEach(function(lab, idx) {
+                    let statusLabel = lab.status.replace('_', ' ');
+                    let priorityHtml = (lab.priority && lab.priority !== 'routine')
+                        ? `<span class="priority-badge ${lab.priority}">${lab.priority}</span>` : '';
+                    let approvedBadge = lab.approved ? ' <span class="badge bg-success badge-sm"><i class="mdi mdi-check"></i> Approved</span>' : '';
+
+                    // Build result content section
+                    let resultSection = '';
+                    if (lab.has_result) {
+                        let resultContent = '';
+                        // V2: structured result_data table
+                        if (lab.result_data) {
+                            resultContent = renderResultData(lab.result_data);
+                        }
+                        // V1: raw HTML result
+                        if (!resultContent && lab.result) {
+                            resultContent = '<div class="alert alert-light mb-0 p-2"><small>' + lab.result + '</small></div>';
+                        }
+                        // Attachments
+                        let attachHtml = renderAttachments(lab.attachments);
+
+                        let metaLine = '';
+                        if (lab.result_by) metaLine += `<small class="text-muted"><i class="mdi mdi-account"></i> Results by: ${escH(lab.result_by)}</small> `;
+                        if (lab.result_date) metaLine += `<small class="text-muted"><i class="mdi mdi-calendar-check"></i> ${escH(lab.result_date)}</small>`;
+
+                        resultSection = `
+                            <div class="lab-result-detail mt-2" id="lab-result-${lab.id}" style="display:none;">
+                                ${metaLine ? '<div class="mb-2">' + metaLine + '</div>' : ''}
+                                ${resultContent}
+                                ${attachHtml}
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary clinical-toggle-result" data-target="#lab-result-${lab.id}">
+                                    <i class="mdi mdi-eye"></i> View Result
+                                </button>
+                            </div>`;
+                    } else {
+                        resultSection = lab.result_preview
+                            ? `<div class="lab-result-preview"><i class="mdi mdi-clipboard-text"></i> ${escH(lab.result_preview)}</div>` : '';
+                    }
+
+                    html += `
+                        <div class="lab-card status-${lab.status}">
+                            <div class="lab-header">
+                                <div>
+                                    <span class="lab-name">${escH(lab.service_name)}</span>
+                                    ${priorityHtml} ${approvedBadge}
+                                    ${lab.lab_number ? `<small class="text-muted ms-2">#${escH(lab.lab_number)}</small>` : ''}
+                                </div>
+                                <span class="lab-status status-${lab.status}">${statusLabel}</span>
+                            </div>
+                            <div class="lab-meta">
+                                <span class="lab-meta-item"><i class="mdi mdi-calendar"></i> ${lab.requested_date}</span>
+                                <span class="lab-meta-item"><i class="mdi mdi-doctor"></i> ${escH(lab.doctor)}</span>
+                                ${lab.sample_date ? `<span class="lab-meta-item"><i class="mdi mdi-test-tube"></i> Sample: ${lab.sample_date}</span>` : ''}
+                            </div>
+                            ${resultSection}
+                            ${lab.note ? `<div class="mt-1"><small class="text-muted"><i class="mdi mdi-note"></i> ${escH(lab.note)}</small></div>` : ''}
+                        </div>`;
+                });
+
+                $('#clinical-labs-container').html(html);
+                clinicalLabsLoaded = true;
+
+                $('#clinical-labs-show-all').html(`
+                    <a href="/patient/${patientId}?section=labResultsCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="mdi mdi-open-in-new"></i> See All Lab Results
+                    </a>
+                `);
+            },
+            error: function() {
+                $('#clinical-labs-container').html('<div class="alert alert-danger"><i class="mdi mdi-alert-circle"></i> Failed to load lab results.</div>');
+            }
+        });
+    }
+
+    // Toggle result detail expand/collapse
+    $(document).on('click', '#labs-tab .clinical-toggle-result', function() {
+        var $target = $($(this).data('target'));
+        $target.slideToggle(200);
+        var $icon = $(this).find('i');
+        if ($icon.hasClass('mdi-eye')) {
+            $icon.removeClass('mdi-eye').addClass('mdi-eye-off');
+            $(this).html('<i class="mdi mdi-eye-off"></i> Hide Result');
+        } else {
+            $icon.removeClass('mdi-eye-off').addClass('mdi-eye');
+            $(this).html('<i class="mdi mdi-eye"></i> View Result');
+        }
+    });
+
+    $(document).on('hidden.bs.modal', '#clinical-context-modal', function() {
+        clinicalLabsLoaded = false;
+        $('#clinical-labs-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i><p class="text-muted mt-2">Loading lab results...</p></div>');
+        $('#clinical-labs-show-all').html('');
+    });
+})();
+</script>
+
+{{-- Imaging Tab JavaScript --}}
+<script>
+(function initClinicalImagingLoader() {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initClinicalImagingLoader, 100);
+        return;
+    }
+
+    const $ = jQuery;
+    let clinicalImagingLoaded = false;
+
+    $(document).on('shown.bs.tab', '#imaging-tab-btn', function() {
+        if (!clinicalImagingLoaded) loadClinicalImaging();
+    });
+
+    $(document).on('click', '#imaging-tab-btn', function() {
+        setTimeout(function() {
+            if (!clinicalImagingLoaded && $('#imaging-tab').hasClass('show')) loadClinicalImaging();
+        }, 150);
+    });
+
+    $(document).on('click', '.refresh-clinical-btn[data-panel="imaging"]', function() {
+        clinicalImagingLoaded = false;
+        loadClinicalImaging();
+    });
+
+    function getPatientId() {
+        if (typeof currentPatient !== 'undefined' && currentPatient) return currentPatient;
+        if (typeof selectedPatientId !== 'undefined' && selectedPatientId) return selectedPatientId;
+        if ($('#clinical-context-modal').data('patient-id')) return $('#clinical-context-modal').data('patient-id');
+        return null;
+    }
+
+    function escH(str) { if (!str) return ''; var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+    function renderResultData(resultData) {
+        var data = resultData;
+        if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e) { return ''; } }
+        if (!Array.isArray(data) || data.length === 0) return '';
+
+        var html = '<table class="table table-sm table-bordered mb-0" style="font-size:0.85rem;">';
+        html += '<thead><tr><th>Parameter</th><th>Result</th><th>Reference Range</th><th>Status</th></tr></thead><tbody>';
+        data.forEach(function(p) {
+            var val = (p.value !== undefined && p.value !== null) ? p.value : '';
+            if (p.unit) val += ' ' + p.unit;
+            var ref = 'N/A';
+            if (p.reference_range) {
+                if (p.reference_range.min !== undefined && p.reference_range.max !== undefined) {
+                    ref = p.reference_range.min + ' - ' + p.reference_range.max;
+                    if (p.unit) ref += ' ' + p.unit;
+                } else if (p.reference_range.reference_value) {
+                    ref = p.reference_range.reference_value;
+                } else if (p.reference_range.text) {
+                    ref = p.reference_range.text;
+                }
+            }
+            var sCls = p.status ? 'status-' + p.status.toLowerCase().replace(' ','-') : '';
+            var sBadge = p.status ? '<span class="result-status-badge ' + sCls + '">' + escH(p.status) + '</span>' : '';
+            html += '<tr><td><strong>' + escH(p.name) + '</strong>' + (p.code ? ' <small class="text-muted">(' + escH(p.code) + ')</small>' : '') + '</td>';
+            html += '<td>' + escH(val) + '</td><td>' + escH(ref) + '</td><td>' + sBadge + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        return html;
+    }
+
+    function renderAttachments(attachments) {
+        var data = attachments;
+        if (typeof data === 'string') { try { data = JSON.parse(data); } catch(e) { return ''; } }
+        if (!Array.isArray(data) || data.length === 0) return '';
+        var html = '<div class="mt-2"><small><b><i class="mdi mdi-paperclip"></i> Attachments:</b></small><div class="d-flex flex-wrap gap-1 mt-1">';
+        data.forEach(function(att) {
+            var url = '/storage/' + att.path;
+            html += '<a href="' + url + '" target="_blank" class="btn btn-outline-info btn-sm"><i class="mdi mdi-file-document"></i> ' + escH(att.name || 'File') + '</a>';
+        });
+        html += '</div></div>';
+        return html;
+    }
+
+    function loadClinicalImaging() {
+        let patientId = getPatientId();
+        if (!patientId) {
+            $('#clinical-imaging-container').html('<div class="alert alert-warning"><i class="mdi mdi-alert"></i> No patient selected.</div>');
+            return;
+        }
+
+        $('#clinical-imaging-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i><p class="text-muted mt-2">Loading imaging results...</p></div>');
+
+        $.ajax({
+            url: `/clinical-context/patient/${patientId}/imaging`,
+            method: 'GET',
+            success: function(images) {
+                if (!images || images.length === 0) {
+                    $('#clinical-imaging-container').html('<div class="text-center py-4"><i class="mdi mdi-radiology-box mdi-48px text-muted"></i><p class="text-muted mt-2">No imaging studies found for this patient</p></div>');
+                    $('#clinical-imaging-show-all').html('');
+                    return;
+                }
+
+                let html = '';
+                images.forEach(function(img) {
+                    let statusLabel = img.status.replace('_', ' ');
+                    let priorityHtml = (img.priority && img.priority !== 'routine')
+                        ? `<span class="priority-badge ${img.priority}">${img.priority}</span>` : '';
+                    let approvedBadge = img.approved ? ' <span class="badge bg-success badge-sm"><i class="mdi mdi-check"></i> Approved</span>' : '';
+                    let attachBadge = img.has_attachments ? ' <span class="badge bg-info badge-sm"><i class="mdi mdi-paperclip"></i> Attachments</span>' : '';
+
+                    // Build result content section
+                    let resultSection = '';
+                    if (img.has_result) {
+                        let resultContent = '';
+                        // V2: structured result_data table
+                        if (img.result_data) {
+                            resultContent = renderResultData(img.result_data);
+                        }
+                        // V1: raw HTML result
+                        if (!resultContent && img.result) {
+                            resultContent = '<div class="alert alert-light mb-0 p-2"><small>' + img.result + '</small></div>';
+                        }
+                        // Attachments
+                        let attachHtml = renderAttachments(img.attachments);
+
+                        let metaLine = '';
+                        if (img.result_by) metaLine += `<small class="text-muted"><i class="mdi mdi-account"></i> Results by: ${escH(img.result_by)}</small> `;
+                        if (img.result_date) metaLine += `<small class="text-muted"><i class="mdi mdi-calendar-check"></i> ${escH(img.result_date)}</small>`;
+
+                        resultSection = `
+                            <div class="imaging-result-detail mt-2" id="imaging-result-${img.id}" style="display:none;">
+                                ${metaLine ? '<div class="mb-2">' + metaLine + '</div>' : ''}
+                                ${resultContent}
+                                ${attachHtml}
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary clinical-toggle-result" data-target="#imaging-result-${img.id}">
+                                    <i class="mdi mdi-eye"></i> View Result
+                                </button>
+                            </div>`;
+                    } else {
+                        resultSection = img.result_preview
+                            ? `<div class="imaging-result-preview"><i class="mdi mdi-clipboard-text"></i> ${escH(img.result_preview)}</div>` : '';
+                    }
+
+                    html += `
+                        <div class="imaging-card status-${img.status}">
+                            <div class="imaging-header">
+                                <div>
+                                    <span class="imaging-name">${escH(img.service_name)}</span>
+                                    ${priorityHtml} ${approvedBadge} ${attachBadge}
+                                </div>
+                                <span class="imaging-status status-${img.status}">${statusLabel}</span>
+                            </div>
+                            <div class="imaging-meta">
+                                <span class="imaging-meta-item"><i class="mdi mdi-calendar"></i> ${img.requested_date}</span>
+                                <span class="imaging-meta-item"><i class="mdi mdi-doctor"></i> ${escH(img.doctor)}</span>
+                                ${img.result_date ? `<span class="imaging-meta-item"><i class="mdi mdi-check-circle text-success"></i> Result: ${img.result_date}</span>` : ''}
+                            </div>
+                            ${resultSection}
+                            ${img.note ? `<div class="mt-1"><small class="text-muted"><i class="mdi mdi-note"></i> ${escH(img.note)}</small></div>` : ''}
+                        </div>`;
+                });
+
+                $('#clinical-imaging-container').html(html);
+                clinicalImagingLoaded = true;
+
+                $('#clinical-imaging-show-all').html(`
+                    <a href="/patient/${patientId}?section=imagingResultsCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="mdi mdi-open-in-new"></i> See All Imaging Results
+                    </a>
+                `);
+            },
+            error: function() {
+                $('#clinical-imaging-container').html('<div class="alert alert-danger"><i class="mdi mdi-alert-circle"></i> Failed to load imaging results.</div>');
+            }
+        });
+    }
+
+    // Toggle result detail expand/collapse
+    $(document).on('click', '#imaging-tab .clinical-toggle-result', function() {
+        var $target = $($(this).data('target'));
+        $target.slideToggle(200);
+        var $icon = $(this).find('i');
+        if ($icon.hasClass('mdi-eye')) {
+            $icon.removeClass('mdi-eye').addClass('mdi-eye-off');
+            $(this).html('<i class="mdi mdi-eye-off"></i> Hide Result');
+        } else {
+            $icon.removeClass('mdi-eye-off').addClass('mdi-eye');
+            $(this).html('<i class="mdi mdi-eye"></i> View Result');
+        }
+    });
+
+    $(document).on('hidden.bs.modal', '#clinical-context-modal', function() {
+        clinicalImagingLoaded = false;
+        $('#clinical-imaging-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i><p class="text-muted mt-2">Loading imaging results...</p></div>');
+        $('#clinical-imaging-show-all').html('');
     });
 })();
 </script>
