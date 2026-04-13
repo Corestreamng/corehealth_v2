@@ -422,9 +422,49 @@ class ProductRequestController extends Controller
                     $bill_req->product_id = $prod_id;
                     $bill_req->qty = $prod_req->qty; // Use the qty from ProductRequest (may have been adjusted)
 
-                    // Apply HMO tariff
+                    // Check for pre-billing price override
+                    $priceOverride = $prod_req->price_override;
+
+                    // Apply HMO tariff (respecting price override if set)
                     $patient = Patient::find($request->patient_id);
-                    if ($patient && $patient->hmo_id) {
+                    if ($priceOverride !== null) {
+                        // Price override: patient pays the override amount, HMO covers difference
+                        $overrideTotal = round($priceOverride * $prod_req->qty, 2);
+
+                        if ($patient && $patient->hmo_id) {
+                            try {
+                                $hmoData = HmoHelper::applyHmoTariff($patient->id, $prod_id, null);
+                                if ($hmoData) {
+                                    $tariffTotal = round(($hmoData['payable_amount'] + $hmoData['claims_amount']) * $prod_req->qty, 2);
+                                    $bill_req->payable_amount = $overrideTotal;
+                                    $bill_req->claims_amount = max(0, $tariffTotal - $overrideTotal);
+                                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                    $bill_req->validation_status = $hmoData['validation_status'] ?? 'pending';
+                                } else {
+                                    // HMO tariff lookup returned no data — fall back to override as full payable
+                                    $bill_req->payable_amount = $overrideTotal;
+                                    $bill_req->claims_amount = 0;
+                                    $bill_req->coverage_mode = 'none';
+                                }
+                            } catch (\Exception $e) {
+                                $bill_req->payable_amount = $overrideTotal;
+                                $bill_req->claims_amount = 0;
+                                $bill_req->coverage_mode = 'none';
+                            }
+                        } else {
+                            $bill_req->payable_amount = $overrideTotal;
+                            $bill_req->claims_amount = 0;
+                            $bill_req->coverage_mode = 'none';
+                        }
+
+                        \Log::info('billAjax: Price override applied', [
+                            'product_request_id' => $prod_req->id,
+                            'price_override' => $priceOverride,
+                            'qty' => $prod_req->qty,
+                            'payable_amount' => $bill_req->payable_amount,
+                            'claims_amount' => $bill_req->claims_amount,
+                        ]);
+                    } elseif ($patient && $patient->hmo_id) {
                         try {
                             $hmoData = HmoHelper::applyHmoTariff($patient->id, $prod_id, null);
                             if ($hmoData) {

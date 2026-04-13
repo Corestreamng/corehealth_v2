@@ -132,6 +132,9 @@ Route::middleware(['auth'])->prefix('pharmacy-workbench')->group(function () {
 
     // Quantity Adjustment Route (for billed items only)
     Route::post('/prescription/{id}/adjust-quantity', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'adjustBilledQuantity'])->name('pharmacy.adjust-quantity');
+
+    // Pre-billing Price Override Route (for unbilled items)
+    Route::post('/prescription/{id}/adjust-price', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'adjustPrice'])->name('pharmacy.adjust-price');
 });
 
 
