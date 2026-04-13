@@ -959,6 +959,9 @@
                 <div class="collapse {{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'show' : '' }}" id="sidebar-store-services">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ route('services.index') }}" id="sidebar-store-all-services">All Services</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('services-category.index') }}" id="sidebar-store-service-categories">Categories</a>
                         </li>
                         <li class="nav-item">

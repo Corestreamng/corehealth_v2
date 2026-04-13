@@ -1,140 +1,184 @@
 @extends('admin.layouts.app')
-@section('title', 'Services ')
-@section('page_name', 'Services ')
+@section('title', 'Create Service')
+@section('page_name', 'Services')
 @section('subpage_name', 'Create Service')
+@section('style')
+    @php $primaryColor = appsettings()->hos_color ?? '#011b33'; @endphp
+    <style>
+        :root { --primary-color: {{ $primaryColor }}; --primary-light: {{ $primaryColor }}15; }
+        .cat-option { display: inline-flex; align-items: center; padding: 10px 14px; border: 2px solid #dee2e6; border-radius: 8px; cursor: pointer; transition: all .2s; }
+        .cat-option:hover { border-color: var(--primary-color); }
+        .cat-option.active { border-color: var(--primary-color); background: var(--primary-light); }
+        .cat-option input[type="radio"] { display: none; }
+        .cat-option i { font-size: 1.2rem; margin-right: 6px; }
+    </style>
+    <link rel="stylesheet" href="{{ asset('css/modern-forms.css') }}">
+@endsection
 @section('content')
-    <section class="container">
-
-        <div class="card-modern  mb-3">
-            {!! Form::open(['route' => 'services.store', 'method' => 'POST', 'class' => 'form-horizontal']) !!}
-            {{ csrf_field() }}
-            <div class="card-header bg-transparent ">{{ __('Create Service') }}</div>
-            <div class="card-body">
-                <div class="form-group row">
-                    <label for="category_id" class="col-md-2 col-form-label">{{ __('Category') }} <i class="text-danger">*</i>
-                    </label>
-                    <div class="col-md-10">
-                        {!! Form::select('category', $category, null, [
-                            'id' => 'category_id',
-                            'name' => 'category_id',
-                            'placeholder' => 'Pick Category',
-                            'class' => 'form-control',
-                            'data-live-search' => 'true',
-                            'required' => 'true',
-                        ]) !!}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1 font-weight-bold text-dark">Create Service</h2>
+                        <p class="text-muted mb-0">Add a new service to the system</p>
                     </div>
                 </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ route('services.store') }}">
+                        @csrf
 
-                <div class="form-group row">
-                    <label for="name" class="col-md-2 col-form-label">{{ __('Name') }} <i
-                            class="text-danger">*</i></label>
-                    <div class="col-md-10">
-                        <input type="text" id="service_name" class="form-control" name="service_name"
-                            value="{{ old('service_name') }}" placeholder="Service Name">
-                    </div>
-                </div>
+                        <div class="row">
+                            {{-- Left Sidebar --}}
+                            <div class="col-lg-3">
+                                <div class="card-modern">
+                                    <div class="card-header-modern">
+                                        <h5 class="card-title-modern">
+                                            <i class="mdi mdi-shape-outline text-primary"></i> Category
+                                        </h5>
+                                    </div>
+                                    <div class="card-body p-3">
+                                        @foreach($category as $catId => $catName)
+                                        <label class="cat-option d-block mb-2 {{ old('category_id') == $catId ? 'active' : '' }}" data-cat="{{ $catId }}">
+                                            <input type="radio" name="category_id" value="{{ $catId }}" {{ old('category_id') == $catId ? 'checked' : '' }}>
+                                            <div><span class="font-weight-bold">{{ $catName }}</span></div>
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
 
-                <div class="form-group row">
-                    <label for="service_code" class="col-md-2 col-form-label">{{ __('Code') }}</label>
-                    <div class="col-md-10">
-                        <input type="text" id="service_code" class="form-control" name="service_code"
-                            value="{{ old('service_code') }}" placeholder="Service Code">
-                    </div>
-                </div>
-
-                {{-- Procedure-specific fields (shown only when Procedure category is selected) --}}
-                <div id="procedure-fields" style="display: none; border: 1px solid #e3e6f0; border-radius: 8px; padding: 20px; margin-top: 15px; background: #f8f9fc;">
-                    <h6 class="mb-3 font-weight-bold text-primary">
-                        <i class="mdi mdi-hospital-box mr-2"></i>Procedure Details
-                    </h6>
-
-                    <div class="form-group row">
-                        <label for="procedure_category_id" class="col-md-2 col-form-label">
-                            {{ __('Procedure Category') }} <i class="text-danger">*</i>
-                        </label>
-                        <div class="col-md-10">
-                            <select name="procedure_category_id" id="procedure_category_id" class="form-control">
-                                <option value="">-- Select Procedure Category --</option>
-                                @foreach($procedureCategories as $procCat)
-                                    <option value="{{ $procCat->id }}" {{ old('procedure_category_id') == $procCat->id ? 'selected' : '' }}>
-                                        {{ $procCat->name }} ({{ $procCat->code }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted">Surgical specialty category (e.g., General Surgery, ENT, O&G)</small>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="procedure_code" class="col-md-2 col-form-label">{{ __('Procedure Code') }}</label>
-                        <div class="col-md-10">
-                            <input type="text" id="procedure_code" class="form-control" name="procedure_code"
-                                value="{{ old('procedure_code') }}" placeholder="e.g., LAP-CHOLE-001">
-                            <small class="text-muted">Optional specific procedure code (defaults to service code)</small>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="is_surgical" class="col-md-2 col-form-label">{{ __('Surgical Procedure') }}</label>
-                        <div class="col-md-10">
-                            <div class="custom-control custom-switch mt-2">
-                                <input type="checkbox" class="custom-control-input" id="is_surgical" name="is_surgical" value="1" {{ old('is_surgical') ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="is_surgical">This is a surgical procedure (requires operating room, surgical team)</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="estimated_duration_minutes" class="col-md-2 col-form-label">{{ __('Est. Duration') }}</label>
-                        <div class="col-md-10">
-                            <div class="input-group" style="max-width: 200px;">
-                                <input type="number" id="estimated_duration_minutes" class="form-control"
-                                    name="estimated_duration_minutes" value="{{ old('estimated_duration_minutes') }}"
-                                    placeholder="60" min="1">
-                                <div class="input-group-append">
-                                    <span class="input-group-text">minutes</span>
+                                <div class="card-modern mt-3">
+                                    <div class="card-header-modern">
+                                        <h5 class="card-title-modern">
+                                            <i class="mdi mdi-information-outline text-primary"></i> Tips
+                                        </h5>
+                                    </div>
+                                    <div class="card-body p-3">
+                                        <small class="text-muted d-block mb-2">
+                                            <i class="mdi mdi-check-circle text-success"></i> Choose the correct category — it determines how the service appears in workbenches.
+                                        </small>
+                                        <small class="text-muted d-block mb-2">
+                                            <i class="mdi mdi-check-circle text-success"></i> The <strong>service code</strong> is used for quick lookup and billing references.
+                                        </small>
+                                        <small class="text-muted d-block">
+                                            <i class="mdi mdi-check-circle text-success"></i> Procedure details are only needed for surgical/procedure services.
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
-                            <small class="text-muted">Estimated procedure duration for scheduling</small>
-                        </div>
-                    </div>
 
-                    <div class="form-group row">
-                        <label for="procedure_description" class="col-md-2 col-form-label">{{ __('Description') }}</label>
-                        <div class="col-md-10">
-                            <textarea id="procedure_description" class="form-control" name="procedure_description"
-                                rows="3" placeholder="Procedure description, indications, or notes...">{{ old('procedure_description') }}</textarea>
-                        </div>
-                    </div>
-                </div>
+                            {{-- Right Content --}}
+                            <div class="col-lg-9">
+                                {{-- Basic Information --}}
+                                <div class="card-modern">
+                                    <div class="card-header-modern">
+                                        <h5 class="card-title-modern">
+                                            <i class="mdi mdi-clipboard-text-outline text-primary"></i> Basic Information
+                                        </h5>
+                                    </div>
+                                    <div class="card-body p-4">
+                                        <div class="row g-3">
+                                            <div class="col-lg-8">
+                                                <label class="form-label-modern">Service Name <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control form-control-modern" name="service_name" value="{{ old('service_name') }}" placeholder="e.g. Full Blood Count, Chest X-Ray" required>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <label class="form-label-modern">Service Code <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control form-control-modern" name="service_code" value="{{ old('service_code') }}" placeholder="e.g. FBC-001" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-            </div>
-            <div class="card-footer bg-transparent ">
-                <div class="form-group row">
-                    <div class="col-md-6"><a href="{{ route('services.index') }}" class="btn btn-success"> <i
-                                class="fa fa-close"></i> Back</a></div>
-                    <div class="col-md-6 "><button type="submit" class="btn btn-primary pull-right"> <i
-                                class="fa fa-send"></i> Submit</button></div>
+                                {{-- Procedure Details (conditional) --}}
+                                <div class="card-modern" id="procedure-fields" style="display: none;">
+                                    <div class="card-header-modern">
+                                        <h5 class="card-title-modern">
+                                            <i class="mdi mdi-hospital-box text-primary"></i> Procedure Details
+                                        </h5>
+                                    </div>
+                                    <div class="card-body p-4">
+                                        <div class="row g-3">
+                                            <div class="col-lg-6">
+                                                <label class="form-label-modern">Procedure Category <span class="text-danger">*</span></label>
+                                                <select name="procedure_category_id" id="procedure_category_id" class="form-control form-control-modern">
+                                                    <option value="">-- Select Procedure Category --</option>
+                                                    @foreach($procedureCategories as $procCat)
+                                                        <option value="{{ $procCat->id }}" {{ old('procedure_category_id') == $procCat->id ? 'selected' : '' }}>
+                                                            {{ $procCat->name }} ({{ $procCat->code }})
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <small class="text-muted">e.g. General Surgery, ENT, O&G</small>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label class="form-label-modern">Procedure Code</label>
+                                                <input type="text" class="form-control form-control-modern" name="procedure_code" value="{{ old('procedure_code') }}" placeholder="e.g., LAP-CHOLE-001">
+                                                <small class="text-muted">Optional — defaults to service code</small>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <label class="form-label-modern">Surgical Procedure</label>
+                                                <div class="custom-control custom-switch mt-2">
+                                                    <input type="checkbox" class="custom-control-input" id="is_surgical" name="is_surgical" value="1" {{ old('is_surgical') ? 'checked' : '' }}>
+                                                    <label class="custom-control-label" for="is_surgical">Requires OR & surgical team</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <label class="form-label-modern">Estimated Duration</label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control form-control-modern" name="estimated_duration_minutes" value="{{ old('estimated_duration_minutes') }}" placeholder="60" min="1">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text">mins</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label-modern">Description</label>
+                                                <textarea class="form-control form-control-modern" name="procedure_description" rows="3" placeholder="Procedure description, indications, or notes...">{{ old('procedure_description') }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Submit --}}
+                                <div class="d-flex justify-content-between mt-3">
+                                    <a href="{{ route('services.index') }}" class="btn btn-outline-secondary">
+                                        <i class="mdi mdi-arrow-left"></i> Back
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="mdi mdi-content-save"></i> Create Service
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-            {!! Form::close() !!}
         </div>
-
-    </section>
-
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
     $(document).ready(function() {
         const procedureCategoryId = {{ $procedureCategoryId ?? 'null' }};
-        const $categorySelect = $('#category_id');
         const $procedureFields = $('#procedure-fields');
         const $procedureCategorySelect = $('#procedure_category_id');
 
-        function toggleProcedureFields() {
-            const selectedCategoryId = parseInt($categorySelect.val());
+        // Category card selector
+        document.querySelectorAll('.cat-option').forEach(function(opt) {
+            opt.addEventListener('click', function() {
+                document.querySelectorAll('.cat-option').forEach(function(o) { o.classList.remove('active'); });
+                this.classList.add('active');
+                this.querySelector('input[type="radio"]').checked = true;
+                toggleProcedureFields();
+            });
+        });
 
+        function toggleProcedureFields() {
+            const selectedCategoryId = parseInt($('input[name="category_id"]:checked').val());
             if (procedureCategoryId && selectedCategoryId === procedureCategoryId) {
                 $procedureFields.slideDown(300);
                 $procedureCategorySelect.attr('required', true);
@@ -146,9 +190,6 @@
 
         // Initial check
         toggleProcedureFields();
-
-        // On category change
-        $categorySelect.on('change', toggleProcedureFields);
     });
 </script>
 @endsection
