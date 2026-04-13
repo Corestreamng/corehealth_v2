@@ -37,13 +37,45 @@ class StaffController extends Controller
         // $this->middleware(['Role:Super-Admin|Admin|Users', 'permission:users|user-create|user-list|user-edit|user-delete']);
     }
 
-    public function listStaff()
+    public function listStaff(Request $request)
     {
-        $user = User::with(['category' => function ($q) {
-            $q->addSelect(['id', 'name']);
-        }, 'staff_profile.department', 'roles'])->where('status', '>', 0)->orderBy('id', 'ASC')->where('is_admin', '!=', 19)->get();
+        $query = User::with(['category' => function ($q) {
+            $q->select(['id', 'name']);
+        }, 'staff_profile' => function ($q) {
+            $q->select(['id', 'user_id', 'department_id', 'job_title', 'phone_number', 'employment_status', 'is_dept_head', 'is_unit_head']);
+        }, 'staff_profile.department' => function ($q) {
+            $q->select(['id', 'name']);
+        }, 'roles' => function ($q) {
+            $q->select(['roles.id', 'roles.name']);
+        }])->whereHas('staff_profile')->where('status', '>', 0)->orderBy('id', 'ASC');
 
-        return DataTables::of($user)
+        // Department filter
+        if ($request->filled('department_id') && $request->department_id !== 'all') {
+            $query->whereHas('staff_profile', function ($q) use ($request) {
+                $q->where('department_id', $request->department_id);
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category_id') && $request->category_id !== 'all') {
+            $query->where('is_admin', $request->category_id);
+        }
+
+        // Employment status filter
+        if ($request->filled('employment_status') && $request->employment_status !== 'all') {
+            $status = $request->employment_status;
+            $query->whereHas('staff_profile', function ($q) use ($status) {
+                if ($status === 'active') {
+                    $q->where(function ($qq) {
+                        $qq->where('employment_status', 'active')->orWhereNull('employment_status');
+                    });
+                } else {
+                    $q->where('employment_status', $status);
+                }
+            });
+        }
+
+        return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('staff_info', function ($user) {
                 $avatar = view('components.user-avatar', [
@@ -314,10 +346,10 @@ class StaffController extends Controller
     public function index()
     {
         $statuses = UserCategory::whereStatus(1)->get();
-        // $options = Status::whereVisible(1)->get();
         $roles = Role::pluck('name', 'name')->all();
+        $departments = Department::orderBy('name')->pluck('name', 'id')->all();
 
-        return view('admin.staff.index', compact('roles', 'statuses'));
+        return view('admin.staff.index', compact('roles', 'statuses', 'departments'));
     }
 
     /**
