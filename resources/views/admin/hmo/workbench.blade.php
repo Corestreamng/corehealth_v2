@@ -4378,12 +4378,9 @@ $(function() {
             pfFilteredData = {};
             updatePfBatchBar();
 
-            // Default date range: last 30 days
-            var today = new Date();
-            var thirtyAgo = new Date();
-            thirtyAgo.setDate(today.getDate() - 30);
-            $('#pfFilterDateTo').val(today.toISOString().substring(0, 10));
-            $('#pfFilterDateFrom').val(thirtyAgo.toISOString().substring(0, 10));
+            // Clear all filters on patient switch so everything shows
+            $('#pfFilterDateFrom, #pfFilterDateTo, #pfFilterSearch').val('');
+            $('#pfFilterType, #pfFilterCoverage').val('');
 
             // Hide welcome, show filter bar & content
             $('#pfWelcome').hide();
