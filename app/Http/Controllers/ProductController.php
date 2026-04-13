@@ -99,6 +99,7 @@ class ProductController extends Controller
                 $stockUrl = route('inventory.store-workbench.stock-overview') . '?product_id=' . $pc->id;
                 $batchesUrl = route('inventory.store-workbench.product-batches', $pc->id);
                 $priceUrl = route('prices.edit', $pc->id);
+                $tariffUrl = route('product-tariffs.view', $pc->id);
 
                 return '<div class="btn-group">'
                     . '<a href="' . $showUrl . '" class="btn btn-sm btn-outline-primary" title="View"><i class="mdi mdi-eye"></i></a>'
@@ -108,6 +109,7 @@ class ProductController extends Controller
                     . '<div class="dropdown-menu dropdown-menu-right">'
                     . '<a class="dropdown-item" href="' . $batchUrl . '"><i class="mdi mdi-plus-box mr-1"></i> Add Batch</a>'
                     . '<a class="dropdown-item" href="' . $priceUrl . '"><i class="mdi mdi-currency-ngn mr-1"></i> Adjust Price</a>'
+                    . '<a class="dropdown-item" href="' . $tariffUrl . '"><i class="mdi mdi-shield-check mr-1"></i> HMO Tariffs</a>'
                     . '<a class="dropdown-item" href="' . $stockUrl . '"><i class="mdi mdi-warehouse mr-1"></i> Stock Overview</a>'
                     . '<a class="dropdown-item" href="' . $batchesUrl . '"><i class="mdi mdi-history mr-1"></i> View Batches</a>'
                     . '</div></div></div>';
