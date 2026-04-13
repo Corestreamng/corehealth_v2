@@ -38,6 +38,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServicePriceController;
+use App\Http\Controllers\TariffController;
 use App\Http\Controllers\ProcedureCategoryController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockController;
@@ -733,12 +734,18 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('prices', PriceController::class);
         Route::get('price-list', [PriceController::class, 'listPrice'])->name('price-list');
+        Route::get('product-tariffs/{id}', [PriceController::class, 'tariffView'])->name('product-tariffs.view');
     });
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('service-prices', ServicePriceController::class);
         Route::get('service-price-list', [ServicePriceController::class, 'listServicePrice'])->name('service-price-list');
+        Route::get('service-tariffs/{id}', [ServicePriceController::class, 'tariffView'])->name('service-tariffs.view');
+    });
+
+    Route::group(['middleware' => ['auth']], function () {
+        Route::post('tariff-update', [TariffController::class, 'update'])->name('tariff.update');
     });
 
     Route::group(['middleware' => ['auth']], function () {
