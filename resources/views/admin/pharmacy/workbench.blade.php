@@ -5821,6 +5821,152 @@
     </div>
 </div>
 
+{{-- ========================================= --}}
+{{-- PRE-BILLING PRICE ADJUSTMENT MODAL        --}}
+{{-- ========================================= --}}
+<div class="modal fade" id="priceAdjustmentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #3949ab, #1a237e); color: #fff;">
+                <h5 class="modal-title"><i class="mdi mdi-cash-edit"></i> Adjust Price (Pre-Billing)</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Guidance -->
+                <div class="alert alert-info mb-3">
+                    <i class="mdi mdi-information-outline"></i>
+                    <strong>Pre-Billing Override:</strong> This changes the unit price <em>before</em> billing. When this item is billed, the adjusted price will be used instead of the standard tariff/sale price.
+                </div>
+
+                <!-- Product Info Card -->
+                <div class="card-modern border-primary mb-3">
+                    <div class="card-body py-2">
+                        <h6 class="card-title mb-1" id="price-adjust-product-name">Product Name</h6>
+                        <small class="text-muted" id="price-adjust-product-code"></small>
+                        <div class="row small mt-2">
+                            <div class="col-4">
+                                <span class="text-muted">Unit Price:</span><br>
+                                <strong id="price-adjust-unit-price">₦0.00</strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="text-muted">Qty:</span><br>
+                                <strong id="price-adjust-qty">0</strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="text-muted">Line Total:</span><br>
+                                <strong id="price-adjust-line-total">₦0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HMO Tariff Info (shown only for HMO patients) -->
+                <div id="price-adjust-tariff-info" class="card-modern border-info mb-3" style="display: none;">
+                    <div class="card-header bg-light py-2">
+                        <small><strong><i class="mdi mdi-shield-check"></i> HMO Tariff Reference</strong></small>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="row small">
+                            <div class="col-6">
+                                <span class="text-muted">Tariff Patient Pays:</span><br>
+                                <strong class="text-danger" id="price-adjust-tariff-payable">₦0.00</strong>
+                                <small class="text-muted">/unit</small>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted">Tariff HMO Covers:</span><br>
+                                <strong class="text-success" id="price-adjust-tariff-claims">₦0.00</strong>
+                                <small class="text-muted">/unit</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Previous Override Notice -->
+                <div id="price-adjust-existing-override" class="alert alert-warning mb-3" style="display: none;">
+                    <i class="mdi mdi-alert-outline"></i>
+                    <strong>Previously Adjusted:</strong> This item already has a price override of
+                    <strong id="price-adjust-existing-value">₦0.00</strong>/unit
+                    <span id="price-adjust-existing-meta" class="small text-muted"></span>
+                </div>
+
+                <!-- New Price Input -->
+                <div class="form-group mb-3">
+                    <label><strong>New Unit Price</strong> <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">₦</span>
+                        <input type="number" class="form-control" id="price-adjust-new" min="0" step="0.01" value="0" style="font-size: 1.15rem; font-weight: bold;">
+                    </div>
+                    <small class="text-muted">Enter the new unit price (per single item)</small>
+                </div>
+
+                <!-- Billing Impact Preview -->
+                <div id="price-billing-impact" class="card-modern border-warning mb-3">
+                    <div class="card-header bg-warning text-dark py-2">
+                        <strong><i class="mdi mdi-calculator"></i> Billing Preview (at time of billing)</strong>
+                    </div>
+                    <div class="card-body py-2">
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <td>Patient Payable:</td>
+                                <td class="text-end">
+                                    <span class="text-muted text-decoration-line-through" id="price-impact-payable-old">₦0.00</span>
+                                    <i class="mdi mdi-arrow-right mx-1"></i>
+                                    <strong class="text-danger" id="price-impact-payable-new">₦0.00</strong>
+                                    <span id="price-impact-payable-diff" class="badge ms-1">₦0.00</span>
+                                </td>
+                            </tr>
+                            <tr id="price-impact-claims-row" style="display: none;">
+                                <td>HMO Claims:</td>
+                                <td class="text-end">
+                                    <span class="text-muted text-decoration-line-through" id="price-impact-claims-old">₦0.00</span>
+                                    <i class="mdi mdi-arrow-right mx-1"></i>
+                                    <strong class="text-success" id="price-impact-claims-new">₦0.00</strong>
+                                    <span id="price-impact-claims-diff" class="badge ms-1">₦0.00</span>
+                                </td>
+                            </tr>
+                            <tr class="border-top">
+                                <td><strong>Total Line Amount:</strong></td>
+                                <td class="text-end">
+                                    <strong id="price-impact-total-new">₦0.00</strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Warning for extreme price changes -->
+                <div id="price-adjust-warning" class="alert alert-danger mb-3" style="display: none;">
+                    <i class="mdi mdi-alert-circle"></i>
+                    <span id="price-adjust-warning-text"></span>
+                </div>
+
+                <!-- Reason -->
+                <div class="form-group">
+                    <label><strong><i class="mdi mdi-note-text"></i> Reason for Price Adjustment</strong> <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="price-adjust-reason" rows="2" placeholder="Why are you adjusting the price? (e.g., HMO negotiated rate, management discount, price correction)..." required></textarea>
+                    <small class="text-muted">This will be recorded for audit purposes</small>
+                </div>
+
+                <input type="hidden" id="price-adjust-request-id">
+                <input type="hidden" id="price-adjust-original-price">
+                <input type="hidden" id="price-adjust-coverage-mode">
+                <input type="hidden" id="price-adjust-tariff-payable-unit">
+                <input type="hidden" id="price-adjust-tariff-claims-unit">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirm-price-adjustment">
+                    <i class="mdi mdi-check"></i> Confirm Price Adjustment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 /* Adaptation Modal Steps */
 .adapt-steps .step {
@@ -7374,6 +7520,27 @@ function attachPrescCardActionHandlers() {
             $btn.data('coverage-mode')
         );
     });
+
+    // Price adjustment button handler - pass pricing and tariff context
+    $('.btn-adjust-price-card').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $btn = $(this);
+        openPriceAdjustmentModal(
+            $btn.data('id'),
+            $btn.data('product'),
+            $btn.data('product-code'),
+            $btn.data('price'),
+            $btn.data('qty'),
+            $btn.data('coverage-mode'),
+            $btn.data('tariff-payable'),
+            $btn.data('tariff-claims'),
+            $btn.data('price-override'),
+            $btn.data('price-override-reason'),
+            $btn.data('price-override-by'),
+            $btn.data('price-override-at')
+        );
+    });
 }
 
 // Toggle all checkboxes for billing
@@ -7942,8 +8109,33 @@ function renderPrescCardPharmacy(row, type) {
     let actionButtons = '';
     const coverageMode = row.coverage_mode || 'cash';
 
+    // Price override badge (shown on card when override exists)
+    let priceOverrideBadge = '';
+    if (row.price_override !== null && row.price_override !== undefined && row.price_override !== '') {
+        const overridePrice = parseFloat(row.price_override);
+        const origPrice = parseFloat(row.price_original || price);
+        const diff = overridePrice - origPrice;
+        const diffClass = diff < 0 ? 'text-success' : (diff > 0 ? 'text-danger' : 'text-muted');
+        const diffSign = diff >= 0 ? '+' : '';
+        priceOverrideBadge = `
+            <div class="small mt-1 p-2 rounded border border-primary" style="background: #f0f4ff;">
+                <i class="mdi mdi-cash-edit text-primary me-1"></i>
+                <span class="fw-semibold" style="color: #1a237e;">Price Adjusted:</span>
+                <span style="color: #555; text-decoration: line-through;" class="ms-1">₦${formatMoneyPharmacy(origPrice)}</span>
+                <i class="mdi mdi-arrow-right mx-1" style="color: #333;"></i>
+                <strong style="color: #111;">₦${formatMoneyPharmacy(overridePrice)}</strong>/unit
+                <span class="${diffClass} ms-1">(${diffSign}₦${formatMoneyPharmacy(Math.abs(diff))})</span>
+                ${row.price_override_by ? '<br><small style="color: #444;"><i class="mdi mdi-account"></i> ' + row.price_override_by + '</small>' : ''}
+                ${row.price_override_reason ? '<br><small style="color: #444;"><i class="mdi mdi-note-text"></i> ' + row.price_override_reason + '</small>' : ''}
+            </div>`;
+    }
+
+    // Tariff-related data attributes for price adjustment button
+    const tariffPayableUnit = row.tariff_preview && !row.tariff_preview.no_tariff ? (parseFloat(row.tariff_preview.payable_amount) / qty) : 0;
+    const tariffClaimsUnit = row.tariff_preview && !row.tariff_preview.no_tariff ? (parseFloat(row.tariff_preview.claims_amount) / qty) : 0;
+
     if (type === 'billing') {
-        // Unbilled items - can always be adapted or qty adjusted (no billing impact yet)
+        // Unbilled items - can always be adapted, qty adjusted, or price adjusted (no billing impact yet)
         actionButtons = `
             <div class="presc-card-actions mt-2 pt-2 border-top">
                 <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card"
@@ -7975,6 +8167,22 @@ function renderPrescCardPharmacy(row, type) {
                         data-coverage-mode="${coverageMode}"
                         title="Change the quantity">
                     <i class="mdi mdi-counter"></i> Adjust Qty
+                </button>
+                <button type="button" class="btn btn-xs btn-outline-primary btn-adjust-price-card ms-1"
+                        data-id="${row.id}"
+                        data-product="${row.product_name || 'Unknown'}"
+                        data-product-code="${row.product_code || ''}"
+                        data-qty="${qty}"
+                        data-price="${price}"
+                        data-coverage-mode="${coverageMode}"
+                        data-tariff-payable="${tariffPayableUnit}"
+                        data-tariff-claims="${tariffClaimsUnit}"
+                        data-price-override="${row.price_override ?? ''}"
+                        data-price-override-reason="${row.price_override_reason || ''}"
+                        data-price-override-by="${row.price_override_by || ''}"
+                        data-price-override-at="${row.price_override_at || ''}"
+                        title="Adjust the unit price before billing">
+                    <i class="mdi mdi-cash-edit"></i> Adjust Price
                 </button>
             </div>
         `;
@@ -8045,6 +8253,11 @@ function renderPrescCardPharmacy(row, type) {
     }
     // NOTE: No action buttons for 'dispense' type - items are ready/settled
 
+    // Display price: use override if present, otherwise standard
+    const displayPrice = (row.price_override !== null && row.price_override !== undefined && row.price_override !== '')
+        ? parseFloat(row.price_override) * qty
+        : (payableAmount || totalPrice);
+
     return `
         <div class="${cardClass}" data-id="${row.id}" data-product-id="${row.product_id || ''}" style="${cardStyle}">
             <div class="presc-card-header">
@@ -8054,7 +8267,7 @@ function renderPrescCardPharmacy(row, type) {
                     ${bundledBadge}
                 </div>
                 <div class="text-end">
-                    <div class="presc-card-price">₦${formatMoneyPharmacy(payableAmount || totalPrice)}</div>
+                    <div class="presc-card-price">₦${formatMoneyPharmacy(displayPrice)}</div>
                     ${statusBadges}
                 </div>
             </div>
@@ -8064,6 +8277,7 @@ function renderPrescCardPharmacy(row, type) {
                 <div><strong>Qty:</strong> ${qty}</div>
                 ${hmoInfo}
                 ${tariffPreviewHtml}
+                ${priceOverrideBadge}
                 ${stockInfo}
             </div>
             ${metaInfo}
@@ -15800,6 +16014,166 @@ $('#confirm-qty-adjustment').on('click', function() {
 
 // ===========================================
 // END QUANTITY ADJUSTMENT MODULE
+// ===========================================
+
+// ===========================================
+// PRE-BILLING PRICE ADJUSTMENT MODULE
+// ===========================================
+
+function openPriceAdjustmentModal(requestId, productName, productCode, currentPrice, qty, coverageMode, tariffPayable, tariffClaims, priceOverride, priceOverrideReason, priceOverrideBy, priceOverrideAt) {
+    $('#price-adjust-request-id').val(requestId);
+    $('#price-adjust-original-price').val(currentPrice || 0);
+    $('#price-adjust-coverage-mode').val(coverageMode || 'none');
+
+    // Product info
+    $('#price-adjust-product-name').text(productName || 'Unknown');
+    $('#price-adjust-product-code').text(productCode ? '[' + productCode + ']' : '');
+    const unitPrice = parseFloat(currentPrice) || 0;
+    const itemQty = parseInt(qty) || 1;
+    $('#price-adjust-unit-price').text('₦' + formatMoneyPharmacy(unitPrice));
+    $('#price-adjust-qty').text(itemQty);
+    $('#price-adjust-line-total').text('₦' + formatMoneyPharmacy(unitPrice * itemQty));
+
+    // HMO tariff info
+    const tariffPay = parseFloat(tariffPayable) || 0;
+    const tariffCl = parseFloat(tariffClaims) || 0;
+    const hasTariff = tariffPay > 0 || tariffCl > 0;
+    $('#price-adjust-tariff-info').toggle(hasTariff);
+    $('#price-adjust-tariff-payable').text('₦' + formatMoneyPharmacy(tariffPay));
+    $('#price-adjust-tariff-claims').text('₦' + formatMoneyPharmacy(tariffCl));
+    $('#price-adjust-tariff-payable-unit').val(tariffPay);
+    $('#price-adjust-tariff-claims-unit').val(tariffCl);
+
+    // Existing override notice
+    const hasOverride = priceOverride !== null && priceOverride !== undefined && priceOverride !== '';
+    $('#price-adjust-existing-override').toggle(hasOverride);
+    if (hasOverride) {
+        $('#price-adjust-existing-value').text('₦' + formatMoneyPharmacy(parseFloat(priceOverride)));
+        let meta = '';
+        if (priceOverrideBy) meta += ' by ' + priceOverrideBy;
+        if (priceOverrideAt) meta += ' on ' + priceOverrideAt;
+        if (priceOverrideReason) meta += ' — ' + priceOverrideReason;
+        $('#price-adjust-existing-meta').text(meta);
+    }
+
+    // Set initial value: use existing override if present, otherwise sale price
+    const initialPrice = hasOverride ? parseFloat(priceOverride) : unitPrice;
+    $('#price-adjust-new').val(initialPrice.toFixed(2));
+    $('#price-adjust-reason').val('');
+
+    // Trigger initial preview
+    updatePriceAdjustmentPreview();
+
+    $('#priceAdjustmentModal').modal('show');
+}
+
+function updatePriceAdjustmentPreview() {
+    const originalPrice = parseFloat($('#price-adjust-original-price').val()) || 0;
+    const qty = parseInt($('#price-adjust-qty').text()) || 1;
+    const newPrice = parseFloat($('#price-adjust-new').val()) || 0;
+    const coverageMode = $('#price-adjust-coverage-mode').val();
+    const tariffPayUnit = parseFloat($('#price-adjust-tariff-payable-unit').val()) || 0;
+    const tariffClaimsUnit = parseFloat($('#price-adjust-tariff-claims-unit').val()) || 0;
+    const hasTariff = tariffPayUnit > 0 || tariffClaimsUnit > 0;
+
+    const oldPayable = hasTariff ? tariffPayUnit * qty : originalPrice * qty;
+    const oldClaims = hasTariff ? tariffClaimsUnit * qty : 0;
+    const oldTotal = oldPayable + oldClaims;
+
+    const newPayable = newPrice * qty;
+    let newClaims = 0;
+    if (hasTariff) {
+        const tariffTotal = (tariffPayUnit + tariffClaimsUnit) * qty;
+        newClaims = Math.max(0, tariffTotal - newPayable);
+    }
+    const newTotal = newPayable + newClaims;
+
+    // Update preview
+    $('#price-impact-payable-old').text('₦' + formatMoneyPharmacy(oldPayable));
+    $('#price-impact-payable-new').text('₦' + formatMoneyPharmacy(newPayable));
+    updatePriceDiffBadge('#price-impact-payable-diff', newPayable - oldPayable);
+
+    // Show claims row only for HMO patients
+    $('#price-impact-claims-row').toggle(hasTariff);
+    if (hasTariff) {
+        $('#price-impact-claims-old').text('₦' + formatMoneyPharmacy(oldClaims));
+        $('#price-impact-claims-new').text('₦' + formatMoneyPharmacy(newClaims));
+        updatePriceDiffBadge('#price-impact-claims-diff', newClaims - oldClaims);
+    }
+
+    $('#price-impact-total-new').text('₦' + formatMoneyPharmacy(newTotal));
+
+    // Warnings
+    let warning = '';
+    if (newPrice > originalPrice * 2) {
+        warning = 'New price is more than double the original price. Please verify.';
+    } else if (newPrice <= 0) {
+        warning = 'Setting price to zero will make this item free for the patient.';
+    } else if (hasTariff && newPayable > (tariffPayUnit + tariffClaimsUnit) * qty) {
+        warning = 'New patient payable exceeds the total tariff amount. HMO claims will be ₦0.';
+    }
+    $('#price-adjust-warning').toggle(!!warning);
+    $('#price-adjust-warning-text').text(warning);
+}
+
+function updatePriceDiffBadge(selector, diff) {
+    const formatted = (diff >= 0 ? '+' : '-') + '₦' + formatMoneyPharmacy(Math.abs(diff));
+    const badgeClass = diff > 0 ? 'bg-danger' : (diff < 0 ? 'bg-success' : 'bg-secondary');
+    $(selector).removeClass('bg-danger bg-success bg-secondary').addClass(badgeClass).text(formatted);
+}
+
+// Listen for price input change
+$('#price-adjust-new').on('change input', function() {
+    updatePriceAdjustmentPreview();
+});
+
+// Confirm price adjustment
+$('#confirm-price-adjustment').on('click', function() {
+    const requestId = $('#price-adjust-request-id').val();
+    const newPrice = parseFloat($('#price-adjust-new').val());
+    const reason = $('#price-adjust-reason').val().trim();
+
+    if (isNaN(newPrice) || newPrice < 0) {
+        toastr.warning('Please enter a valid price (minimum ₦0)');
+        return;
+    }
+
+    if (!reason) {
+        toastr.warning('Please enter a reason for the price adjustment');
+        $('#price-adjust-reason').focus();
+        return;
+    }
+
+    const $btn = $(this);
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+
+    $.ajax({
+        url: `/pharmacy-workbench/prescription/${requestId}/adjust-price`,
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            new_price: newPrice,
+            adjustment_reason: reason
+        },
+        success: function(response) {
+            $btn.prop('disabled', false).html(originalHtml);
+            toastr.success(response.message || 'Price adjusted successfully');
+            $('#priceAdjustmentModal').modal('hide');
+
+            // Refresh prescription lists
+            loadPrescriptionItems(currentStatusFilter);
+            refreshAllPrescTables();
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(originalHtml);
+            toastr.error(xhr.responseJSON?.message || 'Failed to adjust price');
+        }
+    });
+});
+
+// ===========================================
+// END PRE-BILLING PRICE ADJUSTMENT MODULE
 // ===========================================
 
 // ===========================================

@@ -171,6 +171,21 @@ class PharmacyWorkbenchController extends Controller
                     'coverage_mode'  => $t['coverage_mode'],
                 ];
             })
+            ->addColumn('price_override', function ($item) {
+                return $item->price_override;
+            })
+            ->addColumn('price_original', function ($item) {
+                return $item->price_original;
+            })
+            ->addColumn('price_override_reason', function ($item) {
+                return $item->price_override_reason;
+            })
+            ->addColumn('price_override_by', function ($item) {
+                return $item->price_override_by ? userfullname($item->price_override_by) : null;
+            })
+            ->addColumn('price_override_at', function ($item) {
+                return $item->price_override_at ? date('M j, Y h:i A', strtotime($item->price_override_at)) : null;
+            })
             ->make(true);
     }
 
@@ -1478,11 +1493,12 @@ class PharmacyWorkbenchController extends Controller
                             'product_request_id' => $productRequest->id,
                             'product_id' => $prodId,
                             'qty_from_product_request' => $productRequest->qty,
-                            'billReq_qty_before' => $billReq->qty
+                            'billReq_qty_before' => $billReq->qty,
+                            'price_override' => $productRequest->price_override,
                         ]);
 
-                        // Apply HMO tariff if patient has HMO
-                        $this->applyHmoTariffToRequest($billReq, $patient, $prodId, $productRequest->product, $productRequest->qty);
+                        // Apply HMO tariff if patient has HMO (respects price_override)
+                        $this->applyHmoTariffToRequest($billReq, $patient, $prodId, $productRequest->product, $productRequest->qty, $productRequest->price_override);
 
                         \Log::info('PharmacyWorkbench: After applyHmoTariff', [
                             'product_request_id' => $productRequest->id,
@@ -1581,8 +1597,53 @@ class PharmacyWorkbenchController extends Controller
     /**
      * Helper to apply HMO tariff to a ProductOrServiceRequest
      */
-    private function applyHmoTariffToRequest(ProductOrServiceRequest $billReq, Patient $patient, $productId, $product = null, $qty = 1)
+    private function applyHmoTariffToRequest(ProductOrServiceRequest $billReq, Patient $patient, $productId, $product = null, $qty = 1, $priceOverride = null)
     {
+        // If a pre-billing price override exists, use it instead of tariff/sale price
+        if ($priceOverride !== null) {
+            $overrideTotal = round($priceOverride * $qty, 2);
+
+            if ($patient->hmo_id) {
+                // For HMO patients: look up tariff to determine total, then HMO covers the difference
+                try {
+                    $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
+                    if ($hmoData) {
+                        $tariffTotal = round(($hmoData['payable_amount'] + $hmoData['claims_amount']) * $qty, 2);
+                        $billReq->payable_amount = $overrideTotal;
+                        $billReq->claims_amount = max(0, $tariffTotal - $overrideTotal);
+                        $billReq->coverage_mode = $hmoData['coverage_mode'];
+                        $billReq->validation_status = $hmoData['validation_status'] ?? 'pending';
+
+                        Log::info('Price override applied with HMO tariff', [
+                            'product_id' => $productId,
+                            'price_override' => $priceOverride,
+                            'qty' => $qty,
+                            'override_total' => $overrideTotal,
+                            'tariff_total' => $tariffTotal,
+                            'final_payable' => $billReq->payable_amount,
+                            'final_claims' => $billReq->claims_amount,
+                        ]);
+                        return;
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('HMO tariff lookup failed during price override', ['error' => $e->getMessage()]);
+                }
+            }
+
+            // Cash patient or HMO tariff failed: full amount from override
+            $billReq->payable_amount = $overrideTotal;
+            $billReq->claims_amount = 0;
+            $billReq->coverage_mode = 'none';
+
+            Log::info('Price override applied (cash)', [
+                'product_id' => $productId,
+                'price_override' => $priceOverride,
+                'qty' => $qty,
+                'final_payable' => $overrideTotal,
+            ]);
+            return;
+        }
+
         try {
             if ($patient->hmo_id) {
                 $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
@@ -2652,6 +2713,100 @@ class PharmacyWorkbenchController extends Controller
     }
 
     /**
+     * Pre-billing price override for an unbilled prescription item.
+     *
+     * Allows pharmacists to override the unit price before billing so that
+     * the billing step uses the adjusted price instead of the tariff / sale price.
+     * Stores full audit trail including the original price.
+     *
+     * @param Request $request
+     * @param int $id ProductRequest ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function adjustPrice(Request $request, $id)
+    {
+        $request->validate([
+            'new_price' => 'required|numeric|min:0',
+            'adjustment_reason' => 'required|string|max:500',
+        ]);
+
+        $productRequest = ProductRequest::with(['product.price', 'patient.hmo'])->findOrFail($id);
+
+        // Only unbilled items (status=1) can have price overrides
+        if ($productRequest->status != 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Price can only be adjusted on unbilled items (before billing)'
+            ], 422);
+        }
+
+        $product = $productRequest->product;
+        $currentPrice = optional(optional($product)->price)->current_sale_price ?? 0;
+        $newPrice = round((float) $request->new_price, 2);
+        $qty = $productRequest->qty ?? 1;
+
+        // Prevent setting same price
+        $effectivePrice = $productRequest->price_override ?? $currentPrice;
+        if (abs($effectivePrice - $newPrice) < 0.01) {
+            return response()->json([
+                'success' => false,
+                'message' => 'New price is the same as the current price'
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $productRequest->update([
+                'price_override' => $newPrice,
+                'price_original' => $productRequest->price_original ?? $currentPrice,
+                'price_override_reason' => $request->adjustment_reason,
+                'price_override_by' => Auth::id(),
+                'price_override_at' => now(),
+            ]);
+
+            DB::commit();
+
+            // Detailed audit log
+            Log::info('Pre-billing price override applied', [
+                'product_request_id' => $id,
+                'product_id' => $product->id ?? null,
+                'product_name' => $product->product_name ?? 'Unknown',
+                'patient_id' => $productRequest->patient_id,
+                'original_unit_price' => $currentPrice,
+                'previous_override' => $effectivePrice,
+                'new_unit_price' => $newPrice,
+                'qty' => $qty,
+                'old_line_total' => $effectivePrice * $qty,
+                'new_line_total' => $newPrice * $qty,
+                'difference_per_unit' => round($newPrice - $effectivePrice, 2),
+                'difference_total' => round(($newPrice - $effectivePrice) * $qty, 2),
+                'reason' => $request->adjustment_reason,
+                'adjusted_by' => Auth::id(),
+                'adjusted_by_name' => Auth::user()->name ?? '',
+            ]);
+
+            $direction = $newPrice > $effectivePrice ? 'increased' : 'reduced';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Unit price {$direction} from ₦" . number_format($effectivePrice, 2) . " to ₦" . number_format($newPrice, 2),
+                'original_price' => $currentPrice,
+                'new_price' => $newPrice,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Price override failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to adjust price: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Adapt/change a prescription to a different product
      * Records the original product for audit trail
      *
@@ -2726,6 +2881,12 @@ class PharmacyWorkbenchController extends Controller
                 'adaptation_note' => $request->adaptation_note,
                 'adapted_at' => now(),
                 'adapted_by' => Auth::id(),
+                // Clear any pre-billing price override — new product has its own price
+                'price_override' => null,
+                'price_original' => null,
+                'price_override_reason' => null,
+                'price_override_by' => null,
+                'price_override_at' => null,
             ]);
 
             // Update the ProductOrServiceRequest if exists

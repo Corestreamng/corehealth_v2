@@ -38,6 +38,11 @@ class ProductRequest extends Model implements Auditable
         'qty_adjustment_reason',
         'qty_adjusted_at',
         'qty_adjusted_by',
+        'price_override',
+        'price_original',
+        'price_override_reason',
+        'price_override_by',
+        'price_override_at',
         'packaging_id',
         'packaging_qty',
     ];
@@ -45,6 +50,7 @@ class ProductRequest extends Model implements Auditable
     protected $casts = [
         'adapted_at' => 'datetime',
         'qty_adjusted_at' => 'datetime',
+        'price_override_at' => 'datetime',
         'dispense_date' => 'datetime',
         'billed_date' => 'datetime',
     ];
