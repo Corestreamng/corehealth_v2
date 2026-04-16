@@ -2834,7 +2834,7 @@
                 <i class="mdi mdi-package-variant"></i>
                 <span>Inventory (Coming Soon)</span>
             </button>
-            <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+            <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
                 <i class="mdi mdi-ambulance text-danger"></i>
                 <span>Emergency Intake</span>
             </button>
@@ -3813,6 +3813,8 @@
         </div>
     </div>
 </div>
+
+@include('admin.partials.patient-form-modal')
 
 @endsection
 
@@ -7250,7 +7252,7 @@ $(document).on('click', '#openApprovalQueue', function() {
 
 </script>
 
-{{-- Emergency Intake Modal --}}
-@include('admin.partials.emergency-intake-modal')
+{{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
+{{-- @include('admin.partials.emergency-intake-modal') --}}
 
 @endsection

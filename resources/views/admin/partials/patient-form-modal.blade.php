@@ -1034,6 +1034,247 @@
         display: none;
     }
 
+    /* ========================================
+       EMERGENCY MODE STYLES
+       ======================================== */
+    #patientFormModal.pf-emergency-mode .modal-header {
+        background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%) !important;
+    }
+    #patientFormModal.pf-emergency-mode .modal-header.edit-mode {
+        background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%) !important;
+    }
+    #patientFormModal.pf-emergency-mode .stepper-item.active .stepper-icon {
+        background: #dc3545;
+        box-shadow: 0 0 0 4px rgba(220,53,69,0.2);
+    }
+    #patientFormModal.pf-emergency-mode #pf-btn-next {
+        background: #dc3545; border-color: #dc3545;
+    }
+    #patientFormModal.pf-emergency-mode #pf-btn-next:hover {
+        background: #a71d2a; border-color: #a71d2a;
+    }
+    .pf-emergency-timer {
+        font-family: monospace;
+        font-size: 0.78rem;
+        background: rgba(0,0,0,0.25);
+        padding: 2px 10px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        display: none;
+    }
+    #patientFormModal.pf-emergency-mode .pf-emergency-timer { display: inline-block; }
+
+    /* Patient search section (emergency only) */
+    .pf-patient-search-section { display: none; }
+    #patientFormModal.pf-emergency-mode .pf-patient-search-section { display: block; }
+    .pf-patient-search-results {
+        max-height: 200px; overflow-y: auto;
+        border: 1px solid #dee2e6; border-radius: 6px;
+    }
+    .pf-patient-search-results .list-group-item { cursor: pointer; padding: 6px 12px; font-size: 0.85rem; }
+    .pf-selected-patient-banner {
+        display: none; background: #d4edda; border: 1px solid #c3e6cb;
+        border-radius: 6px; padding: 10px 14px;
+    }
+    .pf-selected-patient-banner.show { display: flex; align-items: center; }
+
+    /* Emergency-specific fields in Step 1 */
+    .pf-emergency-fields { display: none; }
+    #patientFormModal.pf-emergency-mode .pf-emergency-fields { display: block; }
+    .pf-new-patient-fields-wrapper { display: block; }
+    #patientFormModal.pf-emergency-mode .pf-new-patient-fields-wrapper.collapsed { display: none; }
+
+    /* === Emergency Patient Chooser Tabs === */
+    .pf-patient-chooser { display: none; margin-bottom: 1rem; }
+    #patientFormModal.pf-emergency-mode .pf-patient-chooser { display: block; }
+
+    .pf-chooser-tabs {
+        display: flex; gap: 8px; margin-bottom: 0;
+    }
+    .pf-chooser-tab {
+        flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 12px 16px; border: 2px solid #dee2e6; border-bottom: none;
+        border-radius: 10px 10px 0 0; background: #f8f9fa;
+        cursor: pointer; font-weight: 600; font-size: 0.88rem;
+        color: #6c757d; transition: all 0.2s ease;
+        position: relative; z-index: 1;
+    }
+    .pf-chooser-tab:hover { background: #e9ecef; color: #495057; }
+    .pf-chooser-tab.active {
+        background: #fff; color: #0d6efd; border-color: #0d6efd;
+        box-shadow: 0 -2px 8px rgba(13,110,253,0.1);
+    }
+    .pf-chooser-tab.active.tab-existing { color: #0d6efd; border-color: #0d6efd; }
+    .pf-chooser-tab.active.tab-new { color: #198754; border-color: #198754; }
+    .pf-chooser-tab.active.tab-unidentified { color: #e67e22; border-color: #e67e22; }
+    .pf-chooser-tab .tab-icon { font-size: 1.2rem; }
+    .pf-chooser-tab .tab-badge {
+        font-size: 0.65rem; padding: 2px 6px; border-radius: 10px;
+        font-weight: 500; margin-left: 4px;
+    }
+
+    .pf-chooser-body {
+        border: 2px solid #dee2e6; border-top: none;
+        border-radius: 0 0 10px 10px; background: #fff;
+        padding: 16px; min-height: 100px;
+    }
+    .pf-chooser-body.border-existing { border-color: #0d6efd; }
+    .pf-chooser-body.border-new { border-color: #198754; }
+    .pf-chooser-body.border-unidentified { border-color: #e67e22; }
+
+    .pf-chooser-panel { display: none; }
+    .pf-chooser-panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+    /* Selected patient card (existing patient) */
+    .pf-selected-card {
+        display: none; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 1px solid #a3d9a5; border-radius: 10px; padding: 16px;
+        position: relative; margin-top: 12px;
+    }
+    .pf-selected-card.show { display: block; animation: fadeIn 0.2s ease; }
+    .pf-selected-card .patient-avatar {
+        width: 48px; height: 48px; border-radius: 50%;
+        background: #198754; color: #fff; display: flex;
+        align-items: center; justify-content: center;
+        font-size: 1.2rem; font-weight: 700; flex-shrink: 0;
+    }
+    .pf-selected-card .patient-details { flex: 1; margin-left: 14px; }
+    .pf-selected-card .patient-details h6 { margin: 0 0 2px; font-size: 1rem; }
+    .pf-selected-card .patient-meta { font-size: 0.78rem; color: #555; }
+    .pf-selected-card .patient-meta span { margin-right: 12px; }
+    .pf-selected-card .btn-deselect {
+        position: absolute; top: 8px; right: 8px;
+        background: rgba(220,53,69,0.1); border: none;
+        border-radius: 50%; width: 28px; height: 28px;
+        display: flex; align-items: center; justify-content: center;
+        color: #dc3545; cursor: pointer; transition: all 0.2s;
+    }
+    .pf-selected-card .btn-deselect:hover { background: #dc3545; color: #fff; }
+
+    /* ---- Age / DOB Toggle Widget ---- */
+    .pf-age-dob-toggle {
+        display: inline-flex;
+        background: #e9ecef;
+        border-radius: 6px;
+        padding: 2px;
+        gap: 2px;
+        margin-left: 6px;
+        vertical-align: middle;
+    }
+    .pf-age-dob-toggle .pf-adt-btn {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 1px 10px;
+        border: none;
+        border-radius: 5px;
+        background: transparent;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.15s;
+        line-height: 1.6;
+    }
+    .pf-age-dob-toggle .pf-adt-btn.active {
+        background: #fff;
+        color: #0d6efd;
+        box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    }
+    .pf-age-input-group {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+    .pf-age-input-group input {
+        flex: 1;
+        min-width: 0;
+    }
+    .pf-age-input-group select {
+        width: 80px;
+        flex-shrink: 0;
+    }
+    .pf-age-hint {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    .pf-age-hint .badge {
+        font-weight: 500;
+        font-size: 0.72rem;
+    }
+    .pf-dob-panel { display: none; }
+    .pf-age-panel { display: block; }
+    .pf-age-dob-wrapper.mode-dob .pf-dob-panel { display: block; }
+    .pf-age-dob-wrapper.mode-dob .pf-age-panel { display: none; }
+    .pf-age-dob-wrapper.mode-age .pf-dob-panel { display: none; }
+    .pf-age-dob-wrapper.mode-age .pf-age-panel { display: block; }
+
+    /* Unidentified patient fields */
+    .pf-unidentified-panel {
+        background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+        padding: 14px;
+    }
+
+    /* Unidentified mode: hide irrelevant rows, show compact fields */
+    #pf-new-patient-wrapper.pf-unidentified-active .pf-hide-unidentified { display: none !important; }
+    .pf-show-unidentified { display: none; }
+    #pf-new-patient-wrapper.pf-unidentified-active .pf-show-unidentified { display: flex !important; }
+
+    /* Unidentified patient toggle */
+    .emi-identity-mode .btn-check:checked + .btn-outline-warning {
+        background: #ffc107; color: #000; border-color: #ffc107;
+    }
+
+    /* ESI buttons */
+    .pf-esi-btn {
+        min-height: 56px; transition: all 0.2s; flex: 1;
+    }
+    .pf-esi-btn.selected {
+        color: #fff !important; transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .pf-esi-btn[data-esi="1"].selected, .pf-esi-btn[data-esi="2"].selected { background: #dc3545 !important; border-color: #dc3545 !important; }
+    .pf-esi-btn[data-esi="3"].selected { background: #ffc107 !important; border-color: #ffc107 !important; color: #000 !important; }
+    .pf-esi-btn[data-esi="4"].selected { background: #0dcaf0 !important; border-color: #0dcaf0 !important; }
+    .pf-esi-btn[data-esi="5"].selected { background: #198754 !important; border-color: #198754 !important; }
+
+    /* GCS severity colors */
+    .pf-gcs-severe { background: #dc3545 !important; color: #fff !important; }
+    .pf-gcs-moderate { background: #ffc107 !important; color: #000 !important; }
+    .pf-gcs-mild { background: #28a745 !important; color: #fff !important; }
+
+    /* Triage & Disposition section cards */
+    .pf-triage-card {
+        background: #f8f9fa; border: 1px solid #e9ecef;
+        border-radius: 6px; padding: 12px; margin-bottom: 12px;
+    }
+    .pf-triage-card .pf-collapse-header {
+        cursor: pointer; user-select: none;
+    }
+    .pf-triage-card .pf-collapse-icon { transition: transform 0.2s; }
+    .pf-triage-card .pf-collapse-header:not(.collapsed) .pf-collapse-icon { transform: rotate(180deg); }
+
+    /* Disposition radio cards */
+    .pf-disposition-option {
+        border: 1px solid #dee2e6; border-radius: 6px; padding: 12px; margin-bottom: 8px;
+        cursor: pointer; transition: all 0.15s;
+    }
+    .pf-disposition-option:hover { border-color: #adb5bd; background: #f8f9fa; }
+    .pf-disposition-option.selected { border-color: #dc3545; background: #fff5f5; }
+
+    /* Service chips (disposition direct services) */
+    .pf-service-chip {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: #e9ecef; border-radius: 4px; padding: 4px 8px;
+        margin: 2px; font-size: 0.8rem;
+    }
+    .pf-service-chip .pf-remove-service { cursor: pointer; color: #dc3545; }
+
+    /* Pain slider */
+    .pf-pain-range { height: 8px; }
+    .pf-pain-range::-webkit-slider-thumb { width: 20px; height: 20px; }
+
+    /* ESI hint box */
+    #pf-esi-hint-box { font-size: 0.82rem; }
+
 </style>
 
 
@@ -1094,6 +1335,15 @@ function resetPatientForm() {
     $('#patient-form')[0].reset();
     $('#patient-form-id').val('');
     $('#patient-form-mode').val('create');
+
+    // Reset age/DOB toggle to Age mode
+    $('.pf-adt-btn').removeClass('active');
+    $('.pf-adt-btn[data-mode="age"]').addClass('active');
+    $('.pf-age-dob-wrapper').removeClass('mode-dob').addClass('mode-age');
+    $('#pf-age-val').val('');
+    $('#pf-age-unit').val('years');
+    $('#pf-age-dob-hint').html('');
+    $('#pf-age-dob-error').hide().text('');
 
     // Reset duplicate detection
     _dupDismissed = false;
@@ -1474,7 +1724,11 @@ function populatePatientForm(data) {
                 dob = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
             }
         }
-        $('#pf-dob').val(dob);
+        $('#pf-dob').val(dob).trigger('change');
+        // Switch to DOB mode for edit since we have an exact date
+        $('.pf-adt-btn').removeClass('active');
+        $('.pf-adt-btn[data-mode="dob"]').addClass('active');
+        $('.pf-age-dob-wrapper').removeClass('mode-age').addClass('mode-dob');
         updatePatientFormAge();
     }
 
@@ -1594,6 +1848,9 @@ function updatePatientFormNavigation() {
     if (patientFormCurrentStep === patientFormTotalSteps) {
         $('#pf-btn-next').hide();
         $('#pf-btn-submit').show();
+        // Show registration summary, hide emergency summary
+        $('#registration-summary').show();
+        $('#emergency-intake-summary').hide();
         updatePatientFormSummary();
     } else {
         $('#pf-btn-next').show();
@@ -1665,11 +1922,22 @@ function validatePatientFormStep(step) {
         }
 
         if (!dob) {
-            $('#pf-dob').addClass('is-invalid');
-            $('#pf-dob').siblings('.invalid-feedback').text('Date of birth is required');
+            // Show error on whichever panel is visible
+            var $ageWrapper = $('.pf-age-dob-wrapper');
+            if ($ageWrapper.hasClass('mode-age')) {
+                $('#pf-age-val').addClass('is-invalid');
+            } else {
+                $('#pf-dob').addClass('is-invalid');
+            }
+            $('#pf-age-dob-error').text('Enter age or date of birth').show();
             isValid = false;
         } else {
-            $('#pf-dob').addClass('is-valid');
+            if ($('.pf-age-dob-wrapper').hasClass('mode-age')) {
+                $('#pf-age-val').addClass('is-valid');
+            } else {
+                $('#pf-dob').addClass('is-valid');
+            }
+            $('#pf-age-dob-error').hide();
         }
 
         // Validate phone if provided
@@ -1988,11 +2256,14 @@ $(document).ready(function() {
 
     // Next button
     $('#pf-btn-next').on('click', function() {
+        // In emergency mode, navigate by sequence index rather than step number
+        if ($('#patientFormModal').hasClass('pf-emergency-mode')) return;
         goToPatientFormStep(patientFormCurrentStep + 1);
     });
 
     // Previous button
     $('#pf-btn-prev').on('click', function() {
+        if ($('#patientFormModal').hasClass('pf-emergency-mode')) return;
         goToPatientFormStep(patientFormCurrentStep - 1);
     });
 
@@ -2008,10 +2279,80 @@ $(document).ready(function() {
         toggleFileNumberEdit(mode);
     });
 
-    // DOB change - update age
-    $('#pf-dob').on('change', function() {
+    // ---- Age / DOB Toggle Widget ----
+    var _pfAgeDobSyncing = false; // prevent infinite loops
+
+    // Toggle between Age and DOB modes
+    $(document).on('click', '.pf-adt-btn', function() {
+        var mode = $(this).data('mode');
+        $('.pf-adt-btn').removeClass('active');
+        $(this).addClass('active');
+        $('.pf-age-dob-wrapper').removeClass('mode-age mode-dob').addClass('mode-' + mode);
+    });
+
+    // Age input changed → compute DOB → sync
+    $(document).on('input change', '#pf-age-val, #pf-age-unit', function() {
+        if (_pfAgeDobSyncing) return;
+        _pfAgeDobSyncing = true;
+
+        var val = parseInt($('#pf-age-val').val());
+        var unit = $('#pf-age-unit').val();
+        if (!isNaN(val) && val >= 0) {
+            var d = new Date();
+            if (unit === 'years') d.setFullYear(d.getFullYear() - val);
+            else if (unit === 'months') d.setMonth(d.getMonth() - val);
+            else if (unit === 'days') d.setDate(d.getDate() - val);
+
+            var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            $('#pf-dob').val(iso);
+
+            // Show hint ≈ year
+            var hint = unit === 'years' ? '≈ ' + d.getFullYear() : d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+            $('#pf-age-dob-hint').html('<span class="badge bg-light text-secondary">' + hint + '</span>');
+
+            updatePatientFormAge();
+            checkDuplicatePatient();
+        } else {
+            $('#pf-dob').val('');
+            $('#pf-age-dob-hint').html('');
+            $('#pf-age-display').text('');
+        }
+        _pfAgeDobSyncing = false;
+    });
+
+    // DOB change → update age display + back-sync to age input
+    $(document).on('change', '#pf-dob', function() {
         updatePatientFormAge();
         checkDuplicatePatient();
+
+        if (_pfAgeDobSyncing) return;
+        _pfAgeDobSyncing = true;
+        var dob = $(this).val();
+        if (dob) {
+            var bd = new Date(dob), now = new Date();
+            var diffMs = now - bd;
+            var totalDays = Math.floor(diffMs / 86400000);
+            if (totalDays < 91) {
+                $('#pf-age-val').val(totalDays);
+                $('#pf-age-unit').val('days');
+            } else if (totalDays < 730) {
+                $('#pf-age-val').val(Math.floor(totalDays / 30.44));
+                $('#pf-age-unit').val('months');
+            } else {
+                var yrs = now.getFullYear() - bd.getFullYear();
+                if (now.getMonth() < bd.getMonth() || (now.getMonth() === bd.getMonth() && now.getDate() < bd.getDate())) yrs--;
+                $('#pf-age-val').val(yrs);
+                $('#pf-age-unit').val('years');
+            }
+            $('#pf-age-dob-hint').html('');
+        } else {
+            $('#pf-age-val').val('');
+            $('#pf-age-dob-hint').html('');
+        }
+        _pfAgeDobSyncing = false;
+
+        // Also clear emergency approx-age if user typed exact DOB
+        if ($(this).val() && pfEmergencyMode) { $('#pf-approx-age').val(''); }
     });
 
     // Duplicate detection: trigger on key fields
@@ -2307,6 +2648,920 @@ $(document).ready(function() {
     });
 });
 
+// =============================================
+// EMERGENCY MODE LOGIC
+// =============================================
+(function() {
+    'use strict';
+
+    let pfEmergencyMode = false;
+    let pfEmergencyTimerInterval = null;
+    let pfEmergencyTimerSeconds = 0;
+    let pfEmergencySearchTimeout = null;
+    let pfDirectServiceSearchTimeout = null;
+    let pfDirectServices = []; // [{type, id, name}]
+    // Step sequence: normal = [1,2,3,4], emergency = [1,2,3,5,6,4]
+    let pfStepSequence = [1, 2, 3, 4];
+
+    const pfApproxAgeMap = {
+        'neonate': 14, 'infant': 183, 'child_1_5': 1095, 'child_6_12': 3285,
+        'adolescent': 5475, 'adult_18_30': 8760, 'adult_31_50': 14600,
+        'adult_51_65': 21170, 'elderly': 27375
+    };
+
+    // Expose function to open modal in emergency mode
+    window.showEmergencyIntakeModal = function() {
+        enableEmergencyMode();
+        showPatientFormModal('create');
+    };
+
+    function enableEmergencyMode() {
+        pfEmergencyMode = true;
+        pfStepSequence = [1, 2, 3, 5, 6, 4];
+
+        var $modal = $('#patientFormModal');
+        $modal.addClass('pf-emergency-mode');
+
+        // Update title
+        $('#patient-form-title').html('<i class="mdi mdi-ambulance mdi-24px"></i> Emergency / Walk-In Intake');
+
+        // Show emergency stepper items (not form-steps — CSS .form-step handles those via .active class)
+        $('.pf-emergency-stepper').show();
+
+        // Update total steps for navigation
+        window._pfTotalSteps = pfStepSequence.length;
+
+        // Generate EX- prefixed file number for emergency patients
+        generateEmergencyFileNumber();
+
+        // Start timer when modal actually shows
+        $modal.off('shown.bs.modal.emergency').on('shown.bs.modal.emergency', function() {
+            startEmergencyTimer();
+        });
+    }
+
+    function generateEmergencyFileNumber() {
+        $.ajax({
+            url: '/reception/patient/next-file-number',
+            method: 'GET',
+            data: { prefix: 'EX-' },
+            success: function(response) {
+                var nextFileNo = response.file_no;
+                $('#pf-file-no').val(nextFileNo).addClass('status-valid');
+                $('#pf-next-file-no').text(nextFileNo);
+                $('#pf-duplicate-warning').hide();
+                // Show recent EX- numbers as hint
+                var recent = response.recent_file_nos || [];
+                var lastTwo = recent.slice(0, 2);
+                if (lastTwo.length > 0) {
+                    $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
+                }
+            },
+            error: function() {
+                $('#pf-file-no').val('EX-001');
+                $('#pf-next-file-no').text('EX-001');
+            }
+        });
+    }
+
+    function disableEmergencyMode() {
+        pfEmergencyMode = false;
+        pfStepSequence = [1, 2, 3, 4];
+
+        var $modal = $('#patientFormModal');
+        $modal.removeClass('pf-emergency-mode');
+
+        // Hide emergency stepper items (form-steps handled by CSS .form-step via .active class)
+        $('.pf-emergency-stepper').hide();
+
+        // Reset summaries to default state
+        $('#registration-summary').show();
+        $('#emergency-intake-summary').hide();
+
+        // Reset total steps
+        window._pfTotalSteps = 4;
+
+        stopEmergencyTimer();
+        resetEmergencyFields();
+    }
+
+    // ---- Timer ----
+    function startEmergencyTimer() {
+        pfEmergencyTimerSeconds = 0;
+        clearInterval(pfEmergencyTimerInterval);
+        $('#pf-emergency-timer').text('00:00');
+        pfEmergencyTimerInterval = setInterval(function() {
+            pfEmergencyTimerSeconds++;
+            var m = String(Math.floor(pfEmergencyTimerSeconds / 60)).padStart(2, '0');
+            var s = String(pfEmergencyTimerSeconds % 60).padStart(2, '0');
+            $('#pf-emergency-timer').text(m + ':' + s);
+        }, 1000);
+    }
+
+    function stopEmergencyTimer() {
+        clearInterval(pfEmergencyTimerInterval);
+        pfEmergencyTimerInterval = null;
+    }
+
+    // ---- Patient Search (emergency) ----
+    $(document).on('input', '#pf-emergency-patient-search', function() {
+        clearTimeout(pfEmergencySearchTimeout);
+        var query = $(this).val().trim();
+        if (query.length < 2) { $('#pf-emergency-patient-results').hide(); return; }
+
+        pfEmergencySearchTimeout = setTimeout(function() {
+            $.get('/emergency/search-patient', { q: query }, function(patients) {
+                var $results = $('#pf-emergency-patient-results').empty();
+                if (patients.length === 0) {
+                    $results.html('<div class="list-group-item text-muted text-center">No patients found</div>');
+                } else {
+                    patients.forEach(function(p) {
+                        $results.append(
+                            '<a href="#" class="list-group-item list-group-item-action pf-emergency-patient-item py-1"' +
+                            ' data-id="' + p.id + '" data-name="' + escapeHtml(p.name) + '" data-fileno="' + escapeHtml(p.file_no) + '"' +
+                            ' data-phone="' + escapeHtml(p.phone || '') + '" data-hmo="' + escapeHtml(p.hmo || '') + '" data-allergies="' + escapeHtml(p.allergies || '') + '">' +
+                            '<div class="d-flex justify-content-between align-items-center">' +
+                            '<div><strong>' + escapeHtml(p.name) + '</strong>' +
+                            '<small class="d-block text-muted">' + escapeHtml(p.file_no) + ' | ' + (p.gender || '') + ' | ' + escapeHtml(p.phone || '') + '</small></div>' +
+                            '<span class="badge bg-secondary">' + escapeHtml(p.hmo || 'Private') + '</span>' +
+                            '</div></a>'
+                        );
+                    });
+                }
+                $results.show();
+            });
+        }, 300);
+    });
+
+    // Select patient from emergency search
+    $(document).on('click', '.pf-emergency-patient-item', function(e) {
+        e.preventDefault();
+        var $el = $(this);
+        var name = $el.data('name');
+        $('#pf-emergency-patient-id').val($el.data('id'));
+        $('#pf-emergency-patient-name').text(name);
+        $('#pf-emergency-patient-fileno').text($el.data('fileno'));
+        $('#pf-emergency-patient-phone').text($el.data('phone'));
+        $('#pf-emergency-patient-hmo').text($el.data('hmo') || 'Private');
+        // Avatar initials
+        var initials = name ? name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase() : '?';
+        $('#pf-emergency-patient-avatar').text(initials);
+        $('#pf-emergency-selected-patient').addClass('show');
+        $('#pf-emergency-patient-results').hide();
+        $('#pf-emergency-patient-search').val('');
+        $('#pf-existing-empty-state').hide();
+
+        // Pre-fill allergies if existing
+        var allergies = $el.data('allergies');
+        if (allergies && allergies !== 'null' && String(allergies).length > 2) {
+            $('#pf-allergy-has').prop('checked', true).trigger('change');
+            var clean = String(allergies);
+            try { var arr = JSON.parse(clean); if (Array.isArray(arr)) clean = arr.join(', '); } catch(e) {}
+            $('#pf-allergies-text').val(clean);
+            $('#pf-allergy-text-input').show();
+        }
+
+        // Hide new-patient form fields when existing selected
+        $('#pf-new-patient-wrapper').addClass('collapsed');
+    });
+
+    // Clear selected patient
+    $(document).on('click', '#pf-emergency-clear-patient', function() {
+        $('#pf-emergency-patient-id').val('');
+        $('#pf-emergency-selected-patient').removeClass('show');
+        $('#pf-existing-empty-state').show();
+        // Don't uncollapse wrapper — user stays on "existing" tab
+    });
+
+    // ---- Patient Chooser Tab Switching ----
+    $(document).on('click', '.pf-chooser-tab', function() {
+        var panel = $(this).data('panel');
+        $('#pf-patient-chooser-mode').val(panel);
+
+        // Switch active tab
+        $('.pf-chooser-tab').removeClass('active');
+        $(this).addClass('active');
+
+        // Switch panel
+        $('.pf-chooser-panel').removeClass('active');
+        $('.pf-chooser-panel[data-panel="' + panel + '"]').addClass('active');
+
+        // Update body border color
+        $('#pf-chooser-body').removeClass('border-existing border-new border-unidentified')
+            .addClass('border-' + panel);
+
+        // Reset unidentified class on wrapper
+        $('#pf-new-patient-wrapper').removeClass('pf-unidentified-active');
+
+        if (panel === 'existing') {
+            // Collapse new-patient wrapper (existing patient already selected or searching)
+            $('#pf-new-patient-wrapper').addClass('collapsed');
+            $('#pf-is-unidentified').val('0');
+            // Restore name fields if they were set for unidentified
+            if ($('#pf-surname').val() === 'Unknown') $('#pf-surname').val('');
+            if ($('#pf-firstname').val() === 'Patient') $('#pf-firstname').val('');
+        } else if (panel === 'new') {
+            // Clear any selected existing patient
+            $('#pf-emergency-patient-id').val('');
+            $('#pf-emergency-selected-patient').removeClass('show');
+            $('#pf-existing-empty-state').show();
+            // Show full new patient form fields
+            $('#pf-new-patient-wrapper').removeClass('collapsed');
+            $('#pf-is-unidentified').val('0');
+            // Restore name fields if they were set for unidentified
+            if ($('#pf-surname').val() === 'Unknown') $('#pf-surname').val('');
+            if ($('#pf-firstname').val() === 'Patient') $('#pf-firstname').val('');
+        } else if (panel === 'unidentified') {
+            // Clear any selected existing patient
+            $('#pf-emergency-patient-id').val('');
+            $('#pf-emergency-selected-patient').removeClass('show');
+            $('#pf-existing-empty-state').show();
+            // Show wrapper but in unidentified mode — only Gender, Approx Age, Phone visible
+            $('#pf-new-patient-wrapper').removeClass('collapsed').addClass('pf-unidentified-active');
+            $('#pf-is-unidentified').val('1');
+            $('#pf-surname').val('Unknown');
+            $('#pf-firstname').val('Patient');
+            // Sync unidentified gender field from main gender if set
+            $('#pf-gender-unid').val($('#pf-gender').val());
+        }
+    });
+
+    // Sync unidentified-only fields back to main fields
+    $(document).on('change', '#pf-gender-unid', function() {
+        $('#pf-gender').val($(this).val());
+    });
+    $(document).on('change', '#pf-approx-age-unid', function() {
+        var key = $(this).val();
+        $('#pf-approx-age').val(key); // sync to main approx age
+        if (key && pfApproxAgeMap[key]) {
+            var d = new Date();
+            d.setDate(d.getDate() - pfApproxAgeMap[key]);
+            var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            $('#pf-dob').val(iso).trigger('change');
+        }
+    });
+    $(document).on('input', '#pf-phone-unid', function() {
+        $('#pf-phone').val($(this).val());
+    });
+
+    // ---- Approx Age → DOB ----
+    $(document).on('change', '#pf-approx-age', function() {
+        var key = $(this).val();
+        if (key && pfApproxAgeMap[key]) {
+            var d = new Date();
+            d.setDate(d.getDate() - pfApproxAgeMap[key]);
+            var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            $('#pf-dob').val(iso).trigger('change');
+        }
+    });
+
+    // ---- ESI Level Selection ----
+    $(document).on('click', '.pf-esi-btn', function() {
+        $('.pf-esi-btn').removeClass('selected');
+        $(this).addClass('selected');
+        $('#pf-esi-level').val($(this).data('esi'));
+
+        var hint = $(this).data('hint');
+        if (hint) {
+            $('#pf-esi-hint-text').text(hint);
+            $('#pf-esi-hint-box').slideDown(150);
+        }
+
+        // Auto-expand GCS + vitals for ESI 1-2
+        var esi = parseInt($(this).data('esi'));
+        if (esi <= 2) {
+            $('#pf-vitals-panel').collapse('show');
+            $('#pf-gcs-panel').collapse('show');
+        }
+    });
+
+    // ---- GCS Auto-Calculation ----
+    $(document).on('change', '.pf-gcs-input', function() {
+        var eye = parseInt($('#pf-gcs-eye').val()) || 0;
+        var verbal = parseInt($('#pf-gcs-verbal').val()) || 0;
+        var motor = parseInt($('#pf-gcs-motor').val()) || 0;
+
+        if (eye && verbal && motor) {
+            var total = eye + verbal + motor;
+            $('#pf-gcs-total').val(total);
+            $('#pf-gcs-total-val').val(total);
+            var $el = $('#pf-gcs-total');
+            $el.removeClass('pf-gcs-severe pf-gcs-moderate pf-gcs-mild');
+            if (total <= 8) $el.addClass('pf-gcs-severe');
+            else if (total <= 12) $el.addClass('pf-gcs-moderate');
+            else $el.addClass('pf-gcs-mild');
+        } else {
+            $('#pf-gcs-total').val('--').removeClass('pf-gcs-severe pf-gcs-moderate pf-gcs-mild');
+            $('#pf-gcs-total-val').val('');
+        }
+    });
+
+    // Pain scale display
+    $(document).on('input', '#pf-pain-scale', function() {
+        $('#pf-pain-display').text($(this).val());
+    });
+
+    // Allergy radio toggle
+    $(document).on('change', 'input[name="pf_allergy_status"]', function() {
+        if ($(this).val() === 'has_allergies') {
+            $('#pf-allergy-text-input').slideDown(150);
+        } else {
+            $('#pf-allergy-text-input').slideUp(150);
+        }
+    });
+
+    // ---- Disposition Toggle ----
+    $(document).on('change', '.pf-disposition-radio', function() {
+        var val = $(this).val();
+        $('#pf-admit-options, #pf-consult-options, #pf-direct-options').hide();
+        if (val === 'admit_emergency') { $('#pf-admit-options').slideDown(200); loadDispositionData(); }
+        else if (val === 'queue_consultation') { $('#pf-consult-options').slideDown(200); loadDispositionData(); }
+        else if (val === 'direct_service') { $('#pf-direct-options').slideDown(200); }
+    });
+
+    var pfDispositionLoaded = false;
+    function loadDispositionData() {
+        if (pfDispositionLoaded) return;
+        pfDispositionLoaded = true;
+
+        $.get('/emergency/available-beds', function(beds) {
+            var $sel = $('#pf-bed-select').empty().append('<option value="">-- No bed (assign later) --</option>');
+            beds.forEach(function(b) {
+                $sel.append('<option value="' + b.id + '">' + escapeHtml(b.name) + ' — ' + escapeHtml(b.ward) + ' (' + escapeHtml(b.bed_type) + ')</option>');
+            });
+        });
+
+        $.get('/emergency/clinics', function(clinics) {
+            var opts = '<option value="">-- Select Clinic --</option>';
+            clinics.forEach(function(c) { opts += '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>'; });
+            $('#pf-clinic-select').html(opts);
+            $('#pf-admit-clinic-select').html(opts);
+        });
+
+        $.get('/emergency/services', function(data) {
+            var $admitSvc = $('#pf-admit-service-select').empty().append('<option value="">-- Select Service --</option>');
+            if (data.admission) data.admission.forEach(function(s) {
+                $admitSvc.append('<option value="' + s.id + '">' + escapeHtml(s.name) + ' — ₦' + Number(s.price).toLocaleString() + '</option>');
+            });
+            var $consultSvc = $('#pf-service-select').empty().append('<option value="">-- Select Service --</option>');
+            if (data.consultation) data.consultation.forEach(function(s) {
+                $consultSvc.append('<option value="' + s.id + '">' + escapeHtml(s.name) + ' — ₦' + Number(s.price).toLocaleString() + '</option>');
+            });
+        });
+    }
+
+    // ---- Direct Service Search ----
+    $(document).on('input', '#pf-direct-service-search', function() {
+        clearTimeout(pfDirectServiceSearchTimeout);
+        var query = $(this).val().trim();
+        if (query.length < 2) { $('#pf-direct-service-results').hide(); return; }
+
+        pfDirectServiceSearchTimeout = setTimeout(function() {
+            var labUrl = '/reception/services/lab';
+            var imgUrl = '/reception/services/imaging';
+            Promise.all([$.get(labUrl, {q: query}), $.get(imgUrl, {q: query})]).then(function(results) {
+                var $results = $('#pf-direct-service-results').empty();
+                results[0].forEach(function(s) {
+                    if (!pfDirectServices.find(function(x){ return x.type==='lab' && x.id===s.id; })) {
+                        $results.append('<a href="#" class="list-group-item list-group-item-action pf-add-direct-service py-1" data-type="lab" data-id="'+s.id+'" data-name="'+escapeHtml(s.name)+'"><span class="badge bg-primary me-1">LAB</span> '+escapeHtml(s.name)+'</a>');
+                    }
+                });
+                results[1].forEach(function(s) {
+                    if (!pfDirectServices.find(function(x){ return x.type==='imaging' && x.id===s.id; })) {
+                        $results.append('<a href="#" class="list-group-item list-group-item-action pf-add-direct-service py-1" data-type="imaging" data-id="'+s.id+'" data-name="'+escapeHtml(s.name)+'"><span class="badge bg-info me-1">IMG</span> '+escapeHtml(s.name)+'</a>');
+                    }
+                });
+                if ($results.children().length === 0) {
+                    $results.html('<div class="list-group-item text-muted text-center">No services found</div>');
+                }
+                $results.show();
+            });
+        }, 300);
+    });
+
+    $(document).on('click', '.pf-add-direct-service', function(e) {
+        e.preventDefault();
+        pfDirectServices.push({ type: $(this).data('type'), id: $(this).data('id'), name: $(this).data('name') });
+        renderDirectServices();
+        $('#pf-direct-service-results').hide();
+        $('#pf-direct-service-search').val('');
+    });
+
+    $(document).on('click', '.pf-remove-service', function() {
+        pfDirectServices.splice($(this).data('index'), 1);
+        renderDirectServices();
+    });
+
+    function renderDirectServices() {
+        var $c = $('#pf-selected-direct-services').empty();
+        if (pfDirectServices.length === 0) { $c.html('<small class="text-muted">No services selected</small>'); return; }
+        pfDirectServices.forEach(function(s, i) {
+            var badge = s.type === 'lab' ? 'bg-primary' : 'bg-info';
+            $c.append('<span class="pf-service-chip"><span class="badge '+badge+' me-1">'+s.type.toUpperCase()+'</span>'+escapeHtml(s.name)+' <span class="pf-remove-service" data-index="'+i+'"><i class="mdi mdi-close-circle"></i></span></span>');
+        });
+    }
+
+    // ---- Override step navigation for emergency mode ----
+    var _origGoToStep = window.goToPatientFormStep || goToPatientFormStep;
+
+    // Patch the global goToPatientFormStep if emergency mode is active
+    var origGoTo = goToPatientFormStep;
+    goToPatientFormStep = function(step) {
+        if (!pfEmergencyMode) { return origGoTo(step); }
+
+        // Map logical index to step number
+        var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
+        var targetIdx = -1;
+
+        // If step is being called as a step NUMBER (from stepper clicks), find its index
+        if (pfStepSequence.indexOf(step) !== -1) {
+            targetIdx = pfStepSequence.indexOf(step);
+        } else {
+            return; // Invalid step
+        }
+
+        // Validate when moving forward
+        if (targetIdx > currentIdx) {
+            for (var i = currentIdx; i < targetIdx; i++) {
+                if (!validateEmergencyStep(pfStepSequence[i])) return;
+            }
+        }
+
+        patientFormCurrentStep = step;
+
+        // Show the step
+        $('.form-step').removeClass('active');
+        $('.form-step[data-step="' + step + '"]').addClass('active');
+
+        // Update stepper
+        updateEmergencyStepper();
+
+        // Update navigation
+        updateEmergencyNavigation();
+
+        // Scroll to top
+        $('.form-steps-container').scrollTop(0);
+    };
+
+    function updateEmergencyStepper() {
+        var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
+        // Update all stepper items that are in our sequence
+        $('.stepper-item').each(function() {
+            var stepNum = parseInt($(this).data('step'));
+            var stepIdx = pfStepSequence.indexOf(stepNum);
+            $(this).removeClass('active completed');
+            if (stepIdx === -1) return; // Not in current sequence
+            if (stepIdx < currentIdx) $(this).addClass('completed');
+            else if (stepIdx === currentIdx) $(this).addClass('active');
+        });
+
+        // Update stepper lines
+        var lineIdx = 0;
+        $('.stepper-line:visible').each(function() {
+            $(this).removeClass('completed');
+            if (lineIdx < currentIdx) $(this).addClass('completed');
+            lineIdx++;
+        });
+    }
+
+    function updateEmergencyNavigation() {
+        var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
+        var isFirst = (currentIdx === 0);
+        var isLast = (currentIdx === pfStepSequence.length - 1);
+
+        if (isFirst) $('#pf-btn-prev').hide(); else $('#pf-btn-prev').show();
+
+        if (isLast) {
+            $('#pf-btn-next').hide();
+            $('#pf-btn-submit').show();
+            $('#pf-submit-text').text('Submit Emergency Intake');
+            // Show emergency summary instead of registration summary
+            $('#registration-summary').hide();
+            $('#emergency-intake-summary').show();
+            updateEmergencyIntakeSummary();
+        } else {
+            $('#pf-btn-next').show();
+            $('#pf-btn-submit').hide();
+        }
+    }
+
+    function validateEmergencyStep(step) {
+        if (step === 1) {
+            // In emergency mode, either existing patient or new patient info
+            var hasExisting = !!$('#pf-emergency-patient-id').val();
+            if (hasExisting) return true;
+
+            var isUnidentified = $('#pf-is-unidentified').val() === '1';
+            if (!isUnidentified) {
+                if (!$('#pf-surname').val().trim() || !$('#pf-firstname').val().trim()) {
+                    toastr.warning('Surname and First Name are required.');
+                    return false;
+                }
+            }
+            if (!$('#pf-gender').val()) {
+                toastr.warning('Gender is required.');
+                return false;
+            }
+            // DOB optional in emergency (may use approx age)
+            return true;
+        }
+        if (step === 5) {
+            // Triage: ESI + chief complaint required
+            if (!$('#pf-esi-level').val()) {
+                toastr.warning('Please select an ESI triage level.');
+                return false;
+            }
+            if (!$('#pf-chief-complaint').val().trim()) {
+                toastr.warning('Chief complaint is required.');
+                return false;
+            }
+            return true;
+        }
+        if (step === 6) {
+            // Disposition validation
+            var disp = $('input[name="pf_disposition"]:checked').val();
+            if (!disp) { toastr.warning('Please select a disposition.'); return false; }
+            if (disp === 'admit_emergency') {
+                if (!$('#pf-admit-service-select').val()) { toastr.warning('Admission service is required.'); return false; }
+                if (!$('#pf-admit-clinic-select').val()) { toastr.warning('Clinic is required.'); return false; }
+            }
+            if (disp === 'queue_consultation') {
+                if (!$('#pf-clinic-select').val()) { toastr.warning('Clinic is required.'); return false; }
+                if (!$('#pf-service-select').val()) { toastr.warning('Service is required.'); return false; }
+            }
+            if (disp === 'direct_service' && pfDirectServices.length === 0) {
+                toastr.warning('Add at least one lab or imaging service.');
+                return false;
+            }
+            return true;
+        }
+        // For other steps, delegate to original validation
+        return validatePatientFormStep(step);
+    }
+
+    // Override Next/Prev for emergency mode
+    $(document).off('click.pfEmergencyNav').on('click.pfEmergencyNav', '#pf-btn-next', function() {
+        if (!pfEmergencyMode) return; // Let original handler work
+        var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
+        if (currentIdx < pfStepSequence.length - 1) {
+            goToPatientFormStep(pfStepSequence[currentIdx + 1]);
+        }
+    });
+
+    $(document).off('click.pfEmergencyPrev').on('click.pfEmergencyPrev', '#pf-btn-prev', function() {
+        if (!pfEmergencyMode) return;
+        var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
+        if (currentIdx > 0) {
+            goToPatientFormStep(pfStepSequence[currentIdx - 1]);
+        }
+    });
+
+    // ---- Override form submission for emergency mode ----
+    var origSubmit = submitPatientForm;
+    submitPatientForm = function() {
+        if (!pfEmergencyMode) { return origSubmit(); }
+
+        // Emergency two-phase submit:
+        // Phase 1: Register patient (if new) via existing endpoint
+        // Phase 2: Submit emergency intake (triage + disposition) to /emergency/intake
+        var existingPatientId = $('#pf-emergency-patient-id').val();
+        var $btn = $('#pf-btn-submit');
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+
+        if (existingPatientId) {
+            // Skip patient creation — go straight to emergency intake
+            submitEmergencyIntake(existingPatientId, $btn, originalHtml);
+        } else {
+            // Phase 1: Create the patient first
+            var isUnidentified = $('#pf-is-unidentified').val() == '1';
+
+            // For unidentified patients without DOB, default to adult (~30 years)
+            if (isUnidentified && !$('#pf-dob').val()) {
+                var d = new Date();
+                d.setFullYear(d.getFullYear() - 30);
+                var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                $('#pf-dob').val(iso);
+            }
+
+            // For unidentified, pack distinguishing features + unidentified flag into misc
+            var miscVal = $('#pf-misc').val().trim();
+            if (isUnidentified) {
+                var miscObj = {};
+                if (miscVal) {
+                    try { miscObj = JSON.parse(miscVal); } catch(e) { miscObj = { notes: miscVal }; }
+                }
+                miscObj.unidentified = true;
+                miscObj.distinguishing_features = $('#pf-distinguishing-features').val() || '';
+                miscObj.arrival_mode = $('#pf-arrival-mode').val() || '';
+                miscObj.approx_age = $('#pf-approx-age').val() || '';
+                miscVal = JSON.stringify(miscObj);
+            }
+
+            var formData = new FormData();
+            formData.append('_token', $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}');
+            formData.append('file_no', $('#pf-file-no').val());
+            formData.append('surname', $('#pf-surname').val().trim());
+            formData.append('firstname', $('#pf-firstname').val().trim());
+            formData.append('othername', $('#pf-othername').val().trim());
+            formData.append('gender', $('#pf-gender').val());
+            formData.append('dob', $('#pf-dob').val());
+            formData.append('phone_no', $('#pf-phone').val().trim());
+            formData.append('email', $('#pf-email').val().trim());
+            formData.append('address', $('#pf-address').val().trim());
+            formData.append('blood_group', $('#pf-blood-group').val());
+            formData.append('genotype', $('#pf-genotype').val());
+            formData.append('disability', $('#pf-disability').val());
+            formData.append('nationality', $('#pf-nationality').val());
+            formData.append('ethnicity', $('#pf-ethnicity').val());
+            formData.append('allergies', JSON.stringify(patientFormAllergies));
+            formData.append('medical_history', $('#pf-medical-history').val().trim());
+            formData.append('misc', miscVal);
+            formData.append('next_of_kin_name', $('#pf-nok-name').val().trim());
+            formData.append('next_of_kin_phone', $('#pf-nok-phone').val().trim());
+            formData.append('next_of_kin_address', $('#pf-nok-address').val().trim());
+            formData.append('hmo_id', $('#pf-hmo').val() || 1);
+            formData.append('hmo_no', $('#pf-hmo-no').val().trim());
+
+            // File uploads
+            var passportFile = $('#pf-passport')[0].files[0];
+            var passportData = $('#pf-passport-data').val();
+            if (passportFile) formData.append('filename', passportFile);
+            else if (passportData) formData.append('passport_data', passportData);
+            var oldRecords = $('#pf-old-records')[0].files[0];
+            if (oldRecords) formData.append('old_records', oldRecords);
+
+            $.ajax({
+                url: patientFormConfig.registerUrl,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success && response.patient) {
+                        submitEmergencyIntake(response.patient.id, $btn, originalHtml);
+                    } else {
+                        toastr.error(response.message || 'Patient registration failed.');
+                        $btn.prop('disabled', false).html(originalHtml);
+                    }
+                },
+                error: function(xhr) {
+                    var errors = xhr.responseJSON?.errors;
+                    if (errors) {
+                        Object.values(errors).forEach(function(err) { toastr.error(err[0]); });
+                    } else {
+                        toastr.error(xhr.responseJSON?.message || 'Patient registration failed.');
+                    }
+                    $btn.prop('disabled', false).html(originalHtml);
+                }
+            });
+        }
+    };
+
+    function submitEmergencyIntake(patientId, $btn, originalHtml) {
+        var disposition = $('input[name="pf_disposition"]:checked').val();
+
+        var intakeData = {
+            _token: $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}',
+            patient_id: patientId,
+            is_new_patient: 0,
+            is_unidentified: $('#pf-is-unidentified').val() == '1' ? 1 : 0,
+            // Triage
+            esi_level: $('#pf-esi-level').val(),
+            chief_complaint: $('#pf-chief-complaint').val(),
+            triage_notes: $('#pf-triage-notes').val(),
+            // Vitals
+            vital_hr: $('#pf-vital-hr').val() || null,
+            vital_bp_sys: $('#pf-vital-bp-sys').val() || null,
+            vital_bp_dia: $('#pf-vital-bp-dia').val() || null,
+            vital_spo2: $('#pf-vital-spo2').val() || null,
+            vital_temp: $('#pf-vital-temp').val() || null,
+            vital_rr: $('#pf-vital-rr').val() || null,
+            vital_bs: $('#pf-vital-bs').val() || null,
+            // GCS + Pain
+            gcs_eye: $('#pf-gcs-eye').val() || null,
+            gcs_verbal: $('#pf-gcs-verbal').val() || null,
+            gcs_motor: $('#pf-gcs-motor').val() || null,
+            gcs_total: $('#pf-gcs-total-val').val() || null,
+            pain_scale: $('#pf-pain-scale').val(),
+            // Allergies
+            allergy_status: $('input[name="pf_allergy_status"]:checked').val(),
+            allergies_text: $('#pf-allergies-text').val(),
+            // Arrival
+            arrival_mode: $('#pf-arrival-mode').val(),
+            brought_by_name: $('#pf-brought-by-name').val(),
+            brought_by_phone: $('#pf-brought-by-phone').val(),
+            distinguishing_features: $('#pf-distinguishing-features').val(),
+            // Disposition
+            disposition: disposition,
+            clinic_id: $('#pf-clinic-select').val() || null,
+            service_id: $('#pf-service-select').val() || null,
+            admit_service_id: $('#pf-admit-service-select').val() || null,
+            admit_clinic_id: $('#pf-admit-clinic-select').val() || null,
+            bed_id: $('#pf-bed-select').val() || null,
+            elapsed_seconds: pfEmergencyTimerSeconds
+        };
+
+        if (disposition === 'direct_service') {
+            intakeData.direct_services = pfDirectServices.map(function(s) { return {type: s.type, id: s.id}; });
+        }
+
+        $.ajax({
+            url: '/emergency/intake',
+            method: 'POST',
+            data: JSON.stringify(intakeData),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message || 'Emergency intake completed.');
+                    $('#patientFormModal').modal('hide');
+
+                    if (typeof patientFormConfig.onSuccess === 'function') {
+                        patientFormConfig.onSuccess(patientId, 'emergency');
+                    }
+                    if (typeof loadPatient === 'function') loadPatient(patientId);
+                    else if (typeof selectPatient === 'function') selectPatient(patientId);
+                    if (typeof loadQueueCounts === 'function') loadQueueCounts();
+                } else {
+                    toastr.error(response.message || 'Emergency intake failed.');
+                }
+            },
+            error: function(xhr) {
+                var msg = xhr.responseJSON?.message || 'Server error during emergency intake.';
+                if (xhr.responseJSON?.errors) {
+                    Object.values(xhr.responseJSON.errors).flat().forEach(function(e) { toastr.error(e); });
+                } else {
+                    toastr.error(msg);
+                }
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    }
+
+    // ---- Emergency Intake Summary ----
+    function updateEmergencyIntakeSummary() {
+        var existingId = $('#pf-emergency-patient-id').val();
+
+        // Patient info
+        if (existingId) {
+            $('#emg-summary-name').text($('#pf-emergency-patient-name').text() || '-');
+            $('#emg-summary-fileno').text($('#pf-emergency-patient-fileno').text() || '-');
+            $('#emg-summary-gender').text('-');
+            $('#emg-summary-patient-type').html('<span class="badge bg-info">Existing Patient</span>');
+        } else {
+            var fullName = [$('#pf-surname').val(), $('#pf-firstname').val(), $('#pf-othername').val()].filter(Boolean).join(' ');
+            $('#emg-summary-name').text(fullName || '-');
+            $('#emg-summary-fileno').text($('#pf-file-no').val() || '-');
+            $('#emg-summary-gender').text($('#pf-gender').val() || '-');
+            var isUnidentified = $('#pf-is-unidentified').val() === '1';
+            $('#emg-summary-patient-type').html(isUnidentified
+                ? '<span class="badge bg-warning text-dark">Unidentified</span>'
+                : '<span class="badge bg-success">New Patient</span>');
+        }
+
+        // Triage
+        var esi = $('#pf-esi-level').val();
+        var esiLabels = {1:'1 - Resuscitation',2:'2 - Emergent',3:'3 - Urgent',4:'4 - Less Urgent',5:'5 - Non-Urgent'};
+        var esiColors = {1:'danger',2:'danger',3:'warning',4:'info',5:'success'};
+        if (esi) {
+            $('#emg-summary-esi').html('<span class="badge bg-' + (esiColors[esi]||'secondary') + '">' + (esiLabels[esi]||esi) + '</span>');
+        } else {
+            $('#emg-summary-esi').text('-');
+        }
+        $('#emg-summary-complaint').text($('#pf-chief-complaint').val() || '-');
+        var gcs = $('#pf-gcs-total-val').val();
+        $('#emg-summary-gcs').text(gcs ? gcs + '/15' : 'Not assessed');
+        $('#emg-summary-pain').text($('#pf-pain-scale').val() > 0 ? $('#pf-pain-scale').val() + '/10' : '0/10');
+
+        var allergyStatus = $('input[name="pf_allergy_status"]:checked').val();
+        if (allergyStatus === 'nkda') $('#emg-summary-allergy').html('<span class="badge bg-success">NKDA</span>');
+        else if (allergyStatus === 'has_allergies') $('#emg-summary-allergy').html('<span class="badge bg-danger">' + ($('#pf-allergies-text').val() || 'Has Allergies') + '</span>');
+        else $('#emg-summary-allergy').html('<span class="badge bg-secondary">Unknown</span>');
+
+        // Vitals
+        var vitals = [];
+        var hr = $('#pf-vital-hr').val(); if (hr) vitals.push({label:'HR', val: hr + ' bpm'});
+        var bps = $('#pf-vital-bp-sys').val(); var bpd = $('#pf-vital-bp-dia').val();
+        if (bps && bpd) vitals.push({label:'BP', val: bps + '/' + bpd + ' mmHg'});
+        var spo2 = $('#pf-vital-spo2').val(); if (spo2) vitals.push({label:'SpO2', val: spo2 + '%'});
+        var temp = $('#pf-vital-temp').val(); if (temp) vitals.push({label:'Temp', val: temp + '°C'});
+        var rr = $('#pf-vital-rr').val(); if (rr) vitals.push({label:'RR', val: rr + '/min'});
+        var bs = $('#pf-vital-bs').val(); if (bs) vitals.push({label:'BS', val: bs + ' mg/dl'});
+
+        if (vitals.length > 0) {
+            var html = '';
+            vitals.forEach(function(v) {
+                html += '<div class="summary-item"><span class="summary-label">' + v.label + ':</span><span class="summary-value">' + v.val + '</span></div>';
+            });
+            $('#emg-summary-vitals-grid').html(html);
+            $('#emg-summary-vitals-section').show();
+        } else {
+            $('#emg-summary-vitals-section').hide();
+        }
+
+        // Disposition
+        var disp = $('input[name="pf_disposition"]:checked').val();
+        var dispLabels = {
+            'admit_emergency': '<i class="mdi mdi-bed text-danger"></i> Admit to Emergency Ward',
+            'queue_consultation': '<i class="mdi mdi-account-clock text-warning"></i> Queue for Consultation',
+            'direct_service': '<i class="mdi mdi-flask text-info"></i> Direct to Lab/Imaging'
+        };
+        $('#emg-summary-disposition').html(dispLabels[disp] || '-');
+
+        var detail = '';
+        if (disp === 'admit_emergency') {
+            var svc = $('#pf-admit-service-select option:selected').text();
+            var clinic = $('#pf-admit-clinic-select option:selected').text();
+            var bed = $('#pf-bed-select option:selected').text();
+            detail = [svc, clinic, bed].filter(function(x){ return x && !x.startsWith('--'); }).join(' | ');
+        } else if (disp === 'queue_consultation') {
+            var clinic = $('#pf-clinic-select option:selected').text();
+            var svc = $('#pf-service-select option:selected').text();
+            detail = [clinic, svc].filter(function(x){ return x && !x.startsWith('--'); }).join(' | ');
+        } else if (disp === 'direct_service') {
+            detail = pfDirectServices.map(function(s){ return s.type.toUpperCase() + ': ' + s.name; }).join(', ');
+        }
+        if (detail) {
+            $('#emg-summary-disposition-detail').text(detail);
+            $('#emg-summary-disposition-detail-row').show();
+        } else {
+            $('#emg-summary-disposition-detail-row').hide();
+        }
+
+        // Elapsed time
+        var m = String(Math.floor(pfEmergencyTimerSeconds / 60)).padStart(2, '0');
+        var s = String(pfEmergencyTimerSeconds % 60).padStart(2, '0');
+        $('#emg-summary-elapsed').text(m + ':' + s);
+    }
+
+    // ---- Reset emergency fields ----
+    function resetEmergencyFields() {
+        // Patient chooser tabs — reset to "existing" tab
+        $('.pf-chooser-tab').removeClass('active');
+        $('.pf-chooser-tab[data-panel="existing"]').addClass('active');
+        $('.pf-chooser-panel').removeClass('active');
+        $('.pf-chooser-panel[data-panel="existing"]').addClass('active');
+        $('#pf-chooser-body').removeClass('border-new border-unidentified').addClass('border-existing');
+        $('#pf-patient-chooser-mode').val('existing');
+        $('#pf-existing-empty-state').show();
+
+        // Patient search
+        $('#pf-emergency-patient-id').val('');
+        $('#pf-emergency-selected-patient').removeClass('show');
+        $('#pf-emergency-patient-search').val('');
+        $('#pf-emergency-patient-results').hide();
+        $('#pf-new-patient-wrapper').removeClass('collapsed pf-unidentified-active');
+
+        // Identity mode
+        $('#pf-is-unidentified').val('0');
+        $('#pf-distinguishing-features').val('');
+        // Clear unidentified-only fields
+        $('#pf-gender-unid').val('');
+        $('#pf-approx-age-unid').val('');
+        $('#pf-phone-unid').val('');
+
+        // Arrival
+        $('#pf-approx-age').val('');
+        $('#pf-arrival-mode').val('walk_in');
+        $('#pf-brought-by-name').val('');
+        $('#pf-brought-by-phone').val('');
+
+        // Triage
+        $('#pf-esi-level').val('');
+        $('.pf-esi-btn').removeClass('selected');
+        $('#pf-esi-hint-box').hide();
+        $('#pf-chief-complaint').val('');
+        $('#pf-vital-hr, #pf-vital-bp-sys, #pf-vital-bp-dia, #pf-vital-spo2, #pf-vital-temp, #pf-vital-rr, #pf-vital-bs').val('');
+        $('#pf-gcs-eye, #pf-gcs-verbal, #pf-gcs-motor').val('');
+        $('#pf-gcs-total').val('--').removeClass('pf-gcs-severe pf-gcs-moderate pf-gcs-mild');
+        $('#pf-gcs-total-val').val('');
+        $('#pf-pain-scale').val(0);
+        $('#pf-pain-display').text('0');
+        $('input[name="pf_allergy_status"][value="nkda"]').prop('checked', true);
+        $('#pf-allergy-text-input').hide();
+        $('#pf-allergies-text').val('');
+        $('#pf-triage-notes').val('');
+        $('#pf-vitals-panel, #pf-gcs-panel').collapse('hide');
+
+        // Disposition
+        $('input[name="pf_disposition"]').prop('checked', false);
+        $('#pf-admit-options, #pf-consult-options, #pf-direct-options').hide();
+        pfDirectServices = [];
+        renderDirectServices();
+        pfDispositionLoaded = false;
+    }
+
+    // Reset on modal close
+    $('#patientFormModal').on('hidden.bs.modal', function() {
+        if (pfEmergencyMode) {
+            disableEmergencyMode();
+        }
+    });
+
+})();
+
 
 </script>
 @endpush
@@ -2316,6 +3571,7 @@ $(document).ready(function() {
         <div class="modal-content">
             <div class="modal-header" id="patient-form-header">
                 <h5 class="modal-title" id="patient-form-title"><i class="mdi mdi-account-plus"></i> New Patient Registration</h5>
+                <span class="pf-emergency-timer badge text-white ms-2" id="pf-emergency-timer">00:00</span>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="patient-form" novalidate>
@@ -2340,6 +3596,18 @@ $(document).ready(function() {
                             <div class="stepper-label">Next of Kin</div>
                         </div>
                         <div class="stepper-line"></div>
+                        {{-- Emergency-only triage step (hidden until emergency mode) --}}
+                        <div class="stepper-item pf-emergency-stepper" data-step="5" style="display:none;">
+                            <div class="stepper-icon"><i class="mdi mdi-clipboard-pulse"></i></div>
+                            <div class="stepper-label">Triage</div>
+                        </div>
+                        <div class="stepper-line pf-emergency-stepper" style="display:none;"></div>
+                        {{-- Emergency-only disposition step (hidden until emergency mode) --}}
+                        <div class="stepper-item pf-emergency-stepper" data-step="6" style="display:none;">
+                            <div class="stepper-icon"><i class="mdi mdi-directions"></i></div>
+                            <div class="stepper-label">Disposition</div>
+                        </div>
+                        <div class="stepper-line pf-emergency-stepper" style="display:none;"></div>
                         <div class="stepper-item" data-step="4">
                             <div class="stepper-icon"><i class="mdi mdi-shield-account"></i></div>
                             <div class="stepper-label">Insurance</div>
@@ -2367,7 +3635,100 @@ $(document).ready(function() {
                                     </div>
                                 </div>
 
-                                <div class="row align-items-end">
+                                {{-- ===== EMERGENCY: Patient Chooser Tabs ===== --}}
+                                <div class="pf-patient-chooser">
+                                    <div class="pf-chooser-tabs">
+                                        <div class="pf-chooser-tab tab-existing active" data-panel="existing">
+                                            <i class="mdi mdi-account-search tab-icon"></i>
+                                            <span>Find Existing</span>
+                                        </div>
+                                        <div class="pf-chooser-tab tab-new" data-panel="new">
+                                            <i class="mdi mdi-account-plus tab-icon"></i>
+                                            <span>New Patient</span>
+                                        </div>
+                                        <div class="pf-chooser-tab tab-unidentified" data-panel="unidentified">
+                                            <i class="mdi mdi-account-question tab-icon"></i>
+                                            <span>Unidentified</span>
+                                        </div>
+                                    </div>
+                                    <div class="pf-chooser-body border-existing" id="pf-chooser-body">
+
+                                        {{-- Panel: Find Existing Patient --}}
+                                        <div class="pf-chooser-panel active" data-panel="existing">
+                                            <div class="mb-2">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-primary-subtle border-0"><i class="mdi mdi-magnify text-primary"></i></span>
+                                                    <input type="text" class="form-control" id="pf-emergency-patient-search"
+                                                           placeholder="Search by name, file number or phone..." autocomplete="off">
+                                                </div>
+                                                <small class="text-muted d-block mt-1" style="font-size:0.72rem;">Type at least 2 characters to search</small>
+                                            </div>
+                                            <div id="pf-emergency-patient-results" class="pf-patient-search-results list-group" style="display: none;"></div>
+
+                                            {{-- Selected patient card --}}
+                                            <div id="pf-emergency-selected-patient" class="pf-selected-card">
+                                                <button type="button" class="btn-deselect" id="pf-emergency-clear-patient" title="Remove selection">
+                                                    <i class="mdi mdi-close"></i>
+                                                </button>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="patient-avatar" id="pf-emergency-patient-avatar">?</div>
+                                                    <div class="patient-details">
+                                                        <h6 id="pf-emergency-patient-name"></h6>
+                                                        <div class="patient-meta">
+                                                            <span><i class="mdi mdi-file-document-outline"></i> <span id="pf-emergency-patient-fileno"></span></span>
+                                                            <span><i class="mdi mdi-phone"></i> <span id="pf-emergency-patient-phone"></span></span>
+                                                            <span><i class="mdi mdi-shield-check"></i> <span id="pf-emergency-patient-hmo"></span></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="pf-emergency-patient-id">
+
+                                            <div class="text-center mt-3" id="pf-existing-empty-state">
+                                                <i class="mdi mdi-account-search-outline text-muted" style="font-size:2.5rem;"></i>
+                                                <p class="text-muted mb-0" style="font-size:0.85rem;">Search for a patient to get started</p>
+                                                <small class="text-muted">Select an existing patient to preserve medical history</small>
+                                            </div>
+                                        </div>
+
+                                        {{-- Panel: Register New Patient --}}
+                                        <div class="pf-chooser-panel" data-panel="new">
+                                            <div class="alert alert-success py-2 mb-3">
+                                                <i class="mdi mdi-information-outline"></i>
+                                                <small>Fill in the patient details below. A file number will be auto-generated.</small>
+                                            </div>
+                                        </div>
+
+                                        {{-- Panel: Unidentified Patient --}}
+                                        <div class="pf-chooser-panel" data-panel="unidentified">
+                                            <div class="pf-unidentified-panel">
+                                                <div class="d-flex align-items-start gap-2 mb-3">
+                                                    <i class="mdi mdi-alert-circle text-warning" style="font-size:1.5rem; margin-top:2px;"></i>
+                                                    <div>
+                                                        <strong>Unidentified Patient</strong>
+                                                        <p class="mb-0" style="font-size:0.82rem; color:#666;">
+                                                            Patient will be registered as <strong>"Unknown Patient"</strong> with an auto-generated identifier.
+                                                            Identity can be updated later from the reception workbench.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label fw-bold mb-1">Distinguishing Features</label>
+                                                    <input type="text" class="form-control form-control-sm" id="pf-distinguishing-features"
+                                                           placeholder="e.g. Scars, tattoos, clothing description, approximate age..." maxlength="500">
+                                                    <small class="text-muted" style="font-size:0.72rem;">Helps identify the patient later</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <input type="hidden" id="pf-is-unidentified" value="0">
+                                    <input type="hidden" id="pf-patient-chooser-mode" value="existing">
+                                </div>
+
+                                <div class="pf-new-patient-fields-wrapper" id="pf-new-patient-wrapper">
+
+                                <div class="row align-items-end pf-row-fileno-names pf-hide-unidentified">
                                     <div class="col-md-4">
                                         <div class="form-group mb-3">
                                             <div class="file-no-label-row">
@@ -2419,7 +3780,7 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row pf-row-other-names pf-hide-unidentified">
                                     <div class="col-md-4">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">Other Names</label>
@@ -2440,14 +3801,36 @@ $(document).ready(function() {
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group mb-3">
-                                            <label class="form-label mb-1">Date of Birth <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" id="pf-dob" required data-validate="required">
-                                            <div class="invalid-feedback"></div>
-                                            <small class="form-text" id="pf-age-display"></small>
+                                            <label class="form-label mb-1">Age / DOB <span class="text-danger">*</span>
+                                                <span class="pf-age-dob-toggle">
+                                                    <button type="button" class="pf-adt-btn active" data-mode="age">Age</button>
+                                                    <button type="button" class="pf-adt-btn" data-mode="dob">DOB</button>
+                                                </span>
+                                            </label>
+                                            <div class="pf-age-dob-wrapper mode-age">
+                                                {{-- Age mode --}}
+                                                <div class="pf-age-panel">
+                                                    <div class="pf-age-input-group">
+                                                        <input type="number" class="form-control" id="pf-age-val" min="0" max="130" placeholder="Age" inputmode="numeric">
+                                                        <select class="form-control" id="pf-age-unit">
+                                                            <option value="years">yrs</option>
+                                                            <option value="months">mos</option>
+                                                            <option value="days">days</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="pf-age-hint" id="pf-age-dob-hint"></div>
+                                                </div>
+                                                {{-- DOB mode --}}
+                                                <div class="pf-dob-panel">
+                                                    <input type="date" class="form-control" id="pf-dob" data-validate="required">
+                                                </div>
+                                                <div class="invalid-feedback" id="pf-age-dob-error"></div>
+                                                <small class="form-text" id="pf-age-display"></small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row pf-row-contact pf-hide-unidentified">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">Phone Number</label>
@@ -2463,7 +3846,7 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row pf-row-address pf-hide-unidentified">
                                     <div class="col-12">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">Residential Address</label>
@@ -2472,7 +3855,7 @@ $(document).ready(function() {
                                     </div>
                                 </div>
 
-                                <div class="row">
+                                <div class="row pf-row-uploads pf-hide-unidentified">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-2"><i class="mdi mdi-camera text-primary"></i> Passport Photo</label>
@@ -2596,10 +3979,99 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {{-- Unidentified-only: Gender + Approx Age (visible only when unidentified tab active) --}}
+                                <div class="row g-2 pf-show-unidentified" style="display:none;">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Gender <span class="text-danger">*</span></label>
+                                            <select class="form-control" id="pf-gender-unid">
+                                                <option value="">Select gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Approx Age</label>
+                                            <select class="form-control form-control-sm" id="pf-approx-age-unid">
+                                                <option value="">Select range</option>
+                                                <option value="neonate">Neonate (0-28 days)</option>
+                                                <option value="infant">Infant (1-12 months)</option>
+                                                <option value="child_1_5">Child (1-5 yrs)</option>
+                                                <option value="child_6_12">Child (6-12 yrs)</option>
+                                                <option value="adolescent">Adolescent (13-17 yrs)</option>
+                                                <option value="adult_18_30">Adult (18-30 yrs)</option>
+                                                <option value="adult_31_50">Adult (31-50 yrs)</option>
+                                                <option value="adult_51_65">Adult (51-65 yrs)</option>
+                                                <option value="elderly">Elderly (65+ yrs)</option>
+                                            </select>
+                                            <small class="text-muted" style="font-size:0.72rem;">Auto-fills DOB estimate</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Phone <small class="text-muted">(if available)</small></label>
+                                            <input type="tel" class="form-control form-control-sm" id="pf-phone-unid" placeholder="Phone number">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                </div>{{-- end pf-new-patient-fields-wrapper --}}
+
+                                {{-- ===== EMERGENCY: Approx Age + Arrival Info (shown only in emergency mode) ===== --}}
+                                <div class="pf-emergency-fields">
+                                    <div class="row g-2 mt-2">
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label mb-1">Approx Age</label>
+                                                <select class="form-control form-control-sm" id="pf-approx-age">
+                                                    <option value="">Select range (if DOB unknown)</option>
+                                                    <option value="neonate">Neonate (0-28 days)</option>
+                                                    <option value="infant">Infant (1-12 months)</option>
+                                                    <option value="child_1_5">Child (1-5 yrs)</option>
+                                                    <option value="child_6_12">Child (6-12 yrs)</option>
+                                                    <option value="adolescent">Adolescent (13-17 yrs)</option>
+                                                    <option value="adult_18_30">Adult (18-30 yrs)</option>
+                                                    <option value="adult_31_50">Adult (31-50 yrs)</option>
+                                                    <option value="adult_51_65">Adult (51-65 yrs)</option>
+                                                    <option value="elderly">Elderly (65+ yrs)</option>
+                                                </select>
+                                                <small class="text-muted">Used when DOB unknown — auto-fills DOB estimate</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label mb-1"><i class="mdi mdi-truck-fast"></i> Mode of Arrival</label>
+                                                <select class="form-control form-control-sm" id="pf-arrival-mode">
+                                                    <option value="walk_in">Walk-In</option>
+                                                    <option value="ambulance">Ambulance</option>
+                                                    <option value="police">Police / Security</option>
+                                                    <option value="referral">Referral</option>
+                                                    <option value="brought_in">Brought by Relative</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label mb-1">Brought By (Name)</label>
+                                                <input type="text" class="form-control form-control-sm" id="pf-brought-by-name" placeholder="Name of escort/relative">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label mb-1">Brought By (Phone)</label>
+                                                <input type="text" class="form-control form-control-sm" id="pf-brought-by-phone" placeholder="Phone number">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Step 2: Medical Information -->
                         <div class="form-step" data-step="2">
                             <div class="step-header">
                                 <h6><i class="mdi mdi-clipboard-pulse"></i> Medical Information</h6>
@@ -2723,6 +4195,287 @@ $(document).ready(function() {
                                 <div class="alert alert-info mt-3">
                                     <i class="mdi mdi-information"></i>
                                     <strong>Tip:</strong> Next of kin information is optional but recommended for emergency situations.
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ===== Step 5: TRIAGE ASSESSMENT (Emergency mode only) ===== --}}
+                        <div class="form-step pf-emergency-step" data-step="5">
+                            <div class="step-header" style="border-left: 4px solid #dc3545;">
+                                <h6><i class="mdi mdi-clipboard-pulse text-danger"></i> Rapid Triage Assessment</h6>
+                                <p class="text-muted mb-0">ESI level, chief complaint, vitals and neurologic indicators</p>
+                            </div>
+                            <div class="step-content">
+                                {{-- ESI Level --}}
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">ESI Triage Level <span class="text-danger">*</span></label>
+                                    <div class="d-flex flex-wrap gap-2" id="pf-esi-buttons">
+                                        <button type="button" class="btn btn-outline-danger pf-esi-btn" data-esi="1"
+                                                data-hint="Immediate life-saving intervention? Intubation, surgical airway, IV push meds, emergency procedure?">
+                                            <strong>1</strong><br><small>Resuscitation</small>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger pf-esi-btn" data-esi="2"
+                                                data-hint="High risk situation? Confused, lethargic, disoriented? Severe pain/distress (Pain ≥ 8/10)?">
+                                            <strong>2</strong><br><small>Emergent</small>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning pf-esi-btn" data-esi="3"
+                                                data-hint="Needs 2+ resources (labs, imaging, IV fluids, specialty consult)? Vitals may be outside normal range.">
+                                            <strong>3</strong><br><small>Urgent</small>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info pf-esi-btn" data-esi="4"
+                                                data-hint="Needs only 1 resource (e.g., one X-ray OR one lab test OR simple procedure). Vitals normal.">
+                                            <strong>4</strong><br><small>Less Urgent</small>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success pf-esi-btn" data-esi="5"
+                                                data-hint="No resources needed. Simple exam, prescription refill, minor complaint. Stable vitals.">
+                                            <strong>5</strong><br><small>Non-Urgent</small>
+                                        </button>
+                                    </div>
+                                    <div id="pf-esi-hint-box" class="alert alert-light border mt-2 py-2 px-3" style="display:none;">
+                                        <small><i class="mdi mdi-lightbulb-on text-warning"></i> <span id="pf-esi-hint-text"></span></small>
+                                    </div>
+                                    <input type="hidden" id="pf-esi-level">
+                                </div>
+
+                                {{-- Chief Complaint --}}
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Chief Complaint <span class="text-danger">*</span></label>
+                                    <textarea class="form-control form-control-sm" id="pf-chief-complaint" rows="2"
+                                              placeholder="Describe the patient's primary complaint..." maxlength="500"></textarea>
+                                    <small class="text-muted" style="font-size:0.72rem;">Use the patient's own words when possible, then add key qualifiers (onset, severity, associated symptoms).</small>
+                                </div>
+
+                                {{-- Quick Vitals --}}
+                                <div class="pf-triage-card">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 pf-collapse-header" data-bs-toggle="collapse" data-bs-target="#pf-vitals-panel" role="button">
+                                        <label class="form-label fw-bold mb-0"><i class="mdi mdi-heart-pulse text-danger"></i> Quick Vitals <small class="text-muted fw-normal">(recommended)</small></label>
+                                        <i class="mdi mdi-chevron-down pf-collapse-icon"></i>
+                                    </div>
+                                    <div class="collapse" id="pf-vitals-panel">
+                                        <div class="row g-2">
+                                            <div class="col-md-4 col-6">
+                                                <label class="form-label"><i class="mdi mdi-heart text-danger"></i> HR</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" class="form-control" id="pf-vital-hr" placeholder="72" min="20" max="250">
+                                                    <span class="input-group-text">bpm</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-6">
+                                                <label class="form-label"><i class="mdi mdi-heart-pulse text-danger"></i> BP</label>
+                                                <div class="d-flex gap-1">
+                                                    <input type="number" class="form-control form-control-sm" id="pf-vital-bp-sys" placeholder="120" min="40" max="300" style="width:48%">
+                                                    <span class="align-self-center">/</span>
+                                                    <input type="number" class="form-control form-control-sm" id="pf-vital-bp-dia" placeholder="80" min="20" max="200" style="width:48%">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-6">
+                                                <label class="form-label"><i class="mdi mdi-percent text-primary"></i> SpO2</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" class="form-control" id="pf-vital-spo2" placeholder="98" min="0" max="100">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-6">
+                                                <label class="form-label"><i class="mdi mdi-thermometer text-warning"></i> Temp</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" step="0.1" class="form-control" id="pf-vital-temp" placeholder="36.5" min="25" max="45">
+                                                    <span class="input-group-text">°C</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-6">
+                                                <label class="form-label"><i class="mdi mdi-lungs text-primary"></i> RR</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" class="form-control" id="pf-vital-rr" placeholder="16" min="4" max="60">
+                                                    <span class="input-group-text">/min</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-6">
+                                                <label class="form-label"><i class="mdi mdi-water text-info"></i> Blood Sugar</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" step="0.1" class="form-control" id="pf-vital-bs" placeholder="100">
+                                                    <span class="input-group-text">mg/dL</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- GCS & Pain --}}
+                                <div class="pf-triage-card">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 pf-collapse-header" data-bs-toggle="collapse" data-bs-target="#pf-gcs-panel" role="button">
+                                        <label class="form-label fw-bold mb-0"><i class="mdi mdi-brain text-purple"></i> GCS & Pain <small class="text-muted fw-normal">(for ESI 1-2 assessment)</small></label>
+                                        <i class="mdi mdi-chevron-down pf-collapse-icon"></i>
+                                    </div>
+                                    <div class="collapse" id="pf-gcs-panel">
+                                        <div class="row g-2">
+                                            <div class="col-md-3 col-6">
+                                                <label class="form-label">Eye (E)</label>
+                                                <select class="form-select form-select-sm pf-gcs-input" id="pf-gcs-eye">
+                                                    <option value="">--</option>
+                                                    <option value="4">4 – Spontaneous</option>
+                                                    <option value="3">3 – To voice</option>
+                                                    <option value="2">2 – To pain</option>
+                                                    <option value="1">1 – None</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3 col-6">
+                                                <label class="form-label">Verbal (V)</label>
+                                                <select class="form-select form-select-sm pf-gcs-input" id="pf-gcs-verbal">
+                                                    <option value="">--</option>
+                                                    <option value="5">5 – Oriented</option>
+                                                    <option value="4">4 – Confused</option>
+                                                    <option value="3">3 – Inappropriate</option>
+                                                    <option value="2">2 – Incomprehensible</option>
+                                                    <option value="1">1 – None</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3 col-6">
+                                                <label class="form-label">Motor (M)</label>
+                                                <select class="form-select form-select-sm pf-gcs-input" id="pf-gcs-motor">
+                                                    <option value="">--</option>
+                                                    <option value="6">6 – Obeys commands</option>
+                                                    <option value="5">5 – Localises pain</option>
+                                                    <option value="4">4 – Withdraws</option>
+                                                    <option value="3">3 – Abnormal flexion</option>
+                                                    <option value="2">2 – Extension</option>
+                                                    <option value="1">1 – None</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3 col-6">
+                                                <label class="form-label">GCS Total</label>
+                                                <input type="text" class="form-control form-control-sm fw-bold text-center" id="pf-gcs-total" readonly value="--" style="font-size:1.1rem;">
+                                                <input type="hidden" id="pf-gcs-total-val">
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <label class="form-label">Pain Scale: <strong id="pf-pain-display">0</strong>/10</label>
+                                            <input type="range" class="form-range pf-pain-range" id="pf-pain-scale" min="0" max="10" value="0">
+                                            <div class="d-flex justify-content-between text-muted" style="font-size:0.72rem;">
+                                                <span>No pain</span><span>Moderate</span><span>Worst pain</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Allergies (radio-based for emergency speed) --}}
+                                <div class="pf-triage-card">
+                                    <label class="form-label fw-bold mb-2"><i class="mdi mdi-alert-circle text-warning"></i> Allergies</label>
+                                    <div class="d-flex gap-3 mb-2">
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" name="pf_allergy_status" id="pf-allergy-nkda" value="nkda" checked>
+                                            <label class="form-check-label" for="pf-allergy-nkda">NKDA <small class="text-muted">(No Known Drug Allergies)</small></label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" name="pf_allergy_status" id="pf-allergy-has" value="has_allergies">
+                                            <label class="form-check-label text-danger" for="pf-allergy-has">Has Allergies</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" name="pf_allergy_status" id="pf-allergy-unknown" value="unknown">
+                                            <label class="form-check-label" for="pf-allergy-unknown">Unknown</label>
+                                        </div>
+                                    </div>
+                                    <div id="pf-allergy-text-input" style="display:none;">
+                                        <input type="text" class="form-control form-control-sm" id="pf-allergies-text"
+                                               placeholder="e.g., Penicillin, Sulfa, Latex (comma-separated)">
+                                    </div>
+                                </div>
+
+                                {{-- Triage Notes --}}
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Triage Notes</label>
+                                    <textarea class="form-control form-control-sm" id="pf-triage-notes" rows="2"
+                                              placeholder="Additional observations, mechanism of injury, clinical findings..." maxlength="1000"></textarea>
+                                    <small class="text-muted" style="font-size:0.72rem;">Document objective findings, immediate interventions, and risk indicators.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ===== Step 6: DISPOSITION PLANNING (Emergency mode only) ===== --}}
+                        <div class="form-step pf-emergency-step" data-step="6">
+                            <div class="step-header" style="border-left: 4px solid #dc3545;">
+                                <h6><i class="mdi mdi-directions text-danger"></i> Disposition Planning</h6>
+                                <p class="text-muted mb-0">Select one disposition pathway for the patient</p>
+                            </div>
+                            <div class="step-content">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Disposition <span class="text-danger">*</span></label>
+                                    <div class="list-group">
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <input type="radio" name="pf_disposition" value="admit_emergency" class="form-check-input me-2 pf-disposition-radio">
+                                            <div>
+                                                <strong><i class="mdi mdi-bed text-danger"></i> Admit to Emergency Ward</strong>
+                                                <small class="d-block text-muted">Assign bed and admit immediately</small>
+                                            </div>
+                                        </label>
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <input type="radio" name="pf_disposition" value="queue_consultation" class="form-check-input me-2 pf-disposition-radio">
+                                            <div>
+                                                <strong><i class="mdi mdi-account-clock text-warning"></i> Queue for Consultation</strong>
+                                                <small class="d-block text-muted">Send to doctor queue for evaluation</small>
+                                            </div>
+                                        </label>
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <input type="radio" name="pf_disposition" value="direct_service" class="form-check-input me-2 pf-disposition-radio">
+                                            <div>
+                                                <strong><i class="mdi mdi-flask text-info"></i> Direct to Lab/Imaging</strong>
+                                                <small class="d-block text-muted">Order lab or imaging services directly</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {{-- Admit Emergency Options --}}
+                                <div id="pf-admit-options" style="display: none;">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Admission Service <span class="text-danger">*</span></label>
+                                            <select class="form-select form-select-sm" id="pf-admit-service-select">
+                                                <option value="">-- Loading services... --</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Emergency Clinic <span class="text-danger">*</span></label>
+                                            <select class="form-select form-select-sm" id="pf-admit-clinic-select">
+                                                <option value="">-- Loading clinics... --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 mb-3">
+                                        <label class="form-label fw-bold">Assign Bed</label>
+                                        <select class="form-select form-select-sm" id="pf-bed-select">
+                                            <option value="">-- No bed (assign later) --</option>
+                                        </select>
+                                        <small class="text-muted">Bed can also be assigned later from nursing workbench.</small>
+                                    </div>
+                                </div>
+
+                                {{-- Queue Consultation Options --}}
+                                <div id="pf-consult-options" style="display: none;">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Clinic <span class="text-danger">*</span></label>
+                                            <select class="form-select form-select-sm" id="pf-clinic-select">
+                                                <option value="">-- Loading clinics... --</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Service <span class="text-danger">*</span></label>
+                                            <select class="form-select form-select-sm" id="pf-service-select">
+                                                <option value="">-- Loading services... --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Direct Service Options --}}
+                                <div id="pf-direct-options" style="display: none;">
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold">Search & Add Services</label>
+                                        <input type="text" class="form-control form-control-sm" id="pf-direct-service-search"
+                                               placeholder="Search lab or imaging services...">
+                                        <div id="pf-direct-service-results" class="list-group mt-1" style="max-height: 150px; overflow-y: auto; display: none;"></div>
+                                    </div>
+                                    <div id="pf-selected-direct-services" class="mb-2"><small class="text-muted">No services selected</small></div>
                                 </div>
                             </div>
                         </div>
@@ -2901,6 +4654,92 @@ $(document).ready(function() {
                                             <div class="summary-item">
                                                 <span class="summary-label">HMO No:</span>
                                                 <span class="summary-value" id="summary-hmo-no">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Emergency Intake Summary (shown instead of Registration Summary in emergency mode) -->
+                                <div class="registration-summary mt-4" id="emergency-intake-summary" style="display:none; border-left: 4px solid #dc3545;">
+                                    <h6><i class="mdi mdi-ambulance text-danger"></i> Emergency Intake Summary</h6>
+
+                                    <!-- Patient -->
+                                    <div class="summary-section">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-account"></i> Patient</h6>
+                                        <div class="summary-grid">
+                                            <div class="summary-item">
+                                                <span class="summary-label">Name:</span>
+                                                <span class="summary-value" id="emg-summary-name">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">File No:</span>
+                                                <span class="summary-value" id="emg-summary-fileno">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Gender:</span>
+                                                <span class="summary-value" id="emg-summary-gender">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Type:</span>
+                                                <span class="summary-value" id="emg-summary-patient-type">New Patient</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Triage -->
+                                    <div class="summary-section">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-clipboard-pulse text-danger"></i> Triage</h6>
+                                        <div class="summary-grid">
+                                            <div class="summary-item">
+                                                <span class="summary-label">ESI Level:</span>
+                                                <span class="summary-value" id="emg-summary-esi">-</span>
+                                            </div>
+                                            <div class="summary-item full-width">
+                                                <span class="summary-label">Chief Complaint:</span>
+                                                <span class="summary-value" id="emg-summary-complaint">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">GCS Score:</span>
+                                                <span class="summary-value" id="emg-summary-gcs">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Pain Scale:</span>
+                                                <span class="summary-value" id="emg-summary-pain">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Allergy Status:</span>
+                                                <span class="summary-value" id="emg-summary-allergy">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Vitals (if captured) -->
+                                    <div class="summary-section" id="emg-summary-vitals-section" style="display:none;">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-heart-pulse"></i> Vitals</h6>
+                                        <div class="summary-grid" id="emg-summary-vitals-grid"></div>
+                                    </div>
+
+                                    <!-- Disposition -->
+                                    <div class="summary-section">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-directions text-danger"></i> Disposition</h6>
+                                        <div class="summary-grid">
+                                            <div class="summary-item full-width">
+                                                <span class="summary-label">Pathway:</span>
+                                                <span class="summary-value" id="emg-summary-disposition">-</span>
+                                            </div>
+                                            <div class="summary-item full-width" id="emg-summary-disposition-detail-row" style="display:none;">
+                                                <span class="summary-label">Details:</span>
+                                                <span class="summary-value" id="emg-summary-disposition-detail">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Elapsed Time -->
+                                    <div class="summary-section">
+                                        <div class="summary-grid">
+                                            <div class="summary-item">
+                                                <span class="summary-label">Elapsed Time:</span>
+                                                <span class="summary-value" id="emg-summary-elapsed">-</span>
                                             </div>
                                         </div>
                                     </div>

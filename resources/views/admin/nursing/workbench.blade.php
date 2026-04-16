@@ -3129,7 +3129,7 @@
                 <i class="mdi mdi-account-switch text-secondary"></i>
                 <span>Admissions Today</span>
             </button>
-            <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+            <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
                 <i class="mdi mdi-ambulance text-danger"></i>
                 <span>Emergency Intake</span>
             </button>
@@ -7217,6 +7217,7 @@
 @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
 @include('admin.partials.invest_res_view_imaging_modal')
 @include('admin.partials.invest_res_view_imaging_js')
+@include('admin.partials.patient-form-modal')
 
 @endsection
 
@@ -19953,8 +19954,8 @@ $(document).ready(function() {
     </div>
 </div>
 
-{{-- Emergency Intake Modal --}}
-@include('admin.partials.emergency-intake-modal')
+{{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
+{{-- @include('admin.partials.emergency-intake-modal') --}}
 
 {{-- ================================================================
      Clinical Request Delete Confirmation Modal (for history tabs)
