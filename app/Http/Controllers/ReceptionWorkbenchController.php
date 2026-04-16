@@ -1224,21 +1224,27 @@ class ReceptionWorkbenchController extends Controller
      */
     public function getNextFileNumber()
     {
-        // Get the last 5 patients with file numbers for reference
-        $recentPatients = Patient::whereNotNull('file_no')
-            ->where('file_no', '!=', '')
-            ->orderBy('id', 'desc')
+        $prefix = request()->query('prefix');
+
+        // If a prefix is specified, scope query to that prefix
+        $query = Patient::whereNotNull('file_no')->where('file_no', '!=', '');
+        if ($prefix) {
+            $query->where('file_no', 'like', $prefix . '%');
+        }
+
+        $recentPatients = $query->orderBy('id', 'desc')
             ->limit(5)
             ->get(['id', 'file_no']);
 
         $recentFileNumbers = $recentPatients->pluck('file_no')->toArray();
 
         if ($recentPatients->isEmpty()) {
+            $defaultNo = $prefix ? $prefix . '001' : '1';
             return response()->json([
-                'file_no' => '1',
+                'file_no' => $defaultNo,
                 'last_file_no' => null,
                 'recent_file_nos' => [],
-                'format_pattern' => null,
+                'format_pattern' => $prefix ? $prefix . 'NNN' : null,
                 'format_example' => null
             ]);
         }
@@ -1286,6 +1292,133 @@ class ReceptionWorkbenchController extends Controller
             'exists' => $existingPatients->isNotEmpty(),
             'count' => $existingPatients->count(),
             'patients' => $patients
+        ]);
+    }
+
+    /**
+     * Check for potential duplicate patients by name, phone, or DOB
+     */
+    public function checkDuplicatePatient(Request $request)
+    {
+        $surname = trim($request->input('surname', ''));
+        $firstname = trim($request->input('firstname', ''));
+        $phone = trim($request->input('phone', ''));
+        $dob = $request->input('dob');
+        $excludeId = $request->input('exclude_patient_id');
+
+        if (strlen($surname) < 2 && strlen($firstname) < 2 && strlen($phone) < 4 && !$dob) {
+            return response()->json(['matches' => [], 'count' => 0]);
+        }
+
+        $query = Patient::with('user')
+            ->whereHas('user', function ($q) {
+                $q->where('is_admin', 19); // patients only
+            });
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        // Build OR conditions for fuzzy matching
+        $query->where(function ($q) use ($surname, $firstname, $phone, $dob) {
+            // Name match: surname + firstname together
+            if (strlen($surname) >= 2 && strlen($firstname) >= 2) {
+                $q->orWhere(function ($sub) use ($surname, $firstname) {
+                    $sub->whereHas('user', function ($uq) use ($surname, $firstname) {
+                        $uq->where('surname', 'like', $surname . '%')
+                            ->where('firstname', 'like', $firstname . '%');
+                    });
+                });
+                // Also check swapped name (surname entered as firstname)
+                $q->orWhere(function ($sub) use ($surname, $firstname) {
+                    $sub->whereHas('user', function ($uq) use ($surname, $firstname) {
+                        $uq->where('surname', 'like', $firstname . '%')
+                            ->where('firstname', 'like', $surname . '%');
+                    });
+                });
+            }
+
+            // Phone match (if 7+ digits provided)
+            if (strlen($phone) >= 7) {
+                $q->orWhere('phone_no', 'like', '%' . substr($phone, -7));
+            }
+
+            // DOB + surname match
+            if ($dob && strlen($surname) >= 2) {
+                $q->orWhere(function ($sub) use ($surname, $dob) {
+                    $sub->where('dob', $dob)
+                        ->whereHas('user', function ($uq) use ($surname) {
+                            $uq->where('surname', 'like', $surname . '%');
+                        });
+                });
+            }
+        });
+
+        $patients = $query->limit(5)->get();
+
+        // Score each match for relevance
+        $matches = $patients->map(function ($patient) use ($surname, $firstname, $phone, $dob) {
+            $user = $patient->user;
+            if (!$user) return null;
+
+            $reasons = [];
+            $score = 0;
+
+            // Name similarity
+            if (strlen($surname) >= 2 && strlen($firstname) >= 2) {
+                $surnameMatch = stripos($user->surname, $surname) === 0;
+                $firstnameMatch = stripos($user->firstname, $firstname) === 0;
+                $swappedSurname = stripos($user->surname, $firstname) === 0;
+                $swappedFirstname = stripos($user->firstname, $surname) === 0;
+
+                if ($surnameMatch && $firstnameMatch) {
+                    $reasons[] = 'Same name';
+                    $score += 50;
+                } elseif ($swappedSurname && $swappedFirstname) {
+                    $reasons[] = 'Name match (swapped)';
+                    $score += 40;
+                } elseif ($surnameMatch || $firstnameMatch) {
+                    $reasons[] = 'Partial name match';
+                    $score += 20;
+                }
+            }
+
+            // Phone similarity
+            if (strlen($phone) >= 7 && $patient->phone_no) {
+                if (substr($patient->phone_no, -7) === substr($phone, -7)) {
+                    $reasons[] = 'Same phone';
+                    $score += 30;
+                }
+            }
+
+            // DOB match
+            if ($dob && $patient->dob) {
+                $patientDob = $patient->dob instanceof \Carbon\Carbon
+                    ? $patient->dob->format('Y-m-d')
+                    : date('Y-m-d', strtotime($patient->dob));
+                if ($patientDob === $dob) {
+                    $reasons[] = 'Same DOB';
+                    $score += 20;
+                }
+            }
+
+            if (empty($reasons)) return null;
+
+            return [
+                'id' => $patient->id,
+                'file_no' => $patient->file_no,
+                'name' => userfullname($user->id),
+                'phone' => $patient->phone_no,
+                'dob' => $patient->dob ? ($patient->dob instanceof \Carbon\Carbon ? $patient->dob->format('d/m/Y') : date('d/m/Y', strtotime($patient->dob))) : null,
+                'gender' => $patient->gender,
+                'reasons' => $reasons,
+                'score' => $score,
+            ];
+        })->filter()->sortByDesc('score')->values();
+
+        return response()->json([
+            'matches' => $matches,
+            'count' => $matches->count(),
         ]);
     }
 

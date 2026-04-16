@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Models\service;
+use App\Models\Service;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Auth;
@@ -184,12 +184,12 @@ class BedController extends Controller
 
                 // Find or create bed service
                 if ($bed->service_id) {
-                    $bed_service_entry = service::find($bed->service_id);
+                    $bed_service_entry = Service::find($bed->service_id);
                 }
 
                 if (!isset($bed_service_entry) || !$bed_service_entry) {
                     // Create new service if bed doesn't have one
-                    $bed_service_entry = service::create([
+                    $bed_service_entry = Service::create([
                         'user_id' => auth()->id() ?? 1,
                         'category_id' => $bedCategoryId,
                         'service_name' => $serviceName,

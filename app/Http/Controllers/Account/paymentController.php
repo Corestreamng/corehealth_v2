@@ -9,7 +9,7 @@ use App\Models\PatientAccount;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\HmoClaim;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

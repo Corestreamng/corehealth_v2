@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Patient;
-use App\Models\patient as PatientLowerCase;
 use App\Models\Product;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\VitalSign;
 use App\Models\NursingNote;
 use App\Models\NursingNoteType;
@@ -113,7 +112,7 @@ class MaternityWorkbenchController extends Controller
         $term = $request->get('term', '');
         if (strlen($term) < 2) return response()->json([]);
 
-        $patients = PatientLowerCase::with(['user', 'hmo'])
+        $patients = Patient::with(['user', 'hmo'])
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($uq) use ($term) {
                     $uq->where('surname', 'like', "%{$term}%")
@@ -154,7 +153,7 @@ class MaternityWorkbenchController extends Controller
 
     public function getPatientDetails($id)
     {
-        $patient = PatientLowerCase::with(['user', 'hmo'])->findOrFail($id);
+        $patient = Patient::with(['user', 'hmo'])->findOrFail($id);
 
         $enrollment = MaternityEnrollment::where('patient_id', $id)
             ->whereIn('status', ['active', 'postnatal'])
@@ -2942,7 +2941,7 @@ class MaternityWorkbenchController extends Controller
         $results = [];
 
         if (in_array($type, ['lab', 'all'])) {
-            $labServices = service::where('name', 'like', "%{$term}%")
+            $labServices = Service::where('name', 'like', "%{$term}%")
                 ->whereHas('category', function ($q) {
                     $q->where('name', 'like', '%lab%');
                 })
@@ -2955,7 +2954,7 @@ class MaternityWorkbenchController extends Controller
         }
 
         if (in_array($type, ['imaging', 'all'])) {
-            $imagingServices = service::where('name', 'like', "%{$term}%")
+            $imagingServices = Service::where('name', 'like', "%{$term}%")
                 ->whereHas('category', function ($q) {
                     $q->where('name', 'like', '%imag%')
                       ->orWhere('name', 'like', '%radiol%')
