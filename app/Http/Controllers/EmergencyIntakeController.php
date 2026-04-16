@@ -144,12 +144,27 @@ class EmergencyIntakeController extends Controller
 
                 $user->save();
 
-                $patient = new patient();
+                $patient = new Patient();
                 $patient->user_id = $user->id;
                 $patient->gender = $request->gender;
                 $patient->dob = $request->dob; // may be null for unknown patients
                 $patient->phone_no = $request->phone_no;
                 $patient->hmo_id = 1; // Default to Private
+
+                // Generate EX- prefixed file number
+                $lastExPatient = Patient::where('file_no', 'like', 'EX-%')
+                    ->orderBy('id', 'desc')
+                    ->first();
+                if ($lastExPatient && $lastExPatient->file_no) {
+                    // Increment the last numeric segment (e.g., EX-009 → EX-010)
+                    if (preg_match('/^(.*?)(\d+)(\D*)$/', $lastExPatient->file_no, $m)) {
+                        $patient->file_no = $m[1] . str_pad(intval($m[2]) + 1, strlen($m[2]), '0', STR_PAD_LEFT) . $m[3];
+                    } else {
+                        $patient->file_no = 'EX-001';
+                    }
+                } else {
+                    $patient->file_no = 'EX-001';
+                }
 
                 // Store brought-by info as next of kin on the patient record (varchar columns)
                 if ($request->brought_by_name) {

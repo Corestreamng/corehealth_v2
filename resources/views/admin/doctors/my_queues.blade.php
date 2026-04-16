@@ -732,6 +732,124 @@
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  Confirmation Modal (Check-in) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="modal fade" id="confirmCheckInModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white py-2">
+                    <h6 class="modal-title mb-0"><i class="mdi mdi-login me-1"></i> Check In Patient</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">Are you sure you want to check in this appointment?</p>
+                    <small class="text-muted">The patient's status will change to <strong>Waiting</strong>. They will appear in the waiting queue and can proceed to vitals or consultation.</small>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-success" id="confirmCheckInBtn"><i class="mdi mdi-check me-1"></i> Check In</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  Confirmation Modal (Cancel Appointment) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="modal fade" id="confirmCancelApptModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white py-2">
+                    <h6 class="modal-title mb-0"><i class="mdi mdi-calendar-remove me-1"></i> Cancel Appointment</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Are you sure you want to cancel this appointment?</p>
+                    <small class="text-muted d-block mb-3">This will remove the appointment from the schedule. The patient will need to book a new appointment if they wish to be seen.</small>
+                    <div class="form-group mb-0">
+                        <label for="cancelApptReason" class="form-label fw-bold small">Reason for Cancellation <span class="text-muted">(optional)</span></label>
+                        <textarea class="form-control form-control-sm" id="cancelApptReason" rows="2" placeholder="e.g. Patient requested cancellation, scheduling conflict..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Go Back</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="confirmCancelApptBtn"><i class="mdi mdi-close-circle me-1"></i> Cancel Appointment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  Confirmation Modal (No-Show) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="modal fade" id="confirmNoShowModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark py-2">
+                    <h6 class="modal-title mb-0"><i class="mdi mdi-account-off me-1"></i> Mark No-Show</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">Mark this appointment as a <strong>No-Show</strong>?</p>
+                    <small class="text-muted">This indicates the patient did not attend their scheduled appointment. This will be recorded in their appointment history.</small>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-warning" id="confirmNoShowBtn"><i class="mdi mdi-account-off me-1"></i> Mark No-Show</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  Confirmation Modal (Accept Referral) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="modal fade" id="confirmAcceptRefModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white py-2">
+                    <h6 class="modal-title mb-0"><i class="mdi mdi-check-circle me-1"></i> Accept Referral</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">Accept this referral?</p>
+                    <small class="text-muted">A new encounter will be started for the patient and they will be added to your consultation queue. You can begin reviewing their case immediately.</small>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-success" id="confirmAcceptRefBtn"><i class="mdi mdi-check-circle me-1"></i> Accept Referral</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  Decline Referral Modal (with reason) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="modal fade" id="declineRefReasonModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white py-2">
+                    <h6 class="modal-title mb-0"><i class="mdi mdi-close-circle me-1"></i> Decline Referral</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Please provide a reason for declining this referral.</p>
+                    <small class="text-muted d-block mb-3">The referring doctor will be notified with your reason so they can make alternative arrangements for the patient.</small>
+                    <div class="form-group mb-0">
+                        <label for="declineRefReason" class="form-label fw-bold small">Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control form-control-sm" id="declineRefReason" rows="2" placeholder="e.g. Patient outside my specialty, scheduling conflict..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="confirmDeclineRefBtn"><i class="mdi mdi-close-circle me-1"></i> Decline Referral</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
@@ -832,6 +950,7 @@
             buttons: ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
             processing: true,
             serverSide: true,
+            searchDelay: 500,
             ajax: {
                 url: "{{ route('appointments.doctor.unified-list') }}",
                 type: 'GET',
@@ -851,6 +970,12 @@
             ],
             paging: true,
             drawCallback: function() { initMiniTimers(); },
+            initComplete: function() {
+                // Add placeholder to search box
+                var $input = $(this).closest('.dataTables_wrapper').find('input[type="search"]');
+                $input.attr('placeholder', 'Search by name, file no, HMO, clinic...');
+                $input.css('min-width', '250px');
+            },
             language: {
                 emptyTable: '<div class="text-center py-4"><i class="mdi mdi-calendar-check-outline" style="font-size:2rem;color:#ccc;"></i><br><span class="text-muted">No queue entries for today</span></div>'
             }
@@ -1166,7 +1291,13 @@
         //  API Actions
         // ═══════════════════════════════════════════════════════════════
         function doCheckIn(apptId) {
-            if (!confirm('Check in this appointment?')) return;
+            _pendingActionId = apptId;
+            new bootstrap.Modal(document.getElementById('confirmCheckInModal')).show();
+        }
+
+        $(document).on('click', '#confirmCheckInBtn', function() {
+            var apptId = _pendingActionId;
+            bootstrap.Modal.getInstance(document.getElementById('confirmCheckInModal')).hide();
             $.ajax({
                 url: "{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
                 type: 'POST',
@@ -1184,11 +1315,18 @@
                     toastr.error(xhr.responseJSON?.message || 'Check-in failed.');
                 }
             });
-        }
+        });
 
         function doCancelAppointment(apptId) {
-            var reason = prompt('Cancellation reason (optional):');
-            if (reason === null) return;
+            _pendingActionId = apptId;
+            $('#cancelApptReason').val('');
+            new bootstrap.Modal(document.getElementById('confirmCancelApptModal')).show();
+        }
+
+        $(document).on('click', '#confirmCancelApptBtn', function() {
+            var apptId = _pendingActionId;
+            var reason = $('#cancelApptReason').val() || '';
+            bootstrap.Modal.getInstance(document.getElementById('confirmCancelApptModal')).hide();
             $.ajax({
                 url: "{{ route('appointments.cancel', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
                 type: 'POST',
@@ -1205,10 +1343,16 @@
                     toastr.error(xhr.responseJSON?.message || 'Failed to cancel.');
                 }
             });
-        }
+        });
 
         function doNoShow(apptId) {
-            if (!confirm('Mark this appointment as No-Show?')) return;
+            _pendingActionId = apptId;
+            new bootstrap.Modal(document.getElementById('confirmNoShowModal')).show();
+        }
+
+        $(document).on('click', '#confirmNoShowBtn', function() {
+            var apptId = _pendingActionId;
+            bootstrap.Modal.getInstance(document.getElementById('confirmNoShowModal')).hide();
             $.ajax({
                 url: "{{ route('appointments.no-show', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
                 type: 'POST',
@@ -1225,7 +1369,7 @@
                     toastr.error(xhr.responseJSON?.message || 'Failed.');
                 }
             });
-        }
+        });
 
         // ═══════════════════════════════════════════════════════════════
         //  Badge & Stats Refresh
@@ -1505,6 +1649,9 @@
         // ═══════════════════════════════════════════════════════════════
         var _activeRefId = null;
         var _activeRefData = null;
+        var _pendingActionId = null;
+        var _pendingActionSource = null;
+        var _pendingActionBtn = null;
 
         // View referral detail
         $(document).on('click', '.btn-view-ref-detail', function() {
@@ -1620,25 +1767,11 @@
         // Decline referral from modal
         $('#refDetailDeclineBtn').on('click', function() {
             if (!_activeRefId) return;
-            var reason = prompt('Reason for declining this referral:');
-            if (!reason) return;
-            var $btn = $(this);
-            $btn.prop('disabled', true);
-            $.post("{{ url('referrals') }}/" + _activeRefId + "/decline", {
-                _token: '{{ csrf_token() }}',
-                reason: reason
-            }, function(res) {
-                if (res.success) {
-                    toastr.success('Referral declined');
-                    bootstrap.Modal.getInstance(document.getElementById('refDetailModal')).hide();
-                    if ($.fn.DataTable.isDataTable('#my_referrals_list')) $('#my_referrals_list').DataTable().ajax.reload(null, false);
-                    if ($.fn.DataTable.isDataTable('#all_referrals_list')) $('#all_referrals_list').DataTable().ajax.reload(null, false);
-                }
-            }).fail(function(xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Failed to decline');
-            }).always(function() {
-                $btn.prop('disabled', false).html('<i class="mdi mdi-close-circle me-1"></i>Decline');
-            });
+            _pendingActionId = _activeRefId;
+            _pendingActionSource = 'refDetail';
+            $('#declineRefReason').val('');
+            bootstrap.Modal.getInstance(document.getElementById('refDetailModal')).hide();
+            new bootstrap.Modal(document.getElementById('declineRefReasonModal')).show();
         });
 
         // Print referral from modal
@@ -1652,9 +1785,32 @@
         // Quick accept from table row
         $(document).on('click', '.btn-accept-ref', function() {
             var refId = $(this).data('id');
-            if (!confirm('Accept this referral? A new encounter will be started for the patient.')) return;
-            var $btn = $(this);
-            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+            _pendingActionId = refId;
+            _pendingActionSource = 'quickAccept';
+            _pendingActionBtn = $(this);
+            new bootstrap.Modal(document.getElementById('confirmAcceptRefModal')).show();
+        });
+
+        // Quick decline from table row
+        $(document).on('click', '.btn-decline-ref', function() {
+            var refId = $(this).data('id');
+            _pendingActionId = refId;
+            _pendingActionSource = 'quickDecline';
+            _pendingActionBtn = $(this);
+            $('#declineRefReason').val('');
+            new bootstrap.Modal(document.getElementById('declineRefReasonModal')).show();
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        //  Modal Confirm Handlers (Accept & Decline Referral)
+        // ═══════════════════════════════════════════════════════════════
+
+        // Confirm accept referral (from quick-accept button)
+        $(document).on('click', '#confirmAcceptRefBtn', function() {
+            var refId = _pendingActionId;
+            bootstrap.Modal.getInstance(document.getElementById('confirmAcceptRefModal')).hide();
+            var $btn = _pendingActionBtn;
+            if ($btn) $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
             $.post("{{ url('referrals') }}/" + refId + "/accept", {
                 _token: '{{ csrf_token() }}'
             }, function(res) {
@@ -1666,16 +1822,22 @@
                 }
             }).fail(function(xhr) {
                 toastr.error(xhr.responseJSON?.message || 'Failed');
-                $btn.prop('disabled', false).html('<i class="mdi mdi-check-circle"></i>');
+                if ($btn) $btn.prop('disabled', false).html('<i class="mdi mdi-check-circle"></i>');
             });
         });
 
-        // Quick decline from table row
-        $(document).on('click', '.btn-decline-ref', function() {
-            var refId = $(this).data('id');
-            var reason = prompt('Reason for declining:');
-            if (!reason) return;
-            var $btn = $(this);
+        // Confirm decline referral (from both refDetail and quick-decline)
+        $(document).on('click', '#confirmDeclineRefBtn', function() {
+            var refId = _pendingActionId;
+            var reason = $('#declineRefReason').val();
+            if (!reason || !reason.trim()) {
+                $('#declineRefReason').addClass('is-invalid');
+                return;
+            }
+            $('#declineRefReason').removeClass('is-invalid');
+            bootstrap.Modal.getInstance(document.getElementById('declineRefReasonModal')).hide();
+
+            var $btn = _pendingActionBtn || $('#refDetailDeclineBtn');
             $btn.prop('disabled', true);
             $.post("{{ url('referrals') }}/" + refId + "/decline", {
                 _token: '{{ csrf_token() }}',
@@ -1687,8 +1849,12 @@
                     if ($.fn.DataTable.isDataTable('#all_referrals_list')) $('#all_referrals_list').DataTable().ajax.reload(null, false);
                 }
             }).fail(function(xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Failed');
+                toastr.error(xhr.responseJSON?.message || 'Failed to decline');
+            }).always(function() {
                 $btn.prop('disabled', false);
+                if (_pendingActionSource === 'refDetail') {
+                    $btn.html('<i class="mdi mdi-close-circle me-1"></i>Decline');
+                }
             });
         });
 

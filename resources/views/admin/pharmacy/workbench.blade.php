@@ -4087,7 +4087,7 @@
                 <i class="mdi mdi-file-invoice-dollar"></i>
                 <span>Generate Invoice (Coming Soon)</span>
             </button>
-            <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+            <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
                 <i class="mdi mdi-ambulance text-danger"></i>
                 <span>Emergency Intake</span>
             </button>
@@ -6262,6 +6262,8 @@
         </div>
     </div>
 </div>
+
+@include('admin.partials.patient-form-modal')
 
 @endsection
 
@@ -17364,7 +17366,7 @@ $('#btn-close-stock-reports').on('click', function() { hidePharmacyStockReports(
 @include('admin.partials.invest_res_view_modal')
 @include('admin.partials.invest_res_view_js')
 
-{{-- Emergency Intake Modal --}}
-@include('admin.partials.emergency-intake-modal')
+{{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
+{{-- @include('admin.partials.emergency-intake-modal') --}}
 
 @endsection

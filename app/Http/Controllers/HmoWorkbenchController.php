@@ -176,6 +176,15 @@ class HmoWorkbenchController extends Controller
             $query->where('validated_by', $request->validated_by);
         }
 
+        // Reception validation filter
+        if ($request->filled('reception_validated')) {
+            if ($request->reception_validated === '1') {
+                $query->where('reception_validated', 1);
+            } elseif ($request->reception_validated === '0') {
+                $query->where('reception_validated', 0);
+            }
+        }
+
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
@@ -432,6 +441,14 @@ class HmoWorkbenchController extends Controller
                     $html .= "<br><small class=\"text-muted\">Awaiting validation</small>";
                 }
 
+                // Reception validated badge
+                if ($req->reception_validated) {
+                    $rcpName = $req->reception_validated_by ? userfullname($req->reception_validated_by) : 'Reception';
+                    $rcpDate = $req->reception_validated_at ? Carbon::parse($req->reception_validated_at)->format('M d H:i') : '';
+                    $html .= '<br><span class="badge badge-outline-info mt-1" style="border:1px solid #17a2b8;color:#17a2b8;font-size:0.7rem;"><i class="mdi mdi-check-decagram"></i> Reception</span>';
+                    $html .= "<br><small class=\"text-info\">$rcpName $rcpDate</small>";
+                }
+
                 return $html;
             })
             ->rawColumns(['checkbox', 'patient_info', 'request_info', 'item_details', 'pricing_info', 'coverage_payment', 'status_validation'])
@@ -566,6 +583,11 @@ class HmoWorkbenchController extends Controller
                 'validation_notes' => $request->validation_notes,
                 'validated_by_name' => $request->validator ? userfullname($request->validated_by) : null,
                 'validated_at' => $request->validated_at ? Carbon::parse($request->validated_at)->format('d M Y H:i') : null,
+                // Reception validation
+                'reception_validated' => (bool) $request->reception_validated,
+                'reception_validated_by_name' => $request->reception_validated_by ? userfullname($request->reception_validated_by) : null,
+                'reception_validated_at' => $request->reception_validated_at ? Carbon::parse($request->reception_validated_at)->format('d M Y H:i') : null,
+                'reception_validation_notes' => $request->reception_validation_notes,
                 // Billing / remittance
                 'payment_id' => $request->payment_id,
                 'submitted_to_hmo_at' => $request->submitted_to_hmo_at

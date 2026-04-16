@@ -68,4 +68,10 @@ Route::middleware(['auth'])->prefix('reception')->name('reception.')->group(func
 
     // Discard Service Request
     Route::delete('/request/{type}/{id}/discard', [ReceptionWorkbenchController::class, 'discardServiceRequest'])->name('request.discard');
+
+    // HMO Validation by Reception
+    Route::get('/hmo-pending-validation', [ReceptionWorkbenchController::class, 'getHmoPendingValidation'])->name('hmo-pending-validation');
+    Route::get('/hmo-pending-count', [ReceptionWorkbenchController::class, 'getHmoPendingCount'])->name('hmo-pending-count');
+    Route::post('/hmo-validate/{id}', [ReceptionWorkbenchController::class, 'validateHmoRequest'])->name('hmo-validate');
+    Route::post('/hmo-batch-validate', [ReceptionWorkbenchController::class, 'batchValidateHmo'])->name('hmo-batch-validate');
 });

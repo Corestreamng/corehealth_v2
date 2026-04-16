@@ -41,7 +41,16 @@ protected $fillable = [
         'hmo_submission_batch',
         'packaging_id',
         'packaging_qty',
+        'reception_validated',
+        'reception_validated_by',
+        'reception_validated_at',
+        'reception_validation_notes',
     ];
+
+    public function receptionValidator()
+    {
+        return $this->belongsTo(User::class, 'reception_validated_by');
+    }
 
     public function product()
     {

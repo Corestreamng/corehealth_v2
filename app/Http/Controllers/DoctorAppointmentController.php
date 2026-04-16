@@ -1463,11 +1463,9 @@ class DoctorAppointmentController extends Controller
             ->get();
 
         foreach ($appts as $appt) {
-            $patientName = $appt->patient ? userfullname($appt->patient->user_id) : 'N/A';
-            $hmoName = '';
-            if ($appt->patient && $appt->patient->hmo_id) {
-                $hmoName = \App\Models\Hmo::find($appt->patient->hmo_id)->name ?? '';
-            }
+            $user = $appt->patient->user ?? null;
+            $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
+            $hmoName = $appt->patient && $appt->patient->hmo ? $appt->patient->hmo->name : '';
 
             // Appointments don't have a service request yet — delivery N/A
             $rows->push([
@@ -1504,7 +1502,8 @@ class DoctorAppointmentController extends Controller
         $linkedQueueIds = $appts->pluck('doctor_queue_id')->filter()->toArray();
 
         // ── 2. Doctor Queue entries ────────────────────────────────────
-        $queues = DoctorQueue::where(function ($q) use ($doc) {
+        $queues = DoctorQueue::with(['patient.user', 'patient.hmo', 'clinic'])
+            ->where(function ($q) use ($doc) {
                 $q->whereIn('clinic_id', $doc->all_clinic_ids)
                   ->orWhere('staff_id', $doc->id);
             })
@@ -1518,11 +1517,18 @@ class DoctorAppointmentController extends Controller
             ->orderBy('created_at', 'DESC')
             ->get();
 
+        // Batch-load service requests for HMO delivery checks
+        $reqEntryIds = $queues->pluck('request_entry_id')->filter()->unique()->toArray();
+        $reqEntries = !empty($reqEntryIds)
+            ? ProductOrServiceRequest::whereIn('id', $reqEntryIds)->get()->keyBy('id')
+            : collect();
+
         foreach ($queues as $queue) {
-            $patient = Patient::find($queue->patient_id);
-            $patientName = $patient ? userfullname($patient->user_id) : 'N/A';
-            $hmoName = ($patient && $patient->hmo_id) ? (\App\Models\Hmo::find($patient->hmo_id)->name ?? '') : '';
-            $clinic  = \App\Models\Clinic::find($queue->clinic_id)->name ?? '';
+            $patient = $queue->patient;
+            $user = $patient->user ?? null;
+            $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
+            $hmoName = ($patient && $patient->hmo) ? $patient->hmo->name : '';
+            $clinicName = $queue->clinic->name ?? '';
 
             // HMO delivery check — determines encounter access + shown in table
             $encounterUrl = null;
@@ -1531,7 +1537,7 @@ class DoctorAppointmentController extends Controller
             $deliveryHint = 'Service is ready for delivery.';
 
             if (in_array($queue->status, [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION])) {
-                $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
+                $reqEntry = $queue->request_entry_id ? $reqEntries->get($queue->request_entry_id) : null;
                 $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => 'No service request linked.'];
                 $canDeliver = $deliveryCheck['can_deliver'] ?? true;
                 $deliveryReason = $deliveryCheck['reason'] ?? 'Ready';
@@ -1560,7 +1566,7 @@ class DoctorAppointmentController extends Controller
                 'patient_name'     => $patientName,
                 'file_no'          => $patient->file_no ?? 'N/A',
                 'hmo'              => $hmoName,
-                'clinic'           => $clinic,
+                'clinic'           => $clinicName,
                 'status'           => $queue->status,
                 'status_badge'     => $statusBadge,
                 'priority'         => $queue->priority ?? 'routine',
@@ -1597,6 +1603,18 @@ class DoctorAppointmentController extends Controller
         ])->values();
 
         return DataTables::of($rows)
+            ->filter(function ($dataTable) use ($request) {
+                $keyword = mb_strtolower(trim($request->input('search.value', '')));
+                if (strlen($keyword) >= 1) {
+                    $dataTable->collection = $dataTable->collection->filter(function ($row) use ($keyword) {
+                        return str_contains(mb_strtolower($row['patient_name'] ?? ''), $keyword)
+                            || str_contains(mb_strtolower($row['file_no'] ?? ''), $keyword)
+                            || str_contains(mb_strtolower($row['hmo'] ?? ''), $keyword)
+                            || str_contains(mb_strtolower($row['clinic'] ?? ''), $keyword)
+                            || str_contains(mb_strtolower($row['reason'] ?? ''), $keyword);
+                    });
+                }
+            })
             ->addIndexColumn()
             ->addColumn('patient_info', function ($row) {
                 // Rich patient column: name + file_no + priority icon + HMO line

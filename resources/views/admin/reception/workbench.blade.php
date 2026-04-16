@@ -1,4 +1,4 @@
-﻿@extends('admin.layouts.app')
+@extends('admin.layouts.app')
 
 @section('title', 'Reception Workbench')
 
@@ -3263,6 +3263,10 @@
                 <span class="queue-item-label"><i class="mdi mdi-account-arrow-right" style="color:#b45309;"></i> <strong>Pending Referrals</strong></span>
                 <span class="queue-count" id="queue-referrals-count" style="background: #b45309; color: #fff;">0</span>
             </div>
+            <div class="queue-item" id="queue-hmo-pending-item" data-filter="hmo-pending-validation" style="border-left: 3px solid #0d6efd;">
+                <span class="queue-item-label"><i class="mdi mdi-shield-check" style="color:#0d6efd;"></i> <strong>HMO Pending Validation</strong></span>
+                <span class="queue-count" id="queue-hmo-pending-count" style="background: #0d6efd; color: #fff;">0</span>
+            </div>
             <button class="btn-queue-all" id="show-all-queue-btn"><i class="mdi mdi-format-list-bulleted"></i> View Full Queue</button>
         </div>
 
@@ -3288,9 +3292,13 @@
                 <i class="mdi mdi-file-chart"></i>
                 <span>Reports</span>
             </button>
-            <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+            <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
                 <i class="mdi mdi-ambulance text-danger"></i>
                 <span>Emergency Intake</span>
+            </button>
+            <button class="quick-action-btn" id="btn-hmo-validation" onclick="showHmoValidationPanel()">
+                <i class="mdi mdi-shield-check text-primary"></i>
+                <span>HMO Validation</span>
             </button>
         </div>
     </div>
@@ -3349,6 +3357,94 @@
                         </tr>
                     </thead>
                 </table>
+            </div>
+        </div>
+
+        {{-- ─── HMO Pending Validation Panel ───────────────────────────────── --}}
+        <div class="queue-view" id="hmo-validation-view">
+            <div class="queue-view-header">
+                <h4><i class="mdi mdi-shield-check" style="color:#0d6efd;"></i> HMO Pending Validation</h4>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-primary" id="btn-hmo-batch-validate" disabled>
+                        <i class="mdi mdi-check-all"></i> Validate Selected (<span id="hmo-batch-count">0</span>)
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="btn-hmo-refresh-validation">
+                        <i class="mdi mdi-refresh"></i>
+                    </button>
+                    <button class="btn-close-queue" id="btn-close-hmo-validation">
+                        <i class="mdi mdi-close"></i> Close
+                    </button>
+                </div>
+            </div>
+            <div class="queue-view-content">
+                <div class="mb-2 d-flex align-items-center gap-2">
+                    <input type="text" class="form-control form-control-sm" id="hmo-validation-search"
+                           placeholder="Search patient, file no..." style="max-width: 280px;">
+                    <small class="text-muted" id="hmo-validation-total">0 pending</small>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover" id="hmo-validation-table" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th style="width:30px;"><input type="checkbox" id="hmo-select-all" style="transform:scale(1.3);cursor:pointer;"></th>
+                                <th>Patient</th>
+                                <th>HMO</th>
+                                <th>Item</th>
+                                <th>Coverage</th>
+                                <th>HMO Amt</th>
+                                <th>Pending</th>
+                                <th style="width:140px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hmo-validation-body">
+                            <tr><td colspan="8" class="text-center text-muted py-4"><i class="mdi mdi-loading mdi-spin"></i> Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- ─── HMO Validation Confirm Modal ──────────────────────────────── --}}
+        <div class="modal fade" id="hmoValidateConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="border-radius:12px;border:none;">
+                    <div class="modal-header py-2" style="background:linear-gradient(135deg,#0d6efd 0%,#0a58ca 100%);color:#fff;border-radius:12px 12px 0 0;">
+                        <h5 class="modal-title"><i class="mdi mdi-shield-check"></i> <span id="hvc-title">Confirm Validation</span></h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        {{-- Single request details --}}
+                        <div id="hvc-single-details">
+                            <table class="table table-sm table-borderless mb-2" style="font-size:0.88rem;">
+                                <tr><td class="text-muted" style="width:110px;">Patient</td><td><strong id="hvc-patient"></strong></td></tr>
+                                <tr><td class="text-muted">File No</td><td id="hvc-file-no"></td></tr>
+                                <tr><td class="text-muted">HMO</td><td id="hvc-hmo"></td></tr>
+                                <tr><td class="text-muted">Item</td><td id="hvc-item"></td></tr>
+                                <tr><td class="text-muted">Coverage</td><td id="hvc-coverage"></td></tr>
+                                <tr><td class="text-muted">HMO Amount</td><td><strong id="hvc-amount" class="text-success"></strong></td></tr>
+                            </table>
+                            <div class="alert alert-info py-2 mb-2" style="font-size:0.82rem;border-radius:8px;" id="hvc-outcome-info"></div>
+                        </div>
+                        {{-- Batch summary --}}
+                        <div id="hvc-batch-details" style="display:none;">
+                            <div class="alert alert-primary py-2 mb-2" style="font-size:0.88rem;border-radius:8px;">
+                                <i class="mdi mdi-check-all"></i> You are about to validate <strong id="hvc-batch-total">0</strong> HMO request(s).
+                            </div>
+                            <div class="mb-2" style="font-size:0.82rem;">
+                                <span class="text-muted">Primary requests → </span><span class="badge badge-success">Approved</span><br>
+                                <span class="text-muted">Secondary requests → </span><span class="badge" style="background:#7c4dff;color:#fff;">Awaiting Code</span>
+                            </div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="small font-weight-bold text-muted">Notes <span class="font-weight-normal">(optional)</span></label>
+                            <textarea class="form-control form-control-sm" id="hvc-notes" rows="2" maxlength="500" placeholder="Add a note..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="hvc-confirm-btn"><i class="mdi mdi-check"></i> Confirm Validation</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -3857,6 +3953,11 @@
                 <button class="workspace-tab" data-tab="appointments">
                     <i class="mdi mdi-calendar-clock" style="color:#6f42c1;"></i>
                     <span>Appointments</span>
+                </button>
+                <button class="workspace-tab" data-tab="admissions">
+                    <i class="mdi mdi-hospital-building"></i>
+                    <span>Admissions</span>
+                    <span class="badge badge-dark ml-1" id="reception-admissions-badge" style="display:none;">0</span>
                 </button>
             </div>
 
@@ -4369,6 +4470,11 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Admissions Tab (Reusable Module) -->
+            <div class="workspace-tab-content" id="admissions-tab">
+                @include('admin.partials.admissions-module')
             </div>
         </div>
     </div>
@@ -6257,6 +6363,18 @@ function switchWorkspaceTab(tab) {
     if (tab === 'appointments' && currentPatient) {
         loadPatientAppointments(currentPatient);
     }
+
+    if (tab === 'admissions' && currentPatient) {
+        AdmissionModule.init(currentPatient, {
+            container: '#admissions-tab',
+            printTarget: 'self',
+            onBadgeUpdate: function(count) {
+                var badge = $('#reception-admissions-badge');
+                badge.text(count);
+                if (count > 0) badge.show(); else badge.hide();
+            }
+        });
+    }
 }
 
 // =============================================
@@ -6288,6 +6406,19 @@ function loadQueueCounts() {
     }).fail(function() {
         console.error('Failed to load referral count');
     });
+
+    // Load HMO pending validation count
+    $.get('{{ route("reception.hmo-pending-count") }}', function(data) {
+        var count = data.count || 0;
+        $('#queue-hmo-pending-count').text(count);
+        if (count > 0) {
+            $('#queue-hmo-pending-item').addClass('emergency-pulse');
+        } else {
+            $('#queue-hmo-pending-item').removeClass('emergency-pulse');
+        }
+    }).fail(function() {
+        console.error('Failed to load HMO pending count');
+    });
 }
 
 function startQueueRefresh() {
@@ -6313,6 +6444,7 @@ function hideAllViews() {
     $('#reports-view').removeClass('active').hide();
     $('#ward-dashboard-view').removeClass('active').hide();
     $('#appointments-calendar-view').removeClass('active').hide();
+    $('#hmo-validation-view').removeClass('active').hide();
     $('#patient-header').removeClass('active');
     $('#workspace-content').removeClass('active').hide();
 }
@@ -8594,6 +8726,214 @@ $(document).on('click', '.queue-item[data-filter="referrals"]', function() {
     showReferralsQueueView();
 });
 
+// HMO Pending Validation queue item click
+$(document).on('click', '.queue-item[data-filter="hmo-pending-validation"]', function() {
+    showHmoValidationPanel();
+});
+
+// Close HMO validation panel
+$('#btn-close-hmo-validation').on('click', function() {
+    $('#hmo-validation-view').removeClass('active').hide();
+    if (currentPatient) {
+        $('#workspace-content').addClass('active').show();
+        $('#patient-header').addClass('active');
+    } else {
+        $('#empty-state').show();
+    }
+});
+
+// Refresh HMO validation panel
+$('#btn-hmo-refresh-validation').on('click', function() {
+    loadHmoValidationList();
+});
+
+// Search filter
+$('#hmo-validation-search').on('keyup', _.debounce(function() {
+    loadHmoValidationList();
+}, 300));
+
+// Select all checkbox
+$('#hmo-select-all').on('change', function() {
+    var checked = $(this).prop('checked');
+    $('#hmo-validation-body .hmo-row-check').prop('checked', checked);
+    updateHmoBatchCount();
+});
+
+// Row checkbox change
+$(document).on('change', '.hmo-row-check', function() {
+    updateHmoBatchCount();
+});
+
+// ── HMO Validate Confirm Modal helpers ──────────────────────────
+var _hvcMode = null;   // 'single' | 'batch'
+var _hvcId = null;     // single request id
+var _hvcRow = null;    // single row jQuery element
+var _hvcIds = [];      // batch ids
+
+// Single validate button → open confirm modal
+$(document).on('click', '.hmo-validate-btn', function() {
+    var btn = $(this);
+    _hvcMode = 'single';
+    _hvcId = btn.data('id');
+    _hvcRow = btn.closest('tr');
+    _hvcIds = [];
+
+    // Populate modal
+    $('#hvc-title').text('Confirm Validation');
+    $('#hvc-patient').text(btn.data('patient'));
+    $('#hvc-file-no').text(btn.data('fileno'));
+    $('#hvc-hmo').text(btn.data('hmo'));
+    $('#hvc-item').text(btn.data('item'));
+    var coverage = btn.data('coverage');
+    $('#hvc-coverage').html(coverage === 'primary'
+        ? '<span class="badge badge-warning">PRIMARY</span>'
+        : '<span class="badge badge-danger">SECONDARY</span>');
+    $('#hvc-amount').text('₦' + Number(btn.data('amount')).toLocaleString());
+    $('#hvc-outcome-info').html(coverage === 'secondary'
+        ? '<i class="mdi mdi-information-outline"></i> Secondary coverage — will be set to <strong>Awaiting Auth Code</strong>.'
+        : '<i class="mdi mdi-information-outline"></i> Primary coverage — will be <strong>Approved</strong> immediately.');
+
+    $('#hvc-single-details').show();
+    $('#hvc-batch-details').hide();
+    $('#hvc-notes').val('');
+    $('#hvc-confirm-btn').prop('disabled', false).html('<i class="mdi mdi-check"></i> Confirm Validation');
+    $('#hmoValidateConfirmModal').modal('show');
+});
+
+// Batch validate → open confirm modal
+$('#btn-hmo-batch-validate').on('click', function() {
+    _hvcIds = [];
+    $('#hmo-validation-body .hmo-row-check:checked').each(function() {
+        _hvcIds.push($(this).data('id'));
+    });
+    if (_hvcIds.length === 0) return;
+
+    _hvcMode = 'batch';
+    _hvcId = null;
+    _hvcRow = null;
+
+    $('#hvc-title').text('Confirm Batch Validation');
+    $('#hvc-batch-total').text(_hvcIds.length);
+    $('#hvc-single-details').hide();
+    $('#hvc-batch-details').show();
+    $('#hvc-notes').val('');
+    $('#hvc-confirm-btn').prop('disabled', false).html('<i class="mdi mdi-check-all"></i> Confirm Validation');
+    $('#hmoValidateConfirmModal').modal('show');
+});
+
+// Confirm button inside modal → execute
+$('#hvc-confirm-btn').on('click', function() {
+    var confirmBtn = $(this);
+    var notes = $('#hvc-notes').val();
+    confirmBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+
+    if (_hvcMode === 'single' && _hvcId) {
+        $.ajax({
+            url: '{{ url("reception/hmo-validate") }}/' + _hvcId,
+            method: 'POST',
+            data: { _token: '{{ csrf_token() }}', notes: notes },
+            success: function(resp) {
+                $('#hmoValidateConfirmModal').modal('hide');
+                if (resp.success) {
+                    if (_hvcRow) _hvcRow.fadeOut(400, function() { $(this).remove(); });
+                    toastr.success(resp.message);
+                    loadQueueCounts();
+                    updateHmoBatchCount();
+                } else {
+                    toastr.warning(resp.message);
+                }
+            },
+            error: function(xhr) {
+                $('#hmoValidateConfirmModal').modal('hide');
+                toastr.error(xhr.responseJSON?.message || 'Validation failed');
+            }
+        });
+    } else if (_hvcMode === 'batch' && _hvcIds.length) {
+        $.ajax({
+            url: '{{ route("reception.hmo-batch-validate") }}',
+            method: 'POST',
+            data: { _token: '{{ csrf_token() }}', ids: _hvcIds, notes: notes },
+            success: function(resp) {
+                $('#hmoValidateConfirmModal').modal('hide');
+                if (resp.success) {
+                    toastr.success(resp.message);
+                    loadHmoValidationList();
+                    loadQueueCounts();
+                } else {
+                    toastr.warning(resp.message);
+                }
+            },
+            error: function(xhr) {
+                $('#hmoValidateConfirmModal').modal('hide');
+                toastr.error(xhr.responseJSON?.message || 'Batch validation failed');
+            }
+        });
+    }
+});
+
+function showHmoValidationPanel() {
+    hideAllViews();
+    $('#hmo-validation-view').show().addClass('active');
+    $('.queue-item').removeClass('active');
+    $('.queue-item[data-filter="hmo-pending-validation"]').addClass('active');
+    loadHmoValidationList();
+}
+
+function loadHmoValidationList() {
+    var search = $('#hmo-validation-search').val() || '';
+    $('#hmo-validation-body').html('<tr><td colspan="8" class="text-center text-muted py-4"><i class="mdi mdi-loading mdi-spin"></i> Loading...</td></tr>');
+
+    $.get('{{ route("reception.hmo-pending-validation") }}', { search: search }, function(resp) {
+        var data = resp.data || [];
+        $('#hmo-validation-total').text(data.length + ' pending');
+        $('#hmo-select-all').prop('checked', false);
+
+        if (data.length === 0) {
+            $('#hmo-validation-body').html('<tr><td colspan="8" class="text-center text-muted py-4"><i class="mdi mdi-check-circle text-success"></i> No pending HMO requests</td></tr>');
+            return;
+        }
+
+        var html = '';
+        data.forEach(function(r) {
+            var coverageBadge = r.coverage_mode === 'primary'
+                ? '<span class="badge badge-warning">PRIMARY</span>'
+                : '<span class="badge badge-danger">SECONDARY</span>';
+            var hours = r.hours_pending || 0;
+            var slaBadge = hours < 2
+                ? '<span class="badge badge-success">' + hours + 'h</span>'
+                : (hours < 4 ? '<span class="badge badge-warning">' + hours + 'h</span>' : '<span class="badge badge-danger">' + hours + 'h</span>');
+
+            html += '<tr>';
+            html += '<td><input type="checkbox" class="hmo-row-check" data-id="' + r.id + '" style="transform:scale(1.3);cursor:pointer;"></td>';
+            html += '<td><strong>' + r.patient_name + '</strong><br><small class="text-muted">' + r.file_no + '</small></td>';
+            html += '<td><small>' + r.hmo_name + '</small>' + (r.hmo_no ? '<br><small class="text-info">HMO#: ' + r.hmo_no + '</small>' : '') + '</td>';
+            html += '<td><span class="badge badge-' + (r.item_type === 'Product' ? 'success' : 'info') + '">' + r.item_type + '</span><br><small>' + r.item_name + '</small></td>';
+            html += '<td>' + coverageBadge + '</td>';
+            html += '<td><strong>₦' + Number(r.claims_amount).toLocaleString() + '</strong></td>';
+            html += '<td>' + slaBadge + '<br><small class="text-muted">' + (r.created_at || '') + '</small></td>';
+            html += '<td><button class="btn btn-sm btn-success hmo-validate-btn" data-id="' + r.id + '"'
+                + ' data-patient="' + (r.patient_name || '').replace(/"/g,'&quot;') + '"'
+                + ' data-fileno="' + (r.file_no || '') + '"'
+                + ' data-hmo="' + (r.hmo_name || '').replace(/"/g,'&quot;') + '"'
+                + ' data-item="' + (r.item_name || '').replace(/"/g,'&quot;') + '"'
+                + ' data-coverage="' + (r.coverage_mode || '') + '"'
+                + ' data-amount="' + (r.claims_amount || 0) + '"'
+                + '><i class="mdi mdi-check"></i> Validate</button></td>';
+            html += '</tr>';
+        });
+
+        $('#hmo-validation-body').html(html);
+    }).fail(function() {
+        $('#hmo-validation-body').html('<tr><td colspan="8" class="text-center text-danger py-4">Failed to load requests</td></tr>');
+    });
+}
+
+function updateHmoBatchCount() {
+    var count = $('#hmo-validation-body .hmo-row-check:checked').length;
+    $('#hmo-batch-count').text(count);
+    $('#btn-hmo-batch-validate').prop('disabled', count === 0);
+}
+
 var appointmentsDataTable = null;
 var appointmentsGlobalDataTable = null;
 var referralsDataTable = null;
@@ -10002,8 +10342,8 @@ function loadPatientAppointments(patientId) {
 .btn-purple:hover { background: #5a32a3; color: #fff; }
 </style>
 
-{{-- Emergency Intake Modal --}}
-@include('admin.partials.emergency-intake-modal')
+{{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
+{{-- @include('admin.partials.emergency-intake-modal') --}}
 
 {{-- Shared Medical Report History Modal --}}
 @include('admin.partials.medical_report_history_modal')
@@ -10275,6 +10615,9 @@ function loadPatientAppointments(patientId) {
     }
 }
 </style>
+
+{{-- Admission Module JS --}}
+@include('admin.partials.admissions-module-js')
 
 @endsection
 
