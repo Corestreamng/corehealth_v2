@@ -459,6 +459,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/billing-workbench/patient/{id}/generate-statement', [\App\Http\Controllers\BillingWorkbenchController::class, 'generateStatement'])->name('billing.generate-statement');
         Route::get('/billing-workbench/print-deposit-receipt/{id}', [\App\Http\Controllers\BillingWorkbenchController::class, 'printDepositReceipt'])->name('billing.print-deposit-receipt');
 
+        // Shared Admission Module Routes
+        Route::get('/admission-module/patient/{id}/admissions', [\App\Http\Controllers\AdmissionModuleController::class, 'getPatientAdmissions'])->name('admission-module.patient-admissions');
+        Route::get('/admission-module/admission/{id}/detail', [\App\Http\Controllers\AdmissionModuleController::class, 'getAdmissionDetail'])->name('admission-module.admission-detail');
+        Route::get('/admission-module/patient/{id}/history', [\App\Http\Controllers\AdmissionModuleController::class, 'getAdmissionHistory'])->name('admission-module.admission-history');
+        Route::get('/admission-module/admission/{id}/print-bill', [\App\Http\Controllers\AdmissionModuleController::class, 'printAdmissionBill'])->name('admission-module.print-bill');
+
         // Pharmacy Workbench Routes
         Route::get('/pharmacy-workbench', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'index'])->name('pharmacy.workbench');
         Route::get('/pharmacy-workbench/search-patients', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'searchPatients'])->name('pharmacy.search-patients');

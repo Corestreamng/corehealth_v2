@@ -488,7 +488,7 @@
                         <i class="mdi mdi-view-dashboard mr-1"></i>Queue
                     </button>
                 </div>
-                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+                <button class="btn btn-danger btn-sm" onclick="showEmergencyIntakeModal()">
                     <i class="mdi mdi-ambulance"></i> Emergency Intake
                 </button>
                 <span><i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}</span>
@@ -871,6 +871,11 @@
                                             <i class="mdi mdi-cash mr-1"></i>Past/Billed <span class="badge badge-secondary ml-1" id="pfBadgePast">0</span>
                                         </a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#pf-tab-admissions" role="tab">
+                                            <i class="mdi mdi-hospital-building mr-1"></i>Admissions <span class="badge badge-dark ml-1" id="pfBadgeAdmissions" style="display:none;">0</span>
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                             <div class="card-body p-0">
@@ -998,6 +1003,10 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <!-- Admissions tab -->
+                                    <div class="tab-pane fade" id="pf-tab-admissions" role="tabpanel">
+                                        @include('admin.partials.admissions-module')
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1083,6 +1092,16 @@
                                 @foreach($validators as $v)
                                     <option value="{{ $v->id }}">{{ $v->firstname }} {{ $v->surname }}</option>
                                 @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted">Reception</label>
+                            <select class="form-control form-control-sm" id="filter_reception_validated" style="border-radius: 6px;">
+                                <option value="">All</option>
+                                <option value="1">Validated by Reception</option>
+                                <option value="0">Not Validated</option>
                             </select>
                         </div>
                     </div>
@@ -1340,6 +1359,13 @@
                                 <div class="mb-1"><strong>Validated By:</strong> <span id="detail_validated_by">-</span></div>
                                 <div class="mb-1"><strong>Validated At:</strong> <span id="detail_validated_at">-</span></div>
                                 <div><strong>Notes:</strong> <span id="detail_validation_notes" class="text-muted">-</span></div>
+                                {{-- Reception validation sub-section --}}
+                                <div id="detail_reception_validation" class="mt-2 pt-2" style="border-top:1px dashed #dee2e6; display:none;">
+                                    <span class="badge badge-outline-info" style="border:1px solid #17a2b8;color:#17a2b8;font-size:0.75rem;"><i class="mdi mdi-check-decagram"></i> Reception Validated</span>
+                                    <div class="mt-1"><strong>By:</strong> <span id="detail_reception_validated_by">-</span></div>
+                                    <div><strong>At:</strong> <span id="detail_reception_validated_at">-</span></div>
+                                    <div><strong>Notes:</strong> <span id="detail_reception_validation_notes" class="text-muted">-</span></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2179,6 +2205,7 @@ $(function() {
                     d.date_from = $('#filter_date_from').val();
                     d.date_to = $('#filter_date_to').val();
                     d.validated_by = $('#filter_validated_by').val();
+                    d.reception_validated = $('#filter_reception_validated').val();
                     d.search = $('#search_input').val();
                 }
             },
@@ -2468,6 +2495,16 @@ $(function() {
             $('#detail_validated_by').text(d.validated_by_name || '-');
             $('#detail_validated_at').text(d.validated_at || '-');
             $('#detail_validation_notes').text(d.validation_notes || '-');
+
+            // Reception validation
+            if (d.reception_validated) {
+                $('#detail_reception_validation').show();
+                $('#detail_reception_validated_by').text(d.reception_validated_by_name || 'Reception');
+                $('#detail_reception_validated_at').text(d.reception_validated_at || '-');
+                $('#detail_reception_validation_notes').text(d.reception_validation_notes || '-');
+            } else {
+                $('#detail_reception_validation').hide();
+            }
 
             // Submission
             $('#detail_payment_id').text(d.payment_id || '-');
@@ -4392,6 +4429,7 @@ $(function() {
         window.loadPatientFocus = loadPatientFocus; // Expose for patient form callback
         function loadPatientFocus(patientId) {
             pfPatientId = patientId;
+            window._hmoFocusPatientId = patientId; // Expose for admission module
             pfSelectedIds = [];
             pfPages = {};
             pfFilteredData = {};
@@ -4971,7 +5009,37 @@ $(function() {
     #validateGroupModal .custom-checkbox .custom-control-label::before { transform: scale(1.15); }
 </style>
 
-{{-- Emergency Intake Modal --}}
-@include('admin.partials.emergency-intake-modal')
+{{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
+{{-- @include('admin.partials.emergency-intake-modal') --}}
+
+{{-- Admission Module JS --}}
+@include('admin.partials.admissions-module-js')
+
+<script>
+// Initialize Admission Module when Admissions tab is shown in HMO workbench
+function _initHmoAdmissions() {
+    var pid = window._hmoFocusPatientId || window.currentPatient || window.currentClinicalPatientId;
+    if (pid) {
+        AdmissionModule.init(pid, {
+            container: '#pf-tab-admissions',
+            printTarget: 'self',
+            onBadgeUpdate: function(count) {
+                var badge = $('#pfBadgeAdmissions');
+                badge.text(count);
+                if (count > 0) badge.show(); else badge.hide();
+            }
+        });
+    }
+}
+
+// Bootstrap 4 tab shown event
+$(document).on('shown.bs.tab', 'a[href="#pf-tab-admissions"]', _initHmoAdmissions);
+
+// Fallback: direct click on the admissions tab link
+$(document).on('click', 'a[href="#pf-tab-admissions"]', function() {
+    // Small delay to let Bootstrap activate the tab pane
+    setTimeout(_initHmoAdmissions, 150);
+});
+</script>
 
 @endsection

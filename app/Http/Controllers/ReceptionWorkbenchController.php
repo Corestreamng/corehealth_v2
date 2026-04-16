@@ -302,6 +302,15 @@ class ReceptionWorkbenchController extends Controller
             'admitted' => AdmissionRequest::where('discharged', 0)->count(),
             'emergency' => DoctorQueue::where('priority', 'emergency')->whereDate('created_at', $today)->whereIn('status', QueueStatus::ACTIVE)->count(),
             'scheduled' => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::SCHEDULED)->count(),
+            'hmo_pending_validation' => ProductOrServiceRequest::whereHas('user.patient_profile', function ($q) {
+                    $q->whereNotNull('hmo_id');
+                })
+                ->whereNotNull('coverage_mode')
+                ->where('validation_status', 'pending')
+                ->whereIn('coverage_mode', ['primary', 'secondary'])
+                ->where('claims_amount', '>', 0)
+                ->where('reception_validated', 0)
+                ->count(),
         ];
 
         return response()->json($counts);
@@ -2756,6 +2765,213 @@ class ReceptionWorkbenchController extends Controller
                 'success' => false,
                 'message' => 'Failed to discard request: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    // =========================================================================
+    // HMO VALIDATION BY RECEPTION
+    // =========================================================================
+
+    /**
+     * Get pending HMO requests that reception can validate.
+     */
+    public function getHmoPendingValidation(Request $request)
+    {
+        $query = ProductOrServiceRequest::with([
+            'user.patient_profile.hmo',
+            'service',
+            'product',
+            'staff',
+        ])
+        ->whereHas('user.patient_profile', function ($q) {
+            $q->whereNotNull('hmo_id');
+        })
+        ->whereNotNull('coverage_mode')
+        ->where('validation_status', 'pending')
+        ->whereIn('coverage_mode', ['primary', 'secondary'])
+        ->where('claims_amount', '>', 0)
+        ->where('reception_validated', 0)
+        ->orderBy('created_at', 'desc');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($q2) use ($search) {
+                    $q2->where('firstname', 'LIKE', "%{$search}%")
+                       ->orWhere('surname', 'LIKE', "%{$search}%");
+                })
+                ->orWhereHas('user.patient_profile', function ($q2) use ($search) {
+                    $q2->where('file_no', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        $requests = $query->limit(100)->get();
+
+        $data = $requests->map(function ($req) {
+            $pp = $req->user ? $req->user->patient_profile : null;
+            $hmo = $pp ? $pp->hmo : null;
+            $itemName = 'N/A';
+            $itemType = 'N/A';
+
+            if ($req->product_id && $req->product) {
+                $itemName = $req->product->product_name ?? 'Unknown';
+                $itemType = 'Product';
+            } elseif ($req->service_id && $req->service) {
+                $itemName = $req->service->service_name ?? 'Unknown';
+                $itemType = 'Service';
+            }
+
+            return [
+                'id' => $req->id,
+                'patient_name' => $req->user ? userfullname($req->user_id) : 'N/A',
+                'file_no' => $pp->file_no ?? 'N/A',
+                'hmo_name' => $hmo->name ?? 'N/A',
+                'hmo_no' => $pp->hmo_no ?? '',
+                'item_name' => $itemName,
+                'item_type' => $itemType,
+                'coverage_mode' => $req->coverage_mode,
+                'claims_amount' => $req->claims_amount,
+                'payable_amount' => $req->payable_amount,
+                'requested_by' => $req->staff_user_id ? userfullname($req->staff_user_id) : 'System',
+                'created_at' => $req->created_at ? $req->created_at->format('M d, H:i') : null,
+                'hours_pending' => $req->created_at ? $req->created_at->diffInHours(now()) : 0,
+            ];
+        });
+
+        return response()->json(['data' => $data]);
+    }
+
+    /**
+     * Get count of pending HMO requests for reception badge.
+     */
+    public function getHmoPendingCount()
+    {
+        $count = ProductOrServiceRequest::whereHas('user.patient_profile', function ($q) {
+                $q->whereNotNull('hmo_id');
+            })
+            ->whereNotNull('coverage_mode')
+            ->where('validation_status', 'pending')
+            ->whereIn('coverage_mode', ['primary', 'secondary'])
+            ->where('claims_amount', '>', 0)
+            ->where('reception_validated', 0)
+            ->count();
+
+        return response()->json(['count' => $count]);
+    }
+
+    /**
+     * Validate a single HMO request.
+     * Primary → approved. Secondary → awaiting_code.
+     */
+    public function validateHmoRequest(Request $request, $id)
+    {
+        $request->validate([
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $hmoRequest = ProductOrServiceRequest::findOrFail($id);
+
+            if ($hmoRequest->reception_validated) {
+                return response()->json(['success' => false, 'message' => 'Already validated by reception.'], 422);
+            }
+
+            if ($hmoRequest->validation_status !== 'pending') {
+                return response()->json(['success' => false, 'message' => 'Request is no longer pending.'], 422);
+            }
+
+            // Determine new validation_status based on coverage mode
+            $newStatus = $hmoRequest->coverage_mode === 'secondary' ? 'awaiting_code' : 'approved';
+
+            $hmoRequest->update([
+                'validation_status' => $newStatus,
+                'validated_by' => Auth::id(),
+                'validated_at' => now(),
+                'validation_notes' => $request->notes,
+                'reception_validated' => 1,
+                'reception_validated_by' => Auth::id(),
+                'reception_validated_at' => now(),
+                'reception_validation_notes' => $request->notes,
+            ]);
+
+            DB::commit();
+
+            $statusLabel = $newStatus === 'awaiting_code' ? 'Approved — awaiting auth code' : 'Approved';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Request #{$id} validated: {$statusLabel}",
+                'new_status' => $newStatus,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Reception HMO validation error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Validation failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Batch validate HMO requests.
+     */
+    public function batchValidateHmo(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:product_or_service_requests,id',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $ids = $request->ids;
+        $notes = $request->notes;
+        $approved = 0;
+        $awaitingCode = 0;
+        $skipped = 0;
+
+        DB::beginTransaction();
+        try {
+            $requests = ProductOrServiceRequest::whereIn('id', $ids)
+                ->where('validation_status', 'pending')
+                ->where('reception_validated', 0)
+                ->get();
+
+            foreach ($requests as $req) {
+                $newStatus = $req->coverage_mode === 'secondary' ? 'awaiting_code' : 'approved';
+
+                $req->update([
+                    'validation_status' => $newStatus,
+                    'validated_by' => Auth::id(),
+                    'validated_at' => now(),
+                    'validation_notes' => $notes,
+                    'reception_validated' => 1,
+                    'reception_validated_by' => Auth::id(),
+                    'reception_validated_at' => now(),
+                    'reception_validation_notes' => $notes,
+                ]);
+
+                if ($newStatus === 'awaiting_code') {
+                    $awaitingCode++;
+                } else {
+                    $approved++;
+                }
+            }
+
+            $skipped = count($ids) - $requests->count();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Validated: {$approved} approved, {$awaitingCode} awaiting code" . ($skipped ? ", {$skipped} skipped" : ''),
+                'approved' => $approved,
+                'awaiting_code' => $awaitingCode,
+                'skipped' => $skipped,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Batch HMO validation error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Batch validation failed: ' . $e->getMessage()], 500);
         }
     }
 }
