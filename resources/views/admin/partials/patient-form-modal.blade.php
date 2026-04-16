@@ -1,6 +1,6 @@
 {{-- Patient Form Modal (Shared Partial) --}}
 {{-- Usage: @include('admin.partials.patient-form-modal') --}}
-{{-- 
+{{--
     Config: Set window.patientFormConfig before opening the modal:
     window.patientFormConfig = {
         nextFileNumberUrl: '/reception/patient/next-file-number',
@@ -13,6 +13,119 @@
 --}}
 
 <style>
+/* Select2 z-index fix for modals */
+.select2-container--open { z-index: 9999 !important; }
+#patientFormModal .select2-container { width: 100% !important; }
+#patientFormModal .select2-container .select2-selection--single {
+    height: calc(1.5em + 0.75rem + 2px);
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+#patientFormModal .select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5;
+    padding-left: 0;
+}
+#patientFormModal .select2-container .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + 0.75rem);
+}
+
+/* Duplicate Patient Detection Panel */
+.pf-duplicate-panel {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-left: 4px solid #ffa000;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    animation: pfDupSlideIn 0.3s ease;
+}
+@keyframes pfDupSlideIn {
+    from { opacity: 0; max-height: 0; margin-bottom: 0; }
+    to { opacity: 1; max-height: 500px; margin-bottom: 1rem; }
+}
+.pf-dup-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #fff3cd;
+    font-weight: 600;
+    font-size: 13px;
+    color: #856404;
+}
+.pf-dup-header .mdi { font-size: 18px; }
+.pf-dup-dismiss {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #856404;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+.pf-dup-dismiss:hover { color: #533f03; }
+.pf-dup-list { padding: 4px 8px; }
+.pf-dup-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+}
+.pf-dup-item:hover { background: rgba(255,160,0,0.12); }
+.pf-dup-item + .pf-dup-item { border-top: 1px solid #ffe08260; }
+.pf-dup-select {
+    flex-shrink: 0;
+    padding: 2px 10px;
+    border: 1px solid #ffa000;
+    border-radius: 4px;
+    background: #fff;
+    color: #e65100;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.pf-dup-select:hover { background: #ffa000; color: #fff; }
+.pf-dup-item:hover .pf-dup-select { background: #ffa000; color: #fff; }
+.pf-dup-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ffa000;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.pf-dup-info { flex: 1; min-width: 0; }
+.pf-dup-name { font-weight: 600; color: #333; }
+.pf-dup-meta { font-size: 11px; color: #888; display: flex; gap: 8px; flex-wrap: wrap; }
+.pf-dup-reasons { flex-shrink: 0; display: flex; gap: 3px; flex-wrap: wrap; }
+.pf-dup-reason {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    background: #ffa000;
+    color: #fff;
+}
+.pf-dup-reason.high { background: #e53935; }
+.pf-dup-reason.medium { background: #fb8c00; }
+.pf-dup-reason.low { background: #78909c; }
+.pf-dup-footer { padding: 6px 12px; border-top: 1px solid #ffe08260; }
+}
+
 /* ============================================
        PATIENT FORM MODAL STYLES
        ============================================ */
@@ -982,6 +1095,11 @@ function resetPatientForm() {
     $('#patient-form-id').val('');
     $('#patient-form-mode').val('create');
 
+    // Reset duplicate detection
+    _dupDismissed = false;
+    $('#pf-duplicate-panel').hide();
+    $('#pf-dup-list').empty();
+
     // Reset file number toggle to Auto mode
     $('#pf-file-no').prop('readonly', true);
     $('#pf-file-no-toggle').prop('checked', false);
@@ -1186,6 +1304,88 @@ $('#pf-file-no').on('input', function() {
     }
 });
 
+// ============================================
+// DUPLICATE PATIENT DETECTION
+// ============================================
+let _dupCheckTimeout = null;
+let _dupDismissed = false;
+
+function checkDuplicatePatient() {
+    if (_dupDismissed) return;
+    if ($('#patient-form-mode').val() === 'edit') return; // Skip in edit mode
+
+    var surname = $('#pf-surname').val().trim();
+    var firstname = $('#pf-firstname').val().trim();
+    var phone = $('#pf-phone').val().trim();
+    var dob = $('#pf-dob').val();
+
+    // Need at least surname+firstname (2+ chars each) or phone (7+ chars)
+    var hasName = surname.length >= 2 && firstname.length >= 2;
+    var hasPhone = phone.length >= 7;
+    if (!hasName && !hasPhone) {
+        $('#pf-duplicate-panel').slideUp(200);
+        return;
+    }
+
+    if (_dupCheckTimeout) clearTimeout(_dupCheckTimeout);
+    _dupCheckTimeout = setTimeout(function() {
+        $.ajax({
+            url: '/reception/patient/check-duplicate',
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                surname: surname,
+                firstname: firstname,
+                phone: phone,
+                dob: dob,
+                exclude_patient_id: $('#patient-form-id').val() || null
+            },
+            success: function(resp) {
+                if (_dupDismissed) return;
+                if (resp.count > 0) {
+                    renderDuplicateHints(resp.matches);
+                } else {
+                    $('#pf-duplicate-panel').slideUp(200);
+                }
+            }
+        });
+    }, 600);
+}
+
+function renderDuplicateHints(matches) {
+    var $list = $('#pf-dup-list').empty();
+    $('#pf-dup-plural').text(matches.length > 1 ? 's' : '');
+
+    matches.forEach(function(m) {
+        var initials = (m.name || '??').split(' ').map(function(w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
+        var scoreClass = m.score >= 50 ? 'high' : (m.score >= 30 ? 'medium' : 'low');
+
+        var metaParts = [];
+        if (m.file_no) metaParts.push('<i class="mdi mdi-file-document-outline"></i> ' + m.file_no);
+        if (m.phone) metaParts.push('<i class="mdi mdi-phone"></i> ' + m.phone);
+        if (m.dob) metaParts.push('<i class="mdi mdi-calendar"></i> ' + m.dob);
+        if (m.gender) metaParts.push(m.gender);
+
+        var reasons = m.reasons.map(function(r) {
+            return '<span class="pf-dup-reason ' + scoreClass + '">' + r + '</span>';
+        }).join('');
+
+        $list.append(
+            '<div class="pf-dup-item" data-patient-id="' + m.id + '">' +
+                '<div class="pf-dup-avatar">' + initials + '</div>' +
+                '<div class="pf-dup-info">' +
+                    '<div class="pf-dup-name">' + (m.name || 'Unknown') + '</div>' +
+                    '<div class="pf-dup-meta">' + metaParts.join(' &middot; ') + '</div>' +
+                '</div>' +
+                '<div class="pf-dup-reasons">' + reasons + '</div>' +
+                '<button type="button" class="pf-dup-select" title="Select this patient"><i class="mdi mdi-account-check"></i> Select</button>' +
+            '</div>'
+        );
+    });
+
+    $('#pf-duplicate-panel').slideDown(300);
+}
+
 function toggleFileNumberEdit(mode) {
     const $input = $('#pf-file-no');
     const $hint = $('#pf-file-no-hint');
@@ -1241,6 +1441,19 @@ function populatePatientFormHMO() {
 
     // Default select HMO ID 1 (Private)
     $select.val(1);
+
+    // Initialize or refresh Select2
+    if ($.fn.select2) {
+        if ($select.hasClass('select2-hidden-accessible')) {
+            $select.select2('destroy');
+        }
+        $select.select2({
+            dropdownParent: $('#patientFormModal'),
+            placeholder: 'Select HMO',
+            allowClear: false,
+            width: '100%'
+        });
+    }
 }
 
 function populatePatientForm(data) {
@@ -1296,7 +1509,7 @@ function populatePatientForm(data) {
     // Insurance
     if (data.hmo_id) {
         setTimeout(() => {
-            $('#pf-hmo').val(data.hmo_id);
+            $('#pf-hmo').val(data.hmo_id).trigger('change');
             $('#pf-hmo-no').val(data.hmo_no || '');
             $('#pf-hmo-no-container').show();
         }, 100);
@@ -1798,6 +2011,31 @@ $(document).ready(function() {
     // DOB change - update age
     $('#pf-dob').on('change', function() {
         updatePatientFormAge();
+        checkDuplicatePatient();
+    });
+
+    // Duplicate detection: trigger on key fields
+    $('#pf-surname, #pf-firstname').on('input', function() {
+        checkDuplicatePatient();
+    });
+    $('#pf-phone').on('input', function() {
+        checkDuplicatePatient();
+    });
+
+    // Dismiss duplicate panel
+    $(document).on('click', '.pf-dup-dismiss', function() {
+        _dupDismissed = true;
+        $('#pf-duplicate-panel').slideUp(200);
+    });
+
+    // Select existing patient from duplicate suggestions
+    $(document).on('click', '.pf-dup-item', function() {
+        var patientId = $(this).data('patient-id');
+        if (!patientId) return;
+        $('#patientFormModal').modal('hide');
+        if (window.patientFormConfig && typeof window.patientFormConfig.onSelectExisting === 'function') {
+            window.patientFormConfig.onSelectExisting(patientId);
+        }
     });
 
     // HMO change - show/hide HMO number field
@@ -1987,9 +2225,12 @@ $(document).ready(function() {
     $('#btn-change-photo').on('click', resetPhotoCapture);
     $('#btn-remove-photo').on('click', resetPhotoCapture);
 
-    // Stop webcam when modal closes
+    // Stop webcam when modal closes and restore default state
     $('#patientFormModal').on('hidden.bs.modal', function() {
         stopWebcam();
+        // Restore file number controls (may have been hidden by ANC mode)
+        $('.file-no-btn-group').show();
+        $('#pf-file-no-info').show();
     });
 
     // Old records file preview - when new file selected
@@ -2113,6 +2354,19 @@ $(document).ready(function() {
                                 <p class="text-muted mb-0">Personal details and contact information</p>
                             </div>
                             <div class="step-content">
+                                <!-- Duplicate Patient Detection Panel -->
+                                <div id="pf-duplicate-panel" class="pf-duplicate-panel" style="display: none;">
+                                    <div class="pf-dup-header">
+                                        <i class="mdi mdi-account-alert"></i>
+                                        <span>Possible existing patient<span id="pf-dup-plural">s</span> found</span>
+                                        <button type="button" class="pf-dup-dismiss" title="Dismiss">&times;</button>
+                                    </div>
+                                    <div id="pf-dup-list" class="pf-dup-list"></div>
+                                    <div class="pf-dup-footer">
+                                        <small class="text-muted"><i class="mdi mdi-information-outline"></i> If this is the same patient, close this form and search for them instead.</small>
+                                    </div>
+                                </div>
+
                                 <div class="row align-items-end">
                                     <div class="col-md-4">
                                         <div class="form-group mb-3">
@@ -2217,6 +2471,7 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">

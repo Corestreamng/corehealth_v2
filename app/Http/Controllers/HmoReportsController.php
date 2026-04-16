@@ -10,7 +10,7 @@ use App\Models\PatientProfile;
 use App\Models\Patient;
 use App\Models\ServiceCategory;
 use App\Models\ProductCategory;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\Product;
 use App\Models\Bank;
 use Carbon\Carbon;

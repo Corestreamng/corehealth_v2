@@ -675,7 +675,7 @@
 
         <div class="quick-actions">
             <h6><i class="mdi mdi-lightning-bolt"></i> QUICK ACTIONS</h6>
-            <button class="quick-action-btn" id="btn-enroll-patient" disabled title="Select a patient first">
+            <button class="quick-action-btn" id="btn-enroll-patient">
                 <i class="mdi mdi-clipboard-plus text-success"></i>
                 <span>New Enrollment</span>
             </button>
@@ -1474,6 +1474,7 @@
     </div>
 </div>
 
+@include('admin.partials.patient-form-modal')
 @include('admin.partials.treatment-plan-modal')
 @include('admin.partials.re-prescribe-encounter-modal')
 @include('admin.partials.clinical_context_modal')
@@ -1538,6 +1539,83 @@ let currentPatientData = null;
 let currentEnrollment = null;
 let currentEnrollmentId = null;
 const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+
+// ═══════════════════════════════════════════════════════════════
+// PATIENT FORM CONFIG (ANC Registration)
+// ═══════════════════════════════════════════════════════════════
+window.patientFormConfig = {
+    nextFileNumberUrl: '/reception/patient/next-file-number',
+    checkFileNumberUrl: '/reception/patient/check-file-number',
+    updateUrl: '/reception/patient/__ID__/update',
+    registerUrl: '/reception/patient/quick-register',
+    hmos: @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
+    onSuccess: function(patientId, mode) {
+        toastr.success('ANC patient registered successfully');
+        $('#patientFormModal').modal('hide');
+        // Load the newly created patient in the workbench
+        if (typeof loadPatient === 'function') {
+            loadPatient(patientId);
+        }
+    },
+    onSelectExisting: function(patientId) {
+        toastr.info('Loading existing patient...');
+        if (typeof loadPatient === 'function') {
+            loadPatient(patientId);
+        }
+    }
+};
+
+function openAncPatientRegistration() {
+    // Show modal in create mode
+    showPatientFormModal('create');
+
+    // After modal is shown, switch to ANC file number mode
+    $('#patientFormModal').one('shown.bs.modal', function() {
+        // Hide auto/manual toggle — ANC mode uses prefix hint instead
+        $('.file-no-btn-group').hide();
+        $('#pf-file-no-info').hide();
+
+        // Set file number field as editable with ANC prefix
+        var $input = $('#pf-file-no');
+        $input.prop('readonly', false);
+
+        // Generate ANC file number
+        generateAncFileNumber();
+
+        // Update modal title
+        $('#patient-form-title').html('<i class="mdi mdi-clipboard-plus"></i> New ANC Patient Registration');
+
+        // Pre-select Female gender
+        $('#pf-gender').val('Female');
+    });
+}
+
+function generateAncFileNumber() {
+    $.ajax({
+        url: '/reception/patient/next-file-number',
+        method: 'GET',
+        data: { prefix: 'ANC-' },
+        success: function(response) {
+            var nextFileNo = response.file_no;
+            $('#pf-file-no').val(nextFileNo).addClass('status-valid');
+            $('#pf-next-file-no').text(nextFileNo);
+            $('#pf-duplicate-warning').hide();
+
+            // Show last 2 ANC numbers as hint
+            var recent = response.recent_file_nos || [];
+            var lastTwo = recent.slice(0, 2);
+            if (lastTwo.length > 0) {
+                $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
+            } else {
+                $('#pf-file-no-hint').html('').hide();
+            }
+        },
+        error: function() {
+            $('#pf-file-no').val('ANC-001');
+            $('#pf-next-file-no').text('ANC-001');
+        }
+    });
+}
 
 // Edit mode state tracking (shared pattern for modal reuse)
 let _editMode = null;   // null = create, 'anc'|'postnatal'|'baby'|'note'|'history'|'pregnancy' = edit
@@ -5454,9 +5532,9 @@ $(document).ready(function() {
         ClinicalContext.load(currentPatient);
     });
 
-    // Quick action: Enroll patient
+    // Quick action: New ANC patient enrollment
     $('#btn-enroll-patient').on('click', function() {
-        if (currentPatient) switchWorkspaceTab('enrollment');
+        openAncPatientRegistration();
     });
 
     // Quick action: Quick vitals

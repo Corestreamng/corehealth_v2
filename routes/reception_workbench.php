@@ -20,6 +20,7 @@ Route::middleware(['auth'])->prefix('reception')->name('reception.')->group(func
     Route::post('/patient/quick-register', [ReceptionWorkbenchController::class, 'quickRegister'])->name('patient.quick-register');
     Route::get('/patient/next-file-number', [ReceptionWorkbenchController::class, 'getNextFileNumber'])->name('patient.next-file-number');
     Route::post('/patient/check-file-number', [ReceptionWorkbenchController::class, 'checkFileNumberExists'])->name('patient.check-file-number');
+    Route::post('/patient/check-duplicate', [ReceptionWorkbenchController::class, 'checkDuplicatePatient'])->name('patient.check-duplicate');
 
     // Patient data with ID parameter
     Route::get('/patient/{id}', [ReceptionWorkbenchController::class, 'getPatient'])->name('patient');
