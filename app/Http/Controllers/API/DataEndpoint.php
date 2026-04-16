@@ -11,7 +11,7 @@ use App\Models\Hmo;
 use App\Models\LabServiceRequest;
 use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
-use App\Models\service;
+use App\Models\Service;
 use App\Models\Staff;
 use App\Models\User;
 use Exception;
@@ -202,7 +202,7 @@ class DataEndpoint extends Controller
             // Initialize an array to store the count of investigationsPerMonth
             $investigationsPerMonth = [];
 
-            $investigation_services = service::where('category_id', appsettings('investigation_category_id'))->get();
+            $investigation_services = Service::where('category_id', appsettings('investigation_category_id'))->get();
 
             // Loop through each month of the year
             for ($month = 1; $month <= 12; $month++) {
@@ -268,11 +268,11 @@ class DataEndpoint extends Controller
                 ]
             ];
 
-            $bed_services = service::where('category_id', appsettings('bed_service_category_id'))->get()->pluck('id')->toArray();
-            $inves_services = service::where('category_id', appsettings('investigation_category_id'))->get()->pluck('id')->toArray();
-            $consult_services = service::where('category_id', appsettings('consultation_category_id'))->get()->pluck('id')->toArray();
-            $nursing_services = service::where('category_id', appsettings('nursing_service_category'))->get()->pluck('id')->toArray();
-            $misc_services = service::where('category_id', appsettings('misc_service_category_id'))->get()->pluck('id')->toArray();
+            $bed_services = Service::where('category_id', appsettings('bed_service_category_id'))->get()->pluck('id')->toArray();
+            $inves_services = Service::where('category_id', appsettings('investigation_category_id'))->get()->pluck('id')->toArray();
+            $consult_services = Service::where('category_id', appsettings('consultation_category_id'))->get()->pluck('id')->toArray();
+            $nursing_services = Service::where('category_id', appsettings('nursing_service_category'))->get()->pluck('id')->toArray();
+            $misc_services = Service::where('category_id', appsettings('misc_service_category_id'))->get()->pluck('id')->toArray();
 
             // Fetch prices for the provided service IDs
             $pricesPerMonth = ProductOrServiceRequest::whereIn('service_id', $inves_services)

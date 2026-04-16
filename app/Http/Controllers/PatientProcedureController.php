@@ -222,7 +222,7 @@ class PatientProcedureController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $procedure) {
-                $service = \App\Models\service::with('price')->find($request->service_id);
+                $service = \App\Models\Service::with('price')->find($request->service_id);
 
                 // Create the lab service request
                 $labRequest = new LabServiceRequest();
@@ -281,7 +281,7 @@ class PatientProcedureController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $procedure) {
-                $service = \App\Models\service::with('price')->find($request->service_id);
+                $service = \App\Models\Service::with('price')->find($request->service_id);
 
                 // Create the imaging service request
                 $imagingRequest = new ImagingServiceRequest();

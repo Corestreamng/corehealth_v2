@@ -18046,10 +18046,8 @@ let editNoteEditor;
 
 function openEditNoteModal(btn) {
     const noteId = $(btn).data('id');
-    // Get content from the rendered card in the table row
-    // The button is in .card-footer, content is in .card-body > .note-content
-    const card = $(btn).closest('.card');
-    const content = card.find('.note-content').html();
+    // Get content from data attribute on the button (set by server)
+    const content = $(btn).data('content') || $(btn).closest('.nursing-note-card').find('.note-content').html() || '';
 
     $('#edit-note-id').val(noteId);
 
