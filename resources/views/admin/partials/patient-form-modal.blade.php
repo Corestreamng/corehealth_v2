@@ -1280,6 +1280,10 @@
 
 @push('scripts')
 <script>
+// Shared flag – used by both the main form logic (document.ready) and the
+// emergency-mode IIFE below.
+var pfEmergencyMode = false;
+
 // Patient Form Config - must be set by the including page
 if (typeof window.patientFormConfig === 'undefined') {
     window.patientFormConfig = {
@@ -2654,7 +2658,7 @@ $(document).ready(function() {
 (function() {
     'use strict';
 
-    let pfEmergencyMode = false;
+    // pfEmergencyMode is declared at outer <script> scope
     let pfEmergencyTimerInterval = null;
     let pfEmergencyTimerSeconds = 0;
     let pfEmergencySearchTimeout = null;
