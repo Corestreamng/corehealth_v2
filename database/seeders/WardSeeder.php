@@ -97,7 +97,7 @@ class WardSeeder extends Seeder
 
         foreach ($wards as $ward) {
             Ward::updateOrCreate(
-                ['name' => $ward['name']],
+                ['code' => $ward['code']],
                 $ward
             );
         }
