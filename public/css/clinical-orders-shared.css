@@ -60,6 +60,67 @@ tr.calc-enter {
     cursor: not-allowed !important;
 }
 
+/* ─── Floating Search Dropdown ─── */
+.co-search-dropdown {
+    position: fixed !important;
+    z-index: 9999 !important;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    display: none;
+    padding: 0;
+    margin: 0;
+}
+.co-search-dropdown .list-group-item {
+    font-size: 0.88rem;
+    padding: 8px 12px;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.co-search-dropdown .list-group-item:hover:not(.co-search-empty):not(.co-search-loading) {
+    background: #e8f0fe !important;
+}
+.co-search-dropdown .list-group-item.co-already-added {
+    background: #e9ecef !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Loading state */
+.co-search-loading {
+    text-align: center;
+    padding: 14px !important;
+    cursor: default !important;
+    color: #6c757d;
+}
+.co-search-loading .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* Empty / not-found state */
+.co-search-empty {
+    text-align: center;
+    padding: 18px 14px !important;
+    cursor: default !important;
+    color: #6c757d;
+}
+.co-search-empty i {
+    font-size: 1.6rem;
+    display: block;
+    margin-bottom: 4px;
+    opacity: 0.5;
+}
+
 /* ─── Mobile Stack (Plan §2.4) ─── */
 @media (max-width: 576px) {
     .dose-calc-inline .row > [class*="col-md-"] {
