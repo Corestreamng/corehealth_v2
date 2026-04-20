@@ -94,7 +94,6 @@
                     <thead class="bg-light">
                         <tr>
                             <th>Pay Period</th>
-                            <th>Basic Salary</th>
                             <th>Gross Salary</th>
                             <th>Deductions</th>
                             <th>Net Salary</th>
@@ -106,8 +105,7 @@
                         @forelse($payslips as $payslip)
                         <tr>
                             <td>{{ \Carbon\Carbon::parse($payslip->payrollBatch->pay_period_start ?? now())->format('F Y') }}</td>
-                            <td>₦{{ number_format($payslip->basic_salary, 2) }}</td>
-                            <td>₦{{ number_format($payslip->gross_salary, 2) }}</td>
+                            <td>₦{{ number_format($payslip->gross_salary, 2) }}<br><small class="text-muted">Basic: ₦{{ number_format($payslip->basic_salary, 2) }}</small></td>
                             <td>₦{{ number_format($payslip->total_deductions, 2) }}</td>
                             <td><strong>₦{{ number_format($payslip->net_salary, 2) }}</strong></td>
                             <td>
@@ -132,7 +130,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
+                            <td colspan="6" class="text-center py-4 text-muted">
                                 <i class="mdi mdi-alert-circle-outline" style="font-size: 2rem;"></i>
                                 <p class="mb-0">No payslips found</p>
                             </td>
