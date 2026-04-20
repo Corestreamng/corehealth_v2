@@ -1231,6 +1231,96 @@
                 </div>
             </li>
             @endcanany
+            @can('hr-staff-registry.view')
+            <li class="nav-item {{ request()->routeIs('hr.staff-registry.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hr.staff-registry.*') ? 'active' : '' }}" href="{{ route('hr.staff-registry.index') }}" id="sidebar-hr-staff-registry">
+                    <i class="mdi mdi-clipboard-list-outline menu-icon"></i>
+                    <span class="menu-title">Staff Registry</span>
+                </a>
+            </li>
+            @endcan
+            @canany(['hr-promotions.view', 'hr-qualifications.view', 'hr-trainings.view', 'hr-medical-exams.view', 'hr-follow-ups.view'])
+            <li class="nav-item {{ request()->routeIs('hr.promotions.*', 'hr.qualifications.*', 'hr.trainings.*', 'hr.medical-exams.*', 'hr.follow-ups.*') ? 'active' : '' }}">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-tracking" data-bs-target="#sidebar-hr-tracking" aria-expanded="{{ request()->routeIs('hr.promotions.*', 'hr.qualifications.*', 'hr.trainings.*', 'hr.medical-exams.*', 'hr.follow-ups.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-tracking" id="sidebar-hr-tracking-toggle">
+                    <i class="mdi mdi-account-clock-outline menu-icon"></i>
+                    <span class="menu-title">Staff Tracking</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('hr.promotions.*', 'hr.qualifications.*', 'hr.trainings.*', 'hr.medical-exams.*', 'hr.follow-ups.*') ? 'show' : '' }}" id="sidebar-hr-tracking">
+                    <ul class="nav flex-column sub-menu">
+                        @can('hr-promotions.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.promotions.*') ? 'active' : '' }}" href="{{ route('hr.promotions.index') }}" id="sidebar-hr-promotions">
+                                Promotions
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr-qualifications.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.qualifications.*') ? 'active' : '' }}" href="{{ route('hr.qualifications.index') }}" id="sidebar-hr-qualifications">
+                                Qualifications
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr-trainings.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.trainings.*') ? 'active' : '' }}" href="{{ route('hr.trainings.index') }}" id="sidebar-hr-trainings">
+                                Trainings
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr-medical-exams.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.medical-exams.*') ? 'active' : '' }}" href="{{ route('hr.medical-exams.index') }}" id="sidebar-hr-medical-exams">
+                                Medical Exams
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr-follow-ups.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.follow-ups.*') ? 'active' : '' }}" href="{{ route('hr.follow-ups.index') }}" id="sidebar-hr-follow-ups">
+                                Follow-ups
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </div>
+            </li>
+            @endcanany
+            @canany(['hr-units.view', 'hr-cadres.view', 'hr-grade-levels.view'])
+            <li class="nav-item {{ request()->routeIs('hr.units.*', 'hr.cadres.*', 'hr.grade-levels.*') ? 'active' : '' }}">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-config" data-bs-target="#sidebar-hr-config" aria-expanded="{{ request()->routeIs('hr.units.*', 'hr.cadres.*', 'hr.grade-levels.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-config" id="sidebar-hr-config-toggle">
+                    <i class="mdi mdi-cog-outline menu-icon"></i>
+                    <span class="menu-title">HR Configuration</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('hr.units.*', 'hr.cadres.*', 'hr.grade-levels.*') ? 'show' : '' }}" id="sidebar-hr-config">
+                    <ul class="nav flex-column sub-menu">
+                        @can('hr-units.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.units.*') ? 'active' : '' }}" href="{{ route('hr.units.index') }}" id="sidebar-hr-units">
+                                Units
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr-cadres.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.cadres.*') ? 'active' : '' }}" href="{{ route('hr.cadres.index') }}" id="sidebar-hr-cadres">
+                                Cadres
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr-grade-levels.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.grade-levels.*') ? 'active' : '' }}" href="{{ route('hr.grade-levels.index') }}" id="sidebar-hr-grade-levels">
+                                Grade Levels
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </div>
+            </li>
+            @endcanany
             @endhasanyrole
 
         </div>

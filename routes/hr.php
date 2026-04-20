@@ -17,6 +17,18 @@ use App\Http\Controllers\HR\SalaryProfileController;
 use App\Http\Controllers\HR\PayrollBatchController;
 use App\Http\Controllers\HR\HrWorkbenchController;
 use App\Http\Controllers\HR\EssController;
+use App\Http\Controllers\HR\UnitController;
+use App\Http\Controllers\HR\CadreController;
+use App\Http\Controllers\HR\GradeLevelController;
+use App\Http\Controllers\HR\StaffPromotionController;
+use App\Http\Controllers\HR\StaffQualificationController;
+use App\Http\Controllers\HR\StaffTrainingController;
+use App\Http\Controllers\HR\StaffMedicalExamController;
+use App\Http\Controllers\HR\StaffFollowUpController;
+use App\Http\Controllers\HR\StaffTrackingProfileController;
+use App\Http\Controllers\HR\TrackingCalendarController;
+use App\Http\Controllers\HR\StaffRegistryController;
+use App\Http\Controllers\HR\StaffMasterImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
@@ -27,6 +39,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
     Route::middleware(['permission:hr-workbench.access'])->group(function () {
         Route::get('/workbench', [HrWorkbenchController::class, 'index'])->name('workbench.index');
         Route::get('/workbench/stats', [HrWorkbenchController::class, 'stats'])->name('workbench.stats');
+        Route::get('/reports', [HrWorkbenchController::class, 'reports'])->name('reports.index');
     });
 
     // ===========================================
@@ -361,5 +374,98 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
             Route::get('/events', [EssController::class, 'teamCalendarEvents'])->name('events');
             Route::get('/on-leave', [EssController::class, 'teamOnLeave'])->name('on-leave');
         });
+    });
+
+    // ===========================================
+    // HR CONFIGURATION - Units, Cadres, Grade Levels
+    // ===========================================
+    Route::middleware(['permission:hr-units.view'])->prefix('units')->name('units.')->group(function () {
+        Route::get('/', [UnitController::class, 'index'])->name('index');
+        Route::post('/', [UnitController::class, 'store'])->name('store')->middleware('permission:hr-units.create');
+        Route::put('/{unit}', [UnitController::class, 'update'])->name('update')->middleware('permission:hr-units.edit');
+        Route::delete('/{unit}', [UnitController::class, 'destroy'])->name('destroy')->middleware('permission:hr-units.delete');
+        Route::get('/for-department', [UnitController::class, 'forDepartment'])->name('for-department');
+    });
+
+    Route::middleware(['permission:hr-cadres.view'])->prefix('cadres')->name('cadres.')->group(function () {
+        Route::get('/', [CadreController::class, 'index'])->name('index');
+        Route::post('/', [CadreController::class, 'store'])->name('store')->middleware('permission:hr-cadres.create');
+        Route::put('/{cadre}', [CadreController::class, 'update'])->name('update')->middleware('permission:hr-cadres.edit');
+        Route::delete('/{cadre}', [CadreController::class, 'destroy'])->name('destroy')->middleware('permission:hr-cadres.delete');
+    });
+
+    Route::middleware(['permission:hr-grade-levels.view'])->prefix('grade-levels')->name('grade-levels.')->group(function () {
+        Route::get('/', [GradeLevelController::class, 'index'])->name('index');
+        Route::post('/', [GradeLevelController::class, 'store'])->name('store')->middleware('permission:hr-grade-levels.create');
+        Route::put('/{gradeLevel}', [GradeLevelController::class, 'update'])->name('update')->middleware('permission:hr-grade-levels.edit');
+        Route::delete('/{gradeLevel}', [GradeLevelController::class, 'destroy'])->name('destroy')->middleware('permission:hr-grade-levels.delete');
+    });
+
+    // ===========================================
+    // HR OPERATIONAL TRACKING
+    // ===========================================
+    Route::middleware(['permission:hr-promotions.view'])->prefix('promotions')->name('promotions.')->group(function () {
+        Route::get('/', [StaffPromotionController::class, 'index'])->name('index');
+        Route::post('/', [StaffPromotionController::class, 'store'])->name('store')->middleware('permission:hr-promotions.create');
+        Route::get('/{promotion}', [StaffPromotionController::class, 'show'])->name('show');
+        Route::get('/staff/{staff}', [StaffPromotionController::class, 'staffHistory'])->name('staff-history');
+    });
+
+    Route::middleware(['permission:hr-qualifications.view'])->prefix('qualifications')->name('qualifications.')->group(function () {
+        Route::get('/', [StaffQualificationController::class, 'index'])->name('index');
+        Route::post('/', [StaffQualificationController::class, 'store'])->name('store');
+        Route::post('/{qualification}/verify', [StaffQualificationController::class, 'verify'])->name('verify')->middleware('permission:hr-qualifications.verify');
+        Route::delete('/{qualification}', [StaffQualificationController::class, 'destroy'])->name('destroy');
+        Route::get('/import-template', [StaffQualificationController::class, 'importTemplate'])->name('import-template');
+        Route::post('/import', [StaffQualificationController::class, 'import'])->name('import')->middleware('permission:hr-qualifications.verify');
+    });
+
+    Route::middleware(['permission:hr-trainings.view'])->prefix('trainings')->name('trainings.')->group(function () {
+        Route::get('/', [StaffTrainingController::class, 'index'])->name('index');
+        Route::post('/', [StaffTrainingController::class, 'store'])->name('store')->middleware('permission:hr-trainings.create');
+        Route::put('/{training}', [StaffTrainingController::class, 'update'])->name('update')->middleware('permission:hr-trainings.edit');
+        Route::delete('/{training}', [StaffTrainingController::class, 'destroy'])->name('destroy')->middleware('permission:hr-trainings.edit');
+        Route::get('/import-template', [StaffTrainingController::class, 'importTemplate'])->name('import-template');
+        Route::post('/import', [StaffTrainingController::class, 'import'])->name('import')->middleware('permission:hr-trainings.create');
+    });
+
+    Route::middleware(['permission:hr-medical-exams.view'])->prefix('medical-exams')->name('medical-exams.')->group(function () {
+        Route::get('/', [StaffMedicalExamController::class, 'index'])->name('index');
+        Route::post('/', [StaffMedicalExamController::class, 'store'])->name('store')->middleware('permission:hr-medical-exams.create');
+        Route::delete('/{medicalExam}', [StaffMedicalExamController::class, 'destroy'])->name('destroy')->middleware('permission:hr-medical-exams.create');
+    });
+
+    Route::middleware(['permission:hr-follow-ups.view'])->prefix('follow-ups')->name('follow-ups.')->group(function () {
+        Route::get('/', [StaffFollowUpController::class, 'index'])->name('index');
+        Route::post('/', [StaffFollowUpController::class, 'store'])->name('store')->middleware('permission:hr-follow-ups.create');
+        Route::post('/{followUp}/resolve', [StaffFollowUpController::class, 'resolve'])->name('resolve')->middleware('permission:hr-follow-ups.resolve');
+        Route::delete('/{followUp}', [StaffFollowUpController::class, 'destroy'])->name('destroy')->middleware('permission:hr-follow-ups.create');
+    });
+
+    // ===========================================
+    // STAFF TRACKING PROFILE (Unified per-staff view)
+    // ===========================================
+    Route::get('/tracking/staff/{staff}', [StaffTrackingProfileController::class, 'show'])->name('tracking.profile')->middleware('permission:hr-promotions.view');
+    Route::get('/tracking/calendar', [TrackingCalendarController::class, 'index'])->name('tracking.calendar')->middleware('permission:hr-medical-exams.view');
+    Route::get('/tracking/calendar/events', [TrackingCalendarController::class, 'events'])->name('tracking.calendar.events')->middleware('permission:hr-medical-exams.view');
+
+    // ===========================================
+    // STAFF REGISTRY (Spreadsheet View + Export)
+    // ===========================================
+    Route::middleware(['permission:hr-staff-registry.view'])->prefix('staff-registry')->name('staff-registry.')->group(function () {
+        Route::get('/', [StaffRegistryController::class, 'index'])->name('index');
+        Route::get('/data', [StaffRegistryController::class, 'data'])->name('data');
+        Route::get('/export', [StaffRegistryController::class, 'export'])->name('export')->middleware('permission:hr-staff-registry.export');
+        Route::get('/alerts', [StaffRegistryController::class, 'alerts'])->name('alerts');
+        Route::get('/staff/{staff}/detail', [StaffRegistryController::class, 'staffDetail'])->name('staff-detail');
+    });
+
+    // ===========================================
+    // MASTER STAFF IMPORT
+    // ===========================================
+    Route::middleware(['permission:hr-staff-registry.export'])->prefix('master-import')->name('master-import.')->group(function () {
+        Route::get('/', [StaffMasterImportController::class, 'showForm'])->name('index');
+        Route::get('/template', [StaffMasterImportController::class, 'importTemplate'])->name('template');
+        Route::post('/import', [StaffMasterImportController::class, 'import'])->name('import');
     });
 });
