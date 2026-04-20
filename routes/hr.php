@@ -408,6 +408,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         Route::get('/', [StaffPromotionController::class, 'index'])->name('index');
         Route::post('/', [StaffPromotionController::class, 'store'])->name('store')->middleware('permission:hr-promotions.create');
         Route::get('/{promotion}', [StaffPromotionController::class, 'show'])->name('show');
+        Route::delete('/{promotion}', [StaffPromotionController::class, 'destroy'])->name('destroy')->middleware('permission:hr-promotions.create');
         Route::get('/staff/{staff}', [StaffPromotionController::class, 'staffHistory'])->name('staff-history');
     });
 
@@ -432,12 +433,14 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
     Route::middleware(['permission:hr-medical-exams.view'])->prefix('medical-exams')->name('medical-exams.')->group(function () {
         Route::get('/', [StaffMedicalExamController::class, 'index'])->name('index');
         Route::post('/', [StaffMedicalExamController::class, 'store'])->name('store')->middleware('permission:hr-medical-exams.create');
+        Route::put('/{medicalExam}', [StaffMedicalExamController::class, 'update'])->name('update')->middleware('permission:hr-medical-exams.create');
         Route::delete('/{medicalExam}', [StaffMedicalExamController::class, 'destroy'])->name('destroy')->middleware('permission:hr-medical-exams.create');
     });
 
     Route::middleware(['permission:hr-follow-ups.view'])->prefix('follow-ups')->name('follow-ups.')->group(function () {
         Route::get('/', [StaffFollowUpController::class, 'index'])->name('index');
         Route::post('/', [StaffFollowUpController::class, 'store'])->name('store')->middleware('permission:hr-follow-ups.create');
+        Route::post('/{followUp}/start', [StaffFollowUpController::class, 'start'])->name('start')->middleware('permission:hr-follow-ups.resolve');
         Route::post('/{followUp}/resolve', [StaffFollowUpController::class, 'resolve'])->name('resolve')->middleware('permission:hr-follow-ups.resolve');
         Route::delete('/{followUp}', [StaffFollowUpController::class, 'destroy'])->name('destroy')->middleware('permission:hr-follow-ups.create');
     });

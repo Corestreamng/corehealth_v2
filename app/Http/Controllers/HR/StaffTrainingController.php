@@ -59,10 +59,20 @@ class StaffTrainingController extends Controller
                 })
                 ->addColumn('action', function ($t) {
                     $html = '';
+                    // Status transition buttons
+                    if ($t->status === 'planned') {
+                        $html .= '<button class="btn btn-sm btn-outline-warning status-btn" data-url="' . route('hr.trainings.update', $t) . '" data-status="in_progress" title="Start"><i class="mdi mdi-play-circle"></i></button> ';
+                    }
+                    if ($t->status === 'in_progress') {
+                        $html .= '<button class="btn btn-sm btn-outline-success status-btn" data-url="' . route('hr.trainings.update', $t) . '" data-status="completed" title="Complete"><i class="mdi mdi-check-circle"></i></button> ';
+                    }
+                    if (in_array($t->status, ['planned', 'in_progress'])) {
+                        $html .= '<button class="btn btn-sm btn-outline-secondary status-btn" data-url="' . route('hr.trainings.update', $t) . '" data-status="cancelled" title="Cancel"><i class="mdi mdi-close-circle"></i></button> ';
+                    }
                     if ($t->certificate_path) {
                         $html .= '<a href="' . Storage::url($t->certificate_path) . '" target="_blank" class="btn btn-sm btn-outline-info" title="Certificate"><i class="mdi mdi-file-certificate"></i></a> ';
                     }
-                    $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.trainings.destroy', $t) . '"><i class="mdi mdi-delete"></i></button>';
+                    $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.trainings.destroy', $t) . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
                     return $html;
                 })
                 ->rawColumns(['staff_name', 'training_col', 'institution_col', 'status_col', 'action'])

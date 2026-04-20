@@ -165,7 +165,6 @@
 </div>
 @endsection
 @section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
 <script>
 $(function(){
     var scopedStaffId = @json($scopedStaff?->id);
@@ -214,6 +213,17 @@ $(function(){
             success: function(res) { toastr.success(res.message || 'Follow-up created'); $('#followUpModal').modal('hide'); table.ajax.reload(); },
             error: function(xhr) { var msg = xhr.responseJSON?.message || 'Something went wrong'; if(xhr.responseJSON?.errors) msg = Object.values(xhr.responseJSON.errors).flat().join('<br>'); toastr.error(msg); },
             complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i> Create'); }
+        });
+    });
+
+    // AJAX start progress
+    $(document).on('click', '.start-btn', function() {
+        if(!confirm('Mark this follow-up as in progress?')) return;
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: $(this).data('url'), type: 'POST', headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(res) { toastr.success(res.message || 'Marked as in progress'); table.ajax.reload(); },
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Action failed'); $btn.prop('disabled', false); }
         });
     });
 
