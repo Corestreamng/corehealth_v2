@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Clinic;
 use App\Models\Department;
+use App\Models\HR\Cadre;
+use App\Models\HR\GradeLevel;
+use App\Models\HR\Unit;
 use App\Models\Specialization;
 use App\Models\Staff;
 use App\Models\User;
@@ -365,8 +368,11 @@ class StaffController extends Controller
         $clinics = Clinic::pluck('name', 'id')->all();
         $permissions = Permission::pluck('name', 'id')->all();
         $departments = Department::active()->ordered()->get();
+        $cadres = Cadre::active()->ordered()->get();
+        $gradeLevels = GradeLevel::active()->ordered()->get();
+        $units = Unit::active()->ordered()->get();
 
-        return view('admin.staff.create', compact('roles', 'statuses', 'permissions', 'specializations', 'clinics', 'departments'));
+        return view('admin.staff.create', compact('roles', 'statuses', 'permissions', 'specializations', 'clinics', 'departments', 'cadres', 'gradeLevels', 'units'));
     }
 
     /**
@@ -581,6 +587,24 @@ class StaffController extends Controller
                 $staff->tax_id = $request->tax_id ?: null;
                 $staff->pension_id = $request->pension_id ?: null;
 
+                // HR Enhancement fields
+                $staff->unit_id = $request->unit_id ?: null;
+                $staff->cadre_id = $request->cadre_id ?: null;
+                $staff->grade_level_id = $request->grade_level_id ?: null;
+                $staff->entry_grade_level_id = $request->entry_grade_level_id ?: null;
+                $staff->license_number = $request->license_number ?: null;
+                $staff->license_expiry_date = $request->license_expiry_date ?: null;
+                $staff->national_id_number = $request->national_id_number ?: null;
+                $staff->job_location = $request->job_location ?: null;
+                $staff->responsibility = $request->responsibility ?: null;
+                $staff->marital_status = $request->marital_status ?: null;
+                $staff->number_of_children = $request->number_of_children ?: null;
+                $staff->permanent_home_address = $request->permanent_home_address ?: null;
+                $staff->other_talents = $request->other_talents ?: null;
+                $staff->date_confirmed = $request->date_confirmed ?: null;
+                $staff->confirmation_due_date = $request->confirmation_due_date ?: null;
+                $staff->hr_notes = $request->hr_notes ?: null;
+
                 if ($staff->save()) {
                     if (appsettings('goonline', 0) == 1) {
                         // Send to CoreHealth SuperAdmin
@@ -671,10 +695,11 @@ class StaffController extends Controller
         $userPermission = $user->permissions->pluck('name', 'name')->all();
         $clinics = Clinic::pluck('name', 'id')->all();
         $departments = Department::active()->ordered()->get();
+        $cadres = Cadre::active()->ordered()->get();
+        $gradeLevels = GradeLevel::active()->ordered()->get();
+        $units = Unit::active()->ordered()->get();
 
-        // dd($userRole);
-
-        return view('admin.staff.edit', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission', 'specializations', 'clinics', 'departments'));
+        return view('admin.staff.edit', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission', 'specializations', 'clinics', 'departments', 'cadres', 'gradeLevels', 'units'));
     }
 
     /**
@@ -869,6 +894,24 @@ class StaffController extends Controller
                 // Tax & pension
                 $staff->tax_id = $request->tax_id ?: ($staff->tax_id ?? null);
                 $staff->pension_id = $request->pension_id ?: ($staff->pension_id ?? null);
+
+                // HR Enhancement fields
+                $staff->unit_id = $request->unit_id ?: ($staff->unit_id ?? null);
+                $staff->cadre_id = $request->cadre_id ?: ($staff->cadre_id ?? null);
+                $staff->grade_level_id = $request->grade_level_id ?: ($staff->grade_level_id ?? null);
+                $staff->entry_grade_level_id = $request->entry_grade_level_id ?: ($staff->entry_grade_level_id ?? null);
+                $staff->license_number = $request->license_number ?: ($staff->license_number ?? null);
+                $staff->license_expiry_date = $request->license_expiry_date ?: ($staff->license_expiry_date ?? null);
+                $staff->national_id_number = $request->national_id_number ?: ($staff->national_id_number ?? null);
+                $staff->job_location = $request->job_location ?: ($staff->job_location ?? null);
+                $staff->responsibility = $request->responsibility ?: ($staff->responsibility ?? null);
+                $staff->marital_status = $request->marital_status ?: ($staff->marital_status ?? null);
+                $staff->number_of_children = $request->number_of_children ?: ($staff->number_of_children ?? null);
+                $staff->permanent_home_address = $request->permanent_home_address ?: ($staff->permanent_home_address ?? null);
+                $staff->other_talents = $request->other_talents ?: ($staff->other_talents ?? null);
+                $staff->date_confirmed = $request->date_confirmed ?: ($staff->date_confirmed ?? null);
+                $staff->confirmation_due_date = $request->confirmation_due_date ?: ($staff->confirmation_due_date ?? null);
+                $staff->hr_notes = $request->hr_notes ?: ($staff->hr_notes ?? null);
 
                 if ($staff->save()) {
                     // Send User an email with set password link
