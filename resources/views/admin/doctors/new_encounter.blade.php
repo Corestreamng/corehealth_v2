@@ -1629,9 +1629,12 @@
                             rowId: rowId
                         }) + '<input type="hidden" name="consult_presc_id[]" value="' + id + '"></td>';
                     } else {
+                        var simpleDoseCmd = "ClinicalOrdersKit.debouncedUpdate({url:'/encounters/" + encounterId + "/prescriptions/" + recordId + "/dose'," +
+                            "payload:{dose:this.value},csrfToken:'" + csrfToken + "',flashTarget:this.closest('td')})";
                         doseCell = '<td><input type="text" class="form-control" name="consult_presc_dose[]" ' +
-                            'onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/prescriptions/' + recordId + '/dose\',' +
-                            'payload:{dose:this.value},csrfToken:\'' + csrfToken + '\'})" required>' +
+                            'placeholder="e.g. 500mg BD x 5days" ' +
+                            'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
+                            'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + simpleDoseCmd + ' }, 3000)" required>' +
                             '<input type="hidden" name="consult_presc_id[]" value="' + id + '"></td>';
                     }
 
@@ -1639,7 +1642,7 @@
                         '<td>' + name + coverageBadge + '</td>' +
                         '<td>' + (payable ?? price) + '</td>' +
                         doseCell +
-                        '<td><button class="btn btn-danger btn-sm" onclick="removeProdRow(this)"><i class="fa fa-times"></i></button></td>' +
+                        '<td><button class="btn btn-danger btn-sm" onclick="removeProdRow(this)"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                     '</tr>';
                 },
                 onSuccess: function(resp) {
@@ -1736,14 +1739,13 @@
                         '<td>' + name + coverageBadge + '</td>' +
                         '<td>' + (payable ?? price) + '</td>' +
                         '<td>' +
-                            '<input type="text" class="form-control" name="consult_invest_note[]" onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\'})">' +
+                            '<input type="text" class="form-control" name="consult_invest_note[]" placeholder="e.g. Fasting, urgent, repeat in 2wks" ' +
+                            'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\',flashTarget:this.closest(\'td\')})" ' +
+                            'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
                             '<input type="hidden" name="consult_invest_id[]" value="' + id + '">' +
                         '</td>' +
-                        '<td><button class="btn btn-danger" onclick="removeProdRow(this)">x</button></td>' +
+                        '<td><button class="btn btn-danger btn-sm" onclick="removeProdRow(this)"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                     '</tr>';
-                },
-                onSuccess: function(resp) {
-                    if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
                         $('#investigation_history_list').DataTable().ajax.reload(null, false);
                     }
                 }
@@ -1768,10 +1770,12 @@
                         '<td>' + name + coverageBadge + '</td>' +
                         '<td>' + (payable ?? price) + '</td>' +
                         '<td>' +
-                            '<input type="text" class="form-control" name="consult_imaging_note[]" onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\'})">' +
+                            '<input type="text" class="form-control" name="consult_imaging_note[]" placeholder="e.g. R/O fracture, contrast required" ' +
+                            'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\',flashTarget:this.closest(\'td\')})" ' +
+                            'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
                             '<input type="hidden" name="consult_imaging_id[]" value="' + id + '">' +
                         '</td>' +
-                        '<td><button class="btn btn-danger" onclick="removeProdRow(this)">x</button></td>' +
+                        '<td><button class="btn btn-danger btn-sm" onclick="removeProdRow(this)"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                     '</tr>';
                 },
                 onSuccess: function(resp) {
@@ -3391,11 +3395,13 @@
 
         // Phase 2b (Plan §4.3): Register debounced dose auto-save for medications
         // When any structured dose field changes → updateDoseValue fires → triggers this handler
-        ClinicalOrdersKit.onDoseUpdate('', function(recordId, doseValue) {
+        ClinicalOrdersKit.onDoseUpdate('', function(recordId, doseValue, flashEl) {
             ClinicalOrdersKit.debouncedUpdate({
                 url: '/encounters/' + encounterId + '/prescriptions/' + recordId + '/dose',
                 payload: { dose: doseValue },
-                csrfToken: $('meta[name="csrf-token"]').attr('content')
+                csrfToken: $('meta[name="csrf-token"]').attr('content'),
+                flashTarget: flashEl,
+                onSuccess: function() { $('#presc_history_list').DataTable().ajax.reload(null, false); }
             });
         });
 

@@ -5219,7 +5219,7 @@
                                             </div>
                                             <div class="table-responsive mt-3">
                                                 <table class="table table-sm table-bordered table-striped">
-                                                    <thead><th>Name</th><th>Price</th><th>Dose / Frequency</th><th>*</th></thead>
+                                                    <thead><th>Drug / Product</th><th>Price</th><th>Dose / Frequency</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></thead>
                                                     <tbody id="cr-selected-products"></tbody>
                                                 </table>
                                             </div>
@@ -5277,8 +5277,7 @@
                                             </div>
                                             <div class="table-responsive mt-3">
                                                 <table class="table table-sm table-bordered table-striped">
-                                                    <thead><th>Name</th><th>Price</th><th>Notes</th><th>*</th></thead>
-                                                    <tbody id="cr-selected-labs"></tbody>
+                                                    <thead><th>Lab Test</th><th>Price</th><th>Clinical Notes</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></thead>
                                                 </table>
                                             </div>
                                             {{-- Phase 2d (Plan §4.5): Auto-save status — labs save on add --}}
@@ -5335,8 +5334,7 @@
                                             </div>
                                             <div class="table-responsive mt-3">
                                                 <table class="table table-sm table-bordered table-striped">
-                                                    <thead><th>Name</th><th>Price</th><th>Notes</th><th>*</th></thead>
-                                                    <tbody id="cr-selected-imaging"></tbody>
+                                                    <thead><th>Imaging Study</th><th>Price</th><th>Clinical Notes</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></thead>
                                                 </table>
                                             </div>
                                             {{-- Phase 2d (Plan §4.5): Auto-save status — imaging saves on add --}}
@@ -5421,7 +5419,7 @@
                                             </div>
                                             <div class="table-responsive">
                                                 <table class="table table-sm table-bordered table-striped">
-                                                    <thead><tr><th>Procedure</th><th>Price</th><th>Priority</th><th>*</th></tr></thead>
+                                                    <thead><tr><th>Procedure</th><th>Price</th><th>Priority</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></tr></thead>
                                                     <tbody id="cr-selected-procedures"></tbody>
                                                 </table>
                                             </div>
@@ -8334,11 +8332,13 @@ const ClinicalRequests = (function() {
                 crDoseStructuredMode = nurseDoseState.isStructured;
 
                 // Phase 2b (Plan §4.3): Register debounced dose auto-save for medications
-                ClinicalOrdersKit.onDoseUpdate('cr-', function(recordId, doseValue) {
+                ClinicalOrdersKit.onDoseUpdate('cr-', function(recordId, doseValue, flashEl) {
                     ClinicalOrdersKit.debouncedUpdate({
                         url: '/nursing-workbench/clinical-requests/prescriptions/' + recordId + '/dose',
                         payload: { dose: doseValue },
-                        csrfToken: CSRF_TOKEN
+                        csrfToken: CSRF_TOKEN,
+                        flashTarget: flashEl,
+                        onSuccess: function() { initPrescHistory(); }
                     });
                 });
 
@@ -8703,10 +8703,12 @@ const ClinicalRequests = (function() {
                         rowId: rowId
                     }) + '<input type="hidden" name="cr_presc_id[]" value="' + id + '"></td>';
                 } else {
+                    var simpleDoseCmd = "ClinicalOrdersKit.debouncedUpdate({url:'/nursing-workbench/clinical-requests/prescriptions/" + recordId + "/dose'," +
+                        "payload:{dose:this.value},csrfToken:'" + CSRF_TOKEN + "',flashTarget:this.closest('td')})";
                     doseCell = '<td><input type="text" class="form-control form-control-sm" name="cr_presc_dose[]" ' +
                         'placeholder="e.g. 500mg BD x 5days" ' +
-                        'onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/prescriptions/' + recordId + '/dose\',' +
-                        'payload:{dose:this.value},csrfToken:\'' + CSRF_TOKEN + '\'})" required>' +
+                        'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
+                        'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + simpleDoseCmd + ' }, 3000)" required>' +
                         '<input type="hidden" name="cr_presc_id[]" value="' + id + '"></td>';
                 }
 
@@ -8714,7 +8716,7 @@ const ClinicalRequests = (function() {
                     '<td>' + name + coverageBadge + '</td>' +
                     '<td>' + (payable ?? price) + '</td>' +
                     doseCell +
-                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'prescription\',' + recordId + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'prescription\',' + recordId + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                 '</tr>';
             },
             onSuccess: function(resp) {
@@ -8747,8 +8749,11 @@ const ClinicalRequests = (function() {
                 return '<tr data-record-id="' + response.id + '" data-record-type="lab" data-service-id="' + id + '">' +
                     '<td>' + name + coverageBadge + '</td>' +
                     '<td>' + (payable ?? price) + '</td>' +
-                    '<td><input type="text" class="form-control form-control-sm" name="cr_lab_note[]" placeholder="Clinical notes..." onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\'})"><input type="hidden" name="cr_lab_id[]" value="' + id + '"></td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'lab\',' + response.id + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                    '<td><input type="text" class="form-control form-control-sm" name="cr_lab_note[]" placeholder="e.g. Fasting, urgent, repeat in 2wks" ' +
+                    'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\',flashTarget:this.closest(\'td\')})" ' +
+                    'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
+                    '<input type="hidden" name="cr_lab_id[]" value="' + id + '"></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'lab\',' + response.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                 '</tr>';
             },
             onSuccess: function(resp) {
@@ -8775,8 +8780,11 @@ const ClinicalRequests = (function() {
                 return '<tr data-record-id="' + response.id + '" data-record-type="imaging" data-service-id="' + id + '">' +
                     '<td>' + name + coverageBadge + '</td>' +
                     '<td>' + (payable ?? price) + '</td>' +
-                    '<td><input type="text" class="form-control form-control-sm" name="cr_imaging_note[]" placeholder="Clinical notes..." onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\'})"><input type="hidden" name="cr_imaging_id[]" value="' + id + '"></td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'imaging\',' + response.id + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                    '<td><input type="text" class="form-control form-control-sm" name="cr_imaging_note[]" placeholder="e.g. R/O fracture, contrast required" ' +
+                    'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\',flashTarget:this.closest(\'td\')})" ' +
+                    'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
+                    '<input type="hidden" name="cr_imaging_id[]" value="' + id + '"></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'imaging\',' + response.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                 '</tr>';
             },
             onSuccess: function(resp) {
@@ -8823,7 +8831,7 @@ const ClinicalRequests = (function() {
                     '<td>NGN ' + payable + '</td>' +
                     '<td><span class="badge ' + priorityClass + '">' + priorityLabel + '</span>' +
                     (scheduledDate ? '<br><small>' + scheduledDate + '</small>' : '') + '</td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + procId + ')"><i class="fa fa-times"></i></button></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + procId + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                 '</tr>';
             },
             onSuccess: function() {
@@ -8854,7 +8862,7 @@ const ClinicalRequests = (function() {
                     <td><strong>${p.service_name || 'N/A'}</strong><br><small class="text-muted">${p.service_code || ''}</small>${p.pre_notes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + p.pre_notes.substring(0, 60) + '</small>' : ''}</td>
                     <td>NGN ${payable}</td>
                     <td><span class="badge ${priorityClass}">${p.priority}</span>${p.scheduled_date ? '<br><small>' + p.scheduled_date + '</small>' : ''}</td>
-                    <td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeProcedure(${p.id})"><i class="fa fa-times"></i></button></td>
+                    <td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeProcedure(${p.id})"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>
                 </tr>
             `);
         });

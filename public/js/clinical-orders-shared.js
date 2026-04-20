@@ -122,20 +122,30 @@ window.ClinicalOrdersKit = (function ($) {
 
         var rowIdAttr = cfg.rowId ? ' data-row-id="' + cfg.rowId + '"' : '';
 
+        // blur = immediate save; input = 3s idle save
+        var blurAttr  = 'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + oc + '"';
+        var idleAttr  = 'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + oc + ' }, 3000)"';
+        // selects fire on change (no typing), treat like blur
+        var selAttr   = 'onchange="ClinicalOrdersKit.cancelIdleTimer(this); ' + oc + '"';
+
         return '<div class="' + wrapCls + '"' + rowIdAttr + '>' +
             '<div class="row g-1 mb-1">' +
                 '<div class="col-4">' +
-                    '<input type="number" class="form-control form-control-sm ' + amtCls + '" placeholder="Amt" min="0" step="0.01" onchange="' + oc + '">' +
+                    '<span class="co-field-label">Amount</span>' +
+                    '<input type="number" class="form-control form-control-sm ' + amtCls + '" placeholder="e.g. 500" min="0" step="0.01" ' + blurAttr + ' ' + idleAttr + '>' +
+                    '<span class="co-field-hint">e.g. 500, 1.5</span>' +
                 '</div>' +
                 '<div class="col-4">' +
-                    '<select class="form-select form-select-sm ' + unitCls + '" onchange="' + oc + '">' +
+                    '<span class="co-field-label">Unit</span>' +
+                    '<select class="form-select form-select-sm ' + unitCls + '" ' + selAttr + '>' +
                         '<option value="mg">mg</option><option value="g">g</option><option value="ml">ml</option>' +
                         '<option value="IU">IU</option><option value="mcg">mcg</option><option value="units">units</option>' +
                         '<option value="drops">drops</option><option value="puffs">puffs</option>' +
                     '</select>' +
                 '</div>' +
                 '<div class="col-4">' +
-                    '<select class="form-select form-select-sm ' + routeCls + '" onchange="' + oc + '">' +
+                    '<span class="co-field-label">Route</span>' +
+                    '<select class="form-select form-select-sm ' + routeCls + '" ' + selAttr + '>' +
                         '<option value="PO">PO (Oral)</option><option value="IV">IV</option><option value="IM">IM</option>' +
                         '<option value="SC">SC</option><option value="SL">SL</option><option value="PR">PR</option>' +
                         '<option value="INH">INH (Inhaled)</option><option value="TOP">Topical</option>' +
@@ -145,7 +155,8 @@ window.ClinicalOrdersKit = (function ($) {
             '</div>' +
             '<div class="row g-1">' +
                 '<div class="col-4">' +
-                    '<select class="form-select form-select-sm ' + freqCls + '" onchange="' + oc + '">' +
+                    '<span class="co-field-label">Frequency</span>' +
+                    '<select class="form-select form-select-sm ' + freqCls + '" ' + selAttr + '>' +
                         '<option value="OD">OD (once daily)</option><option value="BD">BD (twice daily)</option>' +
                         '<option value="TDS">TDS (3x daily)</option><option value="QID">QID (4x daily)</option>' +
                         '<option value="Q4H">Q4H</option><option value="Q6H">Q6H</option><option value="Q8H">Q8H</option>' +
@@ -153,18 +164,21 @@ window.ClinicalOrdersKit = (function ($) {
                     '</select>' +
                 '</div>' +
                 '<div class="col-4">' +
+                    '<span class="co-field-label">Duration</span>' +
                     '<div class="input-group input-group-sm">' +
-                        '<input type="number" class="form-control ' + durCls + '" placeholder="Dur" min="1" value="5" onchange="' + oc + '">' +
-                        '<select class="form-select ' + durUCls + '" style="max-width:70px;" onchange="' + oc + '">' +
+                        '<input type="number" class="form-control ' + durCls + '" placeholder="e.g. 5" min="1" ' + blurAttr + ' ' + idleAttr + '>' +
+                        '<select class="form-select ' + durUCls + '" style="max-width:70px;" ' + selAttr + '>' +
                             '<option value="days">d</option><option value="weeks">w</option><option value="months">m</option>' +
                         '</select>' +
                     '</div>' +
+                    '<span class="co-field-hint">e.g. 5 days</span>' +
                 '</div>' +
                 '<div class="col-4">' +
+                    '<span class="co-field-label">Qty to dispense</span>' +
                     '<div class="input-group input-group-sm">' +
-                        '<span class="input-group-text" style="font-size:0.75em;">Qty</span>' +
-                        '<input type="number" class="form-control ' + qtyCls + '" placeholder="Qty" min="1">' +
+                        '<input type="number" class="form-control ' + qtyCls + '" placeholder="e.g. 10" min="1" ' + blurAttr + ' ' + idleAttr + '>' +
                     '</div>' +
+                    '<span class="co-field-hint">auto-calculated</span>' +
                 '</div>' +
             '</div>' +
             // Per-drug calculator button (Plan §2.3)
@@ -173,6 +187,43 @@ window.ClinicalOrdersKit = (function ($) {
                 '<i class="fa fa-calculator"></i> Calculator</button>' : '') +
             '<input type="hidden" name="' + hiddenName + '" class="' + hiddenCls + '" value="">' +
         '</div>';
+    }
+
+    /* ─── Idle-timer helpers (blur = immediate, idle 3s = auto-save) ─── */
+    var _idleTimers = {};
+
+    /**
+     * Schedule a callback after `ms` milliseconds of idle on a field.
+     * Each element gets its own timer key so they don't clobber each other.
+     */
+    function scheduleIdleUpdate(el, fn, ms) {
+        var key = _idleKey(el);
+        if (_idleTimers[key]) clearTimeout(_idleTimers[key]);
+        _idleTimers[key] = setTimeout(function () {
+            delete _idleTimers[key];
+            fn.call(el);
+        }, ms || 3000);
+    }
+
+    /**
+     * Cancel any pending idle timer for an element (called on blur before immediate fire).
+     */
+    function cancelIdleTimer(el) {
+        var key = _idleKey(el);
+        if (_idleTimers[key]) {
+            clearTimeout(_idleTimers[key]);
+            delete _idleTimers[key];
+        }
+    }
+
+    function _idleKey(el) {
+        // Use the closest tr's record-id + field class for uniqueness
+        var $el = $(el);
+        var rowId = $el.closest('tr').attr('data-record-id') || '0';
+        var cls = (el.className || '').split(/\s+/).filter(function(c) {
+            return /dose|freq|dur|route|unit|amt|qty|note/.test(c);
+        })[0] || el.name || 'field';
+        return rowId + ':' + cls;
     }
 
     /**
@@ -210,7 +261,11 @@ window.ClinicalOrdersKit = (function ($) {
         var wrapSel = p ? '.cr-structured-dose' : '.structured-dose';
         var $row = $(el).closest(wrapSel);
 
-        autoCalculateQty($row, p);
+        // Only auto-calc qty when the changed field is NOT the qty field itself
+        var qtySel  = p ? '.cr-dose-qty' : '.dose-qty';
+        if (!$(el).hasClass(qtySel.substring(1))) {
+            autoCalculateQty($row, p);
+        }
 
         var amtSel     = p ? '.cr-dose-amount' : '.dose-amount';
         var unitSel    = p ? '.cr-dose-unit' : '.dose-unit';
@@ -242,7 +297,7 @@ window.ClinicalOrdersKit = (function ($) {
         var $tr = $row.closest('tr');
         var recordId = $tr.attr('data-record-id');
         if (recordId && _doseUpdateHandlers[p]) {
-            _doseUpdateHandlers[p](recordId, parts.join(' | '));
+            _doseUpdateHandlers[p](recordId, parts.join(' | '), $row[0]);
         }
     }
 
@@ -745,6 +800,7 @@ window.ClinicalOrdersKit = (function ($) {
         var key = config.url;
         if (_noteTimers[key]) clearTimeout(_noteTimers[key]);
         _noteTimers[key] = setTimeout(function () {
+            if (config.flashTarget) _showSaveState(config.flashTarget, 'saving');
             config.payload._token = config.csrfToken;
             config.payload._method = 'PUT';
             $.ajax({
@@ -752,11 +808,38 @@ window.ClinicalOrdersKit = (function ($) {
                 method: 'POST', // laravel method spoofing
                 data: config.payload,
                 success: function (response) {
+                    if (config.flashTarget) _showSaveState(config.flashTarget, 'saved');
                     if (config.onSuccess) config.onSuccess(response);
                 },
-                error: function () { /* silent fail for debounced updates */ }
+                error: function () {
+                    if (config.flashTarget) _showSaveState(config.flashTarget, 'error');
+                }
             });
         }, 800);
+    }
+
+    /**
+     * Show a subtle save-state indicator inside a target element.
+     * @param {HTMLElement|jQuery|string} target
+     * @param {'saving'|'saved'|'error'} state
+     */
+    function _showSaveState(target, state) {
+        var $t = $(target);
+        if (!$t.length) return;
+        var $ind = $t.children('.co-save-indicator');
+        if (!$ind.length) {
+            $ind = $('<span class="co-save-indicator"></span>').appendTo($t);
+        }
+        $ind.stop(true, true).removeClass('co-saving co-saved co-error');
+        if (state === 'saving') {
+            $ind.addClass('co-saving').html('\u23F3 Saving\u2026');
+        } else if (state === 'saved') {
+            $ind.addClass('co-saved').html('\u2713 Saved');
+            setTimeout(function () { $ind.removeClass('co-saved'); }, 2000);
+        } else if (state === 'error') {
+            $ind.addClass('co-error').html('\u26A0 Save failed');
+            setTimeout(function () { $ind.removeClass('co-error'); }, 3000);
+        }
     }
 
     /* ═══════════════════════════════════════════
@@ -1497,6 +1580,8 @@ window.ClinicalOrdersKit = (function ($) {
         autoCalculateQty: autoCalculateQty,
         collapseStructuredDose: collapseStructuredDose,
         onDoseUpdate: onDoseUpdate,
+        scheduleIdleUpdate: scheduleIdleUpdate,
+        cancelIdleTimer: cancelIdleTimer,
 
         // Dose mode toggle
         initDoseModeToggle: initDoseModeToggle,
