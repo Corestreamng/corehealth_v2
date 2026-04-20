@@ -5215,7 +5215,7 @@
                                                 <label>Search drugs/products</label>
                                                 <input type="text" class="form-control" id="cr_presc_search"
                                                     placeholder="Type to search products..." autocomplete="off">
-                                                <ul class="list-group" id="cr_presc_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                                <ul class="list-group co-search-dropdown" id="cr_presc_results"></ul>
                                             </div>
                                             <div class="table-responsive mt-3">
                                                 <table class="table table-sm table-bordered table-striped">
@@ -5273,7 +5273,7 @@
                                                 <label>Search lab services</label>
                                                 <input type="text" class="form-control" id="cr_lab_search"
                                                     placeholder="Type to search lab services..." autocomplete="off">
-                                                <ul class="list-group" id="cr_lab_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                                <ul class="list-group co-search-dropdown" id="cr_lab_results"></ul>
                                             </div>
                                             <div class="table-responsive mt-3">
                                                 <table class="table table-sm table-bordered table-striped">
@@ -5331,7 +5331,7 @@
                                                 <label>Search imaging services</label>
                                                 <input type="text" class="form-control" id="cr_imaging_search"
                                                     placeholder="Type to search imaging services..." autocomplete="off">
-                                                <ul class="list-group" id="cr_imaging_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                                <ul class="list-group co-search-dropdown" id="cr_imaging_results"></ul>
                                             </div>
                                             <div class="table-responsive mt-3">
                                                 <table class="table table-sm table-bordered table-striped">
@@ -5395,7 +5395,7 @@
                                                         <label><i class="fa fa-search"></i> Search Procedure</label>
                                                         <input type="text" class="form-control" id="cr_proc_search"
                                                             placeholder="Search procedures..." autocomplete="off">
-                                                        <ul class="list-group" id="cr_proc_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                                        <ul class="list-group co-search-dropdown" id="cr_proc_results"></ul>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3">
@@ -8519,11 +8519,19 @@ const ClinicalRequests = (function() {
             $btn.prop('disabled', true).html('<i class="fa fa-check text-success"></i> Added');
         });
 
+        // Initialize floating dropdowns (escape overflow:hidden ancestors)
+        ClinicalOrdersKit.initSearchDropdown('#cr_presc_search', '#cr_presc_results');
+        ClinicalOrdersKit.initSearchDropdown('#cr_lab_search', '#cr_lab_results');
+        ClinicalOrdersKit.initSearchDropdown('#cr_imaging_search', '#cr_imaging_results');
+        ClinicalOrdersKit.initSearchDropdown('#cr_proc_search', '#cr_proc_results');
+
         // Drug search
         $('#cr_presc_search').on('keyup', function() {
             const q = $(this).val();
             clearTimeout(searchTimeout);
             if (q.length < 2) { $('#cr_presc_results').hide(); return; }
+            ClinicalOrdersKit.positionDropdown('#cr_presc_search', '#cr_presc_results');
+            ClinicalOrdersKit.showSearchLoading('#cr_presc_results');
             searchTimeout = setTimeout(() => searchProducts(q), 300);
         });
 
@@ -8532,6 +8540,8 @@ const ClinicalRequests = (function() {
             const q = $(this).val();
             clearTimeout(searchTimeout);
             if (q.length < 2) { $('#cr_lab_results').hide(); return; }
+            ClinicalOrdersKit.positionDropdown('#cr_lab_search', '#cr_lab_results');
+            ClinicalOrdersKit.showSearchLoading('#cr_lab_results');
             searchTimeout = setTimeout(() => searchLabServices(q), 300);
         });
 
@@ -8540,6 +8550,8 @@ const ClinicalRequests = (function() {
             const q = $(this).val();
             clearTimeout(searchTimeout);
             if (q.length < 2) { $('#cr_imaging_results').hide(); return; }
+            ClinicalOrdersKit.positionDropdown('#cr_imaging_search', '#cr_imaging_results');
+            ClinicalOrdersKit.showSearchLoading('#cr_imaging_results');
             searchTimeout = setTimeout(() => searchImagingServices(q), 300);
         });
 
@@ -8548,15 +8560,9 @@ const ClinicalRequests = (function() {
             const q = $(this).val();
             clearTimeout(searchTimeout);
             if (q.length < 2) { $('#cr_proc_results').hide(); return; }
+            ClinicalOrdersKit.positionDropdown('#cr_proc_search', '#cr_proc_results');
+            ClinicalOrdersKit.showSearchLoading('#cr_proc_results');
             searchTimeout = setTimeout(() => searchProcedureServices(q), 300);
-        });
-
-        // Close dropdowns on click outside
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('#cr_presc_search, #cr_presc_results').length) $('#cr_presc_results').hide();
-            if (!$(e.target).closest('#cr_lab_search, #cr_lab_results').length) $('#cr_lab_results').hide();
-            if (!$(e.target).closest('#cr_imaging_search, #cr_imaging_results').length) $('#cr_imaging_results').hide();
-            if (!$(e.target).closest('#cr_proc_search, #cr_proc_results').length) $('#cr_proc_results').hide();
         });
     }
 
@@ -8564,7 +8570,7 @@ const ClinicalRequests = (function() {
     function searchProducts(q) {
         $.get('/live-search-products', { term: q, patient_id: patientId }, function(data) {
             const $res = $('#cr_presc_results').empty();
-            if (!data.length) { $res.append('<li class="list-group-item text-muted">No products found</li>'); }
+            if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_presc_results', 'products'); return; }
             else {
                 data.forEach(item => {
                     const name = item.product_name || 'Unknown';
@@ -8579,13 +8585,11 @@ const ClinicalRequests = (function() {
 
                     // Phase 2c (Plan §4.4): Duplicate filtering for medications
                     const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
-                    const disabledStyle = alreadyAdded ? 'opacity:0.5; pointer-events:none;' : 'cursor:pointer;';
-                    const alreadyBadge = alreadyAdded ? '<span class="badge bg-secondary ms-2">Already Added</span>' : '';
 
                     if (alreadyAdded) {
-                        $res.append(`<li class='list-group-item' style="background:#f0f0f0; ${disabledStyle}"><b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}${alreadyBadge}</li>`);
+                        $res.append(`<li class='list-group-item co-already-added'><b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge} <span class="badge bg-secondary ms-2">Already Added</span></li>`);
                     } else {
-                        $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})"><b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}</li>`);
+                        $res.append(`<li class='list-group-item' onclick="ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})"><b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}</li>`);
                     }
                 });
             }
@@ -8598,7 +8602,7 @@ const ClinicalRequests = (function() {
         if (investigationCategoryId) data.category_id = investigationCategoryId;
         $.get('/live-search-services', data, function(data) {
             const $res = $('#cr_lab_results').empty();
-            if (!data.length) { $res.append('<li class="list-group-item text-muted">No lab services found</li>'); }
+            if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_lab_results', 'lab services'); return; }
             else {
                 data.forEach(item => {
                     const name = item.service_name || 'Unknown';
@@ -8610,9 +8614,9 @@ const ClinicalRequests = (function() {
                     const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                     const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('labs', parseInt(item.id));
                     if (alreadyAdded) {
-                        $res.append(`<li class='list-group-item text-muted' style="background:#e9ecef; cursor:not-allowed;">[${item.category?.category_name || 'Lab'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`);
+                        $res.append(`<li class='list-group-item co-already-added'>[${item.category?.category_name || 'Lab'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`);
                     } else {
-                        $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addLabService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Lab'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
+                        $res.append(`<li class='list-group-item' onclick="ClinicalRequests.addLabService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Lab'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
                     }
                 });
             }
@@ -8623,7 +8627,7 @@ const ClinicalRequests = (function() {
     function searchImagingServices(q) {
         $.get('/live-search-services', { term: q, category_id: 6, patient_id: patientId }, function(data) {
             const $res = $('#cr_imaging_results').empty();
-            if (!data.length) { $res.append('<li class="list-group-item text-muted">No imaging services found</li>'); }
+            if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_imaging_results', 'imaging services'); return; }
             else {
                 data.forEach(item => {
                     const name = item.service_name || 'Unknown';
@@ -8635,9 +8639,9 @@ const ClinicalRequests = (function() {
                     const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                     const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('imaging', parseInt(item.id));
                     if (alreadyAdded) {
-                        $res.append(`<li class='list-group-item text-muted' style="background:#e9ecef; cursor:not-allowed;">[${item.category?.category_name || 'Imaging'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`);
+                        $res.append(`<li class='list-group-item co-already-added'>[${item.category?.category_name || 'Imaging'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`);
                     } else {
-                        $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addImagingService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Imaging'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
+                        $res.append(`<li class='list-group-item' onclick="ClinicalRequests.addImagingService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Imaging'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
                     }
                 });
             }
@@ -8648,7 +8652,7 @@ const ClinicalRequests = (function() {
     function searchProcedureServices(q) {
         $.get('/live-search-services', { term: q, category_id: procedureCategoryId, patient_id: patientId }, function(data) {
             const $res = $('#cr_proc_results').empty();
-            if (!data.length) { $res.append('<li class="list-group-item text-muted">No procedures found</li>'); }
+            if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_proc_results', 'procedures'); return; }
             else {
                 data.forEach(item => {
                     const isSelected = ClinicalOrdersKit.isAlreadyAdded('procedures', item.id);
@@ -8657,9 +8661,9 @@ const ClinicalRequests = (function() {
                     const price = item.price?.sale_price ?? 0;
                     const payable = item.payable_amount ?? price;
                     const disabledBadge = isSelected ? ' <span class="badge bg-warning">Already Added</span>' : '';
-                    const cursor = isSelected ? 'not-allowed' : 'pointer';
                     const clickAttr = isSelected ? '' : `onclick="ClinicalRequests.addProcedure(${JSON.stringify(item).replace(/"/g, '&quot;')})"`;
-                    $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:${cursor};" ${clickAttr}>[${item.category?.category_name || 'Procedure'}] <b>${name}[${code}]</b> NGN ${payable}${disabledBadge}</li>`);
+                    const cls = isSelected ? 'list-group-item co-already-added' : 'list-group-item';
+                    $res.append(`<li class='${cls}' ${clickAttr}>[${item.category?.category_name || 'Procedure'}] <b>${name}[${code}]</b> NGN ${payable}${disabledBadge}</li>`);
                 });
             }
             $res.show();

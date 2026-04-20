@@ -3191,7 +3191,7 @@ function loadClinicalOrdersTab() {
                                 <div class="form-group">
                                     <label>Search drugs/products</label>
                                     <input type="text" class="form-control" id="mco_presc_search" placeholder="Type to search products..." autocomplete="off">
-                                    <ul class="list-group" id="mco_presc_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                    <ul class="list-group co-search-dropdown" id="mco_presc_results"></ul>
                                 </div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered table-striped">
@@ -3237,7 +3237,7 @@ function loadClinicalOrdersTab() {
                                 <div class="form-group">
                                     <label>Search lab services</label>
                                     <input type="text" class="form-control" id="mco_lab_search" placeholder="Type to search lab services..." autocomplete="off">
-                                    <ul class="list-group" id="mco_lab_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                    <ul class="list-group co-search-dropdown" id="mco_lab_results"></ul>
                                 </div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered table-striped">
@@ -3283,7 +3283,7 @@ function loadClinicalOrdersTab() {
                                 <div class="form-group">
                                     <label>Search imaging services</label>
                                     <input type="text" class="form-control" id="mco_imaging_search" placeholder="Type to search imaging services..." autocomplete="off">
-                                    <ul class="list-group" id="mco_imaging_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                    <ul class="list-group co-search-dropdown" id="mco_imaging_results"></ul>
                                 </div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered table-striped">
@@ -3340,7 +3340,7 @@ function loadClinicalOrdersTab() {
                                         <div class="form-group mb-3">
                                             <label><i class="fa fa-search"></i> Search Procedure</label>
                                             <input type="text" class="form-control" id="mco_proc_search" placeholder="Type procedure name or code..." autocomplete="off">
-                                            <ul class="list-group" id="mco_proc_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                            <ul class="list-group co-search-dropdown" id="mco_proc_results"></ul>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -3532,11 +3532,19 @@ const MaternityClinicalOrders = (function() {
     function bindSearchHandlers() {
         let searchTimeout;
 
+        // Initialize floating dropdowns (escape overflow:hidden ancestors)
+        ClinicalOrdersKit.initSearchDropdown('#mco_presc_search', '#mco_presc_results');
+        ClinicalOrdersKit.initSearchDropdown('#mco_lab_search', '#mco_lab_results');
+        ClinicalOrdersKit.initSearchDropdown('#mco_imaging_search', '#mco_imaging_results');
+        ClinicalOrdersKit.initSearchDropdown('#mco_proc_search', '#mco_proc_results');
+
         // Drug search
         $('#mco_presc_search').on('keyup', function() {
             const q = $(this).val();
             clearTimeout(searchTimeout);
             if (q.length < 2) { $('#mco_presc_results').hide(); return; }
+            ClinicalOrdersKit.positionDropdown('#mco_presc_search', '#mco_presc_results');
+            ClinicalOrdersKit.showSearchLoading('#mco_presc_results');
             searchTimeout = setTimeout(() => searchProducts(q), 300);
         });
 
@@ -3545,6 +3553,8 @@ const MaternityClinicalOrders = (function() {
             const q = $(this).val();
             clearTimeout(searchTimeout);
             if (q.length < 2) { $('#mco_lab_results').hide(); return; }
+            ClinicalOrdersKit.positionDropdown('#mco_lab_search', '#mco_lab_results');
+            ClinicalOrdersKit.showSearchLoading('#mco_lab_results');
             searchTimeout = setTimeout(() => searchLabServices(q), 300);
         });
 
@@ -3553,6 +3563,8 @@ const MaternityClinicalOrders = (function() {
             const q = $(this).val();
             clearTimeout(searchTimeout);
             if (q.length < 2) { $('#mco_imaging_results').hide(); return; }
+            ClinicalOrdersKit.positionDropdown('#mco_imaging_search', '#mco_imaging_results');
+            ClinicalOrdersKit.showSearchLoading('#mco_imaging_results');
             searchTimeout = setTimeout(() => searchImagingServices(q), 300);
         });
 
@@ -3561,15 +3573,9 @@ const MaternityClinicalOrders = (function() {
             const q = $(this).val();
             clearTimeout(searchTimeout);
             if (q.length < 2) { $('#mco_proc_results').hide(); return; }
+            ClinicalOrdersKit.positionDropdown('#mco_proc_search', '#mco_proc_results');
+            ClinicalOrdersKit.showSearchLoading('#mco_proc_results');
             searchTimeout = setTimeout(() => searchProcedureServices(q), 300);
-        });
-
-        // Close dropdowns on click outside
-        $(document).off('click.mco').on('click.mco', function(e) {
-            if (!$(e.target).closest('#mco_presc_search, #mco_presc_results').length) $('#mco_presc_results').hide();
-            if (!$(e.target).closest('#mco_lab_search, #mco_lab_results').length) $('#mco_lab_results').hide();
-            if (!$(e.target).closest('#mco_imaging_search, #mco_imaging_results').length) $('#mco_imaging_results').hide();
-            if (!$(e.target).closest('#mco_proc_search, #mco_proc_results').length) $('#mco_proc_results').hide();
         });
 
         // Re-order from history (nursing parity — Plan §5.2)
@@ -3679,7 +3685,8 @@ const MaternityClinicalOrders = (function() {
         $.get('/live-search-services', data, function(results) {
             const $res = $('#mco_lab_results').empty();
             if (!results.length) {
-                $res.append('<li class="list-group-item text-muted">No lab services found</li>');
+                ClinicalOrdersKit.showSearchEmpty('#mco_lab_results', 'lab services');
+                return;
             } else {
                 results.forEach(item => {
                     const name = item.service_name || 'Unknown';
@@ -3693,9 +3700,9 @@ const MaternityClinicalOrders = (function() {
                     const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
 
                     if (alreadyAdded) {
-                        $res.append('<li class="list-group-item text-muted" style="background:#e9ecef; cursor:not-allowed;">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
+                        $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
                     } else {
-                        $res.append('<li class="list-group-item" style="background:#f0f0f0; cursor:pointer;" onclick="MaternityClinicalOrders.addLabService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
+                        $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addLabService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
                     }
                 });
             }
@@ -3707,7 +3714,8 @@ const MaternityClinicalOrders = (function() {
         $.get('/live-search-products', { term: q, patient_id: patientId }, function(results) {
             const $res = $('#mco_presc_results').empty();
             if (!results.length) {
-                $res.append('<li class="list-group-item text-muted">No products found</li>');
+                ClinicalOrdersKit.showSearchEmpty('#mco_presc_results', 'products');
+                return;
             } else {
                 results.forEach(item => {
                     const name = item.product_name || 'Unknown';
@@ -3722,9 +3730,9 @@ const MaternityClinicalOrders = (function() {
                     const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
 
                     if (alreadyAdded) {
-                        $res.append('<li class="list-group-item text-muted" style="background:#e9ecef; cursor:not-allowed;"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
+                        $res.append('<li class="list-group-item co-already-added"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
                     } else {
-                        $res.append('<li class="list-group-item" style="background:#f0f0f0; cursor:pointer;" onclick="MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
+                        $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
                     }
                 });
             }
@@ -3736,7 +3744,8 @@ const MaternityClinicalOrders = (function() {
         $.get('/live-search-services', { term: q, category_id: 6, patient_id: patientId }, function(results) {
             const $res = $('#mco_imaging_results').empty();
             if (!results.length) {
-                $res.append('<li class="list-group-item text-muted">No imaging services found</li>');
+                ClinicalOrdersKit.showSearchEmpty('#mco_imaging_results', 'imaging services');
+                return;
             } else {
                 results.forEach(item => {
                     const name = item.service_name || 'Unknown';
@@ -3750,9 +3759,9 @@ const MaternityClinicalOrders = (function() {
                     const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
 
                     if (alreadyAdded) {
-                        $res.append('<li class="list-group-item text-muted" style="background:#e9ecef; cursor:not-allowed;">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
+                        $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
                     } else {
-                        $res.append('<li class="list-group-item" style="background:#f0f0f0; cursor:pointer;" onclick="MaternityClinicalOrders.addImagingService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
+                        $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addImagingService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
                     }
                 });
             }
@@ -3764,7 +3773,8 @@ const MaternityClinicalOrders = (function() {
         $.get('/live-search-services', { term: q, category_id: procedureCategoryId, patient_id: patientId }, function(results) {
             const $res = $('#mco_proc_results').empty();
             if (!results.length) {
-                $res.append('<li class="list-group-item text-muted">No procedures found</li>');
+                ClinicalOrdersKit.showSearchEmpty('#mco_proc_results', 'procedures');
+                return;
             } else {
                 results.forEach(item => {
                     const name = item.service_name || 'Unknown';
@@ -3776,9 +3786,9 @@ const MaternityClinicalOrders = (function() {
                     const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(item.coverage_mode || null, payable, item.claims_amount ?? 0);
 
                     if (alreadyAdded) {
-                        $res.append('<li class="list-group-item text-muted" style="background:#e9ecef; cursor:not-allowed;">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
+                        $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
                     } else {
-                        $res.append('<li class="list-group-item" style="background:#f0f0f0; cursor:pointer;" onclick="MaternityClinicalOrders.addProcedureService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + payable + ')">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
+                        $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addProcedureService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + payable + ')">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
                     }
                 });
             }
