@@ -117,6 +117,25 @@ class HrWorkbenchController extends Controller
             'pending_payroll' => PayrollBatch::submitted()->count(),
             'terminations_ytd' => $terminationsYtd,
             'salary_profiles' => $staffStats['with_salary_profile'],
+
+            // HR Enhancement alerts
+            'promotion_due' => \App\Models\Staff::whereNotNull('next_promotion_due_date')
+                ->where('next_promotion_due_date', '<=', now())
+                ->where('employment_status', 'active')->count(),
+            'confirmation_due' => \App\Models\Staff::whereNotNull('confirmation_due_date')
+                ->whereNull('date_confirmed')
+                ->where('confirmation_due_date', '<=', now())
+                ->where('employment_status', 'active')->count(),
+            'license_expiring' => \App\Models\Staff::whereNotNull('license_expiry_date')
+                ->where('license_expiry_date', '<=', now()->addMonths(3))
+                ->where('employment_status', 'active')->count(),
+            'medical_exam_due' => \App\Models\Staff::whereNotNull('next_medical_exam_due')
+                ->where('next_medical_exam_due', '<=', now())
+                ->where('employment_status', 'active')->count(),
+            'retiring_soon' => \App\Models\Staff::whereNotNull('retirement_date')
+                ->where('retirement_date', '<=', now()->addYear())
+                ->where('employment_status', 'active')->count(),
+            'open_follow_ups' => \App\Models\HR\StaffFollowUp::whereIn('status', ['open', 'in_progress'])->count(),
         ];
 
         return view('admin.hr.workbench.index', compact(
@@ -153,5 +172,10 @@ class HrWorkbenchController extends Controller
             'disciplinary' => $this->disciplinaryService->getDisciplinaryStats(),
             'payroll' => $this->payrollService->getPayrollStats(),
         ]);
+    }
+
+    public function reports()
+    {
+        return view('admin.hr.reports.index');
     }
 }

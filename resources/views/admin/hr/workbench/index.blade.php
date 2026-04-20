@@ -1,9 +1,56 @@
 @extends('admin.layouts.app')
 
 @section('title', 'HR Workbench')
+@section('page_name', 'Human Resources')
+@section('subpage_name', 'Dashboard')
+
+@section('style')
+    @php $primaryColor = appsettings()->hos_color ?? '#011b33'; @endphp
+    <style>
+        :root { --primary-color: {{ $primaryColor }}; --primary-light: {{ $primaryColor }}15; }
+        .quick-actions-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; }
+        .quick-actions-header h5 { color: white; }
+        .quick-action-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 0.5rem; border-radius: 12px; text-decoration: none; color: white; transition: all 0.3s ease; text-align: center; height: 120px; position: relative; overflow: hidden; }
+        .quick-action-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0); transition: all 0.3s ease; }
+        .quick-action-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); color: white; text-decoration: none; }
+        .quick-action-card:hover::before { background: rgba(255,255,255,0.1); }
+        .quick-action-card .icon-wrapper { font-size: 2.5rem; margin-bottom: 0.5rem; position: relative; z-index: 1; }
+        .quick-action-card .action-title { font-weight: 600; font-size: 0.95rem; display: block; position: relative; z-index: 1; }
+        .quick-action-card .action-desc { font-size: 0.75rem; opacity: 0.9; display: block; position: relative; z-index: 1; }
+        .nav-card { display: flex; align-items: center; padding: 1.25rem; background: white; border-radius: 12px; text-decoration: none; transition: all 0.3s ease; border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: 100%; }
+        .nav-card:hover { transform: translateX(5px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); text-decoration: none; }
+        .nav-card-icon { width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-size: 1.5rem; flex-shrink: 0; }
+        .nav-card-content { flex: 1; }
+        .nav-card-content h6 { margin: 0 0 0.25rem 0; font-size: 1rem; font-weight: 600; color: #212529; }
+        .nav-card-content p { margin: 0; font-size: 0.8rem; color: #6c757d; }
+        .nav-card-arrow { font-size: 1.5rem; opacity: 0.5; transition: all 0.3s ease; }
+        .nav-card:hover .nav-card-arrow { opacity: 1; transform: translateX(3px); }
+        .nav-card-primary .nav-card-icon { background: #e7f1ff; color: #007bff; }
+        .nav-card-primary:hover { border-color: #007bff; }
+        .nav-card-success .nav-card-icon { background: #d4edda; color: #28a745; }
+        .nav-card-success:hover { border-color: #28a745; }
+        .nav-card-info .nav-card-icon { background: #d1ecf1; color: #17a2b8; }
+        .nav-card-info:hover { border-color: #17a2b8; }
+        .nav-card-warning .nav-card-icon { background: #fff3cd; color: #ffc107; }
+        .nav-card-warning:hover { border-color: #ffc107; }
+        .nav-card-danger .nav-card-icon { background: #f8d7da; color: #dc3545; }
+        .nav-card-danger:hover { border-color: #dc3545; }
+        .nav-card-secondary .nav-card-icon { background: #e2e3e5; color: #6c757d; }
+        .nav-card-secondary:hover { border-color: #6c757d; }
+        .nav-card-purple .nav-card-icon { background: #e8dff5; color: #6f42c1; }
+        .nav-card-purple:hover { border-color: #6f42c1; }
+        .nav-card-teal .nav-card-icon { background: #d1f2eb; color: #20c997; }
+        .nav-card-teal:hover { border-color: #20c997; }
+        .nav-card-cyan .nav-card-icon { background: #d1ecf1; color: #17a2b8; }
+        .nav-card-cyan:hover { border-color: #17a2b8; }
+    </style>
+    <link rel="stylesheet" href="{{ asset('css/modern-forms.css') }}">
+@endsection
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
+
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -14,6 +61,74 @@
         </div>
         <div class="text-muted">
             <i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}
+        </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-modern quick-actions-header">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="mdi mdi-lightning-bolt mr-2"></i>Quick Actions</h5>
+                        <span class="badge badge-light">Frequently Used</span>
+                    </div>
+                    <div class="row">
+                        @can('staff-registry.view')
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <a href="{{ route('hr.staff-registry.index') }}" class="quick-action-card bg-primary">
+                                <div class="icon-wrapper"><i class="mdi mdi-account-group"></i></div>
+                                <span class="action-title">Staff Registry</span>
+                                <small class="action-desc">View all staff</small>
+                            </a>
+                        </div>
+                        @endcan
+                        @can('leave-request.view')
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <a href="{{ route('hr.leave-calendar.index') }}" class="quick-action-card bg-success">
+                                <div class="icon-wrapper"><i class="mdi mdi-calendar-month"></i></div>
+                                <span class="action-title">Leave Calendar</span>
+                                <small class="action-desc">View schedule</small>
+                            </a>
+                        </div>
+                        @endcan
+                        @can('disciplinary.create')
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <a href="{{ route('hr.disciplinary.index') }}" class="quick-action-card bg-warning">
+                                <div class="icon-wrapper"><i class="mdi mdi-file-alert"></i></div>
+                                <span class="action-title">Issue Query</span>
+                                <small class="action-desc">Disciplinary action</small>
+                            </a>
+                        </div>
+                        @endcan
+                        @can('payroll.create')
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <a href="{{ route('hr.payroll.index') }}" class="quick-action-card bg-info">
+                                <div class="icon-wrapper"><i class="mdi mdi-cash-register"></i></div>
+                                <span class="action-title">Payroll</span>
+                                <small class="action-desc">Create payroll</small>
+                            </a>
+                        </div>
+                        @endcan
+                        @can('salary-profile.view')
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <a href="{{ route('hr.salary-profiles.index') }}" class="quick-action-card bg-secondary">
+                                <div class="icon-wrapper"><i class="mdi mdi-account-cash"></i></div>
+                                <span class="action-title">Salaries</span>
+                                <small class="action-desc">Salary profiles</small>
+                            </a>
+                        </div>
+                        @endcan
+                        <div class="col-lg-2 col-md-4 col-6 mb-3">
+                            <a href="{{ route('hr.leave-requests.index') }}" class="quick-action-card bg-danger">
+                                <div class="icon-wrapper"><i class="mdi mdi-calendar-clock"></i></div>
+                                <span class="action-title">Leave Requests</span>
+                                <small class="action-desc">Manage requests</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -165,8 +280,143 @@
         </div>
     </div>
 
+    <!-- HR Enhancement Alerts Row -->
+    <div class="row mb-4">
+        <div class="col-12 mb-2">
+            <h6 class="font-weight-bold text-uppercase text-muted">
+                <i class="mdi mdi-bell-alert-outline mr-1"></i> Staff Alerts
+                <a href="{{ route('hr.staff-registry.index') }}" class="btn btn-sm btn-outline-primary ml-2">View Full Registry</a>
+            </h6>
+        </div>
+        <div class="col-md-2">
+        <a href="{{ route('hr.promotions.index') }}" class="text-decoration-none">
+        <div class="card border-left border-warning shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+            <div class="card-body py-2 text-center">
+                <small class="text-muted">Promotion Due</small>
+                <h4 class="text-warning mb-0 font-weight-bold">{{ $stats['promotion_due'] ?? 0 }}</h4>
+            </div>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-left border-info shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+            <div class="card-body py-2 text-center">
+                <small class="text-muted">Confirmation Due</small>
+                <h4 class="text-info mb-0 font-weight-bold">{{ $stats['confirmation_due'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <a href="{{ route('hr.qualifications.index') }}" class="text-decoration-none">
+        <div class="card border-left border-danger shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+            <div class="card-body py-2 text-center">
+                <small class="text-muted">License Expiring</small>
+                <h4 class="text-danger mb-0 font-weight-bold">{{ $stats['license_expiring'] ?? 0 }}</h4>
+            </div>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="{{ route('hr.medical-exams.index') }}" class="text-decoration-none">
+        <div class="card border-left border-secondary shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+            <div class="card-body py-2 text-center">
+                <small class="text-muted">Medical Exam Due</small>
+                <h4 class="text-secondary mb-0 font-weight-bold">{{ $stats['medical_exam_due'] ?? 0 }}</h4>
+            </div>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-left border-dark shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+            <div class="card-body py-2 text-center">
+                <small class="text-muted">Retiring Soon</small>
+                <h4 class="text-dark mb-0 font-weight-bold">{{ $stats['retiring_soon'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <a href="{{ route('hr.follow-ups.index') }}" class="text-decoration-none">
+        <div class="card border-left border-primary shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+            <div class="card-body py-2 text-center">
+                <small class="text-muted">Open Follow-ups</small>
+                <h4 class="text-primary mb-0 font-weight-bold">{{ $stats['open_follow_ups'] ?? 0 }}</h4>
+            </div>
+        </div>
+        </a>
+    </div>
+
+    <!-- Navigate To -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3"><i class="mdi mdi-view-grid mr-2"></i>Navigate To</h5>
+        </div>
+        @can('leave-type.view')
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{{ route('hr.leave-types.index') }}" class="nav-card nav-card-success">
+                <div class="nav-card-icon"><i class="mdi mdi-calendar-check"></i></div>
+                <div class="nav-card-content"><h6>Leave Management</h6><p>Types, requests & balances</p></div>
+                <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+            </a>
+        </div>
+        @endcan
+        @can('disciplinary.view')
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{{ route('hr.disciplinary.index') }}" class="nav-card nav-card-warning">
+                <div class="nav-card-icon"><i class="mdi mdi-gavel"></i></div>
+                <div class="nav-card-content"><h6>Disciplinary</h6><p>Queries, suspensions & terminations</p></div>
+                <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+            </a>
+        </div>
+        @endcan
+        @can('payroll.view')
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{{ route('hr.payroll.index') }}" class="nav-card nav-card-info">
+                <div class="nav-card-icon"><i class="mdi mdi-cash-multiple"></i></div>
+                <div class="nav-card-content"><h6>Payroll</h6><p>Pay heads, profiles & batches</p></div>
+                <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+            </a>
+        </div>
+        @endcan
+        @can('staff-registry.view')
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{{ route('hr.staff-registry.index') }}" class="nav-card nav-card-primary">
+                <div class="nav-card-icon"><i class="mdi mdi-account-group"></i></div>
+                <div class="nav-card-content"><h6>Staff Registry</h6><p>Employee records & profiles</p></div>
+                <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+            </a>
+        </div>
+        @endcan
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{{ route('hr.promotions.index') }}" class="nav-card nav-card-purple">
+                <div class="nav-card-icon"><i class="mdi mdi-arrow-up-bold-circle"></i></div>
+                <div class="nav-card-content"><h6>Staff Tracking</h6><p>Promotions, training & follow-ups</p></div>
+                <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{{ route('hr.units.index') }}" class="nav-card nav-card-secondary">
+                <div class="nav-card-icon"><i class="mdi mdi-cog"></i></div>
+                <div class="nav-card-content"><h6>Configuration</h6><p>Units, cadres & grade levels</p></div>
+                <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{{ route('hr.ess.index') }}" class="nav-card nav-card-teal">
+                <div class="nav-card-icon"><i class="mdi mdi-account-circle"></i></div>
+                <div class="nav-card-content"><h6>Employee Self-Service</h6><p>Leave, payslips & profile</p></div>
+                <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{{ route('hr.qualifications.index') }}" class="nav-card nav-card-danger">
+                <div class="nav-card-icon"><i class="mdi mdi-certificate"></i></div>
+                <div class="nav-card-content"><h6>Qualifications</h6><p>Certifications & training records</p></div>
+                <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+            </a>
+        </div>
+    </div>
+
     <div class="row">
-        <!-- Pending Leave Requests -->
         <div class="col-md-6 mb-4">
             <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
@@ -340,61 +590,5 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
-                    <h6 class="mb-0" style="font-weight: 600;">
-                        <i class="mdi mdi-lightning-bolt text-primary mr-2"></i>Quick Actions
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        @can('leave-request.view')
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ route('hr.leave-calendar.index') }}" class="btn btn-outline-success btn-block py-3" style="border-radius: 8px;">
-                                <i class="mdi mdi-calendar-month d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Leave Calendar
-                            </a>
-                        </div>
-                        @endcan
-                        @can('leave-type.create')
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ route('hr.leave-types.index') }}" class="btn btn-outline-primary btn-block py-3" style="border-radius: 8px;">
-                                <i class="mdi mdi-calendar-plus d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Manage Leave Types
-                            </a>
-                        </div>
-                        @endcan
-                        @can('disciplinary.create')
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ route('hr.disciplinary.index') }}" class="btn btn-outline-warning btn-block py-3" style="border-radius: 8px;">
-                                <i class="mdi mdi-file-alert d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Issue Query
-                            </a>
-                        </div>
-                        @endcan
-                        @can('payroll.create')
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ route('hr.payroll.index') }}" class="btn btn-outline-info btn-block py-3" style="border-radius: 8px;">
-                                <i class="mdi mdi-cash-register d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Create Payroll
-                            </a>
-                        </div>
-                        @endcan
-                        @can('salary-profile.create')
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ route('hr.salary-profiles.index') }}" class="btn btn-outline-secondary btn-block py-3" style="border-radius: 8px;">
-                                <i class="mdi mdi-account-cash d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Salary Profiles
-                            </a>
-                        </div>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
