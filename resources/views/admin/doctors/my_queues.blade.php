@@ -1292,12 +1292,12 @@
         // ═══════════════════════════════════════════════════════════════
         function doCheckIn(apptId) {
             _pendingActionId = apptId;
-            new bootstrap.Modal(document.getElementById('confirmCheckInModal')).show();
+            $('#confirmCheckInModal').modal('show');
         }
 
         $(document).on('click', '#confirmCheckInBtn', function() {
             var apptId = _pendingActionId;
-            bootstrap.Modal.getInstance(document.getElementById('confirmCheckInModal')).hide();
+            $('#confirmCheckInModal').modal('hide');
             $.ajax({
                 url: "{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
                 type: 'POST',
@@ -1320,13 +1320,13 @@
         function doCancelAppointment(apptId) {
             _pendingActionId = apptId;
             $('#cancelApptReason').val('');
-            new bootstrap.Modal(document.getElementById('confirmCancelApptModal')).show();
+            $('#confirmCancelApptModal').modal('show');
         }
 
         $(document).on('click', '#confirmCancelApptBtn', function() {
             var apptId = _pendingActionId;
             var reason = $('#cancelApptReason').val() || '';
-            bootstrap.Modal.getInstance(document.getElementById('confirmCancelApptModal')).hide();
+            $('#confirmCancelApptModal').modal('hide');
             $.ajax({
                 url: "{{ route('appointments.cancel', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
                 type: 'POST',
@@ -1347,12 +1347,12 @@
 
         function doNoShow(apptId) {
             _pendingActionId = apptId;
-            new bootstrap.Modal(document.getElementById('confirmNoShowModal')).show();
+            $('#confirmNoShowModal').modal('show');
         }
 
         $(document).on('click', '#confirmNoShowBtn', function() {
             var apptId = _pendingActionId;
-            bootstrap.Modal.getInstance(document.getElementById('confirmNoShowModal')).hide();
+            $('#confirmNoShowModal').modal('hide');
             $.ajax({
                 url: "{{ route('appointments.no-show', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
                 type: 'POST',
@@ -1659,8 +1659,7 @@
             _activeRefId = refId;
             $('#refDetailModalBody').html('<div class="text-center py-4"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
             $('#refDetailAcceptBtn, #refDetailDeclineBtn, #refDetailPrintBtn').addClass('d-none');
-            var modal = new bootstrap.Modal(document.getElementById('refDetailModal'));
-            modal.show();
+            $('#refDetailModal').modal('show');
 
             $.get("{{ url('referrals') }}/" + refId + "/detail", function(data) {
                 _activeRefData = data;
@@ -1747,7 +1746,7 @@
             }, function(res) {
                 if (res.success) {
                     toastr.success(res.message || 'Referral accepted');
-                    bootstrap.Modal.getInstance(document.getElementById('refDetailModal')).hide();
+                    $('#refDetailModal').modal('hide');
                     // Reload referral tables
                     if ($.fn.DataTable.isDataTable('#my_referrals_list')) $('#my_referrals_list').DataTable().ajax.reload(null, false);
                     if ($.fn.DataTable.isDataTable('#all_referrals_list')) $('#all_referrals_list').DataTable().ajax.reload(null, false);
@@ -1770,8 +1769,8 @@
             _pendingActionId = _activeRefId;
             _pendingActionSource = 'refDetail';
             $('#declineRefReason').val('');
-            bootstrap.Modal.getInstance(document.getElementById('refDetailModal')).hide();
-            new bootstrap.Modal(document.getElementById('declineRefReasonModal')).show();
+            $('#refDetailModal').modal('hide');
+            $('#declineRefReasonModal').modal('show');
         });
 
         // Print referral from modal
@@ -1788,7 +1787,7 @@
             _pendingActionId = refId;
             _pendingActionSource = 'quickAccept';
             _pendingActionBtn = $(this);
-            new bootstrap.Modal(document.getElementById('confirmAcceptRefModal')).show();
+            $('#confirmAcceptRefModal').modal('show');
         });
 
         // Quick decline from table row
@@ -1798,7 +1797,7 @@
             _pendingActionSource = 'quickDecline';
             _pendingActionBtn = $(this);
             $('#declineRefReason').val('');
-            new bootstrap.Modal(document.getElementById('declineRefReasonModal')).show();
+            $('#declineRefReasonModal').modal('show');
         });
 
         // ═══════════════════════════════════════════════════════════════
@@ -1808,7 +1807,7 @@
         // Confirm accept referral (from quick-accept button)
         $(document).on('click', '#confirmAcceptRefBtn', function() {
             var refId = _pendingActionId;
-            bootstrap.Modal.getInstance(document.getElementById('confirmAcceptRefModal')).hide();
+            $('#confirmAcceptRefModal').modal('hide');
             var $btn = _pendingActionBtn;
             if ($btn) $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
             $.post("{{ url('referrals') }}/" + refId + "/accept", {
@@ -1835,7 +1834,7 @@
                 return;
             }
             $('#declineRefReason').removeClass('is-invalid');
-            bootstrap.Modal.getInstance(document.getElementById('declineRefReasonModal')).hide();
+            $('#declineRefReasonModal').modal('hide');
 
             var $btn = _pendingActionBtn || $('#refDetailDeclineBtn');
             $btn.prop('disabled', true);
