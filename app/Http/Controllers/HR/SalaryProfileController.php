@@ -63,7 +63,7 @@ class SalaryProfileController extends Controller
                 ->make(true);
         }
 
-        $staffList = Staff::active()->with('user')->get();
+        $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
         $payHeads = PayHead::active()->orderBy('type')->orderBy('sort_order')->get();
         $payFrequencies = StaffSalaryProfile::getPayFrequencies();
         $stats = $this->getSalaryProfileStats();
@@ -78,7 +78,7 @@ class SalaryProfileController extends Controller
     {
         $activeProfiles = StaffSalaryProfile::where('is_active', true);
         $allProfiles = StaffSalaryProfile::query();
-        
+
         // Count active staff without salary profiles
         $staffWithProfiles = StaffSalaryProfile::where('is_active', true)->pluck('staff_id')->unique();
         $activeStaffCount = Staff::active()->count();
@@ -114,7 +114,7 @@ class SalaryProfileController extends Controller
 
     public function create(Request $request)
     {
-        $staffList = Staff::active()->with('user')->get();
+        $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
         $selectedStaff = $request->staff_id ? Staff::with('user')->find($request->staff_id) : null;
         $payHeads = PayHead::active()->orderBy('type')->orderBy('sort_order')->get();
         $payFrequencies = StaffSalaryProfile::getPayFrequencies();
@@ -152,13 +152,13 @@ class SalaryProfileController extends Controller
                 ->filter(fn($item) => !empty($item['pay_head_id']))
                 ->pluck('pay_head_id')
                 ->toArray();
-            
+
             $duplicates = array_diff_assoc($payHeadIds, array_unique($payHeadIds));
-            
+
             if (!empty($duplicates)) {
                 $duplicateNames = PayHead::whereIn('id', array_unique($duplicates))->pluck('name')->implode(', ');
                 $errorMessage = "Duplicate pay head(s) detected: {$duplicateNames}. Each pay head can only be added once per salary profile.";
-                
+
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => false,
@@ -337,13 +337,13 @@ class SalaryProfileController extends Controller
                 ->filter(fn($item) => !empty($item['pay_head_id']))
                 ->pluck('pay_head_id')
                 ->toArray();
-            
+
             $duplicates = array_diff_assoc($payHeadIds, array_unique($payHeadIds));
-            
+
             if (!empty($duplicates)) {
                 $duplicateNames = PayHead::whereIn('id', array_unique($duplicates))->pluck('name')->implode(', ');
                 $errorMessage = "Duplicate pay head(s) detected: {$duplicateNames}. Each pay head can only be added once per salary profile.";
-                
+
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => false,

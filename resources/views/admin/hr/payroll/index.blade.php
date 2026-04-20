@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
     <div class="row">
         <div class="col-md-12">
             <!-- Page Header -->
@@ -115,10 +116,8 @@
                             <thead>
                                 <tr style="background: #f8f9fa;">
                                     <th style="font-weight: 600; color: #495057;">SN</th>
-                                    <th style="font-weight: 600; color: #495057;">Batch Number</th>
-                                    <th style="font-weight: 600; color: #495057;">Period</th>
-                                    <th style="font-weight: 600; color: #495057;">Staff Count</th>
-                                    <th style="font-weight: 600; color: #495057;">Total Amount</th>
+                                    <th style="font-weight: 600; color: #495057;">Batch</th>
+                                    <th style="font-weight: 600; color: #495057;">Details</th>
                                     <th style="font-weight: 600; color: #495057;">Status</th>
                                     <th style="font-weight: 600; color: #495057;">Created</th>
                                     <th style="font-weight: 600; color: #495057;">Actions</th>
@@ -661,7 +660,7 @@
                                     <label style="font-weight: 600; color: #495057;">Select Bank <span class="text-danger">*</span></label>
                                     <select name="bank_id" id="actionBankId" class="form-control" style="border-radius: 8px;">
                                         <option value="">-- Select Bank --</option>
-                                        @foreach(\App\Models\Bank::whereNotNull('account_id')->orderBy('name')->get() as $bank)
+                                        @foreach($banks as $bank)
                                             <option value="{{ $bank->id }}">{{ $bank->name }} ({{ $bank->account_number }})</option>
                                         @endforeach
                                     </select>
@@ -846,15 +845,17 @@ $(function() {
         },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'batch_number', name: 'batch_number' },
-            { data: 'pay_period_formatted', name: 'pay_period' },
-            { data: 'staff_count', name: 'staff_count', orderable: false },
-            { data: 'total_amount_formatted', name: 'total_net_amount' },
+            { data: 'batch_number', name: 'batch_number', render: function(data, type, row) {
+                return '<strong>' + data + '</strong><br><small class="text-muted">' + (row.pay_period_formatted || '') + '</small>';
+            }},
+            { data: 'staff_count', name: 'staff_count', orderable: false, render: function(data, type, row) {
+                return data + ' staff<br><small class="text-muted">' + (row.total_amount_formatted || '') + '</small>';
+            }},
             { data: 'status_badge', name: 'status' },
             { data: 'created_at', name: 'created_at' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
-        order: [[6, 'desc']],
+        order: [[4, 'desc']],
         language: {
             emptyTable: "No payroll batches found",
             processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'

@@ -126,7 +126,7 @@ class LeaveRequestController extends Controller
 
         $leaveRequests = $query->paginate(20);
         $leaveTypes = LeaveType::active()->orderBy('name')->get();
-        $staffList = Staff::active()->with('user')->get();
+        $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
 
         // Get requests pending supervisor approval (for unit/dept heads)
         $pendingForSupervisor = $this->leaveService->getPendingForSupervisor($user);
@@ -162,8 +162,8 @@ class LeaveRequestController extends Controller
         }
 
         $leaveTypes = LeaveType::active()->orderBy('name')->get();
-        $staffList = Staff::active()->with('user')->orderBy('id')->get();
-        $reliefStaff = Staff::active()->with('user')
+        $staffList = Staff::active()->with('user')->whereHas('user')->orderBy('id')->get();
+        $reliefStaff = Staff::active()->with('user')->whereHas('user')
             ->when($staff, fn($q) => $q->where('id', '!=', $staff->id))
             ->get();
 

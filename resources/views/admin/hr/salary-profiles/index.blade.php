@@ -16,6 +16,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
     <div class="row">
         <div class="col-md-12">
             <!-- Page Header -->
@@ -132,10 +133,7 @@
                                 <tr style="background: #f8f9fa;">
                                     <th style="font-weight: 600; color: #495057;">SN</th>
                                     <th style="font-weight: 600; color: #495057;">Staff</th>
-                                    <th style="font-weight: 600; color: #495057;">Employee ID</th>
-                                    <th style="font-weight: 600; color: #495057;">Basic Salary</th>
                                     <th style="font-weight: 600; color: #495057;">Gross Salary</th>
-                                    <th style="font-weight: 600; color: #495057;">Total Deductions</th>
                                     <th style="font-weight: 600; color: #495057;">Net Salary</th>
                                     <th style="font-weight: 600; color: #495057;">Status</th>
                                     <th style="font-weight: 600; color: #495057;">Actions</th>
@@ -169,7 +167,7 @@
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Staff Member *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-account text-primary mr-1"></i>Staff Member *</label>
                             <select class="form-control select2" name="staff_id" id="staff_id" required style="width: 100%;">
                                 <option value="">Select Staff</option>
                                 @foreach($staffList ?? [] as $staff)
@@ -178,7 +176,7 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Basic Salary *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-currency-ngn text-success mr-1"></i>Basic Salary *</label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text" style="border-radius: 8px 0 0 8px;">₦</span>
@@ -188,12 +186,12 @@
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Effective Date *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar text-danger mr-1"></i>Effective Date *</label>
                             <input type="date" class="form-control" name="effective_date" id="effective_date" required
                                    style="border-radius: 8px; padding: 0.75rem;" value="{{ date('Y-m-d') }}">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Currency</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-cash text-warning mr-1"></i>Currency</label>
                             <input type="text" class="form-control" name="currency" id="currency" value="NGN"
                                    style="border-radius: 8px; padding: 0.75rem;" readonly>
                         </div>
@@ -233,13 +231,13 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="text-center p-3 bg-success text-white rounded" style="cursor: help;" data-toggle="tooltip" data-placement="top" title="">
+                            <div class="text-center p-3 bg-success text-white rounded" style="cursor: help;" data-bs-toggle="tooltip" data-bs-placement="top" title="">
                                 <small class="d-block">Gross Salary</small>
                                 <h5 class="mb-0" id="summaryGross">₦0.00</h5>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="text-center p-3 bg-danger text-white rounded" style="cursor: help;" data-toggle="tooltip" data-placement="top" title="">
+                            <div class="text-center p-3 bg-danger text-white rounded" style="cursor: help;" data-bs-toggle="tooltip" data-bs-placement="top" title="">
                                 <small class="d-block">Deductions</small>
                                 <h5 class="mb-0" id="summaryDeductions">₦0.00</h5>
                             </div>
@@ -251,10 +249,10 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Calculation Breakdown (collapsible) -->
                     <div class="mt-3">
-                        <a class="text-muted small" data-toggle="collapse" href="#calcBreakdown" role="button" aria-expanded="false" aria-controls="calcBreakdown">
+                        <a class="text-muted small" data-bs-toggle="collapse" href="#calcBreakdown" role="button" aria-expanded="false" aria-controls="calcBreakdown">
                             <i class="mdi mdi-information-outline mr-1"></i> View Calculation Breakdown
                         </a>
                         <div class="collapse mt-2" id="calcBreakdown">
@@ -336,12 +334,15 @@ $(function() {
         ajax: "{{ route('hr.salary-profiles.index') }}",
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'staff_name', name: 'staff.user.firstname' },
-            { data: 'employee_id', name: 'staff.employee_id' },
-            { data: 'basic_salary_formatted', name: 'basic_salary' },
-            { data: 'gross_salary_formatted', name: 'gross_salary', orderable: false },
-            { data: 'total_deductions_formatted', name: 'total_deductions', orderable: false },
-            { data: 'net_salary_formatted', name: 'net_salary', orderable: false },
+            { data: 'staff_name', name: 'staff.user.firstname', render: function(data, type, row) {
+                return data + '<br><small class="text-muted">' + (row.employee_id || '') + '</small>';
+            }},
+            { data: 'gross_salary_formatted', name: 'gross_salary', orderable: false, render: function(data, type, row) {
+                return data + '<br><small class="text-muted">Basic: ' + (row.basic_salary_formatted || '') + '</small>';
+            }},
+            { data: 'net_salary_formatted', name: 'net_salary', orderable: false, render: function(data, type, row) {
+                return '<strong>' + data + '</strong><br><small class="text-muted">Ded: ' + (row.total_deductions_formatted || '') + '</small>';
+            }},
             { data: 'is_current', name: 'is_current',
               render: function(data) {
                   return data ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-secondary">Inactive</span>';
@@ -379,8 +380,8 @@ $(function() {
     function additionRow(payHead = null, calcType = 'fixed', calcBase = 'basic', value = '') {
         const options = additions.map(h => {
             const calcInfo = h.calculation_type === 'percentage' ? ` [${h.calculation_type} of ${h.percentage_of || 'basic'}]` : ` [${h.calculation_type}]`;
-            return `<option value="${h.id}" 
-                data-calc-type="${h.calculation_type}" 
+            return `<option value="${h.id}"
+                data-calc-type="${h.calculation_type}"
                 data-calc-base="${h.percentage_of || 'basic'}"
                 ${payHead && h.id == payHead ? 'selected' : ''}>${h.name} (${h.code})${calcInfo}</option>`;
         }).join('');
@@ -414,7 +415,7 @@ $(function() {
                             <span class="input-group-text value-prefix" style="border-radius: 8px 0 0 8px;">${isPercentage ? '%' : '₦'}</span>
                         </div>
                         <input type="number" class="form-control item-value" name="addition_value[]"
-                               step="${isPercentage ? '0.01' : '0.01'}" min="0" value="${value}" 
+                               step="${isPercentage ? '0.01' : '0.01'}" min="0" value="${value}"
                                placeholder="${isPercentage ? 'e.g. 10' : 'Amount'}"
                                style="border-radius: 0 8px 8px 0;">
                     </div>
@@ -432,8 +433,8 @@ $(function() {
     function deductionRow(payHead = null, calcType = 'fixed', calcBase = 'basic', value = '') {
         const options = deductions.map(h => {
             const calcInfo = h.calculation_type === 'percentage' ? ` [${h.calculation_type} of ${h.percentage_of || 'basic'}]` : ` [${h.calculation_type}]`;
-            return `<option value="${h.id}" 
-                data-calc-type="${h.calculation_type}" 
+            return `<option value="${h.id}"
+                data-calc-type="${h.calculation_type}"
                 data-calc-base="${h.percentage_of || 'basic'}"
                 ${payHead && h.id == payHead ? 'selected' : ''}>${h.name} (${h.code})${calcInfo}</option>`;
         }).join('');
@@ -467,7 +468,7 @@ $(function() {
                             <span class="input-group-text value-prefix" style="border-radius: 8px 0 0 8px;">${isPercentage ? '%' : '₦'}</span>
                         </div>
                         <input type="number" class="form-control item-value" name="deduction_value[]"
-                               step="${isPercentage ? '0.01' : '0.01'}" min="0" value="${value}" 
+                               step="${isPercentage ? '0.01' : '0.01'}" min="0" value="${value}"
                                placeholder="${isPercentage ? 'e.g. 7.5' : 'Amount'}"
                                style="border-radius: 0 8px 8px 0;">
                     </div>
@@ -520,7 +521,7 @@ $(function() {
     function validateNoDuplicatePayHeads() {
         const payHeadIds = [];
         const duplicates = [];
-        
+
         $('.pay-head-select').each(function() {
             const id = $(this).val();
             if (id) {
@@ -562,7 +563,7 @@ $(function() {
     // Calculate summary with proper two-pass calculation for gross-based items
     function calculateSummary() {
         const basic = parseFloat($('#basic_salary').val()) || 0;
-        
+
         // ===== ADDITIONS CALCULATION =====
         // Pass 1: Calculate FIXED and BASIC-based additions first
         let fixedAndBasicAdditions = 0;
@@ -646,9 +647,9 @@ $(function() {
         const intermediateGross = basic + fixedBasicAdd;
         $('#breakdownIntermediateGross').text('₦' + intermediateGross.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         $('#breakdownFinalGross').text('₦' + gross.toLocaleString('en-NG', {minimumFractionDigits: 2}));
-        
+
         // Update tooltips
-        $('#summaryGross').closest('div').attr('title', 
+        $('#summaryGross').closest('div').attr('title',
             `Basic: ₦${basic.toLocaleString('en-NG')}\n` +
             `+ Fixed/Basic Add: ₦${fixedBasicAdd.toLocaleString('en-NG')}\n` +
             `+ Gross-based Add: ₦${grossAdd.toLocaleString('en-NG')}`
@@ -707,7 +708,7 @@ $(function() {
             if (data.items) {
                 data.items.filter(i => i.pay_head && i.pay_head.type === 'addition').forEach(item => {
                     $('#additionsContainer').append(additionRow(
-                        item.pay_head_id, 
+                        item.pay_head_id,
                         item.calculation_type || 'fixed',
                         item.calculation_base || 'basic',
                         item.value
@@ -888,11 +889,11 @@ $(function() {
             const calcBase = $(this).find('select[name="addition_calc_base[]"]').val();
             const value = $(this).find('input[name="addition_value[]"]').val();
             if (payHeadId && value) {
-                items.push({ 
-                    pay_head_id: payHeadId, 
+                items.push({
+                    pay_head_id: payHeadId,
                     calculation_type: calcType,
                     calculation_base: calcBase,
-                    value: value 
+                    value: value
                 });
             }
         });
@@ -903,11 +904,11 @@ $(function() {
             const calcBase = $(this).find('select[name="deduction_calc_base[]"]').val();
             const value = $(this).find('input[name="deduction_value[]"]').val();
             if (payHeadId && value) {
-                items.push({ 
+                items.push({
                     pay_head_id: payHeadId,
                     calculation_type: calcType,
                     calculation_base: calcBase,
-                    value: value 
+                    value: value
                 });
             }
         });
@@ -948,7 +949,7 @@ $(function() {
     // Delete profile
     $(document).on('click', '.delete-btn', function() {
         const id = $(this).data('id');
-        
+
         if (!confirm('Are you sure you want to delete this salary profile? This action cannot be undone.')) {
             return;
         }

@@ -108,7 +108,7 @@ class DisciplinaryQueryController extends Controller
         }
 
         $queries = $query->paginate(20);
-        $staffList = Staff::with('user')->get();
+        $staffList = Staff::with('user')->whereHas('user')->get()->sortBy('user.surname');
         $severities = DisciplinaryQuery::getSeverities();
 
         return view('admin.hr.disciplinary.index', compact('queries', 'staffList', 'severities'));
@@ -116,7 +116,7 @@ class DisciplinaryQueryController extends Controller
 
     public function create(Request $request)
     {
-        $staffList = Staff::active()->with('user')->get();
+        $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
         $selectedStaff = $request->staff_id ? Staff::with('user')->find($request->staff_id) : null;
         $severities = DisciplinaryQuery::getSeverities();
 

@@ -23,6 +23,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
     <div class="row">
         <div class="col-md-12">
             <!-- Page Header -->
@@ -107,10 +108,7 @@
                                     <th style="font-weight: 600; color: #495057;">SN</th>
                                     <th style="font-weight: 600; color: #495057;">Staff</th>
                                     <th style="font-weight: 600; color: #495057;">Reason</th>
-                                    <th style="font-weight: 600; color: #495057;">Start Date</th>
-                                    <th style="font-weight: 600; color: #495057;">End Date</th>
-                                    <th style="font-weight: 600; color: #495057;">Days</th>
-                                    <th style="font-weight: 600; color: #495057;">With Pay</th>
+                                    <th style="font-weight: 600; color: #495057;">Period</th>
                                     <th style="font-weight: 600; color: #495057;">Status</th>
                                     <th style="font-weight: 600; color: #495057;">Actions</th>
                                 </tr>
@@ -141,7 +139,7 @@
                 @csrf
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div class="form-group">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Staff Member *</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-account text-primary mr-1"></i>Staff Member *</label>
                         <select class="form-control select2" name="staff_id" id="staff_id" required style="width: 100%;">
                             <option value="">Select Staff</option>
                             @foreach($staffList ?? [] as $staff)
@@ -151,7 +149,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Related Query (Optional)</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-link-variant text-info mr-1"></i>Related Query (Optional)</label>
                         <select class="form-control" name="disciplinary_query_id" id="disciplinary_query_id" style="border-radius: 8px;">
                             <option value="">No related query</option>
                         </select>
@@ -161,14 +159,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label" style="font-weight: 600; color: #495057;">Start Date *</label>
+                                <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-start text-danger mr-1"></i>Start Date *</label>
                                 <input type="date" class="form-control" name="start_date" id="start_date" required
                                        style="border-radius: 8px; padding: 0.75rem;" value="{{ date('Y-m-d') }}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label" style="font-weight: 600; color: #495057;">End Date *</label>
+                                <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-end text-danger mr-1"></i>End Date *</label>
                                 <input type="date" class="form-control" name="end_date" id="end_date" required
                                        style="border-radius: 8px; padding: 0.75rem;">
                             </div>
@@ -176,13 +174,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Reason *</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-text-box text-warning mr-1"></i>Reason *</label>
                         <textarea class="form-control" name="reason" id="reason" rows="3" required
                                   style="border-radius: 8px; padding: 0.75rem;" placeholder="Reason for suspension"></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Suspension Message (Login)</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-message-alert text-danger mr-1"></i>Suspension Message (Login)</label>
                         <input type="text" class="form-control" name="suspension_message" id="suspension_message"
                                style="border-radius: 8px; padding: 0.75rem;" placeholder="Message shown when staff tries to login">
                         <small class="text-muted">This message will be displayed to the staff when they attempt to login</small>
@@ -453,7 +451,7 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
+<script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 <script>
 $(function() {
     // Fix Bootstrap modal enforceFocus to allow Select2 to work properly
@@ -483,19 +481,14 @@ $(function() {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'staff_name', name: 'staff.user.firstname' },
-            { data: 'reason', name: 'reason',
-              render: function(data) {
-                  return data ? (data.length > 40 ? data.substring(0, 40) + '...' : data) : '-';
-              }
-            },
-            { data: 'start_date', name: 'start_date' },
-            { data: 'end_date', name: 'end_date' },
-            { data: 'days', name: 'days', orderable: false },
-            { data: 'is_paid', name: 'is_paid',
-              render: function(data) {
-                  return data ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-secondary">No</span>';
-              }
-            },
+            { data: 'reason', name: 'reason', render: function(data, type, row) {
+                var s = data ? (data.length > 35 ? data.substring(0, 35) + '...' : data) : '-';
+                s += '<br>' + (row.is_paid ? '<span class="badge badge-success">With Pay</span>' : '<span class="badge badge-secondary">Without Pay</span>');
+                return s;
+            }},
+            { data: 'start_date', name: 'start_date', render: function(data, type, row) {
+                return data + ' — ' + (row.end_date || 'Ongoing') + '<br><small class="text-muted">' + (row.days || '') + ' days</small>';
+            }},
             { data: 'status_badge', name: 'status' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],

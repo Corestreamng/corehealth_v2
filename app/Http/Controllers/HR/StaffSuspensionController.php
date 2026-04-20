@@ -99,14 +99,14 @@ class StaffSuspensionController extends Controller
         }
 
         $suspensions = $query->paginate(20);
-        $staffList = Staff::with('user')->get();
+        $staffList = Staff::with('user')->whereHas('user')->get()->sortBy('user.surname');
 
         return view('admin.hr.suspensions.index', compact('suspensions', 'staffList'));
     }
 
     public function create(Request $request)
     {
-        $staffList = Staff::active()->with('user')->get();
+        $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
         $selectedStaff = $request->staff_id ? Staff::with('user')->find($request->staff_id) : null;
         $queries = DisciplinaryQuery::where('status', '!=', DisciplinaryQuery::STATUS_CLOSED)
             ->whereDoesntHave('suspension')

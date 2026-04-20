@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bank;
 use App\Models\HR\PayrollBatch;
 use App\Models\HR\PayrollItem;
 use App\Models\Staff;
@@ -316,8 +317,9 @@ class PayrollBatchController extends Controller
         $batches = $query->latest()->paginate(20);
         $statuses = PayrollBatch::getStatuses();
         $stats = $this->payrollService->getPayrollStats();
+        $banks = Bank::whereNotNull('account_id')->orderBy('name')->get();
 
-        return view('admin.hr.payroll.index', compact('batches', 'statuses', 'stats'));
+        return view('admin.hr.payroll.index', compact('batches', 'statuses', 'stats', 'banks'));
     }
 
     public function create(Request $request)
