@@ -70,7 +70,7 @@ class StoreSeeder extends Seeder
 
         foreach ($stores as $storeData) {
             Store::updateOrCreate(
-                ['store_name' => $storeData['store_name']],
+                ['code' => $storeData['code']],
                 $storeData
             );
         }
