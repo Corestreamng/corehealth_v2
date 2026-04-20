@@ -131,8 +131,7 @@
                             <th>Subject</th>
                             <th>Severity</th>
                             <th>Status</th>
-                            <th>Outcome</th>
-                            <th>Response Deadline</th>
+                            <th>Deadline</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -225,7 +224,7 @@
                                 @endif
                             </td>
                             <td>
-                                <span data-toggle="tooltip" title="{{ $suspension->reason }}">
+                                <span data-bs-toggle="tooltip" title="{{ $suspension->reason }}">
                                     {{ Str::limit($suspension->reason, 30) }}
                                 </span>
                                 @if($suspension->disciplinaryQuery)
@@ -468,7 +467,7 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
+<script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 <script>
 $(document).ready(function() {
     // Initialize DataTable with filters
@@ -486,8 +485,7 @@ $(document).ready(function() {
             { data: 'query_date', name: 'query_date' },
             { data: 'subject', name: 'subject' },
             { data: 'severity', name: 'severity' },
-            { data: 'status', name: 'status' },
-            { data: 'outcome', name: 'outcome' },
+            { data: 'status', name: 'status', render: function(data, type, row) { return data + (row.outcome ? '<br><small class="text-muted">' + row.outcome + '</small>' : ''); } },
             { data: 'response_deadline', name: 'response_deadline' },
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
         ],
