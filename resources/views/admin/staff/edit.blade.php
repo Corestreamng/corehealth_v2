@@ -203,7 +203,7 @@
                                         </div>
                                         <div class="col-lg-4 col-md-6">
                                             <label class="form-label-modern">Department</label>
-                                            <select class="form-control form-control-modern" name="department_id">
+                                            <select class="form-control form-control-modern" name="department_id" id="department_id">
                                                 <option value="">Select Department</option>
                                                 @foreach($departments as $department)
                                                     <option value="{{ $department->id }}" {{ ($user->staff_profile?->department_id ?? old('department_id')) == $department->id ? 'selected' : '' }}>
@@ -212,7 +212,143 @@
                                                 @endforeach
                                             </select>
                                         </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <label class="form-label-modern">Unit</label>
+                                            <select class="form-control form-control-modern" name="unit_id" id="unit_id">
+                                                <option value="">Select Unit</option>
+                                                @foreach($units as $unit)
+                                                    <option value="{{ $unit->id }}" {{ ($user->staff_profile?->unit_id ?? old('unit_id')) == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <label class="form-label-modern">Cadre</label>
+                                            <select class="form-control form-control-modern" name="cadre_id">
+                                                <option value="">Select Cadre</option>
+                                                @foreach($cadres as $cadre)
+                                                    <option value="{{ $cadre->id }}" {{ ($user->staff_profile?->cadre_id ?? old('cadre_id')) == $cadre->id ? 'selected' : '' }}>{{ $cadre->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6">
+                                            <label class="form-label-modern">Current Grade Level</label>
+                                            <select class="form-control form-control-modern" name="grade_level_id">
+                                                <option value="">Select Grade Level</option>
+                                                @foreach($gradeLevels as $gl)
+                                                    <option value="{{ $gl->id }}" {{ ($user->staff_profile?->grade_level_id ?? old('grade_level_id')) == $gl->id ? 'selected' : '' }}>{{ $gl->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6">
+                                            <label class="form-label-modern">Entry Grade Level</label>
+                                            <select class="form-control form-control-modern" name="entry_grade_level_id">
+                                                <option value="">Select Entry Grade</option>
+                                                @foreach($gradeLevels as $gl)
+                                                    <option value="{{ $gl->id }}" {{ ($user->staff_profile?->entry_grade_level_id ?? old('entry_grade_level_id')) == $gl->id ? 'selected' : '' }}>{{ $gl->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6">
+                                            <label class="form-label-modern">Job Location</label>
+                                            <input type="text" class="form-control form-control-modern" name="job_location" value="{{ $user->staff_profile?->job_location ?? old('job_location') }}" placeholder="e.g. Main Campus">
+                                        </div>
+                                        <div class="col-lg-3 col-md-6">
+                                            <label class="form-label-modern">Responsibility</label>
+                                            <input type="text" class="form-control form-control-modern" name="responsibility" value="{{ $user->staff_profile?->responsibility ?? old('responsibility') }}" placeholder="e.g. Ward Supervisor">
+                                        </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Licensing & Identification -->
+                            <div class="card-modern">
+                                <div class="card-header-modern">
+                                    <h5 class="card-title-modern">
+                                        <i class="mdi mdi-card-account-details-outline text-primary"></i> Licensing & Identification
+                                    </h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="row g-3">
+                                        <div class="col-lg-4 col-md-6">
+                                            <label class="form-label-modern">License Number</label>
+                                            <input type="text" class="form-control form-control-modern" name="license_number" value="{{ $user->staff_profile?->license_number ?? old('license_number') }}" placeholder="Professional license #">
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <label class="form-label-modern">License Expiry Date</label>
+                                            <input type="date" class="form-control form-control-modern" name="license_expiry_date" value="{{ $user->staff_profile?->license_expiry_date?->format('Y-m-d') ?? old('license_expiry_date') }}">
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <label class="form-label-modern">National ID (NIN)</label>
+                                            <input type="text" class="form-control form-control-modern" name="national_id_number" value="{{ $user->staff_profile?->national_id_number ?? old('national_id_number') }}" placeholder="National ID number">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Personal Details (Extended) -->
+                            <div class="card-modern">
+                                <div class="card-header-modern">
+                                    <h5 class="card-title-modern">
+                                        <i class="mdi mdi-account-heart-outline text-primary"></i> Personal Details (Extended)
+                                    </h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="row g-3">
+                                        <div class="col-lg-3 col-md-6">
+                                            <label class="form-label-modern">Marital Status</label>
+                                            <select class="form-control form-control-modern" name="marital_status">
+                                                <option value="">Select</option>
+                                                @foreach(['single','married','divorced','widowed','separated'] as $ms)
+                                                    <option value="{{ $ms }}" {{ ($user->staff_profile?->marital_status ?? old('marital_status')) == $ms ? 'selected' : '' }}>{{ ucfirst($ms) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6">
+                                            <label class="form-label-modern">Number of Children</label>
+                                            <input type="number" class="form-control form-control-modern" name="number_of_children" value="{{ $user->staff_profile?->number_of_children ?? old('number_of_children', 0) }}" min="0">
+                                        </div>
+                                        <div class="col-lg-6 col-md-12">
+                                            <label class="form-label-modern">Permanent Home Address</label>
+                                            <textarea class="form-control form-control-modern" name="permanent_home_address" rows="2" placeholder="Hometown / permanent address">{{ $user->staff_profile?->permanent_home_address ?? old('permanent_home_address') }}</textarea>
+                                        </div>
+                                        <div class="col-lg-6 col-md-12">
+                                            <label class="form-label-modern">Other Talents / Skills</label>
+                                            <textarea class="form-control form-control-modern" name="other_talents" rows="2" placeholder="Additional skills, talents, certifications">{{ $user->staff_profile?->other_talents ?? old('other_talents') }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Confirmation & Service Dates -->
+                            <div class="card-modern">
+                                <div class="card-header-modern">
+                                    <h5 class="card-title-modern">
+                                        <i class="mdi mdi-calendar-check text-primary"></i> Confirmation & Service Dates
+                                    </h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="row g-3">
+                                        <div class="col-lg-4 col-md-6">
+                                            <label class="form-label-modern">Date Confirmed</label>
+                                            <input type="date" class="form-control form-control-modern" name="date_confirmed" value="{{ $user->staff_profile?->date_confirmed?->format('Y-m-d') ?? old('date_confirmed') }}">
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <label class="form-label-modern">Confirmation Due Date</label>
+                                            <input type="date" class="form-control form-control-modern" name="confirmation_due_date" value="{{ $user->staff_profile?->confirmation_due_date?->format('Y-m-d') ?? old('confirmation_due_date') }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- HR Notes -->
+                            <div class="card-modern">
+                                <div class="card-header-modern">
+                                    <h5 class="card-title-modern">
+                                        <i class="mdi mdi-note-text-outline text-primary"></i> HR Notes
+                                    </h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <textarea class="form-control form-control-modern" name="hr_notes" rows="3" placeholder="Internal HR notes about this staff member">{{ $user->staff_profile?->hr_notes ?? old('hr_notes') }}</textarea>
                                 </div>
                             </div>
 

@@ -184,7 +184,7 @@
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Department</label>
-                                    <select class="form-control form-control-modern" name="department_id">
+                                    <select class="form-control form-control-modern" name="department_id" id="department_id">
                                         <option value="">Select Department</option>
                                         @foreach($departments as $department)
                                             <option value="{{ $department->id }}" {{ old('department_id') == $department->id ? 'selected' : '' }}>
@@ -193,7 +193,144 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Unit</label>
+                                    <select class="form-control form-control-modern" name="unit_id" id="unit_id">
+                                        <option value="">Select Unit</option>
+                                        @foreach($units as $unit)
+                                            <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Cadre</label>
+                                    <select class="form-control form-control-modern" name="cadre_id">
+                                        <option value="">Select Cadre</option>
+                                        @foreach($cadres as $cadre)
+                                            <option value="{{ $cadre->id }}" {{ old('cadre_id') == $cadre->id ? 'selected' : '' }}>{{ $cadre->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Current Grade Level</label>
+                                    <select class="form-control form-control-modern" name="grade_level_id">
+                                        <option value="">Select Grade Level</option>
+                                        @foreach($gradeLevels as $gl)
+                                            <option value="{{ $gl->id }}" {{ old('grade_level_id') == $gl->id ? 'selected' : '' }}>{{ $gl->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Entry Grade Level</label>
+                                    <select class="form-control form-control-modern" name="entry_grade_level_id">
+                                        <option value="">Select Entry Grade</option>
+                                        @foreach($gradeLevels as $gl)
+                                            <option value="{{ $gl->id }}" {{ old('entry_grade_level_id') == $gl->id ? 'selected' : '' }}>{{ $gl->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Job Location</label>
+                                    <input type="text" class="form-control form-control-modern" name="job_location" value="{{ old('job_location') }}" placeholder="e.g. Main Campus">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Responsibility</label>
+                                    <input type="text" class="form-control form-control-modern" name="responsibility" value="{{ old('responsibility') }}" placeholder="e.g. Ward Supervisor">
+                                </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Licensing & Identification -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-card-account-details-outline text-primary"></i> Licensing & Identification
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">License Number</label>
+                                    <input type="text" class="form-control form-control-modern" name="license_number" value="{{ old('license_number') }}" placeholder="Professional license #">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">License Expiry Date</label>
+                                    <input type="date" class="form-control form-control-modern" name="license_expiry_date" value="{{ old('license_expiry_date') }}">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">National ID (NIN)</label>
+                                    <input type="text" class="form-control form-control-modern" name="national_id_number" value="{{ old('national_id_number') }}" placeholder="National ID number">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Details (Extended) -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-account-heart-outline text-primary"></i> Personal Details (Extended)
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Marital Status</label>
+                                    <select class="form-control form-control-modern" name="marital_status">
+                                        <option value="">Select</option>
+                                        <option value="single" {{ old('marital_status') == 'single' ? 'selected' : '' }}>Single</option>
+                                        <option value="married" {{ old('marital_status') == 'married' ? 'selected' : '' }}>Married</option>
+                                        <option value="divorced" {{ old('marital_status') == 'divorced' ? 'selected' : '' }}>Divorced</option>
+                                        <option value="widowed" {{ old('marital_status') == 'widowed' ? 'selected' : '' }}>Widowed</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Number of Children</label>
+                                    <input type="number" class="form-control form-control-modern" name="number_of_children" value="{{ old('number_of_children') }}" min="0">
+                                </div>
+                                <div class="col-lg-6 col-md-12">
+                                    <label class="form-label-modern">Permanent Home Address</label>
+                                    <textarea class="form-control form-control-modern" name="permanent_home_address" rows="2" placeholder="Hometown / permanent address">{{ old('permanent_home_address') }}</textarea>
+                                </div>
+                                <div class="col-lg-6 col-md-12">
+                                    <label class="form-label-modern">Other Talents / Skills</label>
+                                    <textarea class="form-control form-control-modern" name="other_talents" rows="2" placeholder="Additional skills, talents, certifications">{{ old('other_talents') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation & Service Dates -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-calendar-check text-primary"></i> Confirmation & Service Dates
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Date Confirmed</label>
+                                    <input type="date" class="form-control form-control-modern" name="date_confirmed" value="{{ old('date_confirmed') }}">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Confirmation Due Date</label>
+                                    <input type="date" class="form-control form-control-modern" name="confirmation_due_date" value="{{ old('confirmation_due_date') }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HR Notes -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-note-text-outline text-primary"></i> HR Notes
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <textarea class="form-control form-control-modern" name="hr_notes" rows="3" placeholder="Internal HR notes about this staff member">{{ old('hr_notes') }}</textarea>
                         </div>
                     </div>
 
