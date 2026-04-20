@@ -1335,7 +1335,7 @@ class MaternityWorkbenchController extends Controller
         }
     }
 
-    public function maternityRemoveSingleLab(LabServiceRequest $lab)
+    public function maternityRemoveSingleLab($id, LabServiceRequest $lab)
     {
         try {
             $this->removeSingleLab($lab->id);
@@ -1367,7 +1367,7 @@ class MaternityWorkbenchController extends Controller
         }
     }
 
-    public function maternityRemoveSingleImaging(ImagingServiceRequest $imaging)
+    public function maternityRemoveSingleImaging($id, ImagingServiceRequest $imaging)
     {
         try {
             $this->removeSingleImaging($imaging->id);
@@ -1399,7 +1399,7 @@ class MaternityWorkbenchController extends Controller
         }
     }
 
-    public function maternityUpdatePrescriptionDose(ProductRequest $prescription)
+    public function maternityUpdatePrescriptionDose($id, ProductRequest $prescription)
     {
         try {
             $dose = request()->input('dose', '');
@@ -1410,7 +1410,7 @@ class MaternityWorkbenchController extends Controller
         }
     }
 
-    public function maternityRemoveSinglePrescription(ProductRequest $prescription)
+    public function maternityRemoveSinglePrescription($id, ProductRequest $prescription)
     {
         try {
             $this->removeSinglePrescription($prescription->id);
@@ -1445,7 +1445,7 @@ class MaternityWorkbenchController extends Controller
         }
     }
 
-    public function maternityRemoveSingleProcedure(Procedure $procedure)
+    public function maternityRemoveSingleProcedure($id, Procedure $procedure)
     {
         try {
             $this->removeSingleProcedure($procedure->id);
@@ -1455,7 +1455,7 @@ class MaternityWorkbenchController extends Controller
         }
     }
 
-    public function maternityUpdateLabNote(LabServiceRequest $lab)
+    public function maternityUpdateLabNote($id, LabServiceRequest $lab)
     {
         try {
             $lab = $this->updateSingleLabNote($lab->id, request()->input('note', ''));
@@ -1465,7 +1465,7 @@ class MaternityWorkbenchController extends Controller
         }
     }
 
-    public function maternityUpdateImagingNote(ImagingServiceRequest $imaging)
+    public function maternityUpdateImagingNote($id, ImagingServiceRequest $imaging)
     {
         try {
             $imaging = $this->updateSingleImagingNote($imaging->id, request()->input('note', ''));
