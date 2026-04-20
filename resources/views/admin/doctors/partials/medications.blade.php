@@ -96,10 +96,10 @@
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered table-striped">
                         <thead>
-                            <th>Name</th>
+                            <th>Drug / Product</th>
                             <th>Price</th>
-                            <th>Dose/Freq.</th>
-                            <th>*</th>
+                            <th>Dose / Freq.</th>
+                            <th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th>
                         </thead>
                         <tbody id="selected-products"></tbody>
                     </table>
