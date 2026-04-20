@@ -36,10 +36,17 @@ class PriceController extends Controller
         try {
             $product_id = request()->get('product_id');
             $product     = Product::whereId($product_id)->whereStatus(1)->wherePrice_assign(0)->orderBy('product_name', 'asc')->first();
-            if($product->stock_assign == 0){
+            // Check legacy flag first; if unset, also check actual stock batches
+            $hasStock = $product->stock_assign == 1
+                || \App\Models\StockBatch::where('product_id', $product_id)->active()->where('current_qty', '>', 0)->exists();
+            if(!$hasStock){
                 $msg = "Please assign stock to the item [$product->product_name] before attempting to set price";
                 return redirect(route('products.index'))->withMessage($msg)->withMessageType('danger');
             }else{
+                // Backfill the legacy flag so this check doesn't repeat
+                if ($product->stock_assign == 0) {
+                    $product->update(['stock_assign' => 1]);
+                }
                 $application = ApplicationStatu::whereId(1)->first();
                 return view('admin.prices.create', compact('product', 'application'));
             }

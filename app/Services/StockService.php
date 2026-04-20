@@ -448,6 +448,13 @@ class StockService
         // Sync product buy price from latest batch cost
         $this->syncProductPrice($productId);
 
+        // Ensure legacy stock_assign flag is set so price assignment is unblocked
+        if ($totalQty > 0) {
+            \App\Models\Product::where('id', $productId)
+                ->where('stock_assign', 0)
+                ->update(['stock_assign' => 1]);
+        }
+
         return $storeStock;
     }
 
