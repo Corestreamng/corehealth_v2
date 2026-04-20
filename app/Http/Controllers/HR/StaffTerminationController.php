@@ -124,7 +124,7 @@ class StaffTerminationController extends Controller
         }
 
         $terminations = $query->paginate(20);
-        $staffList = Staff::with('user')->get();
+        $staffList = Staff::with('user')->whereHas('user')->get()->sortBy('user.surname');
         $types = StaffTermination::getTypes();
         $reasonCategories = StaffTermination::getReasonCategories();
 
@@ -133,7 +133,7 @@ class StaffTerminationController extends Controller
 
     public function create(Request $request)
     {
-        $staffList = Staff::active()->with('user')->get();
+        $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
         $selectedStaff = $request->staff_id ? Staff::with('user')->find($request->staff_id) : null;
         $types = StaffTermination::getTypes();
         $reasonCategories = StaffTermination::getReasonCategories();

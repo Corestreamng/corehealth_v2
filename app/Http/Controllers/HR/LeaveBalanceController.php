@@ -98,7 +98,7 @@ class LeaveBalanceController extends Controller
             ->paginate(50);
 
         $leaveTypes = LeaveType::active()->orderBy('name')->get();
-        $staffList = Staff::active()->with('user')->get();
+        $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
         $years = range(now()->year - 2, now()->year + 1);
 
         return view('admin.hr.leave-balances.index', compact('balances', 'leaveTypes', 'staffList', 'years', 'year'));

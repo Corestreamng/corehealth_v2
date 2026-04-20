@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
     <div class="row">
         <div class="col-md-12">
             <!-- Page Header -->
@@ -47,12 +48,8 @@
                                 <tr style="background: #f8f9fa;">
                                     <th style="font-weight: 600; color: #495057;">SN</th>
                                     <th style="font-weight: 600; color: #495057;">Staff</th>
-                                    <th style="font-weight: 600; color: #495057;">Employee ID</th>
                                     <th style="font-weight: 600; color: #495057;">Leave Type</th>
-                                    <th style="font-weight: 600; color: #495057;">Entitled</th>
-                                    <th style="font-weight: 600; color: #495057;">Used</th>
-                                    <th style="font-weight: 600; color: #495057;">Pending</th>
-                                    <th style="font-weight: 600; color: #495057;">Carried</th>
+                                    <th style="font-weight: 600; color: #495057;">Entitlement</th>
                                     <th style="font-weight: 600; color: #495057;">Available</th>
                                     <th style="font-weight: 600; color: #495057;">Actions</th>
                                 </tr>
@@ -89,7 +86,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Adjustment Type *</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-swap-vertical text-info mr-1"></i>Adjustment Type *</label>
                         <select class="form-control" name="adjustment_type" id="adjustment_type" required style="border-radius: 8px;">
                             <option value="add">Add Days (+)</option>
                             <option value="deduct">Deduct Days (-)</option>
@@ -99,13 +96,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Days *</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-range text-primary mr-1"></i>Days *</label>
                         <input type="number" class="form-control" name="days" id="adjust_days" required
                                min="0" step="0.5" style="border-radius: 8px; padding: 0.75rem;">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Reason *</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-text-box text-warning mr-1"></i>Reason *</label>
                         <textarea class="form-control" name="reason" id="adjust_reason" rows="2" required
                                   style="border-radius: 8px; padding: 0.75rem;" placeholder="Reason for adjustment"></textarea>
                     </div>
@@ -143,7 +140,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Year *</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar text-primary mr-1"></i>Year *</label>
                         <input type="number" class="form-control" name="year" id="init_year" required
                                value="{{ date('Y') }}" min="2020" max="2099" style="border-radius: 8px; padding: 0.75rem;">
                     </div>
@@ -190,18 +187,22 @@ $(function() {
         },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'staff_name', name: 'staff.user.firstname' },
-            { data: 'employee_id', name: 'staff.employee_id' },
+            { data: 'staff_name', name: 'staff.user.firstname', render: function(data, type, row) {
+                return data + '<br><small class="text-muted">' + (row.employee_id || '') + '</small>';
+            }},
             { data: 'leave_type', name: 'leaveType.name' },
-            { data: 'entitled_days', name: 'entitled_days' },
-            { data: 'used_days', name: 'used_days' },
-            { data: 'pending_days', name: 'pending_days' },
-            { data: 'carried_forward', name: 'carried_forward' },
+            { data: 'entitled_days', name: 'entitled_days', render: function(data, type, row) {
+                var s = data + ' days';
+                if (parseFloat(row.carried_forward) > 0) s += '<br><small class="text-muted">+' + row.carried_forward + ' carried</small>';
+                return s;
+            }},
             { data: 'available', name: 'available', orderable: false,
               render: function(data, type, row) {
-                  const available = parseFloat(row.entitled_days) - parseFloat(row.used_days) - parseFloat(row.pending_days) + parseFloat(row.carried_forward);
-                  const cls = available > 0 ? 'success' : (available == 0 ? 'warning' : 'danger');
-                  return '<span class="badge badge-' + cls + '" style="font-size: 1em;">' + available.toFixed(1) + '</span>';
+                  var available = parseFloat(row.entitled_days) - parseFloat(row.used_days) - parseFloat(row.pending_days) + parseFloat(row.carried_forward);
+                  var cls = available > 0 ? 'success' : (available == 0 ? 'warning' : 'danger');
+                  var s = '<span class="badge badge-' + cls + '" style="font-size: 1em;">' + available.toFixed(1) + '</span>';
+                  s += '<br><small class="text-muted">' + row.used_days + ' used' + (parseFloat(row.pending_days) > 0 ? ', ' + row.pending_days + ' pending' : '') + '</small>';
+                  return s;
               }
             },
             { data: 'action', name: 'action', orderable: false, searchable: false }
