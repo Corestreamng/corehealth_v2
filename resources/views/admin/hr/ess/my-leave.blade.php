@@ -17,7 +17,7 @@
                 </ol>
             </nav>
         </div>
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#requestLeaveModal" style="border-radius: 8px;">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#requestLeaveModal" style="border-radius: 8px;">
             <i class="mdi mdi-plus mr-1"></i>Request Leave
         </button>
     </div>
@@ -65,11 +65,10 @@
                     <thead class="bg-light">
                         <tr>
                             <th>Leave Type</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
+                            <th>Period</th>
                             <th>Days</th>
                             <th>Status</th>
-                            <th>Requested On</th>
+                            <th>Requested</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -77,8 +76,7 @@
                         @forelse($leaveRequests as $request)
                         <tr>
                             <td>{{ $request->leaveType->name }}</td>
-                            <td>{{ \Carbon\Carbon::parse($request->start_date)->format('M d, Y') }}</td>
-                            <td>{{ \Carbon\Carbon::parse($request->end_date)->format('M d, Y') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($request->start_date)->format('M d') }} — {{ \Carbon\Carbon::parse($request->end_date)->format('M d, Y') }}</td>
                             <td>{{ $request->days_requested }}</td>
                             <td>
                                 @if($request->status === 'pending')
@@ -91,16 +89,12 @@
                                     <span class="badge badge-secondary">Cancelled</span>
                                 @endif
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($request->created_at)->format('M d, Y') }}</td>
+                            <td><small class="text-muted">{{ \Carbon\Carbon::parse($request->created_at)->format('M d, Y') }}</small></td>
                             <td>
                                 @if($request->status === 'pending')
-                                <form action="{{ route('hr.ess.my-leave.cancel', $request->id) }}" method="POST" class="d-inline"
-                                      onsubmit="return confirm('Are you sure you want to cancel this leave request?');">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="mdi mdi-close-circle"></i> Cancel
-                                    </button>
-                                </form>
+                                <button class="btn btn-sm btn-outline-danger cancel-leave-btn" data-id="{{ $request->id }}">
+                                    <i class="mdi mdi-close-circle"></i> Cancel
+                                </button>
                                 @else
                                 <span class="text-muted">-</span>
                                 @endif
@@ -108,7 +102,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
+                            <td colspan="6" class="text-center py-4 text-muted">
                                 <i class="mdi mdi-alert-circle-outline" style="font-size: 2rem;"></i>
                                 <p class="mb-0">No leave requests found</p>
                             </td>
@@ -673,7 +667,7 @@ $(document).ready(function() {
     });
 
     // Cancel leave request
-    $(document).on('click', '.btn-cancel-request, .cancel-request', function() {
+    $(document).on('click', '.btn-cancel-request, .cancel-request, .cancel-leave-btn', function() {
         var id = $(this).data('id');
 
         if (confirm('Are you sure you want to cancel this leave request?')) {

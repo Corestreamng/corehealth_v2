@@ -178,10 +178,8 @@
                         <thead class="bg-light">
                             <tr>
                                 <th>Employee</th>
-                                <th>Unit/Dept</th>
                                 <th>Leave Type</th>
-                                <th>Dates</th>
-                                <th>Days</th>
+                                <th>Period</th>
                                 <th>Status</th>
                                 <th>Requested</th>
                                 <th class="text-center">Actions</th>
@@ -198,29 +196,18 @@
                                         <div>
                                             <span class="font-weight-medium">{{ $request->staff->user->name ?? 'N/A' }}</span>
                                             <br>
-                                            <small class="text-muted">{{ $request->staff->employee_id ?? '' }}</small>
+                                            <small class="text-muted">{{ $request->staff->specialization->name ?? 'N/A' }}</small>
                                         </div>
                                     </div>
-                                </td>
-                                <td>
-                                    <small class="text-muted">{{ $request->staff->specialization->name ?? 'N/A' }}</small>
                                 </td>
                                 <td>
                                     <span class="badge" style="background-color: {{ $request->leaveType->color ?? '#6c757d' }}20; color: {{ $request->leaveType->color ?? '#6c757d' }}; border-radius: 6px; padding: 5px 10px;">
                                         {{ $request->leaveType->name ?? 'N/A' }}
                                     </span>
+                                    <br><small class="text-muted">{{ $request->total_days }} days @if($request->is_half_day)<span class="badge badge-info" style="font-size: 0.6rem;">Half</span>@endif</small>
                                 </td>
                                 <td>
-                                    <span class="font-weight-medium">{{ \Carbon\Carbon::parse($request->start_date)->format('M d, Y') }}</span>
-                                    <br>
-                                    <small class="text-muted">to {{ \Carbon\Carbon::parse($request->end_date)->format('M d, Y') }}</small>
-                                </td>
-                                <td>
-                                    <span class="font-weight-bold">{{ $request->total_days }}</span>
-                                    <small class="text-muted">days</small>
-                                    @if($request->is_half_day)
-                                        <br><span class="badge badge-info badge-sm" style="border-radius: 4px; font-size: 0.65rem;">Half Day</span>
-                                    @endif
+                                    <span class="font-weight-medium">{{ \Carbon\Carbon::parse($request->start_date)->format('M d') }} — {{ \Carbon\Carbon::parse($request->end_date)->format('M d, Y') }}</span>
                                 </td>
                                 <td>
                                     @php
@@ -254,14 +241,14 @@
                                         <button type="button" class="btn btn-sm btn-success approve-btn"
                                                 data-id="{{ $request->id }}"
                                                 data-name="{{ $request->staff->user->name ?? 'Employee' }}"
-                                                data-toggle="modal" data-target="#approveModal"
+                                                data-bs-toggle="modal" data-bs-target="#approveModal"
                                                 style="border-radius: 6px;" title="Approve">
                                             <i class="mdi mdi-check"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-danger reject-btn"
                                                 data-id="{{ $request->id }}"
                                                 data-name="{{ $request->staff->user->name ?? 'Employee' }}"
-                                                data-toggle="modal" data-target="#rejectModal"
+                                                data-bs-toggle="modal" data-bs-target="#rejectModal"
                                                 style="border-radius: 6px;" title="Reject">
                                             <i class="mdi mdi-close"></i>
                                         </button>
@@ -302,7 +289,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-check-circle mr-2"></i>Approve Leave Request
                 </h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -317,7 +304,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light"  data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
                     <button type="submit" class="btn btn-success" style="border-radius: 8px;">
                         <i class="mdi mdi-check mr-1"></i>Approve Request
                     </button>
@@ -335,7 +322,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-close-circle mr-2"></i>Reject Leave Request
                 </h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -349,7 +336,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light"  data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
                     <button type="submit" class="btn btn-danger" style="border-radius: 8px;">
                         <i class="mdi mdi-close mr-1"></i>Reject Request
                     </button>
@@ -367,18 +354,56 @@ $(document).ready(function() {
     $('.approve-btn').on('click', function() {
         var requestId = $(this).data('id');
         var employeeName = $(this).data('name');
-
         $('#approveEmployeeName').text(employeeName);
-        $('#approveForm').attr('action', '/hr/ess/team-approvals/' + requestId + '/approve');
+        $('#approveForm').data('url', '/hr/ess/team-approvals/' + requestId + '/approve');
     });
 
     // Handle reject button click
     $('.reject-btn').on('click', function() {
         var requestId = $(this).data('id');
         var employeeName = $(this).data('name');
-
         $('#rejectEmployeeName').text(employeeName);
-        $('#rejectForm').attr('action', '/hr/ess/team-approvals/' + requestId + '/reject');
+        $('#rejectForm').data('url', '/hr/ess/team-approvals/' + requestId + '/reject');
+    });
+
+    // AJAX approve
+    $('#approveForm').on('submit', function(e) {
+        e.preventDefault();
+        var url = $(this).data('url');
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: $(this).serialize(),
+            headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(res) {
+                $('#approveModal').modal('hide');
+                toastr.success(res.message || 'Leave request approved successfully');
+                setTimeout(function(){ location.reload(); }, 800);
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to approve request');
+            }
+        });
+    });
+
+    // AJAX reject
+    $('#rejectForm').on('submit', function(e) {
+        e.preventDefault();
+        var url = $(this).data('url');
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: $(this).serialize(),
+            headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(res) {
+                $('#rejectModal').modal('hide');
+                toastr.success(res.message || 'Leave request rejected');
+                setTimeout(function(){ location.reload(); }, 800);
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to reject request');
+            }
+        });
     });
 });
 </script>

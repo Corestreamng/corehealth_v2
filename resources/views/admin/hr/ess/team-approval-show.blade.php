@@ -181,7 +181,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <form action="{{ route('hr.ess.team-approvals.approve', $leaveRequest) }}" method="POST" id="approveForm">
+                            <form id="approveForm" data-url="{{ route('hr.ess.team-approvals.approve', $leaveRequest) }}">
                                 @csrf
                                 <div class="form-group">
                                     <label>Approval Remarks (Optional)</label>
@@ -196,7 +196,7 @@
                             </form>
                         </div>
                         <div class="col-md-6">
-                            <form action="{{ route('hr.ess.team-approvals.reject', $leaveRequest) }}" method="POST" id="rejectForm">
+                            <form id="rejectForm" data-url="{{ route('hr.ess.team-approvals.reject', $leaveRequest) }}">
                                 @csrf
                                 <div class="form-group">
                                     <label>Rejection Reason <span class="text-danger">*</span></label>
@@ -361,4 +361,44 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+$(document).ready(function() {
+    $('#approveForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: $(this).data('url'),
+            type: 'POST',
+            data: $(this).serialize(),
+            headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(res) {
+                toastr.success(res.message || 'Leave request approved successfully');
+                setTimeout(function(){ location.reload(); }, 800);
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to approve request');
+            }
+        });
+    });
+
+    $('#rejectForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: $(this).data('url'),
+            type: 'POST',
+            data: $(this).serialize(),
+            headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(res) {
+                toastr.success(res.message || 'Leave request rejected');
+                setTimeout(function(){ location.reload(); }, 800);
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to reject request');
+            }
+        });
+    });
+});
+</script>
 @endsection
