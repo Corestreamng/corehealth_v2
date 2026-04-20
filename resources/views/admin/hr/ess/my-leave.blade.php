@@ -637,7 +637,7 @@ $(document).ready(function() {
             $('#view_status').html('<span class="badge badge-' + statusClass + '">' + data.status.charAt(0).toUpperCase() + data.status.slice(1) + '</span>');
 
             if (data.processed_by) {
-                $('#view_processed_by').text(data.processed_by.firstname + ' ' + data.processed_by.surname);
+                $('#view_processed_by').text(data.processed_by.surname + ' ' + data.processed_by.firstname + ' ' + (data.processed_by.othername || ''));
                 $('#view_processed_at').text(data.processed_at);
             } else {
                 $('#view_processed_by').text('N/A');

@@ -20,7 +20,7 @@
                     <h3 class="mb-1" style="font-weight: 700; color: var(--primary-color);">
                         <i class="mdi mdi-history mr-2"></i>Promotion History
                     </h3>
-                    <p class="text-muted mb-0">{{ $staff->user?->surname }} {{ $staff->user?->firstname }} — {{ $staff->employee_id }}</p>
+                    <p class="text-muted mb-0">{{ $staff->user?->surname }} {{ $staff->user?->firstname }} {{ $staff->user?->othername }} — {{ $staff->employee_id }}</p>
                 </div>
                 <a href="{{ route('hr.promotions.index') }}" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px;">
                     <i class="mdi mdi-arrow-left mr-1"></i> Back

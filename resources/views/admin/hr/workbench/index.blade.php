@@ -433,7 +433,7 @@
                         @foreach($pendingLeaveRequests as $request)
                         <div class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div>
-                                <strong>{{ $request->staff->user->firstname ?? '' }} {{ $request->staff->user->surname ?? '' }}</strong>
+                                <strong>{{ $request->staff->user->surname ?? '' }} {{ $request->staff->user->firstname ?? '' }} {{ $request->staff->user->othername ?? '' }}</strong>
                                 <br>
                                 <small class="text-muted">
                                     {{ $request->leaveType->name ?? 'N/A' }} •
@@ -476,7 +476,7 @@
                         @foreach($openQueries as $query)
                         <div class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div>
-                                <strong>{{ $query->staff->user->firstname ?? '' }} {{ $query->staff->user->surname ?? '' }}</strong>
+                                <strong>{{ $query->staff->user->surname ?? '' }} {{ $query->staff->user->firstname ?? '' }} {{ $query->staff->user->othername ?? '' }}</strong>
                                 <span class="badge badge-{{ $query->severity == 'gross' ? 'danger' : ($query->severity == 'major' ? 'warning' : 'info') }} ml-2">
                                     {{ ucfirst($query->severity) }}
                                 </span>
@@ -523,7 +523,7 @@
                         @foreach($staffOnLeave as $leave)
                         <div class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div>
-                                <strong>{{ $leave->staff->user->firstname ?? '' }} {{ $leave->staff->user->surname ?? '' }}</strong>
+                                <strong>{{ $leave->staff->user->surname ?? '' }} {{ $leave->staff->user->firstname ?? '' }} {{ $leave->staff->user->othername ?? '' }}</strong>
                                 <br>
                                 <small class="text-muted">
                                     {{ $leave->leaveType->name ?? 'N/A' }} •

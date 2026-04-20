@@ -34,7 +34,7 @@ class StaffMedicalExamController extends Controller
             $rows = $query->get();
             $csv = "Staff,Exam Type,Exam Date,Result,Conducted By,Next Due,Notes\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname).'","'.ucfirst(str_replace('_',' ',$r->exam_type)).'","'.($r->exam_date?->format('Y-m-d') ?? '').'","'.ucfirst($r->result).'","'.($r->conducted_by ?? '').'","'.($r->next_exam_due?->format('Y-m-d') ?? '').'","'.str_replace('"','""',$r->notes ?? '')."\"\n";
+                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.ucfirst(str_replace('_',' ',$r->exam_type)).'","'.($r->exam_date?->format('Y-m-d') ?? '').'","'.ucfirst($r->result).'","'.($r->conducted_by ?? '').'","'.($r->next_exam_due?->format('Y-m-d') ?? '').'","'.str_replace('"','""',$r->notes ?? '')."\"\n";
             }
             return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=medical_exams_'.date('Ymd').'.csv');
         }
@@ -42,7 +42,7 @@ class StaffMedicalExamController extends Controller
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($e) => '<a href="' . route('hr.tracking.profile', $e->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($e->staff?->user?->surname . ' ' . $e->staff?->user?->firstname) . '</a>')
+                ->addColumn('staff_name', fn($e) => '<a href="' . route('hr.tracking.profile', $e->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($e->staff?->user?->surname . ' ' . $e->staff?->user?->firstname . ' ' . $e->staff?->user?->othername) . '</a>')
                 ->addColumn('exam_col', function ($e) {
                     $typeLabels = ['pre_employment' => 'Pre-Empl', 'periodic' => 'Periodic', 'exit' => 'Exit'];
                     return '<span class="badge badge-info">' . ($typeLabels[$e->exam_type] ?? ucfirst($e->exam_type)) . '</span><br><small class="text-muted">' . ($e->exam_date?->format('d M Y') ?? '') . '</small>';

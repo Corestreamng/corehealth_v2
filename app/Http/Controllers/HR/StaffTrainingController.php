@@ -33,7 +33,7 @@ class StaffTrainingController extends Controller
             $rows = $query->get();
             $csv = "Staff,Type,Title,Institution,Start Date,End Date,Status\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname).'","'.ucfirst(str_replace('_',' ',$r->type)).'","'.($r->title ?? '').'","'.($r->institution ?? '').'","'.($r->start_date?->format('Y-m-d') ?? '').'","'.($r->end_date?->format('Y-m-d') ?? '').'","'.ucfirst(str_replace('_',' ',$r->status))."\"\n";
+                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.ucfirst(str_replace('_',' ',$r->type)).'","'.($r->title ?? '').'","'.($r->institution ?? '').'","'.($r->start_date?->format('Y-m-d') ?? '').'","'.($r->end_date?->format('Y-m-d') ?? '').'","'.ucfirst(str_replace('_',' ',$r->status))."\"\n";
             }
             return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=trainings_'.date('Ymd').'.csv');
         }
@@ -41,7 +41,7 @@ class StaffTrainingController extends Controller
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($t) => '<a href="' . route('hr.tracking.profile', $t->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($t->staff?->user?->surname . ' ' . $t->staff?->user?->firstname) . '</a>')
+                ->addColumn('staff_name', fn($t) => '<a href="' . route('hr.tracking.profile', $t->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($t->staff?->user?->surname . ' ' . $t->staff?->user?->firstname . ' ' . $t->staff?->user?->othername) . '</a>')
                 ->addColumn('training_col', function ($t) {
                     $typeColors = ['attended' => 'success', 'identified' => 'warning', 'career_plan' => 'info'];
                     return e($t->title) . '<br><span class="badge badge-' . ($typeColors[$t->type] ?? 'secondary') . '">' . str_replace('_', ' ', ucfirst($t->type)) . '</span>';

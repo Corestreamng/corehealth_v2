@@ -230,7 +230,7 @@
                         @endif
                         <p class="photo-upload-hint"><i class="mdi mdi-camera"></i> Click to change photo</p>
 
-                        <h3 class="profile-name">{{ $user->firstname ?? '' }} {{ $user->surname ?? '' }}</h3>
+                        <h3 class="profile-name">{{ $user->surname ?? '' }} {{ $user->firstname ?? '' }} {{ $user->othername ?? '' }}</h3>
                         <p class="profile-role">{{ $staff->job_title ?? $user->category->name ?? 'Staff' }}</p>
 
                         @if($staff && $staff->is_dept_head)
@@ -334,7 +334,7 @@
                                     @endif
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="font-weight-bold">{{ $supervisor->user->firstname ?? '' }} {{ $supervisor->user->surname ?? '' }}</div>
+                                    <div class="font-weight-bold">{{ $supervisor->user->surname ?? '' }} {{ $supervisor->user->firstname ?? '' }} {{ $supervisor->user->othername ?? '' }}</div>
                                     <small class="text-muted">{{ $supervisor->job_title ?? 'Supervisor' }}</small>
                                 </div>
                                 <div>

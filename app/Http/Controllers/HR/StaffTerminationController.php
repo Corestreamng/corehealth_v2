@@ -76,7 +76,7 @@ class StaffTerminationController extends Controller
                 ->addIndexColumn()
                 ->addColumn('staff_name', function ($t) {
                     $user = $t->staff->user ?? null;
-                    return $user ? $user->firstname . ' ' . $user->surname : 'N/A';
+                    return $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A';
                 })
                 ->addColumn('termination_type_badge', function ($t) {
                     $colors = [
@@ -227,7 +227,7 @@ class StaffTerminationController extends Controller
                 'success' => true,
                 'id' => $termination->id,
                 'termination_number' => $termination->termination_number,
-                'staff_name' => $user ? $user->firstname . ' ' . $user->surname : 'N/A',
+                'staff_name' => $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A',
                 'employee_id' => $termination->staff->employee_id ?? '-',
                 'termination_type' => $termination->type,
                 'termination_type_badge' => '<span class="badge badge-' . $color . '">' . ($types[$termination->type] ?? ucfirst($termination->type)) . '</span>',
@@ -246,7 +246,7 @@ class StaffTerminationController extends Controller
                 'status_badge' => ($termination->clearance_completed && $termination->final_payment_processed)
                     ? '<span class="badge badge-success">Completed</span>'
                     : '<span class="badge badge-warning">Pending</span>',
-                'processed_by' => $termination->processedBy ? $termination->processedBy->firstname . ' ' . $termination->processedBy->surname : '-',
+                'processed_by' => $termination->processedBy ? $termination->processedBy->surname . ' ' . $termination->processedBy->firstname . ' ' . $termination->processedBy->othername : '-',
                 'created_at' => $termination->created_at->format('d M Y H:i'),
                 'disciplinary_query' => $termination->disciplinaryQuery ? [
                     'id' => $termination->disciplinaryQuery->id,
@@ -373,7 +373,7 @@ class StaffTerminationController extends Controller
     {
         $termination->load('staff.user');
         $staffName = $termination->staff->user
-            ? $termination->staff->user->firstname . ' ' . $termination->staff->user->surname
+            ? $termination->staff->user->surname . ' ' . $termination->staff->user->firstname . ' ' . $termination->staff->user->othername
             : 'Staff #' . $termination->staff_id;
 
         // Generate expense number
