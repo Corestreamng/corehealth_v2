@@ -20,7 +20,7 @@
                     <h3 class="mb-1" style="font-weight: 700; color: var(--primary-color);">
                         <i class="mdi mdi-arrow-up-bold-circle mr-2"></i>Promotion Detail
                     </h3>
-                    <p class="text-muted mb-0">{{ $promotion->staff?->user?->surname }} {{ $promotion->staff?->user?->firstname }}</p>
+                    <p class="text-muted mb-0">{{ $promotion->staff?->user?->surname }} {{ $promotion->staff?->user?->firstname }} {{ $promotion->staff?->user?->othername }} ({{ $promotion->staff?->employee_id }})</p>
                 </div>
                 <a href="{{ route('hr.promotions.index') }}" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px;">
                     <i class="mdi mdi-arrow-left mr-1"></i> Back
@@ -32,7 +32,7 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="text-muted small">Staff Name</label>
-                            <p class="font-weight-bold mb-0">{{ $promotion->staff?->user?->surname }} {{ $promotion->staff?->user?->firstname }}</p>
+                            <p class="font-weight-bold mb-0">{{ $promotion->staff?->user?->surname }} {{ $promotion->staff?->user?->firstname }} {{ $promotion->staff?->user?->othername }}</p>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="text-muted small">Employee ID</label>
@@ -74,7 +74,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="text-muted small">Processed By</label>
-                            <p class="mb-0">{{ $promotion->processedBy?->surname }} {{ $promotion->processedBy?->firstname }}</p>
+                            <p class="mb-0">{{ $promotion->processedBy?->surname }} {{ $promotion->processedBy?->firstname }} {{ $promotion->processedBy?->othername }}</p>
                         </div>
                         @if($promotion->remarks)
                         <div class="col-12 mb-3">

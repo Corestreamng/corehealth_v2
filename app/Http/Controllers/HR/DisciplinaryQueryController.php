@@ -57,7 +57,7 @@ class DisciplinaryQueryController extends Controller
                 ->addIndexColumn()
                 ->addColumn('staff_name', function ($q) {
                     $user = $q->staff->user ?? null;
-                    return $user ? $user->firstname . ' ' . $user->surname : 'N/A';
+                    return $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A';
                 })
                 ->addColumn('severity_badge', function ($q) {
                     $colors = [

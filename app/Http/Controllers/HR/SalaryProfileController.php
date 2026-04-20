@@ -33,7 +33,7 @@ class SalaryProfileController extends Controller
                 ->addIndexColumn()
                 ->addColumn('staff_name', function ($profile) {
                     $user = $profile->staff->user ?? null;
-                    return $user ? $user->firstname . ' ' . $user->surname : 'N/A';
+                    return $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A';
                 })
                 ->addColumn('employee_id', function ($profile) {
                     return $profile->staff->employee_id ?? 'N/A';
@@ -247,7 +247,7 @@ class SalaryProfileController extends Controller
             return response()->json([
                 'id' => $salaryProfile->id,
                 'staff_id' => $salaryProfile->staff_id,
-                'staff_name' => $user ? $user->firstname . ' ' . $user->surname : 'N/A',
+                'staff_name' => $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A',
                 'employee_id' => $salaryProfile->staff->employee_id ?? 'N/A',
                 'basic_salary' => $salaryProfile->basic_salary,
                 'gross_salary' => $salaryProfile->gross_salary ?? $salaryProfile->calculateGrossSalary(),

@@ -29,7 +29,7 @@
         <div class="card-header-modern d-flex justify-content-between align-items-center">
             <div>
                 <h2 class="mb-1 font-weight-bold text-dark">
-                    <i class="mdi mdi-arrow-up-bold-circle text-primary"></i> {{ $scopedStaff ? ($scopedStaff->user?->surname . ' ' . $scopedStaff->user?->firstname . ' — ') : '' }}Promotions
+                    <i class="mdi mdi-arrow-up-bold-circle text-primary"></i> {{ $scopedStaff ? ($scopedStaff->user?->surname . ' ' . $scopedStaff->user?->firstname . ' ' . $scopedStaff->user?->othername . ' — ') : '' }}Promotions
                 </h2>
                 <p class="text-muted mb-0">{{ $scopedStaff ? 'Promotion history and grade level changes' : 'Record and track staff promotions and grade level changes' }}</p>
             </div>
@@ -55,7 +55,7 @@
                 <select class="form-control form-control-sm" id="staffFilter" style="min-width: 220px; border-radius: 8px;">
                     <option value="">All Staff</option>
                     @foreach($staffList as $s)
-                        <option value="{{ $s->id }}">{{ $s->user?->surname }} {{ $s->user?->firstname }}</option>
+                        <option value="{{ $s->id }}">{{ $s->user?->surname }} {{ $s->user?->firstname }} {{ $s->user?->othername }} ({{ $s->employee_id }})</option>
                     @endforeach
                 </select>
                 <button class="btn btn-outline-secondary btn-sm" id="clearFilters" style="border-radius: 8px;">Clear</button>
@@ -106,12 +106,12 @@
                             <label class="form-label" style="font-weight: 600;"><i class="mdi mdi-account text-primary mr-1"></i>Staff *</label>
                             @if($scopedStaff)
                                 <input type="hidden" name="staff_id" value="{{ $scopedStaff->id }}">
-                                <div class="form-control" style="border-radius: 8px; background: #f3f4f6; font-weight: 600;">{{ $scopedStaff->user?->surname }} {{ $scopedStaff->user?->firstname }} ({{ $scopedStaff->employee_id }})</div>
+                                <div class="form-control" style="border-radius: 8px; background: #f3f4f6; font-weight: 600;">{{ $scopedStaff->user?->surname }} {{ $scopedStaff->user?->firstname }} {{ $scopedStaff->user?->othername }} ({{ $scopedStaff->employee_id }})</div>
                             @else
                                 <select class="form-control modal-select2" name="staff_id" required>
                                     <option value="">Select Staff</option>
                                     @foreach($staffList as $s)
-                                        <option value="{{ $s->id }}">{{ $s->user?->surname }} {{ $s->user?->firstname }} ({{ $s->employee_id }})</option>
+                                        <option value="{{ $s->id }}">{{ $s->user?->surname }} {{ $s->user?->firstname }} {{ $s->user?->othername }} ({{ $s->employee_id }})</option>
                                     @endforeach
                                 </select>
                             @endif

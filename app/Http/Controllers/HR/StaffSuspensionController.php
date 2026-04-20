@@ -60,7 +60,7 @@ class StaffSuspensionController extends Controller
                 ->addIndexColumn()
                 ->addColumn('staff_name', function ($s) {
                     $user = $s->staff->user ?? null;
-                    return $user ? $user->firstname . ' ' . $user->surname : 'N/A';
+                    return $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A';
                 })
                 ->addColumn('days', function ($s) {
                     if ($s->start_date && $s->end_date) {
@@ -90,7 +90,7 @@ class StaffSuspensionController extends Controller
                     $viewBtn = '<button type="button" class="btn btn-sm btn-info view-btn mr-1" data-id="' . $s->id . '" title="View"><i class="mdi mdi-eye"></i></button>';
                     $liftBtn = '';
                     if ($s->status === 'active') {
-                        $liftBtn = '<button type="button" class="btn btn-sm btn-success lift-btn" data-id="' . $s->id . '" data-name="' . ($s->staff->user->firstname ?? '') . ' ' . ($s->staff->user->surname ?? '') . '" title="Lift"><i class="mdi mdi-lock-open"></i></button>';
+                        $liftBtn = '<button type="button" class="btn btn-sm btn-success lift-btn" data-id="' . $s->id . '" data-name="' . ($s->staff->user->surname ?? '') . ' ' . ($s->staff->user->firstname ?? '') . ' ' . ($s->staff->user->othername ?? '') . '" title="Lift"><i class="mdi mdi-lock-open"></i></button>';
                     }
                     return $viewBtn . $liftBtn;
                 })
@@ -191,7 +191,7 @@ class StaffSuspensionController extends Controller
                 'success' => true,
                 'id' => $suspension->id,
                 'suspension_number' => $suspension->suspension_number ?? 'SUSP-' . $suspension->id,
-                'staff_name' => $user ? $user->firstname . ' ' . $user->surname : 'N/A',
+                'staff_name' => $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A',
                 'employee_id' => $suspension->staff->employee_id ?? '-',
                 'type' => $suspension->type,
                 'type_badge' => '<span class="badge badge-' . ($suspension->type === 'paid' ? 'success' : 'warning') . '">' . ucfirst($suspension->type) . '</span>',
@@ -204,9 +204,9 @@ class StaffSuspensionController extends Controller
                 'suspension_message' => $suspension->suspension_message,
                 'status' => $suspension->status,
                 'status_badge' => '<span class="badge badge-' . ($suspension->status === 'active' ? 'danger' : ($suspension->status === 'lifted' ? 'success' : 'secondary')) . '">' . ucfirst($suspension->status) . '</span>',
-                'issued_by' => $suspension->issuedBy ? $suspension->issuedBy->firstname . ' ' . $suspension->issuedBy->surname : '-',
+                'issued_by' => $suspension->issuedBy ? $suspension->issuedBy->surname . ' ' . $suspension->issuedBy->firstname . ' ' . $suspension->issuedBy->othername : '-',
                 'created_at' => $suspension->created_at->format('d M Y H:i'),
-                'lifted_by' => $suspension->liftedBy ? $suspension->liftedBy->firstname . ' ' . $suspension->liftedBy->surname : null,
+                'lifted_by' => $suspension->liftedBy ? $suspension->liftedBy->surname . ' ' . $suspension->liftedBy->firstname . ' ' . $suspension->liftedBy->othername : null,
                 'lifted_at' => $suspension->lifted_at ? Carbon::parse($suspension->lifted_at)->format('d M Y H:i') : null,
                 'lift_reason' => $suspension->lift_reason,
                 'disciplinary_query' => $suspension->disciplinaryQuery ? [

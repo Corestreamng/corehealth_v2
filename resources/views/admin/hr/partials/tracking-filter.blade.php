@@ -5,7 +5,7 @@
         <select class="form-control form-control-sm select2" name="staff_id" style="min-width: 220px;">
             <option value="">All Staff</option>
             @foreach($staffList as $s)
-                <option value="{{ $s->id }}" {{ request('staff_id') == $s->id ? 'selected' : '' }}>{{ $s->user?->surname }} {{ $s->user?->firstname }}</option>
+                <option value="{{ $s->id }}" {{ request('staff_id') == $s->id ? 'selected' : '' }}>{{ $s->user?->surname }} {{ $s->user?->firstname }} {{ $s->user?->othername }} ({{ $s->employee_id }})</option>
             @endforeach
         </select>
 

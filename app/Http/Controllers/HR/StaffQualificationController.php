@@ -27,7 +27,7 @@ class StaffQualificationController extends Controller
             $rows = $query->get();
             $csv = "Staff,Type,Qualification,Field of Study,Institution,Year,Date Obtained,Verified\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname).'","'.ucfirst($r->type).'","'.($r->qualification_name ?? '').'","'.($r->field_of_study ?? '').'","'.($r->institution ?? '').'","'.($r->year_of_graduation ?? '').'","'.($r->date_obtained?->format('Y-m-d') ?? '').'","'.($r->result_seen ? 'Yes' : 'No')."\"\n";
+                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.ucfirst($r->type).'","'.($r->qualification_name ?? '').'","'.($r->field_of_study ?? '').'","'.($r->institution ?? '').'","'.($r->year_of_graduation ?? '').'","'.($r->date_obtained?->format('Y-m-d') ?? '').'","'.($r->result_seen ? 'Yes' : 'No')."\"\n";
             }
             return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=qualifications_'.date('Ymd').'.csv');
         }
@@ -35,7 +35,7 @@ class StaffQualificationController extends Controller
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($q) => '<a href="' . route('hr.tracking.profile', $q->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($q->staff?->user?->surname . ' ' . $q->staff?->user?->firstname) . '</a>')
+                ->addColumn('staff_name', fn($q) => '<a href="' . route('hr.tracking.profile', $q->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($q->staff?->user?->surname . ' ' . $q->staff?->user?->firstname . ' ' . $q->staff?->user?->othername) . '</a>')
                 ->addColumn('qualification_col', function ($q) {
                     $html = e($q->qualification_name);
                     if ($q->field_of_study) $html .= '<br><small class="text-muted">' . e($q->field_of_study) . '</small>';

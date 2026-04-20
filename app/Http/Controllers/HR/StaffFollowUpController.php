@@ -33,7 +33,7 @@ class StaffFollowUpController extends Controller
             $rows = $query->get();
             $csv = "Staff,Subject,Priority,Due Date,Status,Created By,Resolved By,Resolved At\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname).'","'.($r->subject ?? '').'","'.ucfirst($r->priority).'","'.($r->due_date?->format('Y-m-d') ?? '').'","'.ucfirst(str_replace('_',' ',$r->status)).'","'.($r->createdByUser?->name ?? '').'","'.($r->resolvedByUser?->name ?? '').'","'.($r->resolved_at?->format('Y-m-d H:i') ?? '')."\"\n";
+                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.($r->subject ?? '').'","'.ucfirst($r->priority).'","'.($r->due_date?->format('Y-m-d') ?? '').'","'.ucfirst(str_replace('_',' ',$r->status)).'","'.($r->createdByUser?->name ?? '').'","'.($r->resolvedByUser?->name ?? '').'","'.($r->resolved_at?->format('Y-m-d H:i') ?? '')."\"\n";
             }
             return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=follow_ups_'.date('Ymd').'.csv');
         }
@@ -41,7 +41,7 @@ class StaffFollowUpController extends Controller
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($f) => '<a href="' . route('hr.tracking.profile', $f->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($f->staff?->user?->surname . ' ' . $f->staff?->user?->firstname) . '</a>')
+                ->addColumn('staff_name', fn($f) => '<a href="' . route('hr.tracking.profile', $f->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($f->staff?->user?->surname . ' ' . $f->staff?->user?->firstname . ' ' . $f->staff?->user?->othername) . '</a>')
                 ->addColumn('subject_col', function ($f) {
                     $html = e($f->subject);
                     if ($f->details) $html .= '<br><small class="text-muted">' . e(\Str::limit($f->details, 60)) . '</small>';

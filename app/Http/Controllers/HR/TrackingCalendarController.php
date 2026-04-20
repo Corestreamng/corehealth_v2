@@ -30,7 +30,7 @@ class TrackingCalendarController extends Controller
             ->get();
 
         foreach ($exams as $exam) {
-            $name = $exam->staff?->user?->surname . ' ' . $exam->staff?->user?->firstname;
+            $name = $exam->staff?->user?->surname . ' ' . $exam->staff?->user?->firstname . ' ' . $exam->staff?->user?->othername;
             $overdue = $exam->next_exam_due->isPast();
             $events[] = [
                 'id' => 'exam-' . $exam->id,
@@ -59,7 +59,7 @@ class TrackingCalendarController extends Controller
             ->get();
 
         foreach ($trainings as $t) {
-            $name = $t->staff?->user?->surname . ' ' . $t->staff?->user?->firstname;
+            $name = $t->staff?->user?->surname . ' ' . $t->staff?->user?->firstname . ' ' . $t->staff?->user?->othername;
             $events[] = [
                 'id' => 'train-' . $t->id,
                 'title' => $name . ' — ' . $t->title,
@@ -90,7 +90,7 @@ class TrackingCalendarController extends Controller
             ->get();
 
         foreach ($promoDue as $s) {
-            $name = $s->user?->surname . ' ' . $s->user?->firstname;
+            $name = $s->user?->surname . ' ' . $s->user?->firstname . ' ' . $s->user?->othername;
             $overdue = Carbon::parse($s->next_promotion_due_date)->isPast();
             $events[] = [
                 'id' => 'promo-' . $s->id,
@@ -114,7 +114,7 @@ class TrackingCalendarController extends Controller
             ->get();
 
         foreach ($licExpiry as $s) {
-            $name = $s->user?->surname . ' ' . $s->user?->firstname;
+            $name = $s->user?->surname . ' ' . $s->user?->firstname . ' ' . $s->user?->othername;
             $expired = Carbon::parse($s->license_expiry_date)->isPast();
             $events[] = [
                 'id' => 'lic-' . $s->id,
@@ -140,7 +140,7 @@ class TrackingCalendarController extends Controller
             ->get();
 
         foreach ($confirmDue as $s) {
-            $name = $s->user?->surname . ' ' . $s->user?->firstname;
+            $name = $s->user?->surname . ' ' . $s->user?->firstname . ' ' . $s->user?->othername;
             $overdue = Carbon::parse($s->confirmation_due_date)->isPast();
             $events[] = [
                 'id' => 'conf-' . $s->id,
@@ -164,7 +164,7 @@ class TrackingCalendarController extends Controller
             ->get();
 
         foreach ($retiring as $s) {
-            $name = $s->user?->surname . ' ' . $s->user?->firstname;
+            $name = $s->user?->surname . ' ' . $s->user?->firstname . ' ' . $s->user?->othername;
             $past = Carbon::parse($s->retirement_date)->isPast();
             $events[] = [
                 'id' => 'retire-' . $s->id,

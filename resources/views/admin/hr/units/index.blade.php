@@ -54,7 +54,7 @@
                                     <td>{{ $i + 1 }}</td>
                                     <td class="font-weight-bold">{{ $unit->name }} @if($unit->code)<br><small class="text-muted"><code>{{ $unit->code }}</code></small>@endif</td>
                                     <td>{{ $unit->department?->name ?? '—' }}</td>
-                                    <td>{{ $unit->headOfUnit ? $unit->headOfUnit->surname . ' ' . $unit->headOfUnit->firstname : '—' }}</td>
+                                    <td>{{ $unit->headOfUnit ? $unit->headOfUnit->surname . ' ' . $unit->headOfUnit->firstname . ' ' . $unit->headOfUnit->othername : '—' }}</td>
                                     <td>{!! $unit->is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>' !!}</td>
                                     <td>
                                         @can('hr-units.edit')
@@ -112,7 +112,7 @@
                             <select class="form-control select2" name="head_of_unit_id" id="f_head_of_unit_id" style="border-radius: 8px;">
                                 <option value="">— None —</option>
                                 @foreach($users as $u)
-                                    <option value="{{ $u->id }}">{{ $u->surname }} {{ $u->firstname }}</option>
+                                    <option value="{{ $u->id }}">{{ $u->surname }} {{ $u->firstname }} {{ $u->othername }}</option>
                                 @endforeach
                             </select>
                         </div>

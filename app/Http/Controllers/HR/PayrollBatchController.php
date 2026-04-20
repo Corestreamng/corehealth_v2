@@ -218,7 +218,7 @@ class PayrollBatchController extends Controller
             return [
                 'id' => $s->id,
                 'employee_id' => $s->employee_id,
-                'name' => $user ? $user->firstname . ' ' . $user->surname : 'N/A',
+                'name' => $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A',
                 'department_id' => $s->department_id,
                 'department' => $s->department?->name ?? 'N/A',
                 'employment_type' => $s->employment_type,
@@ -343,7 +343,7 @@ class PayrollBatchController extends Controller
                     return [
                         'id' => $staff->id,
                         'employee_id' => $staff->employee_id,
-                        'name' => $user ? $user->firstname . ' ' . $user->surname : 'N/A',
+                        'name' => $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A',
                         'department' => $staff->department?->name ?? 'N/A',
                         'profile_id' => $profile?->id,
                         'basic_salary' => $basicSalary,
@@ -715,7 +715,7 @@ class PayrollBatchController extends Controller
                     return [
                         'id' => $item->id,
                         'staff_id' => $item->staff_id,
-                        'staff_name' => $user ? $user->firstname . ' ' . $user->surname : 'N/A',
+                        'staff_name' => $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A',
                         'employee_id' => $item->staff?->employee_id ?? 'N/A',
                         'department' => $item->staff?->department?->name ?? 'N/A',
                         'days_worked' => $item->days_worked,

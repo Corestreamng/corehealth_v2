@@ -26,7 +26,7 @@ class StaffPromotionController extends Controller
             $rows = $query->get();
             $csv = "Staff,From Grade,To Grade,New Title,Promotion Date,Effective Date,Next Due,Authority\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname).'","'.($r->fromGradeLevel?->name ?? '').'","'.($r->toGradeLevel?->name ?? '').'","'.($r->to_job_title ?? '').'","'.($r->promotion_date?->format('Y-m-d') ?? '').'","'.($r->effective_date?->format('Y-m-d') ?? '').'","'.($r->next_promotion_due_date?->format('Y-m-d') ?? '').'","'.($r->authority ?? '')."\"\n";
+                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.($r->fromGradeLevel?->name ?? '').'","'.($r->toGradeLevel?->name ?? '').'","'.($r->to_job_title ?? '').'","'.($r->promotion_date?->format('Y-m-d') ?? '').'","'.($r->effective_date?->format('Y-m-d') ?? '').'","'.($r->next_promotion_due_date?->format('Y-m-d') ?? '').'","'.($r->authority ?? '')."\"\n";
             }
             return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=promotions_'.date('Ymd').'.csv');
         }
@@ -34,7 +34,7 @@ class StaffPromotionController extends Controller
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($p) => '<a href="' . route('hr.tracking.profile', $p->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($p->staff?->user?->surname . ' ' . $p->staff?->user?->firstname) . '</a>')
+                ->addColumn('staff_name', fn($p) => '<a href="' . route('hr.tracking.profile', $p->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($p->staff?->user?->surname . ' ' . $p->staff?->user?->firstname . ' ' . $p->staff?->user?->othername) . '</a>')
                 ->addColumn('grade_change', fn($p) => e($p->fromGradeLevel?->name ?? '—') . ' <i class="mdi mdi-arrow-right text-success"></i> <span class="badge badge-success">' . e($p->toGradeLevel?->name ?? '—') . '</span>')
                 ->addColumn('new_title', fn($p) => e($p->to_job_title ?? '—'))
                 ->addColumn('date_col', fn($p) => ($p->promotion_date?->format('d M Y') ?? '') . ($p->authority ? '<br><small class="text-muted">' . e($p->authority) . '</small>' : ''))
@@ -97,7 +97,7 @@ class StaffPromotionController extends Controller
         // Observer handles syncing to staff table
 
         if ($request->ajax()) {
-            return response()->json(['message' => 'Promotion recorded for ' . ($staff->user?->surname ?? '') . ' ' . ($staff->user?->firstname ?? '')]);
+            return response()->json(['message' => 'Promotion recorded for ' . ($staff->user?->surname ?? '') . ' ' . ($staff->user?->firstname ?? '') . ' ' . ($staff->user?->othername ?? '')]);
         }
 
         Alert::success('Success', 'Promotion recorded for ' . ($staff->user?->surname ?? ''));
