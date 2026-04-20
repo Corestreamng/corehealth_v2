@@ -3195,7 +3195,7 @@ function loadClinicalOrdersTab() {
                                 </div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered table-striped">
-                                        <thead><tr><th>Name</th><th>Price</th><th>Dose / Frequency</th><th>*</th></tr></thead>
+                                        <thead><tr><th>Drug / Product</th><th>Price</th><th>Dose / Frequency</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></tr></thead>
                                         <tbody id="mco-selected-products"></tbody>
                                     </table>
                                 </div>
@@ -3241,7 +3241,7 @@ function loadClinicalOrdersTab() {
                                 </div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered table-striped">
-                                        <thead><tr><th>Name</th><th>Price</th><th>Notes</th><th>*</th></tr></thead>
+                                        <thead><tr><th>Lab Test</th><th>Price</th><th>Clinical Notes</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></tr></thead>
                                         <tbody id="mco-selected-labs"></tbody>
                                     </table>
                                 </div>
@@ -3287,7 +3287,7 @@ function loadClinicalOrdersTab() {
                                 </div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered table-striped">
-                                        <thead><tr><th>Name</th><th>Price</th><th>Notes</th><th>*</th></tr></thead>
+                                        <thead><tr><th>Imaging Study</th><th>Price</th><th>Clinical Notes</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></tr></thead>
                                         <tbody id="mco-selected-imaging"></tbody>
                                     </table>
                                 </div>
@@ -3368,7 +3368,7 @@ function loadClinicalOrdersTab() {
                                 </div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered table-striped">
-                                        <thead><tr><th>Procedure</th><th>Price</th><th>Priority</th><th>*</th></tr></thead>
+                                        <thead><tr><th>Procedure</th><th>Price</th><th>Priority</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></tr></thead>
                                         <tbody id="mco-selected-procedures"></tbody>
                                     </table>
                                 </div>
@@ -3432,11 +3432,13 @@ const MaternityClinicalOrders = (function() {
             mcoDoseStructuredMode = mcoDoseState.isStructured;
 
             // Register debounced dose auto-save for medications
-            ClinicalOrdersKit.onDoseUpdate('mco-', function(recordId, doseValue) {
+            ClinicalOrdersKit.onDoseUpdate('mco-', function(recordId, doseValue, flashEl) {
                 ClinicalOrdersKit.debouncedUpdate({
                     url: '/maternity-workbench/enrollment/' + enrollmentId + '/prescriptions/' + recordId + '/dose',
                     payload: { dose: doseValue },
-                    csrfToken: CSRF_TOKEN
+                    csrfToken: CSRF_TOKEN,
+                    flashTarget: flashEl,
+                    onSuccess: function() { initPrescHistory(); }
                 });
             });
 
@@ -3815,7 +3817,7 @@ const MaternityClinicalOrders = (function() {
                 var recordId = resp.id;
                 var doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, 'mco-'); " +
                     "ClinicalOrdersKit.debouncedUpdate({url:'/maternity-workbench/enrollment/" + enrollmentId + "/prescriptions/" + recordId + "/dose'," +
-                    "payload:{dose: $(this).closest('.mco-structured-dose').find('.mco-structured-dose-value').val()}," +
+                    "payload:{dose: $(this).closest('.cr-structured-dose').find('.cr-structured-dose-value').val()}," +
                     "csrfToken:'" + CSRF_TOKEN + "'});";
 
                 var doseCell;
@@ -3828,10 +3830,12 @@ const MaternityClinicalOrders = (function() {
                         rowId: rowId
                     }) + '<input type="hidden" name="mco_presc_id[]" value="' + id + '"></td>';
                 } else {
+                    var simpleDoseCmd = "ClinicalOrdersKit.debouncedUpdate({url:'/maternity-workbench/enrollment/" + enrollmentId + "/prescriptions/" + recordId + "/dose'," +
+                        "payload:{dose:this.value},csrfToken:'" + CSRF_TOKEN + "',flashTarget:this.closest('td')})";
                     doseCell = '<td><input type="text" class="form-control form-control-sm" name="mco_presc_dose[]" ' +
                         'placeholder="e.g. 500mg BD x 5days" ' +
-                        'onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/prescriptions/' + recordId + '/dose\',' +
-                        'payload:{dose:this.value},csrfToken:\'' + CSRF_TOKEN + '\'})" required>' +
+                        'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
+                        'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + simpleDoseCmd + ' }, 3000)" required>' +
                         '<input type="hidden" name="mco_presc_id[]" value="' + id + '"></td>';
                 }
 
@@ -3839,7 +3843,7 @@ const MaternityClinicalOrders = (function() {
                     '<td>' + name + coverageBadge + '</td>' +
                     '<td>' + (payable ?? price) + '</td>' +
                     doseCell +
-                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'prescription\',' + recordId + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'prescription\',' + recordId + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                 '</tr>';
             },
             onSuccess: function(resp) {
@@ -3863,8 +3867,11 @@ const MaternityClinicalOrders = (function() {
                 return '<tr data-record-id="' + response.id + '" data-record-type="lab" data-service-id="' + id + '">' +
                     '<td>' + name + coverageBadge + '</td>' +
                     '<td>' + (payable ?? price) + '</td>' +
-                    '<td><input type="text" class="form-control form-control-sm" name="mco_lab_note[]" placeholder="Clinical notes..." onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\'})"><input type="hidden" name="mco_lab_id[]" value="' + id + '"></td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'lab\',' + response.id + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                    '<td><input type="text" class="form-control form-control-sm" name="mco_lab_note[]" placeholder="e.g. Fasting, urgent, repeat in 2wks" ' +
+                    'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')})" ' +
+                    'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
+                    '<input type="hidden" name="mco_lab_id[]" value="' + id + '"></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'lab\',' + response.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                 '</tr>';
             },
             onSuccess: function(resp) {
@@ -3888,8 +3895,11 @@ const MaternityClinicalOrders = (function() {
                 return '<tr data-record-id="' + response.id + '" data-record-type="imaging" data-service-id="' + id + '">' +
                     '<td>' + name + coverageBadge + '</td>' +
                     '<td>' + (payable ?? price) + '</td>' +
-                    '<td><input type="text" class="form-control form-control-sm" name="mco_imaging_note[]" placeholder="Clinical notes..." onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\'})"><input type="hidden" name="mco_imaging_id[]" value="' + id + '"></td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'imaging\',' + response.id + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                    '<td><input type="text" class="form-control form-control-sm" name="mco_imaging_note[]" placeholder="e.g. R/O fracture, contrast required" ' +
+                    'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')})" ' +
+                    'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
+                    '<input type="hidden" name="mco_imaging_id[]" value="' + id + '"></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'imaging\',' + response.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                 '</tr>';
             },
             onSuccess: function(resp) {
@@ -3930,7 +3940,7 @@ const MaternityClinicalOrders = (function() {
                     '<td>NGN ' + price + '</td>' +
                     '<td><span class="badge ' + priorityClass + '">' + priorityLabel + '</span>' +
                     (scheduledDate ? '<br><small>' + scheduledDate + '</small>' : '') + '</td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                 '</tr>';
             },
             onSuccess: function() {
