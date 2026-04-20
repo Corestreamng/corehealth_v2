@@ -180,7 +180,7 @@
                                     {{ $memberUser ? strtoupper(substr($memberUser->firstname, 0, 1) . substr($memberUser->surname, 0, 1)) : '??' }}
                                 </div>
                                 <div class="flex-grow-1 small">
-                                    <div class="font-weight-bold">{{ $memberUser ? $memberUser->firstname . ' ' . $memberUser->surname : $member->employee_id }}</div>
+                                    <div class="font-weight-bold">{{ $memberUser ? $memberUser->surname . ' ' . $memberUser->firstname . ' ' . $memberUser->othername : $member->employee_id }}</div>
                                     <small class="text-muted">{{ $member->department->name ?? 'No Dept' }}</small>
                                 </div>
                             </div>
@@ -210,7 +210,7 @@
                             @foreach($teamMembers as $member)
                             @php $memberUser = $member->user; @endphp
                             <option value="{{ $member->id }}">
-                                {{ $memberUser ? $memberUser->firstname . ' ' . $memberUser->surname : $member->employee_id }}
+                                {{ $memberUser ? $memberUser->surname . ' ' . $memberUser->firstname . ' ' . $memberUser->othername : $member->employee_id }}
                             </option>
                             @endforeach
                         </select>

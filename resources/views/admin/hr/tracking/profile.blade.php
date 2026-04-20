@@ -545,7 +545,7 @@
                                         @else — @endif
                                     </td>
                                     <td><span class="badge badge-{{ $statusColors2[$fu->status] ?? 'secondary' }}">{{ str_replace('_', ' ', ucfirst($fu->status)) }}</span></td>
-                                    <td>{{ $fu->createdByUser?->surname ?? '—' }}</td>
+                                    <td>{{ $fu->createdByUser?->surname ?? '—' }} {{ $fu->createdByUser?->firstname ?? '' }} {{ $fu->createdByUser?->othername ?? '' }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>

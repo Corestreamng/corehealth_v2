@@ -152,7 +152,7 @@
                             <select class="form-control select2" name="staff_id" id="staff_id" required style="width: 100%;">
                                 <option value="">Select Staff</option>
                                 @foreach($staffList ?? [] as $staff)
-                                <option value="{{ $staff->id }}">{{ $staff->user->firstname ?? '' }} {{ $staff->user->surname ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
+                                <option value="{{ $staff->id }}">{{ $staff->user->surname ?? '' }} {{ $staff->user->firstname ?? '' }} {{ $staff->user->othername ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
                                 @endforeach
                             </select>
                             <small class="text-muted">Employee the query is being issued to</small>
@@ -715,7 +715,7 @@ $(function() {
 
     function renderQueryDetails(data) {
         const staff = data.staff?.user;
-        const staffName = staff ? `${staff.firstname || ''} ${staff.surname || ''}`.trim() : 'N/A';
+        const staffName = staff ? `${staff.surname || ''} ${staff.firstname || ''} ${staff.othername || ''}`.trim() : 'N/A';
         const employeeId = data.staff?.employee_id || 'N/A';
 
         $('#viewQueryNumber').text(data.query_number || 'N/A');
@@ -809,7 +809,7 @@ $(function() {
             timeline.push({
                 title: 'Response Received',
                 completed: true,
-                user: data.staff?.user ? `${data.staff.user.firstname || ''} ${data.staff.user.surname || ''}`.trim() : 'Staff',
+                user: data.staff?.user ? `${data.staff.user.surname || ''} ${data.staff.user.firstname || ''} ${data.staff.user.othername || ''}`.trim() : 'Staff',
                 date: formatDate(data.response_received_at),
                 icon: 'mdi-comment-text'
             });

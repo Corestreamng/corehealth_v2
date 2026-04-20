@@ -171,7 +171,7 @@
                             <select class="form-control select2" name="staff_id" id="staff_id" required style="width: 100%;">
                                 <option value="">Select Staff</option>
                                 @foreach($staffList ?? [] as $staff)
-                                <option value="{{ $staff->id }}">{{ $staff->user->firstname ?? '' }} {{ $staff->user->surname ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
+                                <option value="{{ $staff->id }}">{{ $staff->user->surname ?? '' }} {{ $staff->user->firstname ?? '' }} {{ $staff->user->othername ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
                                 @endforeach
                             </select>
                         </div>

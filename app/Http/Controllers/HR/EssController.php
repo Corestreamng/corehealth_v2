@@ -1215,7 +1215,7 @@ class EssController extends Controller
         $events = [];
         foreach ($leaves as $leave) {
             $staffUser = $leave->staff->user ?? null;
-            $staffName = $staffUser ? ($staffUser->firstname . ' ' . $staffUser->surname) : 'Unknown';
+            $staffName = $staffUser ? ($staffUser->surname . ' ' . $staffUser->firstname . ' ' . $staffUser->othername) : 'Unknown';
             $color = $statusColors[$leave->status] ?? '#6c757d';
             $leaveTypeName = $leave->leaveType->name ?? 'Leave';
 
@@ -1305,7 +1305,7 @@ class EssController extends Controller
             $user = $leave->staff->user ?? null;
             return [
                 'id' => $leave->staff_id,
-                'name' => $user ? ($user->firstname . ' ' . $user->surname) : 'Unknown',
+                'name' => $user ? ($user->surname . ' ' . $user->firstname . ' ' . $user->othername) : 'Unknown',
                 'employee_id' => $leave->staff->employee_id ?? '',
                 'department' => $leave->staff->department->name ?? '',
                 'leave_type' => $leave->leaveType->name ?? 'Leave',
