@@ -176,6 +176,11 @@ class AppServiceProvider extends ServiceProvider
         // NEW: Appointment observer - sends emails, auto no-show marking
         DoctorAppointment::observe(DoctorAppointmentObserver::class);
 
+        // HR Enhancement observers - sync denormalized fields
+        \App\Models\HR\StaffPromotion::observe(\App\Observers\HR\StaffPromotionObserver::class);
+        \App\Models\HR\StaffMedicalExam::observe(\App\Observers\HR\StaffMedicalExamObserver::class);
+        \App\Models\HR\StaffSalaryProfile::observe(\App\Observers\HR\StaffSalaryProfileEnhancedObserver::class);
+
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();
 
