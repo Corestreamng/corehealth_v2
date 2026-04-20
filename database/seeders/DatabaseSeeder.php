@@ -26,6 +26,9 @@ class DatabaseSeeder extends Seeder
             HmoExecutiveRoleSeeder::class,
             MaternityRoleSeeder::class,
 
+            // HR Reference Data (must run after permissions)
+            HrReferenceDataSeeder::class,
+
             // Accounting
             ChartOfAccountsSeeder::class,
             SalariesPayableAccountSeeder::class,

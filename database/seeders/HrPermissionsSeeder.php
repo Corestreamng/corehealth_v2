@@ -94,6 +94,55 @@ class HrPermissionsSeeder extends Seeder
             // Employee Self Service
             'ess.access',
             'ess.view-payslips',
+
+            // HR Enhancement - Configuration
+            'hr-units.view',
+            'hr-units.create',
+            'hr-units.edit',
+            'hr-units.delete',
+
+            'hr-cadres.view',
+            'hr-cadres.create',
+            'hr-cadres.edit',
+            'hr-cadres.delete',
+
+            'hr-grade-levels.view',
+            'hr-grade-levels.create',
+            'hr-grade-levels.edit',
+            'hr-grade-levels.delete',
+
+            // HR Enhancement - Operational Tracking
+            'hr-promotions.view',
+            'hr-promotions.create',
+            'hr-promotions.edit',
+            'hr-promotions.delete',
+            'hr-promotions.process',
+
+            'hr-qualifications.view',
+            'hr-qualifications.create',
+            'hr-qualifications.edit',
+            'hr-qualifications.delete',
+            'hr-qualifications.verify',
+
+            'hr-trainings.view',
+            'hr-trainings.create',
+            'hr-trainings.edit',
+            'hr-trainings.delete',
+
+            'hr-medical-exams.view',
+            'hr-medical-exams.create',
+            'hr-medical-exams.edit',
+            'hr-medical-exams.delete',
+
+            'hr-follow-ups.view',
+            'hr-follow-ups.create',
+            'hr-follow-ups.edit',
+            'hr-follow-ups.delete',
+            'hr-follow-ups.resolve',
+
+            // Staff Registry
+            'hr-staff-registry.view',
+            'hr-staff-registry.export',
         ];
 
         foreach ($permissions as $permission) {
@@ -178,6 +227,17 @@ class HrPermissionsSeeder extends Seeder
             'hr-workbench.access',
             'ess.access',
             'ess.view-payslips',
+
+            // HR Enhancement - Config & Tracking
+            'hr-units.view', 'hr-units.create', 'hr-units.edit', 'hr-units.delete',
+            'hr-cadres.view', 'hr-cadres.create', 'hr-cadres.edit', 'hr-cadres.delete',
+            'hr-grade-levels.view', 'hr-grade-levels.create', 'hr-grade-levels.edit', 'hr-grade-levels.delete',
+            'hr-promotions.view', 'hr-promotions.create', 'hr-promotions.edit', 'hr-promotions.delete', 'hr-promotions.process',
+            'hr-qualifications.view', 'hr-qualifications.create', 'hr-qualifications.edit', 'hr-qualifications.delete', 'hr-qualifications.verify',
+            'hr-trainings.view', 'hr-trainings.create', 'hr-trainings.edit', 'hr-trainings.delete',
+            'hr-medical-exams.view', 'hr-medical-exams.create', 'hr-medical-exams.edit', 'hr-medical-exams.delete',
+            'hr-follow-ups.view', 'hr-follow-ups.create', 'hr-follow-ups.edit', 'hr-follow-ups.delete', 'hr-follow-ups.resolve',
+            'hr-staff-registry.view', 'hr-staff-registry.export',
         ]);
 
         // Payroll Approver role
