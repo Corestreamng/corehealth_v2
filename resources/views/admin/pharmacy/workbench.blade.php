@@ -16212,7 +16212,7 @@ window.pharmacyReturnsInitialized = false;
 
 function showPharmacyReturns() {
     hideAllPanelViews();
-    $('#pharmacy-returns-view').addClass('active');
+    $('#pharmacy-returns-view').show().addClass('active');
     showMobileMainWorkspace();
 
     if (!window.pharmacyReturnsInitialized) {
@@ -16226,13 +16226,13 @@ function showPharmacyReturns() {
 }
 
 function hidePharmacyReturns() {
-    $('#pharmacy-returns-view').removeClass('active');
+    $('#pharmacy-returns-view').removeClass('active').hide();
     backToEmptyState();
 }
 
 function showReturnCreateForm() {
-    $('#pharmacy-returns-view').removeClass('active');
-    $('#pharmacy-return-create-view').addClass('active');
+    $('#pharmacy-returns-view').removeClass('active').hide();
+    $('#pharmacy-return-create-view').show().addClass('active');
     $('#dispensedItemResults').html('');
     $('#dispensedItemSearch').val('');
     $('#returnDetailsSection').hide();
@@ -16241,7 +16241,7 @@ function showReturnCreateForm() {
 }
 
 function hideReturnCreateForm() {
-    $('#pharmacy-return-create-view').removeClass('active');
+    $('#pharmacy-return-create-view').removeClass('active').hide();
     showPharmacyReturns();
 }
 
@@ -16638,7 +16638,7 @@ window.pharmacyDamagesInitialized = false;
 
 function showPharmacyDamages() {
     hideAllPanelViews();
-    $('#pharmacy-damages-view').addClass('active');
+    $('#pharmacy-damages-view').show().addClass('active');
     showMobileMainWorkspace();
 
     if (!window.pharmacyDamagesInitialized) {
@@ -16652,13 +16652,13 @@ function showPharmacyDamages() {
 }
 
 function hidePharmacyDamages() {
-    $('#pharmacy-damages-view').removeClass('active');
+    $('#pharmacy-damages-view').removeClass('active').hide();
     backToEmptyState();
 }
 
 function showDamageCreateForm() {
-    $('#pharmacy-damages-view').removeClass('active');
-    $('#pharmacy-damage-create-view').addClass('active');
+    $('#pharmacy-damages-view').removeClass('active').hide();
+    $('#pharmacy-damage-create-view').show().addClass('active');
     $('#createDamageForm')[0].reset();
     $('#damage_total_display').val('₦0.00');
     $('#damage_available_stock').val('-');
@@ -16669,7 +16669,7 @@ function showDamageCreateForm() {
 }
 
 function hideDamageCreateForm() {
-    $('#pharmacy-damage-create-view').removeClass('active');
+    $('#pharmacy-damage-create-view').removeClass('active').hide();
     showPharmacyDamages();
 }
 
@@ -17134,7 +17134,7 @@ window.pharmacyStockReportsInitialized = false;
 
 function showPharmacyStockReports() {
     hideAllPanelViews();
-    $('#pharmacy-stock-reports-view').addClass('active');
+    $('#pharmacy-stock-reports-view').show().addClass('active');
     showMobileMainWorkspace();
 
     if (!window.pharmacyStockReportsInitialized) {
@@ -17150,7 +17150,7 @@ function showPharmacyStockReports() {
 }
 
 function hidePharmacyStockReports() {
-    $('#pharmacy-stock-reports-view').removeClass('active');
+    $('#pharmacy-stock-reports-view').removeClass('active').hide();
     backToEmptyState();
 }
 
