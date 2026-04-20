@@ -38,7 +38,11 @@ class StaffPromotionController extends Controller
                 ->addColumn('grade_change', fn($p) => e($p->fromGradeLevel?->name ?? '—') . ' <i class="mdi mdi-arrow-right text-success"></i> <span class="badge badge-success">' . e($p->toGradeLevel?->name ?? '—') . '</span>')
                 ->addColumn('new_title', fn($p) => e($p->to_job_title ?? '—'))
                 ->addColumn('date_col', fn($p) => ($p->promotion_date?->format('d M Y') ?? '') . ($p->authority ? '<br><small class="text-muted">' . e($p->authority) . '</small>' : ''))
-                ->addColumn('action', fn($p) => '<a href="' . route('hr.promotions.show', $p) . '" class="btn btn-sm btn-outline-info"><i class="mdi mdi-eye"></i></a>')
+                ->addColumn('action', function ($p) {
+                    $html = '<a href="' . route('hr.promotions.show', $p) . '" class="btn btn-sm btn-outline-info" title="View"><i class="mdi mdi-eye"></i></a> ';
+                    $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.promotions.destroy', $p) . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
+                    return $html;
+                })
                 ->rawColumns(['staff_name', 'grade_change', 'date_col', 'action'])
                 ->make(true);
         }
@@ -113,5 +117,17 @@ class StaffPromotionController extends Controller
     {
         $promotions = $staff->promotions()->with(['fromGradeLevel', 'toGradeLevel', 'processedBy'])->get();
         return view('admin.hr.promotions.staff-history', compact('staff', 'promotions'));
+    }
+
+    public function destroy(Request $request, StaffPromotion $promotion)
+    {
+        $promotion->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['message' => 'Promotion record removed.']);
+        }
+
+        Alert::success('Success', 'Promotion record removed.');
+        return redirect()->back();
     }
 }

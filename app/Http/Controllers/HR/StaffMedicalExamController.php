@@ -59,11 +59,11 @@ class StaffMedicalExamController extends Controller
                     return $e->next_exam_due->format('d M Y');
                 })
                 ->addColumn('action', function ($e) {
-                    $html = '';
+                    $html = '<button class="btn btn-sm btn-outline-primary edit-exam-btn" data-id="' . $e->id . '" data-result="' . $e->result . '" data-next-due="' . ($e->next_exam_due?->format('Y-m-d') ?? '') . '" data-notes="' . e($e->notes ?? '') . '" data-url="' . route('hr.medical-exams.update', $e) . '" title="Edit"><i class="mdi mdi-pencil"></i></button> ';
                     if ($e->document_path) {
                         $html .= '<a href="' . Storage::url($e->document_path) . '" target="_blank" class="btn btn-sm btn-outline-info" title="View Report"><i class="mdi mdi-file-document"></i></a> ';
                     }
-                    $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.medical-exams.destroy', $e) . '"><i class="mdi mdi-delete"></i></button>';
+                    $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.medical-exams.destroy', $e) . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
                     return $html;
                 })
                 ->rawColumns(['staff_name', 'exam_col', 'result_col', 'next_due_col', 'action'])
@@ -116,6 +116,24 @@ class StaffMedicalExamController extends Controller
         }
 
         Alert::success('Success', 'Medical exam recorded.');
+        return redirect()->back();
+    }
+
+    public function update(Request $request, StaffMedicalExam $medicalExam)
+    {
+        $request->validate([
+            'result' => 'required|in:fit,unfit,conditional',
+            'next_exam_due' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $medicalExam->update($request->only(['result', 'next_exam_due', 'notes']));
+
+        if ($request->ajax()) {
+            return response()->json(['message' => 'Medical exam updated.']);
+        }
+
+        Alert::success('Success', 'Medical exam updated.');
         return redirect()->back();
     }
 

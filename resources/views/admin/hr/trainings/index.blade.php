@@ -223,7 +223,6 @@
 </div>
 @endsection
 @section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
 <script>
 $(function(){
     var scopedStaffId = @json($scopedStaff?->id);
@@ -282,6 +281,19 @@ $(function(){
             url: $(this).data('url'), type: 'DELETE', headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
             success: function(res) { toastr.success(res.message || 'Deleted'); table.ajax.reload(); },
             error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Delete failed'); $btn.prop('disabled', false); }
+        });
+    });
+
+    // AJAX status change
+    $(document).on('click', '.status-btn', function() {
+        var status = $(this).data('status');
+        var labels = { in_progress: 'Start this training?', completed: 'Mark training as completed?', cancelled: 'Cancel this training?' };
+        if(!confirm(labels[status] || 'Change status?')) return;
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: $(this).data('url'), type: 'PUT', data: { status: status }, headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(res) { toastr.success(res.message || 'Status updated'); table.ajax.reload(); },
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Update failed'); $btn.prop('disabled', false); }
         });
     });
 

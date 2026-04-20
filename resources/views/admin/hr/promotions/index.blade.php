@@ -166,7 +166,6 @@
 </div>
 @endsection
 @section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
 <script>
 $(function(){
     var scopedStaffId = @json($scopedStaff?->id);
@@ -224,6 +223,17 @@ $(function(){
         $(this).find('.modal-select2').each(function() {
             if ($(this).data('select2')) $(this).select2('destroy');
             $(this).val(null);
+        });
+    });
+
+    // AJAX delete
+    $(document).on('click', '.delete-btn', function() {
+        if(!confirm('Remove this promotion record?')) return;
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: $(this).data('url'), type: 'DELETE', headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(res) { toastr.success(res.message || 'Deleted'); table.ajax.reload(); },
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Delete failed'); $btn.prop('disabled', false); }
         });
     });
 });

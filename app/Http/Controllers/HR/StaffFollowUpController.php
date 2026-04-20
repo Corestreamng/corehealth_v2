@@ -65,10 +65,13 @@ class StaffFollowUpController extends Controller
                 ->addColumn('created_by_col', fn($f) => e($f->createdByUser?->surname ?? '—'))
                 ->addColumn('action', function ($f) {
                     $html = '';
+                    if ($f->status === 'open') {
+                        $html .= '<button class="btn btn-sm btn-outline-info start-btn" data-url="' . route('hr.follow-ups.start', $f) . '" title="Start Progress"><i class="mdi mdi-play-circle"></i></button> ';
+                    }
                     if ($f->status !== 'resolved') {
                         $html .= '<button class="btn btn-sm btn-outline-success resolve-btn" data-url="' . route('hr.follow-ups.resolve', $f) . '" title="Resolve"><i class="mdi mdi-check-circle"></i></button> ';
                     }
-                    $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.follow-ups.destroy', $f) . '"><i class="mdi mdi-delete"></i></button>';
+                    $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.follow-ups.destroy', $f) . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
                     return $html;
                 })
                 ->rawColumns(['staff_name', 'subject_col', 'priority_col', 'due_date_col', 'status_col', 'action'])
@@ -113,6 +116,24 @@ class StaffFollowUpController extends Controller
         }
 
         Alert::success('Success', 'Follow-up created.');
+        return redirect()->back();
+    }
+
+    public function start(Request $request, StaffFollowUp $followUp)
+    {
+        if ($followUp->status !== 'open') {
+            return $request->ajax()
+                ? response()->json(['message' => 'Only open follow-ups can be started.'], 422)
+                : redirect()->back();
+        }
+
+        $followUp->update(['status' => 'in_progress']);
+
+        if ($request->ajax()) {
+            return response()->json(['message' => 'Follow-up marked as in progress.']);
+        }
+
+        Alert::success('Success', 'Follow-up marked as in progress.');
         return redirect()->back();
     }
 
