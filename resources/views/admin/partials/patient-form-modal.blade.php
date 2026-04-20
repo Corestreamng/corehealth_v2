@@ -1081,6 +1081,9 @@
     /* Emergency-specific fields in Step 1 */
     .pf-emergency-fields { display: none; }
     #patientFormModal.pf-emergency-mode .pf-emergency-fields { display: block; }
+
+    /* Emergency mode: hide non-essential registration fields & stepper items */
+    #patientFormModal.pf-emergency-mode .pf-hide-emergency { display: none !important; }
     .pf-new-patient-fields-wrapper { display: block; }
     #patientFormModal.pf-emergency-mode .pf-new-patient-fields-wrapper.collapsed { display: none; }
 
@@ -2664,7 +2667,7 @@ $(document).ready(function() {
     let pfEmergencySearchTimeout = null;
     let pfDirectServiceSearchTimeout = null;
     let pfDirectServices = []; // [{type, id, name}]
-    // Step sequence: normal = [1,2,3,4], emergency = [1,2,3,5,6,4]
+    // Step sequence: normal = [1,2,3,4], emergency = [1,5,6,4] (skip Medical & NOK)
     let pfStepSequence = [1, 2, 3, 4];
 
     const pfApproxAgeMap = {
@@ -2681,7 +2684,7 @@ $(document).ready(function() {
 
     function enableEmergencyMode() {
         pfEmergencyMode = true;
-        pfStepSequence = [1, 2, 3, 5, 6, 4];
+        pfStepSequence = [1, 5, 6, 4];
 
         var $modal = $('#patientFormModal');
         $modal.addClass('pf-emergency-mode');
@@ -2827,6 +2830,11 @@ $(document).ready(function() {
 
         // Hide new-patient form fields when existing selected
         $('#pf-new-patient-wrapper').addClass('collapsed');
+
+        // In emergency mode, auto-skip to triage step after selecting existing patient
+        if (pfEmergencyMode) {
+            setTimeout(function() { goToPatientFormStep(5); }, 400);
+        }
     });
 
     // Clear selected patient
@@ -3590,16 +3598,16 @@ $(document).ready(function() {
                             <div class="stepper-label">Basic Info</div>
                         </div>
                         <div class="stepper-line"></div>
-                        <div class="stepper-item" data-step="2">
+                        <div class="stepper-item pf-hide-emergency" data-step="2">
                             <div class="stepper-icon"><i class="mdi mdi-clipboard-pulse"></i></div>
                             <div class="stepper-label">Medical</div>
                         </div>
-                        <div class="stepper-line"></div>
-                        <div class="stepper-item" data-step="3">
+                        <div class="stepper-line pf-hide-emergency"></div>
+                        <div class="stepper-item pf-hide-emergency" data-step="3">
                             <div class="stepper-icon"><i class="mdi mdi-account-supervisor"></i></div>
                             <div class="stepper-label">Next of Kin</div>
                         </div>
-                        <div class="stepper-line"></div>
+                        <div class="stepper-line pf-hide-emergency"></div>
                         {{-- Emergency-only triage step (hidden until emergency mode) --}}
                         <div class="stepper-item pf-emergency-stepper" data-step="5" style="display:none;">
                             <div class="stepper-icon"><i class="mdi mdi-clipboard-pulse"></i></div>
@@ -3842,7 +3850,7 @@ $(document).ready(function() {
                                             <div class="invalid-feedback"></div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 pf-hide-emergency">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">Email Address</label>
                                             <input type="email" class="form-control" id="pf-email" data-validate="email" placeholder="Enter email address">
@@ -3850,7 +3858,7 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row pf-row-address pf-hide-unidentified">
+                                <div class="row pf-row-address pf-hide-unidentified pf-hide-emergency">
                                     <div class="col-12">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">Residential Address</label>
@@ -3859,7 +3867,7 @@ $(document).ready(function() {
                                     </div>
                                 </div>
 
-                                <div class="row pf-row-uploads pf-hide-unidentified">
+                                <div class="row pf-row-uploads pf-hide-unidentified pf-hide-emergency">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-2"><i class="mdi mdi-camera text-primary"></i> Passport Photo</label>
