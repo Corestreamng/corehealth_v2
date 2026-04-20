@@ -82,10 +82,10 @@
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered table-striped">
                         <thead>
-                            <th>Name</th>
+                            <th>Imaging Study</th>
                             <th>Price</th>
-                            <th>Notes</th>
-                            <th>*</th>
+                            <th>Clinical Notes</th>
+                            <th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th>
                         </thead>
                         <tbody id="selected-imaging-services"></tbody>
                     </table>

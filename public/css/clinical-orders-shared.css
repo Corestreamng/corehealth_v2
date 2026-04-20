@@ -121,6 +121,30 @@ tr.calc-enter {
     opacity: 0.5;
 }
 
+/* Save / persist indicator */
+.co-save-indicator {
+    display: block;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    margin-top: 2px;
+    min-height: 12px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+.co-save-indicator.co-saving {
+    color: #6c757d;
+    opacity: 0.7;
+}
+.co-save-indicator.co-saved {
+    color: #198754;
+    opacity: 1;
+}
+.co-save-indicator.co-error {
+    color: #dc3545;
+    opacity: 1;
+}
+
 /* ─── Mobile Stack (Plan §2.4) ─── */
 @media (max-width: 576px) {
     .dose-calc-inline .row > [class*="col-md-"] {
@@ -134,4 +158,36 @@ tr.calc-enter {
         font-size: 0.85em;
         min-width: auto;
     }
+}
+
+/* ─── Micro-labels for structured dose fields ─── */
+.co-field-label {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 1px;
+    line-height: 1;
+}
+.co-field-hint {
+    display: block;
+    font-size: 0.58rem;
+    color: #adb5bd;
+    font-style: italic;
+    margin-top: 1px;
+    line-height: 1.1;
+}
+
+/* ─── Remove button label ─── */
+.co-remove-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+.co-remove-btn i {
+    font-size: 0.8em;
 }
