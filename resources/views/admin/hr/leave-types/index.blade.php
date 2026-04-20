@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
     <div class="row">
         <div class="col-md-12">
             <!-- Page Header -->
@@ -35,12 +36,9 @@
                             <thead>
                                 <tr style="background: #f8f9fa;">
                                     <th style="font-weight: 600; color: #495057;">SN</th>
-                                    <th style="font-weight: 600; color: #495057;">Name</th>
-                                    <th style="font-weight: 600; color: #495057;">Code</th>
-                                    <th style="font-weight: 600; color: #495057;">Max Days/Year</th>
-                                    <th style="font-weight: 600; color: #495057;">Max Consecutive</th>
-                                    <th style="font-weight: 600; color: #495057;">Paid</th>
-                                    <th style="font-weight: 600; color: #495057;">Carry Forward</th>
+                                    <th style="font-weight: 600; color: #495057;">Leave Type</th>
+                                    <th style="font-weight: 600; color: #495057;">Limits</th>
+                                    <th style="font-weight: 600; color: #495057;">Options</th>
                                     <th style="font-weight: 600; color: #495057;">Status</th>
                                     <th style="font-weight: 600; color: #495057;">Actions</th>
                                 </tr>
@@ -73,17 +71,17 @@
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Leave Type Name *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-tag text-primary mr-1"></i>Leave Type Name *</label>
                             <input type="text" class="form-control" name="name" id="name" required
                                    style="border-radius: 8px; padding: 0.75rem;" placeholder="e.g., Annual Leave">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Code *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-code-tags text-info mr-1"></i>Code *</label>
                             <input type="text" class="form-control" name="code" id="code" required
                                    style="border-radius: 8px; padding: 0.75rem;" placeholder="e.g., AL" maxlength="10">
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Description</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-text-box text-secondary mr-1"></i>Description</label>
                             <textarea class="form-control" name="description" id="description" rows="2"
                                       style="border-radius: 8px; padding: 0.75rem;" placeholder="Brief description of this leave type"></textarea>
                         </div>
@@ -96,49 +94,49 @@
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Max Days Per Year *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-range text-success mr-1"></i>Max Days Per Year *</label>
                             <input type="number" class="form-control" name="max_days_per_year" id="max_days_per_year"
                                    required min="0" max="365" value="20"
                                    style="border-radius: 8px; padding: 0.75rem;">
                             <small class="text-muted">Maximum annual entitlement</small>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Max Consecutive Days</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-check text-warning mr-1"></i>Max Consecutive Days</label>
                             <input type="number" class="form-control" name="max_consecutive_days" id="max_consecutive_days"
                                    min="0" max="365"
                                    style="border-radius: 8px; padding: 0.75rem;">
                             <small class="text-muted">Leave blank for no limit</small>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Min Notice Days</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-bell-ring text-danger mr-1"></i>Min Notice Days</label>
                             <input type="number" class="form-control" name="min_notice_days" id="min_notice_days"
                                    min="0" value="3"
                                    style="border-radius: 8px; padding: 0.75rem;">
                             <small class="text-muted">Advance notice required</small>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Max Requests/Year</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-counter text-purple mr-1"></i>Max Requests/Year</label>
                             <input type="number" class="form-control" name="max_requests_per_year" id="max_requests_per_year"
                                    min="1" max="50"
                                    style="border-radius: 8px; padding: 0.75rem;">
                             <small class="text-muted">Leave blank for unlimited</small>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Max Carry Forward</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-redo text-teal mr-1"></i>Max Carry Forward</label>
                             <input type="number" class="form-control" name="max_carry_forward" id="max_carry_forward"
                                    min="0" max="365" value="5"
                                    style="border-radius: 8px; padding: 0.75rem;">
                             <small class="text-muted">Days to carry to next year</small>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Min Service Months</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-clock-start text-secondary mr-1"></i>Min Service Months</label>
                             <input type="number" class="form-control" name="min_service_months" id="min_service_months"
                                    min="0" value="0"
                                    style="border-radius: 8px; padding: 0.75rem;">
                             <small class="text-muted">Service required to access</small>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Color</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-palette text-info mr-1"></i>Color</label>
                             <input type="color" class="form-control" name="color" id="color"
                                    value="#3498db" style="border-radius: 8px; height: 40px;">
                             <small class="text-muted">Calendar display color</small>
@@ -200,7 +198,7 @@
 
                     <div class="row mt-3" id="genderSpecificSection">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Gender Specific</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-gender-male-female text-warning mr-1"></i>Gender Specific</label>
                             <select class="form-control" name="gender_specific" id="gender_specific" style="border-radius: 8px; padding: 0.75rem;">
                                 <option value="">All Genders</option>
                                 <option value="male">Male Only</option>
@@ -261,23 +259,21 @@ $(function() {
         ajax: "{{ route('hr.leave-types.index') }}",
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'name', name: 'name' },
-            { data: 'code', name: 'code' },
-            { data: 'max_days_per_year', name: 'max_days_per_year' },
-            { data: 'max_consecutive_days', name: 'max_consecutive_days',
-              render: function(data) { return data || '<span class="text-muted">No limit</span>'; }
-            },
-            { data: 'is_paid', name: 'is_paid',
-              render: function(data) {
-                  return data ? '<span class="badge badge-success">Paid</span>' : '<span class="badge badge-secondary">Unpaid</span>';
-              }
-            },
-            { data: 'allow_carry_forward', name: 'allow_carry_forward',
-              render: function(data, type, row) {
-                  if (!data) return '<span class="badge badge-secondary">No</span>';
-                  return '<span class="badge badge-info">Max ' + (row.max_carry_forward || 0) + ' days</span>';
-              }
-            },
+            { data: 'name', name: 'name', render: function(data, type, row) {
+                return '<strong>' + data + '</strong><br><small class="text-muted">' + (row.code || '') + '</small>';
+            }},
+            { data: 'max_days_per_year', name: 'max_days_per_year', render: function(data, type, row) {
+                var s = data + ' days/yr';
+                if (row.max_consecutive_days) s += '<br><small class="text-muted">Max ' + row.max_consecutive_days + ' consecutive</small>';
+                return s;
+            }},
+            { data: 'is_paid', name: 'is_paid', render: function(data, type, row) {
+                var s = data ? '<span class="badge badge-success">Paid</span>' : '<span class="badge badge-secondary">Unpaid</span>';
+                s += ' ';
+                if (row.allow_carry_forward) s += '<span class="badge badge-info">Carry ' + (row.max_carry_forward || 0) + 'd</span>';
+                else s += '<span class="badge badge-secondary">No Carry</span>';
+                return s;
+            }},
             { data: 'is_active', name: 'is_active',
               render: function(data) {
                   return data ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>';

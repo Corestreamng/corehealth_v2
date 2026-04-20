@@ -16,6 +16,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
     <div class="row">
         <div class="col-md-12">
             <!-- Page Header -->
@@ -112,13 +113,10 @@
                             <thead>
                                 <tr style="background: #f8f9fa;">
                                     <th style="font-weight: 600; color: #495057;">SN</th>
-                                    <th style="font-weight: 600; color: #495057;">Query No</th>
                                     <th style="font-weight: 600; color: #495057;">Staff</th>
-                                    <th style="font-weight: 600; color: #495057;">Subject</th>
+                                    <th style="font-weight: 600; color: #495057;">Query</th>
                                     <th style="font-weight: 600; color: #495057;">Severity</th>
                                     <th style="font-weight: 600; color: #495057;">Status</th>
-                                    <th style="font-weight: 600; color: #495057;">Outcome</th>
-                                    <th style="font-weight: 600; color: #495057;">Date</th>
                                     <th style="font-weight: 600; color: #495057;">Actions</th>
                                 </tr>
                             </thead>
@@ -150,45 +148,49 @@
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Staff Member *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-account text-primary mr-1"></i>Staff Member *</label>
                             <select class="form-control select2" name="staff_id" id="staff_id" required style="width: 100%;">
                                 <option value="">Select Staff</option>
                                 @foreach($staffList ?? [] as $staff)
                                 <option value="{{ $staff->id }}">{{ $staff->user->firstname ?? '' }} {{ $staff->user->surname ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
                                 @endforeach
                             </select>
+                            <small class="text-muted">Employee the query is being issued to</small>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Severity Level *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-alert-circle text-warning mr-1"></i>Severity Level *</label>
                             <select class="form-control" name="severity" id="severity" required style="border-radius: 8px;">
                                 <option value="minor">Minor</option>
                                 <option value="moderate">Moderate</option>
                                 <option value="major">Major</option>
                                 <option value="gross">Gross Misconduct</option>
                             </select>
+                            <small class="text-muted">Determines escalation path and penalties</small>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Subject *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-format-title text-info mr-1"></i>Subject *</label>
                             <input type="text" class="form-control" name="subject" id="subject" required
                                    style="border-radius: 8px; padding: 0.75rem;" placeholder="Brief subject of the query">
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Incident Date *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar text-danger mr-1"></i>Incident Date *</label>
                             <input type="date" class="form-control" name="incident_date" id="incident_date" required
                                    style="border-radius: 8px; padding: 0.75rem;" max="{{ date('Y-m-d') }}">
+                            <small class="text-muted">When the incident occurred</small>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Description *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-text-box text-secondary mr-1"></i>Description *</label>
                             <textarea class="form-control" name="description" id="description" rows="4" required
                                       style="border-radius: 8px; padding: 0.75rem;" placeholder="Detailed description of the incident/misconduct"></textarea>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Response Deadline *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-clock-alert text-warning mr-1"></i>Response Deadline *</label>
                             <input type="date" class="form-control" name="response_deadline" id="response_deadline" required
                                    style="border-radius: 8px; padding: 0.75rem;" min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                            <small class="text-muted">Staff must respond before this date</small>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Supporting Documents</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-paperclip text-success mr-1"></i>Supporting Documents</label>
                             <input type="file" class="form-control" name="attachments[]" id="attachments" multiple
                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="border-radius: 8px;">
                             <small class="text-muted">Evidence files (PDF, images, Word documents). Max 5MB each.</small>
@@ -417,7 +419,7 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label class="form-label" style="font-weight: 600; color: #495057;">Outcome *</label>
+                                <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-gavel text-primary mr-1"></i>Outcome *</label>
                                 <select class="form-control" name="outcome" id="outcome" required style="border-radius: 8px;">
                                     <option value="">Select Outcome</option>
                                     <option value="no_action">No Action Required</option>
@@ -442,7 +444,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">Suspension Type *</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-account-cancel text-danger mr-1"></i>Suspension Type *</label>
                                     <select class="form-control" name="suspension_type" id="suspension_type" style="border-radius: 8px;">
                                         <option value="unpaid">Without Pay (Unpaid)</option>
                                         <option value="paid">With Pay (Paid)</option>
@@ -451,21 +453,21 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">Duration (Days) *</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-clock-outline text-warning mr-1"></i>Duration (Days) *</label>
                                     <input type="number" class="form-control" name="suspension_days" id="suspension_days"
                                            min="1" max="365" style="border-radius: 8px; padding: 0.75rem;" placeholder="Number of days">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">Start Date *</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-start text-danger mr-1"></i>Start Date *</label>
                                     <input type="date" class="form-control" name="suspension_start_date" id="suspension_start_date"
                                            style="border-radius: 8px; padding: 0.75rem;" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">End Date</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-end text-danger mr-1"></i>End Date</label>
                                     <input type="date" class="form-control" name="suspension_end_date" id="suspension_end_date"
                                            style="border-radius: 8px; padding: 0.75rem;" readonly>
                                     <small class="text-muted">Auto-calculated from start date + days</small>
@@ -473,7 +475,7 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">Login Block Message</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-message-alert text-danger mr-1"></i>Login Block Message</label>
                                     <input type="text" class="form-control" name="suspension_message" id="suspension_message"
                                            style="border-radius: 8px; padding: 0.75rem;"
                                            placeholder="Message shown when staff tries to login"
@@ -497,7 +499,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">Termination Type *</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-shape text-danger mr-1"></i>Termination Type *</label>
                                     <select class="form-control" name="termination_type" id="termination_type" style="border-radius: 8px;">
                                         <option value="involuntary">Involuntary (Dismissal)</option>
                                         <option value="voluntary">Voluntary (Resignation)</option>
@@ -506,7 +508,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">Reason Category *</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-tag text-warning mr-1"></i>Reason Category *</label>
                                     <select class="form-control" name="termination_reason_category" id="termination_reason_category" style="border-radius: 8px;">
                                         <option value="misconduct">Misconduct</option>
                                         <option value="poor_performance">Poor Performance</option>
@@ -518,14 +520,14 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">Notice Date *</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-alert text-warning mr-1"></i>Notice Date *</label>
                                     <input type="date" class="form-control" name="termination_notice_date" id="termination_notice_date"
                                            style="border-radius: 8px; padding: 0.75rem;" value="{{ date('Y-m-d') }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" style="font-weight: 600; color: #495057;">Last Working Day *</label>
+                                    <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-end text-danger mr-1"></i>Last Working Day *</label>
                                     <input type="date" class="form-control" name="termination_last_working_day" id="termination_last_working_day"
                                            style="border-radius: 8px; padding: 0.75rem;" value="{{ date('Y-m-d') }}">
                                 </div>
@@ -544,7 +546,7 @@
                     </div>
 
                     <div class="form-group mt-3">
-                        <label class="form-label" style="font-weight: 600; color: #495057;">Decision Notes / Justification *</label>
+                        <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-note-text text-secondary mr-1"></i>Decision Notes / Justification *</label>
                         <textarea class="form-control" name="decision_notes" id="decision_notes" rows="3" required
                                   style="border-radius: 8px; padding: 0.75rem;" placeholder="Provide detailed justification for the decision"></textarea>
                     </div>
@@ -591,16 +593,19 @@ $(function() {
         },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'query_number', name: 'query_number' },
             { data: 'staff_name', name: 'staff.user.firstname' },
-            { data: 'subject', name: 'subject' },
+            { data: 'query_number', name: 'query_number', render: function(data, type, row) {
+                return '<code>' + data + '</code><br><small class="text-muted">' + (row.subject || '') + '</small>';
+            }},
             { data: 'severity_badge', name: 'severity' },
-            { data: 'status_badge', name: 'status' },
-            { data: 'outcome_badge', name: 'outcome' },
-            { data: 'created_at', name: 'created_at' },
+            { data: 'status_badge', name: 'status', render: function(data, type, row) {
+                var s = data;
+                if (row.outcome_badge) s += '<br>' + row.outcome_badge;
+                return s;
+            }},
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
-        order: [[7, 'desc']],
+        order: [[2, 'desc']],
         language: {
             emptyTable: "No disciplinary queries found",
             processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'

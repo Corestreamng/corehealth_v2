@@ -3,11 +3,14 @@
 @section('title', 'Leave Requests')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('plugins/chosen/chosen.min.css') }}">
+<style>
+    .select2-container--open { z-index: 9999 !important; }
+</style>
 @endsection
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
     <div class="row">
         <div class="col-md-12">
             <!-- Page Header -->
@@ -107,9 +110,7 @@
                                     <th style="font-weight: 600; color: #495057;">Staff</th>
                                     <th style="font-weight: 600; color: #495057;">Leave Type</th>
                                     <th style="font-weight: 600; color: #495057;">Period</th>
-                                    <th style="font-weight: 600; color: #495057;">Days</th>
                                     <th style="font-weight: 600; color: #495057;">Status</th>
-                                    <th style="font-weight: 600; color: #495057;">Applied On</th>
                                     <th style="font-weight: 600; color: #495057;">Actions</th>
                                 </tr>
                             </thead>
@@ -141,16 +142,17 @@
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Staff *</label>
-                            <select class="form-control chosen-select" name="staff_id" id="staff_id" required data-placeholder="Select Staff">
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-account text-primary mr-1"></i>Staff *</label>
+                            <select class="form-control" name="staff_id" id="staff_id" required>
                                 <option value="">Select Staff</option>
                                 @foreach($staffList ?? [] as $staff)
                                 <option value="{{ $staff->id }}">{{ $staff->user->name ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
                                 @endforeach
                             </select>
+                            <small class="text-muted">Employee requesting leave</small>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Leave Type *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-clipboard-list text-info mr-1"></i>Leave Type *</label>
                             <select class="form-control" name="leave_type_id" id="leave_type_id" required style="border-radius: 8px;">
                                 <option value="">Select Leave Type</option>
                                 @foreach($leaveTypes ?? [] as $type)
@@ -182,13 +184,13 @@
                     <!-- Date Selection -->
                     <div class="row">
                         <div class="col-md-5 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Start Date *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-arrow-right text-success mr-1"></i>Start Date *</label>
                             <input type="date" class="form-control" name="start_date" id="start_date" required
                                    style="border-radius: 8px; padding: 0.75rem;" min="{{ date('Y-m-d') }}">
                             <small class="text-muted" id="minNoticeWarning"></small>
                         </div>
                         <div class="col-md-5 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">End Date *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-arrow-left text-danger mr-1"></i>End Date *</label>
                             <input type="date" class="form-control" name="end_date" id="end_date" required
                                    style="border-radius: 8px; padding: 0.75rem;" min="{{ date('Y-m-d') }}">
                         </div>
@@ -214,12 +216,12 @@
 
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Reason *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-text-box text-secondary mr-1"></i>Reason *</label>
                             <textarea class="form-control" name="reason" id="reason" rows="3" required
                                       style="border-radius: 8px; padding: 0.75rem;" placeholder="Please provide a detailed reason for your leave request"></textarea>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Relief Staff <small class="text-muted">(Optional)</small></label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-account-switch text-warning mr-1"></i>Relief Staff <small class="text-muted">(Optional)</small></label>
                             <select name="relief_staff_id" id="relief_staff_id" class="form-control" style="border-radius: 8px;">
                                 <option value="">Select a colleague to handle duties</option>
                                 @foreach($staffList ?? [] as $staff)
@@ -229,12 +231,12 @@
                             <small class="text-muted">Optional: Select a colleague who will cover responsibilities during absence</small>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Handover Notes <small class="text-muted">(Optional)</small></label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-clipboard-text text-teal mr-1"></i>Handover Notes <small class="text-muted">(Optional)</small></label>
                             <textarea class="form-control" name="handover_notes" id="handover_notes" rows="2"
                                       style="border-radius: 8px; padding: 0.75rem;" placeholder="Brief notes about ongoing work or handover instructions"></textarea>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Contact During Leave <small class="text-muted">(Optional)</small></label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-phone text-purple mr-1"></i>Contact During Leave <small class="text-muted">(Optional)</small></label>
                             <input type="text" class="form-control" name="contact_during_leave" id="contact_during_leave"
                                    style="border-radius: 8px; padding: 0.75rem;" placeholder="Phone number or email where you can be reached">
                         </div>
@@ -330,8 +332,8 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('plugins/chosen/chosen.jquery.min.js') }}"></script>
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
+
+<script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 <script>
 $(document).ready(function() {
     var selectedLeaveType = null;
@@ -362,14 +364,14 @@ $(document).ready(function() {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'staff_name', name: 'staff.user.firstname' },
-            { data: 'leave_type', name: 'leaveType.name' },
+            { data: 'leave_type', name: 'leaveType.name', render: function(data, type, row) {
+                return data + '<br><small class="text-muted">' + row.days_requested + ' days</small>';
+            }},
             { data: 'period', name: 'start_date' },
-            { data: 'days_requested', name: 'days_requested' },
             { data: 'status_badge', name: 'status', orderable: false },
-            { data: 'created_at', name: 'created_at' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
-        order: [[6, 'desc']],
+        order: [[3, 'desc']],
         language: {
             emptyTable: "No leave requests found",
             processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
@@ -392,10 +394,18 @@ $(document).ready(function() {
         table.ajax.reload();
     });
 
-    // Add request button - initialize Chosen when modal opens
+    // Initialize select2 for staff field in modal
+    $('#staff_id').select2({
+        dropdownParent: $('#leaveRequestModal'),
+        placeholder: 'Search staff...',
+        width: '100%'
+    });
+
+    // Add request button
     $('#addRequestBtn').click(function() {
         $('#leaveRequestForm')[0].reset();
         $('#leave_request_id').val('');
+        $('#staff_id').val('').trigger('change');
         selectedLeaveType = null;
         $('#leaveTypeDetails').hide();
         $('#documentSection').hide();
@@ -403,24 +413,6 @@ $(document).ready(function() {
         $('#daysInfo').hide();
         $('#modalTitleText').text('New Leave Request');
         $('#leaveRequestModal').modal('show');
-
-        // Initialize Chosen after modal is shown
-        setTimeout(function() {
-            if (typeof $.fn.chosen !== 'undefined') {
-                $('.chosen-select').chosen({
-                    width: '100%',
-                    no_results_text: 'No staff found matching',
-                    allow_single_deselect: true
-                });
-            }
-        }, 100);
-    });
-
-    // Destroy Chosen when modal closes
-    $('#leaveRequestModal').on('hidden.bs.modal', function() {
-        if (typeof $.fn.chosen !== 'undefined') {
-            $('.chosen-select').chosen('destroy');
-        }
     });
 
     // Set default min date to today

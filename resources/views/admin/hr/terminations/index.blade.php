@@ -23,6 +23,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @include('admin.hr.partials.hr-subnav')
     <div class="row">
         <div class="col-md-12">
             <!-- Page Header -->
@@ -119,12 +120,9 @@
                                 <tr style="background: #f8f9fa;">
                                     <th style="font-weight: 600; color: #495057;">SN</th>
                                     <th style="font-weight: 600; color: #495057;">Staff</th>
-                                    <th style="font-weight: 600; color: #495057;">Type</th>
-                                    <th style="font-weight: 600; color: #495057;">Reason</th>
-                                    <th style="font-weight: 600; color: #495057;">Last Working Day</th>
-                                    <th style="font-weight: 600; color: #495057;">Exit Interview</th>
-                                    <th style="font-weight: 600; color: #495057;">Clearance</th>
-                                    <th style="font-weight: 600; color: #495057;">Status</th>
+                                    <th style="font-weight: 600; color: #495057;">Type / Reason</th>
+                                    <th style="font-weight: 600; color: #495057;">Last Day</th>
+                                    <th style="font-weight: 600; color: #495057;">Progress</th>
                                     <th style="font-weight: 600; color: #495057;">Actions</th>
                                 </tr>
                             </thead>
@@ -155,7 +153,7 @@
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Staff Member *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-account text-primary mr-1"></i>Staff Member *</label>
                             <select class="form-control select2" name="staff_id" id="staff_id" required style="width: 100%;">
                                 <option value="">Select Staff</option>
                                 @foreach($staffList ?? [] as $staff)
@@ -164,7 +162,7 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Termination Type *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-shape text-danger mr-1"></i>Termination Type *</label>
                             <select class="form-control" name="termination_type" id="termination_type" required style="border-radius: 8px;">
                                 <option value="voluntary">Voluntary (Resignation)</option>
                                 <option value="involuntary">Involuntary (Termination/Dismissal)</option>
@@ -174,22 +172,22 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Notice Date *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-alert text-warning mr-1"></i>Notice Date *</label>
                             <input type="date" class="form-control" name="notice_date" id="notice_date" required
                                    style="border-radius: 8px; padding: 0.75rem;" value="{{ date('Y-m-d') }}">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Last Working Day *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-calendar-end text-danger mr-1"></i>Last Working Day *</label>
                             <input type="date" class="form-control" name="last_working_day" id="last_working_day" required
                                    style="border-radius: 8px; padding: 0.75rem;" min="{{ date('Y-m-d') }}">
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Reason *</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-text-box text-warning mr-1"></i>Reason *</label>
                             <textarea class="form-control" name="reason" id="reason" rows="3" required
                                       style="border-radius: 8px; padding: 0.75rem;" placeholder="Detailed reason for termination"></textarea>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Related Disciplinary Query (if applicable)</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-link-variant text-info mr-1"></i>Related Disciplinary Query (if applicable)</label>
                             <select class="form-control" name="disciplinary_query_id" id="disciplinary_query_id" style="border-radius: 8px;">
                                 <option value="">None</option>
                             </select>
@@ -213,7 +211,7 @@
                             </div>
                         </div>
                         <div class="col-md-6 mb-3" id="severanceAmountGroup" style="display: none;">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Severance Amount</label>
+                            <label class="form-label" style="font-weight: 600; color: #495057;"><i class="mdi mdi-currency-ngn text-success mr-1"></i>Severance Amount</label>
                             <input type="number" class="form-control" name="severance_amount" id="severance_amount"
                                    step="0.01" min="0" style="border-radius: 8px; padding: 0.75rem;">
                         </div>
@@ -576,7 +574,7 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
+<script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 <script>
 $(function() {
     // Fix Bootstrap modal enforceFocus to allow Select2 to work properly
@@ -606,19 +604,22 @@ $(function() {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'staff_name', name: 'staff.user.firstname' },
-            { data: 'termination_type_badge', name: 'type' },
-            { data: 'reason', name: 'reason_details',
-              render: function(data, type, row) {
-                  return row.reason_details ? (row.reason_details.length > 50 ? row.reason_details.substring(0, 50) + '...' : row.reason_details) : '-';
-              }
-            },
+            { data: 'termination_type_badge', name: 'type', render: function(data, type, row) {
+                var s = data;
+                var reason = row.reason_details || '';
+                if (reason.length > 40) reason = reason.substring(0, 40) + '...';
+                if (reason) s += '<br><small class="text-muted">' + reason + '</small>';
+                return s;
+            }},
             { data: 'last_working_day', name: 'last_working_day' },
-            { data: 'exit_interview', name: 'exit_interview_conducted', orderable: false },
-            { data: 'clearance', name: 'clearance_completed', orderable: false },
-            { data: 'status_badge', name: 'status' },
+            { data: 'status_badge', name: 'status', render: function(data, type, row) {
+                var s = data;
+                s += '<br>' + (row.exit_interview || '') + ' ' + (row.clearance || '');
+                return s;
+            }},
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
-        order: [[4, 'desc']],
+        order: [[3, 'desc']],
         language: {
             emptyTable: "No termination records found",
             processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
