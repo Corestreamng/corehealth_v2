@@ -1385,6 +1385,100 @@ window.ClinicalOrdersKit = (function ($) {
     }
 
     /* ═══════════════════════════════════════════
+       FLOATING SEARCH DROPDOWN  (position: fixed to escape overflow: hidden)
+       ═══════════════════════════════════════════ */
+
+    /**
+     * Position a search results dropdown using position:fixed, based on the
+     * bounding rect of the associated <input>.  Escapes any number of
+     * overflow:hidden / overflow:auto ancestors.
+     *
+     * @param {string|jQuery} inputSel  - the search <input>
+     * @param {string|jQuery} dropSel   - the <ul> results list (should have class 'co-search-dropdown')
+     */
+    function positionDropdown(inputSel, dropSel) {
+        var $input = $(inputSel);
+        var $drop  = $(dropSel);
+        if (!$input.length || !$drop.length) return;
+
+        var rect = $input[0].getBoundingClientRect();
+        $drop.css({
+            top:   rect.bottom + 'px',
+            left:  rect.left   + 'px',
+            width: rect.width  + 'px'
+        });
+    }
+
+    /**
+     * Show the loading spinner inside a search dropdown.
+     */
+    function showSearchLoading(dropSel) {
+        var $drop = $(dropSel);
+        $drop.html(
+            '<li class="list-group-item co-search-loading">' +
+            '<span class="spinner-border spinner-border-sm text-primary"></span> Searching\u2026' +
+            '</li>'
+        ).show();
+    }
+
+    /**
+     * Show "no results" inside a search dropdown.
+     * @param {string} dropSel
+     * @param {string} [label]  e.g. 'products', 'lab services'
+     */
+    function showSearchEmpty(dropSel, label) {
+        label = label || 'items';
+        $(dropSel).html(
+            '<li class="list-group-item co-search-empty">' +
+            '<i class="mdi mdi-magnify-close"></i>' +
+            'No ' + label + ' found' +
+            '</li>'
+        ).show();
+    }
+
+    /**
+     * Bind a search input to auto-position its dropdown, and
+     * close it on outside click.
+     *
+     * @param {string} inputSel  - e.g. '#mco_presc_search'
+     * @param {string} dropSel   - e.g. '#mco_presc_results'
+     */
+    function initSearchDropdown(inputSel, dropSel) {
+        var $input = $(inputSel);
+        var $drop  = $(dropSel);
+        if (!$input.length || !$drop.length) return;
+
+        // Ensure dropdown class
+        $drop.addClass('co-search-dropdown');
+
+        // Append dropdown to body so it escapes all overflow containers
+        if (!$drop.data('co-moved')) {
+            $drop.detach().appendTo('body');
+            $drop.data('co-moved', true);
+        }
+
+        // Reposition on focus / input
+        $input.on('focus.coSearch input.coSearch', function () {
+            positionDropdown(inputSel, dropSel);
+        });
+
+        // Reposition on scroll of any scrollable ancestor
+        $input.parents().filter(function () {
+            var ov = $(this).css('overflow-y');
+            return ov === 'auto' || ov === 'scroll';
+        }).on('scroll.coSearch', function () {
+            if ($drop.is(':visible')) positionDropdown(inputSel, dropSel);
+        });
+
+        // Close on outside click
+        $(document).on('mousedown.coSearch', function (e) {
+            if (!$(e.target).closest(inputSel + ', ' + dropSel).length) {
+                $drop.hide();
+            }
+        });
+    }
+
+    /* ═══════════════════════════════════════════
        PUBLIC API
        ═══════════════════════════════════════════ */
     return {
@@ -1437,7 +1531,13 @@ window.ClinicalOrdersKit = (function ($) {
         initRePrescribeFromEncounter: initRePrescribeFromEncounter,
         updateRePrescribeConfig: updateRePrescribeConfig,
         refreshRecentEncounters: refreshRecentEncounters,
-        _rpApplySelected: _rpApplySelected
+        _rpApplySelected: _rpApplySelected,
+
+        // Floating search dropdown
+        initSearchDropdown: initSearchDropdown,
+        positionDropdown: positionDropdown,
+        showSearchLoading: showSearchLoading,
+        showSearchEmpty: showSearchEmpty
     };
 
 })(jQuery);
