@@ -177,9 +177,48 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Exam Modal -->
+<div class="modal fade" id="editExamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <form id="editExamForm">
+                @csrf
+                @method('PUT')
+                <div class="modal-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                    <h5 class="modal-title"><i class="mdi mdi-pencil mr-2" style="color: var(--primary-color);"></i> Edit Exam Result</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" style="padding: 1.5rem;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="font-weight: 600;">Result *</label>
+                            <select class="form-control" name="result" id="editResult" required style="border-radius: 8px;">
+                                <option value="fit">Fit</option>
+                                <option value="unfit">Unfit</option>
+                                <option value="conditional">Conditional</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="font-weight: 600;">Next Exam Due</label>
+                            <input type="date" class="form-control" name="next_exam_due" id="editNextDue" style="border-radius: 8px;">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label" style="font-weight: 600;">Notes</label>
+                            <textarea class="form-control" name="notes" id="editNotes" rows="2" style="border-radius: 8px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 8px;"><i class="mdi mdi-check mr-1"></i> Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 @section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
 <script>
 $(function(){
     var scopedStaffId = @json($scopedStaff?->id);
@@ -238,6 +277,29 @@ $(function(){
             url: $(this).data('url'), type: 'DELETE', headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
             success: function(res) { toastr.success(res.message || 'Deleted'); table.ajax.reload(); },
             error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Delete failed'); $btn.prop('disabled', false); }
+        });
+    });
+
+    // Edit exam - populate and open modal
+    $(document).on('click', '.edit-exam-btn', function() {
+        var $btn = $(this);
+        $('#editResult').val($btn.data('result'));
+        $('#editNextDue').val($btn.data('next-due'));
+        $('#editNotes').val($btn.data('notes'));
+        $('#editExamForm').attr('action', $btn.data('url'));
+        $('#editExamModal').modal('show');
+    });
+
+    // AJAX edit submit
+    $('#editExamForm').on('submit', function(e) {
+        e.preventDefault();
+        var $btn = $(this).find('[type=submit]').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> Updating...');
+        $.ajax({
+            url: $(this).attr('action'), type: 'PUT', data: $(this).serialize(),
+            headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(res) { toastr.success(res.message || 'Updated'); $('#editExamModal').modal('hide'); table.ajax.reload(); },
+            error: function(xhr) { var msg = xhr.responseJSON?.message || 'Update failed'; toastr.error(msg); },
+            complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i> Update'); }
         });
     });
 

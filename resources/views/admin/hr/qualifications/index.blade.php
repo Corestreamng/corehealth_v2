@@ -206,7 +206,6 @@
 </div>
 @endsection
 @section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
 <script>
 $(function(){
     var scopedStaffId = @json($scopedStaff?->id);
