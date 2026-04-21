@@ -1746,6 +1746,9 @@
                         '</td>' +
                         '<td><button class="btn btn-danger btn-sm" onclick="removeProdRow(this)"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                     '</tr>';
+                },
+                onSuccess: function(resp) {
+                    if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
                         $('#investigation_history_list').DataTable().ajax.reload(null, false);
                     }
                 }
