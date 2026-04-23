@@ -12,6 +12,40 @@ class Store extends Model implements Auditable
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 
+    // Plan §4 — distribution_role values:
+    //   central | pharmacy_hub | pharmacy_satellite | department | ward | other
+    public const ROLE_CENTRAL               = 'central';
+    public const ROLE_PHARMACY_HUB          = 'pharmacy_hub';
+    public const ROLE_PHARMACY_SATELLITE    = 'pharmacy_satellite';
+    public const ROLE_DEPARTMENT            = 'department';
+    public const ROLE_WARD                  = 'ward';
+    public const ROLE_OTHER                 = 'other';
+
+    public const DISTRIBUTION_ROLES = [
+        self::ROLE_CENTRAL,
+        self::ROLE_PHARMACY_HUB,
+        self::ROLE_PHARMACY_SATELLITE,
+        self::ROLE_DEPARTMENT,
+        self::ROLE_WARD,
+        self::ROLE_OTHER,
+    ];
+
+    /** Human-readable labels keyed by distribution_role value (Plan §4, used in governance views) */
+    public const ROLE_LABELS = [
+        self::ROLE_CENTRAL            => 'Central Store',
+        self::ROLE_PHARMACY_HUB       => 'Pharmacy Hub',
+        self::ROLE_PHARMACY_SATELLITE => 'Pharmacy Satellite',
+        self::ROLE_DEPARTMENT         => 'Department Store',
+        self::ROLE_WARD               => 'Ward Store',
+        self::ROLE_OTHER              => 'Other',
+    ];
+
+    // Roles that are allowed to dispense directly to patients (Plan §7.5.1 Gate check)
+    public const DISPENSE_ROLES = [
+        self::ROLE_PHARMACY_HUB,
+        self::ROLE_PHARMACY_SATELLITE,
+    ];
+
     protected $fillable = [
         'store_name',
         'code',
@@ -19,13 +53,24 @@ class Store extends Model implements Auditable
         'location',
         'store_type',
         'is_default',
+        'is_immutable',
         'manager_id',
         'status',
+        // Governance columns added by migration 2026_04_21_100001 (Plan §4)
+        'distribution_role',
+        'department_id',
+        'ward_id',
+        'parent_store_id',
+        'allows_direct_patient_dispense',
+        'requires_shift_context',
     ];
 
     protected $casts = [
-        'is_default' => 'boolean',
-        'status' => 'boolean',
+        'is_default'                      => 'boolean',
+        'is_immutable'                    => 'boolean',
+        'status'                          => 'boolean',
+        'allows_direct_patient_dispense'  => 'boolean',
+        'requires_shift_context'          => 'boolean',
     ];
 
     // ===== EXISTING RELATIONSHIPS =====
@@ -35,6 +80,53 @@ class Store extends Model implements Auditable
      */
     public function stock() {
         return $this->hasMany(StoreStock::class,'store_id','id');
+    }
+
+    // ===== GOVERNANCE RELATIONSHIPS (Plan §4, §5, §10) =====
+
+    /**
+     * Ward this store is linked to — used by StoreContextResolver::resolveFromShift()
+     * Plan §10 step 2: NursingShift.ward_id → stores.ward_id
+     */
+    public function ward()
+    {
+        return $this->belongsTo(\App\Models\Ward::class, 'ward_id');
+    }
+
+    /**
+     * Department this store belongs to — used by StoreContextResolver::resolveFromUser()
+     * Plan §10 step 3: User.department_id → stores.department_id
+     */
+    public function department()
+    {
+        return $this->belongsTo(\App\Models\Department::class, 'department_id');
+    }
+
+    /**
+     * Parent hub store — pharmacy satellite's replenishment source
+     * Plan §3.1: pharmacy_satellite.parent_store_id → pharmacy_hub
+     */
+    public function parentStore()
+    {
+        return $this->belongsTo(Store::class, 'parent_store_id');
+    }
+
+    /**
+     * Child satellite stores of this hub
+     * Plan §6.3 Tab 3: Satellite Replenishment list
+     */
+    public function childStores()
+    {
+        return $this->hasMany(Store::class, 'parent_store_id');
+    }
+
+    /**
+     * Lane policies where this store's role is the source
+     * Plan §5.3: stored in store_lane_policies; admin UI in Plan §9.1 Section B
+     */
+    public function outgoingLanePolicies()
+    {
+        return \App\Models\StoreLanePolicy::where('source_role', $this->distribution_role);
     }
 
     // ===== NEW INVENTORY MANAGEMENT RELATIONSHIPS =====
@@ -109,7 +201,7 @@ class Store extends Model implements Auditable
     }
 
     /**
-     * Scope for pharmacy stores
+     * Scope for pharmacy stores (legacy — uses store_type)
      */
     public function scopePharmacy($query)
     {
@@ -117,33 +209,107 @@ class Store extends Model implements Auditable
     }
 
     /**
-     * Scope for warehouse stores
+     * Scope for warehouse stores (legacy — uses store_type)
      */
     public function scopeWarehouse($query)
     {
         return $query->where('store_type', 'warehouse');
     }
 
-    // ===== HELPERS =====
-
     /**
-     * Get the default pharmacy store
+     * Scope by distribution_role — used throughout Plan §6 workbench rendering
+     * and by StoreContextResolver (Plan §10)
      */
-    public static function getDefaultPharmacy(): ?self
+    public function scopeRole($query, string $role)
     {
-        return self::where('store_type', 'pharmacy')
-            ->where('is_default', true)
-            ->first()
-            ?? self::where('store_type', 'pharmacy')->first();
+        return $query->where('distribution_role', $role);
     }
 
     /**
-     * Get the central/warehouse store
+     * Scope for stores that can dispense to patients
+     * Plan §7.5.1 — allows_direct_patient_dispense gate check
+     */
+    public function scopeDispensary($query)
+    {
+        return $query->where('allows_direct_patient_dispense', true);
+    }
+
+    /**
+     * Scope for ward stores linked to a specific ward
+     * Plan §10 step 2 — resolveFromShift()
+     */
+    public function scopeForWard($query, int $wardId)
+    {
+        return $query->where('ward_id', $wardId)
+                     ->where('distribution_role', self::ROLE_WARD);
+    }
+
+    /**
+     * Scope for department stores linked to a specific department
+     * Plan §10 step 3 — resolveFromUser()
+     */
+    public function scopeForDepartment($query, int $deptId)
+    {
+        return $query->where('department_id', $deptId)
+                     ->where('distribution_role', self::ROLE_DEPARTMENT);
+    }
+
+    // ===== HELPERS =====
+
+    /**
+     * Get the default pharmacy store (legacy helper — preserved)
+     */
+    public static function getDefaultPharmacy(): ?self
+    {
+        return self::active()->where('store_type', 'pharmacy')
+            ->where('is_default', true)
+            ->first()
+            ?? self::active()->where('store_type', 'pharmacy')->first();
+    }
+
+    /**
+     * Get the central/warehouse store (legacy helper — preserved)
      */
     public static function getCentralStore(): ?self
     {
         return self::where('store_type', 'warehouse')
             ->first();
+    }
+
+    /**
+     * Governance-aware central store lookup using distribution_role
+     * Plan §6.2: used by StoreContextResolver role-default fallback
+     */
+    public static function getCentralByRole(): ?self
+    {
+        return self::where('distribution_role', self::ROLE_CENTRAL)->first()
+            ?? self::getCentralStore();
+    }
+
+    /**
+     * Human-readable label for distribution_role
+     * Used in workbench role badge (Plan §6.1 shared header)
+     */
+    public function distributionRoleLabel(): string
+    {
+        return match ($this->distribution_role) {
+            self::ROLE_CENTRAL              => 'Central Store',
+            self::ROLE_PHARMACY_HUB         => 'Pharmacy Hub',
+            self::ROLE_PHARMACY_SATELLITE   => 'Pharmacy Satellite',
+            self::ROLE_DEPARTMENT           => 'Department Store',
+            self::ROLE_WARD                 => 'Ward Store',
+            default                         => 'Store',
+        };
+    }
+
+    /**
+     * Whether this store can dispense drugs directly to a patient
+     * Plan §7.5.1 — checked before dispenseMedication() L933
+     */
+    public function canDispenseToPatient(): bool
+    {
+        return $this->allows_direct_patient_dispense
+            && in_array($this->distribution_role, self::DISPENSE_ROLES);
     }
 
     /**
