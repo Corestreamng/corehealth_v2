@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Services\RequisitionService;
 use App\Services\StockService;
+use App\Services\StoreContextResolver;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -32,11 +33,13 @@ class StoreRequisitionController extends Controller
 {
     protected RequisitionService $requisitionService;
     protected StockService $stockService;
+    protected StoreContextResolver $resolver;
 
-    public function __construct(RequisitionService $requisitionService, StockService $stockService)
+    public function __construct(RequisitionService $requisitionService, StockService $stockService, StoreContextResolver $resolver)
     {
         $this->requisitionService = $requisitionService;
         $this->stockService = $stockService;
+        $this->resolver = $resolver;
     }
 
     /**
@@ -46,17 +49,22 @@ class StoreRequisitionController extends Controller
     {
         if ($request->ajax()) {
             $user = auth()->user();
+            $isAdmin = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store']);
+
+            // ── Store Governance: scope to stores the user can work from ─────────
+            // Admins see everything; others see requisitions for any store in their
+            // candidateStores() set (both as requester and as fulfiller side).
+            $candidateIds = $isAdmin
+                ? null
+                : $this->resolver->candidateStores($user)->pluck('id');
+
             $query = StoreRequisition::with(['fromStore', 'toStore', 'requester', 'items'])
                 ->orderBy('created_at', 'desc');
 
-            // Apply user-based access filter unless admin/superadmin/store role
-            if (!$user->hasAnyRole(['admin', 'super-admin', 'store', 'Store'])) {
-                // Regular users can only see requisitions they are involved with
-                $query->where(function ($q) use ($user) {
-                    $q->where('requested_by', $user->id)
-                      ->orWhere('approved_by', $user->id)
-                      ->orWhere('rejected_by', $user->id)
-                      ->orWhere('fulfilled_by', $user->id);
+            if (! $isAdmin && $candidateIds !== null) {
+                $query->where(function ($q) use ($candidateIds) {
+                    $q->whereIn('to_store_id', $candidateIds)   // requests made for my store(s)
+                      ->orWhereIn('from_store_id', $candidateIds); // requests my store(s) must fulfill
                 });
             }
 
@@ -118,16 +126,18 @@ class StoreRequisitionController extends Controller
         $stores = Store::active()->orderBy('store_name')->get();
         $statuses = StoreRequisition::getStatuses();
 
-        // Build stats with user-based filtering
+        // Build stats scoped to the user's candidate stores
         $user = auth()->user();
-        $baseQuery = StoreRequisition::query();
+        $isAdmin = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store']);
+        $candidateIds = $isAdmin
+            ? null
+            : $this->resolver->candidateStores($user)->pluck('id');
 
-        if (!$user->hasAnyRole(['admin', 'super-admin', 'store', 'Store'])) {
-            $baseQuery->where(function ($q) use ($user) {
-                $q->where('requested_by', $user->id)
-                  ->orWhere('approved_by', $user->id)
-                  ->orWhere('rejected_by', $user->id)
-                  ->orWhere('fulfilled_by', $user->id);
+        $baseQuery = StoreRequisition::query();
+        if (! $isAdmin && $candidateIds !== null) {
+            $baseQuery->where(function ($q) use ($candidateIds) {
+                $q->whereIn('to_store_id', $candidateIds)
+                  ->orWhereIn('from_store_id', $candidateIds);
             });
         }
 
@@ -149,7 +159,13 @@ class StoreRequisitionController extends Controller
      */
     public function create()
     {
+        $user          = auth()->user();
+        $resolvedStore = $this->resolver->resolve($user);
+        $myStores      = $this->resolver->candidateStores($user); // stores I'm requesting FOR
+
+        // All active stores — used for source (from_store) cards with lane-awareness
         $stores = Store::active()->orderBy('store_name')->get();
+
         $products = Product::with('price')
             ->where('status', true)
             ->orderBy('product_name')
@@ -160,22 +176,27 @@ class StoreRequisitionController extends Controller
         foreach ($stores as $store) {
             $storeStockQuery = \App\Models\StoreStock::where('store_id', $store->id)->where('is_active', true);
             $totalProducts = (clone $storeStockQuery)->where('current_quantity', '>', 0)->count();
-            $totalStock = (clone $storeStockQuery)->sum('current_quantity');
-            $lowStock = (clone $storeStockQuery)->whereColumn('current_quantity', '<=', 'reorder_level')->where('current_quantity', '>', 0)->count();
-            $outOfStock = (clone $storeStockQuery)->where('current_quantity', '<=', 0)->count();
+            $totalStock    = (clone $storeStockQuery)->sum('current_quantity');
+            $lowStock      = (clone $storeStockQuery)->whereColumn('current_quantity', '<=', 'reorder_level')->where('current_quantity', '>', 0)->count();
+            $outOfStock    = (clone $storeStockQuery)->where('current_quantity', '<=', 0)->count();
             $storeStats[$store->id] = [
                 'products' => $totalProducts,
-                'stock' => $totalStock,
-                'low' => $lowStock,
-                'out' => $outOfStock,
+                'stock'    => $totalStock,
+                'low'      => $lowStock,
+                'out'      => $outOfStock,
             ];
         }
 
-        return view('admin.inventory.requisitions.create', compact('stores', 'products', 'storeStats'));
+        return view('admin.inventory.requisitions.create', compact(
+            'stores', 'products', 'storeStats', 'resolvedStore', 'myStores'
+        ));
     }
 
     /**
      * Store a newly created requisition
+     *
+     * Plan §5.2 Step 1, §7.1: lane policy Gate injected here before RequisitionService::create().
+     * RequisitionService::create() itself is NOT modified.
      */
     public function store(Request $request)
     {
@@ -189,6 +210,65 @@ class StoreRequisitionController extends Controller
             'items.*.packaging_id' => 'nullable|exists:product_packagings,id',
             'items.*.packaging_qty' => 'nullable|numeric|min:0',
         ]);
+
+        // ── Store Governance Gate (Plan §5.2 Step 1) ──────────────────────────
+        // Validates that source_role → destination_role is an allowed lane.
+        // 403 JSON response with human-readable denyReason() if blocked.
+        // Does NOT modify RequisitionService::create().
+        $sourceStore      = \App\Models\Store::findOrFail($request->from_store_id);
+        $destinationStore = \App\Models\Store::findOrFail($request->to_store_id);
+
+        $laneCheck = \Illuminate\Support\Facades\Gate::inspect(
+            'requisition-lane-allowed',
+            [$sourceStore->distribution_role, $destinationStore->distribution_role]
+        );
+
+        if ($laneCheck->denied()) {
+            return response()->json([
+                'success'    => false,
+                'message'    => $laneCheck->message(),
+                'lane_error' => true,  // used by UI to show the lane-policy banner (Plan §7.1 UI)
+            ], 403);
+        }
+
+        // ── Plan §R12, §C2 — Lane Override ShiftAction Logging ───────────────
+        // If the lane matrix would have blocked this pair but the Gate allowed it
+        // due to store-policy.override-lane permission, log a ShiftAction.
+        if (auth()->user()->hasPermissionTo('store-policy.override-lane')) {
+            $lanePolicy = \App\Models\StoreLanePolicy::check(
+                $sourceStore->distribution_role,
+                $destinationStore->distribution_role
+            );
+            if (! $lanePolicy->allowed) {
+                $activeShift = \App\Models\NursingShift::where('user_id', auth()->id())
+                    ->where('status', 'active')
+                    ->latest()
+                    ->first();
+
+                if ($activeShift) {
+                    \App\Models\ShiftAction::create([
+                        'shift_id'       => $activeShift->id,
+                        'user_id'        => auth()->id(),
+                        'action_type'    => 'other',
+                        'action_subtype' => 'lane_override',
+                        'description'    => 'Requisition created with overridden lane policy',
+                        'details'        => 'Source role: ' . $sourceStore->distribution_role . ' → Dest role: ' . $destinationStore->distribution_role . ' (normally blocked)',
+                        'auditable_type' => \App\Models\Store::class,
+                        'auditable_id'   => $sourceStore->id,
+                        'metadata'       => [
+                            'source_store_id'     => $sourceStore->id,
+                            'destination_store_id' => $destinationStore->id,
+                            'source_role'         => $sourceStore->distribution_role,
+                            'destination_role'    => $destinationStore->distribution_role,
+                            'override_permission' => 'store-policy.override-lane',
+                        ],
+                        'is_critical'    => false,
+                        'created_at'     => now(),
+                    ]);
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         try {
             $requisition = $this->requisitionService->create(
@@ -238,6 +318,9 @@ class StoreRequisitionController extends Controller
 
     /**
      * Approve requisition
+     *
+     * Plan §5.2 Step 2, §7.2: manager Gate injected here before RequisitionService::approve().
+     * RequisitionService::approve() itself is NOT modified.
      */
     public function approve(Request $request, StoreRequisition $requisition)
     {
@@ -246,6 +329,23 @@ class StoreRequisitionController extends Controller
             'approved_qtys.*' => 'nullable|integer|min:0',
             'notes' => 'nullable|string|max:500',
         ]);
+
+        // ── Store Governance Gate (Plan §5.2 Step 2) ──────────────────────────
+        // Approver must be the manager of the SOURCE store (the store being drawn from).
+        // Does NOT modify RequisitionService::approve().
+        $sourceStore = $requisition->fromStore;
+        $approvalCheck = \Illuminate\Support\Facades\Gate::inspect(
+            'can-approve-requisition-for-store',
+            $sourceStore
+        );
+
+        if ($approvalCheck->denied()) {
+            return response()->json([
+                'success' => false,
+                'message' => $approvalCheck->message(),
+            ], 403);
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         try {
             $requisition = $this->requisitionService->approve(
@@ -364,6 +464,62 @@ class StoreRequisitionController extends Controller
                 ], 400);
             }
 
+            // ── Plan §R11, §C2 — FIFO Override ShiftAction Logging ───────────────
+            // Detect when the user fulfills from a non-oldest batch while an earlier
+            // batch still had stock. Log a ShiftAction for audit trail.
+            // RequisitionService::fulfill() is NOT modified per plan constraint.
+            if (auth()->user()->hasPermissionTo('store-policy.override-fifo')) {
+                foreach ($fulfillments as $itemId => $fulfillData) {
+                    $reqItem = \App\Models\StoreRequisitionItem::find($itemId);
+                    if (! $reqItem) continue;
+
+                    $batchesUsed = array_keys($fulfillData['batches']);
+
+                    // Load all active batches for this product in FIFO order
+                    $allBatches = \App\Models\StockBatch::where('product_id', $reqItem->product_id)
+                        ->where('store_id', $requisition->from_store_id)
+                        ->where('is_active', true)
+                        ->where('current_qty', '>', 0)
+                        ->orderBy('expiry_date', 'asc')
+                        ->orderBy('created_at', 'asc')
+                        ->pluck('id')
+                        ->toArray();
+
+                    // Find first batch in FIFO order not fully used
+                    $firstBatchId = $allBatches[0] ?? null;
+                    if ($firstBatchId && ! in_array($firstBatchId, $batchesUsed)) {
+                        // Non-FIFO: log ShiftAction
+                        $activeShift = \App\Models\NursingShift::where('user_id', auth()->id())
+                            ->where('status', 'active')
+                            ->latest()
+                            ->first();
+
+                        if ($activeShift) {
+                            \App\Models\ShiftAction::create([
+                                'shift_id'     => $activeShift->id,
+                                'user_id'      => auth()->id(),
+                                'action_type'  => 'other',
+                                'action_subtype' => 'fifo_override',
+                                'description'  => 'FIFO/FEFO batch order overridden during requisition fulfillment',
+                                'details'      => 'Requisition #' . $requisition->id . ', product_id=' . $reqItem->product_id . '. FIFO batch ' . $firstBatchId . ' skipped.',
+                                'auditable_type' => \App\Models\StoreRequisition::class,
+                                'auditable_id'   => $requisition->id,
+                                'metadata'     => [
+                                    'requisition_id'   => $requisition->id,
+                                    'product_id'       => $reqItem->product_id,
+                                    'fifo_batch_id'    => $firstBatchId,
+                                    'batches_used'     => $batchesUsed,
+                                    'override_permission' => 'store-policy.override-fifo',
+                                ],
+                                'is_critical'  => false,
+                                'created_at'   => now(),
+                            ]);
+                        }
+                    }
+                }
+            }
+            // ─────────────────────────────────────────────────────────────────────
+
             $batches = $this->requisitionService->fulfill($requisition, $fulfillments);
 
             $requisition->refresh();
@@ -415,7 +571,21 @@ class StoreRequisitionController extends Controller
      */
     public function pendingApproval()
     {
-        $requisitions = $this->requisitionService->getPendingApproval();
+        $user     = auth()->user();
+        $isAdmin  = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store']);
+
+        // ── Governance: only show requisitions drawn FROM my candidate stores ──
+        // Admins see all. Others only see what they can act on.
+        if ($isAdmin) {
+            $requisitions = $this->requisitionService->getPendingApproval();
+        } else {
+            $candidateIds = $this->resolver->candidateStores($user)->pluck('id');
+            $requisitions = \App\Models\StoreRequisition::pending()
+                ->whereIn('from_store_id', $candidateIds)
+                ->with(['items.product', 'items.packaging', 'fromStore', 'toStore', 'requester'])
+                ->orderBy('created_at', 'asc')
+                ->get();
+        }
 
         return view('admin.inventory.requisitions.pending-approval', compact('requisitions'));
     }
@@ -425,16 +595,36 @@ class StoreRequisitionController extends Controller
      */
     public function pendingFulfillment(Request $request)
     {
-        $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
+        $user     = auth()->user();
+        $isAdmin  = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store']);
+        $myStores = $isAdmin ? null : $this->resolver->candidateStores($user);
 
-        if (!$storeId) {
-            return redirect()->back()->with('error', 'No store selected');
+        // ── Governance: resolve the active store for this session ─────────────
+        // Priority: explicit query param (for manual tab switch) → resolved store
+        // → first candidate → pharmacy default fallback.
+        if ($request->filled('store_id')) {
+            $storeId = (int) $request->get('store_id');
+            // Non-admins must only be able to view their own candidate stores
+            if (! $isAdmin && $myStores && ! $myStores->contains('id', $storeId)) {
+                abort(403, 'You cannot view fulfillment for that store.');
+            }
+        } else {
+            $resolvedStore = $this->resolver->resolve($user);
+            $storeId = $resolvedStore?->id
+                ?? ($myStores && $myStores->isNotEmpty() ? $myStores->first()->id : null)
+                ?? Store::getDefaultPharmacy()?->id;
+        }
+
+        if (! $storeId) {
+            return redirect()->back()->with('error', 'No store resolved. Please set your store context first.');
         }
 
         $requisitions = $this->requisitionService->getPendingFulfillment($storeId);
-        $store = Store::find($storeId);
+        $store        = Store::find($storeId);
 
-        return view('admin.inventory.requisitions.pending-fulfillment', compact('requisitions', 'store'));
+        return view('admin.inventory.requisitions.pending-fulfillment', compact(
+            'requisitions', 'store', 'myStores'
+        ));
     }
 
     /**

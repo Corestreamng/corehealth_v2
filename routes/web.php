@@ -465,6 +465,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/admission-module/patient/{id}/history', [\App\Http\Controllers\AdmissionModuleController::class, 'getAdmissionHistory'])->name('admission-module.admission-history');
         Route::get('/admission-module/admission/{id}/print-bill', [\App\Http\Controllers\AdmissionModuleController::class, 'printAdmissionBill'])->name('admission-module.print-bill');
 
+        // Store Context Override — shared across all workbenches (Plan §10 Step 1)
+        Route::post('/store-context/set', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'setStoreContext'])->name('store-context.set');
+        Route::post('/store-context/clear', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'clearStoreContext'])->name('store-context.clear');
+
         // Pharmacy Workbench Routes
         Route::get('/pharmacy-workbench', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'index'])->name('pharmacy.workbench');
         Route::get('/pharmacy-workbench/search-patients', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'searchPatients'])->name('pharmacy.search-patients');

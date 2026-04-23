@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\StoreRequisitionController;
 use App\Http\Controllers\StoreWorkbenchController;
+use App\Http\Controllers\StoreGovernanceController;
 use App\Http\Controllers\ExpenseController;
 
 /**
@@ -97,6 +98,30 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
 
         // AJAX
         Route::get('/ajax/batch-availability', [StoreWorkbenchController::class, 'getBatchAvailability'])->name('batch-availability');
+    });
+
+    // ===== STORE GOVERNANCE CONFIG (Plan §9.1, §9.3) =====
+    Route::prefix('config/store-governance')->name('config.store-governance.')->group(function () {
+        // Store role catalog + ownership mapping (Plan §9.1 Section A/C)
+        Route::get('/', [StoreGovernanceController::class, 'index'])->name('index');
+        Route::post('/stores/{store}', [StoreGovernanceController::class, 'updateStore'])->name('stores.update');
+
+        // Lane policy matrix (Plan §9.1 Section B)
+        Route::get('/lane-matrix', [StoreGovernanceController::class, 'laneMatrix'])->name('lane-matrix');
+        Route::post('/lane-matrix', [StoreGovernanceController::class, 'updateLane'])->name('lane-matrix.update');
+
+        // Context resolution rules (Plan §9.3)
+        Route::get('/context-rules', [StoreGovernanceController::class, 'contextRules'])->name('context-rules');
+        Route::post('/context-rules', [StoreGovernanceController::class, 'saveContextRule'])->name('context-rules.save');
+        Route::delete('/context-rules/{rule}', [StoreGovernanceController::class, 'deleteContextRule'])->name('context-rules.delete');
+
+        // Test panel (Plan §9.3 Section F)
+        Route::post('/context-rules/test', [StoreGovernanceController::class, 'testContextResolution'])->name('context-rules.test');
+
+        // KPI endpoints (Plan §13)
+        Route::get('/kpi/pharmacy', [StoreGovernanceController::class, 'kpiPharmacy'])->name('kpi.pharmacy');
+        Route::get('/kpi/ward', [StoreGovernanceController::class, 'kpiWard'])->name('kpi.ward');
+        Route::get('/kpi/store', [StoreGovernanceController::class, 'kpiStore'])->name('kpi.store');
     });
 
     // ===== EXPENSES =====
