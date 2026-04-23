@@ -797,7 +797,7 @@
             {{-- ========================================
                  ADMINISTRATION SECTION (SUPERADMIN/ADMIN Only)
                  ======================================== --}}
-            @hasanyrole('SUPERADMIN|ADMIN')
+            @hasanyrole('SUPERADMIN|ADMIN|super-admin')
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">Administration</span>
             </li>
@@ -885,12 +885,6 @@
                     </ul>
                 </div>
             </li>
-            <li class="nav-item {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}" href="{{ route('audit-logs.index') }}" id="sidebar-admin-audit-logs">
-                    <i class="mdi mdi-history menu-icon"></i>
-                    <span class="menu-title">Audit Logs</span>
-                </a>
-            </li>
             @can('store-governance.manage')
             <li class="nav-item {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}" href="{{ route('inventory.config.store-governance.index') }}" id="sidebar-admin-store-governance">
@@ -899,6 +893,12 @@
                 </a>
             </li>
             @endcan
+            <li class="nav-item {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}" href="{{ route('audit-logs.index') }}" id="sidebar-admin-audit-logs">
+                    <i class="mdi mdi-history menu-icon"></i>
+                    <span class="menu-title">Audit Logs</span>
+                </a>
+            </li>
             <li class="nav-item {{ request()->routeIs('import-export.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('import-export.*') ? 'active' : '' }}" href="{{ route('import-export.index') }}" id="sidebar-admin-import-export">
                     <i class="mdi mdi-database-import-outline menu-icon"></i>
@@ -1001,7 +1001,7 @@
             </li>
 
             {{-- Accountant Section --}}
-            @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS')
+            @hasanyrole('SUPERADMIN|ADMIN|super-admin|ACCOUNTS')
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">Accountant / Audit</span>
             </li>
@@ -1128,7 +1128,7 @@
             {{-- ========================================
                  HUMAN RESOURCES SECTION
                  ======================================== --}}
-            @hasanyrole('SUPERADMIN|ADMIN|HR MANAGER')
+            @hasanyrole('SUPERADMIN|ADMIN|super-admin|HR MANAGER')
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">Human Resources</span>
             </li>

@@ -5,207 +5,155 @@
 
 @section('content')
 {{--
-    Store Governance Config Page
-    Plan Reference: docs/STORE_GOVERNANCE_AND_CONTEXTUAL_WORKBENCH_PLAN.md
-    § 9.1  Admin Module: Store Governance
-      Section A — Store Role Catalog (distribution_role, dispense flags, shift context)
-      Section B — Lane Policy Matrix  (rendered by AJAX via laneMatrix())
-      Section C — Store Ownership / Manager mapping
-    § 9.4  Save guards for breaking changes
-    § 11   Permission gate: store-governance.view / store-governance.manage
+    Store Governance Config — Store Role Catalog
+    Columns (≤7): Store | Status | Distribution Role | Linked To | Manager | Flags | Actions
+    Editing is via modal. Immutable stores are locked.
 --}}
 <div id="content-wrapper">
     <div class="container-fluid">
 
-        {{-- ── Page Header ──────────────────────────────────────────────── --}}
-        <div class="card-modern mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-sitemap me-2 text-primary"></i>
-                    Store Governance Configuration
-                </h5>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('inventory.config.store-governance.context-rules') }}"
-                       class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-filter me-1"></i> Context Rules
-                    </a>
-                    <a href="{{ route('inventory.config.store-governance.lane-matrix') }}"
-                       class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-project-diagram me-1"></i> Lane Matrix
-                    </a>
+        {{-- ── Shared Nav Tabs ──────────────────────────────────────────── --}}
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+                <a class="nav-link active fw-semibold" href="{{ route('inventory.config.store-governance.index') }}">
+                    <i class="fas fa-store me-1"></i> Store Catalog
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('inventory.config.store-governance.lane-matrix') }}">
+                    <i class="fas fa-project-diagram me-1"></i> Lane Matrix
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('inventory.config.store-governance.context-rules') }}">
+                    <i class="fas fa-filter me-1"></i> Resolution Rules
+                </a>
+            </li>
+        </ul>
+
+        {{-- ── Role Stat Bar ─────────────────────────────────────────────── --}}
+        @php
+            $roleCounts = $stores->groupBy('distribution_role')->map->count();
+            $roleColors = [
+                'central'            => ['bg' => '#6610f2', 'label' => 'Central'],
+                'pharmacy_hub'       => ['bg' => '#0d6efd', 'label' => 'Hub'],
+                'pharmacy_satellite' => ['bg' => '#0dcaf0', 'label' => 'Satellite'],
+                'department'         => ['bg' => '#fd7e14', 'label' => 'Department'],
+                'ward'               => ['bg' => '#198754', 'label' => 'Ward'],
+                'other'              => ['bg' => '#6c757d', 'label' => 'Other'],
+            ];
+        @endphp
+        <div class="row g-2 mb-3">
+            @foreach($roleColors as $role => $meta)
+            <div class="col-6 col-sm-4 col-md-2">
+                <div class="card text-white text-center p-2 stat-role-card"
+                     style="background:{{ $meta['bg'] }}; cursor:pointer" data-role="{{ $role }}">
+                    <div class="fw-bold fs-4">{{ $roleCounts[$role] ?? 0 }}</div>
+                    <div class="small">{{ $meta['label'] }}</div>
                 </div>
             </div>
-            <div class="card-body pb-0">
-                <p class="text-muted small mb-0">
-                    Configure the <strong>distribution role</strong>, parent store hierarchy, dispense flags,
-                    and manager ownership for each store. Changes are audited.
-                    Lane policy and context resolution are on the adjacent tabs.
-                </p>
+            @endforeach
+        </div>
+
+        {{-- ── Filter Bar ───────────────────────────────────────────────── --}}
+        <div class="card-modern mb-3">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <input type="text" id="storeSearch" class="form-control form-control-sm"
+                           style="max-width:240px" placeholder="Search stores…">
+                    <div class="btn-group btn-group-sm" id="roleFilterBtns" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" data-filter="all">All</button>
+                        @foreach($roleColors as $role => $meta)
+                        <button type="button" class="btn btn-outline-secondary" data-filter="{{ $role }}">
+                            {{ $meta['label'] }}
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
             </div>
         </div>
 
-        {{-- ── Section A: Store Role Catalog ──────────────────────────── --}}
-        {{-- Plan §9.1 Section A --}}
+        {{-- ── Store Role Catalog Table (7 cols max) ───────────────────── --}}
         <div class="card-modern">
-            <div class="card-header">
-                <h6 class="mb-0">Section A — Store Role Catalog</h6>
-                <small class="text-muted">Edit inline. Click <em>Save Row</em> to persist changes.</small>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-list me-1 text-primary"></i> Store Role Catalog</h6>
+                <small class="text-muted">Click <strong>Edit</strong> to modify a store's governance settings.</small>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0" id="storeRoleCatalog">
+                    <table class="table table-sm table-bordered mb-0 align-middle" id="storeRoleCatalog">
                         <thead class="table-light">
                             <tr>
                                 <th>Store</th>
-                                <th>Type</th>
+                                <th>Status</th>
                                 <th>Distribution Role</th>
-                                <th>Parent Store</th>
-                                <th>Ward</th>
-                                <th>Department</th>
+                                <th>Linked To</th>
                                 <th>Manager</th>
-                                <th style="width:80px">Direct Dispense</th>
-                                <th style="width:80px">Shift Context</th>
+                                <th class="text-center" title="Direct Dispense / Shift Context">Flags</th>
                                 @can('store-governance.manage')
-                                <th style="width:90px">Actions</th>
+                                <th class="text-center" style="width:90px">Actions</th>
                                 @endcan
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($stores as $store)
-                            <tr data-store-id="{{ $store->id }}">
-                                <td class="fw-semibold">{{ $store->store_name }}</td>
-                                <td><span class="badge bg-secondary">{{ $store->store_type }}</span></td>
-
-                                {{-- distribution_role select --}}
+                            @php
+                                $roleKey     = $store->distribution_role ?? 'other';
+                                $roleColor   = $roleColors[$roleKey]['bg']    ?? '#6c757d';
+                                $roleLabel   = $roleColors[$roleKey]['label'] ?? ucfirst($roleKey);
+                                $linked      = $store->ward?->name ?? $store->department?->name ?? $store->parentStore?->store_name ?? '—';
+                                $isImmutable = $store->is_immutable ?? false;
+                            @endphp
+                            <tr data-store-id="{{ $store->id }}"
+                                data-role="{{ $roleKey }}"
+                                data-name="{{ strtolower($store->store_name) }}">
                                 <td>
-                                    @can('store-governance.manage')
-                                    <select class="form-select form-select-sm sg-field" name="distribution_role"
-                                            data-store="{{ $store->id }}">
-                                        @foreach($distributionRoles as $role)
-                                        <option value="{{ $role }}"
-                                            {{ $store->distribution_role === $role ? 'selected' : '' }}>
-                                            {{ \App\Models\Store::ROLE_LABELS[$role] ?? ucfirst(str_replace('_', ' ', $role)) }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                    @else
-                                        <span class="badge bg-info text-dark">
-                                            {{ \App\Models\Store::ROLE_LABELS[$store->distribution_role] ?? $store->distribution_role }}
-                                        </span>
-                                    @endcan
+                                    @if($isImmutable)
+                                        <i class="fas fa-lock fa-xs text-muted me-1" title="Protected store"></i>
+                                    @endif
+                                    <span class="fw-semibold">{{ $store->store_name }}</span>
                                 </td>
-
-                                {{-- parent_store_id --}}
                                 <td>
-                                    @can('store-governance.manage')
-                                    <select class="form-select form-select-sm sg-field" name="parent_store_id"
-                                            data-store="{{ $store->id }}">
-                                        <option value="">— none —</option>
-                                        @foreach($stores as $ps)
-                                        @if($ps->id !== $store->id)
-                                        <option value="{{ $ps->id }}"
-                                            {{ $store->parent_store_id == $ps->id ? 'selected' : '' }}>
-                                            {{ $ps->store_name }}
-                                        </option>
-                                        @endif
-                                        @endforeach
-                                    </select>
+                                    @if($store->status)
+                                        <span class="badge bg-success">Active</span>
                                     @else
-                                        {{ $store->parentStore?->store_name ?? '—' }}
-                                    @endcan
+                                        <span class="badge bg-danger">Inactive</span>
+                                    @endif
                                 </td>
-
-                                {{-- ward_id --}}
                                 <td>
-                                    @can('store-governance.manage')
-                                    <select class="form-select form-select-sm sg-field" name="ward_id"
-                                            data-store="{{ $store->id }}">
-                                        <option value="">— none —</option>
-                                        @foreach($wards as $ward)
-                                        <option value="{{ $ward->id }}"
-                                            {{ $store->ward_id == $ward->id ? 'selected' : '' }}>
-                                            {{ $ward->name }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                    @else
-                                        {{ $store->ward?->name ?? '—' }}
-                                    @endcan
+                                    <span class="badge text-white" style="background:{{ $roleColor }}">
+                                        {{ $roleLabel }}
+                                    </span>
                                 </td>
-
-                                {{-- department_id --}}
-                                <td>
-                                    @can('store-governance.manage')
-                                    <select class="form-select form-select-sm sg-field" name="department_id"
-                                            data-store="{{ $store->id }}">
-                                        <option value="">— none —</option>
-                                        @foreach($departments as $dept)
-                                        <option value="{{ $dept->id }}"
-                                            {{ $store->department_id == $dept->id ? 'selected' : '' }}>
-                                            {{ $dept->name }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                    @else
-                                        {{ $store->department?->name ?? '—' }}
-                                    @endcan
+                                <td class="small text-muted">{{ $linked }}</td>
+                                <td class="small">
+                                    {{ $store->manager ? $store->manager->surname . ' ' . $store->manager->firstname : '—' }}
                                 </td>
-
-                                {{-- manager_id --}}
-                                <td>
-                                    @can('store-governance.manage')
-                                    <select class="form-select form-select-sm sg-field" name="manager_id"
-                                            data-store="{{ $store->id }}">
-                                        <option value="">— none —</option>
-                                        @foreach($managers as $mgr)
-                                        <option value="{{ $mgr->id }}"
-                                            {{ $store->manager_id == $mgr->id ? 'selected' : '' }}>
-                                            {{ $mgr->surname }} {{ $mgr->firstname }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                    @else
-                                        {{ $store->manager ? $store->manager->surname . ' ' . $store->manager->firstname : '—' }}
-                                    @endcan
-                                </td>
-
-                                {{-- allows_direct_patient_dispense --}}
                                 <td class="text-center">
-                                    @can('store-governance.manage')
-                                    <div class="form-check form-switch d-flex justify-content-center">
-                                        <input class="form-check-input sg-toggle"
-                                               type="checkbox"
-                                               name="allows_direct_patient_dispense"
-                                               data-store="{{ $store->id }}"
-                                               {{ $store->allows_direct_patient_dispense ? 'checked' : '' }}>
-                                    </div>
-                                    @else
-                                        <i class="fas fa-{{ $store->allows_direct_patient_dispense ? 'check text-success' : 'times text-muted' }}"></i>
-                                    @endcan
+                                    <span title="Direct Dispense"
+                                          class="{{ $store->allows_direct_patient_dispense ? 'text-success' : 'text-muted' }}">
+                                        <i class="fas fa-syringe fa-xs"></i>
+                                    </span>
+                                    <span title="Shift Context Required"
+                                          class="{{ $store->requires_shift_context ? 'text-warning' : 'text-muted' }} ms-1">
+                                        <i class="fas fa-clock fa-xs"></i>
+                                    </span>
                                 </td>
-
-                                {{-- requires_shift_context --}}
-                                <td class="text-center">
-                                    @can('store-governance.manage')
-                                    <div class="form-check form-switch d-flex justify-content-center">
-                                        <input class="form-check-input sg-toggle"
-                                               type="checkbox"
-                                               name="requires_shift_context"
-                                               data-store="{{ $store->id }}"
-                                               {{ $store->requires_shift_context ? 'checked' : '' }}>
-                                    </div>
-                                    @else
-                                        <i class="fas fa-{{ $store->requires_shift_context ? 'check text-success' : 'times text-muted' }}"></i>
-                                    @endcan
-                                </td>
-
                                 @can('store-governance.manage')
                                 <td class="text-center">
-                                    <button class="btn btn-xs btn-primary sg-save-row"
-                                            data-store="{{ $store->id }}"
-                                            title="Save this row">
-                                        <i class="fas fa-save"></i>
-                                    </button>
+                                    @if($isImmutable)
+                                        <button class="btn btn-xs btn-outline-secondary" disabled
+                                                title="Protected store — cannot be edited">
+                                            <i class="fas fa-lock d-block mx-auto mb-1"></i>
+                                            <span class="d-block" style="font-size:0.7rem">Locked</span>
+                                        </button>
+                                    @else
+                                        <button class="btn btn-xs btn-outline-primary sg-edit-btn"
+                                                data-store="{{ $store->id }}">
+                                            <i class="fas fa-pencil-alt d-block mx-auto mb-1"></i>
+                                            <span class="d-block" style="font-size:0.7rem">Edit</span>
+                                        </button>
+                                    @endif
                                 </td>
                                 @endcan
                             </tr>
@@ -219,56 +167,206 @@
     </div>{{-- /container-fluid --}}
 </div>{{-- /content-wrapper --}}
 
-{{-- Save Guard Modal (Plan §9.4) --}}
-<div class="modal fade" id="saveGuardModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-warning">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Breaking Change Warning</h5>
+{{-- ── Edit Store Modal ─────────────────────────────────────────────────── --}}
+@can('store-governance.manage')
+<div class="modal fade" id="editStoreModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-store me-2"></i><span id="editStoreTitle">Edit Store</span>
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="saveGuardMessage">
+            <div class="modal-body">
+                <input type="hidden" id="editStoreId">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Distribution Role</label>
+                        <select class="form-select" id="editDistributionRole">
+                            @foreach($distributionRoles as $role)
+                            <option value="{{ $role }}">
+                                {{ \App\Models\Store::ROLE_LABELS[$role] ?? ucfirst(str_replace('_', ' ', $role)) }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Parent Store</label>
+                        <select class="form-select" id="editParentStoreId">
+                            <option value="">— none —</option>
+                            @foreach($stores as $ps)
+                            <option value="{{ $ps->id }}">{{ $ps->store_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Ward</label>
+                        <select class="form-select" id="editWardId">
+                            <option value="">— none —</option>
+                            @foreach($wards as $ward)
+                            <option value="{{ $ward->id }}">{{ $ward->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Department</label>
+                        <select class="form-select" id="editDepartmentId">
+                            <option value="">— none —</option>
+                            @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Manager</label>
+                        <select class="form-select" id="editManagerId">
+                            <option value="">— none —</option>
+                            @foreach($managers as $mgr)
+                            <option value="{{ $mgr->id }}">{{ $mgr->surname }} {{ $mgr->firstname }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Direct Dispense</label>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" id="editDirectDispense">
+                            <label class="form-check-label small" for="editDirectDispense">Enabled</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Shift Context</label>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" id="editShiftContext">
+                            <label class="form-check-label small" for="editShiftContext">Required</label>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="saveGuardConfirm">
-                    <i class="fas fa-exclamation me-1"></i>Save Anyway
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="editStoreSaveBtn">
+                    <i class="fas fa-save me-1"></i> Save Changes
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+{{-- Save Guard Modal (Plan §9.4) --}}
+<div class="modal fade" id="saveGuardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Breaking Change Warning
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="saveGuardMessage"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="saveGuardConfirm">
+                    <i class="fas fa-exclamation me-1"></i> Save Anyway
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endcan
+
 @endsection
 
 @section('scripts')
 <script>
 (function () {
-    /**
-     * Store Governance — Store Role Catalog JS
-     * Plan §9.1 Section A, §9.4 save guards
-     */
     const SAVE_URL = id => `/inventory/config/store-governance/stores/${id}`;
-    const CSRF    = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    const CSRF     = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+    const STORE_DATA = @json($stores->keyBy('id')->map(fn($s) => [
+        'id'                             => $s->id,
+        'store_name'                     => $s->store_name,
+        'distribution_role'              => $s->distribution_role,
+        'parent_store_id'                => $s->parent_store_id,
+        'ward_id'                        => $s->ward_id,
+        'department_id'                  => $s->department_id,
+        'manager_id'                     => $s->manager_id,
+        'allows_direct_patient_dispense' => $s->allows_direct_patient_dispense ? 1 : 0,
+        'requires_shift_context'         => $s->requires_shift_context ? 1 : 0,
+    ]));
 
     let pendingSaveStore = null;
     let pendingSaveData  = null;
+    let activeFilter     = 'all';
 
-    // Collect row data for a given store ID
-    function collectRowData(storeId) {
-        const row = document.querySelector(`tr[data-store-id="${storeId}"]`);
-        if (! row) return null;
-        const data = {};
-
-        row.querySelectorAll('.sg-field[data-store]').forEach(el => {
-            data[el.name] = el.value || null;
+    // ── Filter / search ───────────────────────────────────────────────────
+    function applyFilter() {
+        const q = document.getElementById('storeSearch').value.toLowerCase().trim();
+        document.querySelectorAll('#storeRoleCatalog tbody tr').forEach(row => {
+            const matchRole = activeFilter === 'all' || row.dataset.role === activeFilter;
+            const matchName = !q || row.dataset.name.includes(q);
+            row.style.display = (matchRole && matchName) ? '' : 'none';
         });
-        row.querySelectorAll('.sg-toggle[data-store]').forEach(el => {
-            data[el.name] = el.checked ? 1 : 0;
-        });
-
-        return data;
     }
 
+    document.getElementById('storeSearch')?.addEventListener('input', applyFilter);
+
+    document.querySelectorAll('#roleFilterBtns .btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('#roleFilterBtns .btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            activeFilter = this.dataset.filter;
+            applyFilter();
+        });
+    });
+
+    document.querySelectorAll('.stat-role-card').forEach(card => {
+        card.addEventListener('click', function () {
+            const role = this.dataset.role;
+            document.querySelectorAll('#roleFilterBtns .btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.filter === role);
+            });
+            activeFilter = role;
+            applyFilter();
+        });
+    });
+
+    // ── Open edit modal ───────────────────────────────────────────────────
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.sg-edit-btn');
+        if (!btn) return;
+        const storeId = btn.dataset.store;
+        const s = STORE_DATA[storeId];
+        if (!s) return;
+
+        document.getElementById('editStoreId').value          = storeId;
+        document.getElementById('editStoreTitle').textContent = 'Edit — ' + s.store_name;
+        document.getElementById('editDistributionRole').value = s.distribution_role ?? '';
+        document.getElementById('editParentStoreId').value    = s.parent_store_id   ?? '';
+        document.getElementById('editWardId').value           = s.ward_id           ?? '';
+        document.getElementById('editDepartmentId').value     = s.department_id     ?? '';
+        document.getElementById('editManagerId').value        = s.manager_id        ?? '';
+        document.getElementById('editDirectDispense').checked = s.allows_direct_patient_dispense == 1;
+        document.getElementById('editShiftContext').checked   = s.requires_shift_context == 1;
+
+        new bootstrap.Modal(document.getElementById('editStoreModal')).show();
+    });
+
+    function collectModalData() {
+        return {
+            distribution_role:              document.getElementById('editDistributionRole').value || null,
+            parent_store_id:                document.getElementById('editParentStoreId').value    || null,
+            ward_id:                        document.getElementById('editWardId').value           || null,
+            department_id:                  document.getElementById('editDepartmentId').value     || null,
+            manager_id:                     document.getElementById('editManagerId').value        || null,
+            allows_direct_patient_dispense: document.getElementById('editDirectDispense').checked ? 1 : 0,
+            requires_shift_context:         document.getElementById('editShiftContext').checked   ? 1 : 0,
+        };
+    }
+
+    // ── Save store ────────────────────────────────────────────────────────
     async function saveStore(storeId, data, forceSave = false) {
         if (forceSave) data.force_save = 1;
 
@@ -280,33 +378,30 @@
         const json = await res.json();
 
         if (res.status === 409 && json.save_guard) {
-            // Plan §9.4 — save guard triggered
             pendingSaveStore = storeId;
             pendingSaveData  = data;
-            document.getElementById('saveGuardMessage').innerHTML =
-                `<p>${json.message}</p>`;
+            bootstrap.Modal.getInstance(document.getElementById('editStoreModal'))?.hide();
+            document.getElementById('saveGuardMessage').innerHTML = `<p>${json.message}</p>`;
             new bootstrap.Modal(document.getElementById('saveGuardModal')).show();
             return;
         }
 
         if (json.success) {
             toastr.success(json.message ?? 'Saved.');
+            bootstrap.Modal.getInstance(document.getElementById('editStoreModal'))?.hide();
+            location.reload();
         } else {
             toastr.error(json.message ?? 'Save failed.');
         }
     }
 
-    // Save Row button click
-    document.addEventListener('click', function (e) {
-        const btn = e.target.closest('.sg-save-row');
-        if (! btn) return;
-        const storeId = btn.dataset.store;
-        const data    = collectRowData(storeId);
-        if (data) saveStore(storeId, data);
+    document.getElementById('editStoreSaveBtn')?.addEventListener('click', function () {
+        const storeId = document.getElementById('editStoreId').value;
+        if (!storeId) return;
+        saveStore(storeId, collectModalData());
     });
 
-    // Confirm forced save from modal
-    document.getElementById('saveGuardConfirm').addEventListener('click', function () {
+    document.getElementById('saveGuardConfirm')?.addEventListener('click', function () {
         bootstrap.Modal.getInstance(document.getElementById('saveGuardModal')).hide();
         if (pendingSaveStore && pendingSaveData) {
             saveStore(pendingSaveStore, pendingSaveData, true);
