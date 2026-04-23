@@ -76,10 +76,44 @@ class StoreContextResolver
         $store = $this->resolveFromRoleRule($user);
         if ($store) return $store;
 
-        // Step 6 — Admin fallback: resolve to the system default store.
-        // ADMIN / SUPERADMIN / super-admin have no fixed "home" store, so we
-        // gracefully fall back to whichever store has is_default = true.
-        // They can always switch via the store-picker dropdown.
+        // Step 6 — Role-based hard-coded fallbacks for clinical roles that have
+        // no role_default rule configured yet (common on fresh installs).
+        // Admins and clinical roles get a sensible default so the workbench
+        // is usable out-of-the-box. Staff can always switch via the store-picker.
+
+        // PHARMACIST → pharmacy hub (is_default + pharmacy type), then any pharmacy store
+        if ($user->hasRole('PHARMACIST')) {
+            $store = Store::active()
+                    ->where('distribution_role', Store::ROLE_PHARMACY_HUB)
+                    ->where('is_default', true)
+                    ->first()
+                ?? Store::active()
+                    ->where('distribution_role', Store::ROLE_PHARMACY_HUB)
+                    ->orderBy('id')
+                    ->first()
+                ?? Store::active()
+                    ->whereIn('distribution_role', [Store::ROLE_PHARMACY_HUB, Store::ROLE_PHARMACY_SATELLITE])
+                    ->orderBy('id')
+                    ->first();
+            if ($store) {
+                $this->resolutionTrace[] = "Step 6 (pharmacist fallback): resolved to [{$store->store_name}] — pharmacy hub default.";
+                return $store;
+            }
+        }
+
+        // STORE role → central store
+        if ($user->hasRole('STORE')) {
+            $store = Store::active()
+                    ->where('distribution_role', Store::ROLE_CENTRAL)
+                    ->orderBy('id')
+                    ->first();
+            if ($store) {
+                $this->resolutionTrace[] = "Step 6 (store-keeper fallback): resolved to [{$store->store_name}] — central store default.";
+                return $store;
+            }
+        }
+
+        // ADMIN / SUPERADMIN / super-admin → system default store (is_default = true), then first active
         if ($user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
             $store = Store::active()->where('is_default', true)->first()
                 ?? Store::active()->orderBy('id')->first();
@@ -89,7 +123,7 @@ class StoreContextResolver
             }
         }
 
-        $this->resolutionTrace[] = 'Step 5 (role rule): no match → returning null, fallback applies.';
+        $this->resolutionTrace[] = 'Step 6: no fallback matched → returning null, fallback-action applies.';
         return null;
     }
 
