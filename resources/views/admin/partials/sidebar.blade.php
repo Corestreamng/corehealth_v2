@@ -424,6 +424,16 @@
                     </ul>
                 </div>
             </li> -->
+            @can('store-governance.view')
+            @hasrole('STORE')
+            <li class="nav-item {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}" href="{{ route('inventory.config.store-governance.index') }}" id="sidebar-store-governance-view">
+                    <i class="mdi mdi-store-cog menu-icon"></i>
+                    <span class="menu-title">Store Governance</span>
+                </a>
+            </li>
+            @endhasrole
+            @endcan
             @endhasanyrole
 
             {{-- ========================================
@@ -881,6 +891,14 @@
                     <span class="menu-title">Audit Logs</span>
                 </a>
             </li>
+            @can('store-governance.manage')
+            <li class="nav-item {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}" href="{{ route('inventory.config.store-governance.index') }}" id="sidebar-admin-store-governance">
+                    <i class="mdi mdi-store-cog menu-icon"></i>
+                    <span class="menu-title">Store Governance</span>
+                </a>
+            </li>
+            @endcan
             <li class="nav-item {{ request()->routeIs('import-export.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('import-export.*') ? 'active' : '' }}" href="{{ route('import-export.index') }}" id="sidebar-admin-import-export">
                     <i class="mdi mdi-database-import-outline menu-icon"></i>

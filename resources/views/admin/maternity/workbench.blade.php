@@ -629,7 +629,45 @@
      HTML STRUCTURE (shared layout with nursing workbench)
      ═══════════════════════════════════════════════════════════════ -->
 
+{{-- Store Context Banner — outside flex container so it spans full width --}}
+@if($resolvedStore)
+<div class="px-3 pt-2 pb-0">
+    <div class="alert alert-info py-1 px-3 d-flex align-items-center gap-2 mb-1" id="store-context-badge">
+        <i class="fas fa-store-alt me-1"></i>
+        <strong>Active Store:</strong>
+        <span class="ms-1">{{ $resolvedStore->store_name }}</span>
+        <span class="badge bg-secondary ms-1 text-uppercase" style="font-size:0.7rem;">
+            {{ $resolvedStore->distributionRoleLabel() }}
+        </span>
+        @can('store-context.change-manual')
+        <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2"
+                onclick="openStoreContextOverride()"
+                title="Change active store context">
+            <i class="fas fa-exchange-alt"></i> Change
+        </button>
+        @endcan
+    </div>
+</div>
+@elseif($contextFallbackAction === 'block')
+<div class="px-3 pt-2 pb-0">
+    <div class="alert alert-danger py-2 px-3 d-flex align-items-center gap-2 mb-1" id="store-context-banner">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        <strong>No maternity store resolved.</strong>
+        <span class="ms-1">Ward stock actions are blocked. Start a shift or contact admin.</span>
+    </div>
+</div>
+@elseif($contextFallbackAction === 'allow_manual')
+<div class="px-3 pt-2 pb-0">
+    <div class="alert alert-warning py-2 px-3 d-flex align-items-center gap-2 mb-1" id="store-context-banner">
+        <i class="fas fa-question-circle me-1"></i>
+        <strong>No store auto-resolved.</strong>
+        <span class="ms-1">Select a store manually for ward stock actions.</span>
+    </div>
+</div>
+@endif
+
 <div class="nursing-workbench-container">
+
     <!-- ── Left Panel: Patient Search & Queue (SHARED PATTERN) ── -->
     <div class="left-panel" id="left-panel">
         <div class="panel-header">
@@ -965,10 +1003,11 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold mb-2" style="font-size: 1rem;"><i class="mdi mdi-store text-success"></i> Step 1: Select Dispensing Store</label>
                             <select id="imm-modal-vaccine-store" class="form-control form-control-lg" style="border: 2px solid #388e3c; font-weight: 500;" required>
-                                <option value="">-- Choose Store --</option>
-                                @foreach($stores ?? [] as $store)
-                                    <option value="{{ $store->id }}">{{ $store->store_name }}</option>
-                                @endforeach
+                                @if($resolvedStore ?? null)
+                                    <option value="{{ $resolvedStore->id }}" selected>{{ $resolvedStore->store_name }}</option>
+                                @else
+                                    <option value="">-- No store assigned --</option>
+                                @endif
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -5749,4 +5788,62 @@ InvestResultEntry.bindFormSubmit(function() {
 
 // setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
 </script>
+
+<!-- Store Context Override Modal -->
+<div class="modal fade" id="storeContextOverrideModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fas fa-exchange-alt me-1"></i> Change Active Store</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <label class="form-label small fw-bold mb-1">Select Store</label>
+                <select id="ctx-store-select" class="form-select form-select-sm">
+                    <option value="">-- Select --</option>
+                    @foreach($stores as $ctxStore)
+                    <option value="{{ $ctxStore->id }}" {{ $resolvedStore && $resolvedStore->id === $ctxStore->id ? 'selected' : '' }}>
+                        {{ $ctxStore->store_name }}
+                    </option>
+                    @endforeach
+                </select>
+                <div id="ctx-override-error" class="text-danger small mt-1 d-none"></div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm"
+                        onclick="confirmStoreContextOverride()">
+                    <i class="fas fa-check me-1"></i> Apply
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openStoreContextOverride() {
+    $('#storeContextOverrideModal').modal('show');
+}
+function confirmStoreContextOverride() {
+    const storeId = $('#ctx-store-select').val();
+    if (!storeId) {
+        $('#ctx-override-error').text('Please select a store.').removeClass('d-none');
+        return;
+    }
+    $('#ctx-override-error').addClass('d-none');
+    $('#ctx-override-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Applying...');
+    $.ajax({
+        url: '{{ route("store-context.set") }}',
+        method: 'POST',
+        data: { store_id: storeId, context: 'ward', _token: '{{ csrf_token() }}' },
+        success: function () { window.location.reload(); },
+        error: function (xhr) {
+            const msg = xhr.responseJSON?.message ?? 'Failed to update store context.';
+            $('#ctx-override-error').text(msg).removeClass('d-none');
+            $('#ctx-override-btn').prop('disabled', false).html('<i class="fas fa-check me-1"></i> Apply');
+        }
+    });
+}
+</script>
+
 @endsection

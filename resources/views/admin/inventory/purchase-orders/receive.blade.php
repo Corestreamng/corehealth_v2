@@ -147,7 +147,8 @@
                             <td class="align-middle">
                                 <select class="form-control form-control-sm receive-packaging-select"
                                         data-item-id="{{ $item->id }}"
-                                        data-product-id="{{ $item->product_id }}">
+                                        data-product-id="{{ $item->product_id }}"
+                                        data-base-unit-name="{{ $item->product->base_unit_name ?? 'pcs' }}">
                                     <option value="" data-base-qty="1">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
                                     @if($item->product->packagings)
                                         @foreach($item->product->packagings->sortBy('level') as $pkg)
@@ -303,14 +304,23 @@ $(document).on('input', '.receive-qty', function() {
     updateReceiveBaseEquiv($(this).closest('tr'));
 });
 
+// Initialise dual-unit display for pre-selected packagings on page load (Plan §7.4, §B8)
+$(function() {
+    $('.item-main-row').each(function() {
+        updateReceiveBaseEquiv($(this));
+    });
+});
+
 function updateReceiveBaseEquiv(row) {
     var pkgSelect = row.find('.receive-packaging-select');
     var selected = pkgSelect.find('option:selected');
     var qty = parseFloat(row.find('.receive-qty').val()) || 0;
     var baseQty = parseFloat(selected.data('base-qty')) || 1;
+    var baseUnitName = pkgSelect.data('base-unit-name') || 'pcs';
     var label = row.find('.receive-base-equiv');
     if (baseQty > 1 && qty > 0) {
-        label.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' base units');
+        var baseTotal = parseFloat((qty * baseQty).toFixed(4));
+        label.text('= ' + baseTotal + ' ' + baseUnitName);
     } else {
         label.text('');
     }
