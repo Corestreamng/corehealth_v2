@@ -5,6 +5,7 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
+<link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">
 @endpush
 
 @section('content')
@@ -871,6 +872,10 @@
                     <i class="mdi mdi-shield-search"></i>
                     <span>Audit Trail</span>
                 </button>
+                <button class="workspace-tab" data-tab="billing">
+                    <i class="mdi mdi-receipt"></i>
+                    <span>Billing</span>
+                </button>
             </div>
 
             <!-- ═══ OVERVIEW TAB ═══ -->
@@ -973,6 +978,13 @@
                     <div id="audit-content">
                         <p class="text-muted text-center py-3">Enroll/select patient to view audit trail</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- ═══ BILLING TAB ═══ -->
+            <div class="workspace-tab-content" id="billing-tab">
+                <div id="billing-kit-root">
+                    <p class="text-muted text-center py-5"><i class="mdi mdi-account-arrow-left mdi-36px"></i><br>Select a patient to view billing</p>
                 </div>
             </div>
         </div>
@@ -1333,6 +1345,7 @@
                 </form>
             </div>
             <div class="modal-footer">
+                <div id="mat-note-autosave-status" class="mr-auto small" style="min-height: 1.2em;"></div>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="mdi mdi-close"></i> Cancel</button>
                 <button type="button" class="btn btn-primary" id="btn-save-note"><i class="mdi mdi-check"></i> Save Note</button>
             </div>
@@ -1565,6 +1578,27 @@
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/immunization-module.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
+<script>
+window.BILLING_KIT_CONFIG = {
+    csrf: '{{ csrf_token() }}',
+    addServiceRoute: '{{ route("nursing-workbench.billing.add-service") }}',
+    addLabRoute: '{{ route("nursing-workbench.billing.add-lab-bill") }}',
+    addImagingRoute: '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
+    addConsumableRoute: '{{ route("nursing-workbench.billing.add-consumable") }}',
+    removeBillBase: '/nursing-workbench/remove-bill',
+    pendingBillsBase: '/nursing-workbench/patient',
+    serviceRequestsBase: '/nursing-workbench/patient',
+    searchServicesRoute: '{{ route("nursing-workbench.search-services") }}',
+    searchProductsRoute: '{{ route("nursing-workbench.search-products") }}',
+    productBatchesRoute: '{{ route("nursing-workbench.product-batches") }}',
+    investigationCategoryId: '{{ appsettings("investigation_category_id", "") }}',
+    imagingCategoryId: 6,
+    resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
+    resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
+    showMedicationOption: true,
+};
+</script>
+<script src="{{ asset('js/billing-shared.js') }}"></script>
 {{-- SHARED partial: patient search JS with maternity context --}}
 @include('admin.partials.patient_search_js', ['search_context' => 'maternity'])
 @include('admin.partials.invest_res_js')
@@ -2020,6 +2054,7 @@ function switchWorkspaceTab(tab) {
         case 'immunization': loadImmunizationTab(); break;
         case 'notes': loadNotesTab(); break;
         case 'audit': loadAuditTab(); break;
+        case 'billing': BillingKit.init(currentPatient); break;
         case 'vitals':
             if (typeof window.initUnifiedVitals === 'function') { window.initUnifiedVitals(currentPatient); }
             break;
@@ -5216,8 +5251,9 @@ function loadNotesTab() {
         } else {
             resp.notes.forEach(function(n) {
                 const actions = n.can_edit ? `<div class="mt-1"><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editNote(${n.id})" title="Edit note"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteNote(${n.id})" title="Delete note"><i class="mdi mdi-delete"></i></button></div>` : '';
+                const draftBadge = n.completed === false ? '<span class="badge badge-warning mr-1">Draft</span>' : '';
                 html += `<div class="note-card">
-                    <div class="d-flex justify-content-between"><span class="note-author">${n.created_by} <span class="badge bg-secondary">${n.type}</span></span><div class="d-flex align-items-center gap-2"><span class="note-time">${n.time_ago}</span>${actions}</div></div>
+                    <div class="d-flex justify-content-between"><span class="note-author">${n.created_by} ${draftBadge}<span class="badge bg-secondary">${n.type}</span></span><div class="d-flex align-items-center gap-2"><span class="note-time">${n.time_ago}</span>${actions}</div></div>
                     <div class="note-body">${n.note}</div>
                 </div>`;
             });
@@ -5285,11 +5321,38 @@ function showAddNoteForm() {
     if (form) form.reset();
 
     // Init CKEditor after modal is fully visible
+    let _matNoteAutosaveTimer = null;
     $('#addNoteModal').off('shown.bs.modal.noteEditor').on('shown.bs.modal.noteEditor', function() {
-        initMaternityEditor('#mat-note-editor-modal', 'note');
+        initMaternityEditor('#mat-note-editor-modal', 'note').then(function(editor) {
+            if (!editor) return;
+            editor.model.document.on('change:data', function() {
+                clearTimeout(_matNoteAutosaveTimer);
+                const noteTypeId = $('#modal-note-type-select').val();
+                const content = editor.getData();
+                if (!content.trim() || !noteTypeId || !currentEnrollmentId) return;
+                $('#mat-note-autosave-status').html('<i class="mdi mdi-loading mdi-spin text-warning"></i> <span class="text-warning">Unsaved...</span>');
+                _matNoteAutosaveTimer = setTimeout(function() {
+                    $.ajax({
+                        url: '/maternity-workbench/enrollment/' + currentEnrollmentId + '/note',
+                        method: 'POST',
+                        data: { note_type_id: noteTypeId, note: content, completed: 0 },
+                        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                        success: function() {
+                            const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                            $('#mat-note-autosave-status').html('<i class="mdi mdi-check-circle text-success"></i> <span class="text-success">Autosaved ' + t + '</span>');
+                        },
+                        error: function() {
+                            $('#mat-note-autosave-status').html('<i class="mdi mdi-alert-circle text-danger"></i> <span class="text-danger">Autosave failed</span>');
+                        }
+                    });
+                }, 3000);
+            });
+        });
     });
     // Destroy CKEditor when modal hides
     $('#addNoteModal').off('hidden.bs.modal.noteEditor').on('hidden.bs.modal.noteEditor', function() {
+        clearTimeout(_matNoteAutosaveTimer);
+        $('#mat-note-autosave-status').html('');
         destroyMaternityEditor('note');
     });
 
@@ -5349,7 +5412,7 @@ $(document).on('click', '#btn-save-note', function() {
         url: url, method: method, data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
         success: function(r) {
             btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Note');
-            if (r.success) { _editMode = null; _editId = null; destroyMaternityEditor('note'); $('#addNoteModal').modal('hide'); toastr.success(r.message); loadNotesTab(); } else toastr.error(r.message);
+            if (r.success) { _editMode = null; _editId = null; destroyMaternityEditor('note'); $('#mat-note-autosave-status').html(''); $('#addNoteModal').modal('hide'); toastr.success(r.message); loadNotesTab(); } else toastr.error(r.message);
         },
         error: function(xhr) { btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Note'); toastr.error(xhr.responseJSON?.message || 'Failed to save'); }
     });

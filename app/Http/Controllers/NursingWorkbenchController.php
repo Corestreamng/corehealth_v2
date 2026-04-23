@@ -1735,6 +1735,7 @@ class NursingWorkbenchController extends Controller{
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'service_id' => 'required|exists:services,id',
+            'qty'        => 'nullable|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -1746,24 +1747,26 @@ class NursingWorkbenchController extends Controller{
 
             $patient = Patient::findOrFail($request->patient_id);
             $service = Service::with('price')->findOrFail($request->service_id);
+            $qty = max(1, (int) ($request->input('qty', 1)));
 
             $billReq = new ProductOrServiceRequest();
             $billReq->user_id = $patient->user_id;
             $billReq->staff_user_id = Auth::id();
             $billReq->service_id = $service->id;
+            $billReq->qty = $qty;
 
             // Apply HMO tariff if applicable
             try {
                 $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $service->id);
                 if ($hmoData) {
-                    $billReq->payable_amount = $hmoData['payable_amount'];
-                    $billReq->claims_amount = $hmoData['claims_amount'];
+                    $billReq->payable_amount = $hmoData['payable_amount'] * $qty;
+                    $billReq->claims_amount  = $hmoData['claims_amount'] * $qty;
                     $billReq->coverage_mode = $hmoData['coverage_mode'];
                     $billReq->validation_status = $hmoData['validation_status'];
                 }
             } catch (\Exception $e) {
                 // If no HMO tariff, use regular price
-                $billReq->payable_amount = $service->price ? $service->price->sale_price : 0;
+                $billReq->payable_amount = ($service->price ? $service->price->sale_price : 0) * $qty;
             }
 
             $billReq->save();
@@ -2501,6 +2504,9 @@ class NursingWorkbenchController extends Controller{
                 // Header
                 $html .= '<div class="card-header bg-light d-flex justify-content-between align-items-center py-2">';
                 $html .= '<div>';
+                if (!$note->completed) {
+                    $html .= '<span class="badge badge-warning me-1">Draft</span>';
+                }
                 $html .= '<span class="badge ' . $badgeColor . ' me-2">' . htmlspecialchars($typeName) . '</span>';
                 $html .= '<small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $createdAt . '</small>';
                 $html .= '</div>';
@@ -2565,9 +2571,10 @@ class NursingWorkbenchController extends Controller{
     public function saveNursingNote(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'patient_id' => 'required|exists:patients,id',
+            'patient_id'   => 'required|exists:patients,id',
             'note_type_id' => 'required|exists:nursing_note_types,id',
-            'note' => 'required|string',
+            'note'         => 'required|string',
+            'completed'    => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -2575,9 +2582,10 @@ class NursingWorkbenchController extends Controller{
         }
 
         $patientId = $request->patient_id;
+        $completed = (bool) $request->input('completed', 1);
 
         try {
-            // Check if there's an existing open note of this type
+            // Check if there's an existing open (draft) note of this type
             $existingNote = NursingNote::where('patient_id', $patientId)
                 ->where('nursing_note_type_id', $request->note_type_id)
                 ->where('completed', false)
@@ -2585,27 +2593,27 @@ class NursingWorkbenchController extends Controller{
 
             if ($existingNote) {
                 $existingNote->update([
-                    'note' => $request->note,
+                    'note'       => $request->note,
                     'updated_by' => Auth::id(),
-                    'completed' => true,
+                    'completed'  => $completed,
                 ]);
                 $note = $existingNote;
-                $message = 'Nursing note updated successfully';
+                $message = $completed ? 'Nursing note saved successfully' : 'Draft autosaved';
             } else {
                 $note = NursingNote::create([
-                    'patient_id' => $patientId,
+                    'patient_id'           => $patientId,
                     'nursing_note_type_id' => $request->note_type_id,
-                    'note' => $request->note,
-                    'created_by' => Auth::id(),
-                    'completed' => true,
+                    'note'                 => $request->note,
+                    'created_by'           => Auth::id(),
+                    'completed'            => $completed,
                 ]);
-                $message = 'Nursing note created successfully';
+                $message = $completed ? 'Nursing note created successfully' : 'Draft autosaved';
             }
 
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'note' => $note,
+                'note'    => $note,
             ]);
         } catch (\Exception $e) {
             return response()->json([

@@ -50,6 +50,12 @@ class PurchaseOrderController extends Controller
             $query = PurchaseOrder::with(['supplier', 'targetStore', 'creator', 'items'])
                 ->orderBy('created_at', 'desc');
 
+            // Governance: non-admins only see POs for their accessible stores
+            if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+                $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
+                $query->whereIn('target_store_id', $accessibleStoreIds);
+            }
+
             // Apply filters
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
@@ -92,7 +98,7 @@ class PurchaseOrderController extends Controller
         }
 
         $suppliers = Supplier::orderBy('company_name')->get();
-        $stores = Store::active()->orderBy('store_name')->get();
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
         $statuses = PurchaseOrder::getStatuses();
         $statistics = $this->purchaseOrderService->getStatistics('month');
 
@@ -105,7 +111,7 @@ class PurchaseOrderController extends Controller
     public function create()
     {
         $suppliers = Supplier::orderBy('company_name')->get();
-        $stores = Store::active()->orderBy('store_name')->get();
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
         $products = Product::with('price')
             ->where('status', true)
             ->orderBy('product_name')
@@ -122,6 +128,15 @@ class PurchaseOrderController extends Controller
         $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'target_store_id' => 'required|exists:stores,id',
+        ]);
+
+        // Governance: verify the target store is accessible by this user
+        $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
+        if (! $accessibleStoreIds->contains((int) $request->target_store_id)) {
+            return response()->json(['success' => false, 'message' => 'You are not authorised to create a purchase order for this store.'], 403);
+        }
+
+        $request->validate([
             'expected_date' => 'nullable|date|after_or_equal:today',
             'notes' => 'nullable|string|max:1000',
             'items' => 'required|array|min:1',
@@ -193,7 +208,7 @@ class PurchaseOrderController extends Controller
 
         $purchaseOrder->load(['items.product.packagings', 'items.packaging']);
         $suppliers = Supplier::orderBy('company_name')->get();
-        $stores = Store::active()->orderBy('store_name')->get();
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
         $products = Product::with('price')
             ->where('status', true)
             ->orderBy('product_name')
@@ -217,6 +232,15 @@ class PurchaseOrderController extends Controller
         $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'target_store_id' => 'required|exists:stores,id',
+        ]);
+
+        // Governance: verify the target store is accessible by this user
+        $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
+        if (! $accessibleStoreIds->contains((int) $request->target_store_id)) {
+            return response()->json(['success' => false, 'message' => 'You are not authorised to assign this purchase order to that store.'], 403);
+        }
+
+        $request->validate([
             'expected_date' => 'nullable|date',
             'notes' => 'nullable|string|max:1000',
             'items' => 'required|array|min:1',

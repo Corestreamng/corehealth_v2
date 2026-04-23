@@ -2466,6 +2466,7 @@ class MaternityWorkbenchController extends Controller
                     'created_at'   => Carbon::parse($note->created_at)->format('h:i a, d M Y'),
                     'time_ago'     => Carbon::parse($note->created_at)->diffForHumans(),
                     'can_edit'     => Auth::id() == $note->created_by && Carbon::parse($note->created_at)->diffInMinutes(now()) < (function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60),
+                    'completed'    => (bool) $note->completed,
                 ];
             });
 
@@ -2481,24 +2482,42 @@ class MaternityWorkbenchController extends Controller
         $validator = Validator::make($request->all(), [
             'note_type_id' => 'required|exists:nursing_note_types,id',
             'note'         => 'required|string',
+            'completed'    => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
+        $completed = (bool) $request->input('completed', 1);
+
         try {
-            $note = NursingNote::create([
-                'patient_id'          => $enrollment->patient_id,
-                'nursing_note_type_id'=> $request->note_type_id,
-                'note'                => $request->note,
-                'created_by'          => Auth::id(),
-                'completed'           => true,
-            ]);
+            // Upsert: if there's an open draft of this type, update it
+            $existing = NursingNote::where('patient_id', $enrollment->patient_id)
+                ->where('nursing_note_type_id', $request->note_type_id)
+                ->where('completed', false)
+                ->first();
+
+            if ($existing) {
+                $existing->update([
+                    'note'       => $request->note,
+                    'updated_by' => Auth::id(),
+                    'completed'  => $completed,
+                ]);
+                $note = $existing;
+            } else {
+                $note = NursingNote::create([
+                    'patient_id'           => $enrollment->patient_id,
+                    'nursing_note_type_id' => $request->note_type_id,
+                    'note'                 => $request->note,
+                    'created_by'           => Auth::id(),
+                    'completed'            => $completed,
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Note saved successfully.',
+                'message' => $completed ? 'Note saved successfully.' : 'Draft autosaved',
                 'note'    => $note,
             ]);
         } catch (\Exception $e) {
