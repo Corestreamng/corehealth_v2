@@ -171,6 +171,25 @@ class PharmacyWorkbenchController extends Controller
             $tariffMap = $previews['products'];
         }
 
+        // dd($patient->hmo_id, $tariffMap);
+
+        // Precompute per-item tariff totals for unbilled rows so the billing-tab UI
+        // can show accurate estimate badges before ProductOrServiceRequest is created.
+        $tariffTotals = [];
+        foreach ($items as $item) {
+            $t = $tariffMap[$item->product_id] ?? null;
+            if (!$t) {
+                continue;
+            }
+
+            $qty = $item->qty ?? 1;
+            $tariffTotals[$item->id] = [
+                'payable_amount' => round($t['payable_amount'] * $qty, 2),
+                'claims_amount' => round($t['claims_amount'] * $qty, 2),
+                'coverage_mode' => $t['coverage_mode'] ?? 'none',
+            ];
+        }
+
         return DataTables::of($items)
             ->addIndexColumn()
             ->addColumn('id', function ($item) {
@@ -188,14 +207,47 @@ class PharmacyWorkbenchController extends Controller
             ->addColumn('price', function ($item) {
                 return optional(optional($item->product)->price)->current_sale_price ?? 0;
             })
-            ->addColumn('payable_amount', function ($item) {
-                return optional($item->productOrServiceRequest)->payable_amount ?? 0;
+            ->addColumn('payable_amount', function ($item) use ($tariffTotals, $patient) {
+                $posr = $item->productOrServiceRequest;
+
+                // For HMO patients, billing estimate must come from tariff lookup per item.
+                // Do not trust stale pre-linked POSR cash values in unbilled stage.
+                if ($patient && $patient->hmo_id && isset($tariffTotals[$item->id])) {
+                    return $tariffTotals[$item->id]['payable_amount'];
+                }
+
+                if ($posr) {
+                    return $posr->payable_amount ?? 0;
+                }
+
+                $cashPrice = optional(optional($item->product)->price)->current_sale_price ?? 0;
+                return $cashPrice * ($item->qty ?? 1);
             })
-            ->addColumn('claims_amount', function ($item) {
-                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            ->addColumn('claims_amount', function ($item) use ($tariffTotals, $patient) {
+                $posr = $item->productOrServiceRequest;
+
+                if ($patient && $patient->hmo_id && isset($tariffTotals[$item->id])) {
+                    return $tariffTotals[$item->id]['claims_amount'];
+                }
+
+                if ($posr) {
+                    return $posr->claims_amount ?? 0;
+                }
+
+                return $tariffTotals[$item->id]['claims_amount'] ?? 0;
             })
-            ->addColumn('coverage_mode', function ($item) {
-                return optional($item->productOrServiceRequest)->coverage_mode ?? 'cash';
+            ->addColumn('coverage_mode', function ($item) use ($tariffTotals, $patient) {
+                $posr = $item->productOrServiceRequest;
+
+                if ($patient && $patient->hmo_id && isset($tariffTotals[$item->id])) {
+                    return $tariffTotals[$item->id]['coverage_mode'] ?? 'primary';
+                }
+
+                if ($posr && !empty($posr->coverage_mode)) {
+                    return $posr->coverage_mode;
+                }
+
+                return $tariffTotals[$item->id]['coverage_mode'] ?? 'cash';
             })
             ->addColumn('is_paid', function ($item) {
                 return optional($item->productOrServiceRequest)->payment_id !== null;
