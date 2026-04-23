@@ -987,6 +987,27 @@ class EncounterController extends Controller
         $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
             ->where('status', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
+        // Batch-load HMO tariff previews so estimate badges show correct values before billing
+        $patient = Patient::find($patient_id);
+        $tariffMap = [];
+        if ($patient && $patient->hmo_id) {
+            $productIds = $items->pluck('product_id')->unique()->filter()->values()->toArray();
+            $previews = HmoHelper::batchPreviewTariffs($patient->hmo_id, $productIds);
+            $tariffMap = $previews['products'];
+        }
+
+        $tariffTotals = [];
+        foreach ($items as $item) {
+            $t = $tariffMap[$item->product_id] ?? null;
+            if (!$t) continue;
+            $qty = $item->qty ?? 1;
+            $tariffTotals[$item->id] = [
+                'payable_amount' => round($t['payable_amount'] * $qty, 2),
+                'claims_amount'  => round($t['claims_amount'] * $qty, 2),
+                'coverage_mode'  => $t['coverage_mode'] ?? 'none',
+            ];
+        }
+
         return DataTables::of($items)
             ->addIndexColumn()
             ->addColumn('id', function ($item) {
@@ -1010,15 +1031,28 @@ class EncounterController extends Controller
             ->addColumn('price', function ($item) {
                 return optional(optional($item->product)->price)->current_sale_price ?? 0;
             })
-            ->addColumn('payable_amount', function ($item) {
+            ->addColumn('payable_amount', function ($item) use ($tariffTotals, $patient) {
+                if ($patient && $patient->hmo_id && isset($tariffTotals[$item->id])) {
+                    return $tariffTotals[$item->id]['payable_amount'];
+                }
                 $posr = $item->productOrServiceRequest;
-                return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
+                if ($posr) return $posr->payable_amount ?? 0;
+                $cashPrice = optional(optional($item->product)->price)->current_sale_price ?? 0;
+                return $cashPrice * ($item->qty ?? 1);
             })
-            ->addColumn('claims_amount', function ($item) {
+            ->addColumn('claims_amount', function ($item) use ($tariffTotals, $patient) {
+                if ($patient && $patient->hmo_id && isset($tariffTotals[$item->id])) {
+                    return $tariffTotals[$item->id]['claims_amount'];
+                }
                 return optional($item->productOrServiceRequest)->claims_amount ?? 0;
             })
-            ->addColumn('coverage_mode', function ($item) {
-                return optional($item->productOrServiceRequest)->coverage_mode ?? 'none';
+            ->addColumn('coverage_mode', function ($item) use ($tariffTotals, $patient) {
+                if ($patient && $patient->hmo_id && isset($tariffTotals[$item->id])) {
+                    return $tariffTotals[$item->id]['coverage_mode'] ?? 'primary';
+                }
+                $posr = $item->productOrServiceRequest;
+                if ($posr && !empty($posr->coverage_mode)) return $posr->coverage_mode;
+                return 'cash';
             })
             ->addColumn('requested_by', function ($item) {
                 return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
