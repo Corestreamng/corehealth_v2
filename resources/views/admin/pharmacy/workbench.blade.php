@@ -8050,7 +8050,7 @@ function renderPrescCardPharmacy(row, type) {
 
     // HMO info if applicable
     let hmoInfo = '';
-    if (row.coverage_mode && row.coverage_mode !== 'null' && row.coverage_mode !== 'none') {
+    if (type !== 'billing' && row.coverage_mode && row.coverage_mode !== 'null' && row.coverage_mode !== 'none') {
         hmoInfo = `
             <div class="presc-card-hmo-info small mt-1 p-2 bg-light rounded">
                 <span class="badge bg-info">${(row.coverage_mode || '').toUpperCase()}</span>
