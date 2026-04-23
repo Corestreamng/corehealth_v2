@@ -25,6 +25,10 @@ class DatabaseSeeder extends Seeder
             InventoryPermissionsSeeder::class,
             HmoExecutiveRoleSeeder::class,
             MaternityRoleSeeder::class,
+            // Store Governance — must run after stores + roles exist
+            StoreGovernanceSeeder::class,
+            StoreGovernancePermissionsSeeder::class,
+            CanonicalStoresSeeder::class,
 
             // HR Reference Data (must run after permissions)
             HrReferenceDataSeeder::class,
