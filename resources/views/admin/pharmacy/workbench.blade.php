@@ -4017,7 +4017,48 @@
 
 </style>
 
+{{-- Store Context Banner — outside the flex container so it spans full width without compressing the panels --}}
+@if($resolvedStore)
+<div class="px-3 pt-2 pb-0">
+    <div class="alert alert-info py-1 px-3 d-flex align-items-center gap-2 mb-1" id="store-context-badge">
+        <i class="fas fa-store-alt me-1"></i>
+        <strong>Active Store:</strong>
+        <span class="ms-1">{{ $resolvedStore->store_name }}</span>
+        <span class="badge bg-secondary ms-1 text-uppercase" style="font-size:0.7rem;">
+            {{ $resolvedStore->distributionRoleLabel() }}
+        </span>
+        @can('store-context.change-manual')
+        <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2"
+                onclick="openStoreContextOverride()"
+                title="Change active store context">
+            <i class="fas fa-exchange-alt"></i> Change
+        </button>
+        @endcan
+    </div>
+</div>
+@elseif($contextFallbackAction === 'block')
+<div class="px-3 pt-2 pb-0">
+    <div class="alert alert-danger py-2 px-3 d-flex align-items-center gap-2 mb-1" id="store-context-banner">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        <strong>No store context resolved.</strong>
+        <span class="ms-1">Dispensing is blocked until a store is assigned to your role or shift.</span>
+        <a href="{{ route('inventory.config.store-governance.context-rules') }}" class="btn btn-danger btn-sm ms-auto py-0 px-2">
+            <i class="fas fa-cog"></i> Configure
+        </a>
+    </div>
+</div>
+@elseif($contextFallbackAction === 'allow_manual')
+<div class="px-3 pt-2 pb-0">
+    <div class="alert alert-warning py-2 px-3 d-flex align-items-center gap-2 mb-1" id="store-context-banner">
+        <i class="fas fa-question-circle me-1"></i>
+        <strong>No store auto-resolved.</strong>
+        <span class="ms-1">Please select a store manually before dispensing.</span>
+    </div>
+</div>
+@endif
+
 <div class="pharmacy-workbench-container">
+
     <!-- Left Panel: Patient Search & Queue -->
     <div class="left-panel" id="left-panel">
         <div class="panel-header">
@@ -6176,10 +6217,11 @@
                                 <i class="mdi mdi-store text-success"></i> Dispensing Store
                             </label>
                             <select id="modal-store-select" class="form-select">
-                                <option value="">-- Select Store --</option>
-                                @foreach($stores as $store)
-                                    <option value="{{ $store->id }}">{{ $store->store_name }}</option>
-                                @endforeach
+                                @if($resolvedStore)
+                                    <option value="{{ $resolvedStore->id }}" selected>{{ $resolvedStore->store_name }}</option>
+                                @else
+                                    <option value="">-- No store assigned --</option>
+                                @endif
                             </select>
                         </div>
                         <div class="col-md-7">
@@ -8018,24 +8060,62 @@ function renderPrescCardPharmacy(row, type) {
         `;
     }
 
-    // Tariff preview for unbilled items (HMO estimate before billing)
+    // Pre-billing payable/claims estimate for billing tab cards
+    // Effective unit price respects any pre-billing price override
+    const effectiveUnitPrice = (row.price_override !== null && row.price_override !== undefined && row.price_override !== '')
+        ? parseFloat(row.price_override) : price;
     let tariffPreviewHtml = '';
-    if (type === 'billing' && row.tariff_preview) {
+    if (type === 'billing') {
         const tp = row.tariff_preview;
-        if (tp.no_tariff) {
+        if (!tp) {
+            // Cash patient — full price is payable, no HMO claim
+            const cashTotal = effectiveUnitPrice * qty;
             tariffPreviewHtml = `
-                <div class="small mt-1 p-2 rounded border border-warning bg-warning bg-opacity-10">
-                    <i class="mdi mdi-alert-outline text-warning me-1"></i>
-                    <span class="text-muted">No HMO tariff configured — patient may pay full price</span>
+                <div class="presc-card-billing-preview small mt-1 p-2 rounded" style="background:#f6fff6; border:1px solid #28a745;">
+                    <div class="fw-semibold mb-1" style="color:#155724;">
+                        <i class="mdi mdi-calculator-variant text-success me-1"></i> Billing Estimate
+                        <span class="badge bg-success ms-1">CASH</span>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:1rem;">
+                        <span><strong class="text-danger">Patient Pays:</strong> ₦${formatMoneyPharmacy(cashTotal)}</span>
+                        <span><strong class="text-muted">HMO Claim:</strong> ₦0.00</span>
+                    </div>
+                </div>`;
+        } else if (tp.no_tariff) {
+            // HMO patient but no tariff configured for this product
+            const fallbackTotal = effectiveUnitPrice * qty;
+            tariffPreviewHtml = `
+                <div class="presc-card-billing-preview small mt-1 p-2 rounded" style="background:#fffdf0; border:1px solid #ffc107;">
+                    <div class="fw-semibold mb-1" style="color:#856404;">
+                        <i class="mdi mdi-alert-outline text-warning me-1"></i> Billing Estimate
+                        <span class="badge bg-warning text-dark ms-1">HMO — No Tariff</span>
+                    </div>
+                    <div class="text-muted mb-1" style="font-size:0.78rem;">No tariff configured for this HMO — will be charged at full price</div>
+                    <div class="d-flex flex-wrap" style="gap:1rem;">
+                        <span><strong class="text-danger">Patient Pays:</strong> ₦${formatMoneyPharmacy(fallbackTotal)}</span>
+                        <span><strong class="text-muted">HMO Claim:</strong> ₦0.00</span>
+                    </div>
                 </div>`;
         } else {
+            // HMO patient with valid tariff — show breakdown
+            const tpPayable = parseFloat(tp.payable_amount);
+            const tpClaims = parseFloat(tp.claims_amount);
+            const tpTotal = tpPayable + tpClaims;
+            const mode = (tp.coverage_mode || 'primary').toUpperCase();
+            let modeBadgeStyle = 'background:#17a2b8;color:#fff;';
+            if (tp.coverage_mode === 'secondary') modeBadgeStyle = 'background:#ffc107;color:#000;';
+            else if (tp.coverage_mode === 'express') modeBadgeStyle = 'background:#6f42c1;color:#fff;';
             tariffPreviewHtml = `
-                <div class="small mt-1 p-2 rounded border border-info bg-info bg-opacity-10">
-                    <i class="mdi mdi-information-outline text-info me-1"></i>
-                    <span class="text-muted fw-semibold">HMO Estimate:</span>
-                    <span class="badge bg-info ms-1">${(tp.coverage_mode || '').toUpperCase()}</span>
-                    <span class="text-danger ms-2">Patient: ₦${formatMoneyPharmacy(tp.payable_amount)}</span>
-                    <span class="text-success ms-2">HMO: ₦${formatMoneyPharmacy(tp.claims_amount)}</span>
+                <div class="presc-card-billing-preview small mt-1 p-2 rounded" style="background:#f0f8ff; border:1px solid #17a2b8;">
+                    <div class="fw-semibold mb-1" style="color:#0c5460;">
+                        <i class="mdi mdi-calculator-variant text-info me-1"></i> Billing Estimate
+                        <span class="badge ms-1" style="${modeBadgeStyle}">${mode}</span>
+                    </div>
+                    <div class="d-flex flex-wrap" style="gap:1rem;">
+                        <span><strong class="text-danger">Patient Pays:</strong> ₦${formatMoneyPharmacy(tpPayable)}</span>
+                        <span><strong class="text-success">HMO Claim:</strong> ₦${formatMoneyPharmacy(tpClaims)}</span>
+                        ${tpTotal > 0 ? `<span class="text-muted">Total: ₦${formatMoneyPharmacy(tpTotal)}</span>` : ''}
+                    </div>
                 </div>`;
         }
     }
@@ -17366,7 +17446,159 @@ $('#btn-close-stock-reports').on('click', function() { hidePharmacyStockReports(
 @include('admin.partials.invest_res_view_modal')
 @include('admin.partials.invest_res_view_js')
 
-{{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
-{{-- @include('admin.partials.emergency-intake-modal') --}}
+{{--
+    ══════════════════════════════════════════════════════════════
+    Store Governance — Readiness Chip JS (Plan §7.5.1, §B12)
+    Reads validateCartStock() response fields:
+      - validation_results[].readiness_chip  (ready|billing_pending|hmo_blocked|stock_short|governance_blocked)
+      - store_governance_blocked             (bool)
+      - store_governance_message             (string)
+    Renders coloured chips on dispense queue rows.
+    Called by: renderChipForRow(row, containerId)
+    ══════════════════════════════════════════════════════════════
+--}}
+<style>
+    /* Plan §7.5.1 — Readiness Chip styles */
+    .readiness-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .readiness-chip.chip-ready            { background:#d1fae5; color:#065f46; }
+    .readiness-chip.chip-billing_pending  { background:#fef9c3; color:#713f12; }
+    .readiness-chip.chip-hmo_blocked      { background:#fee2e2; color:#7f1d1d; }
+    .readiness-chip.chip-stock_short      { background:#ffedd5; color:#7c2d12; }
+    .readiness-chip.chip-governance_blocked { background:#e0e7ff; color:#3730a3; }
+    .readiness-chip.chip-blocked          { background:#f3f4f6; color:#374151; }
+</style>
+<script>
+/**
+ * Store Governance — Readiness Chip Renderer (Plan §7.5.1, §B12)
+ *
+ * Usage after validateCartStock() resolves:
+ *   applyReadinessChips(validationResponse, rowSelector);
+ *
+ * @param {Object} response   — full JSON from validateCartStock()
+ * @param {string} rowAttr    — data attribute name on TR that holds product_request_id
+ */
+window.applyReadinessChips = function(response, rowAttr) {
+    rowAttr = rowAttr || 'data-pr-id';
+
+    // If the entire store is governance-blocked, show a toast and stop
+    if (response.store_governance_blocked) {
+        if (typeof toastr !== 'undefined') {
+            toastr.error(response.store_governance_message || 'You do not have permission to dispense from this store.', 'Store Blocked', { timeOut: 6000 });
+        }
+    }
+
+    (response.validation_results || []).forEach(function(r) {
+        const $row = $('[' + rowAttr + '="' + r.product_request_id + '"]');
+        if (!$row.length) return;
+
+        const chip   = r.readiness_chip || 'blocked';
+        const labels = {
+            ready:               '<i class="fas fa-check-circle"></i> Ready',
+            billing_pending:     '<i class="fas fa-file-invoice"></i> Bill First',
+            hmo_blocked:         '<i class="fas fa-shield-alt"></i> HMO Block',
+            stock_short:         '<i class="fas fa-exclamation-triangle"></i> Stock Short',
+            governance_blocked:  '<i class="fas fa-lock"></i> Store Locked',
+            blocked:             '<i class="fas fa-ban"></i> Blocked',
+        };
+
+        const html = `<span class="readiness-chip chip-${chip}" title="${(r.error || '').replace(/"/g, '&quot;')}">${labels[chip] || chip}</span>`;
+
+        // Replace or append chip into a designated .readiness-chip-cell
+        const $cell = $row.find('.readiness-chip-cell');
+        if ($cell.length) {
+            $cell.html(html);
+        } else {
+            // Fallback: append after the last td
+            $row.find('td:last').prepend(html + ' ');
+        }
+    });
+};
+
+/**
+ * Helper: derive chip label HTML directly from an error_type string.
+ * Useful for inline rendering without a full response object.
+ */
+window.readinessChipHtml = function(chipState, tooltip) {
+    const labels = {
+        ready:              '<i class="fas fa-check-circle"></i> Ready',
+        billing_pending:    '<i class="fas fa-file-invoice"></i> Bill First',
+        hmo_blocked:        '<i class="fas fa-shield-alt"></i> HMO Block',
+        stock_short:        '<i class="fas fa-exclamation-triangle"></i> Stock Short',
+        governance_blocked: '<i class="fas fa-lock"></i> Store Locked',
+        blocked:            '<i class="fas fa-ban"></i> Blocked',
+    };
+    const t = (tooltip || '').replace(/"/g, '&quot;');
+    return `<span class="readiness-chip chip-${chipState}" title="${t}">${labels[chipState] || chipState}</span>`;
+};
+
+// ── Store Context Override (Plan §10 Step 1) ──────────────────────────────
+function openStoreContextOverride() {
+    $('#storeContextOverrideModal').modal('show');
+}
+
+function confirmStoreContextOverride() {
+    const storeId = $('#ctx-store-select').val();
+    if (!storeId) {
+        $('#ctx-override-error').text('Please select a store.').removeClass('d-none');
+        return;
+    }
+    $('#ctx-override-error').addClass('d-none');
+    $('#ctx-override-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Applying...');
+
+    $.ajax({
+        url: '{{ route("store-context.set") }}',
+        method: 'POST',
+        data: { store_id: storeId, context: 'pharmacy', _token: '{{ csrf_token() }}' },
+        success: function () {
+            window.location.reload();
+        },
+        error: function (xhr) {
+            const msg = xhr.responseJSON?.message ?? 'Failed to update store context.';
+            $('#ctx-override-error').text(msg).removeClass('d-none');
+            $('#ctx-override-btn').prop('disabled', false).html('<i class="fas fa-check me-1"></i> Apply');
+        }
+    });
+}
+</script>
+
+<!-- Store Context Override Modal -->
+<div class="modal fade" id="storeContextOverrideModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fas fa-exchange-alt me-1"></i> Change Active Store</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <label class="form-label small fw-bold mb-1">Select Store</label>
+                <select id="ctx-store-select" class="form-select form-select-sm">
+                    <option value="">-- Select --</option>
+                    @foreach($stores as $ctxStore)
+                    <option value="{{ $ctxStore->id }}" {{ $resolvedStore && $resolvedStore->id === $ctxStore->id ? 'selected' : '' }}>
+                        {{ $ctxStore->store_name }}
+                    </option>
+                    @endforeach
+                </select>
+                <div id="ctx-override-error" class="text-danger small mt-1 d-none"></div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm"
+                        onclick="confirmStoreContextOverride()">
+                    <i class="fas fa-check me-1"></i> Apply
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection

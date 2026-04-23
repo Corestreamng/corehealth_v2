@@ -82,6 +82,103 @@
         border-color: #17a2b8;
         background: linear-gradient(135deg, #d1ecf1 0%, #fff 100%);
     }
+    .store-select-card.destination-locked {
+        cursor: default;
+    }
+    .store-select-card.destination-locked:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: #17a2b8;
+    }
+    /* Lane-blocked: greyed out but still visible */
+    .store-select-card.lane-blocked {
+        opacity: 0.38;
+        cursor: not-allowed;
+        border-color: #dee2e6 !important;
+        background: #f8f9fa !important;
+    }
+    .store-select-card.lane-blocked:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    .store-select-card.lane-blocked .store-icon { color: #adb5bd !important; }
+    /* Override toggle row */
+    .lane-override-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.75rem;
+        padding: 0.45rem 0.75rem;
+        background: #fff8e1;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #856404;
+    }
+    .lane-override-bar .form-check { margin: 0; }
+    .lane-blocked-note {
+        font-size: 0.78rem;
+        color: #dc3545;
+        margin-top: 0.3rem;
+    }
+    /* ── Step-1 destination chip (single-store) ──────────────────────── */
+    .dest-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #d1ecf1 0%, #e8f7f9 100%);
+        border: 2px solid #17a2b8;
+        border-radius: 50px;
+        padding: 0.45rem 1.1rem 0.45rem 0.8rem;
+        font-weight: 600;
+        font-size: 1rem;
+        color: #0c5460;
+    }
+    /* ── Step-1 live selection mini-bar ──────────────────────────────── */
+    .step1-live-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.55rem 1.5rem;
+        background: #f0f4ff;
+        border: 1px solid #c5d3f0;
+        border-radius: 50px;
+        margin-bottom: 0.75rem;
+        font-size: 0.88rem;
+    }
+    .step1-live-bar .lbar-store {
+        font-weight: 600;
+        padding: 0.2rem 0.75rem;
+        border-radius: 20px;
+    }
+    .step1-live-bar .lbar-store.dest  { background: #d1ecf1; color: #0c5460; }
+    .step1-live-bar .lbar-store.src   { background: #d4edda; color: #155724; }
+    .step1-live-bar .lbar-store.empty { background: #f0f0f0; color: #adb5bd; font-style: italic; font-weight: 400; }
+    .step1-live-bar .lbar-arrow       { color: #007bff; }
+    /* ── Sticky Continue button ──────────────────────────────────────── */
+    .step1-continue-wrap {
+        position: sticky;
+        bottom: 68px; /* sits above the fixed footer (footer ≈ 61px tall, z-index 998) */
+        z-index: 999;
+        text-align: center;
+        padding: 0.75rem 1rem;
+        background: rgba(255,255,255,0.93);
+        backdrop-filter: blur(4px);
+        border-radius: 16px;
+        box-shadow: 0 -2px 16px rgba(0,0,0,0.1);
+    }
+    /* ── Compatible stores count badge ──────────────────────────────── */
+    .compatible-count-badge {
+        font-size: 0.75rem;
+        background: #d4edda;
+        color: #155724;
+        border-radius: 20px;
+        padding: 0.1rem 0.55rem;
+        font-weight: 600;
+        display: inline-block;
+        vertical-align: middle;
+    }
     .store-select-card .store-icon {
         font-size: 2.5rem;
         margin-bottom: 0.5rem;
@@ -475,33 +572,172 @@
             <input type="hidden" name="from_store_id" id="from_store_id">
             <input type="hidden" name="to_store_id" id="to_store_id">
 
+            {{--
+                Lane Policy Banner (Plan §7.1, §5.1, §B9)
+                Shown when source or destination store role pair is denied by StoreLanePolicy.
+                Populated by JS after both stores are selected (see updateLanePolicyBanner() below).
+                'lane_error: true' flag is also returned by StoreRequisitionController::store() 403.
+            --}}
+            <div id="lane-policy-banner" class="alert mb-3" style="display:none;" role="alert">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="fas fa-ban fa-lg mt-1"></i>
+                    <div>
+                        <strong id="lane-policy-banner-title">Lane Blocked</strong>
+                        <div id="lane-policy-banner-message" class="mt-1 small"></div>
+                        @can('store-policy.override-lane')
+                        <div class="mt-2">
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-unlock-alt me-1"></i> You have override permission — submission will still proceed.
+                            </span>
+                        </div>
+                        @endcan
+                    </div>
+                </div>
+            </div>
+
             <!-- Wizard Steps Indicator -->
             <div class="wizard-steps">
                 <div class="wizard-step active" data-step="1">
                     <span class="step-num">1</span>
-                    <span>Select Stores</span>
+                    <span>Choose Stores</span>
                 </div>
                 <div class="wizard-step" data-step="2">
                     <span class="step-num">2</span>
-                    <span>Add Items</span>
+                    <span>Pick Items</span>
                 </div>
                 <div class="wizard-step" data-step="3">
                     <span class="step-num">3</span>
-                    <span>Review & Submit</span>
+                    <span>Confirm & Send</span>
                 </div>
             </div>
 
             <!-- STEP 1: Store Selection -->
             <div class="step-panel active" id="step-1">
+
+                @if($myStores->count() === 1)
+                {{-- ─── Single-store: destination chip + full-width source grid ─── --}}
+                <div class="form-section">
+                    <p class="text-uppercase text-muted mb-1" style="font-size:0.72rem;letter-spacing:0.6px;">Requesting stock for</p>
+                    <div class="dest-chip mb-3">
+                        <i class="mdi mdi-lock-outline text-info"></i>
+                        <span>{{ $myStores->first()->store_name }}</span>
+                    </div>
+                    {{-- Hidden grid — keeps all JS state logic identical for both layouts --}}
+                    <div id="dest-store-grid" style="display:none;">
+                        <div class="store-select-card destination-locked selected destination"
+                             data-store-id="{{ $myStores->first()->id }}"
+                             data-store-name="{{ $myStores->first()->store_name }}"
+                             data-distribution-role="{{ $myStores->first()->distribution_role ?? 'other' }}"
+                             data-type="destination"></div>
+                    </div>
+
+                    <h5 class="mt-2 mb-1">
+                        <i class="mdi mdi-transfer-right text-success"></i> Choose Supplier Store
+                        <span class="compatible-count-badge" id="compatible-count-badge" style="display:none;"></span>
+                    </h5>
+                    <p class="text-muted mb-2" style="font-size:0.88rem;">Select which store should send the stock.</p>
+
+                    @hasanyrole('SUPERADMIN|ADMIN|STORE')
+                    <div class="lane-override-bar mb-2" id="lane-override-bar" style="display:none;">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="lane-override-toggle">
+                            <label class="form-check-label fw-semibold" for="lane-override-toggle">Show all sources</label>
+                        </div>
+                        <span class="text-muted">— override lane restrictions</span>
+                        <span tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
+                              title="Your role can bypass lane policy. The approval requirement on submit still applies."
+                              style="cursor:help;"><i class="mdi mdi-help-circle text-warning"></i></span>
+                    </div>
+                    @endhasanyrole
+
+                    <div class="store-selection-grid" id="source-store-grid">
+                        @foreach($stores as $store)
+                        <div class="store-select-card"
+                             data-store-id="{{ $store->id }}"
+                             data-store-name="{{ $store->store_name }}"
+                             data-distribution-role="{{ $store->distribution_role ?? 'other' }}"
+                             data-type="source">
+                            <i class="mdi mdi-store store-icon"></i>
+                            <div class="store-name">{{ $store->store_name }}</div>
+                            <div class="store-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value" data-stat="products">{{ $storeStats[$store->id]['products'] ?? 0 }}</span>
+                                    <span>Products</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" data-stat="stock">{{ number_format($storeStats[$store->id]['stock'] ?? 0) }}</span>
+                                    <span>In Stock</span>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                @else
+                {{-- ─── Multi-store: 2-column layout ─────────────────────────────── --}}
                 <div class="row">
-                    <!-- Source Store Selection -->
+
+                    <!-- My Store (destination) — LEFT -->
                     <div class="col-md-6 mb-4">
-                        <div class="form-section">
-                            <h5><i class="mdi mdi-store text-success"></i> Source Store (Transfer FROM)</h5>
-                            <p class="text-muted mb-3">Select the store that has the items you need</p>
+                        <div class="form-section h-100">
+                            <h5><i class="mdi mdi-store text-info"></i> My Store <small class="text-muted fw-normal">— needs stock</small></h5>
+                            <p class="text-muted mb-3" style="font-size:0.88rem;">Select which of your stores needs restocking.</p>
+                            <div class="store-selection-grid" id="dest-store-grid">
+                                @foreach($myStores as $destStore)
+                                <div class="store-select-card {{ $resolvedStore?->id == $destStore->id ? 'selected destination' : '' }}"
+                                     data-store-id="{{ $destStore->id }}"
+                                     data-store-name="{{ $destStore->store_name }}"
+                                     data-distribution-role="{{ $destStore->distribution_role ?? 'other' }}"
+                                     data-type="destination">
+                                    <i class="mdi mdi-store store-icon"></i>
+                                    <div class="store-name">{{ $destStore->store_name }}</div>
+                                    <div class="store-stats">
+                                        <div class="stat-item">
+                                            <span class="stat-value">{{ $storeStats[$destStore->id]['products'] ?? 0 }}</span>
+                                            <span>Products</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-value">{{ number_format($storeStats[$destStore->id]['stock'] ?? 0) }}</span>
+                                            <span>In Stock</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Supplier Store (source) — RIGHT -->
+                    <div class="col-md-6 mb-4">
+                        <div class="form-section h-100">
+                            <h5>
+                                <i class="mdi mdi-transfer-right text-success"></i> Supplier Store
+                                <small class="text-muted fw-normal">— has the stock</small>
+                                <span class="compatible-count-badge" id="compatible-count-badge" style="display:none;"></span>
+                            </h5>
+                            <p class="text-muted mb-2" style="font-size:0.88rem;">Select where to transfer stock from.</p>
+
+                            @hasanyrole('SUPERADMIN|ADMIN|STORE')
+                            <div class="lane-override-bar mb-2" id="lane-override-bar" style="display:none;">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="lane-override-toggle">
+                                    <label class="form-check-label fw-semibold" for="lane-override-toggle">Show all sources</label>
+                                </div>
+                                <span class="text-muted">— override lane restrictions</span>
+                                <span tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top"
+                                      title="Your role can bypass lane policy. The approval requirement on submit still applies."
+                                      style="cursor:help;"><i class="mdi mdi-help-circle text-warning"></i></span>
+                            </div>
+                            @endhasanyrole
+
                             <div class="store-selection-grid" id="source-store-grid">
                                 @foreach($stores as $store)
-                                <div class="store-select-card" data-store-id="{{ $store->id }}" data-store-name="{{ $store->store_name }}" data-type="source">
+                                <div class="store-select-card"
+                                     data-store-id="{{ $store->id }}"
+                                     data-store-name="{{ $store->store_name }}"
+                                     data-distribution-role="{{ $store->distribution_role ?? 'other' }}"
+                                     data-type="source">
                                     <i class="mdi mdi-store store-icon"></i>
                                     <div class="store-name">{{ $store->store_name }}</div>
                                     <div class="store-stats">
@@ -520,36 +756,19 @@
                         </div>
                     </div>
 
-                    <!-- Destination Store Selection -->
-                    <div class="col-md-6 mb-4">
-                        <div class="form-section">
-                            <h5><i class="mdi mdi-store text-info"></i> Destination Store (Transfer TO)</h5>
-                            <p class="text-muted mb-3">Select the store that needs the items</p>
-                            <div class="store-selection-grid" id="dest-store-grid">
-                                @foreach($stores as $store)
-                                <div class="store-select-card" data-store-id="{{ $store->id }}" data-store-name="{{ $store->store_name }}" data-type="destination">
-                                    <i class="mdi mdi-store store-icon"></i>
-                                    <div class="store-name">{{ $store->store_name }}</div>
-                                    <div class="store-stats">
-                                        <div class="stat-item">
-                                            <span class="stat-value" data-stat="low">{{ $storeStats[$store->id]['low'] ?? 0 }}</span>
-                                            <span>Low Stock</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-value" data-stat="out">{{ $storeStats[$store->id]['out'] ?? 0 }}</span>
-                                            <span>Out of Stock</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
+                </div>
+                @endif
+
+                <!-- Live selection bar: shows [Dest] → [Src] as user picks cards -->
+                <div class="step1-live-bar" id="step1-live-bar">
+                    <span class="lbar-store dest" id="lbar-dest">—</span>
+                    <span class="lbar-arrow"><i class="mdi mdi-arrow-right-bold"></i></span>
+                    <span class="lbar-store empty" id="lbar-src">pick a source store</span>
                 </div>
 
-                <div class="text-center">
-                    <button type="button" class="btn btn-primary btn-lg" id="btn-to-step-2" disabled>
-                        Continue to Add Items <i class="mdi mdi-arrow-right"></i>
+                <div class="step1-continue-wrap">
+                    <button type="button" class="btn btn-primary btn-lg px-5" id="btn-to-step-2" disabled>
+                        Continue to Pick Items <i class="mdi mdi-arrow-right"></i>
                     </button>
                 </div>
             </div>
@@ -758,10 +977,58 @@ $(function() {
     var destStoreName = '';
     var cartItems = {}; // { productId: { name, code, qty, available } }
     var productsData = []; // All products from source store
+    var adminOverride = false; // true when lane-override-toggle is checked
 
-    // Store selection handlers
+    // ── Destination store: initialise from governance controls ───────────────
+    // Blade renders #dest-store-grid with card(s). The governance-resolved card
+    // is pre-marked .selected.destination. Single-store also gets .destination-locked.
+    function initDestStore() {
+        var $selected = $('#dest-store-grid .store-select-card.selected.destination');
+        if (! $selected.length) {
+            // Fallback: if no card is pre-selected, auto-select the first one
+            $selected = $('#dest-store-grid .store-select-card').first();
+            if ($selected.length) {
+                $selected.addClass('selected destination');
+            }
+        }
+        if ($selected.length) {
+            destStoreId   = $selected.data('store-id');
+            destStoreName = $selected.data('store-name');
+            $('#to_store_id').val(destStoreId);
+            updateContinueButton();
+            updateSourceCardLaneState();
+            updateStep1LiveBar();
+        }
+    }
+
+    // ── Override toggle (ADMIN / STORE only) ────────────────────────────────
+    $('#lane-override-toggle').on('change', function() {
+        adminOverride = $(this).is(':checked');
+        updateSourceCardLaneState();
+        if (adminOverride && sourceStoreId && destStoreId) updateLanePolicyBanner();
+        if (!adminOverride && sourceStoreId) {
+            // Check if the currently selected source is now blocked
+            var $sel = $('#source-store-grid .store-select-card.selected.source');
+            if ($sel.hasClass('lane-blocked')) {
+                $sel.removeClass('selected source');
+                sourceStoreId = null;
+                sourceStoreName = '';
+                $('#from_store_id').val('');
+                updateContinueButton();
+            }
+        }
+        updateStep1LiveBar();
+    });
+
+    // Store selection handler — source cards
     $('#source-store-grid .store-select-card').on('click', function() {
         var $card = $(this);
+
+        if ($card.hasClass('lane-blocked') && !adminOverride) {
+            toastr.warning('This store cannot supply to <strong>' + (destStoreName || 'the destination') + '</strong> under current lane rules. Use the override toggle if you have permission.', '', {escapeHtml: false});
+            return;
+        }
+
         var storeId = $card.data('store-id');
 
         // Can't select same store as destination
@@ -777,10 +1044,116 @@ $(function() {
         $('#from_store_id').val(storeId);
 
         updateContinueButton();
+        if (sourceStoreId && destStoreId) updateLanePolicyBanner();
+        updateStep1LiveBar();
     });
+
+    /**
+     * Grey out source cards that lane policy doesn't allow to supply the selected
+     * destination. Cards are greyed (.lane-blocked) and un-clickable unless
+     * adminOverride is active. Shows: compatible count badge + override toggle bar.
+     */
+    function updateSourceCardLaneState() {
+        var $all = $('#source-store-grid .store-select-card');
+
+        if (! destStoreId) {
+            $all.removeClass('lane-blocked').removeAttr('title');
+            $('#lane-override-bar').hide();
+            $('#compatible-count-badge').hide();
+            return;
+        }
+
+        var destRole = $('#dest-store-grid .store-select-card.selected.destination').data('distribution-role') || '';
+
+        // Lane matrix — mirrors StoreLanePolicy::defaultMatrix()
+        var ALLOWED_SOURCES = {
+            'central':             ['central'],
+            'pharmacy_hub':        ['central', 'pharmacy_hub'],
+            'pharmacy_satellite':  ['central', 'pharmacy_hub', 'pharmacy_satellite'],
+            'department':          ['central', 'pharmacy_hub'],
+            'ward':                ['central', 'pharmacy_hub', 'department'],
+            'other':               ['central', 'pharmacy_hub', 'department', 'ward', 'other']
+        };
+
+        var allowed   = ALLOWED_SOURCES[destRole] || null;
+        var anyBlocked = false;
+
+        $all.each(function() {
+            var $card      = $(this);
+            var sourceRole = $card.data('distribution-role') || 'other';
+            var srcId      = $card.data('store-id');
+
+            if (! allowed || String(srcId) === String(destStoreId) || adminOverride) {
+                $card.removeClass('lane-blocked').removeAttr('title');
+                return;
+            }
+
+            if (allowed.indexOf(sourceRole) === -1) {
+                $card.addClass('lane-blocked')
+                     .attr('title', 'Lane policy: ' + sourceRole + ' → ' + destRole + ' transfer is not permitted');
+                anyBlocked = true;
+                if ($card.hasClass('selected') && !adminOverride) {
+                    $card.removeClass('selected source');
+                    sourceStoreId = null;
+                    sourceStoreName = '';
+                    $('#from_store_id').val('');
+                    updateContinueButton();
+                }
+            } else {
+                $card.removeClass('lane-blocked').removeAttr('title');
+            }
+        });
+
+        // Compatible count badge
+        var blockedCount = $all.filter('.lane-blocked').length;
+        var compatCount  = $all.length - blockedCount;
+        var $badge = $('#compatible-count-badge');
+        if (anyBlocked) {
+            $badge.text(compatCount + ' compatible').show();
+        } else {
+            $badge.hide();
+        }
+
+        // Override toggle bar (only rendered for ADMIN/STORE roles)
+        if (anyBlocked) {
+            $('#lane-override-bar').show();
+        } else {
+            $('#lane-override-bar').hide();
+            if (adminOverride) {
+                adminOverride = false;
+                $('#lane-override-toggle').prop('checked', false);
+            }
+        }
+    }
+
+    /**
+     * Reflects current dest/source selection in the live mini-bar at the bottom
+     * of Step 1 — gives the user a clear "[From] → [To]" summary at all times.
+     */
+    function updateStep1LiveBar() {
+        var $dest = $('#lbar-dest');
+        var $src  = $('#lbar-src');
+
+        $dest.text(destStoreName || '—');
+        if (destStoreName) {
+            $dest.removeClass('empty');
+        } else {
+            $dest.addClass('empty');
+        }
+
+        if (sourceStoreName) {
+            $src.text(sourceStoreName).removeClass('empty').addClass('src');
+        } else {
+            $src.text('pick a source store').removeClass('src').addClass('empty');
+        }
+    }
 
     $('#dest-store-grid .store-select-card').on('click', function() {
         var $card = $(this);
+
+        // Single-store (locked) card: already selected, no interaction needed
+        if ($card.hasClass('destination-locked')) return;
+
         var storeId = $card.data('store-id');
 
         // Can't select same store as source
@@ -796,6 +1169,8 @@ $(function() {
         $('#to_store_id').val(storeId);
 
         updateContinueButton();
+        if (sourceStoreId && destStoreId) updateLanePolicyBanner();
+        updateStep1LiveBar();
     });
 
     function updateContinueButton() {
@@ -1221,6 +1596,11 @@ $(function() {
                         var errors = xhr.responseJSON.errors;
                         message = Object.values(errors).flat().join('<br>');
                     }
+                    // Plan §7.1: lane_error flag — scroll back to step 1 and highlight banner
+                    if (xhr.responseJSON.lane_error) {
+                        goToStep(1);
+                        showLaneBanner('danger', 'Lane Blocked by Governance Policy', message);
+                    }
                 }
                 toastr.error(message);
                 $btn.html(originalText).prop('disabled', false);
@@ -1239,6 +1619,73 @@ $(function() {
     function ucfirst(str) {
         if (!str) return '';
         return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    /**
+     * Plan §7.1, §5.1, §B9 — Lane Policy Banner
+     *
+     * Calls GET /admin/inventory/config/store-governance/lane-matrix to get current policy,
+     * finds the cell for (sourceRole × destRole) and shows/hides the banner.
+     * The store cards carry data-distribution-role attributes for this lookup.
+     */
+    function updateLanePolicyBanner() {
+        var $srcCard  = $('#source-store-grid .store-select-card.selected.source');
+        var $dstCard  = $('#dest-store-grid .store-select-card.selected.destination');
+        var srcRole   = $srcCard.data('distribution-role');
+        var dstRole   = $dstCard.data('distribution-role');
+
+        if (!srcRole || !dstRole) { hideLaneBanner(); return; }
+        if (srcRole === dstRole && srcRole === 'other') { hideLaneBanner(); return; }
+
+        $.getJSON('{{ route("inventory.config.store-governance.lane-matrix") }}', function(resp) {
+            if (!resp.success) return;
+            var cell = (resp.matrix || []).find(function(c) {
+                return c.source_role === srcRole && c.destination_role === dstRole;
+            });
+            if (!cell) { hideLaneBanner(); return; }
+
+            if (!cell.allowed) {
+                showLaneBanner(
+                    'danger',
+                    'Lane Blocked: ' + ucfirst(srcRole) + ' → ' + ucfirst(dstRole),
+                    'This lane is disabled by the lane policy. '
+                    + (cell.notes ? cell.notes : 'Contact your store manager to enable it.')
+                );
+            } else if (cell.requires_approval_level !== 'none') {
+                showLaneBanner(
+                    'warning',
+                    'Approval Required: ' + ucfirst(srcRole) + ' → ' + ucfirst(dstRole),
+                    'This requisition requires <strong>' + cell.requires_approval_level + '</strong>-level approval before fulfillment.'
+                    + (cell.notes ? ' ' + cell.notes : '')
+                );
+            } else {
+                hideLaneBanner();
+            }
+        });
+    }
+
+    function showLaneBanner(type, title, message) {
+        var $b = $('#lane-policy-banner');
+        $b.removeClass('alert-danger alert-warning alert-info').addClass('alert-' + type);
+        $('#lane-policy-banner-title').text(title);
+        $('#lane-policy-banner-message').html(message);
+        $b.slideDown(200);
+    }
+
+    function hideLaneBanner() {
+        $('#lane-policy-banner').slideUp(200);
+    }
+
+    // ── Initialise on page load ──────────────────────────────────────────────
+    // Sets JS state from the blade-pre-selected destination card, runs lane
+    // state calculation, and populates the live bar.
+    initDestStore();
+
+    // Bootstrap 5 tooltips (blocked card hints + override help icon)
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+            new bootstrap.Tooltip(el);
+        });
     }
 });
 </script>
