@@ -39,6 +39,9 @@ use Illuminate\Support\Facades\Validator;
 use OwenIt\Auditing\Models\Audit;
 use Illuminate\Support\Str;
 use App\Http\Traits\ClinicalOrdersTrait;
+use App\Services\StoreContextResolver;
+use App\Models\StoreContextRule;
+use Illuminate\Support\Facades\Gate;
 
 class MaternityWorkbenchController extends Controller
 {
@@ -54,8 +57,16 @@ class MaternityWorkbenchController extends Controller
         if (!$user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'MATERNITY'])) {
             abort(403, 'You do not have access to the Maternity Workbench.');
         }
-        $stores = Store::orderBy('store_name')->get(['id', 'store_name']);
-        return view('admin.maternity.workbench', compact('stores'));
+        // ── Store Governance: context resolution (Plan §10, §B5) ─────────────
+        $resolver              = app(StoreContextResolver::class);
+        $resolvedStore         = $resolver->resolve($user);
+        $contextFallbackAction = $resolvedStore ? null : StoreContextRule::fallbackAction();
+
+        // Candidate stores: all ward stores + user's dept store + rule-configured stores.
+        $stores = $resolver->candidateStores($user, 'ward');
+        // ─────────────────────────────────────────────────────────────────────
+
+        return view('admin.maternity.workbench', compact('stores', 'resolvedStore', 'contextFallbackAction'));
     }
 
     private function nursingProxy(): NursingWorkbenchController

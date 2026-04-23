@@ -11,7 +11,10 @@ use App\Models\StoreRequisition;
 use App\Services\StockService;
 use App\Services\PurchaseOrderService;
 use App\Services\RequisitionService;
+use App\Services\StoreContextResolver;
+use App\Models\StoreContextRule;
 use App\Helpers\BatchHelper;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -44,24 +47,48 @@ class StoreWorkbenchController extends Controller
     protected StockService $stockService;
     protected PurchaseOrderService $purchaseOrderService;
     protected RequisitionService $requisitionService;
+    protected StoreContextResolver $contextResolver;
 
     public function __construct(
         StockService $stockService,
         PurchaseOrderService $purchaseOrderService,
-        RequisitionService $requisitionService
+        RequisitionService $requisitionService,
+        StoreContextResolver $contextResolver
     ) {
         $this->stockService = $stockService;
         $this->purchaseOrderService = $purchaseOrderService;
         $this->requisitionService = $requisitionService;
+        $this->contextResolver = $contextResolver;
     }
 
     /**
      * Store Workbench Dashboard
+     *
+     * Plan §6.4 (Store Keeper Workbench), §10 (Context Resolution):
+     * If no store_id is given, StoreContextResolver auto-resolves the store for the
+     * current user. The resolved store + fallback action are passed to the view for
+     * the store context badge and "Resolve Store Context" banner (Plan §6.1).
      */
     public function index(Request $request)
     {
         $storeId = $request->get('store_id');
-        $store = $storeId ? Store::find($storeId) : null;
+
+        // ── Store Governance: context resolution (Plan §10, §B2) ─────────────
+        $resolvedAutomatically = false;
+        $contextFallbackAction = null;
+
+        if ($storeId) {
+            $store = Store::find($storeId);
+        } else {
+            $store = $this->contextResolver->resolve(auth()->user());
+            $resolvedAutomatically = (bool) $store;
+            if (! $store) {
+                $contextFallbackAction = StoreContextRule::fallbackAction();
+            }
+            $storeId = $store?->id;
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         $stores = Store::active()->orderBy('store_name')->get();
 
         // If no store selected, show aggregated stats for all stores
@@ -101,7 +128,9 @@ class StoreWorkbenchController extends Controller
             'pendingRequisitions',
             'incomingRequisitions',
             'expiringBatches',
-            'lowStockItems'
+            'lowStockItems',
+            'resolvedAutomatically',   // Plan §6.1 — context badge: "Auto-resolved"
+            'contextFallbackAction'    // Plan §6.1 — drives "Resolve Store Context" banner when null
         ));
     }
 

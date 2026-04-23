@@ -40,6 +40,9 @@ use App\Models\Store;
 use App\Models\StoreStock;
 use App\Models\StockBatch;
 use App\Services\StockService;
+use App\Services\StoreContextResolver;
+use App\Models\StoreContextRule;
+use Illuminate\Support\Facades\Gate;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
 use App\Services\QueueStatusService;
@@ -199,6 +202,10 @@ class NursingWorkbenchController extends Controller{
 
     /**
      * Display the nursing workbench main page.
+     *
+     * Plan §6.3 (Nurse Workbench), §10 (Context Resolution):
+     * Context resolver auto-resolves the ward store from the user's active NursingShift.
+     * Passes $resolvedStore + $contextFallbackAction for the store badge and banner (Plan §6.1).
      */
     public function index()
     {
@@ -207,10 +214,16 @@ class NursingWorkbenchController extends Controller{
             abort(403, 'Unauthorized access to Nursing Workbench');
         }
 
-        // Get active stores for store selection
-        $stores = Store::where('status', 1)->orderBy('store_name')->get();
+        // ── Store Governance: context resolution (Plan §10, §B4) ─────────────
+        $resolver              = app(StoreContextResolver::class);
+        $resolvedStore         = $resolver->resolve(Auth::user());
+        $contextFallbackAction = $resolvedStore ? null : StoreContextRule::fallbackAction();
 
-        return view('admin.nursing.workbench', compact('stores'));
+        // Candidate stores: all ward stores + user's dept store + rule-configured stores.
+        $stores = $resolver->candidateStores(Auth::user(), 'ward');
+        // ─────────────────────────────────────────────────────────────────────
+
+        return view('admin.nursing.workbench', compact('stores', 'resolvedStore', 'contextFallbackAction'));
     }
 
     // =====================================
@@ -776,6 +789,24 @@ class NursingWorkbenchController extends Controller{
     {
         $drugSource = $request->drug_source;
 
+        // ── Store Governance Gate (Plan §6.3, §7.5, §B7) ─────────────────────────
+        // Gate only applies for ward_stock source (Plan §R7 — only ward dispenses need Gate).
+        // pharmacy_dispensed and patient_own paths bypass the store gate.
+        if ($drugSource === 'ward_stock' && $request->store_id) {
+            $injectionStore = \App\Models\Store::find($request->store_id);
+            if ($injectionStore) {
+                $gateCheck = Gate::inspect('administer-from-store', $injectionStore);
+                if ($gateCheck->denied()) {
+                    return response()->json([
+                        'success'    => false,
+                        'message'    => $gateCheck->message(),
+                        'gate_error' => true,
+                    ], 403);
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // §7.3: Conditional validation rules per drug source
         $rules = [
             'patient_id'    => 'required|exists:patients,id',
@@ -1201,6 +1232,21 @@ class NursingWorkbenchController extends Controller{
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
+
+        if ($request->store_id) {
+            $immunizationStore = \App\Models\Store::find($request->store_id);
+            if ($immunizationStore) {
+                $gateCheck = Gate::inspect('administer-from-store', $immunizationStore);
+                if ($gateCheck->denied()) {
+                    return response()->json([
+                        'success'    => false,
+                        'message'    => $gateCheck->message(),
+                        'gate_error' => true,
+                    ], 403);
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         try {
             DB::beginTransaction();
@@ -1749,7 +1795,7 @@ class NursingWorkbenchController extends Controller{
             'store_id' => 'required|exists:stores,id',
             'product_id' => 'required|exists:products,id',
             'qty' => 'required|integer|min:1',
-            'batch_id' => 'nullable|exists:stock_batches,id', // Optional batch selection
+            'batch_id' => 'nullable|exists:stock_batches,id',
             'is_medication' => 'nullable|boolean',
             'dose' => 'nullable|string|max:500',
         ]);
@@ -1757,6 +1803,22 @@ class NursingWorkbenchController extends Controller{
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
+
+        // ── Store Governance Gate (Plan §6.3, §7.5, §B7) ─────────────────────────
+        // bill-consumable-from-store Gate: checks bill-consumable-from-store perm +
+        // active shift if requires_shift_context (StoreGovernancePolicy L87).
+        $consumableStore = \App\Models\Store::find($request->store_id);
+        if ($consumableStore) {
+            $gateCheck = Gate::inspect('bill-consumable-from-store', $consumableStore);
+            if ($gateCheck->denied()) {
+                return response()->json([
+                    'success'    => false,
+                    'message'    => $gateCheck->message(),
+                    'gate_error' => true,
+                ], 403);
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         try {
             DB::beginTransaction();
@@ -2822,7 +2884,72 @@ class NursingWorkbenchController extends Controller{
             'generated_by' => userfullname(Auth::id()),
             'total_patients' => $patientReports->count(),
             'patients' => $patientReports,
+
+            // ── Plan §6.6 Tab 5 — Ward Stock Snapshot (C1) ───────────────────────
+            // Auto-resolved ward store stock included in the handover package so the
+            // incoming nurse can see what's available without opening the workbench.
+            // Included only when the resolved store has ward-level stock.
+            'ward_stock_snapshot' => $this->buildWardStockSnapshot(),
+            // ─────────────────────────────────────────────────────────────────────
         ]);
+    }
+
+    /**
+     * Plan §6.6 Tab 5, §C1 — Ward Stock Snapshot for Handover Report.
+     *
+     * Resolves the current user's ward store via StoreContextResolver, then
+     * returns a lightweight stock summary: all active batches with qty > 0,
+     * grouped by product, sorted by expiry (FEFO).
+     *
+     * Called only by generateHandoverReport(). StockService is NOT modified.
+     *
+     * @return array|null  null if no ward store resolved
+     */
+    private function buildWardStockSnapshot(): ?array
+    {
+        $resolver = app(\App\Services\StoreContextResolver::class);
+        $store    = $resolver->resolve(Auth::user());
+
+        if (! $store) {
+            return null;
+        }
+
+        $batches = \App\Models\StockBatch::with('product:id,product_name,product_code,base_unit_name')
+            ->where('store_id', $store->id)
+            ->where('is_active', true)
+            ->where('current_qty', '>', 0)
+            ->orderBy('expiry_date', 'asc')
+            ->get();
+
+        // Group by product, summarise qty + earliest expiry
+        $grouped = $batches->groupBy('product_id')->map(function ($batchGroup) {
+            $product = $batchGroup->first()->product;
+            $totalQty = $batchGroup->sum('current_qty');
+            $earliestExpiry = $batchGroup->whereNotNull('expiry_date')->sortBy('expiry_date')->first();
+            $expiryDays = $earliestExpiry?->expiry_date
+                ? now()->diffInDays($earliestExpiry->expiry_date, false)
+                : null;
+
+            return [
+                'product_id'       => $product->id,
+                'product_name'     => $product->product_name,
+                'product_code'     => $product->product_code,
+                'unit'             => $product->base_unit_name ?? '',
+                'total_qty'        => $totalQty,
+                'batch_count'      => $batchGroup->count(),
+                'earliest_expiry'  => $earliestExpiry?->expiry_date?->format('d M Y'),
+                'expiry_days_left' => $expiryDays,
+                'stock_status'     => $totalQty <= 0 ? 'out' : ($expiryDays !== null && $expiryDays <= 30 ? 'expiring_soon' : 'ok'),
+            ];
+        })->values();
+
+        return [
+            'store_id'   => $store->id,
+            'store_name' => $store->store_name,
+            'store_role' => $store->distribution_role,
+            'items'      => $grouped,
+            'generated_at' => Carbon::now()->toISOString(),
+        ];
     }
 
     /**
