@@ -18,6 +18,9 @@ use App\Models\AdmissionRequest;
 use App\Helpers\HmoHelper;
 use App\Helpers\BatchHelper;
 use App\Services\StockService;
+use App\Services\StoreContextResolver;
+use App\Models\StoreContextRule;
+use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,12 +41,76 @@ use PDF;
 class PharmacyWorkbenchController extends Controller
 {
     /**
-     * Display the pharmacy workbench main page
+     * Display the pharmacy workbench main page.
+     *
+     * Plan §6.2 (Pharmacist Workbench), §10 (Context Resolution):
+     * Resolves the pharmacy store for the current user via StoreContextResolver.
+     * Passes $resolvedStore + $contextFallbackAction to drive the store context badge
+     * and the "Resolve Store Context" banner in the view (Plan §6.1).
      */
     public function index()
     {
-        $stores = Store::where('status', 1)->get();
-        return view('admin.pharmacy.workbench', compact('stores'));
+        // ── Store Governance: context resolution (Plan §10, §B3) ─────────────
+        $resolver            = app(StoreContextResolver::class);
+        $resolvedStore       = $resolver->resolve(auth()->user());
+        $contextFallbackAction = $resolvedStore ? null : StoreContextRule::fallbackAction();
+
+        // Candidate stores: pharmacy-type bucket + user's dept store + rule-configured stores.
+        $stores = $resolver->candidateStores(auth()->user(), 'pharmacy');
+        // ─────────────────────────────────────────────────────────────────────
+
+        return view('admin.pharmacy.workbench', compact('stores', 'resolvedStore', 'contextFallbackAction'));
+    }
+
+    /**
+     * Set an explicit store context override in the session (Plan §10 Step 1).
+     * Requires 'store-context.change-manual' permission.
+     * Shared across pharmacy, nursing, and maternity workbenches.
+     *
+     * Accepts an optional `context` field ('pharmacy'|'ward') to restrict
+     * which store types are valid, preventing cross-context overrides.
+     */
+    public function setStoreContext(\Illuminate\Http\Request $request)
+    {
+        if (! auth()->user()->can('store-context.change-manual')) {
+            return response()->json(['message' => 'You do not have permission to change the store context.'], 403);
+        }
+
+        $request->validate([
+            'store_id' => 'required|integer|exists:stores,id',
+            'context'  => 'required|in:pharmacy,ward',
+        ]);
+
+        $store = Store::find($request->store_id);
+        if (! $store || ! $store->status) {
+            return response()->json(['message' => 'The selected store is inactive.'], 422);
+        }
+
+        $context  = $request->input('context');
+        $resolver = app(\App\Services\StoreContextResolver::class);
+
+        // Enforce context-appropriate store — the store must appear in the user's
+        // candidate list for this workbench type (prevents cross-context exploits).
+        $candidateIds = $resolver->candidateStores(auth()->user(), $context)
+            ->pluck('id');
+
+        if (! $candidateIds->contains($store->id)) {
+            $label = $context === 'pharmacy' ? 'pharmacy workbench' : 'this workbench';
+            return response()->json(['message' => "That store is not available for the {$label}."], 422);
+        }
+
+        $resolver->setSessionStore($request->store_id);
+
+        return response()->json(['success' => true, 'store_name' => $store->store_name]);
+    }
+
+    /**
+     * Clear the session store context override.
+     */
+    public function clearStoreContext()
+    {
+        app(\App\Services\StoreContextResolver::class)->clearSessionStore();
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -899,23 +966,53 @@ class PharmacyWorkbenchController extends Controller
 
             if ($storeQty < $qty) {
                 $result['valid'] = false;
-                $result['error'] = "Insufficient stock in {$store->name}: need {$qty}, have {$storeQty}";
+                $result['error'] = "Insufficient stock in {$store->store_name}: need {$qty}, have {$storeQty}";
                 $result['error_type'] = 'insufficient_stock';
                 $result['shortage'] = $qty - $storeQty;
                 $allValid = false;
                 $totalIssues++;
             }
 
+            // ── Plan §7.5.1 Readiness Chip ───────────────────────────────────────────
+            // Four states: ready | billing_pending | hmo_blocked | stock_short
+            $result['readiness_chip'] = match (true) {
+                $result['error_type'] === 'not_billed'               => 'billing_pending',
+                in_array($result['error_type'], ['hmo_block', 'bundled_procedure_block']) => 'hmo_blocked',
+                $result['error_type'] === 'insufficient_stock'       => 'stock_short',
+                $result['valid']                                     => 'ready',
+                default                                              => 'blocked',
+            };
+            // ─────────────────────────────────────────────────────────────────────
+
             $validationResults[] = $result;
         }
 
+        // ── Plan §7.5.1 — Store Governance block check ─────────────────────────────
+        // If the user cannot dispense from this store, all chips become 'governance_blocked'.
+        $storeGovernanceBlocked = false;
+        $storeGovernanceMessage = null;
+        if ($store) {
+            $gateCheck = Gate::inspect('dispense-from-store', $store);
+            if ($gateCheck->denied()) {
+                $storeGovernanceBlocked = true;
+                $storeGovernanceMessage = $gateCheck->message();
+                foreach ($validationResults as &$r) {
+                    $r['readiness_chip'] = 'governance_blocked';
+                }
+                unset($r);
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         return response()->json([
             'success' => true,
-            'all_valid' => $allValid,
+            'all_valid' => $allValid && ! $storeGovernanceBlocked,
             'total_items' => count($request->product_request_ids),
             'total_issues' => $totalIssues,
             'store_id' => $storeId,
-            'store_name' => $store->name ?? '',
+            'store_name' => $store->store_name ?? '',
+            'store_governance_blocked' => $storeGovernanceBlocked,
+            'store_governance_message' => $storeGovernanceMessage,
             'validation_results' => $validationResults
         ]);
     }
@@ -940,6 +1037,20 @@ class PharmacyWorkbenchController extends Controller
 
         $storeId = $request->store_id;
         $store = Store::find($storeId);
+
+        // ── Store Governance Gate (Plan §6.2, §7.5, §B6) ─────────────────────────
+        // Validates that the dispensing user has the 'dispense-from-store' permission
+        // AND that the store allows_direct_patient_dispense (StoreGovernancePolicy checks both).
+        // Does NOT modify StockService.
+        $gateCheck = Gate::inspect('dispense-from-store', $store);
+        if ($gateCheck->denied()) {
+            return response()->json([
+                'success' => false,
+                'message' => $gateCheck->message(),
+                'gate_error' => true,
+            ], 403);
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         // PHASE 1: Pre-validate ALL items before any changes
         $itemsToDispense = [];
