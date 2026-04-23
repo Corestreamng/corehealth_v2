@@ -76,7 +76,10 @@
         {{-- ── Unconfigured Roles Warning ───────────────────────────────── --}}
         @php
             $configuredRoles = $roleRules->pluck('user_role')->toArray();
-            $unconfigured = collect($spatieRoles)->filter(fn($r) => !in_array($r, $configuredRoles))->values();
+            $bypassRoles = $rolesWithCandidateAll->toArray();
+            $unconfigured = collect($spatieRoles)
+                ->filter(fn($r) => !in_array($r, $configuredRoles) && !in_array($r, $bypassRoles))
+                ->values();
         @endphp
         @if($unconfigured->isNotEmpty())
         <div class="alert alert-warning d-flex align-items-start gap-2 mb-3">

@@ -76,6 +76,19 @@ class StoreContextResolver
         $store = $this->resolveFromRoleRule($user);
         if ($store) return $store;
 
+        // Step 6 — Admin fallback: resolve to the system default store.
+        // ADMIN / SUPERADMIN / super-admin have no fixed "home" store, so we
+        // gracefully fall back to whichever store has is_default = true.
+        // They can always switch via the store-picker dropdown.
+        if ($user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+            $store = Store::active()->where('is_default', true)->first()
+                ?? Store::active()->orderBy('id')->first();
+            if ($store) {
+                $this->resolutionTrace[] = "Step 6 (admin fallback): resolved to [{$store->store_name}] — admin default store.";
+                return $store;
+            }
+        }
+
         $this->resolutionTrace[] = 'Step 5 (role rule): no match → returning null, fallback applies.';
         return null;
     }
