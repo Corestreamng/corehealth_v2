@@ -254,6 +254,66 @@ class Store extends Model implements Auditable
                      ->where('distribution_role', self::ROLE_DEPARTMENT);
     }
 
+    /**
+     * Scope stores accessible by the given user under governance policies.
+     *
+     * Rules:
+     *  - ADMIN / SUPERADMIN / super-admin → all stores (no restriction)
+     *  - PHARMACIST                       → pharmacy hub + satellite stores only
+     *  - All others (STORE, NURSE, etc.)  → stores they manage (manager_id)
+     *                                       + the store resolved by StoreContextResolver
+     *
+     * Usage: Store::active()->forUser(auth()->user())->orderBy('store_name')->get()
+     */
+    public function scopeForUser($query, \App\Models\User $user)
+    {
+        // Admins see all stores
+        if ($user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+            return $query;
+        }
+
+        // Pharmacists see pharmacy-role stores only
+        if ($user->hasRole('PHARMACIST')) {
+            return $query->where(function ($q) {
+                $q->whereIn('distribution_role', [
+                    self::ROLE_PHARMACY_HUB,
+                    self::ROLE_PHARMACY_SATELLITE,
+                ])->orWhere('store_type', 'pharmacy');
+            });
+        }
+
+        // All other roles: managed stores + context-resolved store
+        $ids = collect();
+
+        // STORE role also gets all central stores
+        if ($user->hasRole('STORE')) {
+            $centralIds = \Illuminate\Support\Facades\DB::table('stores')
+                ->where('distribution_role', self::ROLE_CENTRAL)
+                ->where('status', true)
+                ->pluck('id');
+            $ids = $ids->merge($centralIds);
+        }
+
+        // Stores this user directly manages
+        $managedIds = \Illuminate\Support\Facades\DB::table('stores')
+            ->where('manager_id', $user->id)
+            ->pluck('id');
+        $ids = $ids->merge($managedIds);
+
+        // Store resolved by the 5-step context chain
+        $resolved = app(\App\Services\StoreContextResolver::class)->resolve($user);
+        if ($resolved) {
+            $ids->push($resolved->id);
+        }
+
+        if ($ids->isEmpty()) {
+            // No accessible stores — return empty result set
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query->whereIn('id', $ids->unique()->values()->all());
+    }
+
     // ===== HELPERS =====
 
     /**

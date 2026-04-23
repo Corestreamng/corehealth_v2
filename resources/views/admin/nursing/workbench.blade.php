@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
 <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
+<link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">
 @endpush
 
 @section('content')
@@ -5476,418 +5477,10 @@
 
             <!-- Billing Tab -->
             <div class="workspace-tab-content" id="billing-tab">
-                <div class="billing-container p-3">
-                    <!-- Sub-tabs for Billing -->
-                    <ul class="nav nav-tabs mb-3" id="billing-sub-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="billing-services-tab" data-toggle="tab" href="#billing-services" role="tab">
-                                <i class="mdi mdi-medical-bag"></i> Services
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="billing-labs-tab" data-toggle="tab" href="#billing-labs" role="tab">
-                                <i class="mdi mdi-flask"></i> Labs
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="billing-imaging-tab" data-toggle="tab" href="#billing-imaging" role="tab">
-                                <i class="mdi mdi-radioactive"></i> Imaging
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="billing-consumables-tab" data-toggle="tab" href="#billing-consumables" role="tab">
-                                <i class="mdi mdi-package-variant"></i> Consumables
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="billing-pending-tab" data-toggle="tab" href="#billing-pending" role="tab">
-                                <i class="mdi mdi-clock-outline"></i> Pending Bills
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="billing-history-tab" data-toggle="tab" href="#billing-history" role="tab">
-                                <i class="mdi mdi-clipboard-list"></i> Billing History
-                            </a>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content" id="billing-sub-content">
-                        <!-- Services Sub-tab -->
-                        <div class="tab-pane fade show active" id="billing-services" role="tabpanel">
-                            <div class="card-modern">
-                                <div class="card-header bg-warning py-2">
-                                    <h6 class="mb-0"><i class="mdi mdi-medical-bag"></i> Add Nursing Service</h6>
-                                </div>
-                                <div class="card-body">
-                                    <form id="service-billing-form">
-                                        <div class="form-row">
-                                            <div class="form-group col-md-8" style="position: relative;">
-                                                <label for="service-search"><i class="mdi mdi-magnify"></i> Search Nursing Service *</label>
-                                                <input type="text" class="form-control" id="service-search" placeholder="Type to search for nursing services..." autocomplete="off">
-                                                <input type="hidden" id="service-id">
-                                                <ul class="list-group" id="service-search-results" style="display: none; position: absolute; z-index: 1050; max-height: 280px; overflow-y: auto; width: 100%; left: 0;"></ul>
-                                            </div>
-                                            <div class="form-group col-md-4">
-                                                <label for="service-price"><i class="mdi mdi-currency-ngn"></i> Price</label>
-                                                <input type="text" class="form-control" id="service-price" readonly placeholder="Auto-calculated">
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="service-notes"><i class="mdi mdi-note-text"></i> Notes</label>
-                                            <textarea class="form-control" id="service-notes" rows="2" placeholder="Any additional notes..."></textarea>
-                                        </div>
-                                        <div class="form-actions text-right">
-                                            <button type="submit" class="btn btn-warning">
-                                                <i class="mdi mdi-plus"></i> Add Service
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Labs Direct Billing Sub-tab -->
-                        <div class="tab-pane fade" id="billing-labs" role="tabpanel">
-                            <div class="card-modern">
-                                <div class="card-header bg-success text-white py-2">
-                                    <h6 class="mb-0"><i class="mdi mdi-flask"></i> Direct Lab Billing</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="alert alert-light py-2 px-3 mb-3 small" style="border-left: 4px solid #28a745;">
-                                        <i class="mdi mdi-information-outline text-success"></i>
-                                        This creates a lab request <strong>and bills it directly</strong>. The lab department will see it as already billed.
-                                    </div>
-                                    <form id="lab-billing-form">
-                                        <div class="form-row">
-                                            <div class="form-group col-md-8" style="position: relative;">
-                                                <label for="lab-billing-search"><i class="mdi mdi-magnify"></i> Search Lab Service *</label>
-                                                <input type="text" class="form-control" id="lab-billing-search" placeholder="Type to search lab services..." autocomplete="off">
-                                                <input type="hidden" id="lab-billing-id">
-                                                <ul class="list-group" id="lab-billing-search-results" style="display: none; position: absolute; z-index: 1050; max-height: 280px; overflow-y: auto; width: 100%; left: 0;"></ul>
-                                            </div>
-                                            <div class="form-group col-md-4">
-                                                <label for="lab-billing-price"><i class="mdi mdi-currency-ngn"></i> Price</label>
-                                                <input type="text" class="form-control" id="lab-billing-price" readonly placeholder="Auto-calculated">
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="lab-billing-notes"><i class="mdi mdi-note-text"></i> Clinical Notes</label>
-                                            <textarea class="form-control" id="lab-billing-notes" rows="2" placeholder="Any clinical notes..."></textarea>
-                                        </div>
-                                        <div class="form-actions text-right">
-                                            <button type="submit" class="btn btn-success">
-                                                <i class="mdi mdi-flask-plus"></i> Add Lab Bill
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Imaging Direct Billing Sub-tab -->
-                        <div class="tab-pane fade" id="billing-imaging" role="tabpanel">
-                            <div class="card-modern">
-                                <div class="card-header py-2" style="background: #6f42c1; color: white;">
-                                    <h6 class="mb-0"><i class="mdi mdi-radioactive"></i> Direct Imaging Billing</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="alert alert-light py-2 px-3 mb-3 small" style="border-left: 4px solid #6f42c1;">
-                                        <i class="mdi mdi-information-outline" style="color: #6f42c1;"></i>
-                                        This creates an imaging request <strong>and bills it directly</strong>. The imaging department will see it as already billed.
-                                    </div>
-                                    <form id="imaging-billing-form">
-                                        <div class="form-row">
-                                            <div class="form-group col-md-8" style="position: relative;">
-                                                <label for="imaging-billing-search"><i class="mdi mdi-magnify"></i> Search Imaging Service *</label>
-                                                <input type="text" class="form-control" id="imaging-billing-search" placeholder="Type to search imaging services..." autocomplete="off">
-                                                <input type="hidden" id="imaging-billing-id">
-                                                <ul class="list-group" id="imaging-billing-search-results" style="display: none; position: absolute; z-index: 1050; max-height: 280px; overflow-y: auto; width: 100%; left: 0;"></ul>
-                                            </div>
-                                            <div class="form-group col-md-4">
-                                                <label for="imaging-billing-price"><i class="mdi mdi-currency-ngn"></i> Price</label>
-                                                <input type="text" class="form-control" id="imaging-billing-price" readonly placeholder="Auto-calculated">
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="imaging-billing-notes"><i class="mdi mdi-note-text"></i> Clinical Notes</label>
-                                            <textarea class="form-control" id="imaging-billing-notes" rows="2" placeholder="Any clinical notes..."></textarea>
-                                        </div>
-                                        <div class="form-actions text-right">
-                                            <button type="submit" class="btn" style="background: #6f42c1; color: white;">
-                                                <i class="mdi mdi-radioactive"></i> Add Imaging Bill
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Consumables Sub-tab -->
-                        <div class="tab-pane fade" id="billing-consumables" role="tabpanel">
-                            <div class="card-modern">
-                                <div class="card-header bg-info text-white py-2">
-                                    <h6 class="mb-0"><i class="mdi mdi-package-variant"></i> Add Consumable</h6>
-                                </div>
-                                <div class="card-body">
-                                    <!-- Step 1: Store Selection - Primary Action -->
-                                    <div class="store-selection-panel mb-4 p-3 rounded" style="background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%); border: 2px solid #4fc3f7;">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold mb-2" style="font-size: 1rem;">
-                                                    <i class="mdi mdi-store text-info"></i> Step 1: Select Dispensing Store
-                                                </label>
-                                                <select id="consumable-store" class="form-control form-control-lg" style="border: 2px solid #0288d1; font-weight: 500;" required>
-                                                    @if($resolvedStore ?? null)
-                                                        <option value="{{ $resolvedStore->id }}" selected>{{ $resolvedStore->store_name }}</option>
-                                                    @else
-                                                        <option value="">-- No store assigned --</option>
-                                                    @endif
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div id="consumable-store-info" class="p-3 bg-white rounded shadow-sm" style="display: none;">
-                                                    <h6 class="text-info mb-2"><i class="mdi mdi-package-variant"></i> Store Stock</h6>
-                                                    <div id="consumable-store-stock-summary" class="small">
-                                                        <!-- Stock summary will be loaded here -->
-                                                    </div>
-                                                </div>
-                                                <div id="consumable-store-placeholder" class="p-3 text-muted text-center">
-                                                    <i class="mdi mdi-arrow-left-bold mdi-24px"></i>
-                                                    <p class="mb-0 small">Select store first, then search product</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <form id="consumable-billing-form">
-                                        <!-- Step 2: Product Search & Selection -->
-                                        <div class="form-row">
-                                            <div class="form-group col-md-5" style="position: relative;">
-                                                <label for="consumable-search"><i class="mdi mdi-magnify"></i> Step 2: Search Consumable *</label>
-                                                <input type="text" class="form-control" id="consumable-search" placeholder="Type to search for products..." autocomplete="off">
-                                                <input type="hidden" id="consumable-id">
-                                                <ul class="list-group" id="consumable-search-results" style="display: none; position: absolute; z-index: 1050; max-height: 280px; overflow-y: auto; width: 100%; left: 0;"></ul>
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label for="consumable-quantity"><i class="mdi mdi-numeric"></i> Qty *</label>
-                                                <input type="number" class="form-control" id="consumable-quantity" min="1" value="1" required>
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label for="consumable-packaging"><i class="mdi mdi-package-variant"></i> Unit</label>
-                                                <select class="form-control" id="consumable-packaging">
-                                                    <option value="" data-base="1">Base Unit</option>
-                                                </select>
-                                                <small class="text-muted" id="consumable-base-equiv" style="display:none;">= <strong id="consumable-base-qty">0</strong> <span id="consumable-base-unit-name">units</span></small>
-                                            </div>
-                                            <div class="form-group col-md-2">
-                                                <label for="consumable-price"><i class="mdi mdi-currency-ngn"></i> Total</label>
-                                                <input type="text" class="form-control" id="consumable-price" readonly placeholder="Auto">
-                                            </div>
-                                            <div class="form-group col-md-3">
-                                                <label for="consumable-batch-select">
-                                                    <i class="mdi mdi-package-variant"></i> Batch
-                                                    <span class="badge badge-info badge-sm" title="FIFO">FIFO</span>
-                                                </label>
-                                                <select class="form-control" id="consumable-batch-select">
-                                                    <option value="">-- Select product first --</option>
-                                                </select>
-                                                <input type="hidden" id="consumable-batch-id">
-                                            </div>
-                                        </div>
-
-                                        <!-- Selected Product Stock Info with Batch Details -->
-                                        <div id="consumable-selected-stock" class="alert alert-light mb-3" style="display: none;">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <strong id="consumable-selected-name">-</strong>
-                                                    <br><small class="text-muted" id="consumable-selected-code">-</small>
-                                                </div>
-                                                <div id="consumable-stock-info" class="text-right">
-                                                    <!-- Stock info will show here -->
-                                                </div>
-                                            </div>
-                                            <div id="consumable-batch-info" class="mt-2 pt-2 border-top small" style="display: none;">
-                                                <i class="mdi mdi-information-outline text-info"></i>
-                                                <span id="consumable-batch-detail">FIFO batch will be auto-selected</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Is Medication checkbox + dose/frequency -->
-                                        <div class="form-group mb-3">
-                                            <div class="custom-control custom-checkbox">
-                                                <input type="checkbox" class="custom-control-input" id="consumable-is-medication">
-                                                <label class="custom-control-label" for="consumable-is-medication">
-                                                    <i class="mdi mdi-pill"></i> This is a medication (add dose/frequency)
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div id="consumable-dose-section" style="display: none;">
-                                            <div class="form-row">
-                                                <div class="form-group col-md-12">
-                                                    <label for="consumable-dose"><i class="mdi mdi-pencil-outline"></i> Dose / Frequency</label>
-                                                    <input type="text" class="form-control" id="consumable-dose" placeholder="e.g. 500mg BD x 5 days, 1 tab TDS x 7 days">
-                                                    <small class="form-text text-muted">This item will also appear in the patient's prescription history.</small>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-actions text-right">
-                                            <button type="submit" class="btn btn-info btn-lg">
-                                                <i class="mdi mdi-plus"></i> Add Consumable
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pending Bills Sub-tab -->
-                        <div class="tab-pane fade" id="billing-pending" role="tabpanel">
-                            <div class="card-modern">
-                                <div class="card-header py-2">
-                                    <h6 class="mb-0"><i class="mdi mdi-clock-outline"></i> Pending Bills</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-hover" id="pending-bills-table" style="width:100%">
-                                            <thead>
-                                                <tr>
-                                                    <th>Item</th>
-                                                    <th>Type</th>
-                                                    <th>Qty</th>
-                                                    <th>Amount</th>
-                                                    <th>Added By</th>
-                                                    <th>Date</th>
-                                                    <th>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Billing History Sub-tab -->
-                        <div class="tab-pane fade" id="billing-history" role="tabpanel">
-                            <!-- Summary Stats -->
-                            <div class="row mb-3">
-                                <div class="col-md-3">
-                                    <div class="bh-stat-card bh-stat-purple">
-                                        <div class="bh-stat-icon"><i class="mdi mdi-clipboard-list mdi-24px"></i></div>
-                                        <div>
-                                            <div class="bh-stat-value" id="bh-total-requests">0</div>
-                                            <div class="bh-stat-label">Total Requests</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="bh-stat-card bh-stat-green">
-                                        <div class="bh-stat-icon"><i class="mdi mdi-shield-check mdi-24px"></i></div>
-                                        <div>
-                                            <div class="bh-stat-value" id="bh-hmo-covered">₦0.00</div>
-                                            <div class="bh-stat-label">HMO Covered</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="bh-stat-card bh-stat-pink">
-                                        <div class="bh-stat-icon"><i class="mdi mdi-cash mdi-24px"></i></div>
-                                        <div>
-                                            <div class="bh-stat-value" id="bh-patient-payable">₦0.00</div>
-                                            <div class="bh-stat-label">Patient Payable</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="bh-stat-card bh-stat-blue">
-                                        <div class="bh-stat-icon"><i class="mdi mdi-check-circle mdi-24px"></i></div>
-                                        <div>
-                                            <div class="bh-stat-value" id="bh-completed-count">0</div>
-                                            <div class="bh-stat-label">Completed</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Filters -->
-                            <div class="card-modern mb-3">
-                                <div class="card-body py-2">
-                                    <form id="bh-filter-form" class="form-inline flex-wrap">
-                                        <div class="form-group mr-2 mb-2">
-                                            <label class="mr-1 small font-weight-bold">From</label>
-                                            <input type="date" class="form-control form-control-sm" id="bh-date-from">
-                                        </div>
-                                        <div class="form-group mr-2 mb-2">
-                                            <label class="mr-1 small font-weight-bold">To</label>
-                                            <input type="date" class="form-control form-control-sm" id="bh-date-to">
-                                        </div>
-                                        <div class="form-group mr-2 mb-2">
-                                            <select class="form-control form-control-sm" id="bh-type-filter">
-                                                <option value="">All Types</option>
-                                                <option value="lab">Lab Test</option>
-                                                <option value="imaging">Imaging</option>
-                                                <option value="product">Product/Drug</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mr-2 mb-2">
-                                            <select class="form-control form-control-sm" id="bh-billing-filter">
-                                                <option value="">All Billing</option>
-                                                <option value="pending">Pending</option>
-                                                <option value="billed">Billed</option>
-                                                <option value="paid">Paid</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mr-2 mb-2">
-                                            <select class="form-control form-control-sm" id="bh-delivery-filter">
-                                                <option value="">All Delivery</option>
-                                                <option value="pending">Pending</option>
-                                                <option value="in_progress">In Progress</option>
-                                                <option value="completed">Completed</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-2">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary mr-1" id="bh-clear-filters" title="Clear Filters">
-                                                <i class="mdi mdi-refresh"></i>
-                                            </button>
-                                            <button type="submit" class="btn btn-sm btn-primary">
-                                                <i class="mdi mdi-filter"></i> Apply
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <!-- DataTable -->
-                            <div class="card-modern">
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-hover" id="billing-history-table" style="width:100%">
-                                            <thead>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>Request #</th>
-                                                    <th>Type</th>
-                                                    <th>Service/Item</th>
-                                                    <th>Price</th>
-                                                    <th>HMO Covers</th>
-                                                    <th>Payable</th>
-                                                    <th>Billing</th>
-                                                    <th>Delivery</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
+                <div id="billing-kit-root">
+                    <p class="text-muted text-center py-5"><i class="mdi mdi-account-arrow-left mdi-36px"></i><br>Select a patient to view billing</p>
                 </div>
             </div>
-
             <!-- Nursing Notes Tab -->
             <div class="workspace-tab-content" id="notes-tab">
                 <div class="notes-container p-3">
@@ -5928,6 +5521,7 @@
                                             <div id="nursing-note-editor"></div>
                                         </div>
                                         <div class="form-actions text-right mt-3">
+                                            <div id="note-autosave-status" class="small mb-2" style="min-height: 1.3em;"></div>
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="mdi mdi-content-save"></i> Save Note
                                             </button>
@@ -7265,6 +6859,27 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
+<script>
+window.BILLING_KIT_CONFIG = {
+    csrf: '{{ csrf_token() }}',
+    addServiceRoute: '{{ route("nursing-workbench.billing.add-service") }}',
+    addLabRoute: '{{ route("nursing-workbench.billing.add-lab-bill") }}',
+    addImagingRoute: '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
+    addConsumableRoute: '{{ route("nursing-workbench.billing.add-consumable") }}',
+    removeBillBase: '/nursing-workbench/remove-bill',
+    pendingBillsBase: '/nursing-workbench/patient',
+    serviceRequestsBase: '/nursing-workbench/patient',
+    searchServicesRoute: '{{ route("nursing-workbench.search-services") }}',
+    searchProductsRoute: '{{ route("nursing-workbench.search-products") }}',
+    productBatchesRoute: '{{ route("nursing-workbench.product-batches") }}',
+    investigationCategoryId: '{{ appsettings("investigation_category_id", "") }}',
+    imagingCategoryId: 6,
+    resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
+    resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
+    showMedicationOption: true,
+};
+</script>
+<script src="{{ asset('js/billing-shared.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'nursing'])
 @include('admin.partials.invest_res_js')
 <script>
@@ -8262,9 +7877,13 @@ function loadPatient(patientId) {
             loadInjectionHistory(patientId);
             loadImmunizationSchedule(patientId);
             loadImmunizationHistory(patientId);
-            loadPendingBills(patientId);
+            BillingKit.init(patientId);
             loadNotesHistory(patientId);
-            billingHistoryLoaded = false; // Reset so billing history lazy-loads fresh for new patient
+
+            // Reset note autosave state when switching patients
+            clearTimeout(nurseNoteAutosaveTimer);
+            $('#note-autosave-status').html('');
+            if (nursingNoteEditor) { try { nursingNoteEditor.setData(''); } catch(e) {} }
 
             // Initialize procedures DataTable
             initializeProceduresDataTable(patientId);
@@ -9721,7 +9340,7 @@ function refreshCurrentPatientData() {
     if (!currentPatient) return;
 
     // Silently reload patient data
-    loadPendingBills(currentPatient);
+    BillingKit.loadPendingBills(currentPatient);
     loadInjectionHistory(currentPatient);
     loadInjectionPrescriptions(true);
     loadImmunizationHistory(currentPatient);
@@ -14240,799 +13859,6 @@ function loadImmunizationHistory(patientId) {
     loadImmunizationHistoryTable(patientId);
 }
 
-// Close billing search dropdowns on outside click
-$(document).on('click', function(e) {
-    if (!$(e.target).closest('#service-search, #service-search-results').length) {
-        $('#service-search-results').hide();
-    }
-    if (!$(e.target).closest('#consumable-search, #consumable-search-results').length) {
-        $('#consumable-search-results').hide();
-    }
-    if (!$(e.target).closest('#lab-billing-search, #lab-billing-search-results').length) {
-        $('#lab-billing-search-results').hide();
-    }
-    if (!$(e.target).closest('#imaging-billing-search, #imaging-billing-search-results').length) {
-        $('#imaging-billing-search-results').hide();
-    }
-});
-
-// Service Billing Search
-let serviceSearchTimer = null;
-let serviceSearchXhr = null;
-$('#service-search').on('input', function() {
-    const query = $(this).val().trim();
-    clearTimeout(serviceSearchTimer);
-    if (serviceSearchXhr) { serviceSearchXhr.abort(); serviceSearchXhr = null; }
-    if (query.length < 2) {
-        $('#service-search-results').hide();
-        return;
-    }
-
-    serviceSearchTimer = setTimeout(function() {
-        $('#service-search-results').html('<li class="billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
-        serviceSearchXhr = $.ajax({
-            url: '{{ route("nursing-workbench.search-services") }}',
-            method: 'GET',
-            data: { term: query, patient_id: currentPatient || null },
-            success: function(results) {
-                serviceSearchXhr = null;
-                if (!results.length) {
-                    $('#service-search-results').html('<li class="billing-search-no-results">No services found</li>').show();
-                    return;
-                }
-                let html = '';
-                results.forEach(service => {
-                    const price = parseFloat(service.price || 0);
-                    const hmo = service.hmo;
-                    const payable = hmo ? parseFloat(hmo.payable) : price;
-                    html += `<li class="list-group-item list-group-item-action" onclick="selectService(${service.id}, '${(service.name || '').replace(/'/g, "\\'")}', ${payable})">
-                        <div class="billing-search-item-name">${service.name}</div>
-                        <div class="billing-search-item-meta">
-                            <span class="billing-search-item-price">${hmo ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '</s>' : '₦' + price.toLocaleString()}</span>
-                            ${service.category ? `<span class="billing-search-item-badge">${service.category}</span>` : ''}
-                            ${service.code ? `<span class="billing-search-item-badge">${service.code}</span>` : ''}
-                        </div>
-                        ${hmo ? `<div class="billing-search-hmo-row">
-                            <span class="billing-search-hmo-label">HMO:</span>
-                            <span class="billing-search-hmo-payable">Pay ₦${parseFloat(hmo.payable).toLocaleString()}</span>
-                            <span class="billing-search-hmo-claims">Claim ₦${parseFloat(hmo.claims).toLocaleString()}</span>
-                            <span class="billing-search-hmo-mode mode-${hmo.mode}">${hmo.mode}</span>
-                        </div>` : ''}
-                    </li>`;
-                });
-                $('#service-search-results').html(html).show();
-            }
-        });
-    }, 300);
-});
-
-function selectService(id, name, price) {
-    $('#service-id').val(id);
-    $('#service-search').val(name);
-    $('#service-price').val('₦' + parseFloat(price).toLocaleString());
-    $('#service-search-results').hide();
-}
-
-// Shared search result renderer for billing dropdowns (lab, imaging)
-function renderBillingSearchResults(results, containerSelector, selectFnName) {
-    const $container = $(containerSelector);
-    if (!results.length) {
-        $container.html('<li class="list-group-item billing-search-no-results text-muted">No services found</li>').show();
-        return;
-    }
-    let html = '';
-    results.forEach(function(service) {
-        const price = parseFloat(service.price || 0);
-        const hmo = service.hmo;
-        const payable = hmo ? parseFloat(hmo.payable) : price;
-        const escapedName = (service.name || '').replace(/'/g, "\\'");
-        html += '<li class="list-group-item list-group-item-action" onclick="' + selectFnName + '(' + service.id + ', \'' + escapedName + '\', ' + payable + ')" style="cursor:pointer;">' +
-            '<div class="billing-search-item-name">' + service.name + '</div>' +
-            '<div class="billing-search-item-meta">' +
-                '<span class="billing-search-item-price">' + (hmo ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '</s>' : '₦' + price.toLocaleString()) + '</span>' +
-                (service.category ? '<span class="billing-search-item-badge">' + service.category + '</span>' : '') +
-                (service.code ? '<span class="billing-search-item-badge">' + service.code + '</span>' : '') +
-            '</div>' +
-            (hmo ? '<div class="billing-search-hmo-row">' +
-                '<span class="billing-search-hmo-label">HMO:</span>' +
-                '<span class="billing-search-hmo-payable">Pay ₦' + parseFloat(hmo.payable).toLocaleString() + '</span>' +
-                '<span class="billing-search-hmo-claims">Claim ₦' + parseFloat(hmo.claims).toLocaleString() + '</span>' +
-                '<span class="billing-search-hmo-mode mode-' + hmo.mode + '">' + hmo.mode + '</span>' +
-            '</div>' : '') +
-        '</li>';
-    });
-    $container.html(html).show();
-}
-
-// =====================================
-// Lab Direct Billing Search
-// =====================================
-let labBillingSearchTimer = null;
-let labBillingSearchXhr = null;
-$('#lab-billing-search').on('input', function() {
-    const query = $(this).val().trim();
-    clearTimeout(labBillingSearchTimer);
-    if (labBillingSearchXhr) { labBillingSearchXhr.abort(); labBillingSearchXhr = null; }
-    if (query.length < 2) { $('#lab-billing-search-results').hide(); return; }
-
-    labBillingSearchTimer = setTimeout(function() {
-        $('#lab-billing-search-results').html('<li class="list-group-item billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
-        labBillingSearchXhr = $.ajax({
-            url: '{{ route("nursing-workbench.search-services") }}',
-            method: 'GET',
-            data: { term: query, patient_id: currentPatient || null, category_id: '{{ appsettings("investigation_category_id", "") }}' },
-            success: function(results) {
-                labBillingSearchXhr = null;
-                renderBillingSearchResults(results, '#lab-billing-search-results', 'selectLabBilling');
-            }
-        });
-    }, 300);
-});
-
-function selectLabBilling(id, name, price) {
-    $('#lab-billing-id').val(id);
-    $('#lab-billing-search').val(name);
-    $('#lab-billing-price').val('₦' + parseFloat(price).toLocaleString());
-    $('#lab-billing-search-results').hide();
-}
-
-// Lab Billing Form Submit
-$('#lab-billing-form').on('submit', function(e) {
-    e.preventDefault();
-    const data = {
-        patient_id: currentPatient,
-        service_id: $('#lab-billing-id').val(),
-        notes: $('#lab-billing-notes').val()
-    };
-    if (!data.service_id) {
-        showNotification('error', 'Please select a lab service');
-        return;
-    }
-    const $btn = $(this).find('button[type="submit"]');
-    const origHtml = $btn.html();
-    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
-    $.ajax({
-        url: '{{ route("nursing-workbench.billing.add-lab-bill") }}',
-        method: 'POST',
-        data: data,
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-        success: function(response) {
-            $btn.prop('disabled', false).html(origHtml);
-            showNotification('success', response.message || 'Lab billed successfully');
-            if (billingHistoryLoaded) reloadBillingHistory();
-            $('#lab-billing-form')[0].reset();
-            $('#lab-billing-id').val('');
-            loadPendingBills(currentPatient);
-        },
-        error: function(xhr) {
-            $btn.prop('disabled', false).html(origHtml);
-            showNotification('error', xhr.responseJSON?.message || 'Failed to bill lab service');
-        }
-    });
-});
-
-// =====================================
-// Imaging Direct Billing Search
-// =====================================
-let imagingBillingSearchTimer = null;
-let imagingBillingSearchXhr = null;
-$('#imaging-billing-search').on('input', function() {
-    const query = $(this).val().trim();
-    clearTimeout(imagingBillingSearchTimer);
-    if (imagingBillingSearchXhr) { imagingBillingSearchXhr.abort(); imagingBillingSearchXhr = null; }
-    if (query.length < 2) { $('#imaging-billing-search-results').hide(); return; }
-
-    imagingBillingSearchTimer = setTimeout(function() {
-        $('#imaging-billing-search-results').html('<li class="list-group-item billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
-        imagingBillingSearchXhr = $.ajax({
-            url: '{{ route("nursing-workbench.search-services") }}',
-            method: 'GET',
-            data: { term: query, patient_id: currentPatient || null, category_id: 6 },
-            success: function(results) {
-                imagingBillingSearchXhr = null;
-                renderBillingSearchResults(results, '#imaging-billing-search-results', 'selectImagingBilling');
-            }
-        });
-    }, 300);
-});
-
-function selectImagingBilling(id, name, price) {
-    $('#imaging-billing-id').val(id);
-    $('#imaging-billing-search').val(name);
-    $('#imaging-billing-price').val('₦' + parseFloat(price).toLocaleString());
-    $('#imaging-billing-search-results').hide();
-}
-
-// Imaging Billing Form Submit
-$('#imaging-billing-form').on('submit', function(e) {
-    e.preventDefault();
-    const data = {
-        patient_id: currentPatient,
-        service_id: $('#imaging-billing-id').val(),
-        notes: $('#imaging-billing-notes').val()
-    };
-    if (!data.service_id) {
-        showNotification('error', 'Please select an imaging service');
-        return;
-    }
-    const $btn = $(this).find('button[type="submit"]');
-    const origHtml = $btn.html();
-    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
-    $.ajax({
-        url: '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
-        method: 'POST',
-        data: data,
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-        success: function(response) {
-            $btn.prop('disabled', false).html(origHtml);
-            showNotification('success', response.message || 'Imaging billed successfully');
-            if (billingHistoryLoaded) reloadBillingHistory();
-            $('#imaging-billing-form')[0].reset();
-            $('#imaging-billing-id').val('');
-            loadPendingBills(currentPatient);
-        },
-        error: function(xhr) {
-            $btn.prop('disabled', false).html(origHtml);
-            showNotification('error', xhr.responseJSON?.message || 'Failed to bill imaging service');
-        }
-    });
-});
-
-// Consumable Search
-let consumableSearchTimer = null;
-let consumableSearchXhr = null;
-$('#consumable-search').on('input', function() {
-    const query = $(this).val().trim();
-    clearTimeout(consumableSearchTimer);
-    if (consumableSearchXhr) { consumableSearchXhr.abort(); consumableSearchXhr = null; }
-    if (query.length < 2) {
-        $('#consumable-search-results').hide();
-        return;
-    }
-
-    consumableSearchTimer = setTimeout(function() {
-        $('#consumable-search-results').html('<li class="billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
-        consumableSearchXhr = $.ajax({
-            url: '{{ route("nursing-workbench.search-products") }}',
-            method: 'GET',
-            data: { term: query, patient_id: currentPatient || null },
-            success: function(results) {
-                consumableSearchXhr = null;
-                if (!results.length) {
-                    $('#consumable-search-results').html('<li class="billing-search-no-results">No products found</li>').show();
-                    return;
-                }
-                let html = '';
-                results.forEach(product => {
-                    const escapedName = (product.name || '').replace(/'/g, "\\'");
-                    const code = (product.code || '').replace(/'/g, "\\'");
-                    const price = parseFloat(product.price || 0);
-                    const hmo = product.hmo;
-                    const payable = hmo ? parseFloat(hmo.payable) : price;
-                    const stock = parseInt(product.stock || 0);
-                    const stockClass = stock > 10 ? 'text-success' : stock > 0 ? 'text-warning' : 'text-danger';
-                    html += `<li class="list-group-item list-group-item-action" onclick="selectConsumable(${product.id}, '${escapedName}', ${payable}, '${code}')">
-                        <div class="billing-search-item-name">${product.name}</div>
-                        <div class="billing-search-item-meta">
-                            <span class="billing-search-item-price">${hmo ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '/unit</s>' : '₦' + price.toLocaleString() + '/unit'}</span>
-                            ${product.code ? `<span class="billing-search-item-badge">${product.code}</span>` : ''}
-                            <span class="billing-search-item-stock ${stockClass}"><i class="mdi mdi-package-variant-closed"></i> ${stock} in stock</span>
-                        </div>
-                        ${hmo ? `<div class="billing-search-hmo-row">
-                            <span class="billing-search-hmo-label">HMO:</span>
-                            <span class="billing-search-hmo-payable">Pay ₦${parseFloat(hmo.payable).toLocaleString()}/unit</span>
-                            <span class="billing-search-hmo-claims">Claim ₦${parseFloat(hmo.claims).toLocaleString()}</span>
-                            <span class="billing-search-hmo-mode mode-${hmo.mode}">${hmo.mode}</span>
-                        </div>` : ''}
-                    </li>`;
-                });
-                $('#consumable-search-results').html(html).show();
-            }
-        });
-    }, 300);
-});
-
-function selectConsumable(id, name, unitPrice, code) {
-    // Check if store is selected first
-    const storeId = $('#consumable-store').val();
-    if (!storeId) {
-        showNotification('warning', 'Please select a store first');
-        $('#consumable-store').focus();
-        return;
-    }
-
-    $('#consumable-id').val(id);
-    $('#consumable-search').val(name);
-    updateConsumablePrice(unitPrice);
-    $('#consumable-search-results').hide();
-
-    // Show selected product info with stock
-    $('#consumable-selected-name').text(name);
-    $('#consumable-selected-code').text(`[${code || 'N/A'}]`);
-    $('#consumable-selected-stock').show();
-    updateConsumableStockDisplay();
-
-    // Load packaging options for this product
-    loadConsumablePackagings(id);
-
-    // Fetch and populate batch dropdown for this product
-    fetchProductBatchesForSelect(id, storeId, '#consumable-batch-select', function(response) {
-        if (response.success && response.total_available > 0) {
-            $('#consumable-batch-info').show();
-            const fifoBatch = response.fifo_recommended || response.batches[0];
-            if (fifoBatch) {
-                $('#consumable-batch-detail').html(`
-                    <strong>FIFO Recommended:</strong> ${fifoBatch.batch_number}
-                    (${fifoBatch.current_qty} avail)
-                    ${fifoBatch.expiry_formatted ? `| Exp: ${fifoBatch.expiry_formatted}` : ''}
-                `);
-            }
-        } else {
-            $('#consumable-batch-info').hide();
-        }
-    });
-}
-
-// Update consumable price on quantity change
-$('#consumable-quantity').on('input', function() {
-    const id = $('#consumable-id').val();
-    if (id) {
-        // Recalculate based on stored unit price
-        const quantity = $(this).val() || 1;
-        // Get unit price from the consumable-price data attribute (set when selecting)
-        const unitPrice = $(this).data('unit-price') || 0;
-        updateConsumablePrice(unitPrice);
-    }
-});
-
-function updateConsumablePrice(unitPrice) {
-    const quantity = $('#consumable-quantity').val() || 1;
-    const total = unitPrice * quantity;
-    $('#consumable-price').val('₦' + total.toFixed(2));
-    $('#consumable-quantity').data('unit-price', unitPrice);
-}
-
-// Load packaging options for selected consumable
-function loadConsumablePackagings(productId) {
-    const $select = $('#consumable-packaging');
-    $select.html('<option value="" data-base="1">Base Unit</option>');
-    $('#consumable-base-equiv').hide();
-
-    $.ajax({
-        url: '/products/' + productId + '/packagings',
-        method: 'GET',
-        success: function(response) {
-            const baseUnitName = response.base_unit_name || 'units';
-            $select.html(`<option value="" data-base="1">${baseUnitName} (base)</option>`);
-            $('#consumable-base-unit-name').text(baseUnitName);
-
-            if (response.packagings && response.packagings.length > 0) {
-                let defaultSelected = false;
-                response.packagings.forEach(function(pkg) {
-                    const isDefault = pkg.is_default_dispense ? ' selected' : '';
-                    if (pkg.is_default_dispense) defaultSelected = true;
-                    $select.append(`<option value="${pkg.id}" data-base="${pkg.base_unit_qty}"${isDefault}>${pkg.name} (${parseFloat(pkg.base_unit_qty)} ${baseUnitName})</option>`);
-                });
-                updateConsumableBaseEquiv();
-            }
-
-            // Set step for decimal qty support
-            if (response.allow_decimal_qty) {
-                $('#consumable-quantity').attr('step', 'any').attr('min', '0.01');
-            } else {
-                $('#consumable-quantity').attr('step', '1').attr('min', '1');
-            }
-        }
-    });
-}
-
-// Update base unit equivalent display
-function updateConsumableBaseEquiv() {
-    const $sel = $('#consumable-packaging');
-    const base = parseFloat($sel.find(':selected').data('base')) || 1;
-    const qty = parseFloat($('#consumable-quantity').val()) || 0;
-    const total = qty * base;
-
-    if (base > 1) {
-        $('#consumable-base-qty').text(parseFloat(total.toFixed(4)));
-        $('#consumable-base-equiv').show();
-    } else {
-        $('#consumable-base-equiv').hide();
-    }
-}
-
-$('#consumable-packaging, #consumable-quantity').on('change input', function() {
-    updateConsumableBaseEquiv();
-});
-
-// Service Billing Form Submit
-$('#service-billing-form').on('submit', function(e) {
-    e.preventDefault();
-
-    const data = {
-        patient_id: currentPatient,
-        service_id: $('#service-id').val(),
-        notes: $('#service-notes').val()
-    };
-
-    if (!data.service_id) {
-        showNotification('error', 'Please select a service');
-        return;
-    }
-
-    $.ajax({
-        url: '{{ route("nursing-workbench.billing.add-service") }}',
-        method: 'POST',
-        data: data,
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-        success: function(response) {
-            showNotification('success', response.message || 'Service added successfully');
-                if (billingHistoryLoaded) reloadBillingHistory();
-            $('#service-billing-form')[0].reset();
-            $('#service-id').val('');
-            loadPendingBills(currentPatient);
-        },
-        error: function(xhr) {
-            showNotification('error', xhr.responseJSON?.message || 'Failed to add service');
-        }
-    });
-});
-
-// Is Medication Toggle
-$('#consumable-is-medication').on('change', function() {
-    $('#consumable-dose-section').toggle(this.checked);
-    if (!this.checked) {
-        $('#consumable-dose').val('');
-    }
-});
-
-// Consumable Billing Form Submit
-$('#consumable-billing-form').on('submit', function(e) {
-    e.preventDefault();
-
-    const storeId = $('#consumable-store').val();
-    if (!storeId) {
-        showNotification('error', 'Please select a store to dispense from');
-        $('#consumable-store').focus();
-        return;
-    }
-
-    const productId = $('#consumable-id').val();
-    const productName = $('#consumable-search').val();
-    const pkgBase = parseFloat($('#consumable-packaging').find(':selected').data('base')) || 1;
-    const rawQty = parseFloat($('#consumable-quantity').val()) || 1;
-    const quantity = Math.round(rawQty * pkgBase); // Convert to base units
-
-    if (!productId) {
-        showNotification('error', 'Please select a consumable');
-        return;
-    }
-
-    // Clear previous errors
-    $('#consumable-stock-error').remove();
-    $('#consumable-quantity').removeClass('is-invalid');
-
-    const $submitBtn = $(this).find('button[type="submit"]');
-    const originalBtnHtml = $submitBtn.html();
-    $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Checking Stock...');
-
-    // Validate stock before submission
-    validateStockAvailability(storeId, [{
-        product_id: productId,
-        product_name: productName,
-        qty: quantity
-    }])
-    .then(() => {
-        // Stock OK - proceed
-        $submitBtn.html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
-
-        const data = {
-            patient_id: currentPatient,
-            product_id: productId,
-            qty: quantity,
-            store_id: storeId,
-            batch_id: $('#consumable-batch-select').val() || null, // Send selected batch ID
-            is_medication: $('#consumable-is-medication').is(':checked') ? 1 : 0,
-            dose: $('#consumable-dose').val() || null,
-            packaging_id: $('#consumable-packaging').val() || null,
-            packaging_qty: rawQty
-        };
-
-        $.ajax({
-            url: '{{ route("nursing-workbench.billing.add-consumable") }}',
-            method: 'POST',
-            data: data,
-            headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-            success: function(response) {
-                $submitBtn.prop('disabled', false).html(originalBtnHtml);
-                showNotification('success', response.message || 'Consumable added successfully');
-                if (billingHistoryLoaded) reloadBillingHistory();
-                $('#consumable-billing-form')[0].reset();
-                $('#consumable-id').val('');
-                $('#consumable-is-medication').prop('checked', false);
-                $('#consumable-dose-section').hide();
-                $('#consumable-dose').val('');
-                $('#consumable-packaging').html('<option value="" data-base="1">Base Unit</option>');
-                $('#consumable-base-equiv').hide();
-                $('#consumable-batch-select').html('<option value="">-- Select product first --</option>');
-                $('#consumable-batch-info').hide();
-                $('#consumable-store-stock-summary').html('<p class="text-muted mb-0">Select a product to see stock</p>');
-                loadPendingBills(currentPatient);
-            },
-            error: function(xhr) {
-                $submitBtn.prop('disabled', false).html(originalBtnHtml);
-                showNotification('error', xhr.responseJSON?.message || 'Failed to add consumable');
-            }
-        });
-    })
-    .catch(stockError => {
-        $submitBtn.prop('disabled', false).html(originalBtnHtml);
-        $('#consumable-quantity').addClass('is-invalid');
-
-        const errorHtml = `<div id="consumable-stock-error" class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-            <strong><i class="mdi mdi-alert-circle"></i> Insufficient Stock!</strong><br>
-            ${stockError.items[0].product_name}: Need <strong>${stockError.items[0].requested_qty}</strong>, only <strong>${stockError.items[0].available_qty}</strong> available
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        </div>`;
-
-        $('#consumable-billing-form').prepend(errorHtml);
-        showNotification('error', 'Insufficient stock');
-    });
-});
-
-// Load Pending Bills with DataTable
-function loadPendingBills(patientId) {
-    // Destroy existing DataTable if it exists
-    if ($.fn.DataTable.isDataTable('#pending-bills-table')) {
-        $('#pending-bills-table').DataTable().destroy();
-    }
-
-    $('#pending-bills-table').DataTable({
-        processing: true,
-        serverSide: false,
-        ajax: {
-            url: `/nursing-workbench/patient/${patientId}/pending-bills`,
-            dataSrc: ''
-        },
-        columns: [
-            { data: 'item_name' },
-            {
-                data: 'type',
-                render: function(data) {
-                    const badgeClass = data === 'service' ? 'badge-primary' : 'badge-info';
-                    return `<span class="badge ${badgeClass}">${data}</span>`;
-                }
-            },
-            { data: 'qty' },
-            {
-                data: 'payable_amount',
-                render: function(data, type, row) {
-                    let html = `₦${parseFloat(data || 0).toFixed(2)}`;
-                    if (row.claims_amount > 0) {
-                        html += `<br><small class="text-success">Claims: ₦${parseFloat(row.claims_amount).toFixed(2)}</small>`;
-                    }
-                    return html;
-                }
-            },
-            { data: 'added_by' },
-            { data: 'created_at' },
-            {
-                data: null,
-                render: function(data) {
-                    if (data.can_delete) {
-                        return `<button class="btn btn-sm btn-danger" onclick="removeBillItem(${data.id})"><i class="fa fa-trash"></i></button>`;
-                    }
-                    return '<span class="text-muted">-</span>';
-                }
-            }
-        ],
-        order: [[5, 'desc']],
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        language: {
-            emptyTable: "No pending bills"
-        }
-    });
-}
-
-function removeBillItem(id) {
-    if (!confirm('Are you sure you want to remove this bill item?')) return;
-
-    $.ajax({
-        url: `/nursing-workbench/remove-bill/${id}`,
-        method: 'DELETE',
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-        success: function(response) {
-            showNotification('success', response.message || 'Item removed');
-            loadPendingBills(currentPatient);
-            // Refresh billing history if loaded
-            if (billingHistoryLoaded) reloadBillingHistory();
-        },
-        error: function(xhr) {
-            var msg = 'Failed to remove item';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                msg = xhr.responseJSON.message;
-            }
-            showNotification('error', msg);
-        }
-    });
-}
-
-// =====================================
-// BILLING HISTORY (Service Requests)
-// =====================================
-let billingHistoryTable = null;
-let billingHistoryLoaded = false;
-
-function initBillingHistory(patientId) {
-    if (!patientId) return;
-
-    // Set default date range: current month
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    $('#bh-date-from').val(firstDay.toISOString().split('T')[0]);
-    $('#bh-date-to').val(lastDay.toISOString().split('T')[0]);
-
-    loadBillingHistoryTable(patientId);
-    loadBillingHistoryStats(patientId);
-    billingHistoryLoaded = true;
-}
-
-function loadBillingHistoryTable(patientId) {
-    if (billingHistoryTable) {
-        billingHistoryTable.destroy();
-        billingHistoryTable = null;
-    }
-
-    billingHistoryTable = $('#billing-history-table').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: `/nursing-workbench/patient/${patientId}/service-requests`,
-            data: function(d) {
-                d.date_from = $('#bh-date-from').val();
-                d.date_to = $('#bh-date-to').val();
-                d.type_filter = $('#bh-type-filter').val();
-                d.billing_filter = $('#bh-billing-filter').val();
-                d.delivery_filter = $('#bh-delivery-filter').val();
-            }
-        },
-        columns: [
-            { data: 'date_formatted', name: 'date_formatted' },
-            { data: 'request_no', name: 'request_no' },
-            { data: 'type_badge', name: 'type_badge' },
-            { data: 'name', name: 'name' },
-            { data: 'price_formatted', name: 'price_formatted', className: 'text-right' },
-            { data: 'hmo_covers_formatted', name: 'hmo_covers_formatted', className: 'text-right text-success' },
-            { data: 'payable_formatted', name: 'payable_formatted', className: 'text-right text-primary font-weight-bold' },
-            { data: 'billing_badge', name: 'billing_badge' },
-            { data: 'delivery_badge', name: 'delivery_badge' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
-        ],
-        order: [[0, 'desc']],
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-        language: {
-            emptyTable: 'No service requests found',
-            processing: '<i class="mdi mdi-loading mdi-spin mdi-24px"></i>'
-        },
-        drawCallback: function() {
-            loadBillingHistoryStats(currentPatient);
-        }
-    });
-}
-
-function loadBillingHistoryStats(patientId) {
-    if (!patientId) return;
-    $.ajax({
-        url: `/nursing-workbench/patient/${patientId}/service-requests-stats`,
-        data: {
-            date_from: $('#bh-date-from').val(),
-            date_to: $('#bh-date-to').val()
-        },
-        success: function(res) {
-            if (res.success) {
-                $('#bh-total-requests').text(res.stats.total_requests);
-                $('#bh-hmo-covered').text(res.stats.hmo_covered);
-                $('#bh-patient-payable').text(res.stats.patient_payable);
-                $('#bh-completed-count').text(res.stats.completed);
-            }
-        }
-    });
-}
-
-function reloadBillingHistory() {
-    if (billingHistoryTable) {
-        billingHistoryTable.ajax.reload();
-    }
-}
-
-// Filter form submit
-$(document).on('submit', '#bh-filter-form', function(e) {
-    e.preventDefault();
-    reloadBillingHistory();
-});
-
-// Clear filters
-$(document).on('click', '#bh-clear-filters', function() {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    $('#bh-date-from').val(firstDay.toISOString().split('T')[0]);
-    $('#bh-date-to').val(lastDay.toISOString().split('T')[0]);
-    $('#bh-type-filter').val('');
-    $('#bh-billing-filter').val('');
-    $('#bh-delivery-filter').val('');
-    reloadBillingHistory();
-});
-
-// Lazy-load billing history when sub-tab is shown
-$(document).on('shown.bs.tab', '#billing-history-tab', function() {
-    if (!billingHistoryLoaded && currentPatient) {
-        initBillingHistory(currentPatient);
-    }
-});
-
-// View request details from billing history
-$(document).on('click', '#billing-history .view-request-btn', function() {
-    const type = $(this).data('type');
-    const id = $(this).data('id');
-    showBillingRequestDetails(type, id);
-});
-
-function showBillingRequestDetails(type, id) {
-    // Build a simple detail view in a SweetAlert or Bootstrap modal
-    const typeColors = { lab: '#17a2b8', imaging: '#ffc107', product: '#28a745' };
-    const typeLabels = { lab: 'Lab Test', imaging: 'Imaging', product: 'Product/Drug' };
-
-    Swal.fire({
-        title: `<i class="mdi mdi-eye"></i> ${typeLabels[type] || 'Request'} Details`,
-        html: '<div class="text-center"><i class="mdi mdi-loading mdi-spin mdi-36px"></i><br>Loading...</div>',
-        showConfirmButton: true,
-        confirmButtonText: 'Close',
-        width: '500px',
-        didOpen: () => {
-            // Fetch details — use the same data from the table row if available
-            const tableData = billingHistoryTable ? billingHistoryTable.rows().data().toArray() : [];
-            const row = tableData.find(r => r.id == id && r.type === type);
-
-            if (row) {
-                const hmoCoverage = row.hmo_covers > 0
-                    ? `<tr><td class="text-muted">HMO Covers</td><td class="text-success font-weight-bold">₦${parseFloat(row.hmo_covers).toFixed(2)}</td></tr>`
-                    : '';
-                const coverageMode = row.coverage_mode
-                    ? `<tr><td class="text-muted">Coverage</td><td><span class="badge badge-info">${row.coverage_mode}</span></td></tr>`
-                    : '';
-
-                Swal.update({
-                    html: `
-                        <div class="text-left">
-                            <div class="mb-3 p-2 rounded" style="background: ${typeColors[type]}15; border-left: 4px solid ${typeColors[type]};">
-                                <strong style="color: ${typeColors[type]};">${row.request_no}</strong>
-                                <span class="badge ml-2" style="background: ${typeColors[type]}; color: #fff;">${typeLabels[type]}</span>
-                            </div>
-                            <table class="table table-sm table-borderless mb-0">
-                                <tr><td class="text-muted" style="width:40%;">Service/Item</td><td class="font-weight-bold">${row.name}</td></tr>
-                                <tr><td class="text-muted">Price</td><td>₦${parseFloat(row.price).toFixed(2)}</td></tr>
-                                ${hmoCoverage}
-                                <tr><td class="text-muted">Payable</td><td class="text-primary font-weight-bold">₦${parseFloat(row.payable).toFixed(2)}</td></tr>
-                                ${coverageMode}
-                                <tr><td class="text-muted">Billing Status</td><td>${row.billing_badge}</td></tr>
-                                <tr><td class="text-muted">Delivery Status</td><td>${row.delivery_badge}</td></tr>
-                                <tr><td class="text-muted">Requested By</td><td>${row.requested_by || '-'}</td></tr>
-                                <tr><td class="text-muted">Date</td><td>${row.date_formatted}</td></tr>
-                            </table>
-                        </div>
-                    `
-                });
-            } else {
-                Swal.update({ html: '<p class="text-muted">Details not available. Try refreshing the table.</p>' });
-            }
-        }
-    });
-}
-
 // Load Note Types
 // Functions for Notes
 // Note Types loading removed as requested
@@ -15041,6 +13867,26 @@ function showBillingRequestDetails(type, id) {
 // Nursing Note Form Submit
 // Initialize CKEditor for nursing note
 let nursingNoteEditor;
+let nurseNoteAutosaveTimer = null;
+
+function doNurseNoteAutosave() {
+    if (!currentPatient || !nursingNoteEditor) return;
+    const content = nursingNoteEditor.getData();
+    if (!content.trim()) return;
+    $.ajax({
+        url: '{{ route("nursing-workbench.notes.store") }}',
+        method: 'POST',
+        data: { patient_id: currentPatient, note_type_id: 5, note: content, completed: 0 },
+        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+        success: function() {
+            const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+            $('#note-autosave-status').html('<i class="mdi mdi-check-circle text-success"></i> <span class="text-success">Autosaved ' + t + '</span>');
+        },
+        error: function() {
+            $('#note-autosave-status').html('<i class="mdi mdi-alert-circle text-danger"></i> <span class="text-danger">Autosave failed</span>');
+        }
+    });
+}
 
 function initNursingNoteCKEditor() {
     if (document.querySelector('#nursing-note-editor') && !nursingNoteEditor) {
@@ -15067,6 +13913,14 @@ function initNursingNoteCKEditor() {
             })
             .then(editor => {
                 nursingNoteEditor = editor;
+                // Wire up autosave on editor changes
+                editor.model.document.on('change:data', () => {
+                    clearTimeout(nurseNoteAutosaveTimer);
+                    const content = editor.getData();
+                    if (!content.trim() || !currentPatient) return;
+                    $('#note-autosave-status').html('<i class="mdi mdi-loading mdi-spin text-warning"></i> <span class="text-warning">Unsaved changes...</span>');
+                    nurseNoteAutosaveTimer = setTimeout(doNurseNoteAutosave, 3000);
+                });
             })
             .catch(error => {
                 console.error(error);
@@ -15112,6 +13966,8 @@ $('#nursing-note-form').on('submit', function(e) {
             if (nursingNoteEditor) {
                 nursingNoteEditor.setData('');
             }
+            clearTimeout(nurseNoteAutosaveTimer);
+            $('#note-autosave-status').html('');
             // Switch to history tab to see the new note
             $('#notes-history-tab-link').tab('show');
             loadNotesHistory(currentPatient);
@@ -15193,7 +14049,7 @@ function switchWorkspaceTab(tab) {
             $('#vaccine-time').val(new Date().toISOString().slice(0, 16));
             break;
         case 'billing':
-            loadPendingBills(currentPatient);
+            BillingKit.init(currentPatient);
             break;
         case 'notes':
             // Removed loadNoteTypes call as it is no longer needed
