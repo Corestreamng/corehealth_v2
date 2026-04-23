@@ -908,7 +908,11 @@
                             <div class="mb-3">
                                 <label for="administer_store_id" class="form-label">Dispensing Store <span class="text-danger">*</span></label>
                                 <select class="form-select" id="administer_store_id" name="store_id">
-                                    <option value="">-- Select Store --</option>
+                                    @if($resolvedStore ?? null)
+                                        <option value="{{ $resolvedStore->id }}" selected>{{ $resolvedStore->store_name }}</option>
+                                    @else
+                                        <option value="">-- Select Store --</option>
+                                    @endif
                                 </select>
                                 <div id="administer-stock-info" class="mt-1 d-none">
                                     <small>Available: <span id="administer-stock-qty" class="badge bg-secondary">—</span></small>

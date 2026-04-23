@@ -1081,6 +1081,33 @@
             Select batches and quantities for each item.
         </p>
 
+        {{--
+            Plan §7.3, §R11 — FIFO Override Warning
+            Batches are pre-sorted FEFO (expiry_date asc). If the user skips a batch
+            with remaining stock, a JS warning prompts them to justify the override.
+            The warning is non-blocking (users with store-policy.override-fifo permission
+            can dismiss; others see a read-only advisory). Stock deduction still goes through
+            RequisitionService::fulfill() which remains unmodified.
+        --}}
+        <div id="fifo-override-banner" class="alert alert-warning" style="display:none;">
+            <div class="d-flex align-items-start gap-2">
+                <i class="fas fa-exclamation-triangle fa-lg mt-1 text-warning"></i>
+                <div>
+                    <strong>FIFO/FEFO Order Override Detected</strong>
+                    <div id="fifo-override-detail" class="mt-1 small"></div>
+                    @can('store-policy.override-fifo')
+                    <button type="button" class="btn btn-sm btn-outline-warning mt-2" id="btn-dismiss-fifo-warning">
+                        <i class="fas fa-unlock-alt me-1"></i> I understand — proceed with out-of-order batch
+                    </button>
+                    @else
+                    <div class="mt-2 small text-danger">
+                        <i class="fas fa-lock me-1"></i> You do not have permission to override FIFO order. Please use batches in the displayed order.
+                    </div>
+                    @endcan
+                </div>
+            </div>
+        </div>
+
         <form id="fulfill-form" method="POST" action="{{ route('inventory.requisitions.fulfill', $requisition) }}">
             @csrf
             @foreach($requisition->items as $item)
@@ -1299,8 +1326,41 @@ $(function() {
         // Update item total display
         $('.item-transfer-total[data-item-id="' + itemId + '"]').text(itemTotal);
 
+        // ── Plan §7.3, §R11 — FIFO Override Warning ──────────────────────────
+        // If this input is for a non-first batch and val > 0,
+        // check if an earlier batch for the same item still has untouched stock.
+        if (val > 0) {
+            var $allBatchInputs = $('input[data-item-id="' + itemId + '"]');
+            var thisIndex = $allBatchInputs.index($input);
+            var fifoViolation = false;
+            var firstBatchName = '';
+            $allBatchInputs.each(function(idx) {
+                if (idx < thisIndex) {
+                    var earlierUsed = parseInt($(this).val()) || 0;
+                    var earlierAvail = parseInt($(this).data('available'));
+                    if (earlierUsed < earlierAvail) {
+                        fifoViolation = true;
+                        firstBatchName = $(this).closest('tr').find('td:first strong').text() || ('Batch index ' + idx);
+                        return false; // break
+                    }
+                }
+            });
+            if (fifoViolation) {
+                $('#fifo-override-detail').html(
+                    'You are transferring from a later batch while <strong>' + firstBatchName +
+                    '</strong> still has remaining stock. FIFO/FEFO order should be observed (Plan §R11).'
+                );
+                $('#fifo-override-banner').slideDown(200);
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // Update grand total
         updateGrandTotal();
+    });
+
+    $('#btn-dismiss-fifo-warning').on('click', function() {
+        $('#fifo-override-banner').slideUp(200);
     });
 
     function updateGrandTotal() {
