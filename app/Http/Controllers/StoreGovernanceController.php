@@ -230,8 +230,16 @@ class StoreGovernanceController extends Controller
         $departments     = \App\Models\Department::orderBy('name')->get();
         $spatieRoles     = \Spatie\Permission\Models\Role::orderBy('name')->pluck('name');
 
+        // Roles that already bypass context rules via stores.candidate-all permission.
+        // These should not appear in the "unconfigured" warning — they can always see all stores.
+        $rolesWithCandidateAll = \Spatie\Permission\Models\Role::whereHas(
+            'permissions',
+            fn ($q) => $q->where('name', 'stores.candidate-all')
+        )->pluck('name');
+
         return view('admin.config.store-governance.context-rules', compact(
-            'roleRules', 'deptRules', 'bucketRules', 'fallbackRule', 'stores', 'departments', 'spatieRoles'
+            'roleRules', 'deptRules', 'bucketRules', 'fallbackRule', 'stores', 'departments',
+            'spatieRoles', 'rolesWithCandidateAll'
         ));
     }
 
