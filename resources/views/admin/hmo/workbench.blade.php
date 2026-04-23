@@ -4720,7 +4720,7 @@ $(function() {
                             '<td><small>' + escHtml(r.validated_by || '-') + '</small></td>' +
                             '<td><small>' + (r.validated_at || r.created_at || '') + '</small></td>' +
                             '<td><div class="pf-action-cell">' +
-                                '<button class="btn btn-sm btn-warning reverse-btn" data-id="' + r.id + '"><i class="mdi mdi-undo mr-1"></i>Reverse</button>' +
+                                (r.can_reverse ? '<button class="btn btn-sm btn-warning reverse-btn mr-1" data-id="' + r.id + '"><i class="mdi mdi-undo mr-1"></i>Reverse</button>' : '') +
                                 '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>' +
                             '</div></td></tr>';
                         break;
@@ -4748,14 +4748,39 @@ $(function() {
                             '<td><small>' + escHtml(r.validated_by || '-') + '</small></td>' +
                             '<td><small>' + (r.validated_at || r.created_at || '') + '</small></td>' +
                             '<td><div class="pf-action-cell">' +
-                                '<button class="btn btn-sm btn-info reapprove-btn" data-id="' + r.id + '" data-mode="' + (r.coverage_mode || 'primary') + '"><i class="mdi mdi-check-circle-outline mr-1"></i>Re-approve</button>' +
+                                (r.can_reverse ? '<button class="btn btn-sm btn-info reapprove-btn mr-1" data-id="' + r.id + '" data-mode="' + (r.coverage_mode || 'primary') + '"><i class="mdi mdi-check-circle-outline mr-1"></i>Re-approve</button>' : '') +
                                 '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>' +
                             '</div></td></tr>';
                         break;
 
                     case 'past':
+                        // Build action buttons based on the item's actual validation_status
+                        var pastActions = '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>';
+                        if (r.validation_status === 'awaiting_code') {
+                            // Should not normally land here now, but guard anyway
+                            pastActions =
+                                '<div class="input-group input-group-sm d-inline-flex mr-1" style="max-width:180px;">' +
+                                    '<input type="text" class="form-control pf-auth-code-input" data-id="' + r.id + '" placeholder="Auth code" value="' + escHtml(r.auth_code || '') + '" style="border-radius:4px 0 0 4px; font-size:0.78rem;">' +
+                                    '<div class="input-group-append"><button class="btn btn-sm pf-submit-auth" data-id="' + r.id + '" style="background:#7c4dff;color:#fff;border-radius:0 4px 4px 0;"><i class="mdi mdi-check"></i></button></div>' +
+                                '</div>' +
+                                '<button class="btn btn-sm btn-danger reject-btn mr-1" data-id="' + r.id + '"><i class="mdi mdi-close mr-1"></i>Reject</button>' +
+                                '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>';
+                        } else if (r.validation_status === 'pending') {
+                            pastActions =
+                                '<button class="btn btn-sm btn-success approve-btn mr-1" data-id="' + r.id + '" data-mode="' + (r.coverage_mode || 'primary') + '"><i class="mdi mdi-check mr-1"></i>Approve</button>' +
+                                '<button class="btn btn-sm btn-danger reject-btn mr-1" data-id="' + r.id + '"><i class="mdi mdi-close mr-1"></i>Reject</button>' +
+                                '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>';
+                        } else if (r.validation_status === 'approved') {
+                            pastActions =
+                                (r.can_reverse ? '<button class="btn btn-sm btn-warning reverse-btn mr-1" data-id="' + r.id + '"><i class="mdi mdi-undo mr-1"></i>Reverse</button>' : '') +
+                                '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>';
+                        } else if (r.validation_status === 'rejected') {
+                            pastActions =
+                                (r.can_reverse ? '<button class="btn btn-sm btn-info reapprove-btn mr-1" data-id="' + r.id + '" data-mode="' + (r.coverage_mode || 'primary') + '"><i class="mdi mdi-check-circle-outline mr-1"></i>Re-approve</button>' : '') +
+                                '<button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button>';
+                        }
                         tr = '<tr>' +
-                            '<td><strong>' + escHtml(r.name) + '</strong></td>' +
+                            '<td><strong>' + escHtml(r.name) + '</strong>' + (r.category ? '<br><small class="text-muted">' + escHtml(r.category) + '</small>' : '') + '</td>' +
                             '<td><span class="badge badge-' + typeBadge(r.type) + '">' + r.type + '</span></td>' +
                             '<td>' + r.qty + '</td>' +
                             '<td>₦' + fmtN(r.claims_amount) + '</td>' +
@@ -4763,7 +4788,7 @@ $(function() {
                             '<td><span class="badge badge-outline-secondary" style="border:1px solid #adb5bd;">' + (r.coverage_mode || '') + '</span></td>' +
                             '<td>' + statusBadge(r.validation_status) + '</td>' +
                             '<td><small>' + (r.created_at || '') + '</small></td>' +
-                            '<td><button class="btn btn-sm btn-outline-secondary view-details-btn" data-id="' + r.id + '"><i class="mdi mdi-eye mr-1"></i>Details</button></td>' +
+                            '<td><div class="pf-action-cell">' + pastActions + '</div></td>' +
                             '</tr>';
                         break;
                 }

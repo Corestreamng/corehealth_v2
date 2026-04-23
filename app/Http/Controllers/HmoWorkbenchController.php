@@ -2138,12 +2138,14 @@ class HmoWorkbenchController extends Controller
         foreach ($allRequests as $req) {
             if ($req->coverage_mode === 'express') {
                 $tabs['express']->push($req);
+            } elseif ($req->validation_status === 'awaiting_code') {
+                // awaiting_code must be checked BEFORE payment_id: patient may have paid
+                // their payable portion while the HMO auth code is still outstanding.
+                $tabs['awaiting_code']->push($req);
             } elseif ($req->payment_id && $req->claims_amount > 0) {
                 $tabs['past']->push($req);
             } elseif ($req->validation_status === 'pending' && $req->claims_amount > 0) {
                 $tabs['pending']->push($req);
-            } elseif ($req->validation_status === 'awaiting_code') {
-                $tabs['awaiting_code']->push($req);
             } elseif ($req->validation_status === 'approved' && $req->claims_amount > 0) {
                 $tabs['approved']->push($req);
             } elseif ($req->validation_status === 'rejected' && $req->claims_amount > 0) {
@@ -2190,6 +2192,9 @@ class HmoWorkbenchController extends Controller
                 'hours_ago'         => $req->created_at ? round($req->created_at->diffInMinutes(now()) / 60, 1) : null,
                 'encounter_id'      => $req->encounter_id,
                 'doctor'            => ($req->encounter && $req->encounter->doctor) ? userfullname($req->encounter->doctor_id) : null,
+                'can_reverse'       => ($req->validation_status === 'approved' || $req->validation_status === 'rejected')
+                                        ? $this->checkServiceDeliveryStatus($req)['can_reverse']
+                                        : null,
             ];
         };
 
