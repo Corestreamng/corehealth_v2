@@ -123,7 +123,7 @@ class StoreRequisitionController extends Controller
                 ->make(true);
         }
 
-        $stores = Store::active()->orderBy('store_name')->get();
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
         $statuses = StoreRequisition::getStatuses();
 
         // Build stats scoped to the user's candidate stores
@@ -163,8 +163,9 @@ class StoreRequisitionController extends Controller
         $resolvedStore = $this->resolver->resolve($user);
         $myStores      = $this->resolver->candidateStores($user); // stores I'm requesting FOR
 
-        // All active stores — used for source (from_store) cards with lane-awareness
-        $stores = Store::active()->orderBy('store_name')->get();
+        // Active stores accessible to this user — used for source (from_store) cards with lane-awareness.
+        // Server-side lane policy and to_store ownership check in store() enforce the actual rules.
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
 
         $products = Product::with('price')
             ->where('status', true)
@@ -210,6 +211,18 @@ class StoreRequisitionController extends Controller
             'items.*.packaging_id' => 'nullable|exists:product_packagings,id',
             'items.*.packaging_qty' => 'nullable|numeric|min:0',
         ]);
+
+        // ── Store Governance: verify to_store is accessible to this user ────────
+        // Admins (ADMIN, SUPERADMIN, super-admin) bypass this check.
+        if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+            $accessibleStoreIds = \App\Models\Store::active()->forUser(auth()->user())->pluck('id');
+            if (! $accessibleStoreIds->contains((int) $request->to_store_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorised to request stock for the selected destination store.',
+                ], 403);
+            }
+        }
 
         // ── Store Governance Gate (Plan §5.2 Step 1) ──────────────────────────
         // Validates that source_role → destination_role is an allowed lane.

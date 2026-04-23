@@ -89,7 +89,7 @@ class StoreWorkbenchController extends Controller
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        $stores = Store::active()->orderBy('store_name')->get();
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
 
         // If no store selected, show aggregated stats for all stores
         if (!$store) {
@@ -205,7 +205,7 @@ class StoreWorkbenchController extends Controller
                 ->make(true);
         }
 
-        $stores = Store::active()->orderBy('store_name')->get();
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
 
         // Pass filter info for display
         $productFilter = $request->filled('product_id') ? Product::find($request->product_id) : null;
@@ -298,7 +298,7 @@ class StoreWorkbenchController extends Controller
     public function productBatches(Request $request, int $productId)
     {
         $product = Product::findOrFail($productId);
-        $stores = Store::active()->orderBy('store_name')->get();
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
 
         // Get store filter if specified
         $storeId = $request->get('store_id');
@@ -441,9 +441,22 @@ class StoreWorkbenchController extends Controller
      */
     public function manualBatchForm(Request $request)
     {
-        $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
-        $store = Store::findOrFail($storeId);
-        $stores = Store::active()->orderBy('store_name')->get();
+        $user = auth()->user();
+        $stores = Store::active()->forUser($user)->orderBy('store_name')->get();
+
+        // Resolve default store: explicit request param → context resolver → first accessible store
+        $storeId = $request->get('store_id');
+        if (! $storeId) {
+            $resolved = $this->contextResolver->resolve($user);
+            $storeId = $resolved?->id ?? $stores->first()?->id;
+        }
+        $store = $storeId ? Store::find($storeId) : null;
+
+        // Ensure the requested store is within the user's accessible stores
+        if ($store && ! $stores->contains('id', $store->id)) {
+            abort(403, 'You do not have access to this store.');
+        }
+
         $products = Product::where('status', 1)->orderBy('product_name')->get();
 
         // Pre-select product if coming from products page
@@ -461,6 +474,18 @@ class StoreWorkbenchController extends Controller
         $request->validate([
             'store_id' => 'required|exists:stores,id',
             'product_id' => 'required|exists:products,id',
+        ]);
+
+        // Governance: verify the submitted store is accessible by this user
+        $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
+        if (! $accessibleStoreIds->contains((int) $request->store_id)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'You are not authorised to add stock to this store.'], 403);
+            }
+            abort(403, 'You are not authorised to add stock to this store.');
+        }
+
+        $request->validate([
             'supplier_id' => 'nullable|exists:suppliers,id',
             'quantity' => 'required|integer|min:1',
             'cost_price' => 'nullable|numeric|min:0',
@@ -526,7 +551,16 @@ class StoreWorkbenchController extends Controller
         $days = $request->get('days', 90);
 
         $expiringBatches = BatchHelper::getBatchesWithExpiryWarning($storeId, $days);
-        $stores = Store::active()->orderBy('store_name')->get();
+        $accessibleStores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
+        $stores = $accessibleStores;
+
+        // Governance: if a specific store was requested, verify the user has access
+        if ($storeId && ! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+            if (! $accessibleStores->contains('id', (int) $storeId)) {
+                abort(403, 'You are not authorised to view the expiry report for this store.');
+            }
+        }
+
         $store = $storeId ? Store::find($storeId) : null;
 
         return view('admin.inventory.store-workbench.expiry-report', compact('expiringBatches', 'stores', 'store', 'days'));
@@ -538,7 +572,14 @@ class StoreWorkbenchController extends Controller
     public function stockValueReport(Request $request)
     {
         $storeId = $request->get('store_id');
-        $stores = Store::active()->orderBy('store_name')->get();
+        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
+
+        // Governance: if a specific store was requested, verify the user has access
+        if ($storeId && ! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+            if (! $stores->contains('id', (int) $storeId)) {
+                abort(403, 'You are not authorised to view the stock value report for this store.');
+            }
+        }
 
         // If no store_id provided or empty, show all stores report
         if (empty($storeId)) {
