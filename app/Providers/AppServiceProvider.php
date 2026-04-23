@@ -94,6 +94,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(DepartmentNotificationService::class, function ($app) {
             return new DepartmentNotificationService();
         });
+
+        // Register StoreContextResolver as a singleton (Plan §10, §B1)
+        // Singleton is safe here — the resolver holds no request-specific state between calls;
+        // the resolutionTrace is cleared on each resolve() call.
+        $this->app->singleton(\App\Services\StoreContextResolver::class);
     }
 
     /**
@@ -180,6 +185,12 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\HR\StaffPromotion::observe(\App\Observers\HR\StaffPromotionObserver::class);
         \App\Models\HR\StaffMedicalExam::observe(\App\Observers\HR\StaffMedicalExamObserver::class);
         \App\Models\HR\StaffSalaryProfile::observe(\App\Observers\HR\StaffSalaryProfileEnhancedObserver::class);
+
+        // Store Governance observers — auto-create stores for new wards/departments,
+        // protect immutable canonical stores from deletion or deactivation.
+        \App\Models\Ward::observe(\App\Observers\WardObserver::class);
+        \App\Models\Department::observe(\App\Observers\DepartmentObserver::class);
+        \App\Models\Store::observe(\App\Observers\StoreObserver::class);
 
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();
