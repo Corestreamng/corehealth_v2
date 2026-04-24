@@ -905,6 +905,12 @@
                     <span class="menu-title">Data Import/Export</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('backups.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('backups.*') ? 'active' : '' }}" href="{{ route('backups.index') }}" id="sidebar-admin-backups">
+                    <i class="mdi mdi-database-lock menu-icon"></i>
+                    <span class="menu-title">Database Backups</span>
+                </a>
+            </li>
             <li class="nav-item {{ request()->routeIs('staff.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('staff.*') ? 'active' : '' }}" href="{{ route('staff.index') }}" id="sidebar-admin-staff-management">
                     <i class="mdi mdi-account-group menu-icon"></i>

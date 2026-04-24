@@ -844,6 +844,19 @@ Route::group(['middleware' => ['auth']], function () {
         Route::delete('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'destroy'])->name('hmo-tariffs.destroy');
     });
 
+    // Database Backup Management
+    Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
+        Route::get('admin/backups', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('backups.index');
+        Route::get('admin/backups/list', [\App\Http\Controllers\Admin\BackupController::class, 'listBackups'])->name('backups.list');
+        Route::post('admin/backups/create', [\App\Http\Controllers\Admin\BackupController::class, 'createBackup'])->name('backups.create');
+        Route::get('admin/backups/drives', [\App\Http\Controllers\Admin\BackupController::class, 'listDrives'])->name('backups.drives');
+        Route::get('admin/backups/external', [\App\Http\Controllers\Admin\BackupController::class, 'listExternalBackups'])->name('backups.external');
+        Route::post('admin/backups/restore', [\App\Http\Controllers\Admin\BackupController::class, 'restore'])->name('backups.restore');
+        Route::post('admin/backups/restore-external', [\App\Http\Controllers\Admin\BackupController::class, 'restoreExternal'])->name('backups.restore-external');
+        Route::delete('admin/backups/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'delete'])->name('backups.delete');
+        Route::get('admin/backups/download/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'download'])->name('backups.download');
+    });
+
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('hmo', HmoController::class);
