@@ -99,6 +99,9 @@ class HospitalConfigController extends Controller
             'send_appointment_email_to_doctors' => 'boolean',
             'send_appointment_email_to_patients' => 'boolean',
 
+            // Backup Settings
+            'backup_compression' => 'boolean',
+
             // Feature Flags
             'goonline' => 'boolean',
             'requirediagnosis' => 'boolean',
@@ -130,6 +133,7 @@ class HospitalConfigController extends Controller
         $validated['nurse_can_enter_imaging_result'] = $request->has('nurse_can_enter_imaging_result');
         $validated['send_appointment_email_to_doctors'] = $request->has('send_appointment_email_to_doctors');
         $validated['send_appointment_email_to_patients'] = $request->has('send_appointment_email_to_patients');
+        $validated['backup_compression'] = $request->has('backup_compression');
 
         // Handle logo upload
         if ($request->hasFile('logo')) {

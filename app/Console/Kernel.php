@@ -20,6 +20,10 @@ class Kernel extends ConsoleKernel
 
         // Sync HMO executives to messenger group every hour
         $schedule->command('hmo:sync-executives-group')->hourly();
+
+        // Automated daily database backup at 2:00 AM
+        $schedule->command('backup:database')->dailyAt('02:00')
+                 ->appendOutputTo(storage_path('logs/backup.log'));
     }
 
     /**

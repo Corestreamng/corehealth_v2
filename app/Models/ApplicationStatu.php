@@ -81,6 +81,9 @@ class ApplicationStatu extends Model implements Auditable
         // Appointment Email Notification Flags
         'send_appointment_email_to_doctors',
         'send_appointment_email_to_patients',
+
+        // Backup Settings
+        'backup_compression',
     ];
 
     /**

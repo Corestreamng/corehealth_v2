@@ -793,6 +793,32 @@
                             </div>
                         </div>
 
+                        <!-- Backup Settings Card -->
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-database-lock mr-2" style="color: var(--primary-color);"></i>
+                                    Backup Settings
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="backup_compression" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-zip-box-outline text-info mr-1"></i>Enable Backup Compression
+                                            </label>
+                                            <small class="text-muted d-block">Compress database backups (.sql.gz) to save disk space. Requires gzip on server.</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="backup_compression" value="1" {{ $config->backup_compression ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Save Button -->
                         <button type="submit" class="btn btn-block"
                                 style="background: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 0.875rem; font-weight: 600; transition: all 0.2s;">
