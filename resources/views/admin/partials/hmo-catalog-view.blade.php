@@ -71,7 +71,7 @@
             'refHint' => 'Leave blank to use each item\'s own base price.',
             'scopeOptions' => [
                 'visible' => 'Expanded Groups Only',
-                'pharmacy' => 'All Pharmacy Items',
+                'pharmacy' => 'All Products',
                 'services' => 'All Services',
                 'empty' => 'Unconfigured Items Only'
             ]
