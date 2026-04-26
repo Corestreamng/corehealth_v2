@@ -515,15 +515,24 @@ class PriceController extends Controller
                 ];
             }
 
-            return view('admin.partials.hmo-tariff-view', [
+            $data = [
                 'itemName' => $product->product_name,
                 'itemType' => 'product',
                 'itemId' => $id,
                 'salePrice' => $salePrice,
                 'schemeSummary' => $schemeSummary,
                 'standaloneData' => $standaloneData,
-                'totalHmoCount' => Hmo::where('status', 1)->count(),
-                'backUrl' => route('products.index'),
+                'totalCount' => Hmo::where('status', 1)->count(),
+                'backUrl' => route('hmo-tariffs.index')
+            ];
+
+            if (request()->ajax()) {
+                return view('admin.partials.hmo-tariff-view-partial', $data);
+            }
+
+            return view('admin.tariffs.standalone', [
+                'partial' => 'admin.partials.hmo-tariff-view-partial',
+                'data' => $data
             ]);
         } catch (\Exception $e) {
             return redirect()->back()->withMessage('Error: ' . $e->getMessage());

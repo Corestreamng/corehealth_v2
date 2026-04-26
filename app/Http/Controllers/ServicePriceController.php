@@ -448,15 +448,24 @@ class ServicePriceController extends Controller
                 ];
             }
 
-            return view('admin.partials.hmo-tariff-view', [
+            $data = [
                 'itemName' => $service->service_name,
                 'itemType' => 'service',
                 'itemId' => $id,
                 'salePrice' => $salePrice,
                 'schemeSummary' => $schemeSummary,
                 'standaloneData' => $standaloneData,
-                'totalHmoCount' => Hmo::where('status', 1)->count(),
+                'totalCount' => Hmo::where('status', 1)->count(),
                 'backUrl' => route('services.index'),
+            ];
+
+            if (request()->ajax()) {
+                return view('admin.partials.hmo-tariff-view-partial', $data);
+            }
+
+            return view('admin.tariffs.standalone', [
+                'partial' => 'admin.partials.hmo-tariff-view-partial',
+                'data' => $data
             ]);
         } catch (\Exception $e) {
             return redirect()->back()->withMessage('Error: ' . $e->getMessage());

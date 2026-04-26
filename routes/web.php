@@ -831,6 +831,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
         Route::get('admin/hmo-tariffs', [TariffManagementController::class, 'index'])->name('hmo-tariffs.index');
         Route::get('admin/hmo-tariffs/data', [TariffManagementController::class, 'getTariffs'])->name('hmo-tariffs.data');
+        Route::get('admin/hmo-tariffs/load-view', [TariffManagementController::class, 'loadView'])->name('hmo-tariffs.load-view');
+        Route::post('admin/hmo-tariffs/bulk-update', [TariffManagementController::class, 'bulkUpdate'])->name('hmo-tariffs.bulk-update');
         Route::get('admin/hmo-tariffs/export/csv', [TariffManagementController::class, 'exportCsv'])->name('hmo-tariffs.export');
         Route::get('admin/hmo-tariffs/export/excel', [TariffManagementController::class, 'exportExcel'])->name('hmo-tariffs.export-excel');
         Route::post('admin/hmo-tariffs/import/csv', [TariffManagementController::class, 'importCsv'])->name('hmo-tariffs.import');
