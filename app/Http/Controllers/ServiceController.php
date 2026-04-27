@@ -23,7 +23,15 @@ class ServiceController extends Controller
 {
     public function listServices(Request $request)
     {
-        $query = Service::where('status', '=', 1)->with(['category' => function ($q) {
+        $showDeactivated = $request->has('show_deactivated') && $request->show_deactivated == 'true';
+        
+        $query = Service::withoutGlobalScopes();
+        
+        if (!$showDeactivated) {
+            $query->where('status', 1);
+        }
+
+        $query->with(['category' => function ($q) {
             $q->select(['id', 'category_name']);
         }, 'price']);
 
@@ -39,6 +47,7 @@ class ServiceController extends Controller
                 $catColors = [
                     2 => ['#d4edda', '#155724'],   // Lab
                     6 => ['#d1ecf1', '#0c5460'],   // Imaging
+                    9 => ['#f8d7da', '#721c24'],   // Morgue
                 ];
                 $catBg = $catColors[$pc->category_id][0] ?? '#e9ecef';
                 $catFg = $catColors[$pc->category_id][1] ?? '#495057';
@@ -59,7 +68,11 @@ class ServiceController extends Controller
             })
             ->addColumn('price_info', function ($pc) {
                 $price = optional($pc->price)->sale_price;
-                return $price ? '₦' . number_format($price, 2) : '<span class="text-muted">—</span>';
+                $statusBadge = '';
+                if ($pc->status == 0) {
+                    $statusBadge = '<br><span class="badge badge-danger">Deactivated</span>';
+                }
+                return ($price ? '₦' . number_format($price, 2) : '<span class="text-muted">—</span>') . $statusBadge;
             })
             ->addColumn('actions', function ($pc) {
                 $canManage = Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE']);
@@ -80,6 +93,11 @@ class ServiceController extends Controller
                     $templateBtn = '<a href="' . $tmplUrl . '" class="dropdown-item"><i class="mdi ' . $tmplIcon . ' mr-1"></i> ' . $tmplTitle . '</a>';
                 }
 
+                $toggleStatusUrl = route('services.toggle-status', $pc->id);
+                $toggleText = $pc->status == 1 ? 'Deactivate' : 'Activate';
+                $toggleIcon = $pc->status == 1 ? 'mdi-close-circle' : 'mdi-check-circle';
+                $toggleColor = $pc->status == 1 ? 'text-danger' : 'text-success';
+
                 return '<div class="btn-group">'
                     . '<a href="' . $viewUrl . '" class="btn btn-sm btn-outline-primary" title="View"><i class="mdi mdi-eye"></i></a>'
                     . '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="mdi mdi-pencil"></i></a>'
@@ -89,10 +107,32 @@ class ServiceController extends Controller
                     . '<a href="' . $priceUrl . '" class="dropdown-item"><i class="mdi mdi-currency-ngn mr-1"></i> Adjust Price</a>'
                     . '<a href="' . $tariffUrl . '" class="dropdown-item"><i class="mdi mdi-shield-check mr-1"></i> HMO Tariffs</a>'
                     . $templateBtn
+                    . '<div class="dropdown-divider"></div>'
+                    . '<a href="javascript:void(0);" class="dropdown-item ' . $toggleColor . '" onclick="toggleServiceStatus(' . $pc->id . ', \'' . $toggleText . '\', \'' . $pc->service_name . '\')"><i class="mdi ' . $toggleIcon . ' mr-1"></i> ' . $toggleText . '</a>'
                     . '</div></div></div>';
             })
             ->rawColumns(['service_info', 'price_info', 'actions'])
             ->make(true);
+    }
+
+    public function toggleStatus($id)
+    {
+        try {
+            $service = Service::withoutGlobalScopes()->findOrFail($id);
+            $service->status = $service->status == 1 ? 0 : 1;
+            $service->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Service status updated successfully.',
+                'new_status' => $service->status
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function liveSearchServices(Request $request)
@@ -208,13 +248,14 @@ class ServiceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
+        $selectedCategory = $request->query('category');
         $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
         $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
         $procedureCategoryId = appsettings('procedure_category_id');
-
-        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId'));
+        
+        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId', 'selectedCategory'));
     }
 
     /**
@@ -277,7 +318,7 @@ class ServiceController extends Controller
 
                     DB::commit();
                     $msg = 'The Service  ' . $request->service_name . ' was Saved Successfully.';
-                    return redirect(route('services.index'))->withMessage($msg)->withMessageType('success');
+                    return redirect(route('services.index', ['category' => $myservice->category_id]))->withMessage($msg)->withMessageType('success');
                 } else {
                     DB::rollBack();
                     $msg = 'Something is went wrong. Please try again later, Service not Saved.';
@@ -300,7 +341,7 @@ class ServiceController extends Controller
     {
         $pc = Sale::where('service_id', '=', $id)->with('transaction', 'product', 'store')->sum('total_amount');
         $qt = Sale::where('service_id', '=', $id)->with('transaction', 'product', 'store')->sum('quantity_buy');
-        $pp = Service::find($id);
+        $pp = Service::withoutGlobalScopes()->find($id);
 
         return view('admin.service.product', compact('id', 'pp', 'pc', 'qt'));
     }
@@ -311,17 +352,18 @@ class ServiceController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
 
         try {
-            $product = Service::with('procedureDefinition')->whereId($id)->first();
+            $selectedCategory = $request->query('category');
+            $product = Service::withoutGlobalScopes()->with('procedureDefinition')->whereId($id)->first();
             $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
             $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
             $procedureCategoryId = appsettings('procedure_category_id');
             $procedure = $product->procedureDefinition;
 
-            return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'procedure'));
+            return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'procedure', 'selectedCategory'));
         } catch (\Exception $e) {
 
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
@@ -364,13 +406,12 @@ class ServiceController extends Controller
 
                 DB::beginTransaction();
 
-                $myservice                 = Service::whereId($id)->first();
+                $myservice                 = Service::withoutGlobalScopes()->whereId($id)->first();
                 $oldCategoryId             = $myservice->category_id;
                 $myservice->user_id        = Auth::user()->id;
                 $myservice->category_id    = $request->category_id;
                 $myservice->service_name   = $request->service_name;
                 $myservice->service_code   = $request->service_code;
-                $myservice->status         = 1;
 
                 if ($myservice->update()) {
                     // Handle procedure definition
@@ -397,7 +438,7 @@ class ServiceController extends Controller
 
                     DB::commit();
                     $msg = 'The Service ' . $request->service_name . ' Was Updated Successfully.';
-                    return redirect(route('services.index'))->withMessage($msg)->withMessageType('success');
+                    return redirect(route('services.index', ['category' => $myservice->category_id]))->withMessage($msg)->withMessageType('success');
                 } else {
                     DB::rollBack();
                     $msg = 'Something is went wrong. Please try again later, information not save.';

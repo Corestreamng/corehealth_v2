@@ -144,7 +144,7 @@
 
                                 {{-- Submit --}}
                                 <div class="d-flex justify-content-between mt-3">
-                                    <a href="{{ route('services.index') }}" class="btn btn-outline-secondary">
+                                    <a href="{{ route('services.index', ['category' => $selectedCategory ?? $product->category_id]) }}" class="btn btn-outline-secondary">
                                         <i class="mdi mdi-arrow-left"></i> Back
                                     </a>
                                     <button type="submit" class="btn btn-primary">

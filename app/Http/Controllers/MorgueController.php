@@ -1,0 +1,256 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\DeathRecord;
+use App\Models\MorgueAdmission;
+use App\Models\Patient;
+use App\Models\ProductOrServiceRequest;
+use App\Models\Service;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class MorgueController extends Controller
+{
+    public function index()
+    {
+        return view('admin.morgue.workbench');
+    }
+
+    /**
+     * Get queue for Morgue Workbench
+     */
+    public function getQueue()
+    {
+        // 1. Pending Admissions (Deceased patients with disposition 'morgue' but not yet admitted to morgue)
+        $pending = DeathRecord::with(['patient.user', 'patient.hmo'])
+            ->where('disposition', 'morgue')
+            ->where('last_office_done', true)
+            ->whereDoesntHave('morgueAdmission')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'patient_id' => $r->patient_id,
+                    'name' => userfullname($r->patient->user_id),
+                    'file_no' => $r->patient->file_no,
+                    'death_type' => $r->death_type,
+                    'date_of_death' => $r->date_of_death,
+                    'time_of_death' => $r->time_of_death,
+                ];
+            });
+
+        // 2. Active Admissions
+        $active = MorgueAdmission::with(['patient.user', 'patient.hmo', 'serviceRequest'])
+            ->whereNull('release_time')
+            ->where('status', 'stored')
+            ->get()
+            ->map(function ($a) {
+                $days = Carbon::parse($a->arrival_time)->diffInDays(now()) + 1;
+                return [
+                    'id' => $a->id,
+                    'patient_id' => $a->patient_id,
+                    'name' => userfullname($a->patient->user_id),
+                    'file_no' => $a->patient->file_no,
+                    'fridge_no' => $a->fridge_number,
+                    'tray_no' => $a->tray_number,
+                    'admitted_at' => $a->arrival_time->format('M d, Y H:i'),
+                    'days_spent' => $days,
+                    'status' => $a->status,
+                ];
+            });
+
+        return response()->json([
+            'pending' => $pending,
+            'active' => $active
+        ]);
+    }
+
+    /**
+     * Admit body to morgue
+     */
+    public function admit(Request $request)
+    {
+        $request->validate([
+            'death_record_id' => 'required_without:patient_id|exists:death_records,id',
+            'patient_id' => 'required_without:death_record_id|exists:patients,id',
+            'fridge_no' => 'nullable|string|max:50',
+            'tray_no' => 'nullable|string|max:50',
+            'daily_service_id' => 'required|exists:services,id',
+            'notes' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            if ($request->death_record_id) {
+                $deathRecord = DeathRecord::find($request->death_record_id);
+            } else {
+                // Bridge for Shared Modal: Find or create DeathRecord for the patient
+                $deathRecord = DeathRecord::updateOrCreate(
+                    ['patient_id' => $request->patient_id],
+                    [
+                        'death_type' => 'BID',
+                        'date_of_death' => now()->toDateString(),
+                        'time_of_death' => now()->toTimeString(),
+                        'cause_of_death_primary' => 'Brought in Dead',
+                        'certified_by_doctor_id' => Auth::id(),
+                        'disposition' => 'pending'
+                    ]
+                );
+                
+                $patient = Patient::find($request->patient_id);
+                if ($patient && !$patient->is_deceased) {
+                    $patient->update(['is_deceased' => true]);
+                }
+            }
+            
+            // Create Service Request for Daily Fee (initial)
+            $serviceRequest = ProductOrServiceRequest::create([
+                'service_id' => $request->daily_service_id,
+                'user_id' => $deathRecord->patient->user_id,
+                'staff_user_id' => Auth::id(),
+                'status' => 1, // Pending
+                'qty' => 1
+            ]);
+
+            // Generate Body Code
+            $year = now()->year;
+            $count = MorgueAdmission::whereYear('arrival_time', $year)->count() + 1;
+            $bodyCode = 'MORG-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+
+            // Create Morgue Admission
+            MorgueAdmission::create([
+                'death_record_id' => $deathRecord->id,
+                'patient_id' => $deathRecord->patient_id,
+                'body_code' => $bodyCode,
+                'fridge_number' => $request->fridge_no,
+                'tray_number' => $request->tray_no,
+                'arrival_time' => now(),
+                'admitted_by_staff_id' => Auth::id(),
+                'daily_service_id' => $request->daily_service_id,
+                'current_service_request_id' => $serviceRequest->id,
+                'notes' => $request->notes,
+                'status' => 'stored'
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Body successfully admitted to morgue.'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Morgue admission error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to admit: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Add ad-hoc service (embalming, etc.)
+     */
+    public function addService(Request $request)
+    {
+        $request->validate([
+            'morgue_admission_id' => 'required|exists:morgue_admissions,id',
+            'service_id' => 'required|exists:services,id',
+            'qty' => 'required|integer|min:1'
+        ]);
+
+        try {
+            $admission = MorgueAdmission::find($request->morgue_admission_id);
+            
+            ProductOrServiceRequest::create([
+                'service_id' => $request->service_id,
+                'user_id' => $admission->patient->user_id,
+                'staff_user_id' => Auth::id(),
+                'status' => 1,
+                'qty' => $request->qty
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Service added to bill.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to add service.'], 500);
+        }
+    }
+
+    /**
+     * Release body
+     */
+    public function release(Request $request)
+    {
+        $request->validate([
+            'morgue_admission_id' => 'required|exists:morgue_admissions,id',
+            'released_to_name' => 'required|string|max:150',
+            'released_to_phone' => 'nullable|string|max:20',
+            'release_notes' => 'nullable|string',
+        ]);
+
+        try {
+            $admission = MorgueAdmission::find($request->morgue_admission_id);
+            
+            // Check for pending bills? 
+            // In many systems, they must pay before release.
+            // For now, let's just mark as released.
+
+            $admission->update([
+                'release_time' => now(),
+                'released_by_staff_id' => Auth::id(),
+                'released_to_name' => $request->released_to_name,
+                'released_to_id_no' => $request->released_to_phone, // Using phone as ID for now
+                'notes' => $request->release_notes,
+                'status' => 'released'
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Body released successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to release body.'], 500);
+        }
+    }
+
+    /**
+     * Get morgue services (for ad-hoc or daily fee)
+     */
+    public function getServices(Request $request)
+    {
+        $categoryId = appsettings('morgue_category_id') ?? 
+                     DB::table('service_categories')->where('category_name', 'MORGUE')->orWhere('category_name', 'Morgue')->value('id') ?? 
+                     9;
+        
+        $query = Service::where('status', 1)
+            ->where('category_id', $categoryId)
+            ->with(['price', 'category']);
+
+        $services = $query->get()->map(function($service) use ($request) {
+            $basePrice = optional($service->price)->sale_price;
+            $coverage = null;
+
+            if ($request->filled('patient_id')) {
+                try {
+                    $coverage = \App\Helpers\HmoHelper::applyHmoTariff($request->patient_id, null, $service->id);
+                } catch (\Exception $e) {
+                    $coverage = null; 
+                }
+            }
+
+            return [
+                'id' => $service->id,
+                'service_name' => $service->service_name,
+                'service_code' => $service->service_code,
+                'coverage_mode' => $coverage['coverage_mode'] ?? 'cash',
+                'payable_amount' => $coverage['payable_amount'] ?? ($basePrice ?? 0),
+                'claims_amount' => $coverage['claims_amount'] ?? 0,
+                'validation_status' => $coverage['validation_status'] ?? null,
+                'category' => $service->category,
+                'price' => $service->price,
+            ];
+        });
+
+        return response()->json($services);
+    }
+}

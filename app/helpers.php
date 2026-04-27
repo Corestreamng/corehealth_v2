@@ -285,12 +285,27 @@ if (!function_exists('appsettings')) {
                     'consultation_category_id' => 'CONSULTATION_CATEGORY_ID',
                     'nursing_service_category' => 'NUSRING_SERVICE_CATEGORY',
                     'misc_service_category_id' => 'MISC_SERVICE_CATEGORY_ID',
+                    'morgue_category_id' => 'MORGUE_CATEGORY_ID',
+                    'imaging_category_id' => 'IMAGING_CATEGORY_ID',
+                    'registration_category_id' => 'REGISTRATION_CATEGORY_ID',
+                    'procedure_category_id' => 'PROCEDURE_CATEGORY_ID',
                     'consultation_cycle_duration' => 'CONSULTATION_CYCLE_DURATION',
                     'note_edit_window' => 'NOTE_EDIT_WINDOW',
                 ];
 
                 $envKey = $envMap[$key] ?? strtoupper($key);
-                return env($envKey);
+                $defaults = [
+                    'morgue_category_id' => 9,
+                    'imaging_category_id' => 6,
+                    'registration_category_id' => 7,
+                    'procedure_category_id' => 8,
+                    'bed_service_category_id' => 3,
+                    'investigation_category_id' => 2,
+                    'consultation_category_id' => 1,
+                    'nursing_service_category' => 4,
+                    'misc_service_category_id' => 5,
+                ];
+                return env($envKey, $defaults[$key] ?? null);
             }
 
             return $value;

@@ -4089,8 +4089,30 @@
                                 </select>
                             </div>
 
+                            {{-- Death Notification for Discharge (Initially Hidden) --}}
+                            <div id="discharge-death-fields" style="display: none; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                                <h6 class="text-danger mb-3"><i class="mdi mdi-alert-circle"></i> Death Notification Info</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold small">Date of Death <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" name="death_date" id="discharge-death-date" value="{{ date('Y-m-d') }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold small">Time of Death <span class="text-danger">*</span></label>
+                                        <input type="time" class="form-control" name="death_time" id="discharge-death-time" value="{{ date('H:i') }}">
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label fw-bold small">Primary Cause of Death <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="death_cause" id="discharge-death-cause" placeholder="Enter primary cause...">
+                                    </div>
+                                </div>
+                                <div class="alert alert-info py-2 mb-0" style="font-size: 0.75rem;">
+                                    <i class="mdi mdi-information-outline"></i> Recording this death will notify nursing staff for Last Office and morgue admission.
+                                </div>
+                            </div>
+
                             <div class="form-group mb-3">
-                                <label for="discharge_note"><strong>Discharge Summary</strong> <span class="text-danger">*</span></label>
+                                <label for="discharge_note"><strong>Discharge Summary / Death Note</strong> <span class="text-danger">*</span></label>
                                 <textarea class="form-control" name="discharge_note" id="discharge_note" rows="5"
                                           placeholder="Enter discharge summary, condition at discharge, medications, follow-up instructions..."></textarea>
                             </div>
@@ -4174,6 +4196,51 @@
                                         </p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {{-- Clinical Outcome Section --}}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold" style="color: {{ appsettings('hos_color', '#007bff') }};">
+                            <i class="mdi mdi-trending-up"></i> Clinical Outcome <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select form-select-lg border-primary-subtle" id="encounter-outcome" required style="border-width: 2px;">
+                            <option value="concluded" selected>Consultation Finalized / Continuing Care</option>
+                            <option value="discharged">Discharged / Stable</option>
+                            <option value="improved">Improved</option>
+                            <option value="unimproved">Unimproved</option>
+                            <option value="referred">Referred Out</option>
+                            <option value="absconded">Absconded / DAMA</option>
+                            <option value="death_rip">Deceased (RIP)</option>
+                            <option value="death_bid">Brought In Dead (BID)</option>
+                        </select>
+                        <div class="form-text text-muted">
+                            <i class="mdi mdi-information-outline"></i> Select the primary outcome for this clinical session.
+                        </div>
+                    </div>
+
+                    {{-- Death Notification Group (Initially Hidden) --}}
+                    <div id="death-notification-fields" style="display: none; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <h6 class="text-danger mb-3"><i class="mdi mdi-alert-circle"></i> Death Notification Info</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold small">Date of Death <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="death-date" value="{{ date('Y-m-d') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold small">Time of Death <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="death-time" value="{{ date('H:i') }}">
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold small">Primary Cause of Death <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="death-cause" placeholder="Enter primary cause or find diagnosis...">
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold small">Certified By</label>
+                                <input type="text" class="form-control" id="death-certified-by" value="Dr. {{ Auth::user()->surname }} {{ Auth::user()->firstname }}" readonly>
                             </div>
                         </div>
                     </div>
@@ -4417,9 +4484,21 @@
         // Show/hide sections
         document.getElementById('admission_section').style.display = 'none';
         document.getElementById('discharge_section').style.display = 'block';
+        $('#discharge-death-fields').hide(); // Reset death fields
 
         $('#admitDischargeModal').modal('show');
     }
+
+    // Toggle discharge death fields
+    $('#discharge_reason_category').on('change', function() {
+        if ($(this).val() === 'Deceased') {
+            $('#discharge-death-fields').slideDown();
+            $('#discharge_note').attr('placeholder', 'Enter death summary, clinical observations, and notification details...');
+        } else {
+            $('#discharge-death-fields').slideUp();
+            $('#discharge_note').attr('placeholder', 'Enter discharge summary, condition at discharge, medications, follow-up instructions...');
+        }
+    });
 
     // Submit admission or discharge
     function submitAdmitDischarge() {
@@ -4441,6 +4520,12 @@
             if (!document.getElementById('discharge_reason_category').value) {
                 showMessage('modal_message', 'Please select a discharge reason', 'error');
                 return;
+            }
+            if (document.getElementById('discharge_reason_category').value === 'Deceased') {
+                if (!document.getElementById('discharge-death-date').value || !document.getElementById('discharge-death-time').value || !document.getElementById('discharge-death-cause').value.trim()) {
+                    showMessage('modal_message', 'Please complete all death notification fields', 'error');
+                    return;
+                }
             }
             if (!document.getElementById('discharge_note').value.trim()) {
                 showMessage('modal_message', 'Please enter discharge summary', 'error');
@@ -4543,6 +4628,13 @@
                     consult_admit: 0,
                     admit_note: '',
                     queue_id: queueId,
+                    outcome: $('#encounter-outcome').val(),
+                    death_record: ($('#encounter-outcome').val() && $('#encounter-outcome').val().startsWith('death')) ? {
+                        date: $('#death-date').val(),
+                        time: $('#death-time').val(),
+                        cause: $('#death-cause').val(),
+                        certified_by: {{ Auth::id() }}
+                    } : null,
                     _token: $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function(response) {
@@ -4564,6 +4656,15 @@
             });
         });
     }
+
+    // Toggle encounter outcome death fields
+    $('#encounter-outcome').on('change', function() {
+        if ($(this).val() && $(this).val().startsWith('death')) {
+            $('#death-notification-fields').slideDown();
+        } else {
+            $('#death-notification-fields').slideUp();
+        }
+    });
 
     // Update modal summary (similar to updateSummary but targets modal elements)
     function updateModalSummary() {
@@ -5125,6 +5226,19 @@
                     $btn.prop('disabled', false).html('<i class="mdi mdi-delete" style="font-size:.8rem;"></i>');
                 }
             });
+        });
+
+        // Toggle Death Notification Fields
+        $(document).on('change', '#encounter-outcome', function() {
+            var val = $(this).val();
+            if (val && val.startsWith('death')) {
+                $('#death-notification-fields').slideDown();
+                $('#followup-fields').closest('.mb-3').hide(); // Hide follow-up if deceased
+                $('#schedule-followup-check').prop('checked', false).trigger('change');
+            } else {
+                $('#death-notification-fields').slideUp();
+                $('#followup-fields').closest('.mb-3').show();
+            }
         });
     </script>
 

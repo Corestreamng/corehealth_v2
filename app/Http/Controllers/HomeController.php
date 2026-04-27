@@ -268,11 +268,12 @@ class HomeController extends Controller
             ->count();
 
         // Total products
-        $totalProducts = DB::table('products')->count();
+        $totalProducts = DB::table('products')->where('status', 1)->count();
 
         // Low stock alerts (products with stock below reorder alert level)
         $lowStock = DB::table('products as p')
             ->join('stocks as s', 'p.id', '=', 's.product_id')
+            ->where('p.status', 1)
             ->whereRaw('s.current_quantity <= CAST(p.reorder_alert AS SIGNED)')
             ->where('p.reorder_alert', '>', 0)
             ->count();
@@ -377,6 +378,7 @@ class HomeController extends Controller
 
         // Total services
         $totalServices = DB::table('services')
+            ->where('status', 1)
             ->whereIn('category_id', [appsettings('investigation_category_id', 2), appsettings('imaging_category_id', 6)])
             ->count();
 

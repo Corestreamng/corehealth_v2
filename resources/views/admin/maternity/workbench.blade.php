@@ -10,19 +10,23 @@
 
 @section('content')
 @php
-    $hosColor = appsettings()->hos_color ?? '#0066cc';
-    $sett = appsettings();
+$hosColor = appsettings()->hos_color ?? '#0066cc';
+$sett = appsettings();
 @endphp
 <style>
     :root {
-        --hospital-primary: {{ appsettings('hos_color', '#007bff') }};
-        --hospital-primary-rgb: 0, 123, 255;
+        --hospital-primary: {{ appsettings("hos_color", "#007bff") }};
+        --hospital-primary-rgb: 0,
+        123,
+        255;
         --success: #28a745;
         --warning: #ffc107;
         --danger: #dc3545;
         --info: #17a2b8;
         --maternity-pink: #e91e8a;
-        --maternity-pink-rgb: 233, 30, 138;
+        --maternity-pink-rgb: 233,
+        30,
+        138;
     }
 
     /* ═══ SHARED: Main Layout (identical to nursing workbench) ═══ */
@@ -86,11 +90,32 @@
         gap: 0.75rem;
     }
 
-    .search-result-item:hover, .search-result-item.active { background: #f8f9fa; }
-    .search-result-item img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-    .search-result-info { flex: 1; }
-    .search-result-name { font-weight: 600; color: #212529; margin-bottom: 0.25rem; }
-    .search-result-details { font-size: 0.85rem; color: #6c757d; }
+    .search-result-item:hover,
+    .search-result-item.active {
+        background: #f8f9fa;
+    }
+
+    .search-result-item img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .search-result-info {
+        flex: 1;
+    }
+
+    .search-result-name {
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 0.25rem;
+    }
+
+    .search-result-details {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
 
     .pending-badge {
         background: var(--maternity-pink);
@@ -102,8 +127,18 @@
     }
 
     /* ═══ SHARED: Queue Widget ═══ */
-    .queue-widget { padding: 1rem; border-bottom: 1px solid #dee2e6; }
-    .queue-widget h6 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #6c757d; margin-bottom: 1rem; }
+    .queue-widget {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .queue-widget h6 {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
 
     .queue-item {
         display: flex;
@@ -116,9 +151,21 @@
         cursor: pointer;
         transition: all 0.2s;
     }
-    .queue-item:hover { transform: translateX(5px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .queue-item.active { border-left: 3px solid var(--maternity-pink); background: #fdf2f8; }
-    .queue-item-label { font-size: 0.9rem; color: #495057; }
+
+    .queue-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .queue-item.active {
+        border-left: 3px solid var(--maternity-pink);
+        background: #fdf2f8;
+    }
+
+    .queue-item-label {
+        font-size: 0.9rem;
+        color: #495057;
+    }
 
     .queue-count {
         font-size: 1.25rem;
@@ -126,12 +173,36 @@
         padding: 0.25rem 0.75rem;
         border-radius: 0.5rem;
     }
-    .queue-count.anc { background: #fce4ec; color: #c2185b; }
-    .queue-count.edd { background: #fff3e0; color: #e65100; }
-    .queue-count.postnatal { background: #e3f2fd; color: #1565c0; }
-    .queue-count.overdue { background: #ffebee; color: #c62828; }
-    .queue-count.high-risk { background: #fbe9e7; color: #bf360c; }
-    .queue-count.due-visit { background: #fff8e1; color: #f57f17; }
+
+    .queue-count.anc {
+        background: #fce4ec;
+        color: #c2185b;
+    }
+
+    .queue-count.edd {
+        background: #fff3e0;
+        color: #e65100;
+    }
+
+    .queue-count.postnatal {
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .queue-count.overdue {
+        background: #ffebee;
+        color: #c62828;
+    }
+
+    .queue-count.high-risk {
+        background: #fbe9e7;
+        color: #bf360c;
+    }
+
+    .queue-count.due-visit {
+        background: #fff8e1;
+        color: #f57f17;
+    }
 
     .btn-queue-all {
         width: 100%;
@@ -145,11 +216,25 @@
         cursor: pointer;
         transition: all 0.2s;
     }
-    .btn-queue-all:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    .btn-queue-all:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
 
     /* ═══ SHARED: Quick Actions ═══ */
-    .quick-actions { padding: 1rem; flex: 1; }
-    .quick-actions h6 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #6c757d; margin-bottom: 1rem; }
+    .quick-actions {
+        padding: 1rem;
+        flex: 1;
+    }
+
+    .quick-actions h6 {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
 
     .quick-action-btn {
         width: 100%;
@@ -166,9 +251,21 @@
         align-items: center;
         gap: 0.5rem;
     }
-    .quick-action-btn:hover:not(:disabled) { border-color: var(--maternity-pink); background: #fdf2f8; }
-    .quick-action-btn:disabled { opacity: 0.5; cursor: not-allowed; background: #f5f5f5; }
-    .quick-action-btn i { font-size: 1.25rem; }
+
+    .quick-action-btn:hover:not(:disabled) {
+        border-color: var(--maternity-pink);
+        background: #fdf2f8;
+    }
+
+    .quick-action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #f5f5f5;
+    }
+
+    .quick-action-btn i {
+        font-size: 1.25rem;
+    }
 
     /* ═══ SHARED: Main Workspace ═══ */
     .main-workspace {
@@ -186,16 +283,41 @@
         color: white;
         display: none;
     }
-    .patient-header.active { display: block; }
 
-    .patient-header-top { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0; }
-    .patient-name { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .patient-meta { display: flex; gap: 1.5rem; font-size: 0.95rem; opacity: 0.95; flex-wrap: wrap; }
-    .patient-meta-item { display: flex; align-items: center; gap: 0.5rem; }
+    .patient-header.active {
+        display: block;
+    }
+
+    .patient-header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0;
+    }
+
+    .patient-name {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .patient-meta {
+        display: flex;
+        gap: 1.5rem;
+        font-size: 0.95rem;
+        opacity: 0.95;
+        flex-wrap: wrap;
+    }
+
+    .patient-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
     .btn-expand-patient {
-        background: rgba(255,255,255,0.2);
-        border: 2px solid rgba(255,255,255,0.3);
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
         color: white;
         padding: 0.5rem 1rem;
         border-radius: 2rem;
@@ -208,17 +330,29 @@
         text-transform: lowercase;
         font-weight: 500;
     }
-    .btn-expand-patient:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
-    .btn-expand-patient.expanded i { transform: rotate(180deg); }
+
+    .btn-expand-patient:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .btn-expand-patient.expanded i {
+        transform: rotate(180deg);
+    }
 
     .patient-details-expanded {
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-out;
-        border-top: 1px solid rgba(255,255,255,0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
         margin-top: 0;
     }
-    .patient-details-expanded.show { max-height: 1000px; margin-top: 1rem; padding-top: 1rem; }
+
+    .patient-details-expanded.show {
+        max-height: 1000px;
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
 
     .patient-details-grid {
         display: grid;
@@ -228,20 +362,48 @@
     }
 
     .patient-detail-item {
-        background: rgba(255,255,255,0.15);
+        background: rgba(255, 255, 255, 0.15);
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;
-        border: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .patient-detail-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 0.25rem; font-weight: 600; }
-    .patient-detail-value { font-size: 0.95rem; font-weight: 500; word-break: break-word; }
-    .patient-detail-item.full-width { grid-column: 1 / -1; }
-    .patient-detail-value.text-content { max-height: 100px; overflow-y: auto; line-height: 1.5; font-size: 0.9rem; }
 
-    .allergies-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .patient-detail-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.8;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .patient-detail-value {
+        font-size: 0.95rem;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    .patient-detail-item.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .patient-detail-value.text-content {
+        max-height: 100px;
+        overflow-y: auto;
+        line-height: 1.5;
+        font-size: 0.9rem;
+    }
+
+    .allergies-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
     .allergy-tag {
-        background: rgba(220,53,69,0.2);
-        border: 1px solid rgba(220,53,69,0.5);
+        background: rgba(220, 53, 69, 0.2);
+        border: 1px solid rgba(220, 53, 69, 0.5);
         padding: 0.25rem 0.75rem;
         border-radius: 1rem;
         font-size: 0.85rem;
@@ -261,13 +423,34 @@
         text-align: center;
         padding: 2rem;
     }
-    .empty-state i { font-size: 5rem; margin-bottom: 1.5rem; opacity: 0.3; }
-    .empty-state h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-    .empty-state p { font-size: 1rem; margin-bottom: 1.5rem; }
+
+    .empty-state i {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.3;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
 
     /* ═══ SHARED: Queue View ═══ */
-    .queue-view { flex: 1; display: none; flex-direction: column; overflow: hidden; }
-    .queue-view.active { display: flex; }
+    .queue-view {
+        flex: 1;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .queue-view.active {
+        display: flex;
+    }
 
     .queue-view-header {
         padding: 1rem 1.5rem;
@@ -277,7 +460,15 @@
         justify-content: space-between;
         align-items: center;
     }
-    .queue-view-header h4 { margin: 0; font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+
+    .queue-view-header h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
     .btn-close-queue {
         padding: 0.5rem 1rem;
@@ -293,29 +484,75 @@
         gap: 0.5rem;
         transition: all 0.2s;
     }
-    .btn-close-queue:hover { background: #5a6268; }
 
-    .queue-view-content { flex: 1; overflow-y: auto; padding: 1.5rem; background: #f8f9fa; }
+    .btn-close-queue:hover {
+        background: #5a6268;
+    }
+
+    .queue-view-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: #f8f9fa;
+    }
 
     /* ═══ SHARED: Queue Cards ═══ */
     .queue-card {
         background: white;
         border-radius: 0.75rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         padding: 1.25rem;
         margin-bottom: 1rem;
         transition: all 0.2s;
         cursor: pointer;
     }
-    .queue-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.15); transform: translateY(-2px); }
-    .queue-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem; }
-    .queue-card-patient-name { font-size: 1.1rem; font-weight: 700; color: #2c3e50; margin-bottom: 0.25rem; }
-    .queue-card-patient-meta { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; color: #6c757d; }
-    .queue-card-patient-meta-item { display: flex; align-items: center; gap: 0.25rem; }
+
+    .queue-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .queue-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+
+    .queue-card-patient-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .queue-card-patient-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .queue-card-patient-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
 
     /* ═══ SHARED: Workspace Content ═══ */
-    .workspace-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; display: none; min-height: 0; }
-    .workspace-content.active { display: flex; }
+    .workspace-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        display: none;
+        min-height: 0;
+    }
+
+    .workspace-content.active {
+        display: flex;
+    }
 
     .workspace-tabs {
         display: flex;
@@ -328,8 +565,15 @@
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
     }
-    .workspace-tabs::-webkit-scrollbar { height: 4px; }
-    .workspace-tabs::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 4px; }
+
+    .workspace-tabs::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .workspace-tabs::-webkit-scrollbar-thumb {
+        background: #dee2e6;
+        border-radius: 4px;
+    }
 
     .workspace-tab {
         padding: 1rem 1.5rem;
@@ -346,8 +590,17 @@
         white-space: nowrap;
         flex-shrink: 0;
     }
-    .workspace-tab:hover { color: var(--maternity-pink); background: rgba(var(--maternity-pink-rgb), 0.05); }
-    .workspace-tab.active { color: var(--maternity-pink); border-bottom-color: var(--maternity-pink); background: white; }
+
+    .workspace-tab:hover {
+        color: var(--maternity-pink);
+        background: rgba(var(--maternity-pink-rgb), 0.05);
+    }
+
+    .workspace-tab.active {
+        color: var(--maternity-pink);
+        border-bottom-color: var(--maternity-pink);
+        background: white;
+    }
 
     .workspace-tab-badge {
         background: var(--danger);
@@ -358,8 +611,19 @@
         font-weight: 700;
     }
 
-    .workspace-tab-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0; padding-bottom: 4rem; display: none; min-height: 0; }
-    .workspace-tab-content.active { display: block; }
+    .workspace-tab-content {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0;
+        padding-bottom: 4rem;
+        display: none;
+        min-height: 0;
+    }
+
+    .workspace-tab-content.active {
+        display: block;
+    }
 
     /* ═══ SHARED: Panel Header ═══ */
     .panel-header {
@@ -370,10 +634,16 @@
         background: var(--maternity-pink);
         color: white;
     }
-    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 600; }
+
+    .panel-header h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
     .btn-view-work-pane {
-        background: rgba(255,255,255,0.2);
-        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         color: white;
         padding: 0.375rem 0.75rem;
         border-radius: 0.5rem;
@@ -392,8 +662,15 @@
         background: #f8f9fa;
         border-bottom: 1px solid #dee2e6;
     }
-    .workspace-navbar-actions { display: flex; gap: 0.5rem; }
-    .btn-back-to-search, .btn-toggle-search, .btn-clinical-context {
+
+    .workspace-navbar-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-back-to-search,
+    .btn-toggle-search,
+    .btn-clinical-context {
         background: var(--maternity-pink);
         color: white;
         border: none;
@@ -406,9 +683,11 @@
         align-items: center;
         gap: 0.5rem;
     }
+
     .btn-clinical-context:hover:not(:disabled) {
         background: #c4177a;
     }
+
     .btn-clinical-context:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -419,17 +698,20 @@
     #clinical-context-modal .modal-dialog {
         max-width: 90vw;
     }
+
     #clinical-context-modal .modal-body {
         padding: 0;
         max-height: 80vh;
         overflow-y: auto;
     }
+
     /* Prevent medication cards from breaking out of modal */
     #clinical-meds-container {
         position: relative;
         max-width: 100%;
         overflow: hidden;
     }
+
     #clinical-meds-container .medication-card,
     #clinical-meds-container .card {
         position: relative !important;
@@ -442,36 +724,107 @@
         right: auto !important;
         bottom: auto !important;
     }
+
     #clinical-meds-container * {
         position: relative !important;
         max-width: 100% !important;
     }
 
     /* ═══ MATERNITY: Rich Editor Styling ═══ */
-    .ck-editor__editable_inline { min-height: 100px; max-height: 300px; }
-    .ck-editor__editable_inline:focus { border-color: var(--maternity-pink) !important; box-shadow: 0 0 0 0.15rem rgba(233,30,99,0.15) !important; }
-    .ck.ck-toolbar { border-radius: 0.5rem 0.5rem 0 0 !important; }
-    .ck.ck-editor__main>.ck-editor__editable { border-radius: 0 0 0.5rem 0.5rem !important; }
+    .ck-editor__editable_inline {
+        min-height: 100px;
+        max-height: 300px;
+    }
+
+    .ck-editor__editable_inline:focus {
+        border-color: var(--maternity-pink) !important;
+        box-shadow: 0 0 0 0.15rem rgba(233, 30, 99, 0.15) !important;
+    }
+
+    .ck.ck-toolbar {
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+
+    .ck.ck-editor__main>.ck-editor__editable {
+        border-radius: 0 0 0.5rem 0.5rem !important;
+    }
 
     /* ═══ MATERNITY: Form Section Grouping ═══ */
-    .mat-form-section { border: 1px solid #e9ecef; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; background: #fafbfc; }
-    .mat-form-section-title { font-weight: 600; font-size: 0.85rem; color: var(--maternity-pink); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; border-bottom: 1px solid #e9ecef; padding-bottom: 0.5rem; }
-    .mat-form-help { font-size: 0.78rem; color: #6c757d; margin-top: 0.2rem; }
-    .mat-form-help i { color: var(--maternity-pink); margin-right: 0.2rem; }
-    .mat-tooltip-icon { color: var(--maternity-pink); cursor: help; margin-left: 0.3rem; font-size: 0.8rem; }
-    .mat-info-banner { background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border: 1px solid #bbdefb; border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.82rem; color: #37474f; display: flex; align-items: flex-start; gap: 0.5rem; }
-    .mat-info-banner i { color: var(--maternity-pink); font-size: 1.1rem; margin-top: 0.1rem; }
+    .mat-form-section {
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: #fafbfc;
+    }
+
+    .mat-form-section-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--maternity-pink);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 0.5rem;
+    }
+
+    .mat-form-help {
+        font-size: 0.78rem;
+        color: #6c757d;
+        margin-top: 0.2rem;
+    }
+
+    .mat-form-help i {
+        color: var(--maternity-pink);
+        margin-right: 0.2rem;
+    }
+
+    .mat-tooltip-icon {
+        color: var(--maternity-pink);
+        cursor: help;
+        margin-left: 0.3rem;
+        font-size: 0.8rem;
+    }
+
+    .mat-info-banner {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border: 1px solid #bbdefb;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.82rem;
+        color: #37474f;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .mat-info-banner i {
+        color: var(--maternity-pink);
+        font-size: 1.1rem;
+        margin-top: 0.1rem;
+    }
 
     /* ═══ MATERNITY-SPECIFIC: Card Styles ═══ */
     .card-modern {
         background: white;
         border-radius: 0.75rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         border: 1px solid #e9ecef;
         overflow: hidden;
     }
-    .card-modern .card-header { padding: 0.75rem 1rem; font-size: 0.9rem; border-bottom: 1px solid #e9ecef; }
-    .card-modern .card-body { padding: 1rem; }
+
+    .card-modern .card-header {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .card-modern .card-body {
+        padding: 1rem;
+    }
 
     /* Enrollment Status Badges */
     .enrollment-badge {
@@ -483,21 +836,76 @@
         font-size: 0.8rem;
         font-weight: 600;
     }
-    .enrollment-badge.active { background: #d4edda; color: #155724; }
-    .enrollment-badge.postnatal { background: #fff3cd; color: #856404; }
-    .enrollment-badge.completed { background: #e2e3e5; color: #383d41; }
-    .enrollment-badge.transferred { background: #d1ecf1; color: #0c5460; }
-    .enrollment-badge.deceased { background: #f8d7da; color: #721c24; }
-    .enrollment-badge.high-risk { background: #f8d7da; color: #721c24; }
+
+    .enrollment-badge.active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .enrollment-badge.postnatal {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .enrollment-badge.completed {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    .enrollment-badge.transferred {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .enrollment-badge.deceased {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .enrollment-badge.high-risk {
+        background: #f8d7da;
+        color: #721c24;
+    }
 
     /* Risk Level Indicator */
-    .risk-indicator { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.6rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-    .risk-indicator.low { background: #d4edda; color: #155724; }
-    .risk-indicator.moderate { background: #fff3cd; color: #856404; }
-    .risk-indicator.high { background: #f8d7da; color: #721c24; }
+    .risk-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .risk-indicator.low {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .risk-indicator.moderate {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .risk-indicator.high {
+        background: #f8d7da;
+        color: #721c24;
+    }
 
     /* Gestational Age Pill */
-    .ga-pill { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.3rem 0.75rem; background: rgba(233,30,138,0.1); color: var(--maternity-pink); border-radius: 1rem; font-weight: 700; font-size: 0.85rem; }
+    .ga-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.3rem 0.75rem;
+        background: rgba(233, 30, 138, 0.1);
+        color: var(--maternity-pink);
+        border-radius: 1rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
 
     /* ANC Visit Card */
     .anc-visit-card {
@@ -506,32 +914,128 @@
         border-left: 4px solid var(--maternity-pink);
         padding: 1rem;
         margin-bottom: 0.75rem;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     }
-    .anc-visit-card .visit-number { font-size: 0.8rem; font-weight: 700; color: var(--maternity-pink); text-transform: uppercase; }
-    .anc-visit-card .visit-date { font-size: 0.85rem; color: #6c757d; }
-    .anc-visit-card .visit-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
-    .anc-visit-card .visit-detail-label { font-size: 0.7rem; text-transform: uppercase; color: #6c757d; }
-    .anc-visit-card .visit-detail-value { font-size: 0.9rem; font-weight: 600; color: #2c3e50; }
+
+    .anc-visit-card .visit-number {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--maternity-pink);
+        text-transform: uppercase;
+    }
+
+    .anc-visit-card .visit-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .anc-visit-card .visit-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .anc-visit-card .visit-detail-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #6c757d;
+    }
+
+    .anc-visit-card .visit-detail-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
 
     /* Timeline */
-    .timeline-container { position: relative; padding-left: 30px; }
-    .timeline-container::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: #dee2e6; }
-    .timeline-item { position: relative; margin-bottom: 1.5rem; }
-    .timeline-item::before { content: ''; position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--maternity-pink); border: 2px solid white; box-shadow: 0 0 0 2px #dee2e6; }
-    .timeline-item.booking::before { background: var(--info); }
-    .timeline-item.anc_visit::before { background: var(--maternity-pink); }
-    .timeline-item.delivery::before { background: var(--success); }
-    .timeline-item.postnatal::before { background: var(--warning); }
-    .timeline-date { font-size: 0.75rem; color: #6c757d; }
-    .timeline-title { font-weight: 600; color: #2c3e50; }
-    .timeline-detail { font-size: 0.85rem; color: #6c757d; }
+    .timeline-container {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-container::before {
+        content: '';
+        position: absolute;
+        left: 12px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -24px;
+        top: 4px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--maternity-pink);
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px #dee2e6;
+    }
+
+    .timeline-item.booking::before {
+        background: var(--info);
+    }
+
+    .timeline-item.anc_visit::before {
+        background: var(--maternity-pink);
+    }
+
+    .timeline-item.delivery::before {
+        background: var(--success);
+    }
+
+    .timeline-item.postnatal::before {
+        background: var(--warning);
+    }
+
+    .timeline-date {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .timeline-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .timeline-detail {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
 
     /* Partograph Grid */
-    .partograph-chart { overflow-x: auto; }
-    .partograph-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    .partograph-table th, .partograph-table td { padding: 0.5rem; border: 1px solid #dee2e6; text-align: center; }
-    .partograph-table th { background: #f8f9fa; font-weight: 600; white-space: nowrap; }
+    .partograph-chart {
+        overflow-x: auto;
+    }
+
+    .partograph-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+
+    .partograph-table th,
+    .partograph-table td {
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        text-align: center;
+    }
+
+    .partograph-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        white-space: nowrap;
+    }
 
     /* Baby Card */
     .baby-card {
@@ -540,53 +1044,196 @@
         border: 1px solid #e9ecef;
         padding: 1.25rem;
         margin-bottom: 1rem;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
-    .baby-card .baby-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-    .baby-card .baby-name { font-size: 1.1rem; font-weight: 700; color: #2c3e50; }
-    .baby-card .baby-sex { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.8rem; font-weight: 600; }
-    .baby-card .baby-sex.male { background: #e3f2fd; color: #1565c0; }
-    .baby-card .baby-sex.female { background: #fce4ec; color: #c2185b; }
-    .baby-card .baby-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
-    .baby-card .baby-metric-label { font-size: 0.7rem; text-transform: uppercase; color: #6c757d; }
-    .baby-card .baby-metric-value { font-size: 0.95rem; font-weight: 600; }
+
+    .baby-card .baby-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .baby-card .baby-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .baby-card .baby-sex {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .baby-card .baby-sex.male {
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .baby-card .baby-sex.female {
+        background: #fce4ec;
+        color: #c2185b;
+    }
+
+    .baby-card .baby-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .baby-card .baby-metric-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #6c757d;
+    }
+
+    .baby-card .baby-metric-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
 
     /* Immunization Schedule */
-    .imm-schedule-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-bottom: 1px solid #f1f3f5; }
-    .imm-schedule-item:last-child { border-bottom: none; }
-    .imm-status-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .imm-status-dot.given { background: #28a745; }
-    .imm-status-dot.overdue { background: #dc3545; }
-    .imm-status-dot.upcoming { background: #dee2e6; }
-    .imm-vaccine-name { font-weight: 600; color: #2c3e50; flex: 1; }
-    .imm-age-label { font-size: 0.8rem; color: #6c757d; }
-    .imm-due-date { font-size: 0.8rem; color: #6c757d; }
+    .imm-schedule-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-bottom: 1px solid #f1f3f5;
+    }
+
+    .imm-schedule-item:last-child {
+        border-bottom: none;
+    }
+
+    .imm-status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .imm-status-dot.given {
+        background: #28a745;
+    }
+
+    .imm-status-dot.overdue {
+        background: #dc3545;
+    }
+
+    .imm-status-dot.upcoming {
+        background: #dee2e6;
+    }
+
+    .imm-vaccine-name {
+        font-weight: 600;
+        color: #2c3e50;
+        flex: 1;
+    }
+
+    .imm-age-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .imm-due-date {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
 
     /* ═══ SHARED: Responsive (identical to nursing workbench) ═══ */
     @media (max-width: 767px) {
-        .nursing-workbench-container { flex-direction: column; }
-        .left-panel { width: 100%; min-width: 100%; border-right: none; border-bottom: 2px solid #e9ecef; }
-        .main-workspace { display: none; }
-        .main-workspace.active { display: flex; }
-        .left-panel.hidden { display: none; }
-        .workspace-navbar { display: flex; }
-        .btn-view-work-pane { display: flex; }
-        .panel-header { display: flex; }
+        .nursing-workbench-container {
+            flex-direction: column;
+        }
+
+        .left-panel {
+            width: 100%;
+            min-width: 100%;
+            border-right: none;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .main-workspace {
+            display: none;
+        }
+
+        .main-workspace.active {
+            display: flex;
+        }
+
+        .left-panel.hidden {
+            display: none;
+        }
+
+        .workspace-navbar {
+            display: flex;
+        }
+
+        .btn-view-work-pane {
+            display: flex;
+        }
+
+        .panel-header {
+            display: flex;
+        }
     }
 
     @media (min-width: 768px) {
-        .left-panel { display: flex !important; }
-        .left-panel.hidden { display: flex !important; width: 0; min-width: 0; overflow: hidden; border: none; padding: 0; }
-        .main-workspace { display: flex !important; }
-        .workspace-navbar { display: flex !important; }
-        .btn-back-to-search { display: none !important; }
-        .btn-toggle-search { display: flex !important; }
+        .left-panel {
+            display: flex !important;
+        }
+
+        .left-panel.hidden {
+            display: flex !important;
+            width: 0;
+            min-width: 0;
+            overflow: hidden;
+            border: none;
+            padding: 0;
+        }
+
+        .main-workspace {
+            display: flex !important;
+        }
+
+        .workspace-navbar {
+            display: flex !important;
+        }
+
+        .btn-back-to-search {
+            display: none !important;
+        }
+
+        .btn-toggle-search {
+            display: flex !important;
+        }
     }
 
     /* Form sections */
-    .form-section { padding: 1.25rem; border-bottom: 1px solid #e9ecef; }
-    .form-section-title { font-size: 0.9rem; font-weight: 700; color: var(--maternity-pink); text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-    .form-section-title i { font-size: 1.1rem; }
+    .form-section {
+        padding: 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .form-section-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--maternity-pink);
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-section-title i {
+        font-size: 1.1rem;
+    }
 
     /* Stat cards */
     .mat-stat-card {
@@ -596,34 +1243,116 @@
         padding: 14px 16px;
         border-radius: 10px;
         background: #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         border-left: 4px solid transparent;
     }
-    .mat-stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
-    .mat-stat-value { font-size: 1.15rem; font-weight: 700; color: #2d3748; }
-    .mat-stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #718096; }
 
-    .mat-stat-pink { border-left-color: var(--maternity-pink); }
-    .mat-stat-pink .mat-stat-icon { background: linear-gradient(135deg, #e91e8a, #ad1457); }
-    .mat-stat-green { border-left-color: #28a745; }
-    .mat-stat-green .mat-stat-icon { background: linear-gradient(135deg, #28a745, #20c997); }
-    .mat-stat-blue { border-left-color: #17a2b8; }
-    .mat-stat-blue .mat-stat-icon { background: linear-gradient(135deg, #17a2b8, #007bff); }
-    .mat-stat-orange { border-left-color: #fd7e14; }
-    .mat-stat-orange .mat-stat-icon { background: linear-gradient(135deg, #fd7e14, #e65100); }
-    .mat-stat-red { border-left-color: #dc3545; }
-    .mat-stat-red .mat-stat-icon { background: linear-gradient(135deg, #dc3545, #b71c1c); }
+    .mat-stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+
+    .mat-stat-value {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .mat-stat-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #718096;
+    }
+
+    .mat-stat-pink {
+        border-left-color: var(--maternity-pink);
+    }
+
+    .mat-stat-pink .mat-stat-icon {
+        background: linear-gradient(135deg, #e91e8a, #ad1457);
+    }
+
+    .mat-stat-green {
+        border-left-color: #28a745;
+    }
+
+    .mat-stat-green .mat-stat-icon {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+
+    .mat-stat-blue {
+        border-left-color: #17a2b8;
+    }
+
+    .mat-stat-blue .mat-stat-icon {
+        background: linear-gradient(135deg, #17a2b8, #007bff);
+    }
+
+    .mat-stat-orange {
+        border-left-color: #fd7e14;
+    }
+
+    .mat-stat-orange .mat-stat-icon {
+        background: linear-gradient(135deg, #fd7e14, #e65100);
+    }
+
+    .mat-stat-red {
+        border-left-color: #dc3545;
+    }
+
+    .mat-stat-red .mat-stat-icon {
+        background: linear-gradient(135deg, #dc3545, #b71c1c);
+    }
 
     /* Timeline icons */
-    .timeline-item { position: relative; padding-left: 28px; }
-    .timeline-item .timeline-icon { position: absolute; left: 0; top: 2px; font-size: 1.1rem; }
-    .timeline-item[style*="cursor:pointer"]:hover { background: rgba(0,0,0,0.02); border-radius: 4px; }
+    .timeline-item {
+        position: relative;
+        padding-left: 28px;
+    }
+
+    .timeline-item .timeline-icon {
+        position: absolute;
+        left: 0;
+        top: 2px;
+        font-size: 1.1rem;
+    }
+
+    .timeline-item[style*="cursor:pointer"]:hover {
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 4px;
+    }
 
     /* Notes */
-    .note-card { background: white; border-radius: 0.5rem; border-left: 3px solid var(--maternity-pink); padding: 0.75rem 1rem; margin-bottom: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .note-time { font-size: 0.75rem; color: #6c757d; }
-    .note-author { font-weight: 600; font-size: 0.85rem; color: #2c3e50; }
-    .note-body { font-size: 0.9rem; margin-top: 0.5rem; }
+    .note-card {
+        background: white;
+        border-radius: 0.5rem;
+        border-left: 3px solid var(--maternity-pink);
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .note-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .note-author {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #2c3e50;
+    }
+
+    .note-body {
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
 </style>
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -642,8 +1371,8 @@
         </span>
         @can('store-context.change-manual')
         <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2"
-                onclick="openStoreContextOverride()"
-                title="Change active store context">
+            onclick="openStoreContextOverride()"
+            title="Change active store context">
             <i class="fas fa-exchange-alt"></i> Change
         </button>
         @endcan
@@ -1016,9 +1745,9 @@
                             <label class="form-label fw-bold mb-2" style="font-size: 1rem;"><i class="mdi mdi-store text-success"></i> Step 1: Select Dispensing Store</label>
                             <select id="imm-modal-vaccine-store" class="form-control form-control-lg" style="border: 2px solid #388e3c; font-weight: 500;" required>
                                 @if($resolvedStore ?? null)
-                                    <option value="{{ $resolvedStore->id }}" selected>{{ $resolvedStore->store_name }}</option>
+                                <option value="{{ $resolvedStore->id }}" selected>{{ $resolvedStore->store_name }}</option>
                                 @else
-                                    <option value="">-- No store assigned --</option>
+                                <option value="">-- No store assigned --</option>
                                 @endif
                             </select>
                         </div>
@@ -1093,7 +1822,9 @@
                     <div class="form-row">
                         <div class="form-group col-md-4">
                             <label for="imm-modal-vaccine-batch-select"><i class="mdi mdi-package-variant"></i> Select Batch <span class="badge badge-info badge-sm ml-1" title="Auto-selects FIFO">FIFO</span></label>
-                            <select class="form-control" id="imm-modal-vaccine-batch-select"><option value="">-- Select store first --</option></select>
+                            <select class="form-control" id="imm-modal-vaccine-batch-select">
+                                <option value="">-- Select store first --</option>
+                            </select>
                             <small class="text-muted" id="imm-modal-vaccine-batch-help">Select product to see available batches</small>
                         </div>
                         <div class="form-group col-md-4">
@@ -1203,7 +1934,11 @@
                             <div class="col-md-3 mb-3"><label class="form-label">Year</label><input type="number" name="year" class="form-control" min="1950" placeholder="e.g. 2021"></div>
                             <div class="col-md-3 mb-3"><label class="form-label">Duration (wks) <span class="mat-tooltip-icon" title="Gestational age at delivery. Term: 37–42 weeks. Preterm: <37 weeks"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="duration_weeks" class="form-control" min="1" max="45" placeholder="e.g. 39"></div>
                             <div class="col-md-3 mb-3"><label class="form-label">Place of Delivery</label><input type="text" name="place_of_delivery" class="form-control" placeholder="e.g. General Hospital"></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Baby Sex</label><select name="baby_sex" class="form-select"><option value="">-- Select --</option><option value="male">Male</option><option value="female">Female</option></select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Baby Sex</label><select name="baby_sex" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select></div>
                         </div>
                         <div class="row">
                             <div class="col-md-4 mb-3"><label class="form-label">Birth Weight (kg) <span class="mat-tooltip-icon" title="Normal: 2.5–4.0 kg. Low birth weight may recur in subsequent pregnancies"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="birth_weight_kg" class="form-control" step="0.1" placeholder="e.g. 3.2"></div>
@@ -1212,7 +1947,11 @@
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-clipboard-check"></i> Outcome</div>
                         <div class="row">
-                            <div class="col-md-4 mb-3"><label class="form-label">Outcome <span class="mat-tooltip-icon" title="Alive: live birth. Dead: neonatal death. Stillbirth: fetal death ≥20 weeks or ≥500g"><i class="mdi mdi-help-circle"></i></span></label><select name="outcome" class="form-select"><option value="alive">Alive</option><option value="dead">Dead</option><option value="stillbirth">Stillbirth</option></select></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Outcome <span class="mat-tooltip-icon" title="Alive: live birth. Dead: neonatal death. Stillbirth: fetal death ≥20 weeks or ≥500g"><i class="mdi mdi-help-circle"></i></span></label><select name="outcome" class="form-select">
+                                    <option value="alive">Alive</option>
+                                    <option value="dead">Dead</option>
+                                    <option value="stillbirth">Stillbirth</option>
+                                </select></div>
                             <div class="col-md-4 mb-3"><label class="form-label">Complications</label><input type="text" name="complications" class="form-control" placeholder="e.g. Pre-eclampsia, PPH"></div>
                             <div class="col-md-4 mb-3"><label class="form-label">Notes</label><input type="text" name="notes" class="form-control" placeholder="Additional observations"></div>
                         </div>
@@ -1265,43 +2004,87 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i><div>Record labour progress and maternal/fetal observations at this time point. Use clinically measured values only.</div></div>
+                <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
+                    <div>Record labour progress and maternal/fetal observations at this time point. Use clinically measured values only.</div>
+                </div>
                 <form id="partograph-form">
                     <input type="hidden" id="partograph-delivery-id">
                     <input type="hidden" id="partograph-entry-id">
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-clock-outline"></i> Timing & Progress</div>
                         <div class="row">
-                            <div class="col-md-4 mb-3"><label class="form-label">Recorded At <span class="text-danger">*</span></label><input type="datetime-local" name="recorded_at" class="form-control" required><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Exact time of this observation</div></div>
-                            <div class="col-md-4 mb-3"><label class="form-label">Cervical Dilation (cm) <span class="text-danger">*</span></label><input type="number" name="cervical_dilation_cm" class="form-control" min="0" max="10" step="0.1" required><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> 0 = closed, 10 = fully dilated. Active labour ≥ 4 cm</div></div>
-                            <div class="col-md-4 mb-3"><label class="form-label">Descent of Head <span class="mat-tooltip-icon" title="Fifths palpable above pelvic brim. 5/5 = free, 0/5 = fully engaged"><i class="mdi mdi-help-circle"></i></span></label><input type="text" name="descent" class="form-control" placeholder="e.g. 5/5, 3/5, 0/5"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Fifths of head palpable above brim (5/5 = free, 0/5 = fully engaged)</div></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Recorded At <span class="text-danger">*</span></label><input type="datetime-local" name="recorded_at" class="form-control" required>
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Exact time of this observation</div>
+                            </div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Cervical Dilation (cm) <span class="text-danger">*</span></label><input type="number" name="cervical_dilation_cm" class="form-control" min="0" max="10" step="0.1" required>
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> 0 = closed, 10 = fully dilated. Active labour ≥ 4 cm</div>
+                            </div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Descent of Head <span class="mat-tooltip-icon" title="Fifths palpable above pelvic brim. 5/5 = free, 0/5 = fully engaged"><i class="mdi mdi-help-circle"></i></span></label><input type="text" name="descent" class="form-control" placeholder="e.g. 5/5, 3/5, 0/5">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Fifths of head palpable above brim (5/5 = free, 0/5 = fully engaged)</div>
+                            </div>
                         </div>
                     </div>
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-heart-pulse"></i> Fetal & Contractions</div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Contractions /10 min <span class="mat-tooltip-icon" title="Count contractions felt in 10 minutes. Active labour: ≥3 per 10 min"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contractions_per_10min" class="form-control" min="0" max="20"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Active labour: ≥ 3 contractions in 10 min</div></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Duration (sec) <span class="mat-tooltip-icon" title="Duration of each contraction in seconds. <20s = mild, 20-40s = moderate, >40s = strong"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contraction_duration_sec" class="form-control" min="0" max="180"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> &lt;20s mild, 20–40s moderate, &gt;40s strong</div></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm. <110 = bradycardia, >160 = tachycardia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fetal_heart_rate" class="form-control" min="60" max="220"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 110–160 bpm</div></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Amniotic Fluid <span class="mat-tooltip-icon" title="C = Clear (normal), I = Intact membranes, M = Meconium-stained (fetal distress risk), B = Bloody, A = Absent"><i class="mdi mdi-help-circle"></i></span></label><select name="amniotic_fluid" class="form-select"><option value="">-- Select --</option><option value="intact">I — Intact</option><option value="clear">C — Clear</option><option value="meconium_stained">M — Meconium stained</option><option value="bloody">B — Bloody</option><option value="absent">A — Absent</option></select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Contractions /10 min <span class="mat-tooltip-icon" title="Count contractions felt in 10 minutes. Active labour: ≥3 per 10 min"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contractions_per_10min" class="form-control" min="0" max="20">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Active labour: ≥ 3 contractions in 10 min</div>
+                            </div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Duration (sec) <span class="mat-tooltip-icon" title="Duration of each contraction in seconds. <20s = mild, 20-40s = moderate, >40s = strong"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contraction_duration_sec" class="form-control" min="0" max="180">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> &lt;20s mild, 20–40s moderate, &gt;40s strong</div>
+                            </div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm. <110 = bradycardia, >160 = tachycardia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fetal_heart_rate" class="form-control" min="60" max="220">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 110–160 bpm</div>
+                            </div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Amniotic Fluid <span class="mat-tooltip-icon" title="C = Clear (normal), I = Intact membranes, M = Meconium-stained (fetal distress risk), B = Bloody, A = Absent"><i class="mdi mdi-help-circle"></i></span></label><select name="amniotic_fluid" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="intact">I — Intact</option>
+                                    <option value="clear">C — Clear</option>
+                                    <option value="meconium_stained">M — Meconium stained</option>
+                                    <option value="bloody">B — Bloody</option>
+                                    <option value="absent">A — Absent</option>
+                                </select></div>
                         </div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Moulding <span class="mat-tooltip-icon" title="Overlap of fetal skull bones. None = no overlap, += reducible, ++/+++ = irreducible (higher risk of obstruction)"><i class="mdi mdi-help-circle"></i></span></label><select name="moulding" class="form-select"><option value="">-- Select --</option><option value="none">None (0)</option><option value="+">+ (bones touching)</option><option value="++">++ (overlapping, reducible)</option><option value="+++">+++ (overlapping, irreducible)</option></select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Moulding <span class="mat-tooltip-icon" title="Overlap of fetal skull bones. None = no overlap, += reducible, ++/+++ = irreducible (higher risk of obstruction)"><i class="mdi mdi-help-circle"></i></span></label><select name="moulding" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="none">None (0)</option>
+                                    <option value="+">+ (bones touching)</option>
+                                    <option value="++">++ (overlapping, reducible)</option>
+                                    <option value="+++">+++ (overlapping, irreducible)</option>
+                                </select></div>
                         </div>
                     </div>
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-account-heart"></i> Maternal Monitoring</div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Pulse (bpm) <span class="mat-tooltip-icon" title="Normal maternal pulse: 60–100 bpm. Tachycardia may indicate dehydration, infection, or haemorrhage"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_pulse" class="form-control" min="20" max="220"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 60–100 bpm</div></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Pulse (bpm) <span class="mat-tooltip-icon" title="Normal maternal pulse: 60–100 bpm. Tachycardia may indicate dehydration, infection, or haemorrhage"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_pulse" class="form-control" min="20" max="220">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 60–100 bpm</div>
+                            </div>
                             <div class="col-md-3 mb-3"><label class="form-label">BP Systolic <span class="mat-tooltip-icon" title="Normal: 90–139 mmHg. ≥140 may indicate pre-eclampsia/eclampsia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_bp_systolic" class="form-control" min="40" max="300"></div>
                             <div class="col-md-3 mb-3"><label class="form-label">BP Diastolic <span class="mat-tooltip-icon" title="Normal: 60–89 mmHg. ≥90 is significant hypertension in labour"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_bp_diastolic" class="form-control" min="20" max="220"></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Temp (°C) <span class="mat-tooltip-icon" title="Normal: 36.5–37.5°C. ≥38°C may indicate chorioamnionitis or infection"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_temp_c" class="form-control" step="0.1" min="30" max="45"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 36.5–37.5°C</div></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Temp (°C) <span class="mat-tooltip-icon" title="Normal: 36.5–37.5°C. ≥38°C may indicate chorioamnionitis or infection"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_temp_c" class="form-control" step="0.1" min="30" max="45">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 36.5–37.5°C</div>
+                            </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Urine Output (ml)</label><input type="number" name="urine_output_ml" class="form-control" min="0"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Adequate: ≥ 30 ml/hr</div></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Urine Protein</label><select name="urine_protein" class="form-select"><option value="">-- Select --</option><option value="nil">Nil</option><option value="trace">Trace</option><option value="+">+</option><option value="++">++</option><option value="+++">+++</option></select><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> ≥++ with high BP → pre-eclampsia</div></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Urine Output (ml)</label><input type="number" name="urine_output_ml" class="form-control" min="0">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Adequate: ≥ 30 ml/hr</div>
+                            </div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Urine Protein</label><select name="urine_protein" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="nil">Nil</option>
+                                    <option value="trace">Trace</option>
+                                    <option value="+">+</option>
+                                    <option value="++">++</option>
+                                    <option value="+++">+++</option>
+                                </select>
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> ≥++ with high BP → pre-eclampsia</div>
+                            </div>
                             <div class="col-md-3 mb-3"><label class="form-label">Oxytocin Dose</label><input type="text" name="oxytocin_dose" class="form-control" placeholder="e.g. 10 IU in 500ml"></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">IV Fluids</label><input type="text" name="iv_fluids" class="form-control" placeholder="e.g. Ringer's Lactate 1L"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Document type and volume of IV fluids</div></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">IV Fluids</label><input type="text" name="iv_fluids" class="form-control" placeholder="e.g. Ringer's Lactate 1L">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Document type and volume of IV fluids</div>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12 mb-3"><label class="form-label">Medications / Notes</label><textarea name="medications" class="form-control" rows="2" placeholder="Additional medications, observations, or clinical notes"></textarea></div>
@@ -1326,7 +2109,9 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i><div>Use the rich editor to write structured clinical notes. You can use <strong>headings, bold, lists</strong> and <strong>tables</strong> for clear documentation.</div></div>
+                <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
+                    <div>Use the rich editor to write structured clinical notes. You can use <strong>headings, bold, lists</strong> and <strong>tables</strong> for clear documentation.</div>
+                </div>
                 <form id="add-note-form">
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-tag"></i> Note Classification</div>
@@ -1362,29 +2147,59 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i><div>Postnatal visits assess <strong>mother's recovery</strong> and <strong>baby's wellbeing</strong>. WHO recommends visits within 24h, Day 3, Week 1–2, and Week 6 post-delivery.</div></div>
+                <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
+                    <div>Postnatal visits assess <strong>mother's recovery</strong> and <strong>baby's wellbeing</strong>. WHO recommends visits within 24h, Day 3, Week 1–2, and Week 6 post-delivery.</div>
+                </div>
                 <form id="postnatal-form">
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-calendar-clock"></i> Visit Information</div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Visit Type <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="WHO recommended schedule: Within 24h, Day 3, Week 1–2, Week 6"><i class="mdi mdi-help-circle"></i></span></label><select name="visit_type" class="form-select" required><option value="within_24h">Within 24 hours</option><option value="day_3">Day 3</option><option value="week_1_2">Week 1–2</option><option value="week_6">Week 6</option><option value="other">Other</option></select></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Visit Type <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="WHO recommended schedule: Within 24h, Day 3, Week 1–2, Week 6"><i class="mdi mdi-help-circle"></i></span></label><select name="visit_type" class="form-select" required>
+                                    <option value="within_24h">Within 24 hours</option>
+                                    <option value="day_3">Day 3</option>
+                                    <option value="week_1_2">Week 1–2</option>
+                                    <option value="week_6">Week 6</option>
+                                    <option value="other">Other</option>
+                                </select></div>
                             <div class="col-md-6 mb-3"><label class="form-label">Visit Date <span class="text-danger">*</span></label><input type="date" name="visit_date" class="form-control" required></div>
                         </div>
                     </div>
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-mother-heart"></i> Mother Assessment</div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">General Condition</label><select name="general_condition" class="form-select"><option value="">-- Select --</option><option>Good</option><option>Fair</option><option>Poor</option></select></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Blood Pressure</label><input type="text" name="blood_pressure" class="form-control" placeholder="e.g. 120/80"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Monitor for postpartum hypertension</div></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Lochia <span class="mat-tooltip-icon" title="Normal: decreasing red→pink→white over weeks. Offensive smell may indicate infection"><i class="mdi mdi-help-circle"></i></span></label><select name="lochia" class="form-select"><option value="">-- Select --</option><option>Normal</option><option>Offensive</option><option>Heavy</option></select></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">FP Counselled <span class="mat-tooltip-icon" title="Was the mother counselled about family planning options?"><i class="mdi mdi-help-circle"></i></span></label><select name="family_planning_counselled" class="form-select"><option value="0">No</option><option value="1">Yes</option></select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">General Condition</label><select name="general_condition" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option>Good</option>
+                                    <option>Fair</option>
+                                    <option>Poor</option>
+                                </select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Blood Pressure</label><input type="text" name="blood_pressure" class="form-control" placeholder="e.g. 120/80">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Monitor for postpartum hypertension</div>
+                            </div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Lochia <span class="mat-tooltip-icon" title="Normal: decreasing red→pink→white over weeks. Offensive smell may indicate infection"><i class="mdi mdi-help-circle"></i></span></label><select name="lochia" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option>Normal</option>
+                                    <option>Offensive</option>
+                                    <option>Heavy</option>
+                                </select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">FP Counselled <span class="mat-tooltip-icon" title="Was the mother counselled about family planning options?"><i class="mdi mdi-help-circle"></i></span></label><select name="family_planning_counselled" class="form-select">
+                                    <option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                </select></div>
                         </div>
                     </div>
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-baby-face-outline"></i> Baby Assessment</div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Baby Weight (kg)</label><input type="number" name="baby_weight_kg" class="form-control" step="0.01" placeholder="e.g. 3.20"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Up to 10% weight loss in first week is normal</div></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Baby Feeding</label><select name="baby_feeding" class="form-select"><option value="">-- Select --</option><option>Exclusive breastfeeding</option><option>Formula</option><option>Mixed</option></select></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Baby Weight (kg)</label><input type="number" name="baby_weight_kg" class="form-control" step="0.01" placeholder="e.g. 3.20">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Up to 10% weight loss in first week is normal</div>
+                            </div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Baby Feeding</label><select name="baby_feeding" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option>Exclusive breastfeeding</option>
+                                    <option>Formula</option>
+                                    <option>Mixed</option>
+                                </select></div>
                         </div>
                     </div>
                     <div class="mat-form-section">
@@ -1411,21 +2226,37 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i><div>Record the antenatal care visit details. <strong>Vital signs</strong> and <strong>obstetric examination findings</strong> are grouped separately. Fields marked <span class="text-danger">*</span> are required.</div></div>
+                <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
+                    <div>Record the antenatal care visit details. <strong>Vital signs</strong> and <strong>obstetric examination findings</strong> are grouped separately. Fields marked <span class="text-danger">*</span> are required.</div>
+                </div>
                 <form id="anc-visit-form">
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-calendar-clock"></i> Visit Information</div>
                         <div class="row">
                             <div class="col-md-3 mb-3"><label class="form-label">Visit Date <span class="text-danger">*</span></label><input type="date" name="visit_date" class="form-control" required></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Gestational Age (weeks) <span class="text-danger">*</span></label><input type="number" name="gestational_age_weeks" class="form-control" min="1" max="45" placeholder="e.g. 28" required><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Current gestational age calculated from LMP</div></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Visit Type</label><select name="visit_type" class="form-select"><option value="">Auto-detect</option><option value="booking">Booking</option><option value="routine">Routine</option><option value="emergency">Emergency</option><option value="specialist_referral">Specialist Referral</option></select><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Leave blank for auto-detection (booking/routine)</div></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Next Appointment</label><input type="date" name="next_appointment" class="form-control"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Schedule the next ANC visit date</div></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Gestational Age (weeks) <span class="text-danger">*</span></label><input type="number" name="gestational_age_weeks" class="form-control" min="1" max="45" placeholder="e.g. 28" required>
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Current gestational age calculated from LMP</div>
+                            </div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Visit Type</label><select name="visit_type" class="form-select">
+                                    <option value="">Auto-detect</option>
+                                    <option value="booking">Booking</option>
+                                    <option value="routine">Routine</option>
+                                    <option value="emergency">Emergency</option>
+                                    <option value="specialist_referral">Specialist Referral</option>
+                                </select>
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Leave blank for auto-detection (booking/routine)</div>
+                            </div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Next Appointment</label><input type="date" name="next_appointment" class="form-control">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Schedule the next ANC visit date</div>
+                            </div>
                         </div>
                     </div>
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-heart-pulse"></i> Maternal Vitals</div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Weight (kg)</label><input type="number" name="weight_kg" class="form-control" step="0.1" placeholder="e.g. 68.5"><div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Monitor weight gain trend each visit</div></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Weight (kg)</label><input type="number" name="weight_kg" class="form-control" step="0.1" placeholder="e.g. 68.5">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Monitor weight gain trend each visit</div>
+                            </div>
                             <div class="col-md-3 mb-3"><label class="form-label">BP Systolic <span class="mat-tooltip-icon" title="Top number of blood pressure. Normal: 90–139 mmHg"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="blood_pressure_systolic" class="form-control" min="50" max="250" placeholder="e.g. 120"></div>
                             <div class="col-md-3 mb-3"><label class="form-label">BP Diastolic <span class="mat-tooltip-icon" title="Bottom number. Normal: 60–89 mmHg. ≥90 may indicate pre-eclampsia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="blood_pressure_diastolic" class="form-control" min="30" max="150" placeholder="e.g. 80"></div>
                             <div class="col-md-3 mb-3"><label class="form-label">Haemoglobin (g/dL) <span class="mat-tooltip-icon" title="Normal in pregnancy: 10–14 g/dL. <10 = anaemia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="haemoglobin" class="form-control" step="0.1" placeholder="e.g. 11.5"></div>
@@ -1436,13 +2267,44 @@
                         <div class="row">
                             <div class="col-md-3 mb-3"><label class="form-label">Fundal Height (cm) <span class="mat-tooltip-icon" title="Symphysis-fundal height — roughly equals gestational age in weeks (±2cm)"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fundal_height_cm" class="form-control" step="0.1" placeholder="e.g. 28"></div>
                             <div class="col-md-3 mb-3"><label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fetal_heart_rate" class="form-control" min="60" max="200" placeholder="e.g. 140"></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Presentation <span class="mat-tooltip-icon" title="Cephalic: head-first (normal). Breech: buttocks/feet first. Transverse: sideways"><i class="mdi mdi-help-circle"></i></span></label><select name="presentation" class="form-select"><option value="">-- Select --</option><option>Cephalic</option><option>Breech</option><option>Transverse</option><option>Oblique</option></select></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Oedema <span class="mat-tooltip-icon" title="+: pedal only. ++: lower legs. +++: generalized/facial (pre-eclampsia warning)"><i class="mdi mdi-help-circle"></i></span></label><select name="oedema" class="form-select"><option value="">-- Select --</option><option>None</option><option>+</option><option>++</option><option>+++</option></select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Presentation <span class="mat-tooltip-icon" title="Cephalic: head-first (normal). Breech: buttocks/feet first. Transverse: sideways"><i class="mdi mdi-help-circle"></i></span></label><select name="presentation" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option>Cephalic</option>
+                                    <option>Breech</option>
+                                    <option>Transverse</option>
+                                    <option>Oblique</option>
+                                </select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Oedema <span class="mat-tooltip-icon" title="+: pedal only. ++: lower legs. +++: generalized/facial (pre-eclampsia warning)"><i class="mdi mdi-help-circle"></i></span></label><select name="oedema" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option>None</option>
+                                    <option>+</option>
+                                    <option>++</option>
+                                    <option>+++</option>
+                                </select></div>
                         </div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Foetal Movement <span class="mat-tooltip-icon" title="Absent/reduced movement may indicate fetal distress"><i class="mdi mdi-help-circle"></i></span></label><select name="foetal_movement" class="form-select"><option value="">-- Select --</option><option value="present">Present</option><option value="absent">Absent</option><option value="reduced">Reduced</option></select></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Urine Protein <span class="mat-tooltip-icon" title="≥++ with raised BP may indicate pre-eclampsia"><i class="mdi mdi-help-circle"></i></span></label><select name="urine_protein" class="form-select"><option value="">-- Select --</option><option value="nil">Nil</option><option value="trace">Trace</option><option value="+">+</option><option value="++">++</option><option value="+++">+++</option></select></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Urine Glucose <span class="mat-tooltip-icon" title="Persistent glycosuria warrants screening for gestational diabetes"><i class="mdi mdi-help-circle"></i></span></label><select name="urine_glucose" class="form-select"><option value="">-- Select --</option><option value="nil">Nil</option><option value="trace">Trace</option><option value="+">+</option><option value="++">++</option><option value="+++">+++</option></select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Foetal Movement <span class="mat-tooltip-icon" title="Absent/reduced movement may indicate fetal distress"><i class="mdi mdi-help-circle"></i></span></label><select name="foetal_movement" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="present">Present</option>
+                                    <option value="absent">Absent</option>
+                                    <option value="reduced">Reduced</option>
+                                </select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Urine Protein <span class="mat-tooltip-icon" title="≥++ with raised BP may indicate pre-eclampsia"><i class="mdi mdi-help-circle"></i></span></label><select name="urine_protein" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="nil">Nil</option>
+                                    <option value="trace">Trace</option>
+                                    <option value="+">+</option>
+                                    <option value="++">++</option>
+                                    <option value="+++">+++</option>
+                                </select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Urine Glucose <span class="mat-tooltip-icon" title="Persistent glycosuria warrants screening for gestational diabetes"><i class="mdi mdi-help-circle"></i></span></label><select name="urine_glucose" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="nil">Nil</option>
+                                    <option value="trace">Trace</option>
+                                    <option value="+">+</option>
+                                    <option value="++">++</option>
+                                    <option value="+++">+++</option>
+                                </select></div>
                         </div>
                     </div>
                     <div class="mat-form-section">
@@ -1471,12 +2333,27 @@
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i> Record the newborn's identity, measurements, and immediate care provided at birth.</div>
                 <form id="register-baby-form">
+                    @csrf
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-account"></i> Identity</div>
                         <div class="row">
                             <div class="col-md-4 mb-3"><label class="form-label">Surname <span class="text-danger">*</span></label><input type="text" name="baby_surname" class="form-control" placeholder="Baby's surname" required></div>
                             <div class="col-md-4 mb-3"><label class="form-label">First Name <span class="text-danger">*</span></label><input type="text" name="baby_firstname" class="form-control" placeholder="Baby's first name" required></div>
-                            <div class="col-md-4 mb-3"><label class="form-label">Sex <span class="text-danger">*</span></label><select name="sex" class="form-select" required><option value="">-- Select --</option><option value="male">Male</option><option value="female">Female</option><option value="ambiguous">Ambiguous</option></select></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Sex <span class="text-danger">*</span></label><select name="sex" class="form-select" required>
+                                    <option value="">-- Select --</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="ambiguous">Ambiguous</option>
+                                </select></div>
+                            <div class="col-md-12 mb-0">
+                                <div class="form-check form-switch border rounded p-2 px-4 bg-light">
+                                    <input class="form-check-input" type="checkbox" name="is_still_birth" id="is_still_birth" value="1">
+                                    <label class="form-check-label fw-bold text-danger" for="is_still_birth">
+                                        <i class="mdi mdi-emoticon-dead"></i> Still Birth (Deceased at birth)
+                                    </label>
+                                    <div class="text-muted small ms-4">Checking this will automatically create a death record for clinical statistics.</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="mat-form-section">
@@ -1500,7 +2377,11 @@
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-medical-bag"></i> Immediate Care</div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Feeding Method <span class="mat-tooltip-icon" title="WHO recommends exclusive breastfeeding for the first 6 months"><i class="mdi mdi-help-circle"></i></span></label><select name="feeding_method" class="form-select"><option value="exclusive_breastfeeding">Exclusive Breastfeeding</option><option value="formula">Formula</option><option value="mixed">Mixed</option></select></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Feeding Method <span class="mat-tooltip-icon" title="WHO recommends exclusive breastfeeding for the first 6 months"><i class="mdi mdi-help-circle"></i></span></label><select name="feeding_method" class="form-select">
+                                    <option value="exclusive_breastfeeding">Exclusive Breastfeeding</option>
+                                    <option value="formula">Formula</option>
+                                    <option value="mixed">Mixed</option>
+                                </select></div>
                         </div>
                         <div class="row mt-2">
                             <div class="col-md-12 mb-3">
@@ -1569,6 +2450,36 @@
     </div>
 </div>
 
+<!-- Mark Baby Deceased Modal -->
+<div class="modal fade" id="markBabyDeceasedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="mdi mdi-account-remove"></i> Mark Baby as Deceased</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="mark-baby-deceased-form">
+                    @csrf
+                    <input type="hidden" name="baby_id" id="deceased-baby-id">
+                    <div class="mb-3">
+                        <label class="form-label">Date of Death <span class="text-danger">*</span></label>
+                        <input type="datetime-local" name="deceased_at" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cause of Death <span class="text-danger">*</span></label>
+                        <textarea name="cause_of_death" class="form-control" rows="3" placeholder="Enter cause of death..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-baby-death"><i class="mdi mdi-check"></i> Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
@@ -1579,24 +2490,24 @@
 <script src="{{ asset('js/immunization-module.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
-window.BILLING_KIT_CONFIG = {
-    csrf: '{{ csrf_token() }}',
-    addServiceRoute: '{{ route("nursing-workbench.billing.add-service") }}',
-    addLabRoute: '{{ route("nursing-workbench.billing.add-lab-bill") }}',
-    addImagingRoute: '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
-    addConsumableRoute: '{{ route("nursing-workbench.billing.add-consumable") }}',
-    removeBillBase: '/nursing-workbench/remove-bill',
-    pendingBillsBase: '/nursing-workbench/patient',
-    serviceRequestsBase: '/nursing-workbench/patient',
-    searchServicesRoute: '{{ route("nursing-workbench.search-services") }}',
-    searchProductsRoute: '{{ route("nursing-workbench.search-products") }}',
-    productBatchesRoute: '{{ route("nursing-workbench.product-batches") }}',
-    investigationCategoryId: '{{ appsettings("investigation_category_id", "") }}',
-    imagingCategoryId: 6,
-    resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
-    resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
-    showMedicationOption: true,
-};
+    window.BILLING_KIT_CONFIG = {
+        csrf: '{{ csrf_token() }}',
+        addServiceRoute: '{{ route("nursing-workbench.billing.add-service") }}',
+        addLabRoute: '{{ route("nursing-workbench.billing.add-lab-bill") }}',
+        addImagingRoute: '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
+        addConsumableRoute: '{{ route("nursing-workbench.billing.add-consumable") }}',
+        removeBillBase: '/nursing-workbench/remove-bill',
+        pendingBillsBase: '/nursing-workbench/patient',
+        serviceRequestsBase: '/nursing-workbench/patient',
+        searchServicesRoute: '{{ route("nursing-workbench.search-services") }}',
+        searchProductsRoute: '{{ route("nursing-workbench.search-products") }}',
+        productBatchesRoute: '{{ route("nursing-workbench.product-batches") }}',
+        investigationCategoryId: '{{ appsettings("investigation_category_id", "") }}',
+        imagingCategoryId: 6,
+        resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
+        resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
+        showMedicationOption: true,
+    };
 </script>
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 {{-- SHARED partial: patient search JS with maternity context --}}
@@ -1604,239 +2515,250 @@ window.BILLING_KIT_CONFIG = {
 @include('admin.partials.invest_res_js')
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-// GLOBAL STATE (mirrors nursing workbench pattern)
-// ═══════════════════════════════════════════════════════════════
-let currentPatient = null;
-let currentPatientData = null;
-let currentEnrollment = null;
-let currentEnrollmentId = null;
-const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+    // ═══════════════════════════════════════════════════════════════
+    // GLOBAL STATE (mirrors nursing workbench pattern)
+    // ═══════════════════════════════════════════════════════════════
+    let currentPatient = null;
+    let currentPatientData = null;
+    let currentEnrollment = null;
+    let currentEnrollmentId = null;
+    const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
-// ═══════════════════════════════════════════════════════════════
-// PATIENT FORM CONFIG (ANC Registration)
-// ═══════════════════════════════════════════════════════════════
-window.patientFormConfig = {
-    nextFileNumberUrl: '/reception/patient/next-file-number',
-    checkFileNumberUrl: '/reception/patient/check-file-number',
-    updateUrl: '/reception/patient/__ID__/update',
-    registerUrl: '/reception/patient/quick-register',
-    hmos: @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
-    onSuccess: function(patientId, mode) {
-        toastr.success('ANC patient registered successfully');
-        $('#patientFormModal').modal('hide');
-        // Load the newly created patient in the workbench
-        if (typeof loadPatient === 'function') {
-            loadPatient(patientId);
-        }
-    },
-    onSelectExisting: function(patientId) {
-        toastr.info('Loading existing patient...');
-        if (typeof loadPatient === 'function') {
-            loadPatient(patientId);
-        }
-    }
-};
-
-function openAncPatientRegistration() {
-    // Show modal in create mode
-    showPatientFormModal('create');
-
-    // After modal is shown, switch to ANC file number mode
-    $('#patientFormModal').one('shown.bs.modal', function() {
-        // Hide auto/manual toggle — ANC mode uses prefix hint instead
-        $('.file-no-btn-group').hide();
-        $('#pf-file-no-info').hide();
-
-        // Set file number field as editable with ANC prefix
-        var $input = $('#pf-file-no');
-        $input.prop('readonly', false);
-
-        // Generate ANC file number
-        generateAncFileNumber();
-
-        // Update modal title
-        $('#patient-form-title').html('<i class="mdi mdi-clipboard-plus"></i> New ANC Patient Registration');
-
-        // Pre-select Female gender
-        $('#pf-gender').val('Female');
-    });
-}
-
-function generateAncFileNumber() {
-    $.ajax({
-        url: '/reception/patient/next-file-number',
-        method: 'GET',
-        data: { prefix: 'ANC-' },
-        success: function(response) {
-            var nextFileNo = response.file_no;
-            $('#pf-file-no').val(nextFileNo).addClass('status-valid');
-            $('#pf-next-file-no').text(nextFileNo);
-            $('#pf-duplicate-warning').hide();
-
-            // Show last 2 ANC numbers as hint
-            var recent = response.recent_file_nos || [];
-            var lastTwo = recent.slice(0, 2);
-            if (lastTwo.length > 0) {
-                $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
-            } else {
-                $('#pf-file-no-hint').html('').hide();
+    // ═══════════════════════════════════════════════════════════════
+    // PATIENT FORM CONFIG (ANC Registration)
+    // ═══════════════════════════════════════════════════════════════
+    window.patientFormConfig = {
+        nextFileNumberUrl: '/reception/patient/next-file-number',
+        checkFileNumberUrl: '/reception/patient/check-file-number',
+        updateUrl: '/reception/patient/__ID__/update',
+        registerUrl: '/reception/patient/quick-register',
+        hmos: @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
+        onSuccess: function(patientId, mode) {
+            toastr.success('ANC patient registered successfully');
+            $('#patientFormModal').modal('hide');
+            // Load the newly created patient in the workbench
+            if (typeof loadPatient === 'function') {
+                loadPatient(patientId);
             }
         },
-        error: function() {
-            $('#pf-file-no').val('ANC-001');
-            $('#pf-next-file-no').text('ANC-001');
-        }
-    });
-}
-
-// Edit mode state tracking (shared pattern for modal reuse)
-let _editMode = null;   // null = create, 'anc'|'postnatal'|'baby'|'note'|'history'|'pregnancy' = edit
-let _editId = null;      // ID of record being edited
-
-// Data caches for edit pre-fill
-let _ancVisitsCache = [];
-let _postnatalVisitsCache = [];
-let _notesCache = [];
-
-// ═══════════════════════════════════════════════════════════════
-// RICH TEXT EDITOR HELPER (CKEditor5)
-// ═══════════════════════════════════════════════════════════════
-const MaternityEditors = {};
-function initMaternityEditor(selector, key) {
-    const el = document.querySelector(selector);
-    if (!el || MaternityEditors[key]) return Promise.resolve(MaternityEditors[key]);
-    return ClassicEditor.create(el, {
-        toolbar: {
-            items: ['heading', '|', 'bold', 'italic', 'bulletedList', 'numberedList', '|', 'outdent', 'indent', '|', 'blockQuote', 'insertTable', 'undo', 'redo']
-        }
-    }).then(editor => {
-        MaternityEditors[key] = editor;
-        return editor;
-    }).catch(err => console.error('CKEditor init error:', err));
-}
-function destroyMaternityEditor(key) {
-    if (MaternityEditors[key]) {
-        MaternityEditors[key].destroy().catch(() => {});
-        delete MaternityEditors[key];
-    }
-}
-function getEditorData(key, fallbackSelector) {
-    if (MaternityEditors[key]) return MaternityEditors[key].getData();
-    return $(fallbackSelector).val() || '';
-}
-
-// ═══════════════════════════════════════════════════════════════
-// VIEW MANAGEMENT (SHARED with nursing workbench — identical)
-// ═══════════════════════════════════════════════════════════════
-function hideAllViews() {
-    $('#empty-state').hide();
-    $('#queue-view').removeClass('active').hide();
-    $('#reports-view').removeClass('active').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active').hide();
-}
-
-function showQueue(filter) {
-    hideAllViews();
-    const titles = {
-        'active-anc': '<i class="mdi mdi-mother-nurse"></i> Active ANC Patients',
-        'due-visits': '<i class="mdi mdi-calendar-clock"></i> Due Visits',
-        'upcoming-edd': '<i class="mdi mdi-calendar-star"></i> Upcoming EDD (Next 4 Weeks)',
-        'postnatal': '<i class="mdi mdi-account-heart"></i> Postnatal Patients',
-        'overdue-immunization': '<i class="mdi mdi-needle"></i> Overdue Immunizations',
-        'high-risk': '<i class="mdi mdi-alert"></i> High Risk Patients',
-    };
-    $('#queue-view-title').html(titles[filter] || titles['active-anc']);
-    $('.queue-item').removeClass('active');
-    $(`.queue-item[data-filter="${filter}"]`).addClass('active');
-    $('#queue-view').addClass('active').css('display', 'flex');
-    if (window.innerWidth < 768) { $('#left-panel').addClass('hidden'); $('#main-workspace').addClass('active'); }
-    loadQueueData(filter);
-}
-
-function hideQueue() {
-    $('#queue-view').removeClass('active').css('display', 'none');
-    $('.queue-item').removeClass('active');
-    if (currentPatient) {
-        $('#patient-header').addClass('active');
-        $('#workspace-content').show().addClass('active');
-    } else {
-        $('#empty-state').show();
-    }
-    if (window.innerWidth < 768) { $('#main-workspace').removeClass('active'); $('#left-panel').removeClass('hidden'); }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// QUEUE DATA (maternity-specific endpoints, shared card pattern)
-// ═══════════════════════════════════════════════════════════════
-function loadQueueData(filter) {
-    const $container = $('#queue-view-content');
-    $container.html('<div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading...</div>');
-
-    const urls = {
-        'active-anc': '{{ route("maternity-workbench.queue.active-anc") }}',
-        'due-visits': '{{ route("maternity-workbench.queue.due-visits") }}',
-        'upcoming-edd': '{{ route("maternity-workbench.queue.upcoming-edd") }}',
-        'postnatal': '{{ route("maternity-workbench.queue.postnatal") }}',
-        'overdue-immunization': '{{ route("maternity-workbench.queue.overdue-immunization") }}',
-        'high-risk': '{{ route("maternity-workbench.queue.high-risk") }}',
-    };
-
-    $.ajax({
-        url: urls[filter] || urls['active-anc'],
-        method: 'GET',
-        success: function(data) {
-            const items = Array.isArray(data) ? data : (data.data || []);
-            if (items.length === 0) {
-                $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-account-off" style="font-size: 3rem;"></i><br>No patients in this queue</div>');
-                return;
+        onSelectExisting: function(patientId) {
+            toastr.info('Loading existing patient...');
+            if (typeof loadPatient === 'function') {
+                loadPatient(patientId);
             }
-            renderQueueCards(items, filter);
-        },
-        error: function() {
-            $container.html('<div class="text-center p-4 text-danger"><i class="mdi mdi-alert-circle" style="font-size: 3rem;"></i><br>Failed to load queue</div>');
         }
-    });
-}
+    };
 
-function renderQueueCards(items, filter) {
-    const $container = $('#queue-view-content');
-    let html = '';
-    items.forEach(function(item) {
-        let badge = '';
-        let detail = '';
-        const pid = item.patient_id || item.baby_id;
+    function openAncPatientRegistration() {
+        // Show modal in create mode
+        showPatientFormModal('create');
 
-        if (filter === 'active-anc') {
-            badge = `<span class="risk-indicator ${item.risk_level}">${item.risk_level}</span>`;
-            detail = `<span><i class="mdi mdi-calendar"></i> EDD: ${item.edd}</span>
+        // After modal is shown, switch to ANC file number mode
+        $('#patientFormModal').one('shown.bs.modal', function() {
+            // Hide auto/manual toggle — ANC mode uses prefix hint instead
+            $('.file-no-btn-group').hide();
+            $('#pf-file-no-info').hide();
+
+            // Set file number field as editable with ANC prefix
+            var $input = $('#pf-file-no');
+            $input.prop('readonly', false);
+
+            // Generate ANC file number
+            generateAncFileNumber();
+
+            // Update modal title
+            $('#patient-form-title').html('<i class="mdi mdi-clipboard-plus"></i> New ANC Patient Registration');
+
+            // Pre-select Female gender
+            $('#pf-gender').val('Female');
+        });
+    }
+
+    function generateAncFileNumber() {
+        $.ajax({
+            url: '/reception/patient/next-file-number',
+            method: 'GET',
+            data: {
+                prefix: 'ANC-'
+            },
+            success: function(response) {
+                var nextFileNo = response.file_no;
+                $('#pf-file-no').val(nextFileNo).addClass('status-valid');
+                $('#pf-next-file-no').text(nextFileNo);
+                $('#pf-duplicate-warning').hide();
+
+                // Show last 2 ANC numbers as hint
+                var recent = response.recent_file_nos || [];
+                var lastTwo = recent.slice(0, 2);
+                if (lastTwo.length > 0) {
+                    $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
+                } else {
+                    $('#pf-file-no-hint').html('').hide();
+                }
+            },
+            error: function() {
+                $('#pf-file-no').val('ANC-001');
+                $('#pf-next-file-no').text('ANC-001');
+            }
+        });
+    }
+
+    // Edit mode state tracking (shared pattern for modal reuse)
+    let _editMode = null; // null = create, 'anc'|'postnatal'|'baby'|'note'|'history'|'pregnancy' = edit
+    let _editId = null; // ID of record being edited
+
+    // Data caches for edit pre-fill
+    let _ancVisitsCache = [];
+    let _postnatalVisitsCache = [];
+    let _notesCache = [];
+
+    // ═══════════════════════════════════════════════════════════════
+    // RICH TEXT EDITOR HELPER (CKEditor5)
+    // ═══════════════════════════════════════════════════════════════
+    const MaternityEditors = {};
+
+    function initMaternityEditor(selector, key) {
+        const el = document.querySelector(selector);
+        if (!el || MaternityEditors[key]) return Promise.resolve(MaternityEditors[key]);
+        return ClassicEditor.create(el, {
+            toolbar: {
+                items: ['heading', '|', 'bold', 'italic', 'bulletedList', 'numberedList', '|', 'outdent', 'indent', '|', 'blockQuote', 'insertTable', 'undo', 'redo']
+            }
+        }).then(editor => {
+            MaternityEditors[key] = editor;
+            return editor;
+        }).catch(err => console.error('CKEditor init error:', err));
+    }
+
+    function destroyMaternityEditor(key) {
+        if (MaternityEditors[key]) {
+            MaternityEditors[key].destroy().catch(() => {});
+            delete MaternityEditors[key];
+        }
+    }
+
+    function getEditorData(key, fallbackSelector) {
+        if (MaternityEditors[key]) return MaternityEditors[key].getData();
+        return $(fallbackSelector).val() || '';
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // VIEW MANAGEMENT (SHARED with nursing workbench — identical)
+    // ═══════════════════════════════════════════════════════════════
+    function hideAllViews() {
+        $('#empty-state').hide();
+        $('#queue-view').removeClass('active').hide();
+        $('#reports-view').removeClass('active').hide();
+        $('#patient-header').removeClass('active');
+        $('#workspace-content').removeClass('active').hide();
+    }
+
+    function showQueue(filter) {
+        hideAllViews();
+        const titles = {
+            'active-anc': '<i class="mdi mdi-mother-nurse"></i> Active ANC Patients',
+            'due-visits': '<i class="mdi mdi-calendar-clock"></i> Due Visits',
+            'upcoming-edd': '<i class="mdi mdi-calendar-star"></i> Upcoming EDD (Next 4 Weeks)',
+            'postnatal': '<i class="mdi mdi-account-heart"></i> Postnatal Patients',
+            'overdue-immunization': '<i class="mdi mdi-needle"></i> Overdue Immunizations',
+            'high-risk': '<i class="mdi mdi-alert"></i> High Risk Patients',
+        };
+        $('#queue-view-title').html(titles[filter] || titles['active-anc']);
+        $('.queue-item').removeClass('active');
+        $(`.queue-item[data-filter="${filter}"]`).addClass('active');
+        $('#queue-view').addClass('active').css('display', 'flex');
+        if (window.innerWidth < 768) {
+            $('#left-panel').addClass('hidden');
+            $('#main-workspace').addClass('active');
+        }
+        loadQueueData(filter);
+    }
+
+    function hideQueue() {
+        $('#queue-view').removeClass('active').css('display', 'none');
+        $('.queue-item').removeClass('active');
+        if (currentPatient) {
+            $('#patient-header').addClass('active');
+            $('#workspace-content').show().addClass('active');
+        } else {
+            $('#empty-state').show();
+        }
+        if (window.innerWidth < 768) {
+            $('#main-workspace').removeClass('active');
+            $('#left-panel').removeClass('hidden');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // QUEUE DATA (maternity-specific endpoints, shared card pattern)
+    // ═══════════════════════════════════════════════════════════════
+    function loadQueueData(filter) {
+        const $container = $('#queue-view-content');
+        $container.html('<div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading...</div>');
+
+        const urls = {
+            'active-anc': '{{ route("maternity-workbench.queue.active-anc") }}',
+            'due-visits': '{{ route("maternity-workbench.queue.due-visits") }}',
+            'upcoming-edd': '{{ route("maternity-workbench.queue.upcoming-edd") }}',
+            'postnatal': '{{ route("maternity-workbench.queue.postnatal") }}',
+            'overdue-immunization': '{{ route("maternity-workbench.queue.overdue-immunization") }}',
+            'high-risk': '{{ route("maternity-workbench.queue.high-risk") }}',
+        };
+
+        $.ajax({
+            url: urls[filter] || urls['active-anc'],
+            method: 'GET',
+            success: function(data) {
+                const items = Array.isArray(data) ? data : (data.data || []);
+                if (items.length === 0) {
+                    $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-account-off" style="font-size: 3rem;"></i><br>No patients in this queue</div>');
+                    return;
+                }
+                renderQueueCards(items, filter);
+            },
+            error: function() {
+                $container.html('<div class="text-center p-4 text-danger"><i class="mdi mdi-alert-circle" style="font-size: 3rem;"></i><br>Failed to load queue</div>');
+            }
+        });
+    }
+
+    function renderQueueCards(items, filter) {
+        const $container = $('#queue-view-content');
+        let html = '';
+        items.forEach(function(item) {
+            let badge = '';
+            let detail = '';
+            const pid = item.patient_id || item.baby_id;
+
+            if (filter === 'active-anc') {
+                badge = `<span class="risk-indicator ${item.risk_level}">${item.risk_level}</span>`;
+                detail = `<span><i class="mdi mdi-calendar"></i> EDD: ${item.edd}</span>
                       <span><i class="mdi mdi-stethoscope"></i> GA: ${item.gestational_age || 'N/A'}</span>
                       <span><i class="mdi mdi-counter"></i> Visits: ${item.anc_visits || 0}</span>`;
-        } else if (filter === 'due-visits') {
-            badge = `<span class="badge bg-warning text-dark">${item.days_overdue}d overdue</span>`;
-            detail = `<span><i class="mdi mdi-calendar-clock"></i> Due: ${item.next_appointment}</span>`;
-        } else if (filter === 'upcoming-edd') {
-            badge = `<span class="badge bg-info">${item.days_to_edd}d to EDD</span>`;
-            detail = `<span><i class="mdi mdi-calendar-star"></i> EDD: ${item.edd}</span>
+            } else if (filter === 'due-visits') {
+                badge = `<span class="badge bg-warning text-dark">${item.days_overdue}d overdue</span>`;
+                detail = `<span><i class="mdi mdi-calendar-clock"></i> Due: ${item.next_appointment}</span>`;
+            } else if (filter === 'upcoming-edd') {
+                badge = `<span class="badge bg-info">${item.days_to_edd}d to EDD</span>`;
+                detail = `<span><i class="mdi mdi-calendar-star"></i> EDD: ${item.edd}</span>
                       <span class="risk-indicator ${item.risk_level}">${item.risk_level}</span>`;
-        } else if (filter === 'postnatal') {
-            badge = `<span class="enrollment-badge ${item.status}">${item.status}</span>`;
-            detail = `<span><i class="mdi mdi-calendar"></i> Delivered: ${item.delivery_date}</span>
+            } else if (filter === 'postnatal') {
+                badge = `<span class="enrollment-badge ${item.status}">${item.status}</span>`;
+                detail = `<span><i class="mdi mdi-calendar"></i> Delivered: ${item.delivery_date}</span>
                       <span><i class="mdi mdi-baby-face"></i> Babies: ${item.baby_count || 0}</span>
                       <span><i class="mdi mdi-clock"></i> ${item.days_postpartum || 0}d postpartum</span>`;
-        } else if (filter === 'overdue-immunization') {
-            detail = `<span><i class="mdi mdi-baby-face"></i> ${item.baby_name}</span>
+            } else if (filter === 'overdue-immunization') {
+                detail = `<span><i class="mdi mdi-baby-face"></i> ${item.baby_name}</span>
                       <span><i class="mdi mdi-mother-nurse"></i> Mother: ${item.mother_name}</span>
                       <span><i class="mdi mdi-clock"></i> Age: ${item.age}</span>`;
-        } else if (filter === 'high-risk') {
-            badge = `<span class="enrollment-badge ${item.status}">${item.status}</span>`;
-            const risks = item.risk_factors ? (Array.isArray(item.risk_factors) ? item.risk_factors.join(', ') : item.risk_factors) : 'N/A';
-            detail = `<span><i class="mdi mdi-alert"></i> ${risks}</span>
+            } else if (filter === 'high-risk') {
+                badge = `<span class="enrollment-badge ${item.status}">${item.status}</span>`;
+                const risks = item.risk_factors ? (Array.isArray(item.risk_factors) ? item.risk_factors.join(', ') : item.risk_factors) : 'N/A';
+                detail = `<span><i class="mdi mdi-alert"></i> ${risks}</span>
                       <span><i class="mdi mdi-calendar"></i> EDD: ${item.edd}</span>`;
-        }
+            }
 
-        html += `<div class="queue-card" onclick="loadPatient(${pid})">
+            html += `<div class="queue-card" onclick="loadPatient(${pid})">
             <div class="queue-card-header">
                 <div>
                     <div class="queue-card-patient-name">${item.name || item.baby_name || 'Unknown'}</div>
@@ -1848,232 +2770,332 @@ function renderQueueCards(items, filter) {
                 ${badge}
             </div>
         </div>`;
-    });
-    $container.html(html);
-}
+        });
+        $container.html(html);
+    }
 
-function loadQueueCounts() {
-    $.ajax({
-        url: '{{ route("maternity-workbench.queue.counts") }}',
-        method: 'GET',
-        success: function(data) {
-            $('#queue-active-anc-count').text(data.active_anc || 0);
-            $('#queue-due-visits-count').text(data.due_visits || 0);
-            $('#queue-upcoming-edd-count').text(data.upcoming_edd || 0);
-            $('#queue-postnatal-count').text(data.postnatal || 0);
-            $('#queue-overdue-imm-count').text(data.overdue_immunization || 0);
-            $('#queue-high-risk-count').text(data.high_risk || 0);
-        }
-    });
-}
+    function loadQueueCounts() {
+        $.ajax({
+            url: '{{ route("maternity-workbench.queue.counts") }}',
+            method: 'GET',
+            success: function(data) {
+                $('#queue-active-anc-count').text(data.active_anc || 0);
+                $('#queue-due-visits-count').text(data.due_visits || 0);
+                $('#queue-upcoming-edd-count').text(data.upcoming_edd || 0);
+                $('#queue-postnatal-count').text(data.postnatal || 0);
+                $('#queue-overdue-imm-count').text(data.overdue_immunization || 0);
+                $('#queue-high-risk-count').text(data.high_risk || 0);
+            }
+        });
+    }
 
-// ═══════════════════════════════════════════════════════════════
-// PATIENT LOADING (SHARED pattern with nursing workbench)
-// ═══════════════════════════════════════════════════════════════
-function loadPatient(patientId) {
-    currentPatient = patientId;
-    hideAllViews();
+    // ═══════════════════════════════════════════════════════════════
+    // PATIENT LOADING (SHARED pattern with nursing workbench)
+    // ═══════════════════════════════════════════════════════════════
+    function loadPatient(patientId) {
+        currentPatient = patientId;
+        hideAllViews();
 
-    $('#workspace-content').show().addClass('active');
-    $('#patient-header').addClass('active');
-    $('#left-panel').addClass('hidden');
-    $('#main-workspace').addClass('active');
+        $('#workspace-content').show().addClass('active');
+        $('#patient-header').addClass('active');
+        $('#left-panel').addClass('hidden');
+        $('#main-workspace').addClass('active');
 
-    // Enable quick actions
-    $('#btn-enroll-patient').prop('disabled', false);
-    $('#btn-quick-vitals').prop('disabled', false);
-    $('#btn-print-anc-card').prop('disabled', false);
-    $('#btn-print-road-card').prop('disabled', false);
-    $('#btn-maternity-audit').prop('disabled', false);
-    $('#btn-clinical-context').prop('disabled', false).attr('title', 'View clinical context for patient');
+        // Enable quick actions
+        $('#btn-enroll-patient').prop('disabled', false);
+        $('#btn-quick-vitals').prop('disabled', false);
+        $('#btn-print-anc-card').prop('disabled', false);
+        $('#btn-print-road-card').prop('disabled', false);
+        $('#btn-maternity-audit').prop('disabled', false);
+        $('#btn-clinical-context').prop('disabled', false).attr('title', 'View clinical context for patient');
 
-    $.ajax({
-        url: `/maternity-workbench/patient/${patientId}/details`,
-        method: 'GET',
-        success: function(data) {
-            currentPatientData = data;
+        $.ajax({
+            url: `/maternity-workbench/patient/${patientId}/details`,
+            method: 'GET',
+            success: function(data) {
+                currentPatientData = data;
 
-            // SHARED function: display patient header (same as nursing)
-            displayPatientInfo(data);
+                // SHARED function: display patient header (same as nursing)
+                displayPatientInfo(data);
 
-            // Store enrollment
-            currentEnrollment = data.enrollment;
-            currentEnrollmentId = data.enrollment ? data.enrollment.id : null;
+                // Store enrollment
+                currentEnrollment = data.enrollment;
+                currentEnrollmentId = data.enrollment ? data.enrollment.id : null;
 
-            // Show/hide print buttons based on enrollment
-            if (currentEnrollmentId) {
-                $('#btn-print-anc-card').show();
-                $('#btn-print-road-card').show();
-                // Show discharge button for active enrollments
-                if (data.enrollment && !['completed', 'transferred', 'deceased'].includes(data.enrollment.status)) {
-                    $('#btn-discharge-patient').show().prop('disabled', false);
+                // Show/hide print buttons based on enrollment
+                if (currentEnrollmentId) {
+                    $('#btn-print-anc-card').show();
+                    $('#btn-print-road-card').show();
+                    // Show discharge button for active enrollments
+                    if (data.enrollment && !['completed', 'transferred', 'deceased'].includes(data.enrollment.status)) {
+                        $('#btn-discharge-patient').show().prop('disabled', false);
+                    } else {
+                        $('#btn-discharge-patient').hide();
+                    }
                 } else {
+                    $('#btn-print-anc-card').hide();
+                    $('#btn-print-road-card').hide();
                     $('#btn-discharge-patient').hide();
                 }
-            } else {
-                $('#btn-print-anc-card').hide();
-                $('#btn-print-road-card').hide();
-                $('#btn-discharge-patient').hide();
+
+                // Load overview
+                populateOverviewTab(data);
+
+                // Initialize shared vitals partial
+                if (typeof window.initUnifiedVitals === 'function') {
+                    window.initUnifiedVitals(patientId);
+                }
+
+                // Load enrollment tab content
+                loadEnrollmentTab();
+
+                switchWorkspaceTab('overview');
+            },
+            error: function(xhr) {
+                console.error('Failed to load patient:', xhr);
+                toastr.error('Failed to load patient data');
             }
-
-            // Load overview
-            populateOverviewTab(data);
-
-            // Initialize shared vitals partial
-            if (typeof window.initUnifiedVitals === 'function') {
-                window.initUnifiedVitals(patientId);
-            }
-
-            // Load enrollment tab content
-            loadEnrollmentTab();
-
-            switchWorkspaceTab('overview');
-        },
-        error: function(xhr) {
-            console.error('Failed to load patient:', xhr);
-            toastr.error('Failed to load patient data');
-        }
-    });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// DISPLAY PATIENT INFO (SHARED with nursing workbench — same pattern)
-// ═══════════════════════════════════════════════════════════════
-function displayPatientInfo(patient) {
-    // Build name with enrollment badge
-    let nameSuffix = '';
-    if (patient.enrollment) {
-        nameSuffix = ` <span class="enrollment-badge ${patient.enrollment.status}">${patient.enrollment.status.toUpperCase()}</span>`;
-        if (patient.enrollment.risk_level === 'high') {
-            nameSuffix += ` <span class="risk-indicator high">HIGH RISK</span>`;
-        }
+        });
     }
-    $('#patient-name').html(`${patient.name} (#${patient.file_no})${nameSuffix}`);
 
-    let metaHtml = `
+    // ═══════════════════════════════════════════════════════════════
+    // DISPLAY PATIENT INFO (SHARED with nursing workbench — same pattern)
+    // ═══════════════════════════════════════════════════════════════
+    function displayPatientInfo(patient) {
+        // Build name with enrollment badge
+        let nameSuffix = '';
+        if (patient.enrollment) {
+            nameSuffix = ` <span class="enrollment-badge ${patient.enrollment.status}">${patient.enrollment.status.toUpperCase()}</span>`;
+            if (patient.enrollment.risk_level === 'high') {
+                nameSuffix += ` <span class="risk-indicator high">HIGH RISK</span>`;
+            }
+        }
+        $('#patient-name').html(`${patient.name} (#${patient.file_no})${nameSuffix}`);
+
+        let metaHtml = `
         <div class="patient-meta-item"><i class="mdi mdi-account"></i><span>${patient.age} ${patient.gender}</span></div>
         <div class="patient-meta-item"><i class="mdi mdi-water"></i><span>${patient.blood_group} ${patient.genotype !== 'N/A' ? '(' + patient.genotype + ')' : ''}</span></div>
         <div class="patient-meta-item"><i class="mdi mdi-phone"></i><span>${patient.phone}</span></div>
     `;
 
-    if (patient.enrollment) {
-        const e = patient.enrollment;
-        if (e.gestational_age) {
-            metaHtml += `<div class="patient-meta-item"><span class="ga-pill"><i class="mdi mdi-baby-carriage"></i> GA: ${e.gestational_age}</span></div>`;
+        if (patient.enrollment) {
+            const e = patient.enrollment;
+            if (e.gestational_age) {
+                metaHtml += `<div class="patient-meta-item"><span class="ga-pill"><i class="mdi mdi-baby-carriage"></i> GA: ${e.gestational_age}</span></div>`;
+            }
+            if (e.edd) {
+                metaHtml += `<div class="patient-meta-item"><i class="mdi mdi-calendar-star"></i><span>EDD: ${e.edd}</span></div>`;
+            }
+            metaHtml += `<div class="patient-meta-item"><i class="mdi mdi-human-pregnant"></i><span>G${e.gravida || '?'}P${e.parity || '?'}</span></div>`;
         }
-        if (e.edd) {
-            metaHtml += `<div class="patient-meta-item"><i class="mdi mdi-calendar-star"></i><span>EDD: ${e.edd}</span></div>`;
-        }
-        metaHtml += `<div class="patient-meta-item"><i class="mdi mdi-human-pregnant"></i><span>G${e.gravida || '?'}P${e.parity || '?'}</span></div>`;
-    }
-    $('#patient-meta').html(metaHtml);
+        $('#patient-meta').html(metaHtml);
 
-    // Build expanded details grid (SHARED pattern)
-    let detailsHtml = '';
-    const fields = [
-        { icon: 'mdi-calendar-clock', label: 'Age', value: patient.age },
-        { icon: 'mdi-gender-female', label: 'Gender', value: patient.gender },
-        { icon: 'mdi-water', label: 'Blood Group', value: patient.blood_group },
-        { icon: 'mdi-dna', label: 'Genotype', value: patient.genotype },
-        { icon: 'mdi-phone', label: 'Phone', value: patient.phone },
-        { icon: 'mdi-map-marker', label: 'Address', value: patient.address },
-        { icon: 'mdi-hospital-building', label: 'HMO', value: patient.hmo },
-        { icon: 'mdi-card-account-details', label: 'HMO No', value: patient.hmo_no },
-    ];
-    fields.forEach(function(f) {
-        detailsHtml += `<div class="patient-detail-item"><div class="patient-detail-label"><i class="mdi ${f.icon}"></i> ${f.label}</div><div class="patient-detail-value">${f.value || 'N/A'}</div></div>`;
-    });
-
-    // Enrollment-specific details
-    if (patient.enrollment) {
-        const e = patient.enrollment;
-        const enrollFields = [
-            { icon: 'mdi-clipboard-plus', label: 'Booking Date', value: e.booking_date },
-            { icon: 'mdi-calendar', label: 'LMP', value: e.lmp },
-            { icon: 'mdi-calendar-star', label: 'EDD', value: e.edd },
-            { icon: 'mdi-baby-carriage', label: 'Gestational Age', value: e.gestational_age },
-            { icon: 'mdi-human-pregnant', label: 'Gravida/Parity', value: `G${e.gravida || '?'} P${e.parity || '?'}` },
-            { icon: 'mdi-scale', label: 'Booking Weight', value: e.booking_weight_kg ? e.booking_weight_kg + ' kg' : 'N/A' },
-            { icon: 'mdi-arrow-up-down', label: 'Height', value: e.height_cm ? e.height_cm + ' cm' : 'N/A' },
-            { icon: 'mdi-gauge', label: 'Booking BP', value: e.booking_bp || 'N/A' },
-            { icon: 'mdi-clock-outline', label: 'Remaining Days', value: e.remaining_days !== null ? e.remaining_days + ' days' : 'N/A' },
+        // Build expanded details grid (SHARED pattern)
+        let detailsHtml = '';
+        const fields = [{
+                icon: 'mdi-calendar-clock',
+                label: 'Age',
+                value: patient.age
+            },
+            {
+                icon: 'mdi-gender-female',
+                label: 'Gender',
+                value: patient.gender
+            },
+            {
+                icon: 'mdi-water',
+                label: 'Blood Group',
+                value: patient.blood_group
+            },
+            {
+                icon: 'mdi-dna',
+                label: 'Genotype',
+                value: patient.genotype
+            },
+            {
+                icon: 'mdi-phone',
+                label: 'Phone',
+                value: patient.phone
+            },
+            {
+                icon: 'mdi-map-marker',
+                label: 'Address',
+                value: patient.address
+            },
+            {
+                icon: 'mdi-hospital-building',
+                label: 'HMO',
+                value: patient.hmo
+            },
+            {
+                icon: 'mdi-card-account-details',
+                label: 'HMO No',
+                value: patient.hmo_no
+            },
         ];
-        enrollFields.forEach(function(f) {
+        fields.forEach(function(f) {
             detailsHtml += `<div class="patient-detail-item"><div class="patient-detail-label"><i class="mdi ${f.icon}"></i> ${f.label}</div><div class="patient-detail-value">${f.value || 'N/A'}</div></div>`;
+        });
+
+        // Enrollment-specific details
+        if (patient.enrollment) {
+            const e = patient.enrollment;
+            const enrollFields = [{
+                    icon: 'mdi-clipboard-plus',
+                    label: 'Booking Date',
+                    value: e.booking_date
+                },
+                {
+                    icon: 'mdi-calendar',
+                    label: 'LMP',
+                    value: e.lmp
+                },
+                {
+                    icon: 'mdi-calendar-star',
+                    label: 'EDD',
+                    value: e.edd
+                },
+                {
+                    icon: 'mdi-baby-carriage',
+                    label: 'Gestational Age',
+                    value: e.gestational_age
+                },
+                {
+                    icon: 'mdi-human-pregnant',
+                    label: 'Gravida/Parity',
+                    value: `G${e.gravida || '?'} P${e.parity || '?'}`
+                },
+                {
+                    icon: 'mdi-scale',
+                    label: 'Booking Weight',
+                    value: e.booking_weight_kg ? e.booking_weight_kg + ' kg' : 'N/A'
+                },
+                {
+                    icon: 'mdi-arrow-up-down',
+                    label: 'Height',
+                    value: e.height_cm ? e.height_cm + ' cm' : 'N/A'
+                },
+                {
+                    icon: 'mdi-gauge',
+                    label: 'Booking BP',
+                    value: e.booking_bp || 'N/A'
+                },
+                {
+                    icon: 'mdi-clock-outline',
+                    label: 'Remaining Days',
+                    value: e.remaining_days !== null ? e.remaining_days + ' days' : 'N/A'
+                },
+            ];
+            enrollFields.forEach(function(f) {
+                detailsHtml += `<div class="patient-detail-item"><div class="patient-detail-label"><i class="mdi ${f.icon}"></i> ${f.label}</div><div class="patient-detail-value">${f.value || 'N/A'}</div></div>`;
+            });
+        }
+
+        // Allergies (SHARED pattern from nursing workbench)
+        let allergiesArray = [];
+        if (patient.allergies) {
+            if (Array.isArray(patient.allergies)) {
+                allergiesArray = patient.allergies;
+            } else if (typeof patient.allergies === 'string') {
+                try {
+                    const p = JSON.parse(patient.allergies);
+                    allergiesArray = Array.isArray(p) ? p : [p];
+                } catch (e) {
+                    allergiesArray = patient.allergies.split(',').map(a => a.trim()).filter(a => a);
+                }
+            } else if (typeof patient.allergies === 'object') {
+                allergiesArray = Object.values(patient.allergies).filter(a => a);
+            }
+        }
+        if (allergiesArray.length > 0) {
+            detailsHtml += `<div class="patient-detail-item full-width"><div class="patient-detail-label"><i class="mdi mdi-alert-circle"></i> Allergies</div><div class="patient-detail-value"><div class="allergies-list">${allergiesArray.map(a => `<span class="allergy-tag"><i class="mdi mdi-alert"></i> ${a}</span>`).join('')}</div></div></div>`;
+        }
+
+        // Risk factors
+        if (patient.enrollment && patient.enrollment.risk_factors && patient.enrollment.risk_factors.length > 0) {
+            const risks = patient.enrollment.risk_factors;
+            const riskHtml = (Array.isArray(risks) ? risks : [risks]).map(r => `<span class="allergy-tag" style="background: rgba(220,53,69,0.15); border-color: rgba(220,53,69,0.4);"><i class="mdi mdi-alert"></i> ${r}</span>`).join('');
+            detailsHtml += `<div class="patient-detail-item full-width"><div class="patient-detail-label"><i class="mdi mdi-alert-octagon"></i> Risk Factors</div><div class="patient-detail-value"><div class="allergies-list">${riskHtml}</div></div></div>`;
+        }
+
+        $('#patient-details-grid').html(detailsHtml);
+
+        // SHARED: Toggle expand/collapse (identical to nursing)
+        $('#btn-expand-patient').off('click').on('click', function() {
+            $(this).toggleClass('expanded');
+            $('#patient-details-expanded').toggleClass('show');
         });
     }
 
-    // Allergies (SHARED pattern from nursing workbench)
-    let allergiesArray = [];
-    if (patient.allergies) {
-        if (Array.isArray(patient.allergies)) { allergiesArray = patient.allergies; }
-        else if (typeof patient.allergies === 'string') {
-            try { const p = JSON.parse(patient.allergies); allergiesArray = Array.isArray(p) ? p : [p]; } catch(e) { allergiesArray = patient.allergies.split(',').map(a => a.trim()).filter(a => a); }
-        } else if (typeof patient.allergies === 'object') { allergiesArray = Object.values(patient.allergies).filter(a => a); }
+    // ═══════════════════════════════════════════════════════════════
+    // TAB SWITCHING (SHARED pattern with nursing workbench)
+    // ═══════════════════════════════════════════════════════════════
+    function switchWorkspaceTab(tab) {
+        $('.workspace-tab').removeClass('active');
+        $('.workspace-tab-content').removeClass('active');
+        $(`.workspace-tab[data-tab="${tab}"]`).addClass('active');
+        $(`#${tab}-tab`).addClass('active');
+
+        if (!currentPatient) return;
+
+        switch (tab) {
+            case 'overview':
+                populateOverviewTab(currentPatientData);
+                break;
+            case 'enrollment':
+                loadEnrollmentTab();
+                break;
+            case 'history':
+                loadHistoryTab();
+                break;
+            case 'anc':
+                loadAncTab();
+                break;
+            case 'clinical-orders':
+                loadClinicalOrdersTab();
+                break;
+            case 'delivery':
+                loadDeliveryTab();
+                break;
+            case 'baby':
+                loadBabyTab();
+                break;
+            case 'postnatal':
+                loadPostnatalTab();
+                break;
+            case 'immunization':
+                loadImmunizationTab();
+                break;
+            case 'notes':
+                loadNotesTab();
+                break;
+            case 'audit':
+                loadAuditTab();
+                break;
+            case 'billing':
+                BillingKit.init(currentPatient);
+                break;
+            case 'vitals':
+                if (typeof window.initUnifiedVitals === 'function') {
+                    window.initUnifiedVitals(currentPatient);
+                }
+                break;
+        }
     }
-    if (allergiesArray.length > 0) {
-        detailsHtml += `<div class="patient-detail-item full-width"><div class="patient-detail-label"><i class="mdi mdi-alert-circle"></i> Allergies</div><div class="patient-detail-value"><div class="allergies-list">${allergiesArray.map(a => `<span class="allergy-tag"><i class="mdi mdi-alert"></i> ${a}</span>`).join('')}</div></div></div>`;
-    }
 
-    // Risk factors
-    if (patient.enrollment && patient.enrollment.risk_factors && patient.enrollment.risk_factors.length > 0) {
-        const risks = patient.enrollment.risk_factors;
-        const riskHtml = (Array.isArray(risks) ? risks : [risks]).map(r => `<span class="allergy-tag" style="background: rgba(220,53,69,0.15); border-color: rgba(220,53,69,0.4);"><i class="mdi mdi-alert"></i> ${r}</span>`).join('');
-        detailsHtml += `<div class="patient-detail-item full-width"><div class="patient-detail-label"><i class="mdi mdi-alert-octagon"></i> Risk Factors</div><div class="patient-detail-value"><div class="allergies-list">${riskHtml}</div></div></div>`;
-    }
+    // ═══════════════════════════════════════════════════════════════
+    // OVERVIEW TAB
+    // ═══════════════════════════════════════════════════════════════
+    function populateOverviewTab(data) {
+        const e = data.enrollment;
+        const v = data.last_vitals;
 
-    $('#patient-details-grid').html(detailsHtml);
+        let html = '';
 
-    // SHARED: Toggle expand/collapse (identical to nursing)
-    $('#btn-expand-patient').off('click').on('click', function() {
-        $(this).toggleClass('expanded');
-        $('#patient-details-expanded').toggleClass('show');
-    });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TAB SWITCHING (SHARED pattern with nursing workbench)
-// ═══════════════════════════════════════════════════════════════
-function switchWorkspaceTab(tab) {
-    $('.workspace-tab').removeClass('active');
-    $('.workspace-tab-content').removeClass('active');
-    $(`.workspace-tab[data-tab="${tab}"]`).addClass('active');
-    $(`#${tab}-tab`).addClass('active');
-
-    if (!currentPatient) return;
-
-    switch(tab) {
-        case 'overview': populateOverviewTab(currentPatientData); break;
-        case 'enrollment': loadEnrollmentTab(); break;
-        case 'history': loadHistoryTab(); break;
-        case 'anc': loadAncTab(); break;
-        case 'clinical-orders': loadClinicalOrdersTab(); break;
-        case 'delivery': loadDeliveryTab(); break;
-        case 'baby': loadBabyTab(); break;
-        case 'postnatal': loadPostnatalTab(); break;
-        case 'immunization': loadImmunizationTab(); break;
-        case 'notes': loadNotesTab(); break;
-        case 'audit': loadAuditTab(); break;
-        case 'billing': BillingKit.init(currentPatient); break;
-        case 'vitals':
-            if (typeof window.initUnifiedVitals === 'function') { window.initUnifiedVitals(currentPatient); }
-            break;
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// OVERVIEW TAB
-// ═══════════════════════════════════════════════════════════════
-function populateOverviewTab(data) {
-    const e = data.enrollment;
-    const v = data.last_vitals;
-
-    let html = '';
-
-    // ── Stage-Aware Progress Section ──────────────────────────────
-    if (e && e.status === 'completed') {
-        // Discharged — show completed summary
-        html += `
+        // ── Stage-Aware Progress Section ──────────────────────────────
+        if (e && e.status === 'completed') {
+            // Discharged — show completed summary
+            html += `
         <div class="card-modern mb-3" style="border-left: 4px solid #6c757d;">
             <div class="card-body py-2 px-3">
                 <div class="d-flex justify-content-between align-items-center">
@@ -2084,18 +3106,18 @@ function populateOverviewTab(data) {
                 ${e.outcome_summary ? '<div class="small mt-1"><i class="mdi mdi-text-box-outline"></i> ' + e.outcome_summary + '</div>' : ''}
             </div>
         </div>`;
-    } else if (e && e.status === 'postnatal' && e.delivery_date) {
-        // Postnatal — show postpartum days + postnatal progress
-        const deliveryDate = new Date(e.delivery_date);
-        const today = new Date();
-        const postpartumDays = Math.floor((today - deliveryDate) / (1000 * 60 * 60 * 24));
-        const postpartumWeeks = Math.floor(postpartumDays / 7);
-        const postpartumRemDays = postpartumDays % 7;
-        // Standard postnatal period is 6 weeks (42 days)
-        const pnProgressPct = Math.min(100, Math.max(0, (postpartumDays / 42) * 100));
-        const pnColor = postpartumDays > 42 ? '#6c757d' : '#2196f3';
+        } else if (e && e.status === 'postnatal' && e.delivery_date) {
+            // Postnatal — show postpartum days + postnatal progress
+            const deliveryDate = new Date(e.delivery_date);
+            const today = new Date();
+            const postpartumDays = Math.floor((today - deliveryDate) / (1000 * 60 * 60 * 24));
+            const postpartumWeeks = Math.floor(postpartumDays / 7);
+            const postpartumRemDays = postpartumDays % 7;
+            // Standard postnatal period is 6 weeks (42 days)
+            const pnProgressPct = Math.min(100, Math.max(0, (postpartumDays / 42) * 100));
+            const pnColor = postpartumDays > 42 ? '#6c757d' : '#2196f3';
 
-        html += `
+            html += `
         <div class="card-modern mb-3" style="border-left: 4px solid #2196f3;">
             <div class="card-body py-2 px-3">
                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -2112,22 +3134,22 @@ function populateOverviewTab(data) {
                 </div>
             </div>
         </div>`;
-    } else if (e && e.lmp && e.edd) {
-        // Active (ANC) — pregnancy progress bar
-        const gaText = e.gestational_age || 'N/A';
-        const gaMatch = gaText.match(/(\d+)\s*weeks?/i);
-        const gaWeeks = gaMatch ? parseInt(gaMatch[1]) : 0;
-        const gaDayMatch = gaText.match(/(\d+)\s*days?/i);
-        const gaDays = gaDayMatch ? parseInt(gaDayMatch[1]) : 0;
-        const totalGaDays = gaWeeks * 7 + gaDays;
-        const totalDays = 280; // 40 weeks
-        const progressPct = Math.min(100, Math.max(0, (totalGaDays / totalDays) * 100));
-        const trimester = gaWeeks < 13 ? 1 : (gaWeeks < 28 ? 2 : 3);
-        const trimesterLabel = ['', '1st Trimester', '2nd Trimester', '3rd Trimester'][trimester];
-        const progressColor = gaWeeks > 41 ? '#dc3545' : (gaWeeks >= 37 ? '#ffc107' : '#28a745');
-        const postDates = e.remaining_days !== null && e.remaining_days < 0;
+        } else if (e && e.lmp && e.edd) {
+            // Active (ANC) — pregnancy progress bar
+            const gaText = e.gestational_age || 'N/A';
+            const gaMatch = gaText.match(/(\d+)\s*weeks?/i);
+            const gaWeeks = gaMatch ? parseInt(gaMatch[1]) : 0;
+            const gaDayMatch = gaText.match(/(\d+)\s*days?/i);
+            const gaDays = gaDayMatch ? parseInt(gaDayMatch[1]) : 0;
+            const totalGaDays = gaWeeks * 7 + gaDays;
+            const totalDays = 280; // 40 weeks
+            const progressPct = Math.min(100, Math.max(0, (totalGaDays / totalDays) * 100));
+            const trimester = gaWeeks < 13 ? 1 : (gaWeeks < 28 ? 2 : 3);
+            const trimesterLabel = ['', '1st Trimester', '2nd Trimester', '3rd Trimester'][trimester];
+            const progressColor = gaWeeks > 41 ? '#dc3545' : (gaWeeks >= 37 ? '#ffc107' : '#28a745');
+            const postDates = e.remaining_days !== null && e.remaining_days < 0;
 
-        html += `
+            html += `
         <div class="card-modern mb-3">
             <div class="card-body py-2 px-3">
                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -2148,129 +3170,164 @@ function populateOverviewTab(data) {
                 </div>
             </div>
         </div>`;
-    }
+        }
 
-    // ── Stat Cards Row ─────────────────────────────────────────
-    html += '<div class="row">';
-    if (e) {
-        // ANC Visits
-        html += `
+        // ── Stat Cards Row ─────────────────────────────────────────
+        html += '<div class="row">';
+        if (e) {
+            // ANC Visits
+            html += `
         <div class="col-lg-2 col-md-4 col-6 mb-3">
             <div class="mat-stat-card mat-stat-pink" style="cursor:pointer;" onclick="switchWorkspaceTab('anc')">
                 <div class="mat-stat-icon"><i class="mdi mdi-stethoscope" style="font-size:1.5rem;"></i></div>
                 <div><div class="mat-stat-value">${e.anc_visit_count || 0}</div><div class="mat-stat-label">ANC Visits</div></div>
             </div>
         </div>`;
-        // Babies
-        html += `
+            // Babies
+            html += `
         <div class="col-lg-2 col-md-4 col-6 mb-3">
             <div class="mat-stat-card mat-stat-green" style="cursor:pointer;" onclick="switchWorkspaceTab('baby')">
                 <div class="mat-stat-icon"><i class="mdi mdi-baby-face" style="font-size:1.5rem;"></i></div>
                 <div><div class="mat-stat-value">${e.baby_count || 0}</div><div class="mat-stat-label">Babies</div></div>
             </div>
         </div>`;
-        // Postnatal
-        html += `
+            // Postnatal
+            html += `
         <div class="col-lg-2 col-md-4 col-6 mb-3">
             <div class="mat-stat-card mat-stat-blue" style="cursor:pointer;" onclick="switchWorkspaceTab('postnatal')">
                 <div class="mat-stat-icon"><i class="mdi mdi-account-heart" style="font-size:1.5rem;"></i></div>
                 <div><div class="mat-stat-value">${e.postnatal_visit_count || 0}</div><div class="mat-stat-label">Postnatal</div></div>
             </div>
         </div>`;
-        // Days to EDD
-        const eddBg = (e.remaining_days !== null && e.remaining_days < 0) ? 'mat-stat-red' : 'mat-stat-orange';
-        html += `
+            // Days to EDD
+            const eddBg = (e.remaining_days !== null && e.remaining_days < 0) ? 'mat-stat-red' : 'mat-stat-orange';
+            html += `
         <div class="col-lg-2 col-md-4 col-6 mb-3">
             <div class="mat-stat-card ${eddBg}">
                 <div class="mat-stat-icon"><i class="mdi mdi-clock-outline" style="font-size:1.5rem;"></i></div>
                 <div><div class="mat-stat-value">${e.remaining_days !== null ? (e.remaining_days < 0 ? Math.abs(e.remaining_days) + 'd over' : e.remaining_days + 'd') : 'N/A'}</div><div class="mat-stat-label">To EDD</div></div>
             </div>
         </div>`;
-        // Risk Level
-        const riskColors = { low: '#28a745', moderate: '#ffc107', high: '#fd7e14', very_high: '#dc3545' };
-        const riskBg = riskColors[e.risk_level] || '#6c757d';
-        html += `
+            // Risk Level
+            const riskColors = {
+                low: '#28a745',
+                moderate: '#ffc107',
+                high: '#fd7e14',
+                very_high: '#dc3545'
+            };
+            const riskBg = riskColors[e.risk_level] || '#6c757d';
+            html += `
         <div class="col-lg-2 col-md-4 col-6 mb-3">
             <div class="mat-stat-card" style="border-left: 4px solid ${riskBg}; cursor:pointer;" onclick="switchWorkspaceTab('enrollment')">
                 <div class="mat-stat-icon"><i class="mdi mdi-shield-alert" style="font-size:1.5rem; color:${riskBg};"></i></div>
                 <div><div class="mat-stat-value" style="color:${riskBg}; text-transform:capitalize;">${(e.risk_level || 'low').replace('_', ' ')}</div><div class="mat-stat-label">Risk Level</div></div>
             </div>
         </div>`;
-        // BMI
-        const bmi = (e.booking_weight_kg && e.height_cm) ? (e.booking_weight_kg / ((e.height_cm / 100) ** 2)).toFixed(1) : null;
-        const bmiColor = bmi ? (bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'))) : '#6c757d';
-        const bmiLabel = bmi ? (bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'))) : '';
-        html += `
+            // BMI
+            const bmi = (e.booking_weight_kg && e.height_cm) ? (e.booking_weight_kg / ((e.height_cm / 100) ** 2)).toFixed(1) : null;
+            const bmiColor = bmi ? (bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'))) : '#6c757d';
+            const bmiLabel = bmi ? (bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'))) : '';
+            html += `
         <div class="col-lg-2 col-md-4 col-6 mb-3">
             <div class="mat-stat-card" style="border-left: 4px solid ${bmiColor};">
                 <div class="mat-stat-icon"><i class="mdi mdi-weight" style="font-size:1.5rem; color:${bmiColor};"></i></div>
                 <div><div class="mat-stat-value" style="color:${bmiColor};">${bmi || 'N/A'}</div><div class="mat-stat-label">BMI ${bmiLabel ? '(' + bmiLabel + ')' : ''}</div></div>
             </div>
         </div>`;
-    }
-    html += '</div>';
+        }
+        html += '</div>';
 
-    // ── Alerts Panel ────────────────────────────────────────────
-    if (e) {
-        const alerts = [];
-        // Post-dates alert
-        if (e.remaining_days !== null && e.remaining_days < 0) {
-            alerts.push({ type: 'danger', icon: 'mdi-alert-circle', text: `Post-dates by ${Math.abs(e.remaining_days)} days — consider induction assessment`, tab: 'delivery' });
-        }
-        // High risk alert
-        if (e.risk_level === 'high' || e.risk_level === 'very_high') {
-            const riskDesc = e.risk_factors ? ': ' + e.risk_factors : '';
-            alerts.push({ type: 'warning', icon: 'mdi-shield-alert', text: `High-risk pregnancy${riskDesc}`, tab: 'enrollment' });
-        }
-        // Near term
-        if (e.remaining_days !== null && e.remaining_days >= 0 && e.remaining_days <= 14) {
-            alerts.push({ type: 'info', icon: 'mdi-calendar-clock', text: `Near term — EDD in ${e.remaining_days} days (${e.edd})`, tab: null });
-        }
-        // Low ANC attendance
-        const gaMatch2 = (e.gestational_age || '').match(/(\d+)\s*weeks?/i);
-        const gaW = gaMatch2 ? parseInt(gaMatch2[1]) : 0;
-        const expectedVisits = gaW < 16 ? 1 : (gaW < 28 ? 2 : (gaW < 36 ? 3 : 4));
-        if (gaW >= 16 && (e.anc_visit_count || 0) < expectedVisits) {
-            alerts.push({ type: 'warning', icon: 'mdi-stethoscope', text: `ANC visits below schedule: ${e.anc_visit_count}/${expectedVisits} expected by ${gaW} weeks`, tab: 'anc' });
-        }
-        // Abnormal BP from last vitals
-        if (v && v.bp && v.bp !== 'N/A') {
-            const bpParts = v.bp.split('/');
-            if (bpParts.length === 2) {
-                const sys = parseInt(bpParts[0]);
-                const dia = parseInt(bpParts[1]);
-                if (sys >= 140 || dia >= 90) {
-                    alerts.push({ type: 'danger', icon: 'mdi-heart-pulse', text: `Elevated BP: ${v.bp} mmHg — screen for pre-eclampsia`, tab: 'vitals' });
+        // ── Alerts Panel ────────────────────────────────────────────
+        if (e) {
+            const alerts = [];
+            // Post-dates alert
+            if (e.remaining_days !== null && e.remaining_days < 0) {
+                alerts.push({
+                    type: 'danger',
+                    icon: 'mdi-alert-circle',
+                    text: `Post-dates by ${Math.abs(e.remaining_days)} days — consider induction assessment`,
+                    tab: 'delivery'
+                });
+            }
+            // High risk alert
+            if (e.risk_level === 'high' || e.risk_level === 'very_high') {
+                const riskDesc = e.risk_factors ? ': ' + e.risk_factors : '';
+                alerts.push({
+                    type: 'warning',
+                    icon: 'mdi-shield-alert',
+                    text: `High-risk pregnancy${riskDesc}`,
+                    tab: 'enrollment'
+                });
+            }
+            // Near term
+            if (e.remaining_days !== null && e.remaining_days >= 0 && e.remaining_days <= 14) {
+                alerts.push({
+                    type: 'info',
+                    icon: 'mdi-calendar-clock',
+                    text: `Near term — EDD in ${e.remaining_days} days (${e.edd})`,
+                    tab: null
+                });
+            }
+            // Low ANC attendance
+            const gaMatch2 = (e.gestational_age || '').match(/(\d+)\s*weeks?/i);
+            const gaW = gaMatch2 ? parseInt(gaMatch2[1]) : 0;
+            const expectedVisits = gaW < 16 ? 1 : (gaW < 28 ? 2 : (gaW < 36 ? 3 : 4));
+            if (gaW >= 16 && (e.anc_visit_count || 0) < expectedVisits) {
+                alerts.push({
+                    type: 'warning',
+                    icon: 'mdi-stethoscope',
+                    text: `ANC visits below schedule: ${e.anc_visit_count}/${expectedVisits} expected by ${gaW} weeks`,
+                    tab: 'anc'
+                });
+            }
+            // Abnormal BP from last vitals
+            if (v && v.bp && v.bp !== 'N/A') {
+                const bpParts = v.bp.split('/');
+                if (bpParts.length === 2) {
+                    const sys = parseInt(bpParts[0]);
+                    const dia = parseInt(bpParts[1]);
+                    if (sys >= 140 || dia >= 90) {
+                        alerts.push({
+                            type: 'danger',
+                            icon: 'mdi-heart-pulse',
+                            text: `Elevated BP: ${v.bp} mmHg — screen for pre-eclampsia`,
+                            tab: 'vitals'
+                        });
+                    }
                 }
             }
-        }
-        // Obese BMI
-        const bmiVal = (e.booking_weight_kg && e.height_cm) ? (e.booking_weight_kg / ((e.height_cm / 100) ** 2)) : null;
-        if (bmiVal && bmiVal >= 30) {
-            alerts.push({ type: 'warning', icon: 'mdi-weight', text: `Booking BMI ${bmiVal.toFixed(1)} — increased risk for GDM, pre-eclampsia`, tab: 'enrollment' });
-        }
+            // Obese BMI
+            const bmiVal = (e.booking_weight_kg && e.height_cm) ? (e.booking_weight_kg / ((e.height_cm / 100) ** 2)) : null;
+            if (bmiVal && bmiVal >= 30) {
+                alerts.push({
+                    type: 'warning',
+                    icon: 'mdi-weight',
+                    text: `Booking BMI ${bmiVal.toFixed(1)} — increased risk for GDM, pre-eclampsia`,
+                    tab: 'enrollment'
+                });
+            }
 
-        if (alerts.length > 0) {
-            html += '<div class="mb-3">';
-            html += '<h6 class="small fw-bold text-muted mb-2"><i class="mdi mdi-bell-alert"></i> Clinical Alerts</h6>';
-            alerts.forEach(a => {
-                const clickAttr = a.tab ? `style="cursor:pointer;" onclick="switchWorkspaceTab('${a.tab}')"` : '';
-                html += `<div class="alert alert-${a.type} py-1 px-2 mb-1 d-flex align-items-center small" ${clickAttr}>
+            if (alerts.length > 0) {
+                html += '<div class="mb-3">';
+                html += '<h6 class="small fw-bold text-muted mb-2"><i class="mdi mdi-bell-alert"></i> Clinical Alerts</h6>';
+                alerts.forEach(a => {
+                    const clickAttr = a.tab ? `style="cursor:pointer;" onclick="switchWorkspaceTab('${a.tab}')"` : '';
+                    html += `<div class="alert alert-${a.type} py-1 px-2 mb-1 d-flex align-items-center small" ${clickAttr}>
                     <i class="mdi ${a.icon} me-2" style="font-size:1.1rem;"></i> ${a.text}
                     ${a.tab ? '<i class="mdi mdi-chevron-right ms-auto"></i>' : ''}
                 </div>`;
-            });
-            html += '</div>';
+                });
+                html += '</div>';
+            }
         }
-    }
 
-    // ── Cards Row ───────────────────────────────────────────────
-    html += '<div class="row">';
+        // ── Cards Row ───────────────────────────────────────────────
+        html += '<div class="row">';
 
-    // Enrollment Summary
-    html += '<div class="col-lg-4 col-md-6 mb-3"><div class="card-modern h-100"><div class="card-header text-white py-2" style="background: var(--maternity-pink);"><h6 class="mb-0"><i class="mdi mdi-clipboard-plus"></i> Enrollment</h6></div><div class="card-body p-2">';
-    if (e) {
-        html += `<table class="table table-sm table-borderless mb-0">
+        // Enrollment Summary
+        html += '<div class="col-lg-4 col-md-6 mb-3"><div class="card-modern h-100"><div class="card-header text-white py-2" style="background: var(--maternity-pink);"><h6 class="mb-0"><i class="mdi mdi-clipboard-plus"></i> Enrollment</h6></div><div class="card-body p-2">';
+        if (e) {
+            html += `<table class="table table-sm table-borderless mb-0">
             <tr><td class="text-muted" style="width:40%;">Status</td><td><span class="enrollment-badge ${e.status}">${e.status}</span></td></tr>
             <tr><td class="text-muted">Entry Point</td><td>${(e.entry_point || '').toUpperCase()}</td></tr>
             <tr><td class="text-muted">Booking</td><td>${e.booking_date || 'N/A'}</td></tr>
@@ -2281,21 +3338,21 @@ function populateOverviewTab(data) {
             <tr><td class="text-muted">Blood Grp</td><td>${e.blood_group || 'N/A'} &nbsp; <span class="text-muted">Geno:</span> ${e.genotype || 'N/A'}</td></tr>
             <tr><td class="text-muted">Height</td><td>${e.height_cm ? e.height_cm + ' cm' : 'N/A'} &nbsp; <span class="text-muted">Wt:</span> ${e.booking_weight_kg ? e.booking_weight_kg + ' kg' : 'N/A'}</td></tr>
         </table>`;
-    } else {
-        html += '<p class="text-muted text-center py-3 mb-0">Not enrolled — <a href="javascript:void(0)" onclick="switchWorkspaceTab(\'enrollment\')">Enroll now</a></p>';
-    }
-    html += '</div></div></div>';
-
-    // Latest Vitals
-    html += '<div class="col-lg-4 col-md-6 mb-3"><div class="card-modern h-100"><div class="card-header bg-success text-white py-2"><h6 class="mb-0"><i class="mdi mdi-heart-pulse"></i> Latest Vitals</h6></div><div class="card-body p-2">';
-    if (v) {
-        // Highlight abnormal BP
-        let bpClass = '';
-        if (v.bp && v.bp !== 'N/A') {
-            const bpSplit = v.bp.split('/');
-            if (bpSplit.length === 2 && (parseInt(bpSplit[0]) >= 140 || parseInt(bpSplit[1]) >= 90)) bpClass = 'text-danger fw-bold';
+        } else {
+            html += '<p class="text-muted text-center py-3 mb-0">Not enrolled — <a href="javascript:void(0)" onclick="switchWorkspaceTab(\'enrollment\')">Enroll now</a></p>';
         }
-        html += `<table class="table table-sm table-borderless mb-0">
+        html += '</div></div></div>';
+
+        // Latest Vitals
+        html += '<div class="col-lg-4 col-md-6 mb-3"><div class="card-modern h-100"><div class="card-header bg-success text-white py-2"><h6 class="mb-0"><i class="mdi mdi-heart-pulse"></i> Latest Vitals</h6></div><div class="card-body p-2">';
+        if (v) {
+            // Highlight abnormal BP
+            let bpClass = '';
+            if (v.bp && v.bp !== 'N/A') {
+                const bpSplit = v.bp.split('/');
+                if (bpSplit.length === 2 && (parseInt(bpSplit[0]) >= 140 || parseInt(bpSplit[1]) >= 90)) bpClass = 'text-danger fw-bold';
+            }
+            html += `<table class="table table-sm table-borderless mb-0">
             <tr><td class="text-muted" style="width:40%;"><i class="mdi mdi-heart-pulse text-danger"></i> BP</td><td class="${bpClass}">${v.bp || 'N/A'} mmHg</td></tr>
             <tr><td class="text-muted"><i class="mdi mdi-thermometer text-warning"></i> Temp</td><td>${v.temp || 'N/A'} °C</td></tr>
             <tr><td class="text-muted"><i class="mdi mdi-heart text-danger"></i> Heart Rate</td><td>${v.heart_rate || 'N/A'} bpm</td></tr>
@@ -2304,84 +3361,93 @@ function populateOverviewTab(data) {
             <tr><td class="text-muted"><i class="mdi mdi-water-percent text-info"></i> SpO2</td><td>${v.spo2 || 'N/A'} %</td></tr>
             <tr><td class="text-muted"><i class="mdi mdi-clock text-secondary"></i> Recorded</td><td class="small">${v.time || 'N/A'}</td></tr>
         </table>`;
-    } else {
-        html += '<p class="text-muted text-center py-3 mb-0">No vitals recorded — <a href="javascript:void(0)" onclick="switchWorkspaceTab(\'vitals\')">Record now</a></p>';
-    }
-    html += '</div></div></div>';
+        } else {
+            html += '<p class="text-muted text-center py-3 mb-0">No vitals recorded — <a href="javascript:void(0)" onclick="switchWorkspaceTab(\'vitals\')">Record now</a></p>';
+        }
+        html += '</div></div></div>';
 
-    // Timeline
-    html += '<div class="col-lg-4 col-md-12 mb-3"><div class="card-modern h-100"><div class="card-header bg-info text-white py-2"><h6 class="mb-0"><i class="mdi mdi-timeline"></i> Timeline</h6></div><div class="card-body p-2" style="max-height:280px; overflow-y:auto;" id="overview-timeline">';
-    html += '<p class="text-muted text-center py-3 mb-0"><i class="mdi mdi-loading mdi-spin"></i> Loading timeline...</p>';
-    html += '</div></div></div>';
+        // Timeline
+        html += '<div class="col-lg-4 col-md-12 mb-3"><div class="card-modern h-100"><div class="card-header bg-info text-white py-2"><h6 class="mb-0"><i class="mdi mdi-timeline"></i> Timeline</h6></div><div class="card-body p-2" style="max-height:280px; overflow-y:auto;" id="overview-timeline">';
+        html += '<p class="text-muted text-center py-3 mb-0"><i class="mdi mdi-loading mdi-spin"></i> Loading timeline...</p>';
+        html += '</div></div></div>';
 
-    html += '</div>';
-    $('#overview-content').html(html);
+        html += '</div>';
+        $('#overview-content').html(html);
 
-    // Load timeline with icons & color coding
-    if (currentEnrollmentId) {
-        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/timeline`, function(resp) {
-            if (resp.success && resp.timeline.length > 0) {
-                const typeIcons = {
-                    enrollment: 'mdi-clipboard-plus',
-                    anc: 'mdi-stethoscope',
-                    delivery: 'mdi-baby-carriage',
-                    baby: 'mdi-baby-face',
-                    postnatal: 'mdi-account-heart',
-                    immunization: 'mdi-needle',
-                    vitals: 'mdi-heart-pulse',
-                    lab: 'mdi-test-tube',
-                    note: 'mdi-note-text',
-                    default: 'mdi-circle-small'
-                };
-                const typeColors = {
-                    enrollment: 'var(--maternity-pink)',
-                    anc: '#e91e63',
-                    delivery: '#4caf50',
-                    baby: '#8bc34a',
-                    postnatal: '#2196f3',
-                    immunization: '#ff9800',
-                    vitals: '#f44336',
-                    lab: '#9c27b0',
-                    note: '#607d8b',
-                    default: '#999'
-                };
-                const tabMap = { anc: 'anc', delivery: 'delivery', baby: 'baby', postnatal: 'postnatal', immunization: 'immunization', vitals: 'vitals', lab: 'clinical-orders', note: 'notes' };
+        // Load timeline with icons & color coding
+        if (currentEnrollmentId) {
+            $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/timeline`, function(resp) {
+                if (resp.success && resp.timeline.length > 0) {
+                    const typeIcons = {
+                        enrollment: 'mdi-clipboard-plus',
+                        anc: 'mdi-stethoscope',
+                        delivery: 'mdi-baby-carriage',
+                        baby: 'mdi-baby-face',
+                        postnatal: 'mdi-account-heart',
+                        immunization: 'mdi-needle',
+                        vitals: 'mdi-heart-pulse',
+                        lab: 'mdi-test-tube',
+                        note: 'mdi-note-text',
+                        default: 'mdi-circle-small'
+                    };
+                    const typeColors = {
+                        enrollment: 'var(--maternity-pink)',
+                        anc: '#e91e63',
+                        delivery: '#4caf50',
+                        baby: '#8bc34a',
+                        postnatal: '#2196f3',
+                        immunization: '#ff9800',
+                        vitals: '#f44336',
+                        lab: '#9c27b0',
+                        note: '#607d8b',
+                        default: '#999'
+                    };
+                    const tabMap = {
+                        anc: 'anc',
+                        delivery: 'delivery',
+                        baby: 'baby',
+                        postnatal: 'postnatal',
+                        immunization: 'immunization',
+                        vitals: 'vitals',
+                        lab: 'clinical-orders',
+                        note: 'notes'
+                    };
 
-                let tHtml = '<div class="timeline-container">';
-                resp.timeline.forEach(function(item) {
-                    const icon = typeIcons[item.type] || typeIcons.default;
-                    const color = typeColors[item.type] || typeColors.default;
-                    const clickTab = tabMap[item.type];
-                    const clickAttr = clickTab ? `style="cursor:pointer;" onclick="switchWorkspaceTab('${clickTab}')"` : '';
-                    tHtml += `<div class="timeline-item ${item.type}" ${clickAttr}>
+                    let tHtml = '<div class="timeline-container">';
+                    resp.timeline.forEach(function(item) {
+                        const icon = typeIcons[item.type] || typeIcons.default;
+                        const color = typeColors[item.type] || typeColors.default;
+                        const clickTab = tabMap[item.type];
+                        const clickAttr = clickTab ? `style="cursor:pointer;" onclick="switchWorkspaceTab('${clickTab}')"` : '';
+                        tHtml += `<div class="timeline-item ${item.type}" ${clickAttr}>
                         <div class="timeline-icon" style="color:${color};"><i class="mdi ${icon}"></i></div>
                         <div class="timeline-date">${item.date || ''}</div>
                         <div class="timeline-title">${item.title}</div>
                         <div class="timeline-detail">${item.detail || ''}</div>
                     </div>`;
-                });
-                tHtml += '</div>';
-                $('#overview-timeline').html(tHtml);
-            } else {
-                $('#overview-timeline').html('<p class="text-muted text-center py-2 mb-0">No timeline events</p>');
-            }
-        });
+                    });
+                    tHtml += '</div>';
+                    $('#overview-timeline').html(tHtml);
+                } else {
+                    $('#overview-timeline').html('<p class="text-muted text-center py-2 mb-0">No timeline events</p>');
+                }
+            });
+        }
     }
-}
 
-// ═══════════════════════════════════════════════════════════════
-// ENROLLMENT TAB
-// ═══════════════════════════════════════════════════════════════
-function loadEnrollmentTab() {
-    if (currentEnrollment) {
-        renderEnrollmentDetails();
-    } else {
-        renderEnrollmentForm();
+    // ═══════════════════════════════════════════════════════════════
+    // ENROLLMENT TAB
+    // ═══════════════════════════════════════════════════════════════
+    function loadEnrollmentTab() {
+        if (currentEnrollment) {
+            renderEnrollmentDetails();
+        } else {
+            renderEnrollmentForm();
+        }
     }
-}
 
-function renderEnrollmentForm() {
-    const html = `
+    function renderEnrollmentForm() {
+        const html = `
     <div class="card-modern">
         <div class="card-header text-white" style="background: var(--maternity-pink);">
             <h6 class="mb-0"><i class="mdi mdi-clipboard-plus"></i> New Maternity Enrollment</h6>
@@ -2454,130 +3520,138 @@ function renderEnrollmentForm() {
             </form>
         </div>
     </div>`;
-    $('#enrollment-content').html(html);
+        $('#enrollment-content').html(html);
 
-    // Auto-calculate EDD, GA display, countdown from LMP
-    function updateLmpCalculations() {
-        const lmpVal = $('#enroll-lmp').val();
-        if (!lmpVal) {
-            $('#enroll-edd').val('');
-            $('#enroll-ga-display').html('— enter LMP —');
-            $('#enroll-edd-countdown').html('—');
-            return;
-        }
-        const lmp = new Date(lmpVal);
-        if (isNaN(lmp)) return;
-
-        // EDD = LMP + 280 days (Naegele's rule)
-        const edd = new Date(lmp);
-        edd.setDate(edd.getDate() + 280);
-        $('#enroll-edd').val(edd.toISOString().split('T')[0]);
-
-        // GA at booking (from LMP to today)
-        const today = new Date();
-        const diffDays = Math.floor((today - lmp) / (1000 * 60 * 60 * 24));
-        if (diffDays >= 0) {
-            const weeks = Math.floor(diffDays / 7);
-            const days = diffDays % 7;
-            const trimester = weeks < 13 ? '1st' : (weeks < 28 ? '2nd' : '3rd');
-            $('#enroll-ga-display').html(`<span style="color:#333;">${weeks}w ${days}d</span> <span class="badge bg-secondary" style="font-size:0.65rem;">${trimester} trimester</span>`);
-        } else {
-            $('#enroll-ga-display').html('<span class="text-warning">Future date?</span>');
-        }
-
-        // Days to EDD countdown
-        const daysToEdd = Math.floor((edd - today) / (1000 * 60 * 60 * 24));
-        if (daysToEdd > 0) {
-            const countdownColor = daysToEdd <= 14 ? '#ffc107' : (daysToEdd <= 42 ? '#17a2b8' : '#28a745');
-            $('#enroll-edd-countdown').html(`<span style="color:${countdownColor};">${daysToEdd} days</span>`);
-        } else if (daysToEdd === 0) {
-            $('#enroll-edd-countdown').html('<span class="text-danger fw-bold">DUE TODAY</span>');
-        } else {
-            $('#enroll-edd-countdown').html(`<span class="text-danger fw-bold">${Math.abs(daysToEdd)} days overdue</span>`);
-        }
-    }
-    $('#enroll-lmp').on('change', updateLmpCalculations);
-
-    // Auto-calculate BMI from weight and height
-    function updateBmiCalc() {
-        const wt = parseFloat($('#enroll-weight').val());
-        const ht = parseFloat($('#enroll-height').val());
-        if (wt > 0 && ht > 0) {
-            const bmi = (wt / ((ht / 100) ** 2)).toFixed(1);
-            const category = bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'));
-            const color = bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'));
-            $('#enroll-bmi-display').html(`<span style="color:${color};">${bmi}</span> <span class="badge" style="background:${color}; font-size:0.65rem;">${category}</span>`);
-        } else {
-            $('#enroll-bmi-display').html('—');
-        }
-    }
-    $('#enroll-weight, #enroll-height').on('input', updateBmiCalc);
-
-    // Handle enrollment form submit
-    $('#enrollment-form').on('submit', function(e) {
-        e.preventDefault();
-        const formData = {};
-        $(this).serializeArray().forEach(f => formData[f.name] = f.value);
-
-        $.ajax({
-            url: '{{ route("maternity-workbench.enroll") }}',
-            method: 'POST',
-            data: formData,
-            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-            success: function(resp) {
-                if (resp.success) {
-                    toastr.success(resp.message);
-                    currentEnrollment = resp.enrollment;
-                    currentEnrollmentId = resp.enrollment_id;
-                    loadPatient(currentPatient); // Reload
-                } else {
-                    toastr.error(resp.message || 'Enrollment failed');
-                }
-            },
-            error: function(xhr) {
-                const errors = xhr.responseJSON?.errors;
-                if (errors) {
-                    Object.values(errors).flat().forEach(e => toastr.error(e));
-                } else {
-                    toastr.error(xhr.responseJSON?.message || 'Enrollment failed');
-                }
+        // Auto-calculate EDD, GA display, countdown from LMP
+        function updateLmpCalculations() {
+            const lmpVal = $('#enroll-lmp').val();
+            if (!lmpVal) {
+                $('#enroll-edd').val('');
+                $('#enroll-ga-display').html('— enter LMP —');
+                $('#enroll-edd-countdown').html('—');
+                return;
             }
+            const lmp = new Date(lmpVal);
+            if (isNaN(lmp)) return;
+
+            // EDD = LMP + 280 days (Naegele's rule)
+            const edd = new Date(lmp);
+            edd.setDate(edd.getDate() + 280);
+            $('#enroll-edd').val(edd.toISOString().split('T')[0]);
+
+            // GA at booking (from LMP to today)
+            const today = new Date();
+            const diffDays = Math.floor((today - lmp) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 0) {
+                const weeks = Math.floor(diffDays / 7);
+                const days = diffDays % 7;
+                const trimester = weeks < 13 ? '1st' : (weeks < 28 ? '2nd' : '3rd');
+                $('#enroll-ga-display').html(`<span style="color:#333;">${weeks}w ${days}d</span> <span class="badge bg-secondary" style="font-size:0.65rem;">${trimester} trimester</span>`);
+            } else {
+                $('#enroll-ga-display').html('<span class="text-warning">Future date?</span>');
+            }
+
+            // Days to EDD countdown
+            const daysToEdd = Math.floor((edd - today) / (1000 * 60 * 60 * 24));
+            if (daysToEdd > 0) {
+                const countdownColor = daysToEdd <= 14 ? '#ffc107' : (daysToEdd <= 42 ? '#17a2b8' : '#28a745');
+                $('#enroll-edd-countdown').html(`<span style="color:${countdownColor};">${daysToEdd} days</span>`);
+            } else if (daysToEdd === 0) {
+                $('#enroll-edd-countdown').html('<span class="text-danger fw-bold">DUE TODAY</span>');
+            } else {
+                $('#enroll-edd-countdown').html(`<span class="text-danger fw-bold">${Math.abs(daysToEdd)} days overdue</span>`);
+            }
+        }
+        $('#enroll-lmp').on('change', updateLmpCalculations);
+
+        // Auto-calculate BMI from weight and height
+        function updateBmiCalc() {
+            const wt = parseFloat($('#enroll-weight').val());
+            const ht = parseFloat($('#enroll-height').val());
+            if (wt > 0 && ht > 0) {
+                const bmi = (wt / ((ht / 100) ** 2)).toFixed(1);
+                const category = bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'));
+                const color = bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'));
+                $('#enroll-bmi-display').html(`<span style="color:${color};">${bmi}</span> <span class="badge" style="background:${color}; font-size:0.65rem;">${category}</span>`);
+            } else {
+                $('#enroll-bmi-display').html('—');
+            }
+        }
+        $('#enroll-weight, #enroll-height').on('input', updateBmiCalc);
+
+        // Handle enrollment form submit
+        $('#enrollment-form').on('submit', function(e) {
+            e.preventDefault();
+            const formData = {};
+            $(this).serializeArray().forEach(f => formData[f.name] = f.value);
+
+            $.ajax({
+                url: '{{ route("maternity-workbench.enroll") }}',
+                method: 'POST',
+                data: formData,
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
+                success: function(resp) {
+                    if (resp.success) {
+                        toastr.success(resp.message);
+                        currentEnrollment = resp.enrollment;
+                        currentEnrollmentId = resp.enrollment_id;
+                        loadPatient(currentPatient); // Reload
+                    } else {
+                        toastr.error(resp.message || 'Enrollment failed');
+                    }
+                },
+                error: function(xhr) {
+                    const errors = xhr.responseJSON?.errors;
+                    if (errors) {
+                        Object.values(errors).flat().forEach(e => toastr.error(e));
+                    } else {
+                        toastr.error(xhr.responseJSON?.message || 'Enrollment failed');
+                    }
+                }
+            });
         });
-    });
-}
+    }
 
-function renderEnrollmentDetails() {
-    const e = currentEnrollment;
+    function renderEnrollmentDetails() {
+        const e = currentEnrollment;
 
-    // Status transition bar — 3-step: Active → Postnatal → Discharged
-    const statuses = ['active', 'postnatal', 'completed'];
-    const statusLabels = ['Active (ANC)', 'Postnatal', 'Discharged'];
-    const statusColors = ['#e91e63', '#2196f3', '#6c757d'];
-    const statusMap = { active: 0, postnatal: 1, completed: 2, transferred: 2, deceased: 2 };
-    const currentIdx = statusMap[e.status] !== undefined ? statusMap[e.status] : -1;
+        // Status transition bar — 3-step: Active → Postnatal → Discharged
+        const statuses = ['active', 'postnatal', 'completed'];
+        const statusLabels = ['Active (ANC)', 'Postnatal', 'Discharged'];
+        const statusColors = ['#e91e63', '#2196f3', '#6c757d'];
+        const statusMap = {
+            active: 0,
+            postnatal: 1,
+            completed: 2,
+            transferred: 2,
+            deceased: 2
+        };
+        const currentIdx = statusMap[e.status] !== undefined ? statusMap[e.status] : -1;
 
-    let statusBarHtml = '<div class="d-flex align-items-center mb-3" style="gap:0;">';
-    statuses.forEach((s, i) => {
-        const isActive = i <= currentIdx;
-        const isCurrent = i === currentIdx;
-        const bg = isActive ? statusColors[i] : '#e0e0e0';
-        const textColor = isActive ? '#fff' : '#999';
-        // For terminal statuses that aren't 'completed', show actual label
-        let label = statusLabels[i];
-        if (i === 2 && isCurrent && e.status === 'transferred') label = 'Transferred';
-        if (i === 2 && isCurrent && e.status === 'deceased') label = 'Deceased';
-        statusBarHtml += `<div class="text-center px-2 py-1 flex-fill" style="background:${bg}; color:${textColor}; font-size:0.72rem; font-weight:${isCurrent ? '700' : '400'}; ${i === 0 ? 'border-radius:6px 0 0 6px;' : ''} ${i === 2 ? 'border-radius:0 6px 6px 0;' : ''}">
+        let statusBarHtml = '<div class="d-flex align-items-center mb-3" style="gap:0;">';
+        statuses.forEach((s, i) => {
+            const isActive = i <= currentIdx;
+            const isCurrent = i === currentIdx;
+            const bg = isActive ? statusColors[i] : '#e0e0e0';
+            const textColor = isActive ? '#fff' : '#999';
+            // For terminal statuses that aren't 'completed', show actual label
+            let label = statusLabels[i];
+            if (i === 2 && isCurrent && e.status === 'transferred') label = 'Transferred';
+            if (i === 2 && isCurrent && e.status === 'deceased') label = 'Deceased';
+            statusBarHtml += `<div class="text-center px-2 py-1 flex-fill" style="background:${bg}; color:${textColor}; font-size:0.72rem; font-weight:${isCurrent ? '700' : '400'}; ${i === 0 ? 'border-radius:6px 0 0 6px;' : ''} ${i === 2 ? 'border-radius:0 6px 6px 0;' : ''}">
             ${isCurrent ? '<i class="mdi mdi-chevron-right"></i> ' : ''}${label}
         </div>`;
-    });
-    statusBarHtml += '</div>';
+        });
+        statusBarHtml += '</div>';
 
-    // BMI display
-    const bmi = (e.booking_weight_kg && e.height_cm) ? (e.booking_weight_kg / ((e.height_cm / 100) ** 2)).toFixed(1) : null;
-    const bmiCategory = bmi ? (bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'))) : '';
-    const bmiColor = bmi ? (bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'))) : '#999';
+        // BMI display
+        const bmi = (e.booking_weight_kg && e.height_cm) ? (e.booking_weight_kg / ((e.height_cm / 100) ** 2)).toFixed(1) : null;
+        const bmiCategory = bmi ? (bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'))) : '';
+        const bmiColor = bmi ? (bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'))) : '#999';
 
-    const html = `
+        const html = `
     <div class="card-modern">
         <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: var(--maternity-pink);">
             <h6 class="mb-0"><i class="mdi mdi-clipboard-check"></i> Enrollment Details</h6>
@@ -2615,24 +3689,26 @@ function renderEnrollmentDetails() {
             </div>
         </div>
     </div>`;
-    $('#enrollment-content').html(html);
-}
-
-function editEnrollment() {
-    const e = currentEnrollment;
-    if (!e) return;
-
-    // Helper to format date for input[type=date]
-    function toDateInput(val) {
-        if (!val) return '';
-        const d = new Date(val);
-        if (isNaN(d)) return '';
-        return d.toISOString().split('T')[0];
+        $('#enrollment-content').html(html);
     }
 
-    function optionSelected(val, option) { return val === option ? 'selected' : ''; }
+    function editEnrollment() {
+        const e = currentEnrollment;
+        if (!e) return;
 
-    const html = `
+        // Helper to format date for input[type=date]
+        function toDateInput(val) {
+            if (!val) return '';
+            const d = new Date(val);
+            if (isNaN(d)) return '';
+            return d.toISOString().split('T')[0];
+        }
+
+        function optionSelected(val, option) {
+            return val === option ? 'selected' : '';
+        }
+
+        const html = `
     <div class="card-modern">
         <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: var(--maternity-pink);">
             <h6 class="mb-0"><i class="mdi mdi-pencil"></i> Edit Enrollment</h6>
@@ -2679,268 +3755,342 @@ function editEnrollment() {
             </form>
         </div>
     </div>`;
-    $('#enrollment-content').html(html);
+        $('#enrollment-content').html(html);
 
-    // Auto-calculate EDD from LMP
-    function editUpdateLmpCalcs() {
-        const lmpVal = $('#edit-enroll-lmp').val();
-        if (!lmpVal) return;
-        const lmp = new Date(lmpVal);
-        if (isNaN(lmp)) return;
-        const edd = new Date(lmp);
-        edd.setDate(edd.getDate() + 280);
-        $('#edit-enroll-edd').val(edd.toISOString().split('T')[0]);
-        const today = new Date();
-        const diffDays = Math.floor((today - lmp) / (1000 * 60 * 60 * 24));
-        if (diffDays >= 0) {
-            const weeks = Math.floor(diffDays / 7), days = diffDays % 7;
-            const tri = weeks < 13 ? '1st' : (weeks < 28 ? '2nd' : '3rd');
-            $('#edit-enroll-ga-display').html(`<span>${weeks}w ${days}d</span> <span class="badge bg-secondary" style="font-size:0.65rem;">${tri} trimester</span>`);
+        // Auto-calculate EDD from LMP
+        function editUpdateLmpCalcs() {
+            const lmpVal = $('#edit-enroll-lmp').val();
+            if (!lmpVal) return;
+            const lmp = new Date(lmpVal);
+            if (isNaN(lmp)) return;
+            const edd = new Date(lmp);
+            edd.setDate(edd.getDate() + 280);
+            $('#edit-enroll-edd').val(edd.toISOString().split('T')[0]);
+            const today = new Date();
+            const diffDays = Math.floor((today - lmp) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 0) {
+                const weeks = Math.floor(diffDays / 7),
+                    days = diffDays % 7;
+                const tri = weeks < 13 ? '1st' : (weeks < 28 ? '2nd' : '3rd');
+                $('#edit-enroll-ga-display').html(`<span>${weeks}w ${days}d</span> <span class="badge bg-secondary" style="font-size:0.65rem;">${tri} trimester</span>`);
+            }
+            const daysToEdd = Math.floor((edd - today) / (1000 * 60 * 60 * 24));
+            $('#edit-enroll-edd-countdown').html(daysToEdd > 0 ? daysToEdd + ' days' : (daysToEdd === 0 ? '<span class="text-danger">DUE TODAY</span>' : `<span class="text-danger">${Math.abs(daysToEdd)}d overdue</span>`));
         }
-        const daysToEdd = Math.floor((edd - today) / (1000 * 60 * 60 * 24));
-        $('#edit-enroll-edd-countdown').html(daysToEdd > 0 ? daysToEdd + ' days' : (daysToEdd === 0 ? '<span class="text-danger">DUE TODAY</span>' : `<span class="text-danger">${Math.abs(daysToEdd)}d overdue</span>`));
-    }
-    $('#edit-enroll-lmp').on('change', editUpdateLmpCalcs);
+        $('#edit-enroll-lmp').on('change', editUpdateLmpCalcs);
 
-    // Auto-calculate BMI
-    function editUpdateBmi() {
-        const wt = parseFloat($('#edit-enroll-weight').val()), ht = parseFloat($('#edit-enroll-height').val());
-        if (wt > 0 && ht > 0) {
-            const bmi = (wt / ((ht / 100) ** 2)).toFixed(1);
-            const cat = bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'));
-            const clr = bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'));
-            $('#edit-enroll-bmi-display').html(`<span style="color:${clr};">${bmi}</span> <span class="badge" style="background:${clr}; font-size:0.65rem;">${cat}</span>`);
+        // Auto-calculate BMI
+        function editUpdateBmi() {
+            const wt = parseFloat($('#edit-enroll-weight').val()),
+                ht = parseFloat($('#edit-enroll-height').val());
+            if (wt > 0 && ht > 0) {
+                const bmi = (wt / ((ht / 100) ** 2)).toFixed(1);
+                const cat = bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'));
+                const clr = bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'));
+                $('#edit-enroll-bmi-display').html(`<span style="color:${clr};">${bmi}</span> <span class="badge" style="background:${clr}; font-size:0.65rem;">${cat}</span>`);
+            }
         }
-    }
-    $('#edit-enroll-weight, #edit-enroll-height').on('input', editUpdateBmi);
-    editUpdateBmi(); // initial calc
+        $('#edit-enroll-weight, #edit-enroll-height').on('input', editUpdateBmi);
+        editUpdateBmi(); // initial calc
 
-    // Submit edit
-    $('#edit-enrollment-form').on('submit', function(ev) {
-        ev.preventDefault();
-        const formData = {};
-        $(this).serializeArray().forEach(f => formData[f.name] = f.value);
+        // Submit edit
+        $('#edit-enrollment-form').on('submit', function(ev) {
+            ev.preventDefault();
+            const formData = {};
+            $(this).serializeArray().forEach(f => formData[f.name] = f.value);
+            $.ajax({
+                url: `/maternity-workbench/enrollment/${currentEnrollmentId}`,
+                method: 'PUT',
+                data: formData,
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
+                success: function(resp) {
+                    if (resp.success) {
+                        toastr.success(resp.message);
+                        currentEnrollment = resp.enrollment;
+                        currentPatientData.enrollment = resp.enrollment;
+                        loadPatient(currentPatient);
+                    } else {
+                        toastr.error(resp.message || 'Update failed');
+                    }
+                },
+                error: function(xhr) {
+                    const errors = xhr.responseJSON?.errors;
+                    if (errors) {
+                        Object.values(errors).flat().forEach(e => toastr.error(e));
+                    } else {
+                        toastr.error(xhr.responseJSON?.message || 'Update failed');
+                    }
+                }
+            });
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // HISTORY TAB
+    // ═══════════════════════════════════════════════════════════════
+    function loadHistoryTab() {
+        if (!currentEnrollmentId) {
+            $('#history-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
+            return;
+        }
+
+        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
+            if (!resp.success) return;
+            const enrollment = resp.enrollment;
+            window._medicalHistoryCache = enrollment.medical_history || [];
+            window._prevPregnanciesCache = enrollment.previous_pregnancies || [];
+            let html = '';
+
+            // Medical History
+            html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-clipboard-text"></i> Medical / Surgical History</h6></div><div class="card-body">';
+            if (enrollment.medical_history && enrollment.medical_history.length > 0) {
+                html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Category</th><th>Description</th><th>Year</th><th>Notes</th><th style="width:80px">Actions</th></tr></thead><tbody>';
+                enrollment.medical_history.forEach(h => {
+                    html += `<tr><td><span class="badge bg-secondary">${h.category}</span></td><td>${h.description}</td><td>${h.year || '-'}</td><td>${h.notes || '-'}</td>
+                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editMedicalHistory(${h.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteMedicalHistory(${h.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td></tr>`;
+                });
+                html += '</tbody></table></div>';
+            } else {
+                html += '<p class="text-muted mb-0">No medical history recorded</p>';
+            }
+            html += `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showAddHistoryForm()"><i class="mdi mdi-plus"></i> Add History</button></div></div>`;
+
+            // Previous Pregnancies
+            html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-human-pregnant"></i> Previous Pregnancies</h6></div><div class="card-body">';
+            if (enrollment.previous_pregnancies && enrollment.previous_pregnancies.length > 0) {
+                html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Year</th><th>Duration</th><th>Place</th><th>Outcome</th><th>Sex</th><th>Weight</th><th>Notes</th><th style="width:60px">Edit</th></tr></thead><tbody>';
+                enrollment.previous_pregnancies.forEach(p => {
+                    const outcome = p.baby_alive ? '✅ Alive' : (p.baby_dead ? '❌ Dead' : (p.baby_stillbirth ? '💔 Stillbirth' : '-'));
+                    html += `<tr><td>${p.year || '-'}</td><td>${p.duration_weeks ? p.duration_weeks + 'w' : '-'}</td><td>${p.place_of_delivery || '-'}</td><td>${outcome}</td><td>${p.baby_sex || '-'}</td><td>${p.birth_weight_kg ? p.birth_weight_kg + 'kg' : '-'}</td><td>${p.notes || '-'}</td>
+                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editPreviousPregnancy(${p.id})" title="Edit"><i class="mdi mdi-pencil"></i></button></td></tr>`;
+                });
+                html += '</tbody></table></div>';
+            } else {
+                html += '<p class="text-muted mb-0">No previous pregnancies recorded</p>';
+            }
+            html += `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showAddPregnancyForm()"><i class="mdi mdi-plus"></i> Add Previous Pregnancy</button></div></div>`;
+
+            $('#history-content').html(html);
+        });
+    }
+
+    function showAddHistoryForm() {
+        _editMode = null;
+        _editId = null;
+        const form = $('#addHistoryModal #add-history-form')[0];
+        if (form) form.reset();
+        $('#addHistoryModalLabel').html('<i class="mdi mdi-clipboard-text-clock"></i> Add Medical History');
+        $('#btn-save-history').html('<i class="mdi mdi-check"></i> Save');
+        $('#addHistoryModal input[name="year"]').attr('max', new Date().getFullYear());
+        $('#addHistoryModal').modal('show');
+    }
+
+    function editMedicalHistory(id) {
+        const h = (window._medicalHistoryCache || []).find(x => x.id === id);
+        if (!h) {
+            toastr.error('Record not found');
+            return;
+        }
+        _editMode = 'history';
+        _editId = id;
+        const form = $('#addHistoryModal #add-history-form')[0];
+        if (form) form.reset();
+        $('#addHistoryModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Medical History');
+        $('#btn-save-history').html('<i class="mdi mdi-check"></i> Update');
+        $('#addHistoryModal select[name="category"]').val(h.category || 'medical');
+        $('#addHistoryModal input[name="year"]').val(h.year || '').attr('max', new Date().getFullYear());
+        $('#addHistoryModal input[name="description"]').val(h.description || '');
+        $('#addHistoryModal input[name="notes"]').val(h.notes || '');
+        $('#addHistoryModal').modal('show');
+    }
+
+    function deleteMedicalHistory(id) {
+        if (!confirm('Delete this medical history entry?')) return;
         $.ajax({
-            url: `/maternity-workbench/enrollment/${currentEnrollmentId}`,
-            method: 'PUT',
-            data: formData,
-            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-            success: function(resp) {
-                if (resp.success) {
-                    toastr.success(resp.message);
-                    currentEnrollment = resp.enrollment;
-                    currentPatientData.enrollment = resp.enrollment;
-                    loadPatient(currentPatient);
-                } else {
-                    toastr.error(resp.message || 'Update failed');
-                }
+            url: `/maternity-workbench/medical-history/${id}`,
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
             },
-            error: function(xhr) {
-                const errors = xhr.responseJSON?.errors;
-                if (errors) {
-                    Object.values(errors).flat().forEach(e => toastr.error(e));
-                } else {
-                    toastr.error(xhr.responseJSON?.message || 'Update failed');
+            success: function(r) {
+                if (r.success) {
+                    toastr.success(r.message || 'Deleted');
+                    loadHistoryTab();
+                } else toastr.error(r.message);
+            },
+            error: function() {
+                toastr.error('Failed to delete');
+            }
+        });
+    }
+
+    // Medical History modal save handler
+    $(document).on('click', '#btn-save-history', function() {
+        const form = $('#addHistoryModal #add-history-form');
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+        const isEdit = _editMode === 'history' && _editId;
+        if (isEdit) {
+            // Single record update via PUT
+            const data = {};
+            form.serializeArray().forEach(f => data[f.name] = f.value);
+            $.ajax({
+                url: `/maternity-workbench/medical-history/${_editId}`,
+                method: 'PUT',
+                data: data,
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
+                success: function(r) {
+                    btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
+                    if (r.success) {
+                        _editMode = null;
+                        _editId = null;
+                        $('#addHistoryModal').modal('hide');
+                        toastr.success(r.message);
+                        loadHistoryTab();
+                    } else toastr.error(r.message);
+                },
+                error: function() {
+                    btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
+                    toastr.error('Failed to update');
                 }
+            });
+        } else {
+            // Create via POST (existing pattern)
+            const data = {
+                items: [{}]
+            };
+            form.serializeArray().forEach(f => data.items[0][f.name] = f.value);
+            $.ajax({
+                url: `/maternity-workbench/enrollment/${currentEnrollmentId}/medical-history`,
+                method: 'POST',
+                data: data,
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
+                success: function(r) {
+                    btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
+                    if (r.success) {
+                        $('#addHistoryModal').modal('hide');
+                        toastr.success(r.message);
+                        loadHistoryTab();
+                    } else toastr.error(r.message);
+                },
+                error: function() {
+                    btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
+                    toastr.error('Failed to save');
+                }
+            });
+        }
+    });
+
+    function showAddPregnancyForm() {
+        _editMode = null;
+        _editId = null;
+        const form = $('#addPregnancyModal #add-pregnancy-form')[0];
+        if (form) form.reset();
+        $('#addPregnancyModalLabel').html('<i class="mdi mdi-baby-carriage"></i> Add Previous Pregnancy');
+        $('#btn-save-pregnancy').html('<i class="mdi mdi-check"></i> Save');
+        $('#addPregnancyModal input[name="year"]').attr('max', new Date().getFullYear());
+        $('#addPregnancyModal').modal('show');
+    }
+
+    function editPreviousPregnancy(id) {
+        const p = (window._prevPregnanciesCache || []).find(x => x.id === id);
+        if (!p) {
+            toastr.error('Record not found');
+            return;
+        }
+        _editMode = 'pregnancy';
+        _editId = id;
+        const form = $('#addPregnancyModal #add-pregnancy-form')[0];
+        if (form) form.reset();
+        $('#addPregnancyModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Previous Pregnancy');
+        $('#btn-save-pregnancy').html('<i class="mdi mdi-check"></i> Update');
+        const m = $('#addPregnancyModal');
+        m.find('input[name="year"]').val(p.year || '').attr('max', new Date().getFullYear());
+        m.find('input[name="duration_weeks"]').val(p.duration_weeks || '');
+        m.find('input[name="place_of_delivery"]').val(p.place_of_delivery || '');
+        m.find('select[name="baby_sex"]').val(p.baby_sex || '');
+        m.find('input[name="birth_weight_kg"]').val(p.birth_weight_kg || '');
+        // Determine outcome from booleans
+        const outcome = p.baby_alive ? 'alive' : (p.baby_dead ? 'dead' : (p.baby_stillbirth ? 'stillbirth' : 'alive'));
+        m.find('select[name="outcome"]').val(outcome);
+        m.find('input[name="complications"]').val(p.complications || '');
+        m.find('input[name="notes"]').val(p.notes || '');
+        m.modal('show');
+    }
+
+    // Previous Pregnancy modal save handler
+    $(document).on('click', '#btn-save-pregnancy', function() {
+        const form = $('#addPregnancyModal #add-pregnancy-form');
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        const data = {};
+        form.serializeArray().forEach(f => data[f.name] = f.value);
+        data.baby_alive = data.outcome === 'alive';
+        data.baby_dead = data.outcome === 'dead';
+        data.baby_stillbirth = data.outcome === 'stillbirth';
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+        const isEdit = _editMode === 'pregnancy' && _editId;
+        const url = isEdit ? `/maternity-workbench/prev-pregnancy/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/prev-pregnancy`;
+        const method = isEdit ? 'PUT' : 'POST';
+        $.ajax({
+            url: url,
+            method: method,
+            data: data,
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
+                if (r.success) {
+                    _editMode = null;
+                    _editId = null;
+                    $('#addPregnancyModal').modal('hide');
+                    toastr.success(r.message);
+                    loadHistoryTab();
+                } else toastr.error(r.message);
+            },
+            error: function() {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
+                toastr.error('Failed to save');
             }
         });
     });
-}
 
-// ═══════════════════════════════════════════════════════════════
-// HISTORY TAB
-// ═══════════════════════════════════════════════════════════════
-function loadHistoryTab() {
-    if (!currentEnrollmentId) { $('#history-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>'); return; }
-
-    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
-        if (!resp.success) return;
-        const enrollment = resp.enrollment;
-        window._medicalHistoryCache = enrollment.medical_history || [];
-        window._prevPregnanciesCache = enrollment.previous_pregnancies || [];
-        let html = '';
-
-        // Medical History
-        html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-clipboard-text"></i> Medical / Surgical History</h6></div><div class="card-body">';
-        if (enrollment.medical_history && enrollment.medical_history.length > 0) {
-            html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Category</th><th>Description</th><th>Year</th><th>Notes</th><th style="width:80px">Actions</th></tr></thead><tbody>';
-            enrollment.medical_history.forEach(h => {
-                html += `<tr><td><span class="badge bg-secondary">${h.category}</span></td><td>${h.description}</td><td>${h.year || '-'}</td><td>${h.notes || '-'}</td>
-                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editMedicalHistory(${h.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteMedicalHistory(${h.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td></tr>`;
-            });
-            html += '</tbody></table></div>';
-        } else {
-            html += '<p class="text-muted mb-0">No medical history recorded</p>';
+    // ═══════════════════════════════════════════════════════════════
+    // ANC VISITS TAB
+    // ═══════════════════════════════════════════════════════════════
+    function loadAncTab() {
+        if (!currentEnrollmentId) {
+            $('#anc-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
+            return;
         }
-        html += `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showAddHistoryForm()"><i class="mdi mdi-plus"></i> Add History</button></div></div>`;
 
-        // Previous Pregnancies
-        html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-human-pregnant"></i> Previous Pregnancies</h6></div><div class="card-body">';
-        if (enrollment.previous_pregnancies && enrollment.previous_pregnancies.length > 0) {
-            html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Year</th><th>Duration</th><th>Place</th><th>Outcome</th><th>Sex</th><th>Weight</th><th>Notes</th><th style="width:60px">Edit</th></tr></thead><tbody>';
-            enrollment.previous_pregnancies.forEach(p => {
-                const outcome = p.baby_alive ? '✅ Alive' : (p.baby_dead ? '❌ Dead' : (p.baby_stillbirth ? '💔 Stillbirth' : '-'));
-                html += `<tr><td>${p.year || '-'}</td><td>${p.duration_weeks ? p.duration_weeks + 'w' : '-'}</td><td>${p.place_of_delivery || '-'}</td><td>${outcome}</td><td>${p.baby_sex || '-'}</td><td>${p.birth_weight_kg ? p.birth_weight_kg + 'kg' : '-'}</td><td>${p.notes || '-'}</td>
-                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editPreviousPregnancy(${p.id})" title="Edit"><i class="mdi mdi-pencil"></i></button></td></tr>`;
-            });
-            html += '</tbody></table></div>';
-        } else {
-            html += '<p class="text-muted mb-0">No previous pregnancies recorded</p>';
-        }
-        html += `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showAddPregnancyForm()"><i class="mdi mdi-plus"></i> Add Previous Pregnancy</button></div></div>`;
-
-        $('#history-content').html(html);
-    });
-}
-
-function showAddHistoryForm() {
-    _editMode = null; _editId = null;
-    const form = $('#addHistoryModal #add-history-form')[0];
-    if (form) form.reset();
-    $('#addHistoryModalLabel').html('<i class="mdi mdi-clipboard-text-clock"></i> Add Medical History');
-    $('#btn-save-history').html('<i class="mdi mdi-check"></i> Save');
-    $('#addHistoryModal input[name="year"]').attr('max', new Date().getFullYear());
-    $('#addHistoryModal').modal('show');
-}
-
-function editMedicalHistory(id) {
-    const h = (window._medicalHistoryCache || []).find(x => x.id === id);
-    if (!h) { toastr.error('Record not found'); return; }
-    _editMode = 'history'; _editId = id;
-    const form = $('#addHistoryModal #add-history-form')[0];
-    if (form) form.reset();
-    $('#addHistoryModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Medical History');
-    $('#btn-save-history').html('<i class="mdi mdi-check"></i> Update');
-    $('#addHistoryModal select[name="category"]').val(h.category || 'medical');
-    $('#addHistoryModal input[name="year"]').val(h.year || '').attr('max', new Date().getFullYear());
-    $('#addHistoryModal input[name="description"]').val(h.description || '');
-    $('#addHistoryModal input[name="notes"]').val(h.notes || '');
-    $('#addHistoryModal').modal('show');
-}
-
-function deleteMedicalHistory(id) {
-    if (!confirm('Delete this medical history entry?')) return;
-    $.ajax({
-        url: `/maternity-workbench/medical-history/${id}`,
-        method: 'DELETE', headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            if (r.success) { toastr.success(r.message || 'Deleted'); loadHistoryTab(); } else toastr.error(r.message);
-        },
-        error: function() { toastr.error('Failed to delete'); }
-    });
-}
-
-// Medical History modal save handler
-$(document).on('click', '#btn-save-history', function() {
-    const form = $('#addHistoryModal #add-history-form');
-    if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
-    const btn = $(this);
-    btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-    const isEdit = _editMode === 'history' && _editId;
-    if (isEdit) {
-        // Single record update via PUT
-        const data = {};
-        form.serializeArray().forEach(f => data[f.name] = f.value);
-        $.ajax({
-            url: `/maternity-workbench/medical-history/${_editId}`,
-            method: 'PUT', data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-            success: function(r) {
-                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
-                if (r.success) { _editMode = null; _editId = null; $('#addHistoryModal').modal('hide'); toastr.success(r.message); loadHistoryTab(); } else toastr.error(r.message);
-            },
-            error: function() { btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save'); toastr.error('Failed to update'); }
-        });
-    } else {
-        // Create via POST (existing pattern)
-        const data = { items: [{}] };
-        form.serializeArray().forEach(f => data.items[0][f.name] = f.value);
-        $.ajax({
-            url: `/maternity-workbench/enrollment/${currentEnrollmentId}/medical-history`,
-            method: 'POST', data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-            success: function(r) {
-                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
-                if (r.success) { $('#addHistoryModal').modal('hide'); toastr.success(r.message); loadHistoryTab(); } else toastr.error(r.message);
-            },
-            error: function() { btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save'); toastr.error('Failed to save'); }
-        });
-    }
-});
-
-function showAddPregnancyForm() {
-    _editMode = null; _editId = null;
-    const form = $('#addPregnancyModal #add-pregnancy-form')[0];
-    if (form) form.reset();
-    $('#addPregnancyModalLabel').html('<i class="mdi mdi-baby-carriage"></i> Add Previous Pregnancy');
-    $('#btn-save-pregnancy').html('<i class="mdi mdi-check"></i> Save');
-    $('#addPregnancyModal input[name="year"]').attr('max', new Date().getFullYear());
-    $('#addPregnancyModal').modal('show');
-}
-
-function editPreviousPregnancy(id) {
-    const p = (window._prevPregnanciesCache || []).find(x => x.id === id);
-    if (!p) { toastr.error('Record not found'); return; }
-    _editMode = 'pregnancy'; _editId = id;
-    const form = $('#addPregnancyModal #add-pregnancy-form')[0];
-    if (form) form.reset();
-    $('#addPregnancyModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Previous Pregnancy');
-    $('#btn-save-pregnancy').html('<i class="mdi mdi-check"></i> Update');
-    const m = $('#addPregnancyModal');
-    m.find('input[name="year"]').val(p.year || '').attr('max', new Date().getFullYear());
-    m.find('input[name="duration_weeks"]').val(p.duration_weeks || '');
-    m.find('input[name="place_of_delivery"]').val(p.place_of_delivery || '');
-    m.find('select[name="baby_sex"]').val(p.baby_sex || '');
-    m.find('input[name="birth_weight_kg"]').val(p.birth_weight_kg || '');
-    // Determine outcome from booleans
-    const outcome = p.baby_alive ? 'alive' : (p.baby_dead ? 'dead' : (p.baby_stillbirth ? 'stillbirth' : 'alive'));
-    m.find('select[name="outcome"]').val(outcome);
-    m.find('input[name="complications"]').val(p.complications || '');
-    m.find('input[name="notes"]').val(p.notes || '');
-    m.modal('show');
-}
-
-// Previous Pregnancy modal save handler
-$(document).on('click', '#btn-save-pregnancy', function() {
-    const form = $('#addPregnancyModal #add-pregnancy-form');
-    if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
-    const data = {};
-    form.serializeArray().forEach(f => data[f.name] = f.value);
-    data.baby_alive = data.outcome === 'alive';
-    data.baby_dead = data.outcome === 'dead';
-    data.baby_stillbirth = data.outcome === 'stillbirth';
-    const btn = $(this);
-    btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-    const isEdit = _editMode === 'pregnancy' && _editId;
-    const url = isEdit ? `/maternity-workbench/prev-pregnancy/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/prev-pregnancy`;
-    const method = isEdit ? 'PUT' : 'POST';
-    $.ajax({
-        url: url, method: method, data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
-            if (r.success) { _editMode = null; _editId = null; $('#addPregnancyModal').modal('hide'); toastr.success(r.message); loadHistoryTab(); } else toastr.error(r.message);
-        },
-        error: function() { btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save'); toastr.error('Failed to save'); }
-    });
-});
-
-// ═══════════════════════════════════════════════════════════════
-// ANC VISITS TAB
-// ═══════════════════════════════════════════════════════════════
-function loadAncTab() {
-    if (!currentEnrollmentId) { $('#anc-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>'); return; }
-
-    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/anc-visits`, function(resp) {
-        if (!resp.success) return;
-        _ancVisitsCache = resp.visits; // cache for edit pre-fill
-        let html = `<div class="d-flex justify-content-between align-items-center mb-3">
+        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/anc-visits`, function(resp) {
+            if (!resp.success) return;
+            _ancVisitsCache = resp.visits; // cache for edit pre-fill
+            let html = `<div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="mdi mdi-stethoscope"></i> ANC Visits (${resp.visits.length})</h5>
             <button class="btn text-white" style="background: var(--maternity-pink);" onclick="showAncVisitForm()"><i class="mdi mdi-plus"></i> New ANC Visit</button>
         </div>`;
 
-        if (resp.visits.length === 0) {
-            html += '<p class="text-muted text-center py-4">No ANC visits recorded yet</p>';
-        } else {
-            // Trend charts panel (show when ≥2 visits with data)
-            html += `<div class="card-modern mb-3">
+            if (resp.visits.length === 0) {
+                html += '<p class="text-muted text-center py-4">No ANC visits recorded yet</p>';
+            } else {
+                // Trend charts panel (show when ≥2 visits with data)
+                html += `<div class="card-modern mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center" style="cursor:pointer;" onclick="$('#anc-trends-body').slideToggle(200); $(this).find('.mdi-chevron-down, .mdi-chevron-up').toggleClass('mdi-chevron-down mdi-chevron-up');">
                     <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> ANC Trend Charts</h6>
                     <i class="mdi mdi-chevron-down"></i>
@@ -2956,8 +4106,8 @@ function loadAncTab() {
                 </div>
             </div>`;
 
-            resp.visits.forEach(function(v) {
-                html += `<div class="anc-visit-card">
+                resp.visits.forEach(function(v) {
+                    html += `<div class="anc-visit-card">
                     <div class="d-flex justify-content-between align-items-center">
                         <div><span class="visit-number">Visit #${v.visit_number}</span> <span class="badge bg-secondary ms-1">${v.visit_type || ''}</span></div>
                         <div class="d-flex align-items-center gap-2">
@@ -2982,217 +4132,491 @@ function loadAncTab() {
                     ${v.clinical_notes ? '<div class="mt-2 small text-muted"><i class="mdi mdi-note"></i> ' + v.clinical_notes + '</div>' : ''}
                     <div class="mt-1 small text-muted">Seen by: ${v.seen_by}</div>
                 </div>`;
+                });
+            }
+            $('#anc-content').html(html);
+            if (resp.visits.length >= 2) {
+                renderAncTrendCharts(resp.visits);
+            }
+        });
+    }
+
+    function showAncVisitForm() {
+        _editMode = null;
+        _editId = null; // reset to create mode
+        destroyMaternityEditor('anc_notes');
+        const form = $('#ancVisitModal #anc-visit-form')[0];
+        if (form) form.reset();
+        $('#ancVisitModalLabel').html('<i class="mdi mdi-stethoscope"></i> Record ANC Visit');
+        $('#btn-save-anc-visit').html('<i class="mdi mdi-check"></i> Save Visit');
+        // Set dynamic defaults
+        $('#ancVisitModal input[name="visit_date"]').val(new Date().toISOString().split('T')[0]);
+        const gaWeeks = currentEnrollment && currentEnrollment.gestational_age ? parseInt(currentEnrollment.gestational_age) : '';
+        $('#ancVisitModal input[name="gestational_age_weeks"]').val(gaWeeks);
+
+        // Init CKEditor after modal is fully visible
+        $('#ancVisitModal').off('shown.bs.modal.ancEditor').on('shown.bs.modal.ancEditor', function() {
+            initMaternityEditor('#mat-anc-notes-editor-modal', 'anc_notes');
+        });
+        // Destroy CKEditor when modal hides
+        $('#ancVisitModal').off('hidden.bs.modal.ancEditor').on('hidden.bs.modal.ancEditor', function() {
+            destroyMaternityEditor('anc_notes');
+        });
+
+        $('#ancVisitModal').modal('show');
+    }
+
+    function editAncVisit(id) {
+        const v = _ancVisitsCache.find(x => x.id === id);
+        if (!v) {
+            toastr.error('Visit data not found');
+            return;
+        }
+        _editMode = 'anc';
+        _editId = id;
+        destroyMaternityEditor('anc_notes');
+        const form = $('#ancVisitModal #anc-visit-form')[0];
+        if (form) form.reset();
+        $('#ancVisitModalLabel').html('<i class="mdi mdi-pencil"></i> Edit ANC Visit #' + v.visit_number);
+        $('#btn-save-anc-visit').html('<i class="mdi mdi-check"></i> Update Visit');
+        // Pre-fill form fields
+        $('#ancVisitModal input[name="visit_date"]').val(v.visit_date_raw || '');
+        $('#ancVisitModal input[name="gestational_age_weeks"]').val(v.gestational_age_weeks || '');
+        $('#ancVisitModal select[name="visit_type"]').val(v.visit_type || '');
+        $('#ancVisitModal input[name="next_appointment"]').val(v.next_appointment_raw || '');
+        $('#ancVisitModal input[name="weight_kg"]').val(v.weight_kg || '');
+        $('#ancVisitModal input[name="blood_pressure_systolic"]').val(v.blood_pressure_systolic || '');
+        $('#ancVisitModal input[name="blood_pressure_diastolic"]').val(v.blood_pressure_diastolic || '');
+        $('#ancVisitModal input[name="haemoglobin"]').val(v.haemoglobin || '');
+        $('#ancVisitModal input[name="fundal_height_cm"]').val(v.fundal_height_cm || '');
+        $('#ancVisitModal input[name="fetal_heart_rate"]').val(v.fetal_heart_rate || '');
+        $('#ancVisitModal select[name="presentation"]').val(v.presentation || '');
+        $('#ancVisitModal select[name="oedema"]').val(v.oedema || '');
+        $('#ancVisitModal select[name="foetal_movement"]').val(v.foetal_movement || '');
+        $('#ancVisitModal select[name="urine_protein"]').val(v.urine_protein || '');
+        $('#ancVisitModal select[name="urine_glucose"]').val(v.urine_glucose || '');
+        // CKEditor: init after modal is visible, then set data
+        $('#ancVisitModal').off('shown.bs.modal.ancEditor').on('shown.bs.modal.ancEditor', function() {
+            initMaternityEditor('#mat-anc-notes-editor-modal', 'anc_notes').then(function(editor) {
+                if (editor && v.clinical_notes) editor.setData(v.clinical_notes);
+            });
+        });
+        $('#ancVisitModal').off('hidden.bs.modal.ancEditor').on('hidden.bs.modal.ancEditor', function() {
+            destroyMaternityEditor('anc_notes');
+        });
+        $('#ancVisitModal').modal('show');
+    }
+
+    // ANC Visit modal save handler
+    $(document).on('click', '#btn-save-anc-visit', function() {
+        const form = $('#ancVisitModal #anc-visit-form');
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        const data = {};
+        form.serializeArray().forEach(f => data[f.name] = f.value);
+        data.clinical_notes = getEditorData('anc_notes', '#mat-anc-notes-editor-modal');
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+        const isEdit = _editMode === 'anc' && _editId;
+        const url = isEdit ? `/maternity-workbench/anc-visit/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/anc-visit`;
+        const method = isEdit ? 'PUT' : 'POST';
+        $.ajax({
+            url: url,
+            method: method,
+            data: data,
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Visit');
+                if (r.success) {
+                    _editMode = null;
+                    _editId = null;
+                    destroyMaternityEditor('anc_notes');
+                    $('#ancVisitModal').modal('hide');
+                    toastr.success(r.message);
+                    loadAncTab();
+                } else toastr.error(r.message);
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Visit');
+                const e = xhr.responseJSON?.errors;
+                if (e) Object.values(e).flat().forEach(m => toastr.error(m));
+                else toastr.error('Failed to save');
+            }
+        });
+    });
+
+    // ─── ANC Trend Charts (Phase 4) ───────────────────────────────
+    function renderAncTrendCharts(visits) {
+        if (typeof Chart === 'undefined' || !visits || visits.length < 2) return;
+
+        // Destroy previous chart instances
+        ['_ancBpChart', '_ancWeightChart', '_ancFundalChart', '_ancHbChart'].forEach(k => {
+            if (window[k]) {
+                window[k].destroy();
+                window[k] = null;
+            }
+        });
+
+        const sorted = [...visits].sort((a, b) => {
+            const da = a.visit_date_raw || a.visit_date || '';
+            const db = b.visit_date_raw || b.visit_date || '';
+            return da.localeCompare(db);
+        });
+        const labels = sorted.map(v => v.visit_date || `V#${v.visit_number}`);
+        const toNum = v => (v === null || v === undefined || v === '') ? null : Number(v);
+
+        // ── 1. Blood Pressure Chart ──
+        const bpCanvas = document.getElementById('anc-chart-bp');
+        if (bpCanvas) {
+            const sys = sorted.map(v => toNum(v.blood_pressure_systolic));
+            const dia = sorted.map(v => toNum(v.blood_pressure_diastolic));
+            window._ancBpChart = new Chart(bpCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                            label: 'Systolic',
+                            data: sys,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220,53,69,0.1)',
+                            tension: 0.3,
+                            pointRadius: 4,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Diastolic',
+                            data: dia,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13,110,253,0.1)',
+                            tension: 0.3,
+                            pointRadius: 4,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Pre-eclampsia threshold (140/90)',
+                            data: new Array(labels.length).fill(140),
+                            borderColor: '#fd7e14',
+                            borderDash: [5, 3],
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                            fill: false
+                        },
+                        {
+                            label: '',
+                            data: new Array(labels.length).fill(90),
+                            borderColor: '#fd7e14',
+                            borderDash: [5, 3],
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true,
+                                padding: 8,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'mmHg'
+                            },
+                            min: 40,
+                            max: 200
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 9
+                                },
+                                maxRotation: 45
+                            }
+                        }
+                    }
+                }
             });
         }
-        $('#anc-content').html(html);
-        if (resp.visits.length >= 2) {
-            renderAncTrendCharts(resp.visits);
+
+        // ── 2. Weight Gain Chart ──
+        const wtCanvas = document.getElementById('anc-chart-weight');
+        if (wtCanvas) {
+            const wts = sorted.map(v => toNum(v.weight_kg));
+            const ppw = currentEnrollment && currentEnrollment.pre_pregnancy_weight ? Number(currentEnrollment.pre_pregnancy_weight) : null;
+            const datasets = [{
+                label: 'Weight (kg)',
+                data: wts,
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25,135,84,0.1)',
+                tension: 0.3,
+                pointRadius: 4,
+                spanGaps: true,
+                fill: true
+            }];
+            if (ppw) {
+                datasets.push({
+                    label: 'Pre-pregnancy weight',
+                    data: new Array(labels.length).fill(ppw),
+                    borderColor: '#6c757d',
+                    borderDash: [5, 3],
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                    fill: false
+                });
+            }
+            window._ancWeightChart = new Chart(wtCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true,
+                                padding: 8,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'kg'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 9
+                                },
+                                maxRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
         }
-    });
-}
 
-function showAncVisitForm() {
-    _editMode = null; _editId = null; // reset to create mode
-    destroyMaternityEditor('anc_notes');
-    const form = $('#ancVisitModal #anc-visit-form')[0];
-    if (form) form.reset();
-    $('#ancVisitModalLabel').html('<i class="mdi mdi-stethoscope"></i> Record ANC Visit');
-    $('#btn-save-anc-visit').html('<i class="mdi mdi-check"></i> Save Visit');
-    // Set dynamic defaults
-    $('#ancVisitModal input[name="visit_date"]').val(new Date().toISOString().split('T')[0]);
-    const gaWeeks = currentEnrollment && currentEnrollment.gestational_age ? parseInt(currentEnrollment.gestational_age) : '';
-    $('#ancVisitModal input[name="gestational_age_weeks"]').val(gaWeeks);
+        // ── 3. Fundal Height vs Gestational Age Chart ──
+        const fhCanvas = document.getElementById('anc-chart-fundal');
+        if (fhCanvas) {
+            const gaWeeks = sorted.map(v => toNum(v.gestational_age_weeks));
+            const fhCm = sorted.map(v => toNum(v.fundal_height_cm));
+            // McDonald's rule reference: fundal height ≈ gestational age ± 2cm
+            const refGa = [];
+            const refUpper = [];
+            const refLower = [];
+            for (let w = 12; w <= 42; w++) {
+                refGa.push(w);
+                refUpper.push(w + 2);
+                refLower.push(Math.max(0, w - 2));
+            }
 
-    // Init CKEditor after modal is fully visible
-    $('#ancVisitModal').off('shown.bs.modal.ancEditor').on('shown.bs.modal.ancEditor', function() {
-        initMaternityEditor('#mat-anc-notes-editor-modal', 'anc_notes');
-    });
-    // Destroy CKEditor when modal hides
-    $('#ancVisitModal').off('hidden.bs.modal.ancEditor').on('hidden.bs.modal.ancEditor', function() {
-        destroyMaternityEditor('anc_notes');
-    });
+            const ptData = [];
+            sorted.forEach(v => {
+                const ga = toNum(v.gestational_age_weeks);
+                const fh = toNum(v.fundal_height_cm);
+                if (ga !== null && fh !== null) ptData.push({
+                    x: ga,
+                    y: fh
+                });
+            });
 
-    $('#ancVisitModal').modal('show');
-}
-
-function editAncVisit(id) {
-    const v = _ancVisitsCache.find(x => x.id === id);
-    if (!v) { toastr.error('Visit data not found'); return; }
-    _editMode = 'anc'; _editId = id;
-    destroyMaternityEditor('anc_notes');
-    const form = $('#ancVisitModal #anc-visit-form')[0];
-    if (form) form.reset();
-    $('#ancVisitModalLabel').html('<i class="mdi mdi-pencil"></i> Edit ANC Visit #' + v.visit_number);
-    $('#btn-save-anc-visit').html('<i class="mdi mdi-check"></i> Update Visit');
-    // Pre-fill form fields
-    $('#ancVisitModal input[name="visit_date"]').val(v.visit_date_raw || '');
-    $('#ancVisitModal input[name="gestational_age_weeks"]').val(v.gestational_age_weeks || '');
-    $('#ancVisitModal select[name="visit_type"]').val(v.visit_type || '');
-    $('#ancVisitModal input[name="next_appointment"]').val(v.next_appointment_raw || '');
-    $('#ancVisitModal input[name="weight_kg"]').val(v.weight_kg || '');
-    $('#ancVisitModal input[name="blood_pressure_systolic"]').val(v.blood_pressure_systolic || '');
-    $('#ancVisitModal input[name="blood_pressure_diastolic"]').val(v.blood_pressure_diastolic || '');
-    $('#ancVisitModal input[name="haemoglobin"]').val(v.haemoglobin || '');
-    $('#ancVisitModal input[name="fundal_height_cm"]').val(v.fundal_height_cm || '');
-    $('#ancVisitModal input[name="fetal_heart_rate"]').val(v.fetal_heart_rate || '');
-    $('#ancVisitModal select[name="presentation"]').val(v.presentation || '');
-    $('#ancVisitModal select[name="oedema"]').val(v.oedema || '');
-    $('#ancVisitModal select[name="foetal_movement"]').val(v.foetal_movement || '');
-    $('#ancVisitModal select[name="urine_protein"]').val(v.urine_protein || '');
-    $('#ancVisitModal select[name="urine_glucose"]').val(v.urine_glucose || '');
-    // CKEditor: init after modal is visible, then set data
-    $('#ancVisitModal').off('shown.bs.modal.ancEditor').on('shown.bs.modal.ancEditor', function() {
-        initMaternityEditor('#mat-anc-notes-editor-modal', 'anc_notes').then(function(editor) {
-            if (editor && v.clinical_notes) editor.setData(v.clinical_notes);
-        });
-    });
-    $('#ancVisitModal').off('hidden.bs.modal.ancEditor').on('hidden.bs.modal.ancEditor', function() {
-        destroyMaternityEditor('anc_notes');
-    });
-    $('#ancVisitModal').modal('show');
-}
-
-// ANC Visit modal save handler
-$(document).on('click', '#btn-save-anc-visit', function() {
-    const form = $('#ancVisitModal #anc-visit-form');
-    if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
-    const data = {};
-    form.serializeArray().forEach(f => data[f.name] = f.value);
-    data.clinical_notes = getEditorData('anc_notes', '#mat-anc-notes-editor-modal');
-    const btn = $(this);
-    btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-    const isEdit = _editMode === 'anc' && _editId;
-    const url = isEdit ? `/maternity-workbench/anc-visit/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/anc-visit`;
-    const method = isEdit ? 'PUT' : 'POST';
-    $.ajax({
-        url: url, method: method, data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Visit');
-            if (r.success) { _editMode = null; _editId = null; destroyMaternityEditor('anc_notes'); $('#ancVisitModal').modal('hide'); toastr.success(r.message); loadAncTab(); } else toastr.error(r.message);
-        },
-        error: function(xhr) {
-            btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Visit');
-            const e = xhr.responseJSON?.errors; if (e) Object.values(e).flat().forEach(m => toastr.error(m)); else toastr.error('Failed to save');
+            window._ancFundalChart = new Chart(fhCanvas.getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                            label: 'Fundal Height',
+                            data: ptData,
+                            borderColor: '#6f42c1',
+                            backgroundColor: '#6f42c1',
+                            pointRadius: 5,
+                            showLine: true,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Expected (GA ± 2cm)',
+                            data: refGa.map((g, i) => ({
+                                x: g,
+                                y: g
+                            })),
+                            borderColor: '#198754',
+                            borderDash: [4, 2],
+                            pointRadius: 0,
+                            showLine: true,
+                            fill: false,
+                            borderWidth: 1.5
+                        },
+                        {
+                            label: 'Upper limit (+2cm)',
+                            data: refGa.map((g, i) => ({
+                                x: g,
+                                y: refUpper[i]
+                            })),
+                            borderColor: 'rgba(25,135,84,0.3)',
+                            borderDash: [2, 2],
+                            pointRadius: 0,
+                            showLine: true,
+                            fill: false,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Lower limit (−2cm)',
+                            data: refGa.map((g, i) => ({
+                                x: g,
+                                y: refLower[i]
+                            })),
+                            borderColor: 'rgba(25,135,84,0.3)',
+                            borderDash: [2, 2],
+                            pointRadius: 0,
+                            showLine: true,
+                            fill: false,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true,
+                                padding: 8,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Gestational Age (weeks)'
+                            },
+                            min: 12,
+                            max: 42
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Fundal Height (cm)'
+                            },
+                            min: 10,
+                            max: 44
+                        }
+                    }
+                }
+            });
         }
-    });
-});
 
-// ─── ANC Trend Charts (Phase 4) ───────────────────────────────
-function renderAncTrendCharts(visits) {
-    if (typeof Chart === 'undefined' || !visits || visits.length < 2) return;
-
-    // Destroy previous chart instances
-    ['_ancBpChart','_ancWeightChart','_ancFundalChart','_ancHbChart'].forEach(k => {
-        if (window[k]) { window[k].destroy(); window[k] = null; }
-    });
-
-    const sorted = [...visits].sort((a, b) => {
-        const da = a.visit_date_raw || a.visit_date || '';
-        const db = b.visit_date_raw || b.visit_date || '';
-        return da.localeCompare(db);
-    });
-    const labels = sorted.map(v => v.visit_date || `V#${v.visit_number}`);
-    const toNum = v => (v === null || v === undefined || v === '') ? null : Number(v);
-
-    // ── 1. Blood Pressure Chart ──
-    const bpCanvas = document.getElementById('anc-chart-bp');
-    if (bpCanvas) {
-        const sys = sorted.map(v => toNum(v.blood_pressure_systolic));
-        const dia = sorted.map(v => toNum(v.blood_pressure_diastolic));
-        window._ancBpChart = new Chart(bpCanvas.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Systolic', data: sys, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.1)', tension: 0.3, pointRadius: 4, spanGaps: true },
-                    { label: 'Diastolic', data: dia, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', tension: 0.3, pointRadius: 4, spanGaps: true },
-                    { label: 'Pre-eclampsia threshold (140/90)', data: new Array(labels.length).fill(140), borderColor: '#fd7e14', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, fill: false },
-                    { label: '', data: new Array(labels.length).fill(90), borderColor: '#fd7e14', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, fill: false }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { usePointStyle: true, padding: 8, font: {size: 10} } } }, scales: { y: { title: { display: true, text: 'mmHg' }, min: 40, max: 200 }, x: { ticks: { font: {size: 9}, maxRotation: 45 } } } }
-        });
-    }
-
-    // ── 2. Weight Gain Chart ──
-    const wtCanvas = document.getElementById('anc-chart-weight');
-    if (wtCanvas) {
-        const wts = sorted.map(v => toNum(v.weight_kg));
-        const ppw = currentEnrollment && currentEnrollment.pre_pregnancy_weight ? Number(currentEnrollment.pre_pregnancy_weight) : null;
-        const datasets = [
-            { label: 'Weight (kg)', data: wts, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.1)', tension: 0.3, pointRadius: 4, spanGaps: true, fill: true }
-        ];
-        if (ppw) {
-            datasets.push({ label: 'Pre-pregnancy weight', data: new Array(labels.length).fill(ppw), borderColor: '#6c757d', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, fill: false });
+        // ── 4. Haemoglobin Trend Chart ──
+        const hbCanvas = document.getElementById('anc-chart-hb');
+        if (hbCanvas) {
+            const hbs = sorted.map(v => toNum(v.haemoglobin));
+            window._ancHbChart = new Chart(hbCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                            label: 'Hb (g/dL)',
+                            data: hbs,
+                            borderColor: '#d63384',
+                            backgroundColor: 'rgba(214,51,132,0.1)',
+                            tension: 0.3,
+                            pointRadius: 4,
+                            spanGaps: true,
+                            fill: true
+                        },
+                        {
+                            label: 'Normal threshold (11 g/dL)',
+                            data: new Array(labels.length).fill(11),
+                            borderColor: '#198754',
+                            borderDash: [5, 3],
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                            fill: false
+                        },
+                        {
+                            label: 'Severe anaemia (7 g/dL)',
+                            data: new Array(labels.length).fill(7),
+                            borderColor: '#dc3545',
+                            borderDash: [5, 3],
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true,
+                                padding: 8,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'g/dL'
+                            },
+                            min: 4,
+                            max: 16
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 9
+                                },
+                                maxRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
         }
-        window._ancWeightChart = new Chart(wtCanvas.getContext('2d'), {
-            type: 'line',
-            data: { labels: labels, datasets: datasets },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { usePointStyle: true, padding: 8, font: {size: 10} } } }, scales: { y: { title: { display: true, text: 'kg' } }, x: { ticks: { font: {size: 9}, maxRotation: 45 } } } }
-        });
     }
 
-    // ── 3. Fundal Height vs Gestational Age Chart ──
-    const fhCanvas = document.getElementById('anc-chart-fundal');
-    if (fhCanvas) {
-        const gaWeeks = sorted.map(v => toNum(v.gestational_age_weeks));
-        const fhCm = sorted.map(v => toNum(v.fundal_height_cm));
-        // McDonald's rule reference: fundal height ≈ gestational age ± 2cm
-        const refGa = [];
-        const refUpper = [];
-        const refLower = [];
-        for (let w = 12; w <= 42; w++) { refGa.push(w); refUpper.push(w + 2); refLower.push(Math.max(0, w - 2)); }
+    // ═══════════════════════════════════════════════════════════════
+    // CLINICAL ORDERS TAB (Nursing-parity — auto-save per item)
+    // ═══════════════════════════════════════════════════════════════
+    function loadClinicalOrdersTab() {
+        if (!currentEnrollmentId || !currentPatient) {
+            $('#clinical-orders-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
+            return;
+        }
 
-        const ptData = [];
-        sorted.forEach(v => {
-            const ga = toNum(v.gestational_age_weeks);
-            const fh = toNum(v.fundal_height_cm);
-            if (ga !== null && fh !== null) ptData.push({ x: ga, y: fh });
-        });
-
-        window._ancFundalChart = new Chart(fhCanvas.getContext('2d'), {
-            type: 'scatter',
-            data: {
-                datasets: [
-                    { label: 'Fundal Height', data: ptData, borderColor: '#6f42c1', backgroundColor: '#6f42c1', pointRadius: 5, showLine: true, tension: 0.2 },
-                    { label: 'Expected (GA ± 2cm)', data: refGa.map((g,i) => ({x: g, y: g})), borderColor: '#198754', borderDash: [4,2], pointRadius: 0, showLine: true, fill: false, borderWidth: 1.5 },
-                    { label: 'Upper limit (+2cm)', data: refGa.map((g,i) => ({x: g, y: refUpper[i]})), borderColor: 'rgba(25,135,84,0.3)', borderDash: [2,2], pointRadius: 0, showLine: true, fill: false, borderWidth: 1 },
-                    { label: 'Lower limit (−2cm)', data: refGa.map((g,i) => ({x: g, y: refLower[i]})), borderColor: 'rgba(25,135,84,0.3)', borderDash: [2,2], pointRadius: 0, showLine: true, fill: false, borderWidth: 1 }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { usePointStyle: true, padding: 8, font: {size: 10} } } }, scales: { x: { title: { display: true, text: 'Gestational Age (weeks)' }, min: 12, max: 42 }, y: { title: { display: true, text: 'Fundal Height (cm)' }, min: 10, max: 44 } } }
-        });
-    }
-
-    // ── 4. Haemoglobin Trend Chart ──
-    const hbCanvas = document.getElementById('anc-chart-hb');
-    if (hbCanvas) {
-        const hbs = sorted.map(v => toNum(v.haemoglobin));
-        window._ancHbChart = new Chart(hbCanvas.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Hb (g/dL)', data: hbs, borderColor: '#d63384', backgroundColor: 'rgba(214,51,132,0.1)', tension: 0.3, pointRadius: 4, spanGaps: true, fill: true },
-                    { label: 'Normal threshold (11 g/dL)', data: new Array(labels.length).fill(11), borderColor: '#198754', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, fill: false },
-                    { label: 'Severe anaemia (7 g/dL)', data: new Array(labels.length).fill(7), borderColor: '#dc3545', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, fill: false }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { usePointStyle: true, padding: 8, font: {size: 10} } } }, scales: { y: { title: { display: true, text: 'g/dL' }, min: 4, max: 16 }, x: { ticks: { font: {size: 9}, maxRotation: 45 } } } }
-        });
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// CLINICAL ORDERS TAB (Nursing-parity — auto-save per item)
-// ═══════════════════════════════════════════════════════════════
-function loadClinicalOrdersTab() {
-    if (!currentEnrollmentId || !currentPatient) {
-        $('#clinical-orders-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
-        return;
-    }
-
-    const html = `
+        const html = `
     <div class="clinical-requests-container p-3">
         <div class="mat-info-banner mb-3"><i class="mdi mdi-auto-fix"></i> <strong>Auto-save enabled:</strong> Items are saved automatically when selected from search results. Use the search boxes below to find and add prescriptions, lab tests, imaging, or procedures.</div>
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -3454,647 +4878,784 @@ function loadClinicalOrdersTab() {
         </div>
     </div>`;
 
-    $('#clinical-orders-content').html(html);
+        $('#clinical-orders-content').html(html);
 
-    // Inject the dose-mode toggle from the hidden source into the dynamic container
-    $('#mco_dose_mode_container').html($('#mco-dose-mode-toggle-source').html());
+        // Inject the dose-mode toggle from the hidden source into the dynamic container
+        $('#mco_dose_mode_container').html($('#mco-dose-mode-toggle-source').html());
 
-    MaternityClinicalOrders.init(currentPatient, currentEnrollmentId);
-}
+        MaternityClinicalOrders.init(currentPatient, currentEnrollmentId);
+    }
 
-const MaternityClinicalOrders = (function() {
-    let patientId = null;
-    let enrollmentId = null;
-    let mcoDoseStructuredMode = true;
-    const investigationCategoryId = '{{ appsettings("investigation_category_id", "") }}';
-    const procedureCategoryId = {{ appsettings('procedure_category_id', 0) }};
+    const MaternityClinicalOrders = (function() {
+        let patientId = null;
+        let enrollmentId = null;
+        let mcoDoseStructuredMode = true;
+        const investigationCategoryId = '{{ appsettings("investigation_category_id", "") }}';
+        const procedureCategoryId = {{ appsettings("procedure_category_id", 0) }};
 
-    function init(pid, eid) {
-        patientId = pid;
-        enrollmentId = eid;
+        function init(pid, eid) {
+            patientId = pid;
+            enrollmentId = eid;
 
-        // Clear selection tables
-        $('#mco-selected-products').empty();
-        $('#mco-selected-labs').empty();
-        $('#mco-selected-imaging').empty();
-        $('#mco-selected-procedures').empty();
+            // Clear selection tables
+            $('#mco-selected-products').empty();
+            $('#mco-selected-labs').empty();
+            $('#mco-selected-imaging').empty();
+            $('#mco-selected-procedures').empty();
 
-        // Init history DataTables
-        initPrescHistory();
-        initLabHistory();
-        initImagingHistory();
-        initProcHistory();
+            // Init history DataTables
+            initPrescHistory();
+            initLabHistory();
+            initImagingHistory();
+            initProcHistory();
 
-        // Clear ClinicalOrdersKit duplicate tracking
-        if (typeof ClinicalOrdersKit !== 'undefined') {
-            ClinicalOrdersKit.clearAddedIds();
-        }
+            // Clear ClinicalOrdersKit duplicate tracking
+            if (typeof ClinicalOrdersKit !== 'undefined') {
+                ClinicalOrdersKit.clearAddedIds();
+            }
 
-        // One-time initialization
-        if (!MaternityClinicalOrders._advancedInit && typeof ClinicalOrdersKit !== 'undefined') {
+            // One-time initialization
+            if (!MaternityClinicalOrders._advancedInit && typeof ClinicalOrdersKit !== 'undefined') {
 
-            // Dose mode toggle
-            var mcoDoseState = ClinicalOrdersKit.initDoseModeToggle({
-                prefix: 'mco_',
-                cssPrefix: 'mco-',
-                tableSelector: '#mco-selected-products',
-                idInputName: 'mco_presc_id[]',
-                doseInputName: 'mco_presc_dose[]',
-                onchange: 'ClinicalOrdersKit.updateDoseValue(this, "mco-")',
-                onToggle: function(isStructured) { mcoDoseStructuredMode = isStructured; }
-            });
-            mcoDoseStructuredMode = mcoDoseState.isStructured;
+                // Dose mode toggle
+                var mcoDoseState = ClinicalOrdersKit.initDoseModeToggle({
+                    prefix: 'mco_',
+                    cssPrefix: 'mco-',
+                    tableSelector: '#mco-selected-products',
+                    idInputName: 'mco_presc_id[]',
+                    doseInputName: 'mco_presc_dose[]',
+                    onchange: 'ClinicalOrdersKit.updateDoseValue(this, "mco-")',
+                    onToggle: function(isStructured) {
+                        mcoDoseStructuredMode = isStructured;
+                    }
+                });
+                mcoDoseStructuredMode = mcoDoseState.isStructured;
 
-            // Register debounced dose auto-save for medications
-            ClinicalOrdersKit.onDoseUpdate('mco-', function(recordId, doseValue, flashEl) {
-                ClinicalOrdersKit.debouncedUpdate({
-                    url: '/maternity-workbench/enrollment/' + enrollmentId + '/prescriptions/' + recordId + '/dose',
-                    payload: { dose: doseValue },
+                // Register debounced dose auto-save for medications
+                ClinicalOrdersKit.onDoseUpdate('mco-', function(recordId, doseValue, flashEl) {
+                    ClinicalOrdersKit.debouncedUpdate({
+                        url: '/maternity-workbench/enrollment/' + enrollmentId + '/prescriptions/' + recordId + '/dose',
+                        payload: {
+                            dose: doseValue
+                        },
+                        csrfToken: CSRF_TOKEN,
+                        flashTarget: flashEl,
+                        onSuccess: function() {
+                            initPrescHistory();
+                        }
+                    });
+                });
+
+                // Treatment Plans
+                ClinicalOrdersKit.initTreatmentPlans({
+                    applyUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/apply-treatment-plan',
                     csrfToken: CSRF_TOKEN,
-                    flashTarget: flashEl,
-                    onSuccess: function() { initPrescHistory(); }
+                    extraPayload: {
+                        enrollment_id: enrollmentId
+                    },
+                    onApplySuccess: function() {
+                        initPrescHistory();
+                        initLabHistory();
+                        initImagingHistory();
+                        initProcHistory();
+                    },
+                    currentItemsGatherer: function() {
+                        var items = [];
+                        $('#mco-selected-labs tr[data-record-id]').each(function() {
+                            items.push({
+                                item_type: 'lab',
+                                reference_id: parseInt($(this).data('service-id')),
+                                display_name: $(this).find('td:first').text().trim(),
+                                note: $(this).find('input[name="mco_lab_note[]"]').val() || ''
+                            });
+                        });
+                        $('#mco-selected-imaging tr[data-record-id]').each(function() {
+                            items.push({
+                                item_type: 'imaging',
+                                reference_id: parseInt($(this).data('service-id')),
+                                display_name: $(this).find('td:first').text().trim(),
+                                note: $(this).find('input[name="mco_imaging_note[]"]').val() || ''
+                            });
+                        });
+                        $('#mco-selected-products tr[data-record-id]').each(function() {
+                            items.push({
+                                item_type: 'medication',
+                                reference_id: parseInt($(this).data('service-id')),
+                                display_name: $(this).find('td:first').text().trim(),
+                                dose: $(this).find('input[name="mco_presc_dose[]"]').val() || ''
+                            });
+                        });
+                        $('#mco-selected-procedures tr[data-record-id]').each(function() {
+                            items.push({
+                                item_type: 'procedure',
+                                reference_id: parseInt($(this).data('service-id')),
+                                display_name: $(this).find('td:first').text().trim(),
+                                note: ''
+                            });
+                        });
+                        return items;
+                    }
                 });
+
+                // Re-prescribe from Encounter
+                ClinicalOrdersKit.initRePrescribeFromEncounter({
+                    recentUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/recent-encounters',
+                    encounterItemsUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/encounter-items/{id}',
+                    rePrescribeUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/re-prescribe',
+                    csrfToken: CSRF_TOKEN,
+                    extraPayload: {
+                        enrollment_id: enrollmentId
+                    },
+                    dropdownSelector: '#mco-rp-encounter-dropdown',
+                    onRePrescribed: function() {
+                        initPrescHistory();
+                        initLabHistory();
+                        initImagingHistory();
+                        initProcHistory();
+                    }
+                });
+
+                MaternityClinicalOrders._advancedInit = true;
+            }
+
+            // Update configs on every enrollment switch
+            if (typeof ClinicalOrdersKit !== 'undefined') {
+                ClinicalOrdersKit.updateTreatmentPlanConfig({
+                    applyUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/apply-treatment-plan',
+                    extraPayload: {
+                        enrollment_id: enrollmentId
+                    }
+                });
+                ClinicalOrdersKit.updateRePrescribeConfig({
+                    recentUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/recent-encounters',
+                    encounterItemsUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/encounter-items/{id}',
+                    rePrescribeUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/re-prescribe',
+                    extraPayload: {
+                        enrollment_id: enrollmentId
+                    }
+                });
+            }
+
+            // Setup search + re-order handlers (only once)
+            if (!MaternityClinicalOrders._searchBound) {
+                bindSearchHandlers();
+                MaternityClinicalOrders._searchBound = true;
+            }
+        }
+
+        function bindSearchHandlers() {
+            let searchTimeout;
+
+            // Initialize floating dropdowns (escape overflow:hidden ancestors)
+            ClinicalOrdersKit.initSearchDropdown('#mco_presc_search', '#mco_presc_results');
+            ClinicalOrdersKit.initSearchDropdown('#mco_lab_search', '#mco_lab_results');
+            ClinicalOrdersKit.initSearchDropdown('#mco_imaging_search', '#mco_imaging_results');
+            ClinicalOrdersKit.initSearchDropdown('#mco_proc_search', '#mco_proc_results');
+
+            // Drug search
+            $('#mco_presc_search').on('keyup', function() {
+                const q = $(this).val();
+                clearTimeout(searchTimeout);
+                if (q.length < 2) {
+                    $('#mco_presc_results').hide();
+                    return;
+                }
+                ClinicalOrdersKit.positionDropdown('#mco_presc_search', '#mco_presc_results');
+                ClinicalOrdersKit.showSearchLoading('#mco_presc_results');
+                searchTimeout = setTimeout(() => searchProducts(q), 300);
             });
 
-            // Treatment Plans
-            ClinicalOrdersKit.initTreatmentPlans({
-                applyUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/apply-treatment-plan',
-                csrfToken: CSRF_TOKEN,
-                extraPayload: { enrollment_id: enrollmentId },
-                onApplySuccess: function() {
-                    initPrescHistory();
-                    initLabHistory();
-                    initImagingHistory();
-                    initProcHistory();
+            // Lab search
+            $('#mco_lab_search').on('keyup', function() {
+                const q = $(this).val();
+                clearTimeout(searchTimeout);
+                if (q.length < 2) {
+                    $('#mco_lab_results').hide();
+                    return;
+                }
+                ClinicalOrdersKit.positionDropdown('#mco_lab_search', '#mco_lab_results');
+                ClinicalOrdersKit.showSearchLoading('#mco_lab_results');
+                searchTimeout = setTimeout(() => searchLabServices(q), 300);
+            });
+
+            // Imaging search
+            $('#mco_imaging_search').on('keyup', function() {
+                const q = $(this).val();
+                clearTimeout(searchTimeout);
+                if (q.length < 2) {
+                    $('#mco_imaging_results').hide();
+                    return;
+                }
+                ClinicalOrdersKit.positionDropdown('#mco_imaging_search', '#mco_imaging_results');
+                ClinicalOrdersKit.showSearchLoading('#mco_imaging_results');
+                searchTimeout = setTimeout(() => searchImagingServices(q), 300);
+            });
+
+            // Procedure search
+            $('#mco_proc_search').on('keyup', function() {
+                const q = $(this).val();
+                clearTimeout(searchTimeout);
+                if (q.length < 2) {
+                    $('#mco_proc_results').hide();
+                    return;
+                }
+                ClinicalOrdersKit.positionDropdown('#mco_proc_search', '#mco_proc_results');
+                ClinicalOrdersKit.showSearchLoading('#mco_proc_results');
+                searchTimeout = setTimeout(() => searchProcedureServices(q), 300);
+            });
+
+            // Re-order from history (nursing parity — Plan §5.2)
+            $(document).off('click.mcoreorder').on('click.mcoreorder', '.re-order-btn', function() {
+                var $btn = $(this);
+                if ($btn.prop('disabled')) return;
+
+                var type = $btn.data('type');
+                var name = $btn.data('name');
+                var price = $btn.data('price') || 0;
+                var coverageMode = $btn.data('coverage-mode') || null;
+                var claims = $btn.data('claims') || null;
+                var payable = $btn.data('payable') || null;
+                if (coverageMode === '') coverageMode = null;
+
+                if (type === 'labs') {
+                    var serviceId = parseInt($btn.data('service-id'));
+                    if (ClinicalOrdersKit.isAlreadyAdded('labs', serviceId)) {
+                        toastr.warning(name + ' is already in your current lab requests');
+                        return;
+                    }
+                    addLabService(name, serviceId, price, coverageMode, claims, payable);
+                } else if (type === 'imaging') {
+                    var serviceId = parseInt($btn.data('service-id'));
+                    if (ClinicalOrdersKit.isAlreadyAdded('imaging', serviceId)) {
+                        toastr.warning(name + ' is already in your current imaging requests');
+                        return;
+                    }
+                    addImagingService(name, serviceId, price, coverageMode, claims, payable);
+                } else if (type === 'prescriptions') {
+                    var productId = parseInt($btn.data('product-id'));
+                    if (ClinicalOrdersKit.isAlreadyAdded('meds', productId)) {
+                        toastr.warning(name + ' is already in your current prescriptions');
+                        return;
+                    }
+                    addProductService(name, productId, price, coverageMode, claims, payable);
+                }
+
+                $btn.prop('disabled', true).html('<i class="fa fa-check text-success"></i> Added');
+            });
+        }
+
+        // ===== HISTORY DATATABLES =====
+        function initPrescHistory() {
+            if ($.fn.DataTable.isDataTable('#mco_presc_history_list')) {
+                $('#mco_presc_history_list').DataTable().destroy();
+            }
+            $('#mco_presc_history_list').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '/prescHistoryList/' + patientId,
+                    type: 'GET'
                 },
-                currentItemsGatherer: function() {
-                    var items = [];
-                    $('#mco-selected-labs tr[data-record-id]').each(function() {
-                        items.push({
-                            item_type: 'lab',
-                            reference_id: parseInt($(this).data('service-id')),
-                            display_name: $(this).find('td:first').text().trim(),
-                            note: $(this).find('input[name="mco_lab_note[]"]').val() || ''
-                        });
-                    });
-                    $('#mco-selected-imaging tr[data-record-id]').each(function() {
-                        items.push({
-                            item_type: 'imaging',
-                            reference_id: parseInt($(this).data('service-id')),
-                            display_name: $(this).find('td:first').text().trim(),
-                            note: $(this).find('input[name="mco_imaging_note[]"]').val() || ''
-                        });
-                    });
-                    $('#mco-selected-products tr[data-record-id]').each(function() {
-                        items.push({
-                            item_type: 'medication',
-                            reference_id: parseInt($(this).data('service-id')),
-                            display_name: $(this).find('td:first').text().trim(),
-                            dose: $(this).find('input[name="mco_presc_dose[]"]').val() || ''
-                        });
-                    });
-                    $('#mco-selected-procedures tr[data-record-id]').each(function() {
-                        items.push({
-                            item_type: 'procedure',
-                            reference_id: parseInt($(this).data('service-id')),
-                            display_name: $(this).find('td:first').text().trim(),
-                            note: ''
-                        });
-                    });
-                    return items;
+                columns: [{
+                    data: 'info',
+                    name: 'info',
+                    orderable: false
+                }],
+                order: [
+                    [0, 'desc']
+                ],
+                pageLength: 10,
+                language: {
+                    emptyTable: 'No prescription history',
+                    processing: '<i class="fa fa-spinner fa-spin"></i> Loading...'
                 }
             });
+        }
 
-            // Re-prescribe from Encounter
-            ClinicalOrdersKit.initRePrescribeFromEncounter({
-                recentUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/recent-encounters',
-                encounterItemsUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/encounter-items/{id}',
-                rePrescribeUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/re-prescribe',
+        function initLabHistory() {
+            if ($.fn.DataTable.isDataTable('#mco_lab_history_list')) {
+                $('#mco_lab_history_list').DataTable().destroy();
+            }
+            $('#mco_lab_history_list').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '/investigationHistoryList/' + patientId,
+                    type: 'GET'
+                },
+                columns: [{
+                    data: 'info',
+                    name: 'info',
+                    orderable: false
+                }],
+                order: [
+                    [0, 'desc']
+                ],
+                pageLength: 10,
+                language: {
+                    emptyTable: 'No lab history',
+                    processing: '<i class="fa fa-spinner fa-spin"></i> Loading...'
+                }
+            });
+        }
+
+        function initImagingHistory() {
+            if ($.fn.DataTable.isDataTable('#mco_imaging_history_list')) {
+                $('#mco_imaging_history_list').DataTable().destroy();
+            }
+            $('#mco_imaging_history_list').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '/imagingHistoryList/' + patientId,
+                    type: 'GET'
+                },
+                columns: [{
+                    data: 'info',
+                    name: 'info',
+                    orderable: false
+                }],
+                order: [
+                    [0, 'desc']
+                ],
+                pageLength: 10,
+                language: {
+                    emptyTable: 'No imaging history',
+                    processing: '<i class="fa fa-spinner fa-spin"></i> Loading...'
+                }
+            });
+        }
+
+        function initProcHistory() {
+            if ($.fn.DataTable.isDataTable('#mco_proc_history_list')) {
+                $('#mco_proc_history_list').DataTable().destroy();
+            }
+            $('#mco_proc_history_list').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '/procedureHistoryList/' + patientId,
+                    type: 'GET'
+                },
+                columns: [{
+                        data: 'procedure',
+                        name: 'procedure'
+                    },
+                    {
+                        data: 'priority',
+                        name: 'priority'
+                    },
+                    {
+                        data: 'status',
+                        name: 'procedure_status'
+                    },
+                    {
+                        data: 'date',
+                        name: 'requested_on'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
+                ],
+                order: [
+                    [3, 'desc']
+                ],
+                pageLength: 10,
+                language: {
+                    emptyTable: 'No procedure history',
+                    processing: '<i class="fa fa-spinner fa-spin"></i> Loading...'
+                }
+            });
+        }
+
+        // ===== SEARCH FUNCTIONS =====
+        function searchLabServices(q) {
+            const data = {
+                term: q,
+                patient_id: patientId
+            };
+            if (investigationCategoryId) data.category_id = investigationCategoryId;
+
+            $.get('/live-search-services', data, function(results) {
+                const $res = $('#mco_lab_results').empty();
+                if (!results.length) {
+                    ClinicalOrdersKit.showSearchEmpty('#mco_lab_results', 'lab services');
+                    return;
+                } else {
+                    results.forEach(item => {
+                        const name = item.service_name || 'Unknown';
+                        const code = item.service_code || '';
+                        const price = item.price?.sale_price ?? 0;
+                        const display = name + '[' + code + ']';
+                        const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('labs', parseInt(item.id));
+                        const mode = item.coverage_mode || null;
+                        const payable = item.payable_amount ?? price;
+                        const claims = item.claims_amount ?? 0;
+                        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
+
+                        if (alreadyAdded) {
+                            $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
+                        } else {
+                            $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addLabService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
+                        }
+                    });
+                }
+                $res.show();
+            });
+        }
+
+        function searchProducts(q) {
+            $.get('/live-search-products', {
+                term: q,
+                patient_id: patientId
+            }, function(results) {
+                const $res = $('#mco_presc_results').empty();
+                if (!results.length) {
+                    ClinicalOrdersKit.showSearchEmpty('#mco_presc_results', 'products');
+                    return;
+                } else {
+                    results.forEach(item => {
+                        const name = item.product_name || 'Unknown';
+                        const code = item.product_code || '';
+                        const qty = item.stock?.current_quantity ?? 0;
+                        const price = item.price?.initial_sale_price ?? 0;
+                        const display = name + '[' + code + '](' + qty + ' avail.)';
+                        const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
+                        const mode = item.coverage_mode || null;
+                        const payable = item.payable_amount ?? price;
+                        const claims = item.claims_amount ?? 0;
+                        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
+
+                        if (alreadyAdded) {
+                            $res.append('<li class="list-group-item co-already-added"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
+                        } else {
+                            $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
+                        }
+                    });
+                }
+                $res.show();
+            });
+        }
+
+        function searchImagingServices(q) {
+            $.get('/live-search-services', {
+                term: q,
+                category_id: 6,
+                patient_id: patientId
+            }, function(results) {
+                const $res = $('#mco_imaging_results').empty();
+                if (!results.length) {
+                    ClinicalOrdersKit.showSearchEmpty('#mco_imaging_results', 'imaging services');
+                    return;
+                } else {
+                    results.forEach(item => {
+                        const name = item.service_name || 'Unknown';
+                        const code = item.service_code || '';
+                        const price = item.price?.sale_price ?? 0;
+                        const display = name + '[' + code + ']';
+                        const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('imaging', parseInt(item.id));
+                        const mode = item.coverage_mode || null;
+                        const payable = item.payable_amount ?? price;
+                        const claims = item.claims_amount ?? 0;
+                        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
+
+                        if (alreadyAdded) {
+                            $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
+                        } else {
+                            $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addImagingService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
+                        }
+                    });
+                }
+                $res.show();
+            });
+        }
+
+        function searchProcedureServices(q) {
+            $.get('/live-search-services', {
+                term: q,
+                category_id: procedureCategoryId,
+                patient_id: patientId
+            }, function(results) {
+                const $res = $('#mco_proc_results').empty();
+                if (!results.length) {
+                    ClinicalOrdersKit.showSearchEmpty('#mco_proc_results', 'procedures');
+                    return;
+                } else {
+                    results.forEach(item => {
+                        const name = item.service_name || 'Unknown';
+                        const code = item.service_code || '';
+                        const price = item.price?.sale_price ?? 0;
+                        const display = name + '[' + code + ']';
+                        const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('procedures', parseInt(item.id));
+                        const payable = item.payable_amount ?? price;
+                        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(item.coverage_mode || null, payable, item.claims_amount ?? 0);
+
+                        if (alreadyAdded) {
+                            $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
+                        } else {
+                            $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addProcedureService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + payable + ')">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
+                        }
+                    });
+                }
+                $res.show();
+            });
+        }
+
+        // ===== AUTO-SAVE ADD FUNCTIONS (via ClinicalOrdersKit.addItem) =====
+
+        function addProductService(name, id, price, mode, claims, payable) {
+            var rowId = 'mco_rx_' + Date.now() + '_' + id;
+            var coverageBadge = ClinicalOrdersKit.renderCoverageBadge(
+                mode && mode !== 'null' ? mode : null, payable ?? price, claims ?? 0
+            );
+
+            ClinicalOrdersKit.addItem({
+                url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-prescription',
+                payload: {
+                    product_id: id,
+                    dose: ''
+                },
                 csrfToken: CSRF_TOKEN,
-                extraPayload: { enrollment_id: enrollmentId },
-                dropdownSelector: '#mco-rp-encounter-dropdown',
-                onRePrescribed: function() {
+                tableSelector: '#mco-selected-products',
+                type: 'meds',
+                referenceId: parseInt(id),
+                buildRowHtml: function(resp) {
+                    var recordId = resp.id;
+                    var doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, 'mco-'); " +
+                        "ClinicalOrdersKit.debouncedUpdate({url:'/maternity-workbench/enrollment/" + enrollmentId + "/prescriptions/" + recordId + "/dose'," +
+                        "payload:{dose: $(this).closest('.cr-structured-dose').find('.cr-structured-dose-value').val()}," +
+                        "csrfToken:'" + CSRF_TOKEN + "'});";
+
+                    var doseCell;
+                    if (mcoDoseStructuredMode) {
+                        doseCell = '<td>' + ClinicalOrdersKit.buildStructuredDoseHtml({
+                            cssPrefix: 'mco-',
+                            hiddenName: 'mco_presc_dose[]',
+                            onchange: doseOnchange,
+                            drugName: name,
+                            rowId: rowId
+                        }) + '<input type="hidden" name="mco_presc_id[]" value="' + id + '"></td>';
+                    } else {
+                        var simpleDoseCmd = "ClinicalOrdersKit.debouncedUpdate({url:'/maternity-workbench/enrollment/" + enrollmentId + "/prescriptions/" + recordId + "/dose'," +
+                            "payload:{dose:this.value},csrfToken:'" + CSRF_TOKEN + "',flashTarget:this.closest('td')})";
+                        doseCell = '<td><input type="text" class="form-control form-control-sm" name="mco_presc_dose[]" ' +
+                            'placeholder="e.g. 500mg BD x 5days" ' +
+                            'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
+                            'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + simpleDoseCmd + ' }, 3000)" required>' +
+                            '<input type="hidden" name="mco_presc_id[]" value="' + id + '"></td>';
+                    }
+
+                    return '<tr data-record-id="' + recordId + '" data-record-type="prescription" data-service-id="' + id + '" data-drug-name="' + name.replace(/"/g, '&quot;') + '" data-row-id="' + rowId + '">' +
+                        '<td>' + name + coverageBadge + '</td>' +
+                        '<td>' + (payable ?? price) + '</td>' +
+                        doseCell +
+                        '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'prescription\',' + recordId + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
+                        '</tr>';
+                },
+                onSuccess: function(resp) {
                     initPrescHistory();
+                }
+            });
+            $('#mco_presc_search').val('');
+            $('#mco_presc_results').hide();
+        }
+
+        function addLabService(name, id, price, mode, claims, payable) {
+            ClinicalOrdersKit.addItem({
+                url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-lab',
+                payload: {
+                    service_id: id,
+                    note: ''
+                },
+                csrfToken: CSRF_TOKEN,
+                tableSelector: '#mco-selected-labs',
+                type: 'labs',
+                referenceId: parseInt(id),
+                buildRowHtml: function(response) {
+                    var coverageBadge = mode && mode !== 'null' ? '<div class="small mt-1"><span class="badge bg-info">' + (mode || '').toUpperCase() + '</span> <span class="text-danger">Pay: ' + payable + '</span> <span class="text-success">Claims: ' + claims + '</span></div>' : '';
+                    return '<tr data-record-id="' + response.id + '" data-record-type="lab" data-service-id="' + id + '">' +
+                        '<td>' + name + coverageBadge + '</td>' +
+                        '<td>' + (payable ?? price) + '</td>' +
+                        '<td><input type="text" class="form-control form-control-sm" name="mco_lab_note[]" placeholder="e.g. Fasting, urgent, repeat in 2wks" ' +
+                        'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')})" ' +
+                        'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
+                        '<input type="hidden" name="mco_lab_id[]" value="' + id + '"></td>' +
+                        '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'lab\',' + response.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
+                        '</tr>';
+                },
+                onSuccess: function(resp) {
                     initLabHistory();
+                }
+            });
+            $('#mco_lab_search').val('');
+            $('#mco_lab_results').hide();
+        }
+
+        function addImagingService(name, id, price, mode, claims, payable) {
+            ClinicalOrdersKit.addItem({
+                url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-imaging',
+                payload: {
+                    service_id: id,
+                    note: ''
+                },
+                csrfToken: CSRF_TOKEN,
+                tableSelector: '#mco-selected-imaging',
+                type: 'imaging',
+                referenceId: parseInt(id),
+                buildRowHtml: function(response) {
+                    var coverageBadge = mode && mode !== 'null' ? '<div class="small mt-1"><span class="badge bg-info">' + (mode || '').toUpperCase() + '</span> <span class="text-danger">Pay: ' + payable + '</span> <span class="text-success">Claims: ' + claims + '</span></div>' : '';
+                    return '<tr data-record-id="' + response.id + '" data-record-type="imaging" data-service-id="' + id + '">' +
+                        '<td>' + name + coverageBadge + '</td>' +
+                        '<td>' + (payable ?? price) + '</td>' +
+                        '<td><input type="text" class="form-control form-control-sm" name="mco_imaging_note[]" placeholder="e.g. R/O fracture, contrast required" ' +
+                        'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')})" ' +
+                        'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
+                        '<input type="hidden" name="mco_imaging_id[]" value="' + id + '"></td>' +
+                        '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'imaging\',' + response.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
+                        '</tr>';
+                },
+                onSuccess: function(resp) {
                     initImagingHistory();
+                }
+            });
+            $('#mco_imaging_search').val('');
+            $('#mco_imaging_results').hide();
+        }
+
+        function addProcedureService(name, id, price) {
+            if (ClinicalOrdersKit.isAlreadyAdded('procedures', parseInt(id))) {
+                toastr.warning('Procedure already added');
+                return;
+            }
+            var priority = $('#mco_proc_priority').val() || 'routine';
+            var scheduledDate = $('#mco_proc_scheduled_date').val() || '';
+            var preNotes = $('#mco_proc_notes').val() || '';
+            var priorityClass = {
+                routine: 'bg-success',
+                urgent: 'bg-warning text-dark',
+                emergency: 'bg-danger'
+            } [priority] || 'bg-secondary';
+            var priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+
+            ClinicalOrdersKit.addItem({
+                url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-procedure',
+                payload: {
+                    service_id: id,
+                    priority: priority,
+                    scheduled_date: scheduledDate,
+                    pre_notes: preNotes
+                },
+                csrfToken: CSRF_TOKEN,
+                tableSelector: '#mco-selected-procedures',
+                type: 'procedures',
+                referenceId: parseInt(id),
+                buildRowHtml: function(resp) {
+                    return '<tr data-record-id="' + resp.id + '" data-record-type="procedure" data-service-id="' + id + '">' +
+                        '<td><strong>' + name + '</strong>' +
+                        (preNotes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + preNotes.substring(0, 60) + '</small>' : '') + '</td>' +
+                        '<td>NGN ' + price + '</td>' +
+                        '<td><span class="badge ' + priorityClass + '">' + priorityLabel + '</span>' +
+                        (scheduledDate ? '<br><small>' + scheduledDate + '</small>' : '') + '</td>' +
+                        '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
+                        '</tr>';
+                },
+                onSuccess: function() {
                     initProcHistory();
                 }
             });
-
-            MaternityClinicalOrders._advancedInit = true;
+            $('#mco_proc_search').val('');
+            $('#mco_proc_results').hide();
         }
 
-        // Update configs on every enrollment switch
-        if (typeof ClinicalOrdersKit !== 'undefined') {
-            ClinicalOrdersKit.updateTreatmentPlanConfig({
-                applyUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/apply-treatment-plan',
-                extraPayload: { enrollment_id: enrollmentId }
-            });
-            ClinicalOrdersKit.updateRePrescribeConfig({
-                recentUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/recent-encounters',
-                encounterItemsUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/encounter-items/{id}',
-                rePrescribeUrl: '/maternity-workbench/enrollment/' + enrollmentId + '/re-prescribe',
-                extraPayload: { enrollment_id: enrollmentId }
-            });
-        }
+        // ===== AUTO-SAVE REMOVE (via ClinicalOrdersKit.removeItem) =====
+        function removeAutoSavedRow(btn, type, recordId, serviceId) {
+            var deleteUrl, tableSelector;
 
-        // Setup search + re-order handlers (only once)
-        if (!MaternityClinicalOrders._searchBound) {
-            bindSearchHandlers();
-            MaternityClinicalOrders._searchBound = true;
-        }
-    }
-
-    function bindSearchHandlers() {
-        let searchTimeout;
-
-        // Initialize floating dropdowns (escape overflow:hidden ancestors)
-        ClinicalOrdersKit.initSearchDropdown('#mco_presc_search', '#mco_presc_results');
-        ClinicalOrdersKit.initSearchDropdown('#mco_lab_search', '#mco_lab_results');
-        ClinicalOrdersKit.initSearchDropdown('#mco_imaging_search', '#mco_imaging_results');
-        ClinicalOrdersKit.initSearchDropdown('#mco_proc_search', '#mco_proc_results');
-
-        // Drug search
-        $('#mco_presc_search').on('keyup', function() {
-            const q = $(this).val();
-            clearTimeout(searchTimeout);
-            if (q.length < 2) { $('#mco_presc_results').hide(); return; }
-            ClinicalOrdersKit.positionDropdown('#mco_presc_search', '#mco_presc_results');
-            ClinicalOrdersKit.showSearchLoading('#mco_presc_results');
-            searchTimeout = setTimeout(() => searchProducts(q), 300);
-        });
-
-        // Lab search
-        $('#mco_lab_search').on('keyup', function() {
-            const q = $(this).val();
-            clearTimeout(searchTimeout);
-            if (q.length < 2) { $('#mco_lab_results').hide(); return; }
-            ClinicalOrdersKit.positionDropdown('#mco_lab_search', '#mco_lab_results');
-            ClinicalOrdersKit.showSearchLoading('#mco_lab_results');
-            searchTimeout = setTimeout(() => searchLabServices(q), 300);
-        });
-
-        // Imaging search
-        $('#mco_imaging_search').on('keyup', function() {
-            const q = $(this).val();
-            clearTimeout(searchTimeout);
-            if (q.length < 2) { $('#mco_imaging_results').hide(); return; }
-            ClinicalOrdersKit.positionDropdown('#mco_imaging_search', '#mco_imaging_results');
-            ClinicalOrdersKit.showSearchLoading('#mco_imaging_results');
-            searchTimeout = setTimeout(() => searchImagingServices(q), 300);
-        });
-
-        // Procedure search
-        $('#mco_proc_search').on('keyup', function() {
-            const q = $(this).val();
-            clearTimeout(searchTimeout);
-            if (q.length < 2) { $('#mco_proc_results').hide(); return; }
-            ClinicalOrdersKit.positionDropdown('#mco_proc_search', '#mco_proc_results');
-            ClinicalOrdersKit.showSearchLoading('#mco_proc_results');
-            searchTimeout = setTimeout(() => searchProcedureServices(q), 300);
-        });
-
-        // Re-order from history (nursing parity — Plan §5.2)
-        $(document).off('click.mcoreorder').on('click.mcoreorder', '.re-order-btn', function() {
-            var $btn = $(this);
-            if ($btn.prop('disabled')) return;
-
-            var type         = $btn.data('type');
-            var name         = $btn.data('name');
-            var price        = $btn.data('price') || 0;
-            var coverageMode = $btn.data('coverage-mode') || null;
-            var claims       = $btn.data('claims') || null;
-            var payable      = $btn.data('payable') || null;
-            if (coverageMode === '') coverageMode = null;
-
-            if (type === 'labs') {
-                var serviceId = parseInt($btn.data('service-id'));
-                if (ClinicalOrdersKit.isAlreadyAdded('labs', serviceId)) {
-                    toastr.warning(name + ' is already in your current lab requests');
-                    return;
-                }
-                addLabService(name, serviceId, price, coverageMode, claims, payable);
+            if (type === 'lab') {
+                deleteUrl = '/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + recordId;
+                tableSelector = '#mco-selected-labs';
             } else if (type === 'imaging') {
-                var serviceId = parseInt($btn.data('service-id'));
-                if (ClinicalOrdersKit.isAlreadyAdded('imaging', serviceId)) {
-                    toastr.warning(name + ' is already in your current imaging requests');
-                    return;
-                }
-                addImagingService(name, serviceId, price, coverageMode, claims, payable);
-            } else if (type === 'prescriptions') {
-                var productId = parseInt($btn.data('product-id'));
-                if (ClinicalOrdersKit.isAlreadyAdded('meds', productId)) {
-                    toastr.warning(name + ' is already in your current prescriptions');
-                    return;
-                }
-                addProductService(name, productId, price, coverageMode, claims, payable);
+                deleteUrl = '/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + recordId;
+                tableSelector = '#mco-selected-imaging';
+            } else if (type === 'prescription') {
+                deleteUrl = '/maternity-workbench/enrollment/' + enrollmentId + '/prescriptions/' + recordId;
+                tableSelector = '#mco-selected-products';
+            } else if (type === 'procedure') {
+                deleteUrl = '/maternity-workbench/enrollment/' + enrollmentId + '/procedures/' + recordId;
+                tableSelector = '#mco-selected-procedures';
             }
 
-            $btn.prop('disabled', true).html('<i class="fa fa-check text-success"></i> Added');
-        });
-    }
+            var idsType = {
+                lab: 'labs',
+                imaging: 'imaging',
+                prescription: 'meds',
+                procedure: 'procedures'
+            } [type] || type;
 
-    // ===== HISTORY DATATABLES =====
-    function initPrescHistory() {
-        if ($.fn.DataTable.isDataTable('#mco_presc_history_list')) {
-            $('#mco_presc_history_list').DataTable().destroy();
+            ClinicalOrdersKit.removeItem({
+                url: deleteUrl,
+                csrfToken: CSRF_TOKEN,
+                rowSelector: $(btn).closest('tr'),
+                type: idsType,
+                referenceId: serviceId ? parseInt(serviceId) : null,
+                tableSelector: tableSelector
+            });
         }
-        $('#mco_presc_history_list').DataTable({
-            processing: true, serverSide: true,
-            ajax: { url: '/prescHistoryList/' + patientId, type: 'GET' },
-            columns: [{ data: 'info', name: 'info', orderable: false }],
-            order: [[0, 'desc']], pageLength: 10,
-            language: { emptyTable: 'No prescription history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
-        });
-    }
 
-    function initLabHistory() {
-        if ($.fn.DataTable.isDataTable('#mco_lab_history_list')) {
-            $('#mco_lab_history_list').DataTable().destroy();
+        function showMessage(containerId, msg, type) {
+            var alertType = type === 'error' ? 'danger' : type;
+            $('#' + containerId).html('<div class="alert alert-' + alertType + ' alert-dismissible fade show">' + msg + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            document.getElementById(containerId).scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
+            setTimeout(function() {
+                $('#' + containerId + ' .alert').alert('close');
+            }, 5000);
         }
-        $('#mco_lab_history_list').DataTable({
-            processing: true, serverSide: true,
-            ajax: { url: '/investigationHistoryList/' + patientId, type: 'GET' },
-            columns: [{ data: 'info', name: 'info', orderable: false }],
-            order: [[0, 'desc']], pageLength: 10,
-            language: { emptyTable: 'No lab history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
-        });
-    }
 
-    function initImagingHistory() {
-        if ($.fn.DataTable.isDataTable('#mco_imaging_history_list')) {
-            $('#mco_imaging_history_list').DataTable().destroy();
-        }
-        $('#mco_imaging_history_list').DataTable({
-            processing: true, serverSide: true,
-            ajax: { url: '/imagingHistoryList/' + patientId, type: 'GET' },
-            columns: [{ data: 'info', name: 'info', orderable: false }],
-            order: [[0, 'desc']], pageLength: 10,
-            language: { emptyTable: 'No imaging history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
-        });
-    }
+        return {
+            init: init,
+            addProductService: addProductService,
+            addLabService: addLabService,
+            addImagingService: addImagingService,
+            addProcedureService: addProcedureService,
+            removeAutoSavedRow: removeAutoSavedRow,
+            _searchBound: false
+        };
+    })();
 
-    function initProcHistory() {
-        if ($.fn.DataTable.isDataTable('#mco_proc_history_list')) {
-            $('#mco_proc_history_list').DataTable().destroy();
-        }
-        $('#mco_proc_history_list').DataTable({
-            processing: true, serverSide: true,
-            ajax: { url: '/procedureHistoryList/' + patientId, type: 'GET' },
-            columns: [
-                { data: 'procedure', name: 'procedure' },
-                { data: 'priority', name: 'priority' },
-                { data: 'status', name: 'procedure_status' },
-                { data: 'date', name: 'requested_on' },
-                { data: 'actions', name: 'actions', orderable: false, searchable: false }
-            ],
-            order: [[3, 'desc']], pageLength: 10,
-            language: { emptyTable: 'No procedure history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
-        });
-    }
-
-    // ===== SEARCH FUNCTIONS =====
-    function searchLabServices(q) {
-        const data = { term: q, patient_id: patientId };
-        if (investigationCategoryId) data.category_id = investigationCategoryId;
-
-        $.get('/live-search-services', data, function(results) {
-            const $res = $('#mco_lab_results').empty();
-            if (!results.length) {
-                ClinicalOrdersKit.showSearchEmpty('#mco_lab_results', 'lab services');
-                return;
-            } else {
-                results.forEach(item => {
-                    const name = item.service_name || 'Unknown';
-                    const code = item.service_code || '';
-                    const price = item.price?.sale_price ?? 0;
-                    const display = name + '[' + code + ']';
-                    const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('labs', parseInt(item.id));
-                    const mode = item.coverage_mode || null;
-                    const payable = item.payable_amount ?? price;
-                    const claims = item.claims_amount ?? 0;
-                    const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
-
-                    if (alreadyAdded) {
-                        $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
-                    } else {
-                        $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addLabService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
-                    }
-                });
-            }
-            $res.show();
-        });
-    }
-
-    function searchProducts(q) {
-        $.get('/live-search-products', { term: q, patient_id: patientId }, function(results) {
-            const $res = $('#mco_presc_results').empty();
-            if (!results.length) {
-                ClinicalOrdersKit.showSearchEmpty('#mco_presc_results', 'products');
-                return;
-            } else {
-                results.forEach(item => {
-                    const name = item.product_name || 'Unknown';
-                    const code = item.product_code || '';
-                    const qty = item.stock?.current_quantity ?? 0;
-                    const price = item.price?.initial_sale_price ?? 0;
-                    const display = name + '[' + code + '](' + qty + ' avail.)';
-                    const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
-                    const mode = item.coverage_mode || null;
-                    const payable = item.payable_amount ?? price;
-                    const claims = item.claims_amount ?? 0;
-                    const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
-
-                    if (alreadyAdded) {
-                        $res.append('<li class="list-group-item co-already-added"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
-                    } else {
-                        $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
-                    }
-                });
-            }
-            $res.show();
-        });
-    }
-
-    function searchImagingServices(q) {
-        $.get('/live-search-services', { term: q, category_id: 6, patient_id: patientId }, function(results) {
-            const $res = $('#mco_imaging_results').empty();
-            if (!results.length) {
-                ClinicalOrdersKit.showSearchEmpty('#mco_imaging_results', 'imaging services');
-                return;
-            } else {
-                results.forEach(item => {
-                    const name = item.service_name || 'Unknown';
-                    const code = item.service_code || '';
-                    const price = item.price?.sale_price ?? 0;
-                    const display = name + '[' + code + ']';
-                    const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('imaging', parseInt(item.id));
-                    const mode = item.coverage_mode || null;
-                    const payable = item.payable_amount ?? price;
-                    const claims = item.claims_amount ?? 0;
-                    const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
-
-                    if (alreadyAdded) {
-                        $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
-                    } else {
-                        $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addImagingService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode||'') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
-                    }
-                });
-            }
-            $res.show();
-        });
-    }
-
-    function searchProcedureServices(q) {
-        $.get('/live-search-services', { term: q, category_id: procedureCategoryId, patient_id: patientId }, function(results) {
-            const $res = $('#mco_proc_results').empty();
-            if (!results.length) {
-                ClinicalOrdersKit.showSearchEmpty('#mco_proc_results', 'procedures');
-                return;
-            } else {
-                results.forEach(item => {
-                    const name = item.service_name || 'Unknown';
-                    const code = item.service_code || '';
-                    const price = item.price?.sale_price ?? 0;
-                    const display = name + '[' + code + ']';
-                    const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('procedures', parseInt(item.id));
-                    const payable = item.payable_amount ?? price;
-                    const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(item.coverage_mode || null, payable, item.claims_amount ?? 0);
-
-                    if (alreadyAdded) {
-                        $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
-                    } else {
-                        $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addProcedureService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + payable + ')">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
-                    }
-                });
-            }
-            $res.show();
-        });
-    }
-
-    // ===== AUTO-SAVE ADD FUNCTIONS (via ClinicalOrdersKit.addItem) =====
-
-    function addProductService(name, id, price, mode, claims, payable) {
-        var rowId = 'mco_rx_' + Date.now() + '_' + id;
-        var coverageBadge = ClinicalOrdersKit.renderCoverageBadge(
-            mode && mode !== 'null' ? mode : null, payable ?? price, claims ?? 0
-        );
-
-        ClinicalOrdersKit.addItem({
-            url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-prescription',
-            payload: { product_id: id, dose: '' },
-            csrfToken: CSRF_TOKEN,
-            tableSelector: '#mco-selected-products',
-            type: 'meds',
-            referenceId: parseInt(id),
-            buildRowHtml: function(resp) {
-                var recordId = resp.id;
-                var doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, 'mco-'); " +
-                    "ClinicalOrdersKit.debouncedUpdate({url:'/maternity-workbench/enrollment/" + enrollmentId + "/prescriptions/" + recordId + "/dose'," +
-                    "payload:{dose: $(this).closest('.cr-structured-dose').find('.cr-structured-dose-value').val()}," +
-                    "csrfToken:'" + CSRF_TOKEN + "'});";
-
-                var doseCell;
-                if (mcoDoseStructuredMode) {
-                    doseCell = '<td>' + ClinicalOrdersKit.buildStructuredDoseHtml({
-                        cssPrefix: 'mco-',
-                        hiddenName: 'mco_presc_dose[]',
-                        onchange: doseOnchange,
-                        drugName: name,
-                        rowId: rowId
-                    }) + '<input type="hidden" name="mco_presc_id[]" value="' + id + '"></td>';
-                } else {
-                    var simpleDoseCmd = "ClinicalOrdersKit.debouncedUpdate({url:'/maternity-workbench/enrollment/" + enrollmentId + "/prescriptions/" + recordId + "/dose'," +
-                        "payload:{dose:this.value},csrfToken:'" + CSRF_TOKEN + "',flashTarget:this.closest('td')})";
-                    doseCell = '<td><input type="text" class="form-control form-control-sm" name="mco_presc_dose[]" ' +
-                        'placeholder="e.g. 500mg BD x 5days" ' +
-                        'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
-                        'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + simpleDoseCmd + ' }, 3000)" required>' +
-                        '<input type="hidden" name="mco_presc_id[]" value="' + id + '"></td>';
-                }
-
-                return '<tr data-record-id="' + recordId + '" data-record-type="prescription" data-service-id="' + id + '" data-drug-name="' + name.replace(/"/g, '&quot;') + '" data-row-id="' + rowId + '">' +
-                    '<td>' + name + coverageBadge + '</td>' +
-                    '<td>' + (payable ?? price) + '</td>' +
-                    doseCell +
-                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'prescription\',' + recordId + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
-                '</tr>';
-            },
-            onSuccess: function(resp) {
-                initPrescHistory();
-            }
-        });
-        $('#mco_presc_search').val('');
-        $('#mco_presc_results').hide();
-    }
-
-    function addLabService(name, id, price, mode, claims, payable) {
-        ClinicalOrdersKit.addItem({
-            url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-lab',
-            payload: { service_id: id, note: '' },
-            csrfToken: CSRF_TOKEN,
-            tableSelector: '#mco-selected-labs',
-            type: 'labs',
-            referenceId: parseInt(id),
-            buildRowHtml: function(response) {
-                var coverageBadge = mode && mode !== 'null' ? '<div class="small mt-1"><span class="badge bg-info">' + (mode||'').toUpperCase() + '</span> <span class="text-danger">Pay: ' + payable + '</span> <span class="text-success">Claims: ' + claims + '</span></div>' : '';
-                return '<tr data-record-id="' + response.id + '" data-record-type="lab" data-service-id="' + id + '">' +
-                    '<td>' + name + coverageBadge + '</td>' +
-                    '<td>' + (payable ?? price) + '</td>' +
-                    '<td><input type="text" class="form-control form-control-sm" name="mco_lab_note[]" placeholder="e.g. Fasting, urgent, repeat in 2wks" ' +
-                    'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')})" ' +
-                    'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
-                    '<input type="hidden" name="mco_lab_id[]" value="' + id + '"></td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'lab\',' + response.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
-                '</tr>';
-            },
-            onSuccess: function(resp) {
-                initLabHistory();
-            }
-        });
-        $('#mco_lab_search').val('');
-        $('#mco_lab_results').hide();
-    }
-
-    function addImagingService(name, id, price, mode, claims, payable) {
-        ClinicalOrdersKit.addItem({
-            url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-imaging',
-            payload: { service_id: id, note: '' },
-            csrfToken: CSRF_TOKEN,
-            tableSelector: '#mco-selected-imaging',
-            type: 'imaging',
-            referenceId: parseInt(id),
-            buildRowHtml: function(response) {
-                var coverageBadge = mode && mode !== 'null' ? '<div class="small mt-1"><span class="badge bg-info">' + (mode||'').toUpperCase() + '</span> <span class="text-danger">Pay: ' + payable + '</span> <span class="text-success">Claims: ' + claims + '</span></div>' : '';
-                return '<tr data-record-id="' + response.id + '" data-record-type="imaging" data-service-id="' + id + '">' +
-                    '<td>' + name + coverageBadge + '</td>' +
-                    '<td>' + (payable ?? price) + '</td>' +
-                    '<td><input type="text" class="form-control form-control-sm" name="mco_imaging_note[]" placeholder="e.g. R/O fracture, contrast required" ' +
-                    'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')})" ' +
-                    'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ClinicalOrdersKit.debouncedUpdate({url:\'/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + CSRF_TOKEN + '\',flashTarget:this.closest(\'td\')}) }, 3000)">' +
-                    '<input type="hidden" name="mco_imaging_id[]" value="' + id + '"></td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'imaging\',' + response.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
-                '</tr>';
-            },
-            onSuccess: function(resp) {
-                initImagingHistory();
-            }
-        });
-        $('#mco_imaging_search').val('');
-        $('#mco_imaging_results').hide();
-    }
-
-    function addProcedureService(name, id, price) {
-        if (ClinicalOrdersKit.isAlreadyAdded('procedures', parseInt(id))) {
-            toastr.warning('Procedure already added');
+    // ═══════════════════════════════════════════════════════════════
+    // DELIVERY TAB
+    // ═══════════════════════════════════════════════════════════════
+    function loadDeliveryTab() {
+        if (!currentEnrollmentId) {
+            $('#delivery-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
             return;
         }
-        var priority = $('#mco_proc_priority').val() || 'routine';
-        var scheduledDate = $('#mco_proc_scheduled_date').val() || '';
-        var preNotes = $('#mco_proc_notes').val() || '';
-        var priorityClass = { routine: 'bg-success', urgent: 'bg-warning text-dark', emergency: 'bg-danger' }[priority] || 'bg-secondary';
-        var priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
 
-        ClinicalOrdersKit.addItem({
-            url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-procedure',
-            payload: {
-                service_id: id,
-                priority: priority,
-                scheduled_date: scheduledDate,
-                pre_notes: preNotes
-            },
-            csrfToken: CSRF_TOKEN,
-            tableSelector: '#mco-selected-procedures',
-            type: 'procedures',
-            referenceId: parseInt(id),
-            buildRowHtml: function(resp) {
-                return '<tr data-record-id="' + resp.id + '" data-record-type="procedure" data-service-id="' + id + '">' +
-                    '<td><strong>' + name + '</strong>' +
-                    (preNotes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + preNotes.substring(0, 60) + '</small>' : '') + '</td>' +
-                    '<td>NGN ' + price + '</td>' +
-                    '<td><span class="badge ' + priorityClass + '">' + priorityLabel + '</span>' +
-                    (scheduledDate ? '<br><small>' + scheduledDate + '</small>' : '') + '</td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
-                '</tr>';
-            },
-            onSuccess: function() {
-                initProcHistory();
-            }
-        });
-        $('#mco_proc_search').val('');
-        $('#mco_proc_results').hide();
-    }
-
-    // ===== AUTO-SAVE REMOVE (via ClinicalOrdersKit.removeItem) =====
-    function removeAutoSavedRow(btn, type, recordId, serviceId) {
-        var deleteUrl, tableSelector;
-
-        if (type === 'lab') {
-            deleteUrl = '/maternity-workbench/enrollment/' + enrollmentId + '/labs/' + recordId;
-            tableSelector = '#mco-selected-labs';
-        } else if (type === 'imaging') {
-            deleteUrl = '/maternity-workbench/enrollment/' + enrollmentId + '/imaging/' + recordId;
-            tableSelector = '#mco-selected-imaging';
-        } else if (type === 'prescription') {
-            deleteUrl = '/maternity-workbench/enrollment/' + enrollmentId + '/prescriptions/' + recordId;
-            tableSelector = '#mco-selected-products';
-        } else if (type === 'procedure') {
-            deleteUrl = '/maternity-workbench/enrollment/' + enrollmentId + '/procedures/' + recordId;
-            tableSelector = '#mco-selected-procedures';
+        // Check if delivery record exists
+        if (currentEnrollment && currentEnrollment.has_delivery) {
+            // Load existing delivery
+            $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
+                if (!resp.success || !resp.enrollment.delivery_record) {
+                    renderDeliveryForm();
+                    return;
+                }
+                renderDeliveryDetails(resp.enrollment.delivery_record);
+            });
+        } else {
+            renderDeliveryForm();
         }
-
-        var idsType = { lab: 'labs', imaging: 'imaging', prescription: 'meds', procedure: 'procedures' }[type] || type;
-
-        ClinicalOrdersKit.removeItem({
-            url: deleteUrl,
-            csrfToken: CSRF_TOKEN,
-            rowSelector: $(btn).closest('tr'),
-            type: idsType,
-            referenceId: serviceId ? parseInt(serviceId) : null,
-            tableSelector: tableSelector
-        });
     }
 
-    function showMessage(containerId, msg, type) {
-        var alertType = type === 'error' ? 'danger' : type;
-        $('#' + containerId).html('<div class="alert alert-' + alertType + ' alert-dismissible fade show">' + msg + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
-        document.getElementById(containerId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        setTimeout(function() { $('#' + containerId + ' .alert').alert('close'); }, 5000);
-    }
-
-    return {
-        init: init,
-        addProductService: addProductService,
-        addLabService: addLabService,
-        addImagingService: addImagingService,
-        addProcedureService: addProcedureService,
-        removeAutoSavedRow: removeAutoSavedRow,
-        _searchBound: false
-    };
-})();
-
-// ═══════════════════════════════════════════════════════════════
-// DELIVERY TAB
-// ═══════════════════════════════════════════════════════════════
-function loadDeliveryTab() {
-    if (!currentEnrollmentId) { $('#delivery-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>'); return; }
-
-    // Check if delivery record exists
-    if (currentEnrollment && currentEnrollment.has_delivery) {
-        // Load existing delivery
-        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
-            if (!resp.success || !resp.enrollment.delivery_record) { renderDeliveryForm(); return; }
-            renderDeliveryDetails(resp.enrollment.delivery_record);
-        });
-    } else {
-        renderDeliveryForm();
-    }
-}
-
-function renderDeliveryForm() {
-    destroyMaternityEditor('delivery_notes');
-    destroyMaternityEditor('delivery_complications');
-    const html = `<div class="card-modern"><div class="card-header text-white" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Record Delivery</h6></div><div class="card-body">
+    function renderDeliveryForm() {
+        destroyMaternityEditor('delivery_notes');
+        destroyMaternityEditor('delivery_complications');
+        const html = `<div class="card-modern"><div class="card-header text-white" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Record Delivery</h6></div><div class="card-body">
         <div class="mat-info-banner"><i class="mdi mdi-information"></i><div>Record the delivery outcome. All fields contribute to the patient\'s permanent delivery record. Fields marked <span class="text-danger">*</span> are required. After saving, register each baby separately in the Baby Records tab.</div></div>
         <form id="delivery-form">
             <div class="mat-form-section">
@@ -4136,40 +5697,46 @@ function renderDeliveryForm() {
                 <button type="submit" class="btn btn-success btn-lg"><i class="mdi mdi-check"></i> Save Delivery Record</button>
             </div>
         </form></div></div>`;
-    $('#delivery-content').html(html);
-    initMaternityEditor('#mat-delivery-notes-editor', 'delivery_notes');
-    initMaternityEditor('#mat-delivery-complications-editor', 'delivery_complications');
+        $('#delivery-content').html(html);
+        initMaternityEditor('#mat-delivery-notes-editor', 'delivery_notes');
+        initMaternityEditor('#mat-delivery-complications-editor', 'delivery_complications');
 
-    $('#delivery-form').on('submit', function(e) {
-        e.preventDefault();
-        const data = {};
-        $(this).serializeArray().forEach(f => data[f.name] = f.value);
-        data.notes = getEditorData('delivery_notes', '#mat-delivery-notes-editor');
-        data.complications = getEditorData('delivery_complications', '#mat-delivery-complications-editor');
-        $.ajax({
-            url: `/maternity-workbench/enrollment/${currentEnrollmentId}/delivery`,
-            method: 'POST', data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-            success: function(r) {
-                if (r.success) {
-                    destroyMaternityEditor('delivery_notes');
-                    destroyMaternityEditor('delivery_complications');
-                    toastr.success(r.message);
-                    currentEnrollment.has_delivery = true;
-                    currentEnrollment.status = 'postnatal';
-                    currentEnrollment.delivery_date = data.delivery_date || null;
-                    loadDeliveryTab();
-                    renderEnrollmentDetails();
-                    populateOverviewTab(currentPatientData);
-                    loadQueueCounts();
-                } else toastr.error(r.message);
-            },
-            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Failed to save'); }
+        $('#delivery-form').on('submit', function(e) {
+            e.preventDefault();
+            const data = {};
+            $(this).serializeArray().forEach(f => data[f.name] = f.value);
+            data.notes = getEditorData('delivery_notes', '#mat-delivery-notes-editor');
+            data.complications = getEditorData('delivery_complications', '#mat-delivery-complications-editor');
+            $.ajax({
+                url: `/maternity-workbench/enrollment/${currentEnrollmentId}/delivery`,
+                method: 'POST',
+                data: data,
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
+                success: function(r) {
+                    if (r.success) {
+                        destroyMaternityEditor('delivery_notes');
+                        destroyMaternityEditor('delivery_complications');
+                        toastr.success(r.message);
+                        currentEnrollment.has_delivery = true;
+                        currentEnrollment.status = 'postnatal';
+                        currentEnrollment.delivery_date = data.delivery_date || null;
+                        loadDeliveryTab();
+                        renderEnrollmentDetails();
+                        populateOverviewTab(currentPatientData);
+                        loadQueueCounts();
+                    } else toastr.error(r.message);
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Failed to save');
+                }
+            });
         });
-    });
-}
+    }
 
-function renderDeliveryDetails(d) {
-    const html = `<div class="card-modern"><div class="card-header text-white d-flex justify-content-between" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Delivery Record</h6><div><button class="btn btn-sm btn-outline-light me-1" onclick="editDeliveryRecord(${d.id})" title="Edit"><i class="mdi mdi-pencil"></i> Edit</button><span class="badge bg-light text-dark">${(d.type_of_delivery || '').toUpperCase()}</span></div></div><div class="card-body">
+    function renderDeliveryDetails(d) {
+        const html = `<div class="card-modern"><div class="card-header text-white d-flex justify-content-between" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Delivery Record</h6><div><button class="btn btn-sm btn-outline-light me-1" onclick="editDeliveryRecord(${d.id})" title="Edit"><i class="mdi mdi-pencil"></i> Edit</button><span class="badge bg-light text-dark">${(d.type_of_delivery || '').toUpperCase()}</span></div></div><div class="card-body">
         <div class="row"><div class="col-md-6"><table class="table table-sm">
             <tr><td class="text-muted">Date</td><td>${d.delivery_date || 'N/A'}</td></tr>
             <tr><td class="text-muted">Time</td><td>${d.delivery_time || 'N/A'}</td></tr>
@@ -4195,161 +5762,170 @@ function renderDeliveryDetails(d) {
             <div class="text-center text-muted py-2">Loading partograph entries...</div>
         </div>
     </div>`;
-    window._deliveryRecordCache = d; // cache for edit
-    $('#delivery-content').html(html);
-    loadPartographEntries(d.id);
-}
-
-function showPartographForm(deliveryId) {
-    const form = $('#partograph-form')[0];
-    if (form) form.reset();
-    $('#partograph-delivery-id').val(deliveryId);
-    $('#partograph-entry-id').val('');
-    window._partographEditMode = false;
-    $('#addPartographModalLabel').html('<i class="mdi mdi-chart-timeline-variant"></i> Add Partograph Entry');
-    $('#btn-save-partograph').html('<i class="mdi mdi-check"></i> Save Entry');
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    $('#partograph-form input[name="recorded_at"]').val(now.toISOString().slice(0, 16));
-    $('#addPartographModal').modal('show');
-}
-
-function editPartographEntry(entryId) {
-    const entry = (window._partographEntriesCache || []).find(e => e.id === entryId);
-    if (!entry) { toastr.error('Entry data not found'); return; }
-    const form = $('#partograph-form')[0];
-    if (form) form.reset();
-    window._partographEditMode = true;
-    $('#partograph-entry-id').val(entryId);
-    $('#partograph-delivery-id').val(entry.delivery_record_id);
-    $('#addPartographModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Partograph Entry');
-    $('#btn-save-partograph').html('<i class="mdi mdi-check"></i> Update Entry');
-    // Pre-fill fields
-    if (entry.recorded_at) {
-        const dt = new Date(entry.recorded_at);
-        dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
-        $('#partograph-form input[name="recorded_at"]').val(dt.toISOString().slice(0, 16));
+        window._deliveryRecordCache = d; // cache for edit
+        $('#delivery-content').html(html);
+        loadPartographEntries(d.id);
     }
-    $('#partograph-form input[name="cervical_dilation_cm"]').val(entry.cervical_dilation_cm ?? '');
-    $('#partograph-form input[name="descent"]').val(entry.descent ?? '');
-    $('#partograph-form input[name="contractions_per_10min"]').val(entry.contractions_per_10min ?? '');
-    $('#partograph-form input[name="contraction_duration_sec"]').val(entry.contraction_duration_sec ?? '');
-    $('#partograph-form input[name="fetal_heart_rate"]').val(entry.fetal_heart_rate ?? '');
-    $('#partograph-form select[name="amniotic_fluid"]').val(entry.amniotic_fluid || '');
-    $('#partograph-form select[name="moulding"]').val(entry.moulding || '');
-    $('#partograph-form input[name="maternal_pulse"]').val(entry.maternal_pulse ?? '');
-    $('#partograph-form input[name="maternal_bp_systolic"]').val(entry.maternal_bp_systolic ?? '');
-    $('#partograph-form input[name="maternal_bp_diastolic"]').val(entry.maternal_bp_diastolic ?? '');
-    $('#partograph-form input[name="maternal_temp_c"]').val(entry.maternal_temp_c ?? '');
-    $('#partograph-form input[name="urine_output_ml"]').val(entry.urine_output_ml ?? '');
-    $('#partograph-form select[name="urine_protein"]').val(entry.urine_protein || '');
-    $('#partograph-form input[name="oxytocin_dose"]').val(entry.oxytocin_dose ?? '');
-    $('#partograph-form input[name="iv_fluids"]').val(entry.iv_fluids ?? '');
-    $('#partograph-form textarea[name="medications"]').val(entry.medications ?? '');
-    $('#addPartographModal').modal('show');
-}
 
-function deletePartographEntry(entryId, deliveryId) {
-    if (!confirm('Delete this partograph entry? This action cannot be undone.')) return;
-    $.ajax({
-        url: `/maternity-workbench/partograph/${entryId}`,
-        method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            if (r.success) {
-                toastr.success(r.message || 'Entry deleted');
-                loadPartographEntries(deliveryId);
-            } else {
-                toastr.error(r.message || 'Failed to delete entry');
-            }
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to delete entry');
+    function showPartographForm(deliveryId) {
+        const form = $('#partograph-form')[0];
+        if (form) form.reset();
+        $('#partograph-delivery-id').val(deliveryId);
+        $('#partograph-entry-id').val('');
+        window._partographEditMode = false;
+        $('#addPartographModalLabel').html('<i class="mdi mdi-chart-timeline-variant"></i> Add Partograph Entry');
+        $('#btn-save-partograph').html('<i class="mdi mdi-check"></i> Save Entry');
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        $('#partograph-form input[name="recorded_at"]').val(now.toISOString().slice(0, 16));
+        $('#addPartographModal').modal('show');
+    }
+
+    function editPartographEntry(entryId) {
+        const entry = (window._partographEntriesCache || []).find(e => e.id === entryId);
+        if (!entry) {
+            toastr.error('Entry data not found');
+            return;
         }
-    });
-}
-
-$(document).on('click', '#btn-save-partograph', function() {
-    const form = $('#partograph-form');
-    if (!form[0].checkValidity()) {
-        form[0].reportValidity();
-        return;
-    }
-
-    const deliveryId = $('#partograph-delivery-id').val();
-    const entryId = $('#partograph-entry-id').val();
-    const isEdit = window._partographEditMode && entryId;
-
-    if (!deliveryId && !isEdit) {
-        toastr.error('Delivery record not found for partograph entry');
-        return;
-    }
-
-    const data = {};
-    form.serializeArray().forEach(function(f) { data[f.name] = f.value; });
-
-    const btn = $(this);
-    const originalHtml = btn.html();
-    btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-
-    const url = isEdit
-        ? `/maternity-workbench/partograph/${entryId}`
-        : `/maternity-workbench/delivery/${deliveryId}/partograph`;
-    const method = isEdit ? 'PUT' : 'POST';
-
-    $.ajax({
-        url: url,
-        method: method,
-        data: data,
-        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            btn.prop('disabled', false).html(originalHtml);
-            if (r.success) {
-                $('#addPartographModal').modal('hide');
-                toastr.success(r.message || 'Partograph entry saved');
-                loadPartographEntries(deliveryId || r.entry?.delivery_record_id);
-            } else {
-                toastr.error(r.message || 'Failed to save partograph entry');
-            }
-        },
-        error: function(xhr) {
-            btn.prop('disabled', false).html(originalHtml);
-            if (xhr.status === 422 && xhr.responseJSON?.errors) {
-                const errs = xhr.responseJSON.errors;
-                const msgs = Object.values(errs).flat().join('<br>');
-                toastr.error(msgs, 'Validation Error');
-            } else {
-                toastr.error(xhr.responseJSON?.message || 'Failed to save partograph entry');
-            }
+        const form = $('#partograph-form')[0];
+        if (form) form.reset();
+        window._partographEditMode = true;
+        $('#partograph-entry-id').val(entryId);
+        $('#partograph-delivery-id').val(entry.delivery_record_id);
+        $('#addPartographModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Partograph Entry');
+        $('#btn-save-partograph').html('<i class="mdi mdi-check"></i> Update Entry');
+        // Pre-fill fields
+        if (entry.recorded_at) {
+            const dt = new Date(entry.recorded_at);
+            dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+            $('#partograph-form input[name="recorded_at"]').val(dt.toISOString().slice(0, 16));
         }
-    });
-});
+        $('#partograph-form input[name="cervical_dilation_cm"]').val(entry.cervical_dilation_cm ?? '');
+        $('#partograph-form input[name="descent"]').val(entry.descent ?? '');
+        $('#partograph-form input[name="contractions_per_10min"]').val(entry.contractions_per_10min ?? '');
+        $('#partograph-form input[name="contraction_duration_sec"]').val(entry.contraction_duration_sec ?? '');
+        $('#partograph-form input[name="fetal_heart_rate"]').val(entry.fetal_heart_rate ?? '');
+        $('#partograph-form select[name="amniotic_fluid"]').val(entry.amniotic_fluid || '');
+        $('#partograph-form select[name="moulding"]').val(entry.moulding || '');
+        $('#partograph-form input[name="maternal_pulse"]').val(entry.maternal_pulse ?? '');
+        $('#partograph-form input[name="maternal_bp_systolic"]').val(entry.maternal_bp_systolic ?? '');
+        $('#partograph-form input[name="maternal_bp_diastolic"]').val(entry.maternal_bp_diastolic ?? '');
+        $('#partograph-form input[name="maternal_temp_c"]').val(entry.maternal_temp_c ?? '');
+        $('#partograph-form input[name="urine_output_ml"]').val(entry.urine_output_ml ?? '');
+        $('#partograph-form select[name="urine_protein"]').val(entry.urine_protein || '');
+        $('#partograph-form input[name="oxytocin_dose"]').val(entry.oxytocin_dose ?? '');
+        $('#partograph-form input[name="iv_fluids"]').val(entry.iv_fluids ?? '');
+        $('#partograph-form textarea[name="medications"]').val(entry.medications ?? '');
+        $('#addPartographModal').modal('show');
+    }
 
-function loadPartographEntries(deliveryId) {
-    if (!deliveryId) return;
+    function deletePartographEntry(entryId, deliveryId) {
+        if (!confirm('Delete this partograph entry? This action cannot be undone.')) return;
+        $.ajax({
+            url: `/maternity-workbench/partograph/${entryId}`,
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                if (r.success) {
+                    toastr.success(r.message || 'Entry deleted');
+                    loadPartographEntries(deliveryId);
+                } else {
+                    toastr.error(r.message || 'Failed to delete entry');
+                }
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to delete entry');
+            }
+        });
+    }
 
-    $('#partograph-content').html('<div class="text-center text-muted py-2"><i class="mdi mdi-loading mdi-spin"></i> Loading partograph entries...</div>');
-
-    $.get(`/maternity-workbench/delivery/${deliveryId}/partograph`, function(resp) {
-        if (!resp.success) {
-            $('#partograph-content').html('<div class="alert alert-danger mb-0">Failed to load partograph entries.</div>');
+    $(document).on('click', '#btn-save-partograph', function() {
+        const form = $('#partograph-form');
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
             return;
         }
 
-        const entries = resp.entries || [];
-        window._partographEntriesCache = entries; // cache for edit
+        const deliveryId = $('#partograph-delivery-id').val();
+        const entryId = $('#partograph-entry-id').val();
+        const isEdit = window._partographEditMode && entryId;
 
-        if (!entries.length) {
-            $('#partograph-content').html('<div class="alert alert-info mb-0"><i class="mdi mdi-information"></i> No partograph entries yet. Click <strong>Add Entry</strong> to begin labour monitoring.</div>');
+        if (!deliveryId && !isEdit) {
+            toastr.error('Delivery record not found for partograph entry');
             return;
         }
 
-        let rows = '';
-        entries.forEach(function(e) {
-            const bp = e.maternal_bp || ((e.maternal_bp_systolic || e.maternal_bp_diastolic) ? `${e.maternal_bp_systolic || ''}/${e.maternal_bp_diastolic || ''}` : '—');
-            const fhrVal = e.fetal_heart_rate ?? '—';
-            const fhrClass = fhrVal !== '—' && (fhrVal < 110 || fhrVal > 160) ? 'text-danger fw-bold' : '';
-            rows += `<tr>
+        const data = {};
+        form.serializeArray().forEach(function(f) {
+            data[f.name] = f.value;
+        });
+
+        const btn = $(this);
+        const originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+
+        const url = isEdit ?
+            `/maternity-workbench/partograph/${entryId}` :
+            `/maternity-workbench/delivery/${deliveryId}/partograph`;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url,
+            method: method,
+            data: data,
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                btn.prop('disabled', false).html(originalHtml);
+                if (r.success) {
+                    $('#addPartographModal').modal('hide');
+                    toastr.success(r.message || 'Partograph entry saved');
+                    loadPartographEntries(deliveryId || r.entry?.delivery_record_id);
+                } else {
+                    toastr.error(r.message || 'Failed to save partograph entry');
+                }
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html(originalHtml);
+                if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                    const errs = xhr.responseJSON.errors;
+                    const msgs = Object.values(errs).flat().join('<br>');
+                    toastr.error(msgs, 'Validation Error');
+                } else {
+                    toastr.error(xhr.responseJSON?.message || 'Failed to save partograph entry');
+                }
+            }
+        });
+    });
+
+    function loadPartographEntries(deliveryId) {
+        if (!deliveryId) return;
+
+        $('#partograph-content').html('<div class="text-center text-muted py-2"><i class="mdi mdi-loading mdi-spin"></i> Loading partograph entries...</div>');
+
+        $.get(`/maternity-workbench/delivery/${deliveryId}/partograph`, function(resp) {
+            if (!resp.success) {
+                $('#partograph-content').html('<div class="alert alert-danger mb-0">Failed to load partograph entries.</div>');
+                return;
+            }
+
+            const entries = resp.entries || [];
+            window._partographEntriesCache = entries; // cache for edit
+
+            if (!entries.length) {
+                $('#partograph-content').html('<div class="alert alert-info mb-0"><i class="mdi mdi-information"></i> No partograph entries yet. Click <strong>Add Entry</strong> to begin labour monitoring.</div>');
+                return;
+            }
+
+            let rows = '';
+            entries.forEach(function(e) {
+                const bp = e.maternal_bp || ((e.maternal_bp_systolic || e.maternal_bp_diastolic) ? `${e.maternal_bp_systolic || ''}/${e.maternal_bp_diastolic || ''}` : '—');
+                const fhrVal = e.fetal_heart_rate ?? '—';
+                const fhrClass = fhrVal !== '—' && (fhrVal < 110 || fhrVal > 160) ? 'text-danger fw-bold' : '';
+                rows += `<tr>
                 <td class="small">${e.recorded_at || '—'}</td>
                 <td>${e.cervical_dilation_cm ?? '—'}</td>
                 <td>${e.descent || '—'}</td>
@@ -4369,9 +5945,9 @@ function loadPartographEntries(deliveryId) {
                     <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deletePartographEntry(${e.id}, ${e.delivery_record_id})" title="Delete"><i class="mdi mdi-delete"></i></button>
                 </td>
             </tr>`;
-        });
+            });
 
-        $('#partograph-content').html(`
+            $('#partograph-content').html(`
             <div class="mb-3">
                 <div class="small text-muted mb-2"><i class="mdi mdi-information"></i> Chart shows cervical dilation progression with WHO-style alert/action guide lines (anchored at first dilation ≥ 4 cm), plus fetal heart rate trend.</div>
                 <div style="position:relative; height:350px;"><canvas id="partograph-chart-canvas"></canvas></div>
@@ -4402,239 +5978,297 @@ function loadPartographEntries(deliveryId) {
             </div>
         `);
 
-        renderPartographChart(entries);
-    }).fail(function() {
-        $('#partograph-content').html('<div class="alert alert-danger mb-0">Unable to load partograph entries.</div>');
-    });
-}
-
-function renderPartographChart(entries) {
-    if (typeof Chart === 'undefined') return;
-
-    const canvas = document.getElementById('partograph-chart-canvas');
-    if (!canvas || !entries || !entries.length) return;
-
-    if (window._partographChartInstance) {
-        window._partographChartInstance.destroy();
+            renderPartographChart(entries);
+        }).fail(function() {
+            $('#partograph-content').html('<div class="alert alert-danger mb-0">Unable to load partograph entries.</div>');
+        });
     }
 
-    const sorted = [...entries].sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
-    const startTime = new Date(sorted[0].recorded_at);
+    function renderPartographChart(entries) {
+        if (typeof Chart === 'undefined') return;
 
-    const toNum = (v) => {
-        if (v === null || v === undefined || v === '') return null;
-        const n = Number(v);
-        return Number.isNaN(n) ? null : n;
-    };
+        const canvas = document.getElementById('partograph-chart-canvas');
+        if (!canvas || !entries || !entries.length) return;
 
-    const toHours = (dateStr) => {
-        const d = new Date(dateStr);
-        return Math.max(0, (d - startTime) / 3600000);
-    };
-
-    const dilation = [];
-    const fhr = [];
-
-    sorted.forEach((e) => {
-        const x = toHours(e.recorded_at);
-        const d = toNum(e.cervical_dilation_cm);
-        const hr = toNum(e.fetal_heart_rate);
-
-        if (d !== null) dilation.push({ x, y: d });
-        if (hr !== null) fhr.push({ x, y: hr });
-    });
-
-    // WHO partograph: alert line starts at the first entry with dilation >= 4 cm
-    // and rises at 1 cm/hour. Action line is 4 hours to the right of alert line.
-    const alertLine = [];
-    const actionLine = [];
-    const maxHour = Math.max(...sorted.map(e => toHours(e.recorded_at)), 12);
-
-    // Find the first time dilation >= 4 cm (active labour onset)
-    let alertStartHour = null;
-    for (const pt of dilation) {
-        if (pt.y >= 4) {
-            alertStartHour = pt.x;
-            break;
+        if (window._partographChartInstance) {
+            window._partographChartInstance.destroy();
         }
-    }
 
-    if (alertStartHour !== null) {
-        // Alert line: starts at (alertStartHour, 4) and rises 1cm per hour
-        for (let h = 0; h <= maxHour + 2; h += 0.5) {
-            const alertY = 4 + (h - alertStartHour);
-            if (h >= alertStartHour && alertY <= 10) {
-                alertLine.push({ x: h, y: alertY });
-            }
-            // Action line: 4 hours to the right of alert line
-            const actionH = h - 4;
-            const actionY = 4 + (actionH - alertStartHour);
-            if (actionH >= alertStartHour && actionY >= 4 && actionY <= 10) {
-                actionLine.push({ x: h, y: actionY });
-            }
-        }
-    }
+        const sorted = [...entries].sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+        const startTime = new Date(sorted[0].recorded_at);
 
-    const ctx = canvas.getContext('2d');
-    window._partographChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            datasets: [
-                {
-                    label: 'Cervical Dilation (cm)',
-                    data: dilation,
-                    borderColor: '#d63384',
-                    backgroundColor: 'rgba(214, 51, 132, 0.15)',
-                    tension: 0.2,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#d63384',
-                    borderWidth: 2.5,
-                    yAxisID: 'y',
-                    spanGaps: true
-                },
-                {
-                    label: 'FHR (bpm)',
-                    data: fhr,
-                    borderColor: '#198754',
-                    backgroundColor: 'rgba(25, 135, 84, 0.12)',
-                    tension: 0.2,
-                    pointRadius: 3,
-                    borderWidth: 1.5,
-                    yAxisID: 'y1',
-                    spanGaps: true
-                },
-                {
-                    label: 'Alert Line (1 cm/hr from 4 cm)',
-                    data: alertLine,
-                    borderColor: '#fd7e14',
-                    borderDash: [6, 4],
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    yAxisID: 'y',
-                    fill: false
-                },
-                {
-                    label: 'Action Line (+4 hrs)',
-                    data: actionLine,
-                    borderColor: '#dc3545',
-                    borderDash: [6, 4],
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    yAxisID: 'y',
-                    fill: false,
-                    spanGaps: true
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } },
-                tooltip: { mode: 'nearest', intersect: false }
-            },
-            scales: {
-                x: {
-                    type: 'linear',
-                    title: { display: true, text: 'Hours since first entry' },
-                    min: 0,
-                    ticks: { callback: function(value) { return value + 'h'; }, stepSize: 1 }
-                },
-                y: {
-                    min: 0,
-                    max: 10,
-                    title: { display: true, text: 'Cervical Dilation (cm)' },
-                    ticks: { stepSize: 1 }
-                },
-                y1: {
-                    position: 'right',
-                    min: 60,
-                    max: 220,
-                    title: { display: true, text: 'FHR (bpm)' },
-                    grid: { drawOnChartArea: false },
-                    ticks: { stepSize: 20 }
-                }
-            }
-        }
-    });
-}
+        const toNum = (v) => {
+            if (v === null || v === undefined || v === '') return null;
+            const n = Number(v);
+            return Number.isNaN(n) ? null : n;
+        };
 
-function editDeliveryRecord(id) {
-    const d = window._deliveryRecordCache;
-    if (!d) { toastr.error('Delivery data not found'); return; }
-    // Re-render the delivery form pre-filled
-    renderDeliveryForm();
-    // Wait a tick for the form to render and editors to init, then pre-fill
-    setTimeout(function() {
-        const f = $('#delivery-form');
-        // Parse dates from Eloquent serialization (ISO string or Y-m-d)
-        const delivDate = d.delivery_date ? d.delivery_date.substring(0, 10) : '';
-        const delivTime = d.delivery_time ? (d.delivery_time.length > 10 ? d.delivery_time.substring(11, 16) : d.delivery_time) : '';
-        f.find('input[name="delivery_date"]').val(delivDate);
-        f.find('input[name="delivery_time"]').val(delivTime);
-        f.find('select[name="type_of_delivery"]').val(d.type_of_delivery || 'svd');
-        f.find('input[name="number_of_babies"]').val(d.number_of_babies || 1);
-        f.find('input[name="duration_of_labour_hours"]').val(d.duration_of_labour_hours || '');
-        f.find('input[name="blood_loss_ml"]').val(d.blood_loss_ml || '');
-        f.find('select[name="oxytocin_given"]').val(d.oxytocin_given ? '1' : '0');
-        f.find('select[name="placenta_complete"]').val(d.placenta_complete ? '1' : '0');
-        f.find('select[name="perineal_tear_degree"]').val(d.perineal_tear_degree || '');
-        f.find('select[name="episiotomy"]').val(d.episiotomy || '');
-        // Set CKEditor data after init
-        setTimeout(function() {
-            if (MaternityEditors['delivery_complications'] && d.complications) MaternityEditors['delivery_complications'].setData(d.complications);
-            if (MaternityEditors['delivery_notes'] && d.notes) MaternityEditors['delivery_notes'].setData(d.notes);
-        }, 500);
-        // Change submit button text
-        f.find('button[type="submit"]').html('<i class="mdi mdi-check"></i> Update Delivery Record');
-        // Override form submit to use PUT
-        f.off('submit').on('submit', function(e) {
-            e.preventDefault();
-            const data = {};
-            $(this).serializeArray().forEach(fd => data[fd.name] = fd.value);
-            data.notes = getEditorData('delivery_notes', '#mat-delivery-notes-editor');
-            data.complications = getEditorData('delivery_complications', '#mat-delivery-complications-editor');
-            $.ajax({
-                url: `/maternity-workbench/delivery/${id}`,
-                method: 'PUT', data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-                success: function(r) {
-                    if (r.success) {
-                        destroyMaternityEditor('delivery_notes');
-                        destroyMaternityEditor('delivery_complications');
-                        toastr.success(r.message || 'Delivery record updated');
-                        loadDeliveryTab();
-                    } else toastr.error(r.message);
-                },
-                error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Failed to update'); }
+        const toHours = (dateStr) => {
+            const d = new Date(dateStr);
+            return Math.max(0, (d - startTime) / 3600000);
+        };
+
+        const dilation = [];
+        const fhr = [];
+
+        sorted.forEach((e) => {
+            const x = toHours(e.recorded_at);
+            const d = toNum(e.cervical_dilation_cm);
+            const hr = toNum(e.fetal_heart_rate);
+
+            if (d !== null) dilation.push({
+                x,
+                y: d
+            });
+            if (hr !== null) fhr.push({
+                x,
+                y: hr
             });
         });
-    }, 300);
-}
 
-// ═══════════════════════════════════════════════════════════════
-// BABY RECORDS TAB
-// ═══════════════════════════════════════════════════════════════
-function loadBabyTab() {
-    if (!currentEnrollmentId) { $('#baby-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>'); return; }
-    if (!currentEnrollment || !currentEnrollment.has_delivery) { $('#baby-content').html('<p class="text-muted text-center py-3">Record delivery first</p>'); return; }
+        // WHO partograph: alert line starts at the first entry with dilation >= 4 cm
+        // and rises at 1 cm/hour. Action line is 4 hours to the right of alert line.
+        const alertLine = [];
+        const actionLine = [];
+        const maxHour = Math.max(...sorted.map(e => toHours(e.recorded_at)), 12);
 
-    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
-        if (!resp.success) return;
-        const babies = resp.enrollment.babies || [];
-        window._babiesCache = babies; // cache for edit
-        let html = `<div class="d-flex justify-content-between align-items-center mb-3">
+        // Find the first time dilation >= 4 cm (active labour onset)
+        let alertStartHour = null;
+        for (const pt of dilation) {
+            if (pt.y >= 4) {
+                alertStartHour = pt.x;
+                break;
+            }
+        }
+
+        if (alertStartHour !== null) {
+            // Alert line: starts at (alertStartHour, 4) and rises 1cm per hour
+            for (let h = 0; h <= maxHour + 2; h += 0.5) {
+                const alertY = 4 + (h - alertStartHour);
+                if (h >= alertStartHour && alertY <= 10) {
+                    alertLine.push({
+                        x: h,
+                        y: alertY
+                    });
+                }
+                // Action line: 4 hours to the right of alert line
+                const actionH = h - 4;
+                const actionY = 4 + (actionH - alertStartHour);
+                if (actionH >= alertStartHour && actionY >= 4 && actionY <= 10) {
+                    actionLine.push({
+                        x: h,
+                        y: actionY
+                    });
+                }
+            }
+        }
+
+        const ctx = canvas.getContext('2d');
+        window._partographChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                        label: 'Cervical Dilation (cm)',
+                        data: dilation,
+                        borderColor: '#d63384',
+                        backgroundColor: 'rgba(214, 51, 132, 0.15)',
+                        tension: 0.2,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#d63384',
+                        borderWidth: 2.5,
+                        yAxisID: 'y',
+                        spanGaps: true
+                    },
+                    {
+                        label: 'FHR (bpm)',
+                        data: fhr,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.12)',
+                        tension: 0.2,
+                        pointRadius: 3,
+                        borderWidth: 1.5,
+                        yAxisID: 'y1',
+                        spanGaps: true
+                    },
+                    {
+                        label: 'Alert Line (1 cm/hr from 4 cm)',
+                        data: alertLine,
+                        borderColor: '#fd7e14',
+                        borderDash: [6, 4],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        yAxisID: 'y',
+                        fill: false
+                    },
+                    {
+                        label: 'Action Line (+4 hrs)',
+                        data: actionLine,
+                        borderColor: '#dc3545',
+                        borderDash: [6, 4],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        yAxisID: 'y',
+                        fill: false,
+                        spanGaps: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        mode: 'nearest',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: {
+                            display: true,
+                            text: 'Hours since first entry'
+                        },
+                        min: 0,
+                        ticks: {
+                            callback: function(value) {
+                                return value + 'h';
+                            },
+                            stepSize: 1
+                        }
+                    },
+                    y: {
+                        min: 0,
+                        max: 10,
+                        title: {
+                            display: true,
+                            text: 'Cervical Dilation (cm)'
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        min: 60,
+                        max: 220,
+                        title: {
+                            display: true,
+                            text: 'FHR (bpm)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            stepSize: 20
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function editDeliveryRecord(id) {
+        const d = window._deliveryRecordCache;
+        if (!d) {
+            toastr.error('Delivery data not found');
+            return;
+        }
+        // Re-render the delivery form pre-filled
+        renderDeliveryForm();
+        // Wait a tick for the form to render and editors to init, then pre-fill
+        setTimeout(function() {
+            const f = $('#delivery-form');
+            // Parse dates from Eloquent serialization (ISO string or Y-m-d)
+            const delivDate = d.delivery_date ? d.delivery_date.substring(0, 10) : '';
+            const delivTime = d.delivery_time ? (d.delivery_time.length > 10 ? d.delivery_time.substring(11, 16) : d.delivery_time) : '';
+            f.find('input[name="delivery_date"]').val(delivDate);
+            f.find('input[name="delivery_time"]').val(delivTime);
+            f.find('select[name="type_of_delivery"]').val(d.type_of_delivery || 'svd');
+            f.find('input[name="number_of_babies"]').val(d.number_of_babies || 1);
+            f.find('input[name="duration_of_labour_hours"]').val(d.duration_of_labour_hours || '');
+            f.find('input[name="blood_loss_ml"]').val(d.blood_loss_ml || '');
+            f.find('select[name="oxytocin_given"]').val(d.oxytocin_given ? '1' : '0');
+            f.find('select[name="placenta_complete"]').val(d.placenta_complete ? '1' : '0');
+            f.find('select[name="perineal_tear_degree"]').val(d.perineal_tear_degree || '');
+            f.find('select[name="episiotomy"]').val(d.episiotomy || '');
+            // Set CKEditor data after init
+            setTimeout(function() {
+                if (MaternityEditors['delivery_complications'] && d.complications) MaternityEditors['delivery_complications'].setData(d.complications);
+                if (MaternityEditors['delivery_notes'] && d.notes) MaternityEditors['delivery_notes'].setData(d.notes);
+            }, 500);
+            // Change submit button text
+            f.find('button[type="submit"]').html('<i class="mdi mdi-check"></i> Update Delivery Record');
+            // Override form submit to use PUT
+            f.off('submit').on('submit', function(e) {
+                e.preventDefault();
+                const data = {};
+                $(this).serializeArray().forEach(fd => data[fd.name] = fd.value);
+                data.notes = getEditorData('delivery_notes', '#mat-delivery-notes-editor');
+                data.complications = getEditorData('delivery_complications', '#mat-delivery-complications-editor');
+                $.ajax({
+                    url: `/maternity-workbench/delivery/${id}`,
+                    method: 'PUT',
+                    data: data,
+                    headers: {
+                        'X-CSRF-TOKEN': CSRF_TOKEN
+                    },
+                    success: function(r) {
+                        if (r.success) {
+                            destroyMaternityEditor('delivery_notes');
+                            destroyMaternityEditor('delivery_complications');
+                            toastr.success(r.message || 'Delivery record updated');
+                            loadDeliveryTab();
+                        } else toastr.error(r.message);
+                    },
+                    error: function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Failed to update');
+                    }
+                });
+            });
+        }, 300);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // BABY RECORDS TAB
+    // ═══════════════════════════════════════════════════════════════
+    function loadBabyTab() {
+        if (!currentEnrollmentId) {
+            $('#baby-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
+            return;
+        }
+        if (!currentEnrollment || !currentEnrollment.has_delivery) {
+            $('#baby-content').html('<p class="text-muted text-center py-3">Record delivery first</p>');
+            return;
+        }
+
+        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
+            if (!resp.success) return;
+            const babies = resp.enrollment.babies || [];
+            window._babiesCache = babies; // cache for edit
+            let html = `<div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="mdi mdi-baby-face-outline"></i> Baby Records (${babies.length})</h5>
             <button class="btn text-white" style="background: var(--maternity-pink);" onclick="showRegisterBabyForm()"><i class="mdi mdi-plus"></i> Register Baby</button>
         </div>`;
 
-        if (babies.length === 0) {
-            html += '<p class="text-muted text-center py-4">No babies registered yet</p>';
-        } else {
-            babies.forEach(function(b) {
-                const patientName = b.patient && b.patient.user ? (b.patient.user.surname + ' ' + b.patient.user.firstname) : 'Baby';
-                html += `<div class="baby-card">
+            if (babies.length === 0) {
+                html += '<p class="text-muted text-center py-4">No babies registered yet</p>';
+            } else {
+                babies.forEach(function(b) {
+                    const patientName = b.patient && b.patient.user ? (b.patient.user.surname + ' ' + b.patient.user.firstname) : 'Baby';
+                    const isStillBirth = b.is_still_birth ? '<span class="badge bg-danger ms-2">Still Birth</span>' : '';
+                    const deathBtn = b.status === 'alive' ? `<button class="btn btn-sm btn-outline-danger" onclick="showMarkDeceasedModal(${b.id})"><i class="mdi mdi-account-remove"></i> Mark Deceased</button>` : '';
+                    
+                    html += `<div class="baby-card ${b.status === 'deceased' ? 'bg-light' : ''}">
                     <div class="baby-header">
-                        <div class="baby-name">${patientName}</div>
+                        <div class="baby-name">${patientName} ${isStillBirth}</div>
                         <div class="d-flex align-items-center gap-2">
                             <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editBaby(${b.id})" title="Edit baby record"><i class="mdi mdi-pencil"></i></button>
                             <span class="baby-sex ${b.sex}">${b.sex === 'male' ? '♂ Male' : (b.sex === 'female' ? '♀ Female' : '? Ambiguous')}</span>
@@ -4643,131 +6277,187 @@ function loadBabyTab() {
                     <div class="baby-metrics">
                         <div><div class="baby-metric-label">Birth Weight</div><div class="baby-metric-value">${b.birth_weight_kg ? b.birth_weight_kg + ' kg' : '-'}</div></div>
                         <div><div class="baby-metric-label">APGAR 1/5/10</div><div class="baby-metric-value">${b.apgar_1_min ?? '-'}/${b.apgar_5_min ?? '-'}/${b.apgar_10_min ?? '-'}</div></div>
-                        <div><div class="baby-metric-label">Length</div><div class="baby-metric-value">${b.length_cm ? b.length_cm + ' cm' : '-'}</div></div>
-                        <div><div class="baby-metric-label">Head Circ</div><div class="baby-metric-value">${b.head_circumference_cm ? b.head_circumference_cm + ' cm' : '-'}</div></div>
-                        <div><div class="baby-metric-label">Feeding</div><div class="baby-metric-value">${(b.feeding_method || '-').replace(/_/g, ' ')}</div></div>
-                        <div><div class="baby-metric-label">Status</div><div class="baby-metric-value">${b.status || '-'}</div></div>
+                        <div><div class="baby-metric-label">Status</div><div class="baby-metric-value"><span class="badge badge-${b.status === 'alive' ? 'success' : (b.status === 'deceased' ? 'danger' : 'warning')}">${b.status || '-'}</span></div></div>
+                        ${b.deceased_at ? `<div class="col-12 mt-1 small text-danger"><b>Deceased:</b> ${b.deceased_at} - ${b.cause_of_death || 'Unknown'}</div>` : ''}
                     </div>
                     <div class="mt-2 d-flex gap-2">
                         <button class="btn btn-sm btn-outline-primary" onclick="loadGrowthChart(${b.id})"><i class="mdi mdi-chart-line"></i> Growth Chart</button>
                         <button class="btn btn-sm btn-outline-success" onclick="showGrowthRecordForm(${b.id})"><i class="mdi mdi-plus"></i> Add Growth</button>
+                        ${deathBtn}
                     </div>
                     <div id="growth-chart-${b.id}" class="mt-2"></div>
                 </div>`;
-            });
-        }
-        $('#baby-content').html(html);
+                });
+            }
+            $('#baby-content').html(html);
+        });
+    }
+
+    function showMarkDeceasedModal(id) {
+        $('#deceased-baby-id').val(id);
+        $('#mark-baby-deceased-form')[0].reset();
+        $('#markBabyDeceasedModal').modal('show');
+    }
+
+    $('#btn-confirm-baby-death').on('click', function() {
+        const id = $('#deceased-baby-id').val();
+        const data = $('#mark-baby-deceased-form').serialize();
+        $.post(`/maternity-workbench/baby/${id}/mark-deceased`, data, function(resp) {
+            if (resp.success) {
+                toastr.success(resp.message);
+                $('#markBabyDeceasedModal').modal('hide');
+                loadBabyTab();
+            } else toastr.error(resp.message);
+        });
     });
-}
 
-function showRegisterBabyForm() {
-    _editMode = null; _editId = null;
-    const form = $('#registerBabyModal #register-baby-form')[0];
-    if (form) form.reset();
-    // Uncheck all checkboxes
-    $('#registerBabyModal input[type="checkbox"]').prop('checked', false);
-    $('#registerBabyModalLabel').html('<i class="mdi mdi-baby-face-outline"></i> Register Baby');
-    $('#btn-save-baby').html('<i class="mdi mdi-check"></i> Register Baby');
-    $('#registerBabyModal').modal('show');
-}
+    function showRegisterBabyForm() {
+        _editMode = null;
+        _editId = null;
+        const form = $('#registerBabyModal #register-baby-form')[0];
+        if (form) form.reset();
+        // Uncheck all checkboxes
+        $('#registerBabyModal input[type="checkbox"]').prop('checked', false);
+        $('#registerBabyModalLabel').html('<i class="mdi mdi-baby-face-outline"></i> Register Baby');
+        $('#btn-save-baby').html('<i class="mdi mdi-check"></i> Register Baby');
+        $('#registerBabyModal').modal('show');
+    }
 
-function editBaby(id) {
-    const b = (window._babiesCache || []).find(x => x.id === id);
-    if (!b) { toastr.error('Baby data not found'); return; }
-    _editMode = 'baby'; _editId = id;
-    const form = $('#registerBabyModal #register-baby-form')[0];
-    if (form) form.reset();
-    $('#registerBabyModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Baby Record');
-    $('#btn-save-baby').html('<i class="mdi mdi-check"></i> Update Baby');
-    // Pre-fill
-    const m = $('#registerBabyModal');
-    const u = b.patient && b.patient.user ? b.patient.user : {};
-    m.find('input[name="baby_surname"]').val(u.surname || '');
-    m.find('input[name="baby_firstname"]').val(u.firstname || '');
-    m.find('select[name="sex"]').val(b.sex || '');
-    m.find('input[name="birth_weight_kg"]').val(b.birth_weight_kg || '');
-    m.find('input[name="length_cm"]').val(b.length_cm || '');
-    m.find('input[name="head_circumference_cm"]').val(b.head_circumference_cm || '');
-    m.find('input[name="apgar_1_min"]').val(b.apgar_1_min ?? '');
-    m.find('input[name="apgar_5_min"]').val(b.apgar_5_min ?? '');
-    m.find('input[name="apgar_10_min"]').val(b.apgar_10_min ?? '');
-    m.find('select[name="feeding_method"]').val(b.feeding_method || 'exclusive_breastfeeding');
-    ['bcg_given','opv0_given','hbv0_given','vitamin_k_given','eye_prophylaxis'].forEach(cb => {
-        m.find('input[name="' + cb + '"]').prop('checked', !!b[cb]);
-    });
-    m.modal('show');
-}
-
-// Register Baby modal save handler
-$(document).on('click', '#btn-save-baby', function() {
-    const form = $('#registerBabyModal #register-baby-form');
-    if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
-    const data = {};
-    form.serializeArray().forEach(f => data[f.name] = f.value);
-    ['bcg_given','opv0_given','hbv0_given','vitamin_k_given','eye_prophylaxis'].forEach(cb => {
-        data[cb] = $('#registerBabyModal input[name="' + cb + '"]').is(':checked') ? 1 : 0;
-    });
-    const btn = $(this);
-    btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-    const isEdit = _editMode === 'baby' && _editId;
-    const url = isEdit ? `/maternity-workbench/baby/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/baby`;
-    const method = isEdit ? 'PUT' : 'POST';
-    $.ajax({
-        url: url, method: method, data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            btn.prop('disabled', false).html(isEdit ? '<i class="mdi mdi-check"></i> Update Baby' : '<i class="mdi mdi-check"></i> Register Baby');
-            if (r.success) { _editMode = null; _editId = null; $('#registerBabyModal').modal('hide'); toastr.success(r.message); loadBabyTab(); } else toastr.error(r.message);
-        },
-        error: function(xhr) { btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Register Baby'); toastr.error(xhr.responseJSON?.message || 'Failed to register'); }
-    });
-});
-
-function showGrowthRecordForm(babyId) {
-    const form = $('#addGrowthModal #growth-record-form')[0];
-    if (form) form.reset();
-    $('#growth-baby-id').val(babyId);
-    $('#addGrowthModal input[name="record_date"]').val(new Date().toISOString().split('T')[0]);
-    $('#addGrowthModal').modal('show');
-}
-
-// Growth Record modal save handler
-$(document).on('click', '#btn-save-growth', function() {
-    const form = $('#addGrowthModal #growth-record-form');
-    if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
-    const bid = $('#growth-baby-id').val();
-    const data = {};
-    form.serializeArray().forEach(f => { if (f.name !== 'baby_id') data[f.name] = f.value; });
-    const btn = $(this);
-    btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-    $.ajax({
-        url: `/maternity-workbench/baby/${bid}/growth`,
-        method: 'POST', data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
-            if (r.success) { $('#addGrowthModal').modal('hide'); toastr.success(r.message); loadBabyTab(); } else toastr.error(r.message);
-        },
-        error: function() { btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save'); toastr.error('Failed to save'); }
-    });
-});
-
-function loadGrowthChart(babyId) {
-    const container = $(`#growth-chart-${babyId}`);
-    container.html('<div class="text-center text-muted py-2"><i class="mdi mdi-loading mdi-spin"></i> Loading growth charts...</div>');
-
-    $.get(`/maternity-workbench/baby/${babyId}/growth-chart`, function(resp) {
-        if (!resp.success || !resp.data || resp.data.length === 0) {
-            container.html('<p class="text-muted small py-2"><i class="mdi mdi-information"></i> No growth records yet. Add a growth record to see WHO growth curves.</p>');
+    function editBaby(id) {
+        const b = (window._babiesCache || []).find(x => x.id === id);
+        if (!b) {
+            toastr.error('Baby data not found');
             return;
         }
+        _editMode = 'baby';
+        _editId = id;
+        const form = $('#registerBabyModal #register-baby-form')[0];
+        if (form) form.reset();
+        $('#registerBabyModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Baby Record');
+        $('#btn-save-baby').html('<i class="mdi mdi-check"></i> Update Baby');
+        // Pre-fill
+        const m = $('#registerBabyModal');
+        const u = b.patient && b.patient.user ? b.patient.user : {};
+        m.find('input[name="baby_surname"]').val(u.surname || '');
+        m.find('input[name="baby_firstname"]').val(u.firstname || '');
+        m.find('select[name="sex"]').val(b.sex || '');
+        m.find('input[name="is_still_birth"]').prop('checked', b.is_still_birth ? true : false);
+        m.find('input[name="birth_weight_kg"]').val(b.birth_weight_kg || '');
+        m.find('input[name="length_cm"]').val(b.length_cm || '');
+        m.find('input[name="head_circumference_cm"]').val(b.head_circumference_cm || '');
+        m.find('input[name="apgar_1_min"]').val(b.apgar_1_min ?? '');
+        m.find('input[name="apgar_5_min"]').val(b.apgar_5_min ?? '');
+        m.find('input[name="apgar_10_min"]').val(b.apgar_10_min ?? '');
+        m.find('select[name="feeding_method"]').val(b.feeding_method || 'exclusive_breastfeeding');
+        ['bcg_given', 'opv0_given', 'hbv0_given', 'vitamin_k_given', 'eye_prophylaxis'].forEach(cb => {
+            m.find('input[name="' + cb + '"]').prop('checked', !!b[cb]);
+        });
+        m.modal('show');
+    }
 
-        const sex = resp.sex;
-        const sexLabel = sex === 'F' ? 'Girls' : 'Boys';
-        const sexColor = sex === 'F' ? '#d63384' : '#0d6efd';
-        const data = resp.data;
-        const who = resp.who_reference;
+    // Register Baby modal save handler
+    $(document).on('click', '#btn-save-baby', function() {
+        const form = $('#registerBabyModal #register-baby-form');
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        const data = {};
+        form.serializeArray().forEach(f => data[f.name] = f.value);
+        ['bcg_given', 'opv0_given', 'hbv0_given', 'vitamin_k_given', 'eye_prophylaxis', 'is_still_birth'].forEach(cb => {
+            data[cb] = $('#registerBabyModal input[name="' + cb + '"]').is(':checked') ? 1 : 0;
+        });
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+        const isEdit = _editMode === 'baby' && _editId;
+        const url = isEdit ? `/maternity-workbench/baby/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/baby`;
+        const method = isEdit ? 'PUT' : 'POST';
+        $.ajax({
+            url: url,
+            method: method,
+            data: data,
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                btn.prop('disabled', false).html(isEdit ? '<i class="mdi mdi-check"></i> Update Baby' : '<i class="mdi mdi-check"></i> Register Baby');
+                if (r.success) {
+                    _editMode = null;
+                    _editId = null;
+                    $('#registerBabyModal').modal('hide');
+                    toastr.success(r.message);
+                    loadBabyTab();
+                } else toastr.error(r.message);
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Register Baby');
+                toastr.error(xhr.responseJSON?.message || 'Failed to register');
+            }
+        });
+    });
 
-        // Build tabbed chart view
-        container.html(`
+    function showGrowthRecordForm(babyId) {
+        const form = $('#addGrowthModal #growth-record-form')[0];
+        if (form) form.reset();
+        $('#growth-baby-id').val(babyId);
+        $('#addGrowthModal input[name="record_date"]').val(new Date().toISOString().split('T')[0]);
+        $('#addGrowthModal').modal('show');
+    }
+
+    // Growth Record modal save handler
+    $(document).on('click', '#btn-save-growth', function() {
+        const form = $('#addGrowthModal #growth-record-form');
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        const bid = $('#growth-baby-id').val();
+        const data = {};
+        form.serializeArray().forEach(f => {
+            if (f.name !== 'baby_id') data[f.name] = f.value;
+        });
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+        $.ajax({
+            url: `/maternity-workbench/baby/${bid}/growth`,
+            method: 'POST',
+            data: data,
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
+                if (r.success) {
+                    $('#addGrowthModal').modal('hide');
+                    toastr.success(r.message);
+                    loadBabyTab();
+                } else toastr.error(r.message);
+            },
+            error: function() {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save');
+                toastr.error('Failed to save');
+            }
+        });
+    });
+
+    function loadGrowthChart(babyId) {
+        const container = $(`#growth-chart-${babyId}`);
+        container.html('<div class="text-center text-muted py-2"><i class="mdi mdi-loading mdi-spin"></i> Loading growth charts...</div>');
+
+        $.get(`/maternity-workbench/baby/${babyId}/growth-chart`, function(resp) {
+            if (!resp.success || !resp.data || resp.data.length === 0) {
+                container.html('<p class="text-muted small py-2"><i class="mdi mdi-information"></i> No growth records yet. Add a growth record to see WHO growth curves.</p>');
+                return;
+            }
+
+            const sex = resp.sex;
+            const sexLabel = sex === 'F' ? 'Girls' : 'Boys';
+            const sexColor = sex === 'F' ? '#d63384' : '#0d6efd';
+            const data = resp.data;
+            const who = resp.who_reference;
+
+            // Build tabbed chart view
+            container.html(`
             <ul class="nav nav-tabs nav-tabs-sm mt-2" id="growth-tabs-${babyId}">
                 <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#gc-weight-${babyId}" style="font-size:0.78rem; padding: 4px 10px;">Weight-for-Age</a></li>
                 <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#gc-length-${babyId}" style="font-size:0.78rem; padding: 4px 10px;">Length-for-Age</a></li>
@@ -4808,118 +6498,220 @@ function loadGrowthChart(babyId) {
             </div>
         `);
 
-        // Render each chart
-        if (typeof Chart !== 'undefined') {
-            renderWhoGrowthChart(`gc-wfa-canvas-${babyId}`, who.weight_for_age, data, 'weight_kg', 'Weight (kg)', sexColor, babyId + '-wfa');
-            renderWhoGrowthChart(`gc-lfa-canvas-${babyId}`, who.length_for_age, data, 'length_height_cm', 'Length/Height (cm)', sexColor, babyId + '-lfa');
-            renderWhoGrowthChart(`gc-hc-canvas-${babyId}`, who.head_circumference, data, 'head_circumference_cm', 'Head Circ (cm)', sexColor, babyId + '-hc');
+            // Render each chart
+            if (typeof Chart !== 'undefined') {
+                renderWhoGrowthChart(`gc-wfa-canvas-${babyId}`, who.weight_for_age, data, 'weight_kg', 'Weight (kg)', sexColor, babyId + '-wfa');
+                renderWhoGrowthChart(`gc-lfa-canvas-${babyId}`, who.length_for_age, data, 'length_height_cm', 'Length/Height (cm)', sexColor, babyId + '-lfa');
+                renderWhoGrowthChart(`gc-hc-canvas-${babyId}`, who.head_circumference, data, 'head_circumference_cm', 'Head Circ (cm)', sexColor, babyId + '-hc');
 
-            // Lazy-render on tab switch (Chart.js needs visible canvas)
-            $(`#growth-tabs-${babyId} a[data-bs-toggle="tab"]`).on('shown.bs.tab', function() {
-                const target = $(this).attr('href');
-                if (target.includes('length') && window['_gcChart_' + babyId + '-lfa']) window['_gcChart_' + babyId + '-lfa'].resize();
-                if (target.includes('hc') && window['_gcChart_' + babyId + '-hc']) window['_gcChart_' + babyId + '-hc'].resize();
-            });
-        }
-    }).fail(function() {
-        container.html('<div class="alert alert-danger small mb-0">Failed to load growth chart data.</div>');
-    });
-}
-
-function renderWhoGrowthChart(canvasId, whoData, childData, measureField, yLabel, childColor, cacheKey) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas || !whoData || whoData.length === 0) return;
-
-    if (window['_gcChart_' + cacheKey]) window['_gcChart_' + cacheKey].destroy();
-
-    // WHO reference bands
-    const months = whoData.map(w => w.month);
-    const sd3n = whoData.map(w => w.sd_neg3);
-    const sd2n = whoData.map(w => w.sd_neg2);
-    const sd1n = whoData.map(w => w.sd_neg1);
-    const median = whoData.map(w => w.median);
-    const sd1p = whoData.map(w => w.sd_pos1);
-    const sd2p = whoData.map(w => w.sd_pos2);
-    const sd3p = whoData.map(w => w.sd_pos3);
-
-    // Child data points
-    const childPts = [];
-    childData.forEach(record => {
-        const age = record.age_months ? parseFloat(record.age_months) : null;
-        const val = record[measureField] ? parseFloat(record[measureField]) : null;
-        if (age !== null && val !== null) childPts.push({ x: age, y: val });
-    });
-
-    const datasets = [
-        // WHO reference bands (filled)
-        { label: '-3 SD', data: sd3n, borderColor: 'rgba(220,53,69,0.4)', borderWidth: 1, pointRadius: 0, fill: false, borderDash: [2,2] },
-        { label: '-2 SD', data: sd2n, borderColor: 'rgba(255,152,0,0.5)', borderWidth: 1, pointRadius: 0, fill: { target: 0, above: 'rgba(255,152,0,0.08)' } },
-        { label: '-1 SD', data: sd1n, borderColor: 'rgba(76,175,80,0.4)', borderWidth: 1, pointRadius: 0, fill: { target: 1, above: 'rgba(255,193,7,0.06)' } },
-        { label: 'Median', data: median, borderColor: '#198754', borderWidth: 2, pointRadius: 0, fill: { target: 2, above: 'rgba(76,175,80,0.08)' } },
-        { label: '+1 SD', data: sd1p, borderColor: 'rgba(76,175,80,0.4)', borderWidth: 1, pointRadius: 0, fill: { target: 3, above: 'rgba(76,175,80,0.08)' } },
-        { label: '+2 SD', data: sd2p, borderColor: 'rgba(255,152,0,0.5)', borderWidth: 1, pointRadius: 0, fill: { target: 4, above: 'rgba(255,193,7,0.06)' } },
-        { label: '+3 SD', data: sd3p, borderColor: 'rgba(220,53,69,0.4)', borderWidth: 1, pointRadius: 0, fill: { target: 5, above: 'rgba(255,152,0,0.08)' } },
-    ];
-
-    // Child measurement line (scatter + line)
-    if (childPts.length > 0) {
-        datasets.push({
-            label: 'Child',
-            data: childPts,
-            borderColor: childColor,
-            backgroundColor: childColor,
-            pointRadius: 6,
-            pointBackgroundColor: childColor,
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            borderWidth: 2.5,
-            showLine: true,
-            tension: 0.2,
-            type: 'scatter',
-            order: 0
+                // Lazy-render on tab switch (Chart.js needs visible canvas)
+                $(`#growth-tabs-${babyId} a[data-bs-toggle="tab"]`).on('shown.bs.tab', function() {
+                    const target = $(this).attr('href');
+                    if (target.includes('length') && window['_gcChart_' + babyId + '-lfa']) window['_gcChart_' + babyId + '-lfa'].resize();
+                    if (target.includes('hc') && window['_gcChart_' + babyId + '-hc']) window['_gcChart_' + babyId + '-hc'].resize();
+                });
+            }
+        }).fail(function() {
+            container.html('<div class="alert alert-danger small mb-0">Failed to load growth chart data.</div>');
         });
     }
 
-    window['_gcChart_' + cacheKey] = new Chart(canvas.getContext('2d'), {
-        type: 'line',
-        data: { labels: months, datasets: datasets },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: { usePointStyle: true, padding: 6, font: { size: 9 }, filter: item => ['Child','Median','-2 SD','+2 SD','-3 SD','+3 SD'].includes(item.text) }
-                },
-                tooltip: { mode: 'nearest', intersect: true }
+    function renderWhoGrowthChart(canvasId, whoData, childData, measureField, yLabel, childColor, cacheKey) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || !whoData || whoData.length === 0) return;
+
+        if (window['_gcChart_' + cacheKey]) window['_gcChart_' + cacheKey].destroy();
+
+        // WHO reference bands
+        const months = whoData.map(w => w.month);
+        const sd3n = whoData.map(w => w.sd_neg3);
+        const sd2n = whoData.map(w => w.sd_neg2);
+        const sd1n = whoData.map(w => w.sd_neg1);
+        const median = whoData.map(w => w.median);
+        const sd1p = whoData.map(w => w.sd_pos1);
+        const sd2p = whoData.map(w => w.sd_pos2);
+        const sd3p = whoData.map(w => w.sd_pos3);
+
+        // Child data points
+        const childPts = [];
+        childData.forEach(record => {
+            const age = record.age_months ? parseFloat(record.age_months) : null;
+            const val = record[measureField] ? parseFloat(record[measureField]) : null;
+            if (age !== null && val !== null) childPts.push({
+                x: age,
+                y: val
+            });
+        });
+
+        const datasets = [
+            // WHO reference bands (filled)
+            {
+                label: '-3 SD',
+                data: sd3n,
+                borderColor: 'rgba(220,53,69,0.4)',
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: false,
+                borderDash: [2, 2]
             },
-            scales: {
-                x: { title: { display: true, text: 'Age (months)' }, min: 0, max: 60, ticks: { stepSize: 6 } },
-                y: { title: { display: true, text: yLabel } }
-            }
+            {
+                label: '-2 SD',
+                data: sd2n,
+                borderColor: 'rgba(255,152,0,0.5)',
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: {
+                    target: 0,
+                    above: 'rgba(255,152,0,0.08)'
+                }
+            },
+            {
+                label: '-1 SD',
+                data: sd1n,
+                borderColor: 'rgba(76,175,80,0.4)',
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: {
+                    target: 1,
+                    above: 'rgba(255,193,7,0.06)'
+                }
+            },
+            {
+                label: 'Median',
+                data: median,
+                borderColor: '#198754',
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: {
+                    target: 2,
+                    above: 'rgba(76,175,80,0.08)'
+                }
+            },
+            {
+                label: '+1 SD',
+                data: sd1p,
+                borderColor: 'rgba(76,175,80,0.4)',
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: {
+                    target: 3,
+                    above: 'rgba(76,175,80,0.08)'
+                }
+            },
+            {
+                label: '+2 SD',
+                data: sd2p,
+                borderColor: 'rgba(255,152,0,0.5)',
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: {
+                    target: 4,
+                    above: 'rgba(255,193,7,0.06)'
+                }
+            },
+            {
+                label: '+3 SD',
+                data: sd3p,
+                borderColor: 'rgba(220,53,69,0.4)',
+                borderWidth: 1,
+                pointRadius: 0,
+                fill: {
+                    target: 5,
+                    above: 'rgba(255,152,0,0.08)'
+                }
+            },
+        ];
+
+        // Child measurement line (scatter + line)
+        if (childPts.length > 0) {
+            datasets.push({
+                label: 'Child',
+                data: childPts,
+                borderColor: childColor,
+                backgroundColor: childColor,
+                pointRadius: 6,
+                pointBackgroundColor: childColor,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                borderWidth: 2.5,
+                showLine: true,
+                tension: 0.2,
+                type: 'scatter',
+                order: 0
+            });
         }
-    });
-}
 
-// ═══════════════════════════════════════════════════════════════
-// POSTNATAL TAB
-// ═══════════════════════════════════════════════════════════════
-function loadPostnatalTab() {
-    if (!currentEnrollmentId) { $('#postnatal-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>'); return; }
+        window['_gcChart_' + cacheKey] = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            usePointStyle: true,
+                            padding: 6,
+                            font: {
+                                size: 9
+                            },
+                            filter: item => ['Child', 'Median', '-2 SD', '+2 SD', '-3 SD', '+3 SD'].includes(item.text)
+                        }
+                    },
+                    tooltip: {
+                        mode: 'nearest',
+                        intersect: true
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Age (months)'
+                        },
+                        min: 0,
+                        max: 60,
+                        ticks: {
+                            stepSize: 6
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: yLabel
+                        }
+                    }
+                }
+            }
+        });
+    }
 
-    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/postnatal`, function(resp) {
-        if (!resp.success) return;
-        _postnatalVisitsCache = resp.visits; // cache for edit
-        let html = `<div class="d-flex justify-content-between align-items-center mb-3">
+    // ═══════════════════════════════════════════════════════════════
+    // POSTNATAL TAB
+    // ═══════════════════════════════════════════════════════════════
+    function loadPostnatalTab() {
+        if (!currentEnrollmentId) {
+            $('#postnatal-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
+            return;
+        }
+
+        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/postnatal`, function(resp) {
+            if (!resp.success) return;
+            _postnatalVisitsCache = resp.visits; // cache for edit
+            let html = `<div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="mdi mdi-account-heart"></i> Postnatal Visits (${resp.visits.length})</h5>
             <button class="btn text-white" style="background: var(--maternity-pink);" onclick="showPostnatalForm()"><i class="mdi mdi-plus"></i> New Visit</button>
         </div>`;
 
-        if (resp.visits.length === 0) {
-            html += '<p class="text-muted text-center py-4">No postnatal visits recorded</p>';
-        } else {
-            resp.visits.forEach(function(v) {
-                html += `<div class="anc-visit-card" style="border-left-color: var(--info);">
+            if (resp.visits.length === 0) {
+                html += '<p class="text-muted text-center py-4">No postnatal visits recorded</p>';
+            } else {
+                resp.visits.forEach(function(v) {
+                    html += `<div class="anc-visit-card" style="border-left-color: var(--info);">
                     <div class="d-flex justify-content-between">
                         <div><span class="visit-number" style="color: var(--info);">${v.visit_type_label}</span></div>
                         <div class="d-flex align-items-center gap-2">
@@ -4937,149 +6729,175 @@ function loadPostnatalTab() {
                     </div>
                     <div class="mt-1 small text-muted">Seen by: ${v.seen_by}</div>
                 </div>`;
-            });
-        }
-        $('#postnatal-content').html(html);
-    });
-}
-
-function showPostnatalForm() {
-    _editMode = null; _editId = null;
-    destroyMaternityEditor('postnatal_notes');
-    const form = $('#postnatalModal #postnatal-form')[0];
-    if (form) form.reset();
-    $('#postnatalModalLabel').html('<i class="mdi mdi-account-heart"></i> Record Postnatal Visit');
-    $('#btn-save-postnatal').html('<i class="mdi mdi-check"></i> Save Visit');
-    $('#postnatalModal input[name="visit_date"]').val(new Date().toISOString().split('T')[0]);
-
-    // Init CKEditor after modal is fully visible
-    $('#postnatalModal').off('shown.bs.modal.pnEditor').on('shown.bs.modal.pnEditor', function() {
-        initMaternityEditor('#mat-postnatal-notes-editor-modal', 'postnatal_notes');
-    });
-    // Destroy CKEditor when modal hides
-    $('#postnatalModal').off('hidden.bs.modal.pnEditor').on('hidden.bs.modal.pnEditor', function() {
-        destroyMaternityEditor('postnatal_notes');
-    });
-
-    $('#postnatalModal').modal('show');
-}
-
-function editPostnatalVisit(id) {
-    const v = _postnatalVisitsCache.find(x => x.id === id);
-    if (!v) { toastr.error('Visit data not found'); return; }
-    _editMode = 'postnatal'; _editId = id;
-    destroyMaternityEditor('postnatal_notes');
-    const form = $('#postnatalModal #postnatal-form')[0];
-    if (form) form.reset();
-    $('#postnatalModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Postnatal Visit');
-    $('#btn-save-postnatal').html('<i class="mdi mdi-check"></i> Update Visit');
-    // Pre-fill form fields
-    const m = $('#postnatalModal');
-    m.find('select[name="visit_type"]').val(v.visit_type || '');
-    m.find('input[name="visit_date"]').val(v.visit_date_raw || '');
-    m.find('select[name="general_condition"]').val(v.general_condition || '');
-    m.find('input[name="blood_pressure"]').val(v.blood_pressure || '');
-    m.find('select[name="lochia"]').val(v.lochia || '');
-    m.find('select[name="family_planning_counselled"]').val(v.family_planning_counselled ? '1' : '0');
-    m.find('input[name="baby_weight_kg"]').val(v.baby_weight_kg || '');
-    m.find('select[name="baby_feeding"]').val(v.baby_feeding || '');
-    // CKEditor
-    m.off('shown.bs.modal.pnEditor').on('shown.bs.modal.pnEditor', function() {
-        initMaternityEditor('#mat-postnatal-notes-editor-modal', 'postnatal_notes').then(function(editor) {
-            if (editor && v.clinical_notes) editor.setData(v.clinical_notes);
+                });
+            }
+            $('#postnatal-content').html(html);
         });
-    });
-    m.off('hidden.bs.modal.pnEditor').on('hidden.bs.modal.pnEditor', function() {
-        destroyMaternityEditor('postnatal_notes');
-    });
-    m.modal('show');
-}
-
-// Postnatal modal save handler
-$(document).on('click', '#btn-save-postnatal', function() {
-    const form = $('#postnatalModal #postnatal-form');
-    if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
-    const data = {};
-    form.serializeArray().forEach(f => data[f.name] = f.value);
-    data.clinical_notes = getEditorData('postnatal_notes', '#mat-postnatal-notes-editor-modal');
-    const btn = $(this);
-    btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-    const isEdit = _editMode === 'postnatal' && _editId;
-    const url = isEdit ? `/maternity-workbench/postnatal/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/postnatal`;
-    const method = isEdit ? 'PUT' : 'POST';
-    $.ajax({
-        url: url, method: method, data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Visit');
-            if (r.success) { _editMode = null; _editId = null; destroyMaternityEditor('postnatal_notes'); $('#postnatalModal').modal('hide'); toastr.success(r.message); loadPostnatalTab(); } else toastr.error(r.message);
-        },
-        error: function(xhr) { btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Visit'); toastr.error(xhr.responseJSON?.message || 'Failed to save'); }
-    });
-});
-
-// ═══════════════════════════════════════════════════════════════
-// IMMUNIZATION TAB
-// ═══════════════════════════════════════════════════════════════
-function loadImmunizationTab() {
-    if (!currentEnrollmentId) { $('#immunization-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>'); return; }
-
-    if (typeof ImmunizationModule === 'undefined') {
-        $('#immunization-content').html('<div class="alert alert-danger">Shared immunization module not loaded.</div>');
-        return;
     }
 
-    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
-        if (!resp.success) return;
+    function showPostnatalForm() {
+        _editMode = null;
+        _editId = null;
+        destroyMaternityEditor('postnatal_notes');
+        const form = $('#postnatalModal #postnatal-form')[0];
+        if (form) form.reset();
+        $('#postnatalModalLabel').html('<i class="mdi mdi-account-heart"></i> Record Postnatal Visit');
+        $('#btn-save-postnatal').html('<i class="mdi mdi-check"></i> Save Visit');
+        $('#postnatalModal input[name="visit_date"]').val(new Date().toISOString().split('T')[0]);
 
-        const enrollment = resp.enrollment || {};
-        const mother = enrollment.patient || null;
-        const babies = enrollment.babies || [];
+        // Init CKEditor after modal is fully visible
+        $('#postnatalModal').off('shown.bs.modal.pnEditor').on('shown.bs.modal.pnEditor', function() {
+            initMaternityEditor('#mat-postnatal-notes-editor-modal', 'postnatal_notes');
+        });
+        // Destroy CKEditor when modal hides
+        $('#postnatalModal').off('hidden.bs.modal.pnEditor').on('hidden.bs.modal.pnEditor', function() {
+            destroyMaternityEditor('postnatal_notes');
+        });
 
-        if (!mother) {
-            $('#immunization-content').html('<p class="text-muted text-center py-4">Mother patient record not found.</p>');
+        $('#postnatalModal').modal('show');
+    }
+
+    function editPostnatalVisit(id) {
+        const v = _postnatalVisitsCache.find(x => x.id === id);
+        if (!v) {
+            toastr.error('Visit data not found');
+            return;
+        }
+        _editMode = 'postnatal';
+        _editId = id;
+        destroyMaternityEditor('postnatal_notes');
+        const form = $('#postnatalModal #postnatal-form')[0];
+        if (form) form.reset();
+        $('#postnatalModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Postnatal Visit');
+        $('#btn-save-postnatal').html('<i class="mdi mdi-check"></i> Update Visit');
+        // Pre-fill form fields
+        const m = $('#postnatalModal');
+        m.find('select[name="visit_type"]').val(v.visit_type || '');
+        m.find('input[name="visit_date"]').val(v.visit_date_raw || '');
+        m.find('select[name="general_condition"]').val(v.general_condition || '');
+        m.find('input[name="blood_pressure"]').val(v.blood_pressure || '');
+        m.find('select[name="lochia"]').val(v.lochia || '');
+        m.find('select[name="family_planning_counselled"]').val(v.family_planning_counselled ? '1' : '0');
+        m.find('input[name="baby_weight_kg"]').val(v.baby_weight_kg || '');
+        m.find('select[name="baby_feeding"]').val(v.baby_feeding || '');
+        // CKEditor
+        m.off('shown.bs.modal.pnEditor').on('shown.bs.modal.pnEditor', function() {
+            initMaternityEditor('#mat-postnatal-notes-editor-modal', 'postnatal_notes').then(function(editor) {
+                if (editor && v.clinical_notes) editor.setData(v.clinical_notes);
+            });
+        });
+        m.off('hidden.bs.modal.pnEditor').on('hidden.bs.modal.pnEditor', function() {
+            destroyMaternityEditor('postnatal_notes');
+        });
+        m.modal('show');
+    }
+
+    // Postnatal modal save handler
+    $(document).on('click', '#btn-save-postnatal', function() {
+        const form = $('#postnatalModal #postnatal-form');
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        const data = {};
+        form.serializeArray().forEach(f => data[f.name] = f.value);
+        data.clinical_notes = getEditorData('postnatal_notes', '#mat-postnatal-notes-editor-modal');
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+        const isEdit = _editMode === 'postnatal' && _editId;
+        const url = isEdit ? `/maternity-workbench/postnatal/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/postnatal`;
+        const method = isEdit ? 'PUT' : 'POST';
+        $.ajax({
+            url: url,
+            method: method,
+            data: data,
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Visit');
+                if (r.success) {
+                    _editMode = null;
+                    _editId = null;
+                    destroyMaternityEditor('postnatal_notes');
+                    $('#postnatalModal').modal('hide');
+                    toastr.success(r.message);
+                    loadPostnatalTab();
+                } else toastr.error(r.message);
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Visit');
+                toastr.error(xhr.responseJSON?.message || 'Failed to save');
+            }
+        });
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // IMMUNIZATION TAB
+    // ═══════════════════════════════════════════════════════════════
+    function loadImmunizationTab() {
+        if (!currentEnrollmentId) {
+            $('#immunization-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
             return;
         }
 
-        const people = [];
-        people.push({
-            key: 'mother',
-            label: 'Mother',
-            name: mother.user ? `${mother.user.surname || ''} ${mother.user.firstname || ''}`.trim() : 'Mother',
-            scheduleUrl: `/maternity-workbench/enrollment/${currentEnrollmentId}/mother-schedule`,
-            generateUrl: `/maternity-workbench/enrollment/${currentEnrollmentId}/generate-mother-schedule`,
-            historyUrl: `/maternity-workbench/enrollment/${currentEnrollmentId}/mother-immunization-history`,
-            patientId: mother.id
-        });
+        if (typeof ImmunizationModule === 'undefined') {
+            $('#immunization-content').html('<div class="alert alert-danger">Shared immunization module not loaded.</div>');
+            return;
+        }
 
-        babies.forEach(function(baby, idx) {
-            const babyName = baby.patient && baby.patient.user
-                ? `${baby.patient.user.surname || ''} ${baby.patient.user.firstname || ''}`.trim()
-                : `Baby ${idx + 1}`;
+        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
+            if (!resp.success) return;
+
+            const enrollment = resp.enrollment || {};
+            const mother = enrollment.patient || null;
+            const babies = enrollment.babies || [];
+
+            if (!mother) {
+                $('#immunization-content').html('<p class="text-muted text-center py-4">Mother patient record not found.</p>');
+                return;
+            }
+
+            const people = [];
             people.push({
-                key: `baby-${baby.id}`,
-                label: `Baby ${idx + 1}`,
-                name: babyName,
-                scheduleUrl: `/maternity-workbench/baby/${baby.id}/schedule`,
-                generateUrl: `/maternity-workbench/baby/${baby.id}/generate-schedule`,
-                historyUrl: `/maternity-workbench/baby/${baby.id}/immunization-history`,
-                patientId: baby.patient_id
+                key: 'mother',
+                label: 'Mother',
+                name: mother.user ? `${mother.user.surname || ''} ${mother.user.firstname || ''}`.trim() : 'Mother',
+                scheduleUrl: `/maternity-workbench/enrollment/${currentEnrollmentId}/mother-schedule`,
+                generateUrl: `/maternity-workbench/enrollment/${currentEnrollmentId}/generate-mother-schedule`,
+                historyUrl: `/maternity-workbench/enrollment/${currentEnrollmentId}/mother-immunization-history`,
+                patientId: mother.id
             });
-        });
 
-        let tabsHtml = '<ul class="nav nav-tabs mb-3" id="imm-person-tabs" role="tablist">';
-        let panesHtml = '<div class="tab-content" id="imm-person-content">';
+            babies.forEach(function(baby, idx) {
+                const babyName = baby.patient && baby.patient.user ?
+                    `${baby.patient.user.surname || ''} ${baby.patient.user.firstname || ''}`.trim() :
+                    `Baby ${idx + 1}`;
+                people.push({
+                    key: `baby-${baby.id}`,
+                    label: `Baby ${idx + 1}`,
+                    name: babyName,
+                    scheduleUrl: `/maternity-workbench/baby/${baby.id}/schedule`,
+                    generateUrl: `/maternity-workbench/baby/${baby.id}/generate-schedule`,
+                    historyUrl: `/maternity-workbench/baby/${baby.id}/immunization-history`,
+                    patientId: baby.patient_id
+                });
+            });
 
-        people.forEach(function(person, idx) {
-            const activeClass = idx === 0 ? 'active' : '';
-            const showClass = idx === 0 ? 'show active' : '';
-            tabsHtml += `
+            let tabsHtml = '<ul class="nav nav-tabs mb-3" id="imm-person-tabs" role="tablist">';
+            let panesHtml = '<div class="tab-content" id="imm-person-content">';
+
+            people.forEach(function(person, idx) {
+                const activeClass = idx === 0 ? 'active' : '';
+                const showClass = idx === 0 ? 'show active' : '';
+                tabsHtml += `
                 <li class="nav-item">
                     <a class="nav-link ${activeClass}" data-toggle="tab" href="#imm-person-${person.key}" role="tab">
                         <i class="mdi ${person.key === 'mother' ? 'mdi-mother-nurse' : 'mdi-baby-face'}"></i> ${person.label}
                     </a>
                 </li>`;
 
-            panesHtml += `
+                panesHtml += `
                 <div class="tab-pane fade ${showClass}" id="imm-person-${person.key}" role="tabpanel">
                     <div class="card-modern mb-3">
                         <div class="card-header py-2"><h6 class="mb-0"><i class="mdi mdi-account-circle"></i> ${person.name}</h6></div>
@@ -5135,55 +6953,24 @@ function loadImmunizationTab() {
                         </div>
                     </div>
                 </div>`;
-        });
-
-        tabsHtml += '</ul>';
-        panesHtml += '</div>';
-        $('#immunization-content').html(tabsHtml + panesHtml);
-
-        ImmunizationModule.initModalEvents();
-
-        people.forEach(function(person) {
-            ImmunizationModule.configure({
-                baseUrl: '/maternity-workbench',
-                csrfToken: CSRF_TOKEN,
-                currentPatientId: person.patientId,
-                productBatchesUrl: '/maternity-workbench/product-batches'
             });
-            ImmunizationModule.loadTemplates(`#imm-template-${person.key}`);
 
-            const reloadSchedule = function() {
+            tabsHtml += '</ul>';
+            panesHtml += '</div>';
+            $('#immunization-content').html(tabsHtml + panesHtml);
+
+            ImmunizationModule.initModalEvents();
+
+            people.forEach(function(person) {
                 ImmunizationModule.configure({
                     baseUrl: '/maternity-workbench',
                     csrfToken: CSRF_TOKEN,
                     currentPatientId: person.patientId,
-                    productBatchesUrl: '/maternity-workbench/product-batches',
-                    onScheduleReload: reloadSchedule,
-                    onHistoryReload: reloadTimeline
+                    productBatchesUrl: '/maternity-workbench/product-batches'
                 });
-                ImmunizationModule.loadSchedule(person.patientId, `#imm-schedule-${person.key}`, person.scheduleUrl, {
-                    activeSchedulesId: `#imm-active-${person.key}`
-                });
-            };
+                ImmunizationModule.loadTemplates(`#imm-template-${person.key}`);
 
-            const reloadTimeline = function() {
-                ImmunizationModule.configure({
-                    baseUrl: '/maternity-workbench',
-                    csrfToken: CSRF_TOKEN,
-                    currentPatientId: person.patientId,
-                    productBatchesUrl: '/maternity-workbench/product-batches',
-                    onScheduleReload: reloadSchedule,
-                    onHistoryReload: reloadTimeline
-                });
-                ImmunizationModule.loadTimeline(person.patientId, `#imm-history-timeline-${person.key}`, person.historyUrl);
-            };
-
-            reloadSchedule();
-            reloadTimeline();
-
-            $(document).off(`click.immAdd${person.key}`, `#imm-add-schedule-${person.key}`)
-                .on(`click.immAdd${person.key}`, `#imm-add-schedule-${person.key}`, function() {
-                    const templateId = $(`#imm-template-${person.key}`).val() || null;
+                const reloadSchedule = function() {
                     ImmunizationModule.configure({
                         baseUrl: '/maternity-workbench',
                         csrfToken: CSRF_TOKEN,
@@ -5192,664 +6979,896 @@ function loadImmunizationTab() {
                         onScheduleReload: reloadSchedule,
                         onHistoryReload: reloadTimeline
                     });
-                    ImmunizationModule.generateSchedule(person.patientId, person.generateUrl, templateId, function() {
-                        reloadSchedule();
+                    ImmunizationModule.loadSchedule(person.patientId, `#imm-schedule-${person.key}`, person.scheduleUrl, {
+                        activeSchedulesId: `#imm-active-${person.key}`
                     });
-                });
+                };
+
+                const reloadTimeline = function() {
+                    ImmunizationModule.configure({
+                        baseUrl: '/maternity-workbench',
+                        csrfToken: CSRF_TOKEN,
+                        currentPatientId: person.patientId,
+                        productBatchesUrl: '/maternity-workbench/product-batches',
+                        onScheduleReload: reloadSchedule,
+                        onHistoryReload: reloadTimeline
+                    });
+                    ImmunizationModule.loadTimeline(person.patientId, `#imm-history-timeline-${person.key}`, person.historyUrl);
+                };
+
+                reloadSchedule();
+                reloadTimeline();
+
+                $(document).off(`click.immAdd${person.key}`, `#imm-add-schedule-${person.key}`)
+                    .on(`click.immAdd${person.key}`, `#imm-add-schedule-${person.key}`, function() {
+                        const templateId = $(`#imm-template-${person.key}`).val() || null;
+                        ImmunizationModule.configure({
+                            baseUrl: '/maternity-workbench',
+                            csrfToken: CSRF_TOKEN,
+                            currentPatientId: person.patientId,
+                            productBatchesUrl: '/maternity-workbench/product-batches',
+                            onScheduleReload: reloadSchedule,
+                            onHistoryReload: reloadTimeline
+                        });
+                        ImmunizationModule.generateSchedule(person.patientId, person.generateUrl, templateId, function() {
+                            reloadSchedule();
+                        });
+                    });
+            });
         });
-    });
-}
-
-function switchImmunizationHistoryView(btn) {
-    const person = $(btn).data('person');
-    const view = $(btn).data('view');
-    const paneClass = `.imm-history-view-pane-${person}`;
-
-    $(`#imm-history-pane-${person} .btn`).removeClass('active');
-    $(btn).addClass('active');
-    $(paneClass).addClass('d-none');
-
-    const historyUrl = person === 'mother'
-        ? `/maternity-workbench/enrollment/${currentEnrollmentId}/mother-immunization-history`
-        : `/maternity-workbench/baby/${person.replace('baby-', '')}/immunization-history`;
-
-    if (view === 'timeline') {
-        $(`#imm-history-timeline-${person}`).removeClass('d-none');
-        ImmunizationModule.loadTimeline(null, `#imm-history-timeline-${person}`, historyUrl);
-    } else if (view === 'calendar') {
-        $(`#imm-history-calendar-${person}`).removeClass('d-none');
-        ImmunizationModule.loadCalendar(null, `#imm-history-calendar-${person}`, historyUrl);
-    } else {
-        $(`#imm-history-table-wrap-${person}`).removeClass('d-none');
-        ImmunizationModule.loadHistoryTable(null, `#imm-history-table-wrap-${person}`, `#imm-history-table-${person}`, historyUrl);
     }
-}
 
-// ═══════════════════════════════════════════════════════════════
-// NOTES TAB (shares pattern with nursing notes)
-// ═══════════════════════════════════════════════════════════════
-function loadNotesTab() {
-    if (!currentEnrollmentId) { $('#notes-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>'); return; }
+    function switchImmunizationHistoryView(btn) {
+        const person = $(btn).data('person');
+        const view = $(btn).data('view');
+        const paneClass = `.imm-history-view-pane-${person}`;
 
-    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/notes`, function(resp) {
-        if (!resp.success) return;
-        _notesCache = resp.notes; // cache for edit
-        let html = `<div class="d-flex justify-content-between align-items-center mb-3">
+        $(`#imm-history-pane-${person} .btn`).removeClass('active');
+        $(btn).addClass('active');
+        $(paneClass).addClass('d-none');
+
+        const historyUrl = person === 'mother' ?
+            `/maternity-workbench/enrollment/${currentEnrollmentId}/mother-immunization-history` :
+            `/maternity-workbench/baby/${person.replace('baby-', '')}/immunization-history`;
+
+        if (view === 'timeline') {
+            $(`#imm-history-timeline-${person}`).removeClass('d-none');
+            ImmunizationModule.loadTimeline(null, `#imm-history-timeline-${person}`, historyUrl);
+        } else if (view === 'calendar') {
+            $(`#imm-history-calendar-${person}`).removeClass('d-none');
+            ImmunizationModule.loadCalendar(null, `#imm-history-calendar-${person}`, historyUrl);
+        } else {
+            $(`#imm-history-table-wrap-${person}`).removeClass('d-none');
+            ImmunizationModule.loadHistoryTable(null, `#imm-history-table-wrap-${person}`, `#imm-history-table-${person}`, historyUrl);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // NOTES TAB (shares pattern with nursing notes)
+    // ═══════════════════════════════════════════════════════════════
+    function loadNotesTab() {
+        if (!currentEnrollmentId) {
+            $('#notes-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
+            return;
+        }
+
+        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/notes`, function(resp) {
+            if (!resp.success) return;
+            _notesCache = resp.notes; // cache for edit
+            let html = `<div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="mdi mdi-note-text"></i> Notes</h5>
             <button class="btn text-white" style="background: var(--maternity-pink);" onclick="showAddNoteForm()"><i class="mdi mdi-plus"></i> Add Note</button>
         </div>`;
 
-        // Cache note types for the modal
-        if (resp.note_types) {
-            let opts = '';
-            resp.note_types.forEach(t => opts += `<option value="${t.id}">${t.name}</option>`);
-            window._matNoteTypeOptions = opts;
-        }
+            // Cache note types for the modal
+            if (resp.note_types) {
+                let opts = '';
+                resp.note_types.forEach(t => opts += `<option value="${t.id}">${t.name}</option>`);
+                window._matNoteTypeOptions = opts;
+            }
 
-        if (resp.notes.length === 0) {
-            html += '<p class="text-muted text-center py-4">No notes yet</p>';
-        } else {
-            resp.notes.forEach(function(n) {
-                const actions = n.can_edit ? `<div class="mt-1"><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editNote(${n.id})" title="Edit note"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteNote(${n.id})" title="Delete note"><i class="mdi mdi-delete"></i></button></div>` : '';
-                const draftBadge = n.completed === false ? '<span class="badge badge-warning mr-1">Draft</span>' : '';
-                html += `<div class="note-card">
+            if (resp.notes.length === 0) {
+                html += '<p class="text-muted text-center py-4">No notes yet</p>';
+            } else {
+                resp.notes.forEach(function(n) {
+                    const actions = n.can_edit ? `<div class="mt-1"><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editNote(${n.id})" title="Edit note"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteNote(${n.id})" title="Delete note"><i class="mdi mdi-delete"></i></button></div>` : '';
+                    const draftBadge = n.completed === false ? '<span class="badge badge-warning mr-1">Draft</span>' : '';
+                    html += `<div class="note-card">
                     <div class="d-flex justify-content-between"><span class="note-author">${n.created_by} ${draftBadge}<span class="badge bg-secondary">${n.type}</span></span><div class="d-flex align-items-center gap-2"><span class="note-time">${n.time_ago}</span>${actions}</div></div>
                     <div class="note-body">${n.note}</div>
                 </div>`;
-            });
-        }
-        $('#notes-content').html(html);
-    });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// AUDIT TAB
-// ═══════════════════════════════════════════════════════════════
-function loadAuditTab() {
-    if (!currentEnrollmentId) {
-        $('#audit-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
-        return;
+                });
+            }
+            $('#notes-content').html(html);
+        });
     }
 
-    $('#audit-content').html('<div class="text-center p-4 text-muted"><i class="mdi mdi-loading mdi-spin mdi-36px"></i><br>Loading audit trail...</div>');
-
-    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/audit-trail`, function(resp) {
-        if (!resp.success) {
-            $('#audit-content').html('<p class="text-danger text-center py-3">Failed to load audit trail</p>');
+    // ═══════════════════════════════════════════════════════════════
+    // AUDIT TAB
+    // ═══════════════════════════════════════════════════════════════
+    function loadAuditTab() {
+        if (!currentEnrollmentId) {
+            $('#audit-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
             return;
         }
 
-        if (!resp.audits || resp.audits.length === 0) {
-            $('#audit-content').html('<p class="text-muted text-center py-3">No audit records yet</p>');
-            return;
-        }
+        $('#audit-content').html('<div class="text-center p-4 text-muted"><i class="mdi mdi-loading mdi-spin mdi-36px"></i><br>Loading audit trail...</div>');
 
-        let html = `<div class="d-flex justify-content-between align-items-center mb-3">
+        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/audit-trail`, function(resp) {
+            if (!resp.success) {
+                $('#audit-content').html('<p class="text-danger text-center py-3">Failed to load audit trail</p>');
+                return;
+            }
+
+            if (!resp.audits || resp.audits.length === 0) {
+                $('#audit-content').html('<p class="text-muted text-center py-3">No audit records yet</p>');
+                return;
+            }
+
+            let html = `<div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="mdi mdi-shield-search"></i> Audit Trail (${resp.total})</h5>
             <span class="badge bg-secondary">Enrollment #${resp.enrollment_id}</span>
         </div>`;
 
-        html += '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Date/Time</th><th>Module</th><th>Event</th><th>User</th><th>Changes</th></tr></thead><tbody>';
-        resp.audits.forEach(function(a) {
-            const oldVals = a.old_values ? JSON.stringify(a.old_values) : '';
-            const newVals = a.new_values ? JSON.stringify(a.new_values) : '';
-            const changes = `${oldVals ? '<div><strong>Old:</strong> ' + oldVals + '</div>' : ''}${newVals ? '<div><strong>New:</strong> ' + newVals + '</div>' : ''}` || '-';
-            html += `<tr>
+            html += '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Date/Time</th><th>Module</th><th>Event</th><th>User</th><th>Changes</th></tr></thead><tbody>';
+            resp.audits.forEach(function(a) {
+                const oldVals = a.old_values ? JSON.stringify(a.old_values) : '';
+                const newVals = a.new_values ? JSON.stringify(a.new_values) : '';
+                const changes = `${oldVals ? '<div><strong>Old:</strong> ' + oldVals + '</div>' : ''}${newVals ? '<div><strong>New:</strong> ' + newVals + '</div>' : ''}` || '-';
+                html += `<tr>
                 <td>${a.created_at || '-'}</td>
                 <td><span class="badge bg-light text-dark">${a.module}</span></td>
                 <td><span class="badge bg-info text-dark">${(a.event || '').toUpperCase()}</span></td>
                 <td>${a.user || 'System'}</td>
                 <td class="small">${changes}</td>
             </tr>`;
+            });
+            html += '</tbody></table></div>';
+
+            $('#audit-content').html(html);
+        }).fail(function() {
+            $('#audit-content').html('<p class="text-danger text-center py-3">Failed to load audit trail</p>');
         });
-        html += '</tbody></table></div>';
+    }
 
-        $('#audit-content').html(html);
-    }).fail(function() {
-        $('#audit-content').html('<p class="text-danger text-center py-3">Failed to load audit trail</p>');
+    function showAddNoteForm() {
+        _editMode = null;
+        _editId = null;
+        destroyMaternityEditor('note');
+        // Populate note types from cached options
+        $('#modal-note-type-select').html(window._matNoteTypeOptions || '');
+        $('#addNoteModalLabel').html('<i class="mdi mdi-note-plus"></i> Add Clinical Note');
+        $('#btn-save-note').html('<i class="mdi mdi-check"></i> Save Note');
+        const form = $('#addNoteModal #add-note-form')[0];
+        if (form) form.reset();
+
+        // Init CKEditor after modal is fully visible
+        let _matNoteAutosaveTimer = null;
+        $('#addNoteModal').off('shown.bs.modal.noteEditor').on('shown.bs.modal.noteEditor', function() {
+            initMaternityEditor('#mat-note-editor-modal', 'note').then(function(editor) {
+                if (!editor) return;
+                editor.model.document.on('change:data', function() {
+                    clearTimeout(_matNoteAutosaveTimer);
+                    const noteTypeId = $('#modal-note-type-select').val();
+                    const content = editor.getData();
+                    if (!content.trim() || !noteTypeId || !currentEnrollmentId) return;
+                    $('#mat-note-autosave-status').html('<i class="mdi mdi-loading mdi-spin text-warning"></i> <span class="text-warning">Unsaved...</span>');
+                    _matNoteAutosaveTimer = setTimeout(function() {
+                        $.ajax({
+                            url: '/maternity-workbench/enrollment/' + currentEnrollmentId + '/note',
+                            method: 'POST',
+                            data: {
+                                note_type_id: noteTypeId,
+                                note: content,
+                                completed: 0
+                            },
+                            headers: {
+                                'X-CSRF-TOKEN': CSRF_TOKEN
+                            },
+                            success: function() {
+                                const t = new Date().toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                                $('#mat-note-autosave-status').html('<i class="mdi mdi-check-circle text-success"></i> <span class="text-success">Autosaved ' + t + '</span>');
+                            },
+                            error: function() {
+                                $('#mat-note-autosave-status').html('<i class="mdi mdi-alert-circle text-danger"></i> <span class="text-danger">Autosave failed</span>');
+                            }
+                        });
+                    }, 3000);
+                });
+            });
+        });
+        // Destroy CKEditor when modal hides
+        $('#addNoteModal').off('hidden.bs.modal.noteEditor').on('hidden.bs.modal.noteEditor', function() {
+            clearTimeout(_matNoteAutosaveTimer);
+            $('#mat-note-autosave-status').html('');
+            destroyMaternityEditor('note');
+        });
+
+        $('#addNoteModal').modal('show');
+    }
+
+    function editNote(id) {
+        const n = _notesCache.find(x => x.id === id);
+        if (!n) {
+            toastr.error('Note not found');
+            return;
+        }
+        if (!n.can_edit) {
+            toastr.warning('This note can no longer be edited');
+            return;
+        }
+        _editMode = 'note';
+        _editId = id;
+        destroyMaternityEditor('note');
+        $('#modal-note-type-select').html(window._matNoteTypeOptions || '');
+        const form = $('#addNoteModal #add-note-form')[0];
+        if (form) form.reset();
+        $('#addNoteModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Note');
+        $('#btn-save-note').html('<i class="mdi mdi-check"></i> Update Note');
+        // Pre-fill note type
+        $('#addNoteModal select[name="note_type_id"]').val(n.note_type_id || '');
+        // CKEditor: set content after init
+        $('#addNoteModal').off('shown.bs.modal.noteEditor').on('shown.bs.modal.noteEditor', function() {
+            initMaternityEditor('#mat-note-editor-modal', 'note').then(function(editor) {
+                if (editor && n.note) editor.setData(n.note);
+            });
+        });
+        $('#addNoteModal').off('hidden.bs.modal.noteEditor').on('hidden.bs.modal.noteEditor', function() {
+            destroyMaternityEditor('note');
+        });
+        $('#addNoteModal').modal('show');
+    }
+
+    function deleteNote(id) {
+        if (!confirm('Delete this note?')) return;
+        $.ajax({
+            url: `/maternity-workbench/note/${id}`,
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                if (r.success) {
+                    toastr.success(r.message || 'Note deleted');
+                    loadNotesTab();
+                } else toastr.error(r.message);
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to delete note');
+            }
+        });
+    }
+
+    // Add/Edit Note modal save handler
+    $(document).on('click', '#btn-save-note', function() {
+        const noteContent = getEditorData('note', '#mat-note-editor-modal');
+        if (!noteContent || !noteContent.trim()) {
+            toastr.warning('Please enter note content');
+            return;
+        }
+        const noteTypeId = $('#addNoteModal select[name="note_type_id"]').val();
+        if (!noteTypeId) {
+            toastr.warning('Please select a note type');
+            return;
+        }
+        const data = {
+            note_type_id: noteTypeId,
+            note: noteContent
+        };
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+        const isEdit = _editMode === 'note' && _editId;
+        const url = isEdit ? `/maternity-workbench/note/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/note`;
+        const method = isEdit ? 'PUT' : 'POST';
+        $.ajax({
+            url: url,
+            method: method,
+            data: data,
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            success: function(r) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Note');
+                if (r.success) {
+                    _editMode = null;
+                    _editId = null;
+                    destroyMaternityEditor('note');
+                    $('#mat-note-autosave-status').html('');
+                    $('#addNoteModal').modal('hide');
+                    toastr.success(r.message);
+                    loadNotesTab();
+                } else toastr.error(r.message);
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Note');
+                toastr.error(xhr.responseJSON?.message || 'Failed to save');
+            }
+        });
     });
-}
 
-function showAddNoteForm() {
-    _editMode = null; _editId = null;
-    destroyMaternityEditor('note');
-    // Populate note types from cached options
-    $('#modal-note-type-select').html(window._matNoteTypeOptions || '');
-    $('#addNoteModalLabel').html('<i class="mdi mdi-note-plus"></i> Add Clinical Note');
-    $('#btn-save-note').html('<i class="mdi mdi-check"></i> Save Note');
-    const form = $('#addNoteModal #add-note-form')[0];
-    if (form) form.reset();
+    // ═══════════════════════════════════════════════════════════════
+    // REPORTS
+    // ═══════════════════════════════════════════════════════════════
+    function showReports() {
+        hideAllViews();
+        $('#reports-view').addClass('active').css('display', 'flex');
+        if (window.innerWidth < 768) {
+            $('#left-panel').addClass('hidden');
+            $('#main-workspace').addClass('active');
+        }
 
-    // Init CKEditor after modal is fully visible
-    let _matNoteAutosaveTimer = null;
-    $('#addNoteModal').off('shown.bs.modal.noteEditor').on('shown.bs.modal.noteEditor', function() {
-        initMaternityEditor('#mat-note-editor-modal', 'note').then(function(editor) {
-            if (!editor) return;
-            editor.model.document.on('change:data', function() {
-                clearTimeout(_matNoteAutosaveTimer);
-                const noteTypeId = $('#modal-note-type-select').val();
-                const content = editor.getData();
-                if (!content.trim() || !noteTypeId || !currentEnrollmentId) return;
-                $('#mat-note-autosave-status').html('<i class="mdi mdi-loading mdi-spin text-warning"></i> <span class="text-warning">Unsaved...</span>');
-                _matNoteAutosaveTimer = setTimeout(function() {
-                    $.ajax({
-                        url: '/maternity-workbench/enrollment/' + currentEnrollmentId + '/note',
-                        method: 'POST',
-                        data: { note_type_id: noteTypeId, note: content, completed: 0 },
-                        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-                        success: function() {
-                            const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-                            $('#mat-note-autosave-status').html('<i class="mdi mdi-check-circle text-success"></i> <span class="text-success">Autosaved ' + t + '</span>');
+        $.get('{{ route("maternity-workbench.reports.summary") }}', function(resp) {
+            if (!resp.success) return;
+            const d = resp.data;
+            let html = '<div class="row mb-3">';
+            const stats = [{
+                    label: 'Total Enrollments',
+                    value: d.total_enrollments,
+                    icon: 'mdi-clipboard-list',
+                    cls: 'mat-stat-pink'
+                },
+                {
+                    label: 'Active ANC',
+                    value: d.active_enrollments,
+                    icon: 'mdi-mother-nurse',
+                    cls: 'mat-stat-green'
+                },
+                {
+                    label: 'Deliveries (Month)',
+                    value: d.deliveries_this_month,
+                    icon: 'mdi-baby-carriage',
+                    cls: 'mat-stat-blue'
+                },
+                {
+                    label: 'Total Babies',
+                    value: d.total_babies,
+                    icon: 'mdi-baby-face',
+                    cls: 'mat-stat-orange'
+                },
+            ];
+            stats.forEach(s => {
+                html += `<div class="col-lg-3 col-md-6 mb-3"><div class="mat-stat-card ${s.cls}"><div class="mat-stat-icon"><i class="mdi ${s.icon}" style="font-size:1.5rem;"></i></div><div><div class="mat-stat-value">${s.value}</div><div class="mat-stat-label">${s.label}</div></div></div></div>`;
+            });
+            html += '</div>';
+
+            html += '<div class="row">';
+            html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">Delivery Stats (This Year)</h6></div><div class="card-body" id="delivery-stats-body"><p class="text-muted">Loading...</p></div></div></div>';
+            html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">Immunization Coverage</h6></div><div class="card-body" id="imm-coverage-body"><p class="text-muted">Loading...</p></div></div></div>';
+            html += '</div>';
+            html += '<div class="row"><div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">ANC Defaulters</h6></div><div class="card-body" id="defaulters-body"><p class="text-muted">Loading...</p></div></div></div>';
+            html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">High Risk Register</h6></div><div class="card-body" id="high-risk-body"><p class="text-muted">Loading...</p></div></div></div></div>';
+
+            $('#reports-content').html(html);
+
+            // Load sub-reports with charts
+            $.get('{{ route("maternity-workbench.reports.delivery-stats") }}', function(r) {
+                if (!r.success) return;
+                const types = Object.keys(r.by_type);
+                const counts = Object.values(r.by_type);
+                const chartColors = ['#e91e63', '#4caf50', '#2196f3', '#ff9800', '#9c27b0', '#00bcd4', '#795548'];
+
+                let tHtml = '<div class="row"><div class="col-md-6"><div style="position:relative; height:250px;"><canvas id="delivery-donut-chart"></canvas></div></div><div class="col-md-6">';
+                tHtml += '<table class="table table-sm mb-0"><thead><tr><th>Type</th><th>Count</th><th>%</th></tr></thead><tbody>';
+                const total = counts.reduce((a, b) => a + b, 0) || 1;
+                types.forEach((type, i) => {
+                    tHtml += `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${chartColors[i % chartColors.length]};margin-right:6px;"></span>${type.toUpperCase()}</td><td class="fw-bold">${r.by_type[type]}</td><td>${((r.by_type[type] / total) * 100).toFixed(1)}%</td></tr>`;
+                });
+                tHtml += '</tbody></table>';
+                tHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'delivery_stats')"><i class="mdi mdi-download"></i> Export CSV</button>`;
+                tHtml += '</div></div>';
+                $('#delivery-stats-body').html(tHtml);
+
+                if (typeof Chart !== 'undefined' && types.length > 0) {
+                    new Chart(document.getElementById('delivery-donut-chart').getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: types.map(t => t.toUpperCase()),
+                            datasets: [{
+                                data: counts,
+                                backgroundColor: chartColors.slice(0, types.length),
+                                borderWidth: 2,
+                                borderColor: '#fff'
+                            }]
                         },
-                        error: function() {
-                            $('#mat-note-autosave-status').html('<i class="mdi mdi-alert-circle text-danger"></i> <span class="text-danger">Autosave failed</span>');
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        font: {
+                                            size: 10
+                                        },
+                                        usePointStyle: true,
+                                        padding: 8
+                                    }
+                                }
+                            }
                         }
                     });
-                }, 3000);
+                }
+            });
+
+            $.get('{{ route("maternity-workbench.reports.immunization-coverage") }}', function(r) {
+                if (!r.success || !Object.keys(r.coverage).length) {
+                    $('#imm-coverage-body').html('<p class="text-muted mb-0">No data</p>');
+                    return;
+                }
+                const vaccines = Object.keys(r.coverage);
+                const givenArr = vaccines.map(v => r.coverage[v].given);
+                const pendingArr = vaccines.map(v => r.coverage[v].total - r.coverage[v].given);
+
+                let cHtml = '<div style="position:relative; height:250px;"><canvas id="imm-bar-chart"></canvas></div>';
+                cHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Vaccine</th><th>Given</th><th>Total</th><th>%</th></tr></thead><tbody>';
+                vaccines.forEach(vaccine => {
+                    const data = r.coverage[vaccine];
+                    const color = data.percentage >= 80 ? 'text-success' : (data.percentage >= 50 ? 'text-warning' : 'text-danger');
+                    cHtml += `<tr><td>${vaccine}</td><td>${data.given}</td><td>${data.total}</td><td class="fw-bold ${color}">${data.percentage}%</td></tr>`;
+                });
+                cHtml += '</tbody></table>';
+                cHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'immunization_coverage')"><i class="mdi mdi-download"></i> Export CSV</button>`;
+                $('#imm-coverage-body').html(cHtml);
+
+                if (typeof Chart !== 'undefined') {
+                    new Chart(document.getElementById('imm-bar-chart').getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: vaccines,
+                            datasets: [{
+                                    label: 'Given',
+                                    data: givenArr,
+                                    backgroundColor: 'rgba(76,175,80,0.7)',
+                                    borderColor: '#4caf50',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Pending',
+                                    data: pendingArr,
+                                    backgroundColor: 'rgba(255,152,0,0.5)',
+                                    borderColor: '#ff9800',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        font: {
+                                            size: 10
+                                        },
+                                        usePointStyle: true
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    stacked: true,
+                                    ticks: {
+                                        font: {
+                                            size: 9
+                                        }
+                                    }
+                                },
+                                y: {
+                                    stacked: true,
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            $.get('{{ route("maternity-workbench.reports.anc-defaulters") }}', function(r) {
+                if (!r.success) return;
+                if (r.defaulters.length === 0) {
+                    $('#defaulters-body').html('<p class="text-muted mb-0">No defaulters</p>');
+                    return;
+                }
+
+                // Horizontal bar chart of days overdue
+                let dHtml = '<div style="position:relative; height:' + Math.max(200, r.defaulters.length * 30) + 'px;"><canvas id="defaulters-bar-chart"></canvas></div>';
+                dHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Name</th><th>File No</th><th>Missed</th><th>Days Overdue</th></tr></thead><tbody>';
+                r.defaulters.forEach(d => {
+                    dHtml += `<tr><td>${d.name}</td><td>${d.file_no}</td><td>${d.missed_date}</td><td class="text-danger fw-bold">${d.days_overdue}</td></tr>`;
+                });
+                dHtml += '</tbody></table>';
+                dHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'anc_defaulters')"><i class="mdi mdi-download"></i> Export CSV</button>`;
+                $('#defaulters-body').html(dHtml);
+
+                if (typeof Chart !== 'undefined') {
+                    new Chart(document.getElementById('defaulters-bar-chart').getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: r.defaulters.map(d => d.name.length > 20 ? d.name.substr(0, 18) + '...' : d.name),
+                            datasets: [{
+                                label: 'Days Overdue',
+                                data: r.defaulters.map(d => d.days_overdue),
+                                backgroundColor: r.defaulters.map(d => d.days_overdue > 30 ? 'rgba(220,53,69,0.7)' : (d.days_overdue > 14 ? 'rgba(255,152,0,0.7)' : 'rgba(255,193,7,0.7)')),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Days'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            $.get('{{ route("maternity-workbench.reports.high-risk-register") }}', function(r) {
+                if (!r.success) return;
+                if (r.register.length === 0) {
+                    $('#high-risk-body').html('<p class="text-muted mb-0">No high-risk patients</p>');
+                    return;
+                }
+
+                // Risk distribution gauge
+                const riskDist = {};
+                r.register.forEach(p => {
+                    const lvl = p.risk_level || 'high';
+                    riskDist[lvl] = (riskDist[lvl] || 0) + 1;
+                });
+
+                let hHtml = '';
+                if (Object.keys(riskDist).length > 0) {
+                    const riskLabels = Object.keys(riskDist).map(k => k.replace('_', ' ').toUpperCase());
+                    const riskCounts = Object.values(riskDist);
+                    const riskClrs = Object.keys(riskDist).map(k => k === 'very_high' ? '#dc3545' : (k === 'high' ? '#fd7e14' : '#ffc107'));
+                    hHtml += '<div class="d-flex justify-content-center mb-2">';
+                    riskLabels.forEach((label, i) => {
+                        hHtml += `<span class="badge me-2" style="background:${riskClrs[i]}; font-size:0.75rem;">${label}: ${riskCounts[i]}</span>`;
+                    });
+                    hHtml += '</div>';
+                }
+
+                hHtml += '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Name</th><th>File No</th><th>Risk</th><th>Factors</th><th>Status</th></tr></thead><tbody>';
+                r.register.forEach(p => {
+                    const risks = Array.isArray(p.risk_factors) ? p.risk_factors.join(', ') : (p.risk_factors || 'N/A');
+                    const riskClr = (p.risk_level === 'very_high') ? 'bg-danger' : 'bg-warning text-dark';
+                    hHtml += `<tr><td>${p.name}</td><td>${p.file_no}</td><td><span class="badge ${riskClr}">${(p.risk_level || 'high').replace('_', ' ')}</span></td><td class="small">${risks}</td><td><span class="enrollment-badge ${p.status}">${p.status}</span></td></tr>`;
+                });
+                hHtml += '</tbody></table></div>';
+                hHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'high_risk_register')"><i class="mdi mdi-download"></i> Export CSV</button>`;
+                $('#high-risk-body').html(hHtml);
             });
         });
-    });
-    // Destroy CKEditor when modal hides
-    $('#addNoteModal').off('hidden.bs.modal.noteEditor').on('hidden.bs.modal.noteEditor', function() {
-        clearTimeout(_matNoteAutosaveTimer);
-        $('#mat-note-autosave-status').html('');
-        destroyMaternityEditor('note');
-    });
+    }
 
-    $('#addNoteModal').modal('show');
-}
+    // Export table to CSV
+    function exportReportTable(btn, filename) {
+        const card = $(btn).closest('.card-body');
+        const table = card.find('table');
+        if (!table.length) {
+            toastr.warning('No table to export');
+            return;
+        }
 
-function editNote(id) {
-    const n = _notesCache.find(x => x.id === id);
-    if (!n) { toastr.error('Note not found'); return; }
-    if (!n.can_edit) { toastr.warning('This note can no longer be edited'); return; }
-    _editMode = 'note'; _editId = id;
-    destroyMaternityEditor('note');
-    $('#modal-note-type-select').html(window._matNoteTypeOptions || '');
-    const form = $('#addNoteModal #add-note-form')[0];
-    if (form) form.reset();
-    $('#addNoteModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Note');
-    $('#btn-save-note').html('<i class="mdi mdi-check"></i> Update Note');
-    // Pre-fill note type
-    $('#addNoteModal select[name="note_type_id"]').val(n.note_type_id || '');
-    // CKEditor: set content after init
-    $('#addNoteModal').off('shown.bs.modal.noteEditor').on('shown.bs.modal.noteEditor', function() {
-        initMaternityEditor('#mat-note-editor-modal', 'note').then(function(editor) {
-            if (editor && n.note) editor.setData(n.note);
-        });
-    });
-    $('#addNoteModal').off('hidden.bs.modal.noteEditor').on('hidden.bs.modal.noteEditor', function() {
-        destroyMaternityEditor('note');
-    });
-    $('#addNoteModal').modal('show');
-}
-
-function deleteNote(id) {
-    if (!confirm('Delete this note?')) return;
-    $.ajax({
-        url: `/maternity-workbench/note/${id}`,
-        method: 'DELETE', headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            if (r.success) { toastr.success(r.message || 'Note deleted'); loadNotesTab(); } else toastr.error(r.message);
-        },
-        error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Failed to delete note'); }
-    });
-}
-
-// Add/Edit Note modal save handler
-$(document).on('click', '#btn-save-note', function() {
-    const noteContent = getEditorData('note', '#mat-note-editor-modal');
-    if (!noteContent || !noteContent.trim()) { toastr.warning('Please enter note content'); return; }
-    const noteTypeId = $('#addNoteModal select[name="note_type_id"]').val();
-    if (!noteTypeId) { toastr.warning('Please select a note type'); return; }
-    const data = { note_type_id: noteTypeId, note: noteContent };
-    const btn = $(this);
-    btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-    const isEdit = _editMode === 'note' && _editId;
-    const url = isEdit ? `/maternity-workbench/note/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/note`;
-    const method = isEdit ? 'PUT' : 'POST';
-    $.ajax({
-        url: url, method: method, data: data, headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        success: function(r) {
-            btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Note');
-            if (r.success) { _editMode = null; _editId = null; destroyMaternityEditor('note'); $('#mat-note-autosave-status').html(''); $('#addNoteModal').modal('hide'); toastr.success(r.message); loadNotesTab(); } else toastr.error(r.message);
-        },
-        error: function(xhr) { btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Note'); toastr.error(xhr.responseJSON?.message || 'Failed to save'); }
-    });
-});
-
-// ═══════════════════════════════════════════════════════════════
-// REPORTS
-// ═══════════════════════════════════════════════════════════════
-function showReports() {
-    hideAllViews();
-    $('#reports-view').addClass('active').css('display', 'flex');
-    if (window.innerWidth < 768) { $('#left-panel').addClass('hidden'); $('#main-workspace').addClass('active'); }
-
-    $.get('{{ route("maternity-workbench.reports.summary") }}', function(resp) {
-        if (!resp.success) return;
-        const d = resp.data;
-        let html = '<div class="row mb-3">';
-        const stats = [
-            { label: 'Total Enrollments', value: d.total_enrollments, icon: 'mdi-clipboard-list', cls: 'mat-stat-pink' },
-            { label: 'Active ANC', value: d.active_enrollments, icon: 'mdi-mother-nurse', cls: 'mat-stat-green' },
-            { label: 'Deliveries (Month)', value: d.deliveries_this_month, icon: 'mdi-baby-carriage', cls: 'mat-stat-blue' },
-            { label: 'Total Babies', value: d.total_babies, icon: 'mdi-baby-face', cls: 'mat-stat-orange' },
-        ];
-        stats.forEach(s => {
-            html += `<div class="col-lg-3 col-md-6 mb-3"><div class="mat-stat-card ${s.cls}"><div class="mat-stat-icon"><i class="mdi ${s.icon}" style="font-size:1.5rem;"></i></div><div><div class="mat-stat-value">${s.value}</div><div class="mat-stat-label">${s.label}</div></div></div></div>`;
-        });
-        html += '</div>';
-
-        html += '<div class="row">';
-        html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">Delivery Stats (This Year)</h6></div><div class="card-body" id="delivery-stats-body"><p class="text-muted">Loading...</p></div></div></div>';
-        html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">Immunization Coverage</h6></div><div class="card-body" id="imm-coverage-body"><p class="text-muted">Loading...</p></div></div></div>';
-        html += '</div>';
-        html += '<div class="row"><div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">ANC Defaulters</h6></div><div class="card-body" id="defaulters-body"><p class="text-muted">Loading...</p></div></div></div>';
-        html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">High Risk Register</h6></div><div class="card-body" id="high-risk-body"><p class="text-muted">Loading...</p></div></div></div></div>';
-
-        $('#reports-content').html(html);
-
-        // Load sub-reports with charts
-        $.get('{{ route("maternity-workbench.reports.delivery-stats") }}', function(r) {
-            if (!r.success) return;
-            const types = Object.keys(r.by_type);
-            const counts = Object.values(r.by_type);
-            const chartColors = ['#e91e63','#4caf50','#2196f3','#ff9800','#9c27b0','#00bcd4','#795548'];
-
-            let tHtml = '<div class="row"><div class="col-md-6"><div style="position:relative; height:250px;"><canvas id="delivery-donut-chart"></canvas></div></div><div class="col-md-6">';
-            tHtml += '<table class="table table-sm mb-0"><thead><tr><th>Type</th><th>Count</th><th>%</th></tr></thead><tbody>';
-            const total = counts.reduce((a, b) => a + b, 0) || 1;
-            types.forEach((type, i) => {
-                tHtml += `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${chartColors[i % chartColors.length]};margin-right:6px;"></span>${type.toUpperCase()}</td><td class="fw-bold">${r.by_type[type]}</td><td>${((r.by_type[type] / total) * 100).toFixed(1)}%</td></tr>`;
+        let csv = '';
+        table.find('tr').each(function() {
+            const row = [];
+            $(this).find('th, td').each(function() {
+                row.push('"' + $(this).text().replace(/"/g, '""').trim() + '"');
             });
-            tHtml += '</tbody></table>';
-            tHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'delivery_stats')"><i class="mdi mdi-download"></i> Export CSV</button>`;
-            tHtml += '</div></div>';
-            $('#delivery-stats-body').html(tHtml);
-
-            if (typeof Chart !== 'undefined' && types.length > 0) {
-                new Chart(document.getElementById('delivery-donut-chart').getContext('2d'), {
-                    type: 'doughnut',
-                    data: { labels: types.map(t => t.toUpperCase()), datasets: [{ data: counts, backgroundColor: chartColors.slice(0, types.length), borderWidth: 2, borderColor: '#fff' }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true, padding: 8 } } } }
-                });
-            }
+            csv += row.join(',') + '\n';
         });
 
-        $.get('{{ route("maternity-workbench.reports.immunization-coverage") }}', function(r) {
-            if (!r.success || !Object.keys(r.coverage).length) { $('#imm-coverage-body').html('<p class="text-muted mb-0">No data</p>'); return; }
-            const vaccines = Object.keys(r.coverage);
-            const givenArr = vaccines.map(v => r.coverage[v].given);
-            const pendingArr = vaccines.map(v => r.coverage[v].total - r.coverage[v].given);
+        const blob = new Blob([csv], {
+            type: 'text/csv;charset=utf-8;'
+        });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `maternity_${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        toastr.success('CSV exported');
+    }
 
-            let cHtml = '<div style="position:relative; height:250px;"><canvas id="imm-bar-chart"></canvas></div>';
-            cHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Vaccine</th><th>Given</th><th>Total</th><th>%</th></tr></thead><tbody>';
-            vaccines.forEach(vaccine => {
-                const data = r.coverage[vaccine];
-                const color = data.percentage >= 80 ? 'text-success' : (data.percentage >= 50 ? 'text-warning' : 'text-danger');
-                cHtml += `<tr><td>${vaccine}</td><td>${data.given}</td><td>${data.total}</td><td class="fw-bold ${color}">${data.percentage}%</td></tr>`;
-            });
-            cHtml += '</tbody></table>';
-            cHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'immunization_coverage')"><i class="mdi mdi-download"></i> Export CSV</button>`;
-            $('#imm-coverage-body').html(cHtml);
+    // ═══════════════════════════════════════════════════════════════
+    // EVENT BINDINGS (SHARED pattern with nursing workbench)
+    // ═══════════════════════════════════════════════════════════════
+    $(document).ready(function() {
+        // Initialize shared patient search module
+        PatientSearch.init();
 
-            if (typeof Chart !== 'undefined') {
-                new Chart(document.getElementById('imm-bar-chart').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: vaccines,
-                        datasets: [
-                            { label: 'Given', data: givenArr, backgroundColor: 'rgba(76,175,80,0.7)', borderColor: '#4caf50', borderWidth: 1 },
-                            { label: 'Pending', data: pendingArr, backgroundColor: 'rgba(255,152,0,0.5)', borderColor: '#ff9800', borderWidth: 1 }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 }, usePointStyle: true } } }, scales: { x: { stacked: true, ticks: { font: { size: 9 } } }, y: { stacked: true, beginAtZero: true } } }
-                });
-            }
+        // Load queue counts on page load
+        loadQueueCounts();
+
+        // Queue item clicks (SHARED)
+        $('.queue-item').on('click', function() {
+            const filter = $(this).data('filter');
+            if (filter) showQueue(filter);
         });
 
-        $.get('{{ route("maternity-workbench.reports.anc-defaulters") }}', function(r) {
-            if (!r.success) return;
-            if (r.defaulters.length === 0) { $('#defaulters-body').html('<p class="text-muted mb-0">No defaulters</p>'); return; }
+        // Refresh queues
+        $('#refresh-queues-btn').on('click', loadQueueCounts);
 
-            // Horizontal bar chart of days overdue
-            let dHtml = '<div style="position:relative; height:' + Math.max(200, r.defaulters.length * 30) + 'px;"><canvas id="defaulters-bar-chart"></canvas></div>';
-            dHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Name</th><th>File No</th><th>Missed</th><th>Days Overdue</th></tr></thead><tbody>';
-            r.defaulters.forEach(d => { dHtml += `<tr><td>${d.name}</td><td>${d.file_no}</td><td>${d.missed_date}</td><td class="text-danger fw-bold">${d.days_overdue}</td></tr>`; });
-            dHtml += '</tbody></table>';
-            dHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'anc_defaulters')"><i class="mdi mdi-download"></i> Export CSV</button>`;
-            $('#defaulters-body').html(dHtml);
+        // Close queue (SHARED)
+        $('#btn-close-queue').on('click', hideQueue);
 
-            if (typeof Chart !== 'undefined') {
-                new Chart(document.getElementById('defaulters-bar-chart').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: r.defaulters.map(d => d.name.length > 20 ? d.name.substr(0, 18) + '...' : d.name),
-                        datasets: [{ label: 'Days Overdue', data: r.defaulters.map(d => d.days_overdue), backgroundColor: r.defaulters.map(d => d.days_overdue > 30 ? 'rgba(220,53,69,0.7)' : (d.days_overdue > 14 ? 'rgba(255,152,0,0.7)' : 'rgba(255,193,7,0.7)')), borderWidth: 1 }]
-                    },
-                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, title: { display: true, text: 'Days' } } } }
-                });
-            }
+        // View queue from empty state
+        $('#view-queue-btn').on('click', function() {
+            showQueue('active-anc');
         });
 
-        $.get('{{ route("maternity-workbench.reports.high-risk-register") }}', function(r) {
-            if (!r.success) return;
-            if (r.register.length === 0) { $('#high-risk-body').html('<p class="text-muted mb-0">No high-risk patients</p>'); return; }
-
-            // Risk distribution gauge
-            const riskDist = {};
-            r.register.forEach(p => { const lvl = p.risk_level || 'high'; riskDist[lvl] = (riskDist[lvl] || 0) + 1; });
-
-            let hHtml = '';
-            if (Object.keys(riskDist).length > 0) {
-                const riskLabels = Object.keys(riskDist).map(k => k.replace('_', ' ').toUpperCase());
-                const riskCounts = Object.values(riskDist);
-                const riskClrs = Object.keys(riskDist).map(k => k === 'very_high' ? '#dc3545' : (k === 'high' ? '#fd7e14' : '#ffc107'));
-                hHtml += '<div class="d-flex justify-content-center mb-2">';
-                riskLabels.forEach((label, i) => {
-                    hHtml += `<span class="badge me-2" style="background:${riskClrs[i]}; font-size:0.75rem;">${label}: ${riskCounts[i]}</span>`;
-                });
-                hHtml += '</div>';
-            }
-
-            hHtml += '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Name</th><th>File No</th><th>Risk</th><th>Factors</th><th>Status</th></tr></thead><tbody>';
-            r.register.forEach(p => {
-                const risks = Array.isArray(p.risk_factors) ? p.risk_factors.join(', ') : (p.risk_factors || 'N/A');
-                const riskClr = (p.risk_level === 'very_high') ? 'bg-danger' : 'bg-warning text-dark';
-                hHtml += `<tr><td>${p.name}</td><td>${p.file_no}</td><td><span class="badge ${riskClr}">${(p.risk_level || 'high').replace('_', ' ')}</span></td><td class="small">${risks}</td><td><span class="enrollment-badge ${p.status}">${p.status}</span></td></tr>`;
-            });
-            hHtml += '</tbody></table></div>';
-            hHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'high_risk_register')"><i class="mdi mdi-download"></i> Export CSV</button>`;
-            $('#high-risk-body').html(hHtml);
+        // Workspace tab switching (SHARED)
+        $(document).on('click', '.workspace-tab', function() {
+            const tab = $(this).data('tab');
+            switchWorkspaceTab(tab);
         });
-    });
-}
 
-// Export table to CSV
-function exportReportTable(btn, filename) {
-    const card = $(btn).closest('.card-body');
-    const table = card.find('table');
-    if (!table.length) { toastr.warning('No table to export'); return; }
-
-    let csv = '';
-    table.find('tr').each(function() {
-        const row = [];
-        $(this).find('th, td').each(function() {
-            row.push('"' + $(this).text().replace(/"/g, '""').trim() + '"');
-        });
-        csv += row.join(',') + '\n';
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `maternity_${filename}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    toastr.success('CSV exported');
-}
-
-// ═══════════════════════════════════════════════════════════════
-// EVENT BINDINGS (SHARED pattern with nursing workbench)
-// ═══════════════════════════════════════════════════════════════
-$(document).ready(function() {
-    // Initialize shared patient search module
-    PatientSearch.init();
-
-    // Load queue counts on page load
-    loadQueueCounts();
-
-    // Queue item clicks (SHARED)
-    $('.queue-item').on('click', function() {
-        const filter = $(this).data('filter');
-        if (filter) showQueue(filter);
-    });
-
-    // Refresh queues
-    $('#refresh-queues-btn').on('click', loadQueueCounts);
-
-    // Close queue (SHARED)
-    $('#btn-close-queue').on('click', hideQueue);
-
-    // View queue from empty state
-    $('#view-queue-btn').on('click', function() { showQueue('active-anc'); });
-
-    // Workspace tab switching (SHARED)
-    $(document).on('click', '.workspace-tab', function() {
-        const tab = $(this).data('tab');
-        switchWorkspaceTab(tab);
-    });
-
-    // Mobile back button (SHARED)
-    $('#btn-back-to-search').on('click', function() {
-        hideAllViews();
-        $('#empty-state').show();
-        $('#main-workspace').removeClass('active');
-        $('#left-panel').removeClass('hidden');
-    });
-
-    // View work pane (SHARED)
-    $('#btn-view-work-pane').on('click', function() {
-        if (currentPatient) {
+        // Mobile back button (SHARED)
+        $('#btn-back-to-search').on('click', function() {
             hideAllViews();
-            $('#patient-header').addClass('active');
-            $('#workspace-content').show().addClass('active');
-        }
-        $('#left-panel').addClass('hidden');
-        $('#main-workspace').addClass('active');
-    });
-
-    // Toggle search (SHARED)
-    $('#btn-toggle-search').on('click', function() {
-        $('#left-panel').toggleClass('hidden');
-    });
-
-    // Clinical Context (SHARED — same as nursing workbench)
-    $('#btn-clinical-context').on('click', function() {
-        if (!currentPatient) {
-            toastr.warning('Please select a patient first');
-            return;
-        }
-        ClinicalContext.load(currentPatient);
-    });
-
-    // Quick action: New ANC patient enrollment
-    $('#btn-enroll-patient').on('click', function() {
-        openAncPatientRegistration();
-    });
-
-    // Quick action: Quick vitals
-    $('#btn-quick-vitals').on('click', function() {
-        if (currentPatient) switchWorkspaceTab('vitals');
-    });
-
-    // Reports button
-    $('#btn-maternity-reports').on('click', showReports);
-
-    // Print buttons
-    $('#btn-print-anc-card').on('click', function() {
-        if (!currentEnrollmentId) { toastr.warning('No enrollment selected'); return; }
-        window.open(`/maternity-workbench/enrollment/${currentEnrollmentId}/print-anc-card`, '_blank');
-    });
-
-    $('#btn-print-road-card').on('click', function() {
-        if (!currentEnrollmentId) { toastr.warning('No enrollment selected'); return; }
-        window.open(`/maternity-workbench/enrollment/${currentEnrollmentId}/print-road-health-card`, '_blank');
-    });
-
-    $('#btn-maternity-audit').on('click', function() {
-        if (!currentEnrollmentId) { toastr.warning('No enrollment selected'); return; }
-        switchWorkspaceTab('audit');
-    });
-
-    // Quick action: Discharge
-    $('#btn-discharge-patient').on('click', function() {
-        showDischargeModal();
-    });
-
-    $('#btn-close-reports').on('click', function() {
-        $('#reports-view').removeClass('active').hide();
-        if (currentPatient) {
-            $('#patient-header').addClass('active');
-            $('#workspace-content').show().addClass('active');
-        } else {
             $('#empty-state').show();
-        }
-    });
+            $('#main-workspace').removeClass('active');
+            $('#left-panel').removeClass('hidden');
+        });
 
-    // Auto-refresh queues every 5 minutes
-    setInterval(loadQueueCounts, 300000);
-});
-
-// ═══════════════════════════════════════════════════════════════
-// DISCHARGE ENROLLMENT
-// ═══════════════════════════════════════════════════════════════
-function showDischargeModal() {
-    if (!currentEnrollmentId || !currentEnrollment) {
-        toastr.warning('No enrollment selected');
-        return;
-    }
-    if (['completed', 'transferred', 'deceased'].includes(currentEnrollment.status)) {
-        toastr.info('This enrollment is already ' + currentEnrollment.status);
-        return;
-    }
-
-    // Reset modal state
-    $('#discharge-outcome-summary').val('');
-    $('#discharge-warnings-container').hide().html('');
-    $('#btn-confirm-discharge').prop('disabled', true).data('confirmed', false);
-    $('#discharge-patient-name').text($('#patient-name').text().split('(')[0].trim());
-    $('#discharge-current-status').html(`<span class="enrollment-badge ${currentEnrollment.status}">${currentEnrollment.status.toUpperCase()}</span>`);
-
-    // Phase 1: Fetch warnings
-    $.ajax({
-        url: `/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`,
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-        data: { outcome_summary: 'checking warnings', confirm: 0 },
-        success: function(resp) {
-            if (resp.confirm && resp.warnings && resp.warnings.length > 0) {
-                let wHtml = '<div class="alert alert-warning py-2 px-3 mb-0"><h6 class="mb-2 small fw-bold"><i class="mdi mdi-alert"></i> Please review before discharging:</h6><ul class="mb-0 small">';
-                resp.warnings.forEach(w => { wHtml += `<li>${w}</li>`; });
-                wHtml += '</ul></div>';
-                $('#discharge-warnings-container').html(wHtml).show();
+        // View work pane (SHARED)
+        $('#btn-view-work-pane').on('click', function() {
+            if (currentPatient) {
+                hideAllViews();
+                $('#patient-header').addClass('active');
+                $('#workspace-content').show().addClass('active');
             }
-            $('#btn-confirm-discharge').prop('disabled', false).data('confirmed', true);
-        },
-        error: function(xhr) {
-            const msg = xhr.responseJSON?.message || 'Cannot discharge this enrollment';
-            toastr.error(msg);
-            $('#modal-discharge').modal('hide');
-        }
+            $('#left-panel').addClass('hidden');
+            $('#main-workspace').addClass('active');
+        });
+
+        // Toggle search (SHARED)
+        $('#btn-toggle-search').on('click', function() {
+            $('#left-panel').toggleClass('hidden');
+        });
+
+        // Clinical Context (SHARED — same as nursing workbench)
+        $('#btn-clinical-context').on('click', function() {
+            if (!currentPatient) {
+                toastr.warning('Please select a patient first');
+                return;
+            }
+            ClinicalContext.load(currentPatient);
+        });
+
+        // Quick action: New ANC patient enrollment
+        $('#btn-enroll-patient').on('click', function() {
+            openAncPatientRegistration();
+        });
+
+        // Quick action: Quick vitals
+        $('#btn-quick-vitals').on('click', function() {
+            if (currentPatient) switchWorkspaceTab('vitals');
+        });
+
+        // Reports button
+        $('#btn-maternity-reports').on('click', showReports);
+
+        // Print buttons
+        $('#btn-print-anc-card').on('click', function() {
+            if (!currentEnrollmentId) {
+                toastr.warning('No enrollment selected');
+                return;
+            }
+            window.open(`/maternity-workbench/enrollment/${currentEnrollmentId}/print-anc-card`, '_blank');
+        });
+
+        $('#btn-print-road-card').on('click', function() {
+            if (!currentEnrollmentId) {
+                toastr.warning('No enrollment selected');
+                return;
+            }
+            window.open(`/maternity-workbench/enrollment/${currentEnrollmentId}/print-road-health-card`, '_blank');
+        });
+
+        $('#btn-maternity-audit').on('click', function() {
+            if (!currentEnrollmentId) {
+                toastr.warning('No enrollment selected');
+                return;
+            }
+            switchWorkspaceTab('audit');
+        });
+
+        // Quick action: Discharge
+        $('#btn-discharge-patient').on('click', function() {
+            showDischargeModal();
+        });
+
+        $('#btn-close-reports').on('click', function() {
+            $('#reports-view').removeClass('active').hide();
+            if (currentPatient) {
+                $('#patient-header').addClass('active');
+                $('#workspace-content').show().addClass('active');
+            } else {
+                $('#empty-state').show();
+            }
+        });
+
+        // Auto-refresh queues every 5 minutes
+        setInterval(loadQueueCounts, 300000);
     });
 
-    const dischargeModalEl = document.getElementById('dischargeModal');
-    new bootstrap.Modal(dischargeModalEl).show();
-
-    // Bind confirm handler (off first to avoid duplicates)
-    $('#btn-confirm-discharge').off('click').on('click', function() {
-        const summary = $('#discharge-outcome-summary').val().trim();
-        if (summary.length < 5) {
-            toastr.warning('Outcome summary must be at least 5 characters');
+    // ═══════════════════════════════════════════════════════════════
+    // DISCHARGE ENROLLMENT
+    // ═══════════════════════════════════════════════════════════════
+    function showDischargeModal() {
+        if (!currentEnrollmentId || !currentEnrollment) {
+            toastr.warning('No enrollment selected');
+            return;
+        }
+        if (['completed', 'transferred', 'deceased'].includes(currentEnrollment.status)) {
+            toastr.info('This enrollment is already ' + currentEnrollment.status);
             return;
         }
 
-        const $btn = $(this);
-        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Discharging...');
+        // Reset modal state
+        $('#discharge-outcome-summary').val('');
+        $('#discharge-warnings-container').hide().html('');
+        $('#btn-confirm-discharge').prop('disabled', true).data('confirmed', false);
+        $('#discharge-patient-name').text($('#patient-name').text().split('(')[0].trim());
+        $('#discharge-current-status').html(`<span class="enrollment-badge ${currentEnrollment.status}">${currentEnrollment.status.toUpperCase()}</span>`);
 
+        // Phase 1: Fetch warnings
         $.ajax({
             url: `/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`,
             method: 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-            data: { outcome_summary: summary, confirm: 1 },
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            data: {
+                outcome_summary: 'checking warnings',
+                confirm: 0
+            },
             success: function(resp) {
-                if (resp.success) {
-                    toastr.success(resp.message || 'Patient discharged successfully');
-                    bootstrap.Modal.getInstance(dischargeModalEl).hide();
-                    // Update local state
-                    currentEnrollment.status = 'completed';
-                    currentEnrollment.completed_at = resp.enrollment?.completed_at || new Date().toISOString().split('T')[0];
-                    currentEnrollment.outcome_summary = summary;
-                    // Refresh UI
-                    renderEnrollmentDetails();
-                    populateOverviewTab(currentPatientData);
-                    loadQueueCounts();
-                    // Update patient header badge
-                    displayPatientInfo(currentPatientData);
-                    // Hide discharge button in quick actions
-                    $('#btn-discharge-patient').hide();
-                } else {
-                    toastr.error(resp.message || 'Discharge failed');
+                if (resp.confirm && resp.warnings && resp.warnings.length > 0) {
+                    let wHtml = '<div class="alert alert-warning py-2 px-3 mb-0"><h6 class="mb-2 small fw-bold"><i class="mdi mdi-alert"></i> Please review before discharging:</h6><ul class="mb-0 small">';
+                    resp.warnings.forEach(w => {
+                        wHtml += `<li>${w}</li>`;
+                    });
+                    wHtml += '</ul></div>';
+                    $('#discharge-warnings-container').html(wHtml).show();
                 }
+                $('#btn-confirm-discharge').prop('disabled', false).data('confirmed', true);
             },
             error: function(xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Failed to discharge');
-            },
-            complete: function() {
-                $btn.prop('disabled', false).html('<i class="mdi mdi-exit-run"></i> Discharge Patient');
+                const msg = xhr.responseJSON?.message || 'Cannot discharge this enrollment';
+                toastr.error(msg);
+                $('#modal-discharge').modal('hide');
             }
         });
+
+        const dischargeModalEl = document.getElementById('dischargeModal');
+        new bootstrap.Modal(dischargeModalEl).show();
+
+        // Bind confirm handler (off first to avoid duplicates)
+        $('#btn-confirm-discharge').off('click').on('click', function() {
+            const summary = $('#discharge-outcome-summary').val().trim();
+            if (summary.length < 5) {
+                toastr.warning('Outcome summary must be at least 5 characters');
+                return;
+            }
+
+            const $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Discharging...');
+
+            $.ajax({
+                url: `/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`,
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
+                data: {
+                    outcome_summary: summary,
+                    confirm: 1
+                },
+                success: function(resp) {
+                    if (resp.success) {
+                        toastr.success(resp.message || 'Patient discharged successfully');
+                        bootstrap.Modal.getInstance(dischargeModalEl).hide();
+                        // Update local state
+                        currentEnrollment.status = 'completed';
+                        currentEnrollment.completed_at = resp.enrollment?.completed_at || new Date().toISOString().split('T')[0];
+                        currentEnrollment.outcome_summary = summary;
+                        // Refresh UI
+                        renderEnrollmentDetails();
+                        populateOverviewTab(currentPatientData);
+                        loadQueueCounts();
+                        // Update patient header badge
+                        displayPatientInfo(currentPatientData);
+                        // Hide discharge button in quick actions
+                        $('#btn-discharge-patient').hide();
+                    } else {
+                        toastr.error(resp.message || 'Discharge failed');
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Failed to discharge');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-exit-run"></i> Discharge Patient');
+                }
+            });
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // LAB & IMAGING RESULT ENTRY / EDIT  (shared InvestResultEntry)
+    // ═══════════════════════════════════════════════════════════════
+
+    // Lab result entry (called from investigation history DataTable "Enter Result" button)
+    function enterLabResult(requestId) {
+        InvestResultEntry.enterResult(
+            requestId,
+            `/lab-workbench/lab-service-requests/${requestId}`,
+            `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+            '{{ route("lab.saveResult") }}'
+        );
+    }
+
+    // Lab result edit (called from investigation history DataTable "Edit" button)
+    function editLabResult(obj) {
+        const requestId = $(obj).data('id');
+        InvestResultEntry.editResult(
+            requestId,
+            `/lab-workbench/lab-service-requests/${requestId}`,
+            `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+            '{{ route("lab.saveResult") }}'
+        );
+    }
+
+    // Imaging result entry (called from imaging history DataTable "Enter Result" button)
+    function enterImagingResult(requestId) {
+        InvestResultEntry.enterResult(
+            requestId,
+            `/imaging-workbench/imaging-service-requests/${requestId}`,
+            `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+            '{{ route("imaging.saveResult") }}'
+        );
+    }
+
+    // Imaging result edit (called from imaging history DataTable "Edit" button)
+    function editImagingResult(obj) {
+        const requestId = $(obj).data('id');
+        InvestResultEntry.editResult(
+            requestId,
+            `/imaging-workbench/imaging-service-requests/${requestId}`,
+            `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+            '{{ route("imaging.saveResult") }}'
+        );
+    }
+
+    // Initialize shared result entry module — refresh maternity DataTables on save
+    InvestResultEntry.bindFormSubmit(function() {
+        if ($.fn.DataTable.isDataTable('#mco_lab_history_list')) {
+            $('#mco_lab_history_list').DataTable().ajax.reload(null, false);
+        }
+        if ($.fn.DataTable.isDataTable('#mco_imaging_history_list')) {
+            $('#mco_imaging_history_list').DataTable().ajax.reload(null, false);
+        }
     });
-}
 
-// ═══════════════════════════════════════════════════════════════
-// LAB & IMAGING RESULT ENTRY / EDIT  (shared InvestResultEntry)
-// ═══════════════════════════════════════════════════════════════
-
-// Lab result entry (called from investigation history DataTable "Enter Result" button)
-function enterLabResult(requestId) {
-    InvestResultEntry.enterResult(
-        requestId,
-        `/lab-workbench/lab-service-requests/${requestId}`,
-        `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-        '{{ route("lab.saveResult") }}'
-    );
-}
-
-// Lab result edit (called from investigation history DataTable "Edit" button)
-function editLabResult(obj) {
-    const requestId = $(obj).data('id');
-    InvestResultEntry.editResult(
-        requestId,
-        `/lab-workbench/lab-service-requests/${requestId}`,
-        `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-        '{{ route("lab.saveResult") }}'
-    );
-}
-
-// Imaging result entry (called from imaging history DataTable "Enter Result" button)
-function enterImagingResult(requestId) {
-    InvestResultEntry.enterResult(
-        requestId,
-        `/imaging-workbench/imaging-service-requests/${requestId}`,
-        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-        '{{ route("imaging.saveResult") }}'
-    );
-}
-
-// Imaging result edit (called from imaging history DataTable "Edit" button)
-function editImagingResult(obj) {
-    const requestId = $(obj).data('id');
-    InvestResultEntry.editResult(
-        requestId,
-        `/imaging-workbench/imaging-service-requests/${requestId}`,
-        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-        '{{ route("imaging.saveResult") }}'
-    );
-}
-
-// Initialize shared result entry module — refresh maternity DataTables on save
-InvestResultEntry.bindFormSubmit(function() {
-    if ($.fn.DataTable.isDataTable('#mco_lab_history_list')) {
-        $('#mco_lab_history_list').DataTable().ajax.reload(null, false);
-    }
-    if ($.fn.DataTable.isDataTable('#mco_imaging_history_list')) {
-        $('#mco_imaging_history_list').DataTable().ajax.reload(null, false);
-    }
-});
-
-// setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
+    // setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
 </script>
 
 <!-- Store Context Override Modal -->
@@ -5875,7 +7894,7 @@ InvestResultEntry.bindFormSubmit(function() {
             <div class="modal-footer py-2">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm"
-                        onclick="confirmStoreContextOverride()">
+                    onclick="confirmStoreContextOverride()">
                     <i class="fas fa-check me-1"></i> Apply
                 </button>
             </div>
@@ -5884,29 +7903,36 @@ InvestResultEntry.bindFormSubmit(function() {
 </div>
 
 <script>
-function openStoreContextOverride() {
-    $('#storeContextOverrideModal').modal('show');
-}
-function confirmStoreContextOverride() {
-    const storeId = $('#ctx-store-select').val();
-    if (!storeId) {
-        $('#ctx-override-error').text('Please select a store.').removeClass('d-none');
-        return;
+    function openStoreContextOverride() {
+        $('#storeContextOverrideModal').modal('show');
     }
-    $('#ctx-override-error').addClass('d-none');
-    $('#ctx-override-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Applying...');
-    $.ajax({
-        url: '{{ route("store-context.set") }}',
-        method: 'POST',
-        data: { store_id: storeId, context: 'ward', _token: '{{ csrf_token() }}' },
-        success: function () { window.location.reload(); },
-        error: function (xhr) {
-            const msg = xhr.responseJSON?.message ?? 'Failed to update store context.';
-            $('#ctx-override-error').text(msg).removeClass('d-none');
-            $('#ctx-override-btn').prop('disabled', false).html('<i class="fas fa-check me-1"></i> Apply');
+
+    function confirmStoreContextOverride() {
+        const storeId = $('#ctx-store-select').val();
+        if (!storeId) {
+            $('#ctx-override-error').text('Please select a store.').removeClass('d-none');
+            return;
         }
-    });
-}
+        $('#ctx-override-error').addClass('d-none');
+        $('#ctx-override-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Applying...');
+        $.ajax({
+            url: '{{ route("store-context.set") }}',
+            method: 'POST',
+            data: {
+                store_id: storeId,
+                context: 'ward',
+                _token: '{{ csrf_token() }}'
+            },
+            success: function() {
+                window.location.reload();
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.message ?? 'Failed to update store context.';
+                $('#ctx-override-error').text(msg).removeClass('d-none');
+                $('#ctx-override-btn').prop('disabled', false).html('<i class="fas fa-check me-1"></i> Apply');
+            }
+        });
+    }
 </script>
 
 @endsection

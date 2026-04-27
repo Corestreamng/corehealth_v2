@@ -21,8 +21,15 @@ class ProductController extends Controller
 {
     public function listProducts(Request $request)
     {
-        $query = Product::where('status', '=', 1)
-            ->with(['stock', 'category', 'price', 'packagings', 'stockBatches' => function($q) {
+        $showDeactivated = $request->has('show_deactivated') && $request->show_deactivated == 'true';
+
+        $query = Product::withoutGlobalScopes();
+
+        if (!$showDeactivated) {
+            $query->where('status', 1);
+        }
+
+        $query->with(['stock', 'category', 'price', 'packagings', 'stockBatches' => function($q) {
                 $q->active()->where('current_qty', '>', 0);
             }])
             ->orderBy('product_name', 'ASC');
@@ -85,7 +92,11 @@ class ProductController extends Controller
             })
             ->addColumn('sale_price', function ($pc) {
                 $price = optional($pc->price)->current_sale_price ?? optional($pc->price)->initial_sale_price;
-                return $price ? '₦' . number_format($price, 2) : '<span class="text-muted">—</span>';
+                $statusBadge = '';
+                if ($pc->status == 0) {
+                    $statusBadge = '<br><span class="badge badge-danger">Deactivated</span>';
+                }
+                return ($price ? '₦' . number_format($price, 2) : '<span class="text-muted">—</span>') . $statusBadge;
             })
             ->addColumn('actions', function ($pc) {
                 $canManage = Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE']);
@@ -101,6 +112,10 @@ class ProductController extends Controller
                 $priceUrl = route('prices.edit', $pc->id);
                 $tariffUrl = route('product-tariffs.view', $pc->id);
 
+                $toggleText = $pc->status == 1 ? 'Deactivate' : 'Activate';
+                $toggleIcon = $pc->status == 1 ? 'mdi-close-circle' : 'mdi-check-circle';
+                $toggleColor = $pc->status == 1 ? 'text-danger' : 'text-success';
+
                 return '<div class="btn-group">'
                     . '<a href="' . $showUrl . '" class="btn btn-sm btn-outline-primary" title="View"><i class="mdi mdi-eye"></i></a>'
                     . '<a href="' . $editUrl . '" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="mdi mdi-pencil"></i></a>'
@@ -112,10 +127,32 @@ class ProductController extends Controller
                     . '<a class="dropdown-item" href="' . $tariffUrl . '"><i class="mdi mdi-shield-check mr-1"></i> HMO Tariffs</a>'
                     . '<a class="dropdown-item" href="' . $stockUrl . '"><i class="mdi mdi-warehouse mr-1"></i> Stock Overview</a>'
                     . '<a class="dropdown-item" href="' . $batchesUrl . '"><i class="mdi mdi-history mr-1"></i> View Batches</a>'
+                    . '<div class="dropdown-divider"></div>'
+                    . '<a href="javascript:void(0);" class="dropdown-item ' . $toggleColor . '" onclick="toggleProductStatus(' . $pc->id . ', \'' . $toggleText . '\', \'' . addslashes($pc->product_name) . '\')"><i class="mdi ' . $toggleIcon . ' mr-1"></i> ' . $toggleText . '</a>'
                     . '</div></div></div>';
             })
             ->rawColumns(['product_info', 'type_badge', 'current_quantity', 'sale_price', 'actions'])
             ->make(true);
+    }
+
+    public function toggleStatus($id)
+    {
+        try {
+            $product = Product::withoutGlobalScopes()->findOrFail($id);
+            $product->status = $product->status == 1 ? 0 : 1;
+            $product->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product status updated successfully.',
+                'new_status' => $product->status
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function liveSearchProducts(Request $request)
@@ -347,7 +384,7 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        $pp = Product::with(['category', 'price', 'stock', 'packagings' => function($q) {
+        $pp = Product::withoutGlobalScopes()->with(['category', 'price', 'stock', 'packagings' => function($q) {
             $q->orderBy('level');
         }, 'stockBatches' => function($q) {
             $q->active()->where('current_qty', '>', 0);
@@ -373,7 +410,7 @@ class ProductController extends Controller
     {
         try {
             $application = ApplicationStatu::whereId(1)->first();
-            $product = Product::with(['packagings' => function($q) {
+            $product = Product::withoutGlobalScopes()->with(['packagings' => function($q) {
                 $q->orderBy('level');
             }])->findOrFail($id);
             $category = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
@@ -433,7 +470,7 @@ class ProductController extends Controller
 
             DB::beginTransaction();
 
-            $myproduct                 = Product::whereId($id)->first();
+            $myproduct                 = Product::withoutGlobalScopes()->whereId($id)->first();
             $myproduct->user_id        = Auth::user()->id;
             $myproduct->category_id    = $request->category_id;
             $myproduct->product_name   = $request->product_name;
@@ -452,7 +489,7 @@ class ProductController extends Controller
             if ($request->s1 || $request->s2) {
                 $myproduct->howmany_to = $request->quantity_in;
             }
-            $myproduct->status = 1;
+            // $myproduct->status = 1; // Removed to prevent resetting status on update
             $myproduct->update();
 
             // Sync packaging levels

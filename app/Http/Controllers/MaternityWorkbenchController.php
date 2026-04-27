@@ -22,6 +22,7 @@ use App\Models\MaternityBaby;
 use App\Models\ChildGrowthRecord;
 use App\Models\PostnatalVisit;
 use App\Models\WhoGrowthStandard;
+use App\Models\DeathRecord;
 use App\Models\TreatmentPlan;
 use App\Models\LabServiceRequest;
 use App\Models\ImagingServiceRequest;
@@ -1924,9 +1925,32 @@ class MaternityWorkbenchController extends Controller
                 'eye_prophylaxis'      => $request->eye_prophylaxis ?? false,
                 'date_first_seen'      => Carbon::today(),
                 'reasons_for_special_care' => $request->reasons_for_special_care,
-                'status'               => 'alive',
+                'status'               => $request->is_still_birth ? 'deceased' : 'alive',
+                'is_still_birth'       => $request->is_still_birth ? true : false,
+                'deceased_at'          => $request->is_still_birth ? now() : null,
+                'cause_of_death'       => $request->is_still_birth ? 'Still Birth' : null,
                 'notes'                => $request->notes,
             ]);
+
+            // Create Death Record if stillbirth
+            if ($request->is_still_birth) {
+                DeathRecord::updateOrCreate(
+                    ['patient_id' => $babyPatient->id],
+                    [
+                        'death_type' => 'Still Birth',
+                        'date_of_death' => now()->toDateString(),
+                        'time_of_death' => now()->toTimeString(),
+                        'cause_of_death_primary' => 'Still Birth',
+                        'cause_of_death_description' => $request->notes ?? 'Recorded during baby registration',
+                        'certified_by_doctor_id' => Auth::id(),
+                        'last_office_done' => false,
+                        'disposition' => 'pending'
+                    ]
+                );
+
+                // Mark baby patient as deceased
+                $babyPatient->update(['is_deceased' => true]);
+            }
 
             // Create initial growth record from birth measurements with WHO z-scores
             if ($request->birth_weight_kg) {
@@ -1986,9 +2010,50 @@ class MaternityWorkbenchController extends Controller
             'feeding_method', 'bcg_given', 'opv0_given', 'hbv0_given',
             'vitamin_k_given', 'eye_prophylaxis', 'status',
             'reasons_for_special_care', 'notes',
+            'is_still_birth', 'deceased_at', 'cause_of_death',
         ]));
 
         return response()->json(['success' => true, 'message' => 'Baby record updated.', 'baby' => $baby->fresh()]);
+    }
+
+    public function markBabyDeceased(Request $request, $id)
+    {
+        $baby = MaternityBaby::findOrFail($id);
+        $validator = Validator::make($request->all(), [
+            'deceased_at' => 'required|date',
+            'cause_of_death' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $baby->update([
+            'status' => 'deceased',
+            'deceased_at' => $request->deceased_at,
+            'cause_of_death' => $request->cause_of_death,
+        ]);
+
+        // Create or update Death Record
+        DeathRecord::updateOrCreate(
+            ['patient_id' => $baby->patient_id],
+            [
+                'death_type' => 'RIP',
+                'date_of_death' => Carbon::parse($request->deceased_at)->toDateString(),
+                'time_of_death' => Carbon::parse($request->deceased_at)->toTimeString(),
+                'cause_of_death_primary' => $request->cause_of_death,
+                'certified_by_doctor_id' => Auth::id(),
+                'last_office_done' => false,
+                'disposition' => 'pending'
+            ]
+        );
+
+        // Mark baby patient as deceased
+        if ($baby->patient) {
+            $baby->patient->update(['is_deceased' => true]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Baby marked as deceased.']);
     }
 
     public function saveGrowthRecord(Request $request, $id)

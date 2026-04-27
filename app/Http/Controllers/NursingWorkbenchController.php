@@ -401,6 +401,61 @@ class NursingWorkbenchController extends Controller{
     }
 
     /**
+     * Get deceased patients list (needs last office).
+     */
+    public function getDeceasedQueue(Request $request)
+    {
+        $records = \App\Models\DeathRecord::with(['patient.user', 'encounter.doctor'])
+            ->where('last_office_done', false)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $results = $records->map(function ($record) {
+            $patient = $record->patient;
+            return [
+                'id' => $record->id,
+                'patient_id' => $patient->id,
+                'name' => userfullname($patient->user_id),
+                'file_no' => $patient->file_no,
+                'gender' => $patient->gender ?? 'N/A',
+                'age' => $this->calculateAge($patient->dob),
+                'death_type' => $record->death_type,
+                'date_of_death' => Carbon::parse($record->date_of_death)->format('d M Y'),
+                'time_of_death' => $record->time_of_death,
+                'certified_by' => $record->certified_by_doctor_id ? userfullname($record->certified_by_doctor_id) : 'N/A',
+                'cause' => $record->cause_of_death_primary,
+                'status' => 'Pending Last Office',
+            ];
+        });
+
+        return response()->json($results);
+    }
+
+    /**
+     * Complete Last Office procedure.
+     */
+    public function completeLastOffice(Request $request, $recordId)
+    {
+        $request->validate([
+            'disposition' => 'required|in:morgue,release',
+            'notes' => 'nullable|string'
+        ]);
+
+        $record = \App\Models\DeathRecord::findOrFail($recordId);
+        $record->last_office_done = true;
+        $record->last_office_by_nurse_id = Auth::id();
+        $record->last_office_at = now();
+        $record->disposition = ($request->disposition === 'release' ? 'family_release' : $request->disposition);
+        $record->disposition_note = $request->notes;
+        $record->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Last office procedure completed. Patient set for ' . $request->disposition
+        ]);
+    }
+
+    /**
      * Get queue counts for dashboard widgets.
      */
     public function getQueueCounts()
@@ -444,6 +499,10 @@ class NursingWorkbenchController extends Controller{
             ->where('discharged', 0)
             ->count();
 
+        // Deceased queue count (needs last office)
+        $deceasedCount = \App\Models\DeathRecord::where('last_office_done', false)
+            ->count();
+
         return response()->json([
             'admitted' => $admittedCount,
             'bed_requests' => $bedRequestsCount,
@@ -454,6 +513,7 @@ class NursingWorkbenchController extends Controller{
             'medication_due' => $overdueMedsCount, // alias for frontend
             'critical' => $criticalCount,
             'emergency' => $emergencyCount,
+            'deceased' => $deceasedCount,
             'total' => $admittedCount,
         ]);
     }

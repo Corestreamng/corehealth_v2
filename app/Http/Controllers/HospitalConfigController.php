@@ -50,9 +50,10 @@ class HospitalConfigController extends Controller
             'investigation_category_id' => 'nullable|integer|min:1',
             'consultation_category_id' => 'nullable|integer|min:1',
             'nursing_service_category' => 'nullable|integer|min:1',
-            'misc_service_category_id' => 'nullable|integer|min:1',
-            'imaging_category_id' => 'nullable|integer|min:1',
-            'registration_category_id' => 'nullable|integer|exists:service_categories,id',
+            'misc_service_category_id' => 'nullable|integer',
+            'imaging_category_id'      => 'nullable|integer',
+            'morgue_category_id'       => 'nullable|integer',
+            'registration_category_id' => 'nullable|exists:service_categories,id',
             'procedure_category_id' => 'nullable|integer|exists:service_categories,id',
 
             // Time Windows

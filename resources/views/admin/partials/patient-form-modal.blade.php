@@ -252,6 +252,19 @@
         display: block;
     }
 
+    /* When a nested .form-step is active, keep the parent .form-step visible
+       (all step divs share the same parent due to an HTML nesting structure) */
+    .form-step:has(.form-step.active) {
+        display: block !important;
+    }
+
+    /* Hide the parent step's own .step-header and .step-content when one of
+       its direct child steps is active (so only the child step content shows) */
+    .form-step:has(> .form-step.active) > .step-header,
+    .form-step:has(> .form-step.active) > .step-content {
+        display: none !important;
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -1064,6 +1077,26 @@
     }
     #patientFormModal.pf-emergency-mode .pf-emergency-timer { display: inline-block; }
 
+    /* Morgue Mode Styles (Dark/Neutral Theme) */
+    #patientFormModal.pf-morgue-mode .modal-header {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%) !important;
+    }
+    #patientFormModal.pf-morgue-mode .stepper-item.active .stepper-icon {
+        background: #1a202c !important;
+        box-shadow: 0 0 0 4px rgba(26,32,44,0.2);
+    }
+    #patientFormModal.pf-morgue-mode #pf-btn-next {
+        background: #1a202c !important; border-color: #1a202c !important;
+    }
+    #patientFormModal.pf-morgue-mode #pf-btn-next:hover {
+        background: #2d3748 !important; border-color: #2d3748 !important;
+    }
+
+    /* Morgue mode hiding non-morgue items */
+    #patientFormModal.pf-morgue-mode .pf-morgue-hide { display: none !important; }
+    /* morgue-only items visible in morgue-mode OR when BID is active (pf-bid-active) */
+    #patientFormModal:not(.pf-morgue-mode):not(.pf-bid-active) .pf-morgue-only { display: none !important; }
+
     /* Patient search section (emergency only) */
     .pf-patient-search-section { display: none; }
     #patientFormModal.pf-emergency-mode .pf-patient-search-section { display: block; }
@@ -1278,6 +1311,13 @@
     /* ESI hint box */
     #pf-esi-hint-box { font-size: 0.82rem; }
 
+    /* Morgue mode summary layout */
+    #patientFormModal.pf-morgue-mode .pf-morgue-hide-summary { display: none !important; }
+    /* Morgue mode: dark accent on step 6 header and summary panel */
+    #patientFormModal.pf-morgue-mode [data-step="6"] .step-header { border-left-color: #1a202c !important; }
+    /* Morgue mode: lock BID toggle (always checked, not unchecke-able) */
+    #patientFormModal.pf-morgue-mode #pf-is-bid { pointer-events: none; opacity: 0.75; }
+
 </style>
 
 
@@ -1293,10 +1333,19 @@ if (typeof window.patientFormConfig === 'undefined') {
         nextFileNumberUrl: '/reception/patient/next-file-number',
         checkFileNumberUrl: '/reception/patient/check-file-number',
         updateUrl: '/reception/patient/__ID__/update',
-        registerUrl: '/reception/patient/quick-register',
+        registerUrl: '{{ route("reception.patient.quick-register") }}',
+        emergencyIntakeUrl: '{{ route("emergency.intake") }}',
         hmos: [],
         onSuccess: function(patientId, mode) {}
     };
+} else {
+    // Ensure defaults exist even if partially provided
+    window.patientFormConfig.nextFileNumberUrl = window.patientFormConfig.nextFileNumberUrl || '/reception/patient/next-file-number';
+    window.patientFormConfig.checkFileNumberUrl = window.patientFormConfig.checkFileNumberUrl || '/reception/patient/check-file-number';
+    window.patientFormConfig.updateUrl = window.patientFormConfig.updateUrl || '/reception/patient/__ID__/update';
+    window.patientFormConfig.registerUrl = window.patientFormConfig.registerUrl || '/reception/patient/quick-register';
+    window.patientFormConfig.emergencyIntakeUrl = window.patientFormConfig.emergencyIntakeUrl || '/emergency/intake';
+    window.patientFormConfig.submitUrl = window.patientFormConfig.submitUrl || window.patientFormConfig.emergencyIntakeUrl;
 }
 
 // =============================================
@@ -2682,6 +2731,44 @@ $(document).ready(function() {
         showPatientFormModal('create');
     };
 
+    // Expose function to open modal in direct morgue admission mode
+    window.showMorgueAdmissionModal = function(config) {
+        if (config) {
+            window.patientFormConfig = $.extend(true, {}, window.patientFormConfig || {}, config);
+        }
+
+        enableEmergencyMode();
+        showPatientFormModal('create');
+
+        // Customizations for Morgue Admission
+        var $modal = $('#patientFormModal');
+        $modal.addClass('pf-morgue-mode');
+        $('#patient-form-title').html('<i class="mdi mdi-emoticon-dead mdi-24px"></i> Direct Morgue Admission (BID)');
+        $('#patient-form-header').css('background', 'linear-gradient(135deg, #1a202c 0%, #2d3748 100%)');
+
+        // Morgue skips Triage — sequence is Patient → Disposition → Summary
+        pfStepSequence = [1, 6, 4];
+        window._pfTotalSteps = pfStepSequence.length;
+        // Hide the triage stepper item and its connector line
+        $('.stepper-item[data-step="5"]').hide();
+        $('.stepper-item[data-step="5"]').prev('.stepper-line').hide();
+        $('.stepper-item[data-step="5"]').next('.stepper-line').hide();
+
+        // Update submit button text
+        $('#pf-submit-text').text('Complete Admission');
+
+        // Preset BID fields (date/time are already set today by default)
+        $('#pf-is-bid').prop('checked', true).trigger('change');
+        $('#pf-bid-date').val(new Date().toISOString().split('T')[0]);
+        $('#pf-bid-time').val(new Date().toTimeString().split(' ')[0].substring(0, 5));
+
+        // Auto-select morgue disposition immediately (triage step is skipped)
+        $('input[name="pf_disposition"][value="morgue_mortal"]').prop('checked', true).trigger('change');
+
+        // Lock BID toggle — morgue is always BID, prevent user from unchecking
+        $('#pf-is-bid').prop('disabled', true);
+    };
+
     function enableEmergencyMode() {
         pfEmergencyMode = true;
         pfStepSequence = [1, 5, 6, 4];
@@ -2691,12 +2778,17 @@ $(document).ready(function() {
 
         // Update title
         $('#patient-form-title').html('<i class="mdi mdi-ambulance mdi-24px"></i> Emergency / Walk-In Intake');
+        $('#pf-submit-text').text('Submit Emergency Intake');
 
         // Show emergency stepper items (not form-steps — CSS .form-step handles those via .active class)
         $('.pf-emergency-stepper').show();
 
         // Update total steps for navigation
         window._pfTotalSteps = pfStepSequence.length;
+
+        // Reset BID fields
+        $('#pf-is-bid').prop('checked', false);
+        $('#pf-bid-info').hide();
 
         // Generate EX- prefixed file number for emergency patients
         generateEmergencyFileNumber();
@@ -2731,12 +2823,34 @@ $(document).ready(function() {
         });
     }
 
+    // BID toggle listener
+    $(document).on('change', '#pf-is-bid', function() {
+        var $modal = $('#patientFormModal');
+        if ($(this).is(':checked')) {
+            $('#pf-bid-info').slideDown();
+            // In emergency mode (non-morgue), expose morgue disposition and auto-select it
+            if (pfEmergencyMode && !$modal.hasClass('pf-morgue-mode')) {
+                $modal.addClass('pf-bid-active');
+                $('input[name="pf_disposition"][value="morgue_mortal"]').prop('checked', true).trigger('change');
+            }
+        } else {
+            $('#pf-bid-info').slideUp();
+            $modal.removeClass('pf-bid-active');
+            // Clear morgue disposition if it was auto-selected
+            if ($('input[name="pf_disposition"]:checked').val() === 'morgue_mortal') {
+                $('input[name="pf_disposition"]').prop('checked', false);
+                $('#pf-morgue-options').hide();
+            }
+        }
+    });
+
     function disableEmergencyMode() {
         pfEmergencyMode = false;
         pfStepSequence = [1, 2, 3, 4];
 
         var $modal = $('#patientFormModal');
-        $modal.removeClass('pf-emergency-mode');
+        $modal.removeClass('pf-emergency-mode pf-morgue-mode');
+        $('#patient-form-header').css('background', ''); // Reset background
 
         // Hide emergency stepper items (form-steps handled by CSS .form-step via .active class)
         $('.pf-emergency-stepper').hide();
@@ -2985,10 +3099,11 @@ $(document).ready(function() {
     // ---- Disposition Toggle ----
     $(document).on('change', '.pf-disposition-radio', function() {
         var val = $(this).val();
-        $('#pf-admit-options, #pf-consult-options, #pf-direct-options').hide();
+        $('#pf-admit-options, #pf-consult-options, #pf-direct-options, #pf-morgue-options').hide();
         if (val === 'admit_emergency') { $('#pf-admit-options').slideDown(200); loadDispositionData(); }
         else if (val === 'queue_consultation') { $('#pf-consult-options').slideDown(200); loadDispositionData(); }
         else if (val === 'direct_service') { $('#pf-direct-options').slideDown(200); }
+        else if (val === 'morgue_mortal') { $('#pf-morgue-options').slideDown(200); loadMorgueServices(); }
     });
 
     var pfDispositionLoaded = false;
@@ -3019,6 +3134,30 @@ $(document).ready(function() {
             if (data.consultation) data.consultation.forEach(function(s) {
                 $consultSvc.append('<option value="' + s.id + '">' + escapeHtml(s.name) + ' — ₦' + Number(s.price).toLocaleString() + '</option>');
             });
+        });
+    }
+
+    var pfMorgueServicesLoaded = false;
+    function loadMorgueServices() {
+        if (pfMorgueServicesLoaded) return;
+
+        var patientId = $('#pf-emergency-patient-id').val() || $('#pf-patient-id').val();
+        var url = '/morgue/services';
+
+        var params = patientId ? { patient_id: patientId } : {};
+
+        $('#pf-morgue-service-select').html('<option value="">-- Loading services... --</option>');
+
+        $.get(url, params, function(services) {
+            var $sel = $('#pf-morgue-service-select').empty().append('<option value="">-- Select Daily Rate --</option>');
+            services.forEach(function(s) {
+                var price = s.payable_amount || (s.price ? s.price.sale_price : 0);
+                var priceStr = ' — ₦' + Number(price).toLocaleString();
+                $sel.append('<option value="' + s.id + '">' + escapeHtml(s.service_name) + priceStr + '</option>');
+            });
+            pfMorgueServicesLoaded = true;
+        }).fail(function() {
+            $('#pf-morgue-service-select').html('<option value="">-- Error loading services --</option>');
         });
     }
 
@@ -3105,6 +3244,17 @@ $(document).ready(function() {
         $('.form-step').removeClass('active');
         $('.form-step[data-step="' + step + '"]').addClass('active');
 
+        // If navigating to the disposition step (6), re-trigger the selected disposition's
+        // change event now that the parent step is visible. This fixes slideDown() measuring
+        // height=0 when it was called during modal init while the parent was display:none.
+        if (step === 6) {
+            var $checkedDisp = $('input[name="pf_disposition"]:checked');
+            if ($checkedDisp.length) {
+                $('#pf-admit-options, #pf-consult-options, #pf-direct-options, #pf-morgue-options').hide();
+                $checkedDisp.trigger('change');
+            }
+        }
+
         // Update stepper
         updateEmergencyStepper();
 
@@ -3146,7 +3296,12 @@ $(document).ready(function() {
         if (isLast) {
             $('#pf-btn-next').hide();
             $('#pf-btn-submit').show();
-            $('#pf-submit-text').text('Submit Emergency Intake');
+
+            var submitText = 'Submit Emergency Intake';
+            if ($('#patientFormModal').hasClass('pf-morgue-mode')) {
+                submitText = 'Complete Admission';
+            }
+            $('#pf-submit-text').text(submitText);
             // Show emergency summary instead of registration summary
             $('#registration-summary').hide();
             $('#emergency-intake-summary').show();
@@ -3192,7 +3347,20 @@ $(document).ready(function() {
         if (step === 6) {
             // Disposition validation
             var disp = $('input[name="pf_disposition"]:checked').val();
-            if (!disp) { toastr.warning('Please select a disposition.'); return false; }
+            var isBid = $('#pf-is-bid').is(':checked');
+
+            if (!disp && !isBid) { toastr.warning('Please select a disposition.'); return false; }
+
+            // If BID and no disposition selected, default to morgue_mortal if we are in morgue mode
+            if (!disp && isBid) {
+                if ($('#patientFormModal').hasClass('pf-morgue-mode')) {
+                    $('input[name="pf_disposition"][value="morgue_mortal"]').prop('checked', true).trigger('change');
+                    disp = 'morgue_mortal';
+                } else {
+                    toastr.warning('Please select a disposition (e.g. Direct to Morgue).');
+                    return false;
+                }
+            }
             if (disp === 'admit_emergency') {
                 if (!$('#pf-admit-service-select').val()) { toastr.warning('Admission service is required.'); return false; }
                 if (!$('#pf-admit-clinic-select').val()) { toastr.warning('Clinic is required.'); return false; }
@@ -3204,6 +3372,12 @@ $(document).ready(function() {
             if (disp === 'direct_service' && pfDirectServices.length === 0) {
                 toastr.warning('Add at least one lab or imaging service.');
                 return false;
+            }
+            if (disp === 'morgue_mortal') {
+                if (!$('#pf-morgue-service-select').val()) {
+                    toastr.warning('Daily service rate is required.');
+                    return false;
+                }
             }
             return true;
         }
@@ -3239,6 +3413,14 @@ $(document).ready(function() {
         var existingPatientId = $('#pf-emergency-patient-id').val();
         var $btn = $('#pf-btn-submit');
         var originalHtml = $btn.html();
+
+        // Validate all steps in current sequence before submitting
+        for (var i = 0; i < pfStepSequence.length; i++) {
+            if (!validateEmergencyStep(pfStepSequence[i])) {
+                return;
+            }
+        }
+
         $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
 
         if (existingPatientId) {
@@ -3338,6 +3520,12 @@ $(document).ready(function() {
             patient_id: patientId,
             is_new_patient: 0,
             is_unidentified: $('#pf-is-unidentified').val() == '1' ? 1 : 0,
+            is_bid: $('#pf-is-bid').is(':checked') ? 1 : 0,
+            bid_record: $('#pf-is-bid').is(':checked') ? {
+                date: $('#pf-bid-date').val(),
+                time: $('#pf-bid-time').val(),
+                cause: $('#pf-bid-cause').val()
+            } : null,
             // Triage
             esi_level: $('#pf-esi-level').val(),
             chief_complaint: $('#pf-chief-complaint').val(),
@@ -3371,6 +3559,11 @@ $(document).ready(function() {
             admit_service_id: $('#pf-admit-service-select').val() || null,
             admit_clinic_id: $('#pf-admit-clinic-select').val() || null,
             bed_id: $('#pf-bed-select').val() || null,
+            // Morgue fields
+            daily_service_id: $('#pf-morgue-service-select').val() || null,
+            fridge_no: $('#pf-morgue-fridge').val() || null,
+            tray_no: $('#pf-morgue-tray').val() || null,
+            notes: $('#pf-morgue-notes').val() || null,
             elapsed_seconds: pfEmergencyTimerSeconds
         };
 
@@ -3378,8 +3571,17 @@ $(document).ready(function() {
             intakeData.direct_services = pfDirectServices.map(function(s) { return {type: s.type, id: s.id}; });
         }
 
+        var submitUrl = patientFormConfig.submitUrl || patientFormConfig.emergencyIntakeUrl;
+
+        if (!submitUrl) {
+            console.error('Submission URL not configured.');
+            toastr.error('System error: Submission route not configured.');
+            $btn.prop('disabled', false).html(originalHtml);
+            return;
+        }
+
         $.ajax({
-            url: '/emergency/intake',
+            url: submitUrl,
             method: 'POST',
             data: JSON.stringify(intakeData),
             contentType: 'application/json',
@@ -3414,6 +3616,29 @@ $(document).ready(function() {
 
     // ---- Emergency Intake Summary ----
     function updateEmergencyIntakeSummary() {
+        var $modal = $('#patientFormModal');
+        var isMorgue = $modal.hasClass('pf-morgue-mode');
+
+        // Update summary title and accent color based on mode
+        if (isMorgue) {
+            $('#emergency-intake-summary')
+                .css('border-left-color', '#1a202c')
+                .find('h6').first()
+                .html('<i class="mdi mdi-emoticon-dead text-dark"></i> Morgue Admission Summary');
+        } else {
+            $('#emergency-intake-summary')
+                .css('border-left-color', '#dc3545')
+                .find('h6').first()
+                .html('<i class="mdi mdi-ambulance text-danger"></i> Emergency Intake Summary');
+        }
+
+        // BID record info
+        if ($('#pf-is-bid').is(':checked')) {
+            $('#emg-summary-bid-date').text($('#pf-bid-date').val() || '-');
+            $('#emg-summary-bid-time').text($('#pf-bid-time').val() || '-');
+            $('#emg-summary-bid-cause').text($('#pf-bid-cause').val() || 'Unknown');
+        }
+
         var existingId = $('#pf-emergency-patient-id').val();
 
         // Patient info
@@ -3478,7 +3703,8 @@ $(document).ready(function() {
         var dispLabels = {
             'admit_emergency': '<i class="mdi mdi-bed text-danger"></i> Admit to Emergency Ward',
             'queue_consultation': '<i class="mdi mdi-account-clock text-warning"></i> Queue for Consultation',
-            'direct_service': '<i class="mdi mdi-flask text-info"></i> Direct to Lab/Imaging'
+            'direct_service': '<i class="mdi mdi-flask text-info"></i> Direct to Lab/Imaging',
+            'morgue_mortal': '<i class="mdi mdi-emoticon-dead text-dark"></i> Direct to Morgue'
         };
         $('#emg-summary-disposition').html(dispLabels[disp] || '-');
 
@@ -3494,6 +3720,11 @@ $(document).ready(function() {
             detail = [clinic, svc].filter(function(x){ return x && !x.startsWith('--'); }).join(' | ');
         } else if (disp === 'direct_service') {
             detail = pfDirectServices.map(function(s){ return s.type.toUpperCase() + ': ' + s.name; }).join(', ');
+        } else if (disp === 'morgue_mortal') {
+            var svc = $('#pf-morgue-service-select option:selected').text();
+            var fridge = $('#pf-morgue-fridge').val();
+            var tray = $('#pf-morgue-tray').val();
+            detail = [svc, fridge ? 'Fridge: ' + fridge : null, tray ? 'Tray: ' + tray : null].filter(Boolean).join(' | ');
         }
         if (detail) {
             $('#emg-summary-disposition-detail').text(detail);
@@ -3559,10 +3790,20 @@ $(document).ready(function() {
 
         // Disposition
         $('input[name="pf_disposition"]').prop('checked', false);
-        $('#pf-admit-options, #pf-consult-options, #pf-direct-options').hide();
+        $('#pf-admit-options, #pf-consult-options, #pf-direct-options, #pf-morgue-options').hide();
         pfDirectServices = [];
         renderDirectServices();
         pfDispositionLoaded = false;
+
+        // Morgue-specific resets
+        pfMorgueServicesLoaded = false;
+        $('#pf-morgue-fridge').val('');
+        $('#pf-morgue-tray').val('');
+        $('#pf-morgue-notes').val('');
+        $('#pf-morgue-service-select').html('<option value="">-- Select Daily Rate --</option>');
+        $('#patientFormModal').removeClass('pf-bid-active');
+        // Re-enable BID toggle (was disabled in morgue mode)
+        $('#pf-is-bid').prop('disabled', false);
     }
 
     // Reset on modal close
@@ -4035,6 +4276,42 @@ $(document).ready(function() {
 
                                 {{-- ===== EMERGENCY: Approx Age + Arrival Info (shown only in emergency mode) ===== --}}
                                 <div class="pf-emergency-fields">
+                                    <div class="row">
+                                        {{-- BID Toggle --}}
+                                        <div class="col-12 mb-3">
+                                            <div class="card bg-light border-danger p-2">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="pf-is-bid" name="is_bid">
+                                                    <label class="form-check-label fw-bold text-danger" for="pf-is-bid">
+                                                        <i class="mdi mdi-emoticon-dead"></i> PATIENT IS BROUGHT IN DEAD (BID)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- BID Info (Initially Hidden) --}}
+                                        <div id="pf-bid-info" style="display:none;" class="col-12">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="floating-label">
+                                                        <input type="date" class="form-control" name="bid_date" id="pf-bid-date" value="{{ date('Y-m-d') }}">
+                                                        <label>Date of Death</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="floating-label">
+                                                        <input type="time" class="form-control" name="bid_time" id="pf-bid-time" value="{{ date('H:i') }}">
+                                                        <label>Time of Death</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 mb-3">
+                                                    <div class="floating-label">
+                                                        <input type="text" class="form-control" name="bid_cause" id="pf-bid-cause" placeholder="Suspected cause of death...">
+                                                        <label>Suspected Cause of Death</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     <div class="row g-2 mt-2">
                                         <div class="col-md-4">
                                             <div class="form-group mb-3">
@@ -4412,25 +4689,32 @@ $(document).ready(function() {
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Disposition <span class="text-danger">*</span></label>
                                     <div class="list-group">
-                                        <label class="list-group-item list-group-item-action d-flex align-items-center">
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center pf-morgue-hide">
                                             <input type="radio" name="pf_disposition" value="admit_emergency" class="form-check-input me-2 pf-disposition-radio">
                                             <div>
                                                 <strong><i class="mdi mdi-bed text-danger"></i> Admit to Emergency Ward</strong>
                                                 <small class="d-block text-muted">Assign bed and admit immediately</small>
                                             </div>
                                         </label>
-                                        <label class="list-group-item list-group-item-action d-flex align-items-center">
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center pf-morgue-hide">
                                             <input type="radio" name="pf_disposition" value="queue_consultation" class="form-check-input me-2 pf-disposition-radio">
                                             <div>
                                                 <strong><i class="mdi mdi-account-clock text-warning"></i> Queue for Consultation</strong>
                                                 <small class="d-block text-muted">Send to doctor queue for evaluation</small>
                                             </div>
                                         </label>
-                                        <label class="list-group-item list-group-item-action d-flex align-items-center">
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center pf-morgue-hide">
                                             <input type="radio" name="pf_disposition" value="direct_service" class="form-check-input me-2 pf-disposition-radio">
                                             <div>
                                                 <strong><i class="mdi mdi-flask text-info"></i> Direct to Lab/Imaging</strong>
                                                 <small class="d-block text-muted">Order lab or imaging services directly</small>
+                                            </div>
+                                        </label>
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center pf-morgue-only">
+                                            <input type="radio" name="pf_disposition" value="morgue_mortal" class="form-check-input me-2 pf-disposition-radio">
+                                            <div>
+                                                <strong><i class="mdi mdi-emoticon-dead text-dark"></i> Direct to Morgue</strong>
+                                                <small class="d-block text-muted">Brought in Dead (BID) admission to morgue</small>
                                             </div>
                                         </label>
                                     </div>
@@ -4458,6 +4742,30 @@ $(document).ready(function() {
                                             <option value="">-- No bed (assign later) --</option>
                                         </select>
                                         <small class="text-muted">Bed can also be assigned later from nursing workbench.</small>
+                                    </div>
+                                </div>
+
+                                {{-- Morgue Admission Options --}}
+                                <div id="pf-morgue-options" style="display: none;">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Daily Service Rate <span class="text-danger">*</span></label>
+                                            <select class="form-select form-select-sm" id="pf-morgue-service-select">
+                                                <option value="">-- Loading services... --</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label fw-bold">Fridge No.</label>
+                                            <input type="text" class="form-control form-control-sm" id="pf-morgue-fridge" placeholder="e.g. F-102">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label fw-bold">Tray No.</label>
+                                            <input type="text" class="form-control form-control-sm" id="pf-morgue-tray" placeholder="e.g. T-05">
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 mb-3">
+                                        <label class="form-label fw-bold">Admission Notes</label>
+                                        <textarea class="form-control form-control-sm" id="pf-morgue-notes" rows="2" placeholder="Notes for mortuary staff..."></textarea>
                                     </div>
                                 </div>
 
@@ -4698,8 +5006,27 @@ $(document).ready(function() {
                                         </div>
                                     </div>
 
+                                    <!-- BID Record (morgue mode only) -->
+                                    <div class="summary-section pf-morgue-only" id="emg-summary-bid-section">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-emoticon-dead text-dark"></i> BID Record</h6>
+                                        <div class="summary-grid">
+                                            <div class="summary-item">
+                                                <span class="summary-label">Date of Death:</span>
+                                                <span class="summary-value" id="emg-summary-bid-date">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Time of Death:</span>
+                                                <span class="summary-value" id="emg-summary-bid-time">-</span>
+                                            </div>
+                                            <div class="summary-item full-width">
+                                                <span class="summary-label">Suspected Cause:</span>
+                                                <span class="summary-value" id="emg-summary-bid-cause">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Triage -->
-                                    <div class="summary-section">
+                                    <div class="summary-section pf-morgue-hide-summary">
                                         <h6 class="summary-section-title"><i class="mdi mdi-clipboard-pulse text-danger"></i> Triage</h6>
                                         <div class="summary-grid">
                                             <div class="summary-item">
@@ -4726,7 +5053,7 @@ $(document).ready(function() {
                                     </div>
 
                                     <!-- Vitals (if captured) -->
-                                    <div class="summary-section" id="emg-summary-vitals-section" style="display:none;">
+                                    <div class="summary-section pf-morgue-hide-summary" id="emg-summary-vitals-section" style="display:none;">
                                         <h6 class="summary-section-title"><i class="mdi mdi-heart-pulse"></i> Vitals</h6>
                                         <div class="summary-grid" id="emg-summary-vitals-grid"></div>
                                     </div>

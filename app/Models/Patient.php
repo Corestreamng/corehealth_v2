@@ -18,6 +18,8 @@ class Patient extends Model implements Auditable
         'insurance_scheme',
         'hmo_id',
         'hmo_no',
+        'is_deceased',
+        'date_of_death',
         'gender',
         'dob',
         'blood_group',
@@ -40,7 +42,19 @@ class Patient extends Model implements Auditable
     protected $casts = [
         'allergies' => 'array',
         'dob' => 'date',
+        'is_deceased' => 'boolean',
+        'date_of_death' => 'date',
     ];
+
+    public function deathRecord()
+    {
+        return $this->hasOne(DeathRecord::class);
+    }
+
+    public function morgueAdmission()
+    {
+        return $this->hasOne(MorgueAdmission::class);
+    }
 
     public function user()
     {

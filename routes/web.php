@@ -44,6 +44,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreStockController;
+use App\Http\Controllers\MorgueController;
 use App\Http\Controllers\VitalSignController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\PatientProfileController;
@@ -218,6 +219,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('products', ProductController::class);
+        Route::post('products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
         Route::get('product-list', [ProductController::class, 'listProducts'])->name('product-list');
         Route::get('products/{product}/packagings', [ProductController::class, 'getPackagings'])->name('products.packagings');
     });
@@ -645,6 +647,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         // Creating and Listing Permissions
         Route::resource('services', ServiceController::class);
+        Route::post('services/{id}/toggle-status', [ServiceController::class, 'toggleStatus'])->name('services.toggle-status');
         Route::resource('beds', BedController::class);
         Route::get('bed-list', [BedController::class, 'listBeds'])->name('bed-list');
 
@@ -974,3 +977,21 @@ require __DIR__ . '/emergency_intake.php';
 
 // Inventory Management routes (PO, Requisitions, Store Workbench)
 require __DIR__ . '/inventory.php';
+
+// Morgue Management routes
+Route::middleware(['auth'])->prefix('morgue')->name('morgue.')->group(function () {
+    Route::get('/workbench', [MorgueController::class, 'index'])->name('workbench');
+    Route::get('/queue', [MorgueController::class, 'getQueue'])->name('queue');
+    Route::post('/admit', [MorgueController::class, 'admit'])->name('admit');
+    Route::post('/add-service', [MorgueController::class, 'addService'])->name('add-service');
+    Route::post('/release', [MorgueController::class, 'release'])->name('release');
+    Route::get('/services', [MorgueController::class, 'getServices'])->name('services');
+});
+
+// Clinical Reports routes
+Route::middleware(['auth'])->prefix('clinical-reports')->name('clinical-reports.')->group(function () {
+    Route::get('/stats', [\App\Http\Controllers\ClinicalReportsController::class, 'getClinicalStats'])->name('stats');
+    Route::get('/search-diagnosis', [\App\Http\Controllers\ClinicalReportsController::class, 'searchDiagnosis'])->name('search-diagnosis');
+    Route::get('/encounter-details/{id}', [\App\Http\Controllers\ClinicalReportsController::class, 'getEncounterDrillDown'])->name('encounter-details');
+    Route::get('/drill-down', [\App\Http\Controllers\ClinicalReportsController::class, 'getDrillDownDetails'])->name('drill-down');
+});

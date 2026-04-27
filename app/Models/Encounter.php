@@ -24,12 +24,18 @@ class Encounter extends Model implements Auditable
         'reasons_for_encounter_comment_2',
         'notes',
         'completed',
+        'outcome',
         'started_at',
         'completed_at',
         'deleted_at',
         'deleted_by',
         'deletion_reason',
     ];
+
+    public function deathRecord()
+    {
+        return $this->hasOne(DeathRecord::class);
+    }
 
     protected $casts = [
         'completed'    => 'boolean',
