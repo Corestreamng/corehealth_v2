@@ -66,9 +66,9 @@ class EmergencyIntakeController extends Controller
             'brought_by_name' => 'nullable|string|max:150',
             'brought_by_phone' => 'nullable|string|max:20',
 
-            // Triage data
-            'esi_level' => 'required|integer|between:1,5',
-            'chief_complaint' => 'required|string|max:500',
+            // Triage data (not required for morgue_mortal direct admission)
+            'esi_level' => 'required_unless:disposition,morgue_mortal|nullable|integer|between:1,5',
+            'chief_complaint' => 'required_unless:disposition,morgue_mortal|nullable|string|max:500',
             'triage_notes' => 'nullable|string|max:1000',
 
             // Quick vitals
@@ -92,7 +92,7 @@ class EmergencyIntakeController extends Controller
             'allergies_text' => 'nullable|string|max:500',
 
             // Disposition
-            'disposition' => 'required|in:admit_emergency,queue_consultation,direct_service',
+            'disposition' => 'required|in:admit_emergency,queue_consultation,direct_service,morgue_mortal',
 
             // For queue_consultation
             'clinic_id' => 'required_if:disposition,queue_consultation|nullable|exists:clinics,id',
@@ -110,6 +110,16 @@ class EmergencyIntakeController extends Controller
 
             // Elapsed time
             'elapsed_seconds' => 'nullable|integer|min:0',
+
+            // Morgue fields (required when disposition is morgue_mortal)
+            'daily_service_id' => 'required_if:disposition,morgue_mortal|nullable|exists:services,id',
+            'fridge_no' => 'nullable|string|max:50',
+            'tray_no' => 'nullable|string|max:50',
+            'notes' => 'nullable|string|max:500',
+
+            // BID info
+            'is_bid' => 'nullable|boolean',
+            'bid_record' => 'nullable|array',
         ]);
 
         try {
@@ -215,8 +225,27 @@ class EmergencyIntakeController extends Controller
                 ], 422);
             }
 
+            // Handle BID
+            if ($request->is_bid) {
+                $patient->is_deceased = true;
+                $patient->save();
+
+                $br = $request->bid_record;
+                \App\Models\DeathRecord::updateOrCreate(
+                    ['patient_id' => $patient->id],
+                    [
+                        'death_type' => 'BID',
+                        'date_of_death' => $br['date'] ?? now()->toDateString(),
+                        'time_of_death' => $br['time'] ?? now()->toTimeString(),
+                        'cause_of_death_primary' => $br['cause'] ?? 'Unknown',
+                        'certified_by_doctor_id' => Auth::id(), // Recorded by intake staff
+                        'last_office_done' => false,
+                        'disposition' => 'pending'
+                    ]
+                );
+            }
+
             // Step 2: Build comprehensive triage narrative for admission_reason
-            $esiLabel = self::ESI_LEVELS[$request->esi_level] ?? 'Unknown';
             $arrivalModes = [
                 'walk_in' => 'Walk-In',
                 'ambulance' => 'Ambulance',
@@ -225,68 +254,76 @@ class EmergencyIntakeController extends Controller
                 'brought_in' => 'Brought by Relative',
             ];
 
-            $triageData = "[EMERGENCY INTAKE] ESI Level {$request->esi_level}: {$esiLabel}\n"
-                . "Chief Complaint: {$request->chief_complaint}\n";
+            if ($request->disposition === 'morgue_mortal') {
+                // Morgue direct admissions skip triage — build a concise record header
+                $triageData = "[MORGUE ADMISSION] [BID] Direct Morgue Intake\n"
+                    . "Admitted By: " . (Auth::user()->surname ?? '') . ' ' . (Auth::user()->firstname ?? '') . "\n"
+                    . "Intake Time: " . Carbon::now()->format('Y-m-d H:i:s');
+            } else {
+                $esiLabel = $request->esi_level ? (self::ESI_LEVELS[$request->esi_level] ?? 'Unknown') : 'Unknown';
+                $triageData = "[EMERGENCY INTAKE]" . ($request->is_bid ? " [BID]" : "") . " ESI Level {$request->esi_level}: {$esiLabel}\n"
+                    . "Chief Complaint: {$request->chief_complaint}\n";
 
-            // Arrival mode
-            if ($request->arrival_mode) {
-                $triageData .= "Arrival Mode: " . ($arrivalModes[$request->arrival_mode] ?? $request->arrival_mode) . "\n";
-            }
-            if ($request->brought_by_name) {
-                $triageData .= "Brought By: {$request->brought_by_name}"
-                    . ($request->brought_by_phone ? " ({$request->brought_by_phone})" : '') . "\n";
-            }
+                // Arrival mode
+                if ($request->arrival_mode) {
+                    $triageData .= "Arrival Mode: " . ($arrivalModes[$request->arrival_mode] ?? $request->arrival_mode) . "\n";
+                }
+                if ($request->brought_by_name) {
+                    $triageData .= "Brought By: {$request->brought_by_name}"
+                        . ($request->brought_by_phone ? " ({$request->brought_by_phone})" : '') . "\n";
+                }
 
-            // Vitals summary
-            $vitals = [];
-            if ($request->vital_hr) $vitals[] = "HR: {$request->vital_hr} bpm";
-            if ($request->vital_bp_sys && $request->vital_bp_dia) $vitals[] = "BP: {$request->vital_bp_sys}/{$request->vital_bp_dia} mmHg";
-            if ($request->vital_spo2) $vitals[] = "SpO2: {$request->vital_spo2}%";
-            if ($request->vital_temp) $vitals[] = "Temp: {$request->vital_temp}°C";
-            if ($request->vital_rr) $vitals[] = "RR: {$request->vital_rr}/min";
-            if ($request->vital_bs) $vitals[] = "BS: {$request->vital_bs} mg/dL";
-            if (!empty($vitals)) {
-                $triageData .= "Vitals: " . implode(' | ', $vitals) . "\n";
-            }
+                // Vitals summary
+                $vitals = [];
+                if ($request->vital_hr) $vitals[] = "HR: {$request->vital_hr} bpm";
+                if ($request->vital_bp_sys && $request->vital_bp_dia) $vitals[] = "BP: {$request->vital_bp_sys}/{$request->vital_bp_dia} mmHg";
+                if ($request->vital_spo2) $vitals[] = "SpO2: {$request->vital_spo2}%";
+                if ($request->vital_temp) $vitals[] = "Temp: {$request->vital_temp}°C";
+                if ($request->vital_rr) $vitals[] = "RR: {$request->vital_rr}/min";
+                if ($request->vital_bs) $vitals[] = "BS: {$request->vital_bs} mg/dL";
+                if (!empty($vitals)) {
+                    $triageData .= "Vitals: " . implode(' | ', $vitals) . "\n";
+                }
 
-            // GCS
-            if ($request->gcs_total) {
-                $severity = $request->gcs_total <= 8 ? 'Severe' : ($request->gcs_total <= 12 ? 'Moderate' : 'Mild');
-                $triageData .= "GCS: {$request->gcs_total}/15 ({$severity}) [E{$request->gcs_eye} V{$request->gcs_verbal} M{$request->gcs_motor}]\n";
-            }
+                // GCS
+                if ($request->gcs_total) {
+                    $severity = $request->gcs_total <= 8 ? 'Severe' : ($request->gcs_total <= 12 ? 'Moderate' : 'Mild');
+                    $triageData .= "GCS: {$request->gcs_total}/15 ({$severity}) [E{$request->gcs_eye} V{$request->gcs_verbal} M{$request->gcs_motor}]\n";
+                }
 
-            // Pain scale
-            if ($request->pain_scale !== null && $request->pain_scale > 0) {
-                $triageData .= "Pain Scale: {$request->pain_scale}/10\n";
-            }
+                // Pain scale
+                if ($request->pain_scale !== null && $request->pain_scale > 0) {
+                    $triageData .= "Pain Scale: {$request->pain_scale}/10\n";
+                }
 
-            // Allergies
-            if ($request->allergy_status === 'nkda') {
-                $triageData .= "Allergies: NKDA\n";
-            } elseif ($request->allergy_status === 'has_allergies' && $request->allergies_text) {
-                $triageData .= "Allergies: ⚠ {$request->allergies_text}\n";
-            } elseif ($request->allergy_status === 'unknown') {
-                $triageData .= "Allergies: Unknown — VERIFY\n";
-            }
+                // Allergies
+                if ($request->allergy_status === 'nkda') {
+                    $triageData .= "Allergies: NKDA\n";
+                } elseif ($request->allergy_status === 'has_allergies' && $request->allergies_text) {
+                    $triageData .= "Allergies: ⚠ {$request->allergies_text}\n";
+                } elseif ($request->allergy_status === 'unknown') {
+                    $triageData .= "Allergies: Unknown — VERIFY\n";
+                }
 
-            // Triage notes
-            if ($request->triage_notes) {
-                $triageData .= "Triage Notes: {$request->triage_notes}\n";
-            }
+                // Triage notes
+                if ($request->triage_notes) {
+                    $triageData .= "Triage Notes: {$request->triage_notes}\n";
+                }
 
-            // Distinguishing features for unidentified
-            if ($request->is_unidentified && $request->distinguishing_features) {
-                $triageData .= "Distinguishing Features: {$request->distinguishing_features}\n";
-            }
+                // Distinguishing features for unidentified
+                if ($request->is_unidentified && $request->distinguishing_features) {
+                    $triageData .= "Distinguishing Features: {$request->distinguishing_features}\n";
+                }
 
-            // Elapsed time & intake staff
-            if ($request->elapsed_seconds) {
-                $mins = floor($request->elapsed_seconds / 60);
-                $secs = $request->elapsed_seconds % 60;
-                $triageData .= "Triage Duration: {$mins}m {$secs}s\n";
-            }
-            $triageData .= "Intake By: " . (Auth::user()->surname ?? '') . ' ' . (Auth::user()->firstname ?? '') . "\n"
-                . "Intake Time: " . Carbon::now()->format('Y-m-d H:i:s');
+                // Elapsed time & intake staff
+                if ($request->elapsed_seconds) {
+                    $mins = floor($request->elapsed_seconds / 60);
+                    $secs = $request->elapsed_seconds % 60;
+                    $triageData .= "Triage Duration: {$mins}m {$secs}s\n";
+                }
+                $triageData .= "Intake By: " . (Auth::user()->surname ?? '') . ' ' . (Auth::user()->firstname ?? '') . "\n"
+                    . "Intake Time: " . Carbon::now()->format('Y-m-d H:i:s');
+            } // end else (non-morgue triage block)
 
             // Step 2b: Create VitalSign record from triage vitals (if any vitals provided)
             if ($request->vital_hr || $request->vital_bp_sys || $request->vital_spo2 || $request->vital_temp || $request->vital_rr || $request->vital_bs) {
@@ -327,6 +364,10 @@ class EmergencyIntakeController extends Controller
                 case 'direct_service':
                     $result = $this->handleDirectService($patient, $request, $triageData);
                     break;
+
+                case 'morgue_mortal':
+                    $result = $this->handleMorgueMortal($patient, $request);
+                    break;
             }
 
             DB::commit();
@@ -350,6 +391,64 @@ class EmergencyIntakeController extends Controller
                 'message' => 'Emergency intake failed: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Disposition: Direct Morgue Admission (Brought In Dead)
+     */
+    private function handleMorgueMortal($patient, Request $request): array
+    {
+        // DeathRecord was already created in the BID handling block above (is_bid=1 is always true for morgue_mortal).
+        // Fetch it or create a fallback in case is_bid was not explicitly set.
+        $deathRecord = \App\Models\DeathRecord::where('patient_id', $patient->id)->latest()->first();
+        if (!$deathRecord) {
+            $br = $request->bid_record ?? [];
+            $deathRecord = \App\Models\DeathRecord::create([
+                'patient_id' => $patient->id,
+                'death_type' => 'BID',
+                'date_of_death' => $br['date'] ?? now()->toDateString(),
+                'time_of_death' => $br['time'] ?? now()->toTimeString(),
+                'cause_of_death_primary' => $br['cause'] ?? 'Brought in Dead',
+                'certified_by_doctor_id' => Auth::id(),
+                'last_office_done' => false,
+                'disposition' => 'pending',
+            ]);
+        }
+
+        // Create initial service request (daily morgue fee)
+        $serviceRequest = ProductOrServiceRequest::create([
+            'service_id' => $request->daily_service_id,
+            'user_id' => $patient->user_id,
+            'staff_user_id' => Auth::id(),
+            'status' => 1,
+            'qty' => 1,
+        ]);
+
+        // Generate unique body code
+        $year = now()->year;
+        $count = \App\Models\MorgueAdmission::whereYear('arrival_time', $year)->count() + 1;
+        $bodyCode = 'MORG-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+
+        // Create morgue admission record
+        \App\Models\MorgueAdmission::create([
+            'death_record_id' => $deathRecord->id,
+            'patient_id' => $patient->id,
+            'body_code' => $bodyCode,
+            'fridge_number' => $request->fridge_no,
+            'tray_number' => $request->tray_no,
+            'arrival_time' => now(),
+            'admitted_by_staff_id' => Auth::id(),
+            'daily_service_id' => $request->daily_service_id,
+            'current_service_request_id' => $serviceRequest->id,
+            'notes' => $request->notes,
+            'status' => 'stored',
+        ]);
+
+        return [
+            'message' => "Body admitted to morgue. Body Code: {$bodyCode}",
+            'disposition' => 'morgue_mortal',
+            'body_code' => $bodyCode,
+        ];
     }
 
     /**

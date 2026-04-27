@@ -11,7 +11,20 @@ class Service extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
+
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::addGlobalScope('active', function ($builder) {
+            $builder->where('status', 1);
+        });
+    }
+
+    protected $fillable = [
         'user_id',
         'category_id',
         'service_name',

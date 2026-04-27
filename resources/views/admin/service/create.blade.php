@@ -40,8 +40,8 @@
                                     </div>
                                     <div class="card-body p-3">
                                         @foreach($category as $catId => $catName)
-                                        <label class="cat-option d-block mb-2 {{ old('category_id') == $catId ? 'active' : '' }}" data-cat="{{ $catId }}">
-                                            <input type="radio" name="category_id" value="{{ $catId }}" {{ old('category_id') == $catId ? 'checked' : '' }}>
+                                        <label class="cat-option d-block mb-2 {{ (old('category_id', $selectedCategory)) == $catId ? 'active' : '' }}" data-cat="{{ $catId }}">
+                                            <input type="radio" name="category_id" value="{{ $catId }}" {{ (old('category_id', $selectedCategory)) == $catId ? 'checked' : '' }}>
                                             <div><span class="font-weight-bold">{{ $catName }}</span></div>
                                         </label>
                                         @endforeach
@@ -143,7 +143,7 @@
 
                                 {{-- Submit --}}
                                 <div class="d-flex justify-content-between mt-3">
-                                    <a href="{{ route('services.index') }}" class="btn btn-outline-secondary">
+                                    <a href="{{ route('services.index', ['category' => $selectedCategory]) }}" class="btn btn-outline-secondary">
                                         <i class="mdi mdi-arrow-left"></i> Back
                                     </a>
                                     <button type="submit" class="btn btn-primary">

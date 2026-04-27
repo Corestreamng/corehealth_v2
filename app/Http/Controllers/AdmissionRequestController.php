@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\DeathRecord;
 
 class AdmissionRequestController extends Controller
 {
@@ -505,6 +506,26 @@ class AdmissionRequestController extends Controller
                 'discharge_note' => $request->discharge_note,
                 'followup_instructions' => $request->followup_instructions,
             ]);
+
+            // If deceased, create a Death Record for single source of truth
+            if ($request->discharge_reason === 'Deceased') {
+                DeathRecord::updateOrCreate(
+                    ['patient_id' => $req->patient_id, 'admission_request_id' => $req->id],
+                    [
+                        'death_type' => 'RIP',
+                        'date_of_death' => $request->death_date ?? now()->toDateString(),
+                        'time_of_death' => $request->death_time ?? now()->toTimeString(),
+                        'cause_of_death_primary' => $request->death_cause ?? 'See discharge summary',
+                        'cause_of_death_description' => $request->discharge_note,
+                        'certified_by_doctor_id' => Auth::id(),
+                        'last_office_done' => false,
+                        'disposition' => 'pending'
+                    ]
+                );
+
+                // Mark patient as deceased in their profile
+                $req->patient->update(['is_deceased' => true]);
+            }
 
             DB::commit();
             return response()->json([

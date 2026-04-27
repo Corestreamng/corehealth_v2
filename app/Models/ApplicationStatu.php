@@ -84,6 +84,7 @@ class ApplicationStatu extends Model implements Auditable
 
         // Backup Settings
         'backup_compression',
+        'morgue_category_id',
     ];
 
     /**

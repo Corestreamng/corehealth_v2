@@ -51,11 +51,17 @@ class AdmissionRequest extends Model implements Auditable
         'discharge_reason',
         'discharge_note',
         'followup_instructions',
+        'death_record_id',
         'priority',
         'esi_level',
         'chief_complaint',
         'preferred_ward_id'
     ];
+
+    public function deathRecord()
+    {
+        return $this->belongsTo(DeathRecord::class);
+    }
 
     protected $casts = [
         'billed_date' => 'datetime',

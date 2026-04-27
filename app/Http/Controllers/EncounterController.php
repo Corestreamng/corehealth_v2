@@ -2732,6 +2732,8 @@ class EncounterController extends Controller
                 'consult_admit' => 'nullable|boolean',
                 'admit_note' => 'nullable|string',
                 'queue_id' => 'required',
+                'outcome' => 'nullable|string',
+                'death_record' => 'nullable|array',
             ]);
 
             DB::beginTransaction();
@@ -2740,7 +2742,33 @@ class EncounterController extends Controller
             $encounter->completed = true;
             $encounter->completed_at = now();
             $encounter->doctor_id = Auth::id();
+            
+            if ($request->outcome) {
+                $encounter->outcome = $request->outcome;
+            }
             $encounter->save();
+
+            // Handle Death Record
+            if ($request->outcome && str_starts_with($request->outcome, 'death')) {
+                $patient = $encounter->patient;
+                $patient->is_deceased = true;
+                $patient->save();
+
+                $dr = $request->death_record;
+                \App\Models\DeathRecord::updateOrCreate(
+                    ['patient_id' => $patient->id],
+                    [
+                        'encounter_id' => $encounter->id,
+                        'death_type' => ($request->outcome === 'death_bid' ? 'BID' : 'RIP'),
+                        'date_of_death' => $dr['date'] ?? now()->toDateString(),
+                        'time_of_death' => $dr['time'] ?? now()->toTimeString(),
+                        'cause_of_death_primary' => $dr['cause'] ?? 'Unknown',
+                        'certified_by_doctor_id' => $dr['certified_by'] ?? Auth::id(),
+                        'last_office_done' => false,
+                        'disposition' => 'pending'
+                    ]
+                );
+            }
 
             // Handle queue status using QueueStatusService
             if ($request->queue_id != 'ward_round') {
