@@ -141,6 +141,13 @@
                                     </div>
 
                                     <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Morgue Category ID</label>
+                                        <input type="number" class="form-control" name="morgue_category_id"
+                                               value="{{ old('morgue_category_id', $config->morgue_category_id ?? 9) }}"
+                                               min="1" style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
                                         <label class="form-label" style="font-weight: 600; color: #495057;">
                                             Registration Category
                                             <small class="text-muted">(for registration fees)</small>

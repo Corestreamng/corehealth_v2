@@ -89,6 +89,7 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::post('/enrollment/{id}/baby', [MaternityWorkbenchController::class, 'registerBaby'])->name('enrollment.baby.store');
         Route::get('/baby/{id}', [MaternityWorkbenchController::class, 'getBabyDetails'])->name('baby.show');
         Route::put('/baby/{id}', [MaternityWorkbenchController::class, 'updateBaby'])->name('baby.update');
+        Route::post('/baby/{id}/mark-deceased', [MaternityWorkbenchController::class, 'markBabyDeceased'])->name('baby.mark-deceased');
         Route::post('/baby/{id}/growth', [MaternityWorkbenchController::class, 'saveGrowthRecord'])->name('baby.growth.store');
         Route::get('/baby/{id}/growth-chart', [MaternityWorkbenchController::class, 'getGrowthChartData'])->name('baby.growth-chart');
 

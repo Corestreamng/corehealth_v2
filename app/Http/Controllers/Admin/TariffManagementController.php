@@ -55,13 +55,13 @@ class TariffManagementController extends Controller
                 $tariffsQuery = HmoTariff::query();
                 
                 if ($type === 'product') {
-                    $product = Product::findOrFail($id);
+                    $product = Product::withoutGlobalScopes()->findOrFail($id);
                     $itemName = $product->product_name;
                     $price = Price::where('product_id', $id)->first();
                     $salePrice = $price ? (float) $price->current_sale_price : 0;
                     $tariffsQuery->where('product_id', $id)->whereNull('service_id');
                 } else {
-                    $service = Service::findOrFail($id);
+                    $service = Service::withoutGlobalScopes()->findOrFail($id);
                     $itemName = $service->service_name;
                     $price = DB::table('service_prices')->where('service_id', $id)->first();
                     $salePrice = $price ? (float) $price->sale_price : 0;
@@ -274,10 +274,10 @@ class TariffManagementController extends Controller
             })
             ->addColumn('item_name', function ($tariff) {
                 if ($tariff->product_id) {
-                    $product = Product::find($tariff->product_id);
+                    $product = Product::withoutGlobalScopes()->find($tariff->product_id);
                     return $product ? $product->product_name : 'N/A';
                 } elseif ($tariff->service_id) {
-                    $service = Service::find($tariff->service_id);
+                    $service = Service::withoutGlobalScopes()->find($tariff->service_id);
                     return $service ? $service->service_name : 'N/A';
                 }
                 return 'N/A';

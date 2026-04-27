@@ -3296,6 +3296,10 @@
                 <i class="mdi mdi-ambulance text-danger"></i>
                 <span>Emergency Intake</span>
             </button>
+            <button class="quick-action-btn" onclick="showMorgueAdmissionModal()">
+                <i class="mdi mdi-emoticon-dead text-dark"></i>
+                <span>Morgue Admission (BID)</span>
+            </button>
             <button class="quick-action-btn" id="btn-hmo-validation" onclick="showHmoValidationPanel()">
                 <i class="mdi mdi-shield-check text-primary"></i>
                 <span>HMO Validation</span>

@@ -29,6 +29,8 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/queue/bed-requests', [NursingWorkbenchController::class, 'getBedRequestsQueue'])->name('bed-requests-queue');
     Route::get('/queue/discharge-requests', [NursingWorkbenchController::class, 'getDischargeQueue'])->name('discharge-queue');
     Route::get('/queue/medication-due', [NursingWorkbenchController::class, 'getMedicationDueQueue'])->name('medication-due');
+    Route::get('/deceased-queue', [NursingWorkbenchController::class, 'getDeceasedQueue'])->name('deceased-queue');
+    Route::post('/deceased/{recordId}/last-office', [NursingWorkbenchController::class, 'completeLastOffice'])->name('last-office.complete');
     Route::get('/queue-counts', [NursingWorkbenchController::class, 'getQueueCounts'])->name('queue-counts');
     Route::get('/wards', [NursingWorkbenchController::class, 'getWards'])->name('wards');
     Route::get('/clinics', [NursingWorkbenchController::class, 'getClinics'])->name('clinics');

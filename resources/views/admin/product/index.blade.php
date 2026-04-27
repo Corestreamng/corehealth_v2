@@ -50,6 +50,11 @@
                             <option value="{{ $catId }}">{{ $catName }}</option>
                         @endforeach
                     </select>
+
+                    <div class="custom-control custom-switch ml-3">
+                        <input type="checkbox" class="custom-control-input" id="show-deactivated">
+                        <label class="custom-control-label" for="show-deactivated">Show Deactivated</label>
+                    </div>
                 </div>
 
                 <div class="table-responsive">
@@ -65,6 +70,27 @@
                             </tr>
                         </thead>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deactivation Confirmation Modal -->
+    <div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="statusModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">Confirm Status Change</h5>
+                    <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to <span id="status-action-text" class="font-weight-bold text-lowercase"></span> the product "<span id="status-item-name" class="font-weight-bold"></span>"?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirm-status-btn">Confirm</button>
                 </div>
             </div>
         </div>
@@ -88,6 +114,7 @@
                     "data": function(d) {
                         d.product_type = $('#filter-type').val();
                         d.category_id = $('#filter-category').val();
+                        d.show_deactivated = $('#show-deactivated').is(':checked');
                     }
                 },
                 "columns": [
@@ -102,8 +129,47 @@
             });
 
             // Filter change reloads table
-            $('#filter-type, #filter-category').on('change', function() {
+            $('#filter-type, #filter-category, #show-deactivated').on('change', function() {
                 table.ajax.reload();
+            });
+
+            let currentProductId = null;
+
+            window.toggleProductStatus = function(id, action, name) {
+                currentProductId = id;
+                $('#status-action-text').text(action);
+                $('#status-item-name').text(name);
+                $('#statusModal').modal('show');
+            };
+
+            $('#confirm-status-btn').click(function() {
+                if (!currentProductId) return;
+                
+                $(this).prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+                
+                $.ajax({
+                    url: `/products/${currentProductId}/toggle-status`,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        $('#statusModal').modal('hide');
+                        if (response.success) {
+                            toastr.success(response.message);
+                            table.ajax.reload(null, false);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        $('#statusModal').modal('hide');
+                        toastr.error('An error occurred while updating status.');
+                    },
+                    complete: function() {
+                        $('#confirm-status-btn').prop('disabled', false).text('Confirm');
+                    }
+                });
             });
         });
     </script>

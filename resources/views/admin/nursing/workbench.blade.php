@@ -1,4 +1,4 @@
-﻿@extends('admin.layouts.app')
+@extends('admin.layouts.app')
 
 @section('title', 'Nursing Workbench')
 
@@ -3123,6 +3123,10 @@
             <div class="queue-item" data-filter="emergency" style="border-left: 3px solid #dc3545;">
                 <span class="queue-item-label"><i class="mdi mdi-ambulance"></i> Emergency Queue</span>
                 <span class="queue-count" id="queue-emergency-count" style="background: #dc3545; color: #fff;">0</span>
+            </div>
+            <div class="queue-item" data-filter="deceased" style="border-left: 3px solid #6c757d;">
+                <span class="queue-item-label"><i class="mdi mdi-emoticon-dead-outline"></i> Deceased (Last Office)</span>
+                <span class="queue-count" id="queue-deceased-count" style="background: #6c757d; color: #fff;">0</span>
             </div>
             <button class="btn-queue-all" id="refresh-queues-btn">
                 <i class="mdi mdi-refresh"></i> Refresh Queues
@@ -6843,6 +6847,46 @@
     }
 </style>
 
+{{-- Last Office Modal --}}
+    <div class="modal fade" id="lastOfficeModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="mdi mdi-emoticon-dead"></i> Complete Last Office</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="last-office-form">
+                        <input type="hidden" id="last-office-record-id">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Patient</label>
+                            <div id="last-office-patient-name" class="form-control-plaintext fw-bold text-primary"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Disposition <span class="text-danger">*</span></label>
+                            <select class="form-select" id="last-office-disposition" required>
+                                <option value="">-- Select --</option>
+                                <option value="morgue">Send to Morgue</option>
+                                <option value="release">Release to Family</option>
+                            </select>
+                            <small class="text-muted">If "Send to Morgue" is selected, the body will appear in the Morgue Workbench.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nurse's Last Office Notes</label>
+                            <textarea class="form-control" id="last-office-notes" rows="4" placeholder="Record details of last office procedure..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-dark" id="btn-submit-last-office">
+                        <i class="mdi mdi-check-circle"></i> Complete Procedure
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <!-- Include Clinical Context Modal -->
 @include('admin.partials.clinical_context_modal')
 @include('admin.partials.treatment-plan-modal')
@@ -7011,6 +7055,10 @@ function loadQueueData(filter) {
         case 'emergency':
             url = '{{ route("emergency.queue") }}';
             handler = displayEmergencyQueue;
+            break;
+        case 'deceased':
+            url = '/nursing-workbench/deceased-queue';
+            handler = displayDeceasedQueue;
             break;
         default:
             url = '{{ route("nursing-workbench.admitted-patients") }}';
@@ -7655,6 +7703,97 @@ function displayEmergencyQueue(patients) {
 
     $container.html(html);
 }
+
+function displayDeceasedQueue(records) {
+    const $container = $('#queue-view .queue-view-content');
+
+    if (records.length === 0) {
+        $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-emoticon-dead-outline mdi-48px"></i><br>No deceased patients pending last office</div>');
+        return;
+    }
+
+    let html = '<div class="row p-2">';
+    records.forEach(r => {
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card-modern queue-patient-card" style="border-left: 4px solid #6c757d;">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="mb-1">${r.name || 'N/A'}</h6>
+                            <span class="badge bg-dark">${r.death_type}</span>
+                        </div>
+                        <small class="text-muted d-block">${r.file_no || ''} | ${r.gender}, ${r.age}</small>
+                        <hr class="my-2">
+                        <div class="mb-2 small">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-bold">Date of Death:</span>
+                                <span>${r.date_of_death} ${r.time_of_death}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-bold">Certified By:</span>
+                                <span>${r.certified_by}</span>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-dark w-100" onclick="openLastOfficeModal(${r.id}, '${(r.name || '').replace(/'/g, "\\'")}')">
+                                <i class="mdi mdi-medical-bag"></i> Last Office Procedure
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    $container.html(html);
+}
+
+function openLastOfficeModal(recordId, patientName) {
+    $('#last-office-record-id').val(recordId);
+    $('#last-office-patient-name').text(patientName);
+    $('#last-office-disposition').val('');
+    $('#last-office-notes').val('');
+    $('#lastOfficeModal').modal('show');
+}
+
+$(document).on('click', '#btn-submit-last-office', function() {
+    const recordId = $('#last-office-record-id').val();
+    const disposition = $('#last-office-disposition').val();
+    const notes = $('#last-office-notes').val();
+
+    if (!disposition) {
+        toastr.warning('Please select a disposition.');
+        return;
+    }
+
+    const $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+    $.ajax({
+        url: '/nursing-workbench/deceased/' + recordId + '/last-office',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            disposition: disposition,
+            notes: notes
+        },
+        success: function(response) {
+            toastr.success(response.message);
+            $('#lastOfficeModal').modal('hide');
+            loadQueueCounts();
+            if (typeof currentQueueFilter !== 'undefined' && currentQueueFilter === 'deceased') {
+                loadQueueData('deceased');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to complete last office.');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-check-circle"></i> Complete Procedure');
+        }
+    });
+});
 
 // ===== EMERGENCY WARD TRANSFER =====
 function openTransferWardModal(admissionId, patientName) {
@@ -9316,6 +9455,7 @@ function loadQueueCounts() {
         $('#queue-discharge-count').text(counts.discharge_requests || 0);
         $('#queue-medication-count').text(counts.medication_due || 0);
         $('#queue-emergency-count').text(counts.emergency || 0);
+        $('#queue-deceased-count').text(counts.deceased || 0);
         updateSyncIndicator();
     });
 }

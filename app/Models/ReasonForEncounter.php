@@ -11,7 +11,10 @@ class ReasonForEncounter extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
+    
+    protected $table = 'reason_for_encounters';
+
+    protected $fillable = [
         'code',
         'name',
         'category',
