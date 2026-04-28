@@ -28,7 +28,8 @@ class AdmissionModuleController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($admission) use ($patient) {
-                $admitDate = $admission->bed_assign_date;
+                // Emergency intake admissions skip bed assignment — fall back to created_at
+                $admitDate = $admission->bed_assign_date ?? $admission->created_at;
                 $dischargeDate = $admission->discharge_date;
 
                 $los = 0;
@@ -80,7 +81,8 @@ class AdmissionModuleController extends Controller
         }
 
         $patient = $admission->patient;
-        $admitDate = $admission->bed_assign_date;
+        // For emergency intake admissions, bed assignment is skipped — fall back to created_at
+        $admitDate = $admission->bed_assign_date ?? $admission->created_at;
         $dischargeDate = $admission->discharge_date;
 
         if (!$admitDate) {
@@ -347,7 +349,8 @@ class AdmissionModuleController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($admission) use ($patient) {
-                $admitDate = $admission->bed_assign_date;
+                // Emergency intake admissions skip bed assignment — fall back to created_at
+                $admitDate = $admission->bed_assign_date ?? $admission->created_at;
                 $dischargeDate = $admission->discharge_date;
 
                 $los = 0;

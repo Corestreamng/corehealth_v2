@@ -236,10 +236,11 @@
         background: #28a745;
     }
 
-    /* Form Steps Container */
+    /* Form Steps Container — fixed height so modal doesn't resize between steps */
     .form-steps-container {
         padding: 0;
-        max-height: 55vh;
+        height: 58vh;
+        min-height: 420px;
         overflow-y: auto;
     }
 
@@ -274,6 +275,56 @@
         padding: 1.25rem 1.5rem;
         background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
         border-bottom: 1px solid #e9ecef;
+    }
+
+    /* Scheme cards in HMO step */
+    #pf-scheme-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.6rem;
+    }
+    .pf-scheme-card {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 0.85rem;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #adb5bd;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #495057;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-align: left;
+        width: 100%;
+    }
+    .pf-scheme-card:hover {
+        background: #f8f9fa;
+        border-color: #ced4da;
+        border-left-color: #6c757d;
+        color: #212529;
+    }
+    .pf-scheme-card.active {
+        background: #f0f4ff;
+        border-color: #c5d3f5;
+        border-left-color: var(--hospital-primary, #0062cc);
+        color: #212529;
+        box-shadow: 0 1px 4px rgba(0,98,204,0.12);
+    }
+    .pf-scheme-card .pf-scheme-count {
+        margin-left: auto;
+        font-size: 0.75rem;
+        background: #e9ecef;
+        color: #495057;
+        border-radius: 10px;
+        padding: 1px 7px;
+        font-weight: 600;
+    }
+    .pf-scheme-card.active .pf-scheme-count {
+        background: var(--hospital-primary, #0062cc);
+        color: #fff;
     }
 
     .step-header h6 {
@@ -1723,43 +1774,76 @@ function populatePatientFormHMO() {
     const $select = $('#pf-hmo');
     $select.empty();
 
+    if (!patientFormConfig.hmos || !patientFormConfig.hmos.length) return;
+
     // Group HMOs by scheme
-    if (patientFormConfig.hmos && patientFormConfig.hmos.length) {
-        const grouped = {};
-        patientFormConfig.hmos.forEach(hmo => {
-            const schemeName = hmo.scheme_name || hmo.scheme || 'Other';
-            if (!grouped[schemeName]) {
-                grouped[schemeName] = [];
-            }
-            grouped[schemeName].push(hmo);
-        });
+    const grouped = {};
+    patientFormConfig.hmos.forEach(hmo => {
+        const schemeName = hmo.scheme_name || hmo.scheme || 'Other';
+        if (!grouped[schemeName]) grouped[schemeName] = [];
+        grouped[schemeName].push(hmo);
+    });
 
-        Object.keys(grouped).sort().forEach(scheme => {
-            const $optgroup = $('<optgroup>').attr('label', scheme);
-            grouped[scheme].forEach(hmo => {
-                // HMO ID 1 is Private and is the default
-                const selected = hmo.id === 1 ? ' selected' : '';
-                $optgroup.append(`<option value="${hmo.id}"${selected}>${hmo.name}</option>`);
-            });
-            $select.append($optgroup);
-        });
-    }
+    // Sort: Self/Private first, then alphabetical
+    const schemes = Object.keys(grouped).sort((a, b) => {
+        if (a === 'Self/Private') return -1;
+        if (b === 'Self/Private') return 1;
+        return a.localeCompare(b);
+    });
 
-    // Default select HMO ID 1 (Private)
-    $select.val(1);
+    // Render scheme cards
+    const $grid = $('#pf-scheme-grid').empty();
+    const schemeIcons = {
+        'Self/Private': 'mdi-account-outline',
+        'Private Health Insurance Scheme': 'mdi-shield-account-outline',
+        'National Health Insurance Scheme': 'mdi-shield-check-outline',
+        'State Health Insurance Scheme': 'mdi-shield-star-outline',
+        'Corporate': 'mdi-office-building-outline',
+        'Others': 'mdi-dots-horizontal-circle-outline',
+    };
+    schemes.forEach(function(scheme) {
+        const icon = schemeIcons[scheme] || 'mdi-shield-account-outline';
+        const $card = $(`<button type="button" class="pf-scheme-card" data-scheme="${scheme}"><i class="mdi ${icon}"></i><span>${scheme}</span><span class="pf-scheme-count">${grouped[scheme].length}</span></button>`);
+        $grid.append($card);
+    });
 
-    // Initialize or refresh Select2
-    if ($.fn.select2) {
-        if ($select.hasClass('select2-hidden-accessible')) {
-            $select.select2('destroy');
+    // Default active scheme: Self/Private if exists, else first
+    const defaultScheme = grouped['Self/Private'] ? 'Self/Private' : schemes[0];
+    function activateScheme(scheme) {
+        pfActiveScheme = scheme;
+        $('.pf-scheme-card').removeClass('active');
+        $(`.pf-scheme-card[data-scheme="${scheme}"]`).addClass('active');
+
+        const isSelfPrivate = (scheme === 'Self/Private');
+        $select.empty();
+        if (!isSelfPrivate) {
+            // Empty placeholder — user must explicitly pick an HMO
+            $select.append('<option value="">-- Select HMO --</option>');
         }
-        $select.select2({
-            dropdownParent: $('#patientFormModal'),
-            placeholder: 'Select HMO',
-            allowClear: false,
-            width: '100%'
+        (grouped[scheme] || []).forEach(hmo => {
+            $select.append(`<option value="${hmo.id}">${hmo.name}</option>`);
         });
+
+        // Show HMO select only for non-self-pay schemes
+        $('#pf-hmo-select-col').toggle(!isSelfPrivate);
+
+        if ($.fn.select2) {
+            if ($select.hasClass('select2-hidden-accessible')) $select.select2('destroy');
+            $select.select2({
+                dropdownParent: $('#patientFormModal'),
+                placeholder: isSelfPrivate ? '' : 'Select HMO',
+                allowClear: false,
+                width: '100%'
+            });
+            $select.trigger('change');
+        }
     }
+
+    $(document).off('click.pfScheme').on('click.pfScheme', '.pf-scheme-card', function() {
+        activateScheme($(this).data('scheme'));
+    });
+
+    activateScheme(defaultScheme);
 }
 
 function populatePatientForm(data) {
@@ -1819,10 +1903,19 @@ function populatePatientForm(data) {
     // Insurance
     if (data.hmo_id) {
         setTimeout(() => {
+            // Find the scheme for this HMO and activate it
+            if (patientFormConfig && patientFormConfig.hmos) {
+                var hmoEntry = patientFormConfig.hmos.find(function(h) { return h.id == data.hmo_id; });
+                if (hmoEntry) {
+                    var schemeName = hmoEntry.scheme_name || hmoEntry.scheme || 'Other';
+                    var $card = $('.pf-scheme-card[data-scheme="' + schemeName + '"]');
+                    if ($card.length) $card.trigger('click');
+                }
+            }
             $('#pf-hmo').val(data.hmo_id).trigger('change');
             $('#pf-hmo-no').val(data.hmo_no || '');
             $('#pf-hmo-no-container').show();
-        }, 100);
+        }, 150);
     }
 
     // Handle existing passport photo - use new photo capture UI
@@ -2011,6 +2104,14 @@ function validatePatientFormStep(step) {
             $('#pf-email').siblings('.invalid-feedback').text('Invalid email address');
             isValid = false;
         }
+    }
+
+    if (step === 4) {
+        if (pfActiveScheme !== 'Self/Private' && !$('#pf-hmo').val()) {
+            toastr.warning('Please select an HMO provider.');
+            return false;
+        }
+        return true;
     }
 
     if (!isValid) {
@@ -2436,7 +2537,7 @@ $(document).ready(function() {
     });
 
     // HMO change - show/hide HMO number field
-    $('#pf-hmo').on('change', function() {
+    $(document).on('change', '#pf-hmo', function() {
         if ($(this).val() && $(this).val() != 1) {
             $('#pf-hmo-no-container').show();
         } else {
@@ -3107,14 +3208,45 @@ $(document).ready(function() {
     });
 
     var pfDispositionLoaded = false;
+    var pfAllBeds = []; // cache all beds for ward filter
+    var pfActiveScheme = '';
     function loadDispositionData() {
         if (pfDispositionLoaded) return;
         pfDispositionLoaded = true;
 
         $.get('/emergency/available-beds', function(beds) {
-            var $sel = $('#pf-bed-select').empty().append('<option value="">-- No bed (assign later) --</option>');
+            pfAllBeds = beds;
+
+            // Build ward list (unique)
+            var wards = {};
             beds.forEach(function(b) {
-                $sel.append('<option value="' + b.id + '">' + escapeHtml(b.name) + ' — ' + escapeHtml(b.ward) + ' (' + escapeHtml(b.bed_type) + ')</option>');
+                if (b.ward_id && !wards[b.ward_id]) {
+                    wards[b.ward_id] = b.ward;
+                }
+            });
+
+            var $wardSel = $('#pf-ward-select');
+            if ($wardSel.hasClass('select2-hidden-accessible')) $wardSel.select2('destroy');
+            $wardSel.empty().append('<option value="">-- Select Ward --</option>');
+            Object.keys(wards).forEach(function(wid) {
+                $wardSel.append('<option value="' + wid + '">' + escapeHtml(wards[wid]) + '</option>');
+            });
+            $wardSel.select2({
+                dropdownParent: $('#patientFormModal'),
+                placeholder: '-- Select Ward --',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Init bed select2 (empty until ward chosen)
+            var $bedSel = $('#pf-bed-select');
+            if ($bedSel.hasClass('select2-hidden-accessible')) $bedSel.select2('destroy');
+            $bedSel.empty().append('<option value="">-- No bed (assign later) --</option>');
+            $bedSel.select2({
+                dropdownParent: $('#patientFormModal'),
+                placeholder: '-- No bed (assign later) --',
+                allowClear: true,
+                width: '100%'
             });
         });
 
@@ -3130,12 +3262,47 @@ $(document).ready(function() {
             if (data.admission) data.admission.forEach(function(s) {
                 $admitSvc.append('<option value="' + s.id + '">' + escapeHtml(s.name) + ' — ₦' + Number(s.price).toLocaleString() + '</option>');
             });
+            if ($admitSvc.hasClass('select2-hidden-accessible')) $admitSvc.select2('destroy');
+            $admitSvc.select2({
+                dropdownParent: $('#patientFormModal'),
+                placeholder: '-- Select Service --',
+                allowClear: true,
+                width: '100%'
+            });
+
             var $consultSvc = $('#pf-service-select').empty().append('<option value="">-- Select Service --</option>');
             if (data.consultation) data.consultation.forEach(function(s) {
                 $consultSvc.append('<option value="' + s.id + '">' + escapeHtml(s.name) + ' — ₦' + Number(s.price).toLocaleString() + '</option>');
             });
+            if ($consultSvc.hasClass('select2-hidden-accessible')) $consultSvc.select2('destroy');
+            $consultSvc.select2({
+                dropdownParent: $('#patientFormModal'),
+                placeholder: '-- Select Service --',
+                allowClear: true,
+                width: '100%'
+            });
         });
     }
+
+    // Ward → Bed filtering
+    $(document).on('change', '#pf-ward-select', function() {
+        var wardId = $(this).val();
+        var $bedSel = $('#pf-bed-select');
+        if ($bedSel.hasClass('select2-hidden-accessible')) $bedSel.select2('destroy');
+        $bedSel.empty().append('<option value="">-- No bed (assign later) --</option>');
+        if (wardId) {
+            pfAllBeds.filter(function(b) { return String(b.ward_id) === String(wardId); })
+                     .forEach(function(b) {
+                         $bedSel.append('<option value="' + b.id + '">' + escapeHtml(b.name) + ' (' + escapeHtml(b.bed_type) + ')</option>');
+                     });
+        }
+        $bedSel.select2({
+            dropdownParent: $('#patientFormModal'),
+            placeholder: '-- No bed (assign later) --',
+            allowClear: true,
+            width: '100%'
+        });
+    });
 
     var pfMorgueServicesLoaded = false;
     function loadMorgueServices() {
@@ -3712,8 +3879,10 @@ $(document).ready(function() {
         if (disp === 'admit_emergency') {
             var svc = $('#pf-admit-service-select option:selected').text();
             var clinic = $('#pf-admit-clinic-select option:selected').text();
+            var ward = $('#pf-ward-select option:selected').text();
             var bed = $('#pf-bed-select option:selected').text();
-            detail = [svc, clinic, bed].filter(function(x){ return x && !x.startsWith('--'); }).join(' | ');
+            var bedInfo = (ward && !ward.startsWith('--') ? ward + ' / ' : '') + (bed && !bed.startsWith('--') ? bed : '');
+            detail = [svc, clinic, bedInfo].filter(function(x){ return x && !x.startsWith('--') && x.trim(); }).join(' | ');
         } else if (disp === 'queue_consultation') {
             var clinic = $('#pf-clinic-select option:selected').text();
             var svc = $('#pf-service-select option:selected').text();
@@ -3794,6 +3963,12 @@ $(document).ready(function() {
         pfDirectServices = [];
         renderDirectServices();
         pfDispositionLoaded = false;
+        pfAllBeds = [];
+        ['#pf-ward-select','#pf-bed-select','#pf-admit-service-select','#pf-service-select'].forEach(function(id) {
+            var $el = $(id);
+            if ($el.hasClass('select2-hidden-accessible')) $el.select2('destroy');
+            $el.empty().append('<option value=""></option>');
+        });
 
         // Morgue-specific resets
         pfMorgueServicesLoaded = false;
@@ -4725,7 +4900,7 @@ $(document).ready(function() {
                                     <div class="row g-2">
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold">Admission Service <span class="text-danger">*</span></label>
-                                            <select class="form-select form-select-sm" id="pf-admit-service-select">
+                                            <select id="pf-admit-service-select" style="width:100%">
                                                 <option value="">-- Loading services... --</option>
                                             </select>
                                         </div>
@@ -4737,11 +4912,20 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                     <div class="mt-2 mb-3">
-                                        <label class="form-label fw-bold">Assign Bed</label>
-                                        <select class="form-select form-select-sm" id="pf-bed-select">
-                                            <option value="">-- No bed (assign later) --</option>
-                                        </select>
-                                        <small class="text-muted">Bed can also be assigned later from nursing workbench.</small>
+                                        <label class="form-label fw-bold">Assign Bed <small class="text-muted">(optional)</small></label>
+                                        <div class="row g-2">
+                                            <div class="col-md-5">
+                                                <select id="pf-ward-select" style="width:100%">
+                                                    <option value="">-- Select Ward --</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-7">
+                                                <select id="pf-bed-select" style="width:100%">
+                                                    <option value="">-- No bed (assign later) --</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted mt-1 d-block">Select a ward first, then pick an available bed. Can also be assigned later from nursing workbench.</small>
                                     </div>
                                 </div>
 
@@ -4780,7 +4964,7 @@ $(document).ready(function() {
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold">Service <span class="text-danger">*</span></label>
-                                            <select class="form-select form-select-sm" id="pf-service-select">
+                                            <select id="pf-service-select" style="width:100%">
                                                 <option value="">-- Loading services... --</option>
                                             </select>
                                         </div>
@@ -4808,11 +4992,19 @@ $(document).ready(function() {
                             </div>
                             <div class="step-content">
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label mb-1">Coverage Scheme</label>
+                                        <div id="pf-scheme-grid">
+                                            {{-- Scheme cards rendered by JS --}}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6" id="pf-hmo-select-col">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">HMO Provider</label>
                                             <select class="form-control" id="pf-hmo">
-                                                <!-- Options populated by JS, HMO ID 1 (Private) is default -->
+                                                <!-- Options populated by JS -->
                                             </select>
                                         </div>
                                     </div>
