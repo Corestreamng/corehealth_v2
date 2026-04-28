@@ -1847,7 +1847,8 @@ class BillingWorkbenchController extends Controller
         }
 
         $patient = $admission->patient;
-        $admitDate = $admission->bed_assign_date;
+        // For emergency intake admissions, bed assignment is skipped — fall back to created_at
+        $admitDate = $admission->bed_assign_date ?? $admission->created_at;
         $dischargeDate = $admission->discharge_date;
 
         if (!$admitDate) {
