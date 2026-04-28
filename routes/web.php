@@ -986,6 +986,8 @@ Route::middleware(['auth'])->prefix('morgue')->name('morgue.')->group(function (
     Route::post('/add-service', [MorgueController::class, 'addService'])->name('add-service');
     Route::post('/release', [MorgueController::class, 'release'])->name('release');
     Route::get('/services', [MorgueController::class, 'getServices'])->name('services');
+    Route::get('/reports', [MorgueController::class, 'getReports'])->name('reports');
+    Route::get('/patient/{admissionId}/bill', [MorgueController::class, 'getPatientBill'])->name('patient.bill');
 });
 
 // Clinical Reports routes
