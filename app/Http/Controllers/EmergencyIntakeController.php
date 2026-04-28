@@ -673,6 +673,7 @@ class EmergencyIntakeController extends Controller
                 return [
                     'id' => $bed->id,
                     'name' => $bed->name,
+                    'ward_id' => $bed->wardRelation->id ?? null,
                     'ward' => $bed->wardRelation->name ?? 'Emergency',
                     'bed_type' => $bed->bed_type ?? 'Standard',
                 ];
@@ -692,6 +693,7 @@ class EmergencyIntakeController extends Controller
                     return [
                         'id' => $bed->id,
                         'name' => $bed->name,
+                        'ward_id' => $bed->wardRelation->id ?? null,
                         'ward' => $bed->wardRelation->name ?? 'General',
                         'bed_type' => $bed->bed_type ?? 'Standard',
                     ];
