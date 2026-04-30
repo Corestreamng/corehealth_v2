@@ -3647,6 +3647,11 @@
                             <i class="mdi mdi-calendar-check"></i> Visits
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="clinical-reports-tab" data-toggle="tab" href="#clinical-reports-content" role="tab">
+                            <i class="mdi mdi-chart-timeline-variant"></i> Clinical Reports
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- Tab Content -->
@@ -3894,6 +3899,9 @@
                             </div>
                         </div>
                     </div>
+
+                    @include('admin.partials.clinical-reports-panel')
+
                 </div>
             </div>
         </div>
@@ -10622,6 +10630,9 @@ function loadPatientAppointments(patientId) {
 
 {{-- Admission Module JS --}}
 @include('admin.partials.admissions-module-js')
+
+{{-- Clinical Reports JS --}}
+@include('admin.partials.clinical-reports-scripts')
 
 @endsection
 
