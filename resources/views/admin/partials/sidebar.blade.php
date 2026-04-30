@@ -106,6 +106,12 @@
                     <span class="menu-title">Health Records Workbench</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" href="{{ route('allPrevEncounters') }}" id="sidebar-receptionist-encounters">
+                    <i class="mdi mdi-stethoscope menu-icon"></i>
+                    <span class="menu-title">All Encounters</span>
+                </a>
+            </li>
             <!-- <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('patient.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-patients" data-bs-target="#sidebar-receptionist-patients" aria-expanded="{{ request()->routeIs('patient.*') ? 'true' : 'false' }}" aria-controls="sidebar-receptionist-patients" id="sidebar-receptionist-patients-toggle">
                     <i class="mdi mdi-account-multiple-outline menu-icon"></i>
@@ -960,6 +966,12 @@
                 <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}" id="sidebar-admin-departments">
                     <i class="mdi mdi-office-building-outline menu-icon"></i>
                     <span class="menu-title">Departments</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" href="{{ route('allPrevEncounters') }}" id="sidebar-admin-encounters">
+                    <i class="mdi mdi-stethoscope menu-icon"></i>
+                    <span class="menu-title">All Encounters</span>
                 </a>
             </li>
             <li class="nav-item">
