@@ -236,7 +236,7 @@
             </div>
 
             <!-- Attachments Card -->
-            @if($leaveRequest->attachments && $leaveRequest->attachments->count() > 0)
+            @if($leaveRequest->attachments && $leaveRequest->attachments->count()> 0)
             <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
@@ -375,7 +375,7 @@
                     @php
                         $available = $balance->available ?? 0;
                         $entitled = $balance->total_entitled ?? 0;
-                        $percentage = $entitled > 0 ? ($available / $entitled) * 100 : 0;
+                        $percentage = $entitled> 0 ? ($available / $entitled) * 100 : 0;
                         $afterApproval = $available - $leaveRequest->total_days;
                     @endphp
 

@@ -175,9 +175,7 @@
                         <p class="text-muted small mb-0">Review the impact across your items</p>
                     </div>
                 </div>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <div class="d-flex border-bottom bg-white flex-wrap">

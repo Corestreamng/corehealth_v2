@@ -69,15 +69,13 @@
 
         _bulkRequests.forEach(function(req, idx) {
             var serviceName = (req.service && (req.service.service_name || req.service.name)) ? (req.service.service_name || req.service.name) : ('Request #' + req.id);
-            var shortName = serviceName.length > 25 ? serviceName.substring(0, 22) + '...' : serviceName;
+            var shortName = serviceName.length> 25 ? serviceName.substring(0, 22) + '...' : serviceName;
             var active = idx === 0 ? 'active' : '';
             var show = idx === 0 ? 'show active' : '';
 
             $tabs.append(
                 '<li class="nav-item" role="presentation">' +
-                    '<button class="nav-link ' + active + ' bulk-result-tab-btn" id="bulk-tab-' + idx + '" ' +
-                    'data-bs-toggle="tab" data-bs-target="#bulk-pane-' + idx + '" type="button" role="tab" ' +
-                    'data-index="' + idx + '" title="' + serviceName + '">' +
+                    '<button class="nav-link ' + active + ' bulk-result-tab-btn" id="bulk-tab-' + idx + '" ' + 'data-bs-toggle="tab" data-bs-target="#bulk-pane-' + idx + '" type="button" role="tab" ' + 'data-index="' + idx + '" title="' + serviceName + '">' +
                     '<span class="bulk-tab-status-icon"></span> ' + shortName +
                     '</button>' +
                 '</li>'
@@ -326,7 +324,7 @@
     function _loadBulkV1Templates() {
         if (_bulkV1TemplatesLoaded) return;
         $.get('{{ route("v1-result-templates.list") }}', function(response) {
-            if (response.success && response.groups && response.groups.length > 0) {
+            if (response.success && response.groups && response.groups.length> 0) {
                 _bulkV1TemplateData = response.groups;
                 _bulkV1TemplatesLoaded = true;
                 // Populate all existing selects
@@ -340,7 +338,7 @@
     function _populateBulkTemplateSelect(idx) {
         if (!_bulkV1TemplatesLoaded) return;
         var $select = $('#bulk-pane-' + idx + ' .bulk-v1-template-select');
-        if ($select.find('optgroup').length > 0) return; // already populated
+        if ($select.find('optgroup').length> 0) return; // already populated
         _bulkV1TemplateData.forEach(function(group) {
             var $optgroup = $('<optgroup>').attr('label', group.category);
             group.templates.forEach(function(t) {
@@ -429,7 +427,7 @@
         $('#bulkResultStatusText').text('Tab ' + (_bulkCurrentIndex + 1) + ' of ' + total);
 
         // Update button text
-        if (_bulkCurrentIndex >= total - 1) {
+        if (_bulkCurrentIndex>= total - 1) {
             $('#bulkNextBtn').hide();
             $('#bulkSaveAndNextBtn').html('<i class="mdi mdi-content-save"></i> Save');
         } else {
@@ -555,7 +553,7 @@
             }
         });
 
-        if (unsaved.length > 0) {
+        if (unsaved.length> 0) {
             if (!confirm('You have unsaved results for:\n\n' + unsaved.join('\n') + '\n\nAre you sure you want to close? Unsaved changes will be lost.')) {
                 return;
             }

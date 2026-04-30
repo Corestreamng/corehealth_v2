@@ -302,7 +302,7 @@
             <!-- Variance -->
             <div class="variance-box {{ abs($reconciliation->variance) < 0.01 ? 'balanced' : 'unbalanced' }} mb-4">
                 <div class="label">Variance</div>
-                <div class="amount {{ $reconciliation->variance >= 0 ? 'text-success' : 'text-danger' }}">
+                <div class="amount {{ $reconciliation->variance>= 0 ? 'text-success' : 'text-danger' }}">
                     ₦{{ number_format($reconciliation->variance, 2) }}
                 </div>
                 @if(abs($reconciliation->variance) < 0.01)

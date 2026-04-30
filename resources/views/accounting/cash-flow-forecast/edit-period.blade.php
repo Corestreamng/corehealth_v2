@@ -408,10 +408,10 @@ $(document).ready(function() {
         $('#totalOutflows, #summaryOutflows').text(formatCurrency(totalOutflows));
 
         $('#netCashFlow').text(formatCurrency(netFlow)).removeClass('text-success text-danger')
-            .addClass(netFlow >= 0 ? 'text-success' : 'text-danger');
+            .addClass(netFlow>= 0 ? 'text-success' : 'text-danger');
 
         $('#closingBalance').text(formatCurrency(closing)).removeClass('text-success text-danger')
-            .addClass(closing >= 0 ? 'text-success' : 'text-danger');
+            .addClass(closing>= 0 ? 'text-success' : 'text-danger');
     }
 
     // Initial calculation

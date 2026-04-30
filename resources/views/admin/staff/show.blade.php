@@ -212,7 +212,7 @@
                             <i class="mdi mdi-shield-key-outline"></i> Access Control
                         </div>
                         <div class="info-card-body">
-                            @if($user->assignRole && count($user->getRoleNames()) > 0)
+                            @if($user->assignRole && count($user->getRoleNames())> 0)
                                 <p class="font-weight-bold mb-2">Roles</p>
                                 <div class="mb-3">
                                     @foreach($user->getRoleNames() as $role)
@@ -220,7 +220,7 @@
                                     @endforeach
                                 </div>
                             @endif
-                            @if($user->assignPermission && count($user->getPermissionNames()) > 0)
+                            @if($user->assignPermission && count($user->getPermissionNames())> 0)
                                 <p class="font-weight-bold mb-2">Direct Permissions</p>
                                 <div>
                                     @foreach($user->getPermissionNames() as $permission)

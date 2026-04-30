@@ -116,15 +116,15 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stat-card" style="border-color: {{ $stats['projected_ending_cash'] >= 0 ? '#28a745' : '#dc3545' }};">
+            <div class="stat-card" style="border-color: {{ $stats['projected_ending_cash']>= 0 ? '#28a745' : '#dc3545' }};">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="stat-value {{ $stats['projected_ending_cash'] >= 0 ? 'text-success' : 'text-danger' }}">
+                        <div class="stat-value {{ $stats['projected_ending_cash']>= 0 ? 'text-success' : 'text-danger' }}">
                             ₦{{ number_format($stats['projected_ending_cash'], 0) }}
                         </div>
                         <div class="stat-label">Projected Ending Cash</div>
                     </div>
-                    <div class="stat-icon" style="background: rgba({{ $stats['projected_ending_cash'] >= 0 ? '40, 167, 69' : '220, 53, 69' }}, 0.1); color: {{ $stats['projected_ending_cash'] >= 0 ? '#28a745' : '#dc3545' }};">
+                    <div class="stat-icon" style="background: rgba({{ $stats['projected_ending_cash']>= 0 ? '40, 167, 69' : '220, 53, 69' }}, 0.1); color: {{ $stats['projected_ending_cash']>= 0 ? '#28a745' : '#dc3545' }};">
                         <i class="mdi mdi-chart-line"></i>
                     </div>
                 </div>
@@ -234,15 +234,15 @@
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom">
                     <span>Net Forecast (3mo)</span>
-                    <strong class="{{ $stats['net_forecast'] >= 0 ? 'text-success' : 'text-danger' }}">
-                        {{ $stats['net_forecast'] >= 0 ? '+' : '' }}₦{{ number_format($stats['net_forecast'], 0) }}
+                    <strong class="{{ $stats['net_forecast']>= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ $stats['net_forecast']>= 0 ? '+' : '' }}₦{{ number_format($stats['net_forecast'], 0) }}
                     </strong>
                 </div>
                 @if($stats['last_period_variance'] !== null)
                 <div class="d-flex justify-content-between py-2">
                     <span>Last Period Variance</span>
-                    <strong class="{{ $stats['last_period_variance'] >= 0 ? 'text-success' : 'text-danger' }}">
-                        {{ $stats['last_period_variance'] >= 0 ? '+' : '' }}₦{{ number_format($stats['last_period_variance'], 0) }}
+                    <strong class="{{ $stats['last_period_variance']>= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ $stats['last_period_variance']>= 0 ? '+' : '' }}₦{{ number_format($stats['last_period_variance'], 0) }}
                     </strong>
                 </div>
                 @endif

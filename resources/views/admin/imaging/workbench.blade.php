@@ -2569,17 +2569,17 @@
     }
 
     /* Disable DataTables responsive expansion */
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable > tbody > tr.child {
+    #history-tab table.dataTable> tbody> tr.child {
         display: none !important;
     }
 
@@ -3327,7 +3327,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #6f42c1, #5a32a3); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-check-decagram"></i> Result Approval Review</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="approval-review-body">
                 <div class="text-center p-4">
@@ -3355,7 +3355,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle"></i> Reject Result</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <form id="rejectionReasonForm">
                 <div class="modal-body">
@@ -3383,7 +3383,7 @@
         <div class="modal-content" style="border-radius: 12px; overflow: hidden;">
             <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: #fff; border: none;">
                 <h5 class="modal-title"><i class="mdi mdi-check-decagram"></i> Confirm Approval</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center py-4">
                 <div style="font-size: 3rem; color: #28a745;"><i class="mdi mdi-clipboard-check-outline"></i></div>
@@ -3406,7 +3406,7 @@
         <div class="modal-content" style="border-radius: 12px; overflow: hidden;">
             <div class="modal-header" style="background: linear-gradient(135deg, #e67e22, #f39c12); color: #fff; border: none;">
                 <h5 class="modal-title"><i class="mdi mdi-undo-variant"></i> Reverse Approval</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center py-4">
                 <div style="font-size: 3rem; color: #e67e22;"><i class="mdi mdi-undo-variant"></i></div>
@@ -3432,9 +3432,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="fa fa-trash"></i> Delete Imaging Request</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="deleteRequestForm">
                 <div class="modal-body">
@@ -3455,7 +3453,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fa fa-times"></i> Cancel
                     </button>
                     <button type="submit" class="btn btn-danger">
@@ -3473,9 +3471,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning">
                 <h5 class="modal-title"><i class="fa fa-ban"></i> Dismiss Imaging Request</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="dismissRequestForm">
                 <div class="modal-body">
@@ -3496,7 +3492,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fa fa-times"></i> Cancel
                     </button>
                     <button type="submit" class="btn btn-warning">
@@ -3556,9 +3552,7 @@
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title"><i class="fa fa-clipboard-list"></i> Audit Trail</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row mb-3">
@@ -3607,7 +3601,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" id="exportAuditLog">
                     <i class="fa fa-download"></i> Export to Excel
                 </button>
@@ -3800,7 +3794,7 @@
                     <i class="mdi mdi-cart-check"></i> Selected Items
                     <span class="badge bg-light text-primary ms-2" id="modal-cart-count">0</span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0" id="cart-review-body">
                 <!-- Populated by JS -->
@@ -4146,7 +4140,7 @@ function populateResultViewModal(res_obj) {
                 paramsArray = resultData;
             }
 
-            if (paramsArray.length > 0) {
+            if (paramsArray.length> 0) {
                 let resultsHtml = '<table class="result-table"><thead><tr>';
                 resultsHtml += '<th style="width: 40%;">Test Parameter</th>';
                 resultsHtml += '<th style="width: 25%;">Results</th>';
@@ -4205,7 +4199,7 @@ function populateResultViewModal(res_obj) {
     $('#invest_attachments').html('');
     if (res_obj.attachments) {
         let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
-        if (attachments && attachments.length > 0) {
+        if (attachments && attachments.length> 0) {
             let attachHtml = '<div class="result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
             attachments.forEach(function(attachment) {
                 let url = '{{ asset("storage") }}/' + attachment.path;
@@ -4367,7 +4361,7 @@ function displayPatientInfo(patient) {
         }
     }
 
-    if (allergiesArray.length > 0) {
+    if (allergiesArray.length> 0) {
         const allergiesList = allergiesArray.map(allergy =>
             `<span class="allergy-tag"><i class="mdi mdi-alert"></i> ${allergy}</span>`
         ).join('');
@@ -4446,7 +4440,7 @@ function restoreCheckedItemsState() {
         // Sync select-all checkbox
         const total = $(`.request-checkbox[data-section="${section}"]`).length;
         const checked = $(`.request-checkbox[data-section="${section}"]:checked`).length;
-        $(`#select-all-${section}`).prop('checked', total > 0 && checked === total);
+        $(`#select-all-${section}`).prop('checked', total> 0 && checked === total);
     });
 
     // Refresh floating cart to reflect restored selections
@@ -4462,7 +4456,7 @@ function clearCheckedItems(section) {
 }
 
 function hasActiveSelections() {
-    return Object.values(checkedItemsState).some(s => s.size > 0);
+    return Object.values(checkedItemsState).some(s => s.size> 0);
 }
 // ── End Selection Preservation State ─────────────────────────────────
 
@@ -4515,7 +4509,7 @@ function renderPendingSubtabContent(filter) {
     }
 
     // Billing Section (Status 1)
-    if ((filter === 'all' || filter === 'billing') && requests.billing.length > 0) {
+    if ((filter === 'all' || filter === 'billing') && requests.billing.length> 0) {
         const billingHtml = `
             <div class="request-section" data-section="billing">
                 <div class="request-section-header">
@@ -4546,7 +4540,7 @@ function renderPendingSubtabContent(filter) {
     // No sample collection stage for imaging - requests go directly from billing to results
 
     // Results Section (Status 2 for imaging - awaiting results)
-    if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
+    if ((filter === 'all' || filter === 'results') && requests.results.length> 0) {
         const resultsHtml = `
             <div class="request-section" data-section="results">
                 <div class="request-section-header d-flex justify-content-between align-items-center">
@@ -4554,7 +4548,7 @@ function renderPendingSubtabContent(filter) {
                         <i class="mdi mdi-file-document-edit"></i>
                         Result Entry (${requests.results.length})
                     </h5>
-                    ${requests.results.length > 1 ? `
+                    ${requests.results.length> 1 ? `
                     <button class="btn btn-sm btn-primary" onclick="openBulkResultEntry()">
                         <i class="mdi mdi-file-multiple"></i> Bulk Result Entry
                     </button>` : ''}
@@ -4576,7 +4570,7 @@ function renderPendingSubtabContent(filter) {
 
     // Pending Approval Section (Status 5)
     const pendingApproval = requests.pending_approval || [];
-    if ((filter === 'all' || filter === 'approval') && pendingApproval.length > 0) {
+    if ((filter === 'all' || filter === 'approval') && pendingApproval.length> 0) {
         const approvalHtml = `
             <div class="request-section" data-section="approval">
                 <div class="request-section-header">
@@ -4597,7 +4591,7 @@ function renderPendingSubtabContent(filter) {
 
     // Rejected Section (Status 6)
     const rejectedItems = requests.rejected || [];
-    if ((filter === 'all' || filter === 'approval') && rejectedItems.length > 0) {
+    if ((filter === 'all' || filter === 'approval') && rejectedItems.length> 0) {
         const rejectedHtml = `
             <div class="request-section" data-section="rejected">
                 <div class="request-section-header">
@@ -4650,21 +4644,21 @@ function createRequestCard(request, section) {
         borderStyle = 'border-left: 4px solid #198754;';
 
         // Payment status (billed items)
-        if (payableAmount > 0 && !isPaid) {
+        if (payableAmount> 0 && !isPaid) {
             statusBadges += ' <span class="badge bg-danger">Awaiting Payment</span>';
             pendingAlerts += `<div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
                 <i class="mdi mdi-cash-clock"></i> <strong>Payment Required:</strong> ₦${Number(payableAmount).toLocaleString()}</div>`;
-        } else if (payableAmount > 0 && isPaid) {
+        } else if (payableAmount> 0 && isPaid) {
             statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> Paid</span>';
         }
         // HMO validation status
-        if (claimsAmount > 0 && (!validationStatus || validationStatus === 'pending')) {
+        if (claimsAmount> 0 && (!validationStatus || validationStatus === 'pending')) {
             statusBadges += ' <span class="badge bg-info">Awaiting HMO Validation</span>';
             pendingAlerts += `<div class="alert alert-info py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
                 <i class="mdi mdi-shield-alert"></i> <strong>HMO Validation Required:</strong> ₦${Number(claimsAmount).toLocaleString()} claim pending</div>`;
-        } else if (claimsAmount > 0 && validationStatus === 'rejected') {
+        } else if (claimsAmount> 0 && validationStatus === 'rejected') {
             statusBadges += ' <span class="badge bg-danger"><i class="mdi mdi-close"></i> HMO Rejected</span>';
-        } else if (claimsAmount > 0 && isValidated) {
+        } else if (claimsAmount> 0 && isValidated) {
             statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> HMO OK</span>';
         }
     } else if (section === 'approval') {
@@ -4680,7 +4674,7 @@ function createRequestCard(request, section) {
     }
 
     // Price display
-    const priceHtml = price > 0 ? `<div class="request-card-price">₦${Number(price).toLocaleString()}</div>` : '';
+    const priceHtml = price> 0 ? `<div class="request-card-price">₦${Number(price).toLocaleString()}</div>` : '';
 
     // HMO coverage split info
     let hmoHtml = '';
@@ -4688,8 +4682,8 @@ function createRequestCard(request, section) {
         hmoHtml = `
             <div class="request-card-hmo-info">
                 <span class="badge bg-info">${coverageMode.toUpperCase()}</span>
-                ${payableAmount > 0 ? `<span class="text-danger ms-2">Pay: ₦${Number(payableAmount).toLocaleString()}</span>` : ''}
-                ${claimsAmount > 0 ? `<span class="text-success ms-2">HMO: ₦${Number(claimsAmount).toLocaleString()}</span>` : ''}
+                ${payableAmount> 0 ? `<span class="text-danger ms-2">Pay: ₦${Number(payableAmount).toLocaleString()}</span>` : ''}
+                ${claimsAmount> 0 ? `<span class="text-success ms-2">HMO: ₦${Number(claimsAmount).toLocaleString()}</span>` : ''}
             </div>
         `;
     }
@@ -4709,8 +4703,8 @@ function createRequestCard(request, section) {
             tariffPreviewHtml = `<div class="d-flex align-items-center gap-2 flex-wrap py-1 px-2 mb-2 mt-1 rounded" style="background:#e8f4fd; font-size:0.85rem;">
                 <span class="badge bg-info">${modeLabel}</span>
                 <span class="text-muted">Estimated:</span>
-                ${payable > 0 ? `<span class="text-danger fw-semibold">Pay ₦${payable.toLocaleString()}</span>` : ''}
-                ${claims > 0 ? `<span class="text-success fw-semibold">HMO ₦${claims.toLocaleString()}</span>` : ''}
+                ${payable> 0 ? `<span class="text-danger fw-semibold">Pay ₦${payable.toLocaleString()}</span>` : ''}
+                ${claims> 0 ? `<span class="text-success fw-semibold">HMO ₦${claims.toLocaleString()}</span>` : ''}
             </div>`;
         }
     }
@@ -4755,25 +4749,21 @@ function createRequestCard(request, section) {
     let checkboxOrAction = '';
     if (section === 'results') {
         checkboxOrAction = `
-            <button class="btn btn-sm btn-primary enter-result-btn"
-                    data-request-id="${request.id}"
-                    ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
+            <button class="btn btn-sm btn-primary enter-result-btn" data-request-id="${request.id}" ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
                 <i class="mdi mdi-file-document-edit"></i>
                 Enter Result
             </button>
         `;
     } else if (section === 'approval') {
         checkboxOrAction = isApprover ? `
-            <button class="btn btn-sm btn-outline-primary review-approval-btn"
-                    data-request-id="${request.id}">
+            <button class="btn btn-sm btn-outline-primary review-approval-btn" data-request-id="${request.id}">
                 <i class="mdi mdi-eye"></i>
                 Review
             </button>
         ` : `<span class="badge badge-purple"><i class="mdi mdi-clock"></i> Pending</span>`;
     } else if (section === 'rejected') {
         checkboxOrAction = `
-            <button class="btn btn-sm btn-warning enter-result-btn"
-                    data-request-id="${request.id}">
+            <button class="btn btn-sm btn-warning enter-result-btn" data-request-id="${request.id}">
                 <i class="mdi mdi-pencil"></i>
                 Re-enter
             </button>
@@ -4977,8 +4967,8 @@ function displayNotes(notes) {
 
                             <div class="alert alert-light mb-0 p-2" id="${noteId}">
                                 <small><b><i class="mdi mdi-note-text"></i> Clinical Notes:</b><br>
-                                <span class="note-text ${content.length > 200 ? 'truncated' : ''}" data-full-text="${escapeHtml(content)}">${truncatedContent}</span></small>
-                                ${content.length > 200 ? `<br><a href="#" class="read-more-link small" data-note-id="${noteId}">Read More</a>` : ''}
+                                <span class="note-text ${content.length> 200 ? 'truncated' : ''}" data-full-text="${escapeHtml(content)}">${truncatedContent}</span></small>
+                                ${content.length> 200 ? `<br><a href="#" class="read-more-link small" data-note-id="${noteId}">Read More</a>` : ''}
                             </div>
                         </div>
                     </div>
@@ -5048,7 +5038,7 @@ function loadQueueCounts() {
         $('#queue-sample-count').text(0); // Imaging doesn't have sample stage
         var emergencyCount = counts.emergency || 0;
         $('#queue-emergency-count').text(emergencyCount);
-        if (emergencyCount > 0) {
+        if (emergencyCount> 0) {
             $('#queue-emergency-count').closest('.queue-item').addClass('emergency-pulse');
         } else {
             $('#queue-emergency-count').closest('.queue-item').removeClass('emergency-pulse');
@@ -5057,7 +5047,7 @@ function loadQueueCounts() {
         var approvalCount = counts.approval || 0;
         $('#queue-approval-count').text(approvalCount);
         $('#approval-float-count').text(approvalCount);
-        if (approvalCount > 0) {
+        if (approvalCount> 0) {
             $('#openApprovalQueue').show();
         }
         updateSyncIndicator();
@@ -5254,7 +5244,7 @@ function updateFloatingCart() {
 
     const totalPrice = items.billing.reduce((sum, i) => sum + i.price, 0);
     $('#cart-item-count').text(totalCount);
-    if (totalPrice > 0) {
+    if (totalPrice> 0) {
         $('#cart-total-display').text('₦' + Number(totalPrice).toLocaleString()).show();
     } else {
         $('#cart-total-display').hide();
@@ -5279,7 +5269,7 @@ function openCartReviewModal() {
         </div>`;
     } else {
         // Billing section
-        if (items.billing.length > 0) {
+        if (items.billing.length> 0) {
             const billingTotal = items.billing.reduce((sum, i) => sum + i.price, 0);
             html += `<div class="cart-section">
                 <div class="cart-section-header">
@@ -5293,14 +5283,14 @@ function openCartReviewModal() {
                         <div class="cart-item-meta"><i class="mdi mdi-doctor"></i> ${item.doctor} &middot; ${item.date}</div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        ${item.price > 0 ? `<span class="cart-item-price">₦${Number(item.price).toLocaleString()}</span>` : ''}
+                        ${item.price> 0 ? `<span class="cart-item-price">₦${Number(item.price).toLocaleString()}</span>` : ''}
                         <button class="cart-item-remove" onclick="uncheckItem(${item.id}, 'billing')" title="Remove">
                             <i class="mdi mdi-close-circle"></i>
                         </button>
                     </div>
                 </div>`;
             });
-            if (billingTotal > 0) {
+            if (billingTotal> 0) {
                 html += `<div class="cart-section-total text-end small text-muted pe-2">Subtotal: <strong>₦${Number(billingTotal).toLocaleString()}</strong></div>`;
             }
             html += `<div class="cart-action-row">
@@ -5327,14 +5317,14 @@ function cartRecordBilling() {
     const ids = $('.request-checkbox[data-section="billing"]:checked').map(function() {
         return $(this).data('request-id');
     }).get();
-    if (ids.length > 0) recordBilling(ids);
+    if (ids.length> 0) recordBilling(ids);
 }
 
 function cartDismiss(section) {
     const ids = $(`.request-checkbox[data-section="${section}"]:checked`).map(function() {
         return $(this).data('request-id');
     }).get();
-    if (ids.length > 0) dismissRequests(ids, section);
+    if (ids.length> 0) dismissRequests(ids, section);
 }
 // ── End Floating Cart Logic ──────────────────────────────────────────
 
@@ -5669,7 +5659,7 @@ function updateTrashTotalCount() {
     const total = dismissed + deleted;
     $('#trash-total-count').text(total);
 
-    if (total > 0) {
+    if (total> 0) {
         $('#trash-total-count').show();
     } else {
         $('#trash-total-count').hide();
@@ -5819,18 +5809,18 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
         const temp = parseFloat(value);
         const idealTemp = 37.0;
         const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
-        status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
+        deviation = temp> idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
+        status = (temp>= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'pulse' && value !== 'N/A') {
         const pulse = parseInt(value);
         const idealPulse = 80;
         const diff = Math.abs(pulse - idealPulse);
-        deviation = pulse > idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
-        status = (pulse >= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
+        deviation = pulse> idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
+        status = (pulse>= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'bp' && value !== 'N/A' && value.includes('/')) {
         const [sys, dia] = value.split('/').map(v => parseInt(v));
-        status = (sys >= 90 && sys <= 140 && dia >= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
-        deviation = sys > 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
+        status = (sys>= 90 && sys <= 140 && dia>= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
+        deviation = sys> 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
     }
 
     const content = `
@@ -5860,14 +5850,14 @@ function checkForAllergies(medications, patientAllergies) {
 
     if (typeof patientAllergies === 'string') {
         // Handle comma-separated string
-        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length > 0);
+        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length> 0);
     } else if (Array.isArray(patientAllergies)) {
         // Handle array (could be array of strings or array of objects)
         allergiesArray = patientAllergies.map(a => {
             if (typeof a === 'string') return a.trim();
             if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
             return '';
-        }).filter(a => a.length > 0);
+        }).filter(a => a.length> 0);
     } else if (typeof patientAllergies === 'object' && patientAllergies !== null) {
         // Handle single object or object with values
         if (patientAllergies.name || patientAllergies.allergy || patientAllergies.allergen) {
@@ -5878,7 +5868,7 @@ function checkForAllergies(medications, patientAllergies) {
                 if (typeof a === 'string') return a.trim();
                 if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
                 return '';
-            }).filter(a => a.length > 0);
+            }).filter(a => a.length> 0);
         }
     }
 
@@ -6370,10 +6360,10 @@ function loadReportsStatistics(filters = {}) {
             }
 
             // Update top services
-            if (data.top_services && data.top_services.length > 0) {
+            if (data.top_services && data.top_services.length> 0) {
                 let servicesHtml = '<ul class="list-group list-group-flush">';
                 data.top_services.forEach(function(service, index) {
-                    const percentage = data.summary.total_requests > 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
+                    const percentage = data.summary.total_requests> 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
                     servicesHtml += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <div style="flex: 1; min-width: 0; margin-right: 15px;">
                             <div class="d-flex justify-content-between mb-1">
@@ -6498,7 +6488,7 @@ function renderQueueCard(data) {
 
     // Attachments
     let attachmentsSection = '';
-    if (data.attachments && data.attachments.length > 0) {
+    if (data.attachments && data.attachments.length> 0) {
         const attachmentLinks = data.attachments.map(att => {
             const icon = getFileIcon(att.type);
             return `<a href="/storage/${att.path}" target="_blank" class="queue-card-attachment">
@@ -6590,7 +6580,7 @@ function getStatusBadges(data) {
                 <div class="queue-card-status-value">${data.result_by}<br><small>${data.result_at}</small></div>
             </div>
         `;
-    } else if (data.status >= 2) {
+    } else if (data.status>= 2) {
         badges += `
             <div class="queue-card-status-item pending">
                 <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
@@ -6834,7 +6824,7 @@ function renderTopServices(services, totalRequests = 0) {
     let html = '<ul class="list-group list-group-flush">';
 
     services.forEach((service, index) => {
-        const percentage = totalRequests > 0 ? Math.round((service.count / totalRequests) * 100) : 0;
+        const percentage = totalRequests> 0 ? Math.round((service.count / totalRequests) * 100) : 0;
 
         html += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
             <div style="flex: 1; min-width: 0; margin-right: 15px;">
@@ -6905,7 +6895,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         6: { name: 'Rejected', color: '#dc3545' }
     };
 
-    if (byStatus && byStatus.length > 0) {
+    if (byStatus && byStatus.length> 0) {
         byStatus.forEach(item => {
             const info = statusMap[item.status] || { name: 'Unknown', color: '#6c757d' };
             statusLabels.push(info.name);
@@ -6948,7 +6938,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
     const trendLabels = [];
     const trendData = [];
 
-    if (monthlyTrends && monthlyTrends.length > 0) {
+    if (monthlyTrends && monthlyTrends.length> 0) {
         monthlyTrends.forEach(item => {
             trendLabels.push(item.month);
             trendData.push(item.count);
@@ -7018,7 +7008,7 @@ function openApprovalReview(requestId) {
         }
 
         let attachmentsHtml = '';
-        if (d.attachments && d.attachments.length > 0) {
+        if (d.attachments && d.attachments.length> 0) {
             const items = d.attachments.map(att => {
                 const fileName = typeof att === 'string' ? att.split('/').pop() : (att.name || 'File');
                 const filePath = typeof att === 'string' ? att : att.path;

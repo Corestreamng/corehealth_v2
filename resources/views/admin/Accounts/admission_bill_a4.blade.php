@@ -174,13 +174,13 @@
                 <span>Gross Total:</span>
                 <span>₦{{ number_format($totals['gross'], 2) }}</span>
             </div>
-            @if($totals['discount'] > 0)
+            @if($totals['discount']> 0)
             <div class="totals-row subtotal">
                 <span>Total Discount:</span>
                 <span class="green">-₦{{ number_format($totals['discount'], 2) }}</span>
             </div>
             @endif
-            @if($totals['hmo'] > 0)
+            @if($totals['hmo']> 0)
             <div class="totals-row subtotal">
                 <span>HMO Coverage:</span>
                 <span class="green">-₦{{ number_format($totals['hmo'], 2) }}</span>
@@ -201,7 +201,7 @@
         </div>
 
         <!-- Day-by-Day Timeline -->
-        @if(count($timeline) > 0)
+        @if(count($timeline)> 0)
         <div class="timeline-section">
             <div class="section-title">Day-by-Day Breakdown</div>
             @foreach($timeline as $day)

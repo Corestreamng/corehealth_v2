@@ -82,7 +82,7 @@
             if (seconds < 60) return seconds + 's';
             var m = Math.floor(seconds / 60);
             var s = seconds % 60;
-            return m + 'm' + (s > 0 ? ' ' + s + 's' : '');
+            return m + 'm' + (s> 0 ? ' ' + s + 's' : '');
         }
 
         function getElapsedSeconds() {
@@ -118,7 +118,7 @@
                 var wallTime = Math.floor((new Date() - _startedAt) / 1000);
                 totalPaused = Math.max(0, wallTime - getElapsedSeconds());
             }
-            if (totalPaused > 0) {
+            if (totalPaused> 0) {
                 $('#timer-pause-info').removeClass('d-none');
                 $('#timer-total-paused').text(formatMinutes(totalPaused));
             }

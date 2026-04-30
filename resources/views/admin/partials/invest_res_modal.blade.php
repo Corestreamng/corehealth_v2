@@ -15,7 +15,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
                             id="invest_res_service_name"></span>)</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="invest_res_entry_id" id="invest_res_entry_id">

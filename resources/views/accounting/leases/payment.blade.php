@@ -563,11 +563,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const variance = paymentAmount - scheduledAmount;
 
         // Show/hide variance warning
-        if (Math.abs(variance) > 0.01 && scheduledAmount > 0) {
+        if (Math.abs(variance)> 0.01 && scheduledAmount> 0) {
             varianceWarning.classList.remove('d-none');
             varianceWarning.classList.remove('over', 'under');
 
-            if (variance > 0) {
+            if (variance> 0) {
                 varianceWarning.classList.add('over');
                 varianceMessage.textContent = `Payment is ₦${formatCurrency(variance)} OVER the scheduled amount of ₦${formatCurrency(scheduledAmount)}`;
             } else {
@@ -592,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Cap principal at opening liability
-            if (principal > openingLiability) {
+            if (principal> openingLiability) {
                 principal = openingLiability;
             }
 

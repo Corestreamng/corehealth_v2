@@ -476,8 +476,8 @@
     <div class="row mb-4">
         <div class="col-lg col-md-4 col-6 mb-3">
             <div class="status-card pending" data-filter="pending_approval">
-                <div class="card-trend {{ $stats['pending_trend'] >= 0 ? 'up' : 'down' }}">
-                    <i class="mdi mdi-arrow-{{ $stats['pending_trend'] >= 0 ? 'up' : 'down' }}"></i>
+                <div class="card-trend {{ $stats['pending_trend']>= 0 ? 'up' : 'down' }}">
+                    <i class="mdi mdi-arrow-{{ $stats['pending_trend']>= 0 ? 'up' : 'down' }}"></i>
                     {{ abs($stats['pending_trend']) }}%
                 </div>
                 <div class="card-icon"><i class="mdi mdi-clock-alert-outline"></i></div>
@@ -533,7 +533,7 @@
                 <div class="vol-count">{{ $stats['today_count'] }} transfers</div>
                 @if($stats['today_vs_yesterday'] != 0)
                 <div class="vol-trend">
-                    <i class="mdi mdi-arrow-{{ $stats['today_vs_yesterday'] >= 0 ? 'up' : 'down' }}"></i>
+                    <i class="mdi mdi-arrow-{{ $stats['today_vs_yesterday']>= 0 ? 'up' : 'down' }}"></i>
                     {{ abs($stats['today_vs_yesterday']) }}% vs yesterday
                 </div>
                 @endif
@@ -546,7 +546,7 @@
                 <div class="vol-count">{{ $stats['week_count'] }} transfers</div>
                 @if($stats['week_vs_last'] != 0)
                 <div class="vol-trend">
-                    <i class="mdi mdi-arrow-{{ $stats['week_vs_last'] >= 0 ? 'up' : 'down' }}"></i>
+                    <i class="mdi mdi-arrow-{{ $stats['week_vs_last']>= 0 ? 'up' : 'down' }}"></i>
                     {{ abs($stats['week_vs_last']) }}% vs last week
                 </div>
                 @endif
@@ -559,7 +559,7 @@
                 <div class="vol-count">{{ $stats['month_count'] }} transfers</div>
                 @if($stats['month_vs_last'] != 0)
                 <div class="vol-trend">
-                    <i class="mdi mdi-arrow-{{ $stats['month_vs_last'] >= 0 ? 'up' : 'down' }}"></i>
+                    <i class="mdi mdi-arrow-{{ $stats['month_vs_last']>= 0 ? 'up' : 'down' }}"></i>
                     {{ abs($stats['month_vs_last']) }}% vs last month
                 </div>
                 @endif
@@ -774,7 +774,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-check-circle text-success mr-2"></i>Approve Transfer</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to approve this transfer?</p>
@@ -796,7 +796,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle text-danger mr-2"></i>Reject Transfer</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -818,7 +818,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-bank-check text-success mr-2"></i>Confirm Clearance</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info small">
@@ -850,7 +850,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-cancel text-dark mr-2"></i>Cancel Transfer</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to cancel this transfer?</p>
@@ -870,7 +870,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-alert text-warning mr-2"></i>Mark Transfer as Failed</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">

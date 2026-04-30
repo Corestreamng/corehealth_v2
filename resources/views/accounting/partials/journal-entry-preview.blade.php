@@ -47,12 +47,12 @@
                 </tr>
             </thead>
             <tbody id="{{ $bodyId ?? 'jePreviewBody' }}">
-                @if(isset($lines) && count($lines) > 0)
+                @if(isset($lines) && count($lines)> 0)
                     @foreach($lines as $line)
                         <tr>
                             <td>{{ $line['account'] }}</td>
-                            <td class="text-right">{{ $line['debit'] > 0 ? '₦' . number_format($line['debit'], 2) : '-' }}</td>
-                            <td class="text-right">{{ $line['credit'] > 0 ? '₦' . number_format($line['credit'], 2) : '-' }}</td>
+                            <td class="text-right">{{ $line['debit']> 0 ? '₦' . number_format($line['debit'], 2) : '-' }}</td>
+                            <td class="text-right">{{ $line['credit']> 0 ? '₦' . number_format($line['credit'], 2) : '-' }}</td>
                         </tr>
                     @endforeach
                 @else

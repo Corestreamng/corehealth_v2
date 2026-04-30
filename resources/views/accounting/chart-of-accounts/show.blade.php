@@ -86,7 +86,7 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="text-muted small">Current Balance</label>
-                        <h3 class="mb-0 text-{{ $balance >= 0 ? 'success' : 'danger' }}">
+                        <h3 class="mb-0 text-{{ $balance>= 0 ? 'success' : 'danger' }}">
                             ₦ {{ number_format(abs($balance), 2) }}
                         </h3>
                         <small class="text-muted">As of {{ now()->format('M d, Y') }}</small>
@@ -96,7 +96,7 @@
 
                     <div class="mb-3">
                         <label class="text-muted small">This Month</label>
-                        <h4 class="mb-0 text-{{ $periodBalance >= 0 ? 'success' : 'danger' }}">
+                        <h4 class="mb-0 text-{{ $periodBalance>= 0 ? 'success' : 'danger' }}">
                             ₦ {{ number_format(abs($periodBalance), 2) }}
                         </h4>
                         <small class="text-muted">{{ now()->format('F Y') }}</small>
@@ -105,7 +105,7 @@
             </div>
 
             {{-- Sub Accounts --}}
-            @if($account->subAccounts->count() > 0)
+            @if($account->subAccounts->count()> 0)
             <div modern shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Sub Accounts</h6>
@@ -142,7 +142,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @if($account->journalLines->count() > 0)
+                    @if($account->journalLines->count()> 0)
                     <div class="table-responsive">
                         <table class="table table-sm table-hover">
                             <thead class="table-light">
@@ -174,10 +174,10 @@
                                         </td>
                                         <td>{{ Str::limit($line->description ?: $line->journalEntry->description, 50) }}</td>
                                         <td class="text-end">
-                                            {{ $line->debit > 0 ? number_format($line->debit, 2) : '-' }}
+                                            {{ $line->debit> 0 ? number_format($line->debit, 2) : '-' }}
                                         </td>
                                         <td class="text-end">
-                                            {{ $line->credit > 0 ? number_format($line->credit, 2) : '-' }}
+                                            {{ $line->credit> 0 ? number_format($line->credit, 2) : '-' }}
                                         </td>
                                     </tr>
                                     @endif

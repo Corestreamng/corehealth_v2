@@ -37,16 +37,13 @@
                 <textarea style="display: none" id="observation_text" name="the_text" class="form-control observation_text">
         </textarea>
             </div>
-            <button type="submit" class="btn btn-primary"
-                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
         </form>
         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
             {{ csrf_field() }}
             <input type="hidden" name="note_type" value="1">
             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-            <button type="submit"
-                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                class="btn btn-success" style="float: right; margin-top:-40px">Save &
+            <button type="submit" onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')" class="btn btn-success" style="float: right; margin-top:-40px">Save &
                 New</button>
         </form>
     </div>
@@ -64,16 +61,13 @@
                 <textarea style="display: none" id="treatment_text" name="the_text" class="form-control treatment_text">
         </textarea>
             </div>
-            <button type="submit" class="btn btn-primary"
-                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
         </form>
         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
             {{ csrf_field() }}
             <input type="hidden" name="note_type" value="2">
             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-            <button type="submit" class="btn btn-success"
-                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                style="float: right; margin-top:-40px">Save &
+            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')" style="float: right; margin-top:-40px">Save &
                 New</button>
         </form>
     </div>
@@ -91,8 +85,7 @@
                 <textarea style="display: none" id="io_text" name="the_text" class="form-control io_text">
         </textarea>
             </div>
-            <button type="submit" class="btn btn-primary"
-                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
         </form>
         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
             {{ csrf_field() }}
@@ -116,16 +109,13 @@
                 <textarea style="display: none" id="labour_text" name="the_text" class="form-control labour_text">
         </textarea>
             </div>
-            <button type="submit" class="btn btn-primary"
-                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
         </form>
         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
             {{ csrf_field() }}
             <input type="hidden" name="note_type" value="4">
             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-            <button type="submit" class="btn btn-success"
-                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                style="float: right; margin-top:-40px">Save &
+            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')" style="float: right; margin-top:-40px">Save &
                 New</button>
         </form>
     </div>
@@ -146,16 +136,13 @@
                 <?php echo $others_record->note ?? $others_record_template->template; ?>
         </textarea>
             </div>
-            <button type="submit" class="btn btn-primary"
-                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
         </form>
         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
             {{ csrf_field() }}
             <input type="hidden" name="note_type" value="5">
             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-            <button type="submit" class="btn btn-success"
-                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                style="float: right; margin-top:-40px">Save &
+            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')" style="float: right; margin-top:-40px">Save &
                 New</button>
         </form>
     </div>

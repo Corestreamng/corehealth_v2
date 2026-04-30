@@ -27,7 +27,7 @@
                     <div class="form-group">
                         <label for="ward_id" class="control-label">Ward <i class="text-danger">*</i></label>
                         <div class="">
-                            @if(isset($wards) && $wards->count() > 0)
+                            @if(isset($wards) && $wards->count()> 0)
                                 <select class="form-control select2" id="ward_id" name="ward_id">
                                     <option value="">-- Select Ward --</option>
                                     @foreach($wards as $ward)

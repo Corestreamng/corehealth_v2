@@ -135,9 +135,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-alert-circle mr-2"></i> Confirm Restoration</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -164,9 +162,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning">
                 <h5 class="modal-title text-white"><i class="mdi mdi-delete mr-2"></i> Delete Backup?</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete <strong id="delete-filename"></strong>?</p>
@@ -184,7 +180,7 @@
 </div>
 
 <!-- Loading/Processing Modal -->
-<div class="modal fade" id="loadingModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content text-center py-4 px-4">
             <div class="modal-body">
@@ -376,7 +372,7 @@ $(document).ready(function() {
         
         progressInterval = setInterval(() => {
             progress += (Math.random() * 4) + 1; // 1% to 5% each tick
-            if (progress > 92) progress = 92; // Cap at 92% until ajax completes
+            if (progress> 92) progress = 92; // Cap at 92% until ajax completes
             $('#loadingModalProgress').css('width', progress + '%').attr('aria-valuenow', progress);
         }, 800);
     }

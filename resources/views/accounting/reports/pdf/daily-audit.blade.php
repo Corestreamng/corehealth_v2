@@ -117,7 +117,7 @@
 </div>
 
 <!-- Entries by Type -->
-@if(!empty($stats['by_type']) && count($stats['by_type']) > 0)
+@if(!empty($stats['by_type']) && count($stats['by_type'])> 0)
 <div style="margin-bottom: 20px;">
     <strong>Entries by Type:</strong>
     @foreach($stats['by_type'] as $type => $count)
@@ -167,8 +167,8 @@
                         <tr>
                             <td>{{ $line->account->account_code ?? $line->account->code ?? '-' }}</td>
                             <td>{{ $line->account->account_name ?? $line->account->name ?? '-' }}</td>
-                            <td class="text-right">{{ $line->debit > 0 ? '₦' . number_format($line->debit, 2) : '-' }}</td>
-                            <td class="text-right">{{ $line->credit > 0 ? '₦' . number_format($line->credit, 2) : '-' }}</td>
+                            <td class="text-right">{{ $line->debit> 0 ? '₦' . number_format($line->debit, 2) : '-' }}</td>
+                            <td class="text-right">{{ $line->credit> 0 ? '₦' . number_format($line->credit, 2) : '-' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -189,7 +189,7 @@
 @endforelse
 
 <!-- Footer Summary -->
-@if($entries->count() > 0)
+@if($entries->count()> 0)
 <div style="margin-top: 25px; padding: 15px; background-color: #333; color: white;">
     <table style="color: white;">
         <tr>

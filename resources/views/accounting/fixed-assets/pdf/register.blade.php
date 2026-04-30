@@ -141,7 +141,7 @@
     </tfoot>
 </table>
 
-@if($stats['by_category']->count() > 0)
+@if($stats['by_category']->count()> 0)
 <!-- Category Breakdown -->
 <div style="margin-top: 20px; page-break-inside: avoid;">
     <h4 style="font-size: 12px; margin-bottom: 10px; color: #495057; border-bottom: 2px solid #dee2e6; padding-bottom: 5px;">

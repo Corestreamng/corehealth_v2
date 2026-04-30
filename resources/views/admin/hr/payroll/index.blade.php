@@ -141,9 +141,7 @@
                     <i class="mdi mdi-cash-register mr-2" style="color: var(--primary-color);"></i>
                     Create Payroll Batch
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="createBatchForm">
                 @csrf
@@ -389,9 +387,7 @@
                     <i class="mdi mdi-eye mr-2" style="color: var(--primary-color);"></i>
                     Payroll Batch Details - <span id="viewBatchNumber"></span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem; max-height: 80vh; overflow-y: auto;">
                 <div class="row">
@@ -627,9 +623,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header" id="actionModalHeader" style="border-radius: 12px 12px 0 0;">
                 <h5 class="modal-title text-white" id="actionModalTitle"></h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="actionForm">
                 @csrf
@@ -689,16 +683,14 @@
 </div>
 
 <!-- Duplicate Staff Handling Modal -->
-<div class="modal fade" id="duplicateHandlingModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<div class="modal fade" id="duplicateHandlingModal" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); border-radius: 12px 12px 0 0;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-exclamation-triangle mr-2"></i>Duplicate Staff Found
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 0;">
                 <!-- Info Banner -->
@@ -1139,7 +1131,7 @@ $(function() {
         }
 
         // If deductions not directly available, calculate from gross - net
-        if (totalDeductions === 0 && totalGross > 0 && totalNet > 0) {
+        if (totalDeductions === 0 && totalGross> 0 && totalNet> 0) {
             totalDeductions = totalGross - totalNet;
         }
 
@@ -1242,7 +1234,7 @@ $(function() {
 
         let html = `<small class="text-muted">Showing ${response.from || 0}-${response.to || 0} of ${response.total || 0}</small>`;
 
-        if (totalPages > 1) {
+        if (totalPages> 1) {
             html += '<div class="btn-group btn-group-sm ml-2">';
             html += `<button type="button" class="btn btn-outline-secondary custom-page-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
 
@@ -1465,7 +1457,7 @@ $(function() {
     function getInitials(name) {
         if (!name) return '?';
         const parts = name.split(' ');
-        if (parts.length >= 2) {
+        if (parts.length>= 2) {
             return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         }
         return name.substring(0, 2).toUpperCase();
@@ -1478,7 +1470,7 @@ $(function() {
         const lockedCount = totalCount - replaceableCount;
 
         $('#selectedDuplicateCount').text(selectedCount);
-        $('#totalDuplicateCount').text(replaceableCount > 0 ? replaceableCount + ' replaceable' : totalCount);
+        $('#totalDuplicateCount').text(replaceableCount> 0 ? replaceableCount + ' replaceable' : totalCount);
         $('#toReplaceCount').text(selectedCount);
         $('#toSkipCount').text(totalCount - selectedCount);
         $('#newStaffCount').text(newStaffCountForBatch);
@@ -1531,7 +1523,7 @@ $(function() {
         });
 
         // Determine action based on selection
-        if (selectedForReplacement.length === replaceableCount && replaceableCount > 0 && replaceableCount === totalDuplicates) {
+        if (selectedForReplacement.length === replaceableCount && replaceableCount> 0 && replaceableCount === totalDuplicates) {
             // All replaceable items selected and all are replaceable - use overwrite action
             pendingBatchData.duplicate_action = 'overwrite';
         } else if (selectedForReplacement.length === 0) {
@@ -1733,7 +1725,7 @@ $(function() {
     function renderBatchActions(data) {
         const perms = data.permissions || {};
         let actions = '';
-        const hasItems = data.items && data.items.length > 0;
+        const hasItems = data.items && data.items.length> 0;
 
         if (data.status === 'draft') {
             if (!hasItems) {

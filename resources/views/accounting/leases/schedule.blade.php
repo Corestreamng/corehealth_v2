@@ -241,7 +241,7 @@
                     <small>Paid</small>
                 </div>
             </div>
-            @if($overdueCount > 0)
+            @if($overdueCount> 0)
             <div class="col-md-2">
                 <div class="summary-card bg-danger text-white">
                     <i class="mdi mdi-alert-circle" style="font-size: 1.5rem; opacity: 0.8;"></i>
@@ -250,17 +250,17 @@
                 </div>
             </div>
             @endif
-            <div class="col-md-{{ $overdueCount > 0 ? '2' : '3' }}">
+            <div class="col-md-{{ $overdueCount> 0 ? '2' : '3' }}">
                 <div class="summary-card bg-warning text-dark">
                     <i class="mdi mdi-cash" style="font-size: 1.5rem; opacity: 0.8;"></i>
                     <h4 class="mb-0 mt-2">₦{{ number_format($totalScheduledPayment / 1000, 0) }}K</h4>
                     <small>Total Scheduled</small>
-                    @if($totalActualPaid > 0)
+                    @if($totalActualPaid> 0)
                     <small class="d-block text-success">Paid: ₦{{ number_format($totalActualPaid / 1000, 0) }}K</small>
                     @endif
                 </div>
             </div>
-            <div class="col-md-{{ $overdueCount > 0 ? '2' : '2' }}">
+            <div class="col-md-{{ $overdueCount> 0 ? '2' : '2' }}">
                 <div class="summary-card bg-info text-white">
                     <i class="mdi mdi-percent" style="font-size: 1.5rem; opacity: 0.8;"></i>
                     <h4 class="mb-0 mt-2">₦{{ number_format($totalInterest / 1000, 0) }}K</h4>
@@ -365,7 +365,7 @@
                                 <th colspan="2" class="text-right">TOTALS:</th>
                                 <th class="text-right">
                                     ₦{{ number_format($totalScheduledPayment, 2) }}
-                                    @if($totalActualPaid > 0 && $totalActualPaid != $totalScheduledPayment)
+                                    @if($totalActualPaid> 0 && $totalActualPaid != $totalScheduledPayment)
                                     <br><small>(Paid: ₦{{ number_format($totalActualPaid, 2) }})</small>
                                     @endif
                                 </th>

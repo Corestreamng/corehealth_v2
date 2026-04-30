@@ -482,14 +482,14 @@ $(document).ready(function() {
         $('#itemsContainer').append(template);
         itemIndex++;
 
-        if ($('.item-row').length > 1) {
+        if ($('.item-row').length> 1) {
             $('.remove-item').prop('disabled', false);
         }
     });
 
     // Remove item
     $(document).on('click', '.remove-item', function() {
-        if ($('.item-row').length > 1) {
+        if ($('.item-row').length> 1) {
             $(this).closest('.item-row').remove();
             calculateTotal();
 

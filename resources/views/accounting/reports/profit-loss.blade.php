@@ -153,7 +153,7 @@
                     <tr class="table-dark fw-bold fs-5">
                         <td><i class="fas fa-money-bill-wave me-2"></i>Net Income (Loss)</td>
                         <td class="text-end" style="width: 180px;">
-                            <span class="{{ ($report['net_income'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                            <span class="{{ ($report['net_income'] ?? 0)>= 0 ? 'text-success' : 'text-danger' }}">
                                 ₦ {{ number_format($report['net_income'] ?? 0, 2) }}
                             </span>
                         </td>

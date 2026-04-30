@@ -69,95 +69,83 @@
     {{-- Nav tabs --}}
     <ul class="nav nav-tabs" id="patientTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link {{ !$section || $section == 'patientInfo' ? 'active' : '' }}" id="patientInfo-tab"
-                data-bs-toggle="tab" data-bs-target="#patientInfo" type="button" role="tab">
+            <button class="nav-link {{ !$section || $section == 'patientInfo' ? 'active' : '' }}" id="patientInfo-tab" data-bs-toggle="tab" data-bs-target="#patientInfo" type="button" role="tab">
                 <i class="fa fa-user me-1"></i> Patient Info
             </button>
         </li>
         @can('see-vitals')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'vitalsCardBody' ? 'active' : '' }}" id="vitals-tab"
-                    data-bs-toggle="tab" data-bs-target="#vitalsCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'vitalsCardBody' ? 'active' : '' }}" id="vitals-tab" data-bs-toggle="tab" data-bs-target="#vitalsCardBody" type="button" role="tab">
                     <i class="fa fa-heartbeat me-1"></i> Vitals
                 </button>
             </li>
         @endcan
         @can('see-nursing-notes')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'nurseChartCardBody' ? 'active' : '' }}" id="nurseChart-tab"
-                    data-bs-toggle="tab" data-bs-target="#nurseChartCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'nurseChartCardBody' ? 'active' : '' }}" id="nurseChart-tab" data-bs-toggle="tab" data-bs-target="#nurseChartCardBody" type="button" role="tab">
                     <i class="fa fa-notes-medical me-1"></i> Nurse Chart
                 </button>
             </li>
         @endcan
         @can('see-nursing-notes')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'injImmHistoryCardBody' ? 'active' : '' }}" id="injImmHistory-tab"
-                    data-bs-toggle="tab" data-bs-target="#injImmHistoryCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'injImmHistoryCardBody' ? 'active' : '' }}" id="injImmHistory-tab" data-bs-toggle="tab" data-bs-target="#injImmHistoryCardBody" type="button" role="tab">
                     <i class="fa fa-syringe me-1"></i> Inj/Imm History
                 </button>
             </li>
         @endcan
         @can('see-accounts')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'accountsCardBody' ? 'active' : '' }}" id="accounts-tab"
-                    data-bs-toggle="tab" data-bs-target="#accountsCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'accountsCardBody' ? 'active' : '' }}" id="accounts-tab" data-bs-toggle="tab" data-bs-target="#accountsCardBody" type="button" role="tab">
                     <i class="fa fa-money-bill-wave me-1"></i> Accounts
                 </button>
             </li>
         @endcan
         @can('see-admissions')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'addmissionsCardBody' ? 'active' : '' }}" id="admissions-tab"
-                    data-bs-toggle="tab" data-bs-target="#addmissionsCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'addmissionsCardBody' ? 'active' : '' }}" id="admissions-tab" data-bs-toggle="tab" data-bs-target="#addmissionsCardBody" type="button" role="tab">
                     <i class="fa fa-bed me-1"></i> Admission History
                 </button>
             </li>
         @endcan
         @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'wardNotesCardBody' ? 'active' : '' }}" id="procedures-tab"
-                    data-bs-toggle="tab" data-bs-target="#wardNotesCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'wardNotesCardBody' ? 'active' : '' }}" id="procedures-tab" data-bs-toggle="tab" data-bs-target="#wardNotesCardBody" type="button" role="tab">
                     <i class="fa fa-procedures me-1"></i> Procedure Notes
                 </button>
             </li>
         @endhasanyrole
         @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'nurseingNotesCardBody' ? 'active' : '' }}" id="nursing-tab"
-                    data-bs-toggle="tab" data-bs-target="#nurseingNotesCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'nurseingNotesCardBody' ? 'active' : '' }}" id="nursing-tab" data-bs-toggle="tab" data-bs-target="#nurseingNotesCardBody" type="button" role="tab">
                     <i class="fa fa-user-nurse me-1"></i> Nursing Notes
                 </button>
             </li>
         @endhasanyrole
         @can('see-doctor-notes')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'doctorNotesCardBody' ? 'active' : '' }}" id="doctor-tab"
-                    data-bs-toggle="tab" data-bs-target="#doctorNotesCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'doctorNotesCardBody' ? 'active' : '' }}" id="doctor-tab" data-bs-toggle="tab" data-bs-target="#doctorNotesCardBody" type="button" role="tab">
                     <i class="fa fa-stethoscope me-1"></i> Doctor Notes
                 </button>
             </li>
         @endcan
         @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'prescriptionsNotesCardBody' ? 'active' : '' }}" id="prescriptions-tab"
-                    data-bs-toggle="tab" data-bs-target="#prescriptionsNotesCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'prescriptionsNotesCardBody' ? 'active' : '' }}" id="prescriptions-tab" data-bs-toggle="tab" data-bs-target="#prescriptionsNotesCardBody" type="button" role="tab">
                     <i class="fa fa-pills me-1"></i> Prescriptions
                 </button>
             </li>
         @endhasanyrole
         @can('see-investigations')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'investigationsCardBody' ? 'active' : '' }}" id="investigations-tab"
-                    data-bs-toggle="tab" data-bs-target="#investigationsCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'investigationsCardBody' ? 'active' : '' }}" id="investigations-tab" data-bs-toggle="tab" data-bs-target="#investigationsCardBody" type="button" role="tab">
                     <i class="fa fa-flask me-1"></i> Investigations
                 </button>
             </li>
         @endcan
         @can('see-investigations')
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $section == 'imagingCardBody' ? 'active' : '' }}" id="imaging-tab"
-                    data-bs-toggle="tab" data-bs-target="#imagingCardBody" type="button" role="tab">
+                <button class="nav-link {{ $section == 'imagingCardBody' ? 'active' : '' }}" id="imaging-tab" data-bs-toggle="tab" data-bs-target="#imagingCardBody" type="button" role="tab">
                     <i class="fa fa-x-ray me-1"></i> Imaging
                 </button>
             </li>
@@ -612,7 +600,7 @@
             $('#imaging_attachments').html('');
             if (res_obj.attachments) {
                 let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
-                if (attachments && attachments.length > 0) {
+                if (attachments && attachments.length> 0) {
                     let attachHtml = '<div class="imaging-result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
                     attachments.forEach(function(attachment) {
                         let url = '{{ asset("storage") }}/' + attachment.path;
@@ -907,7 +895,7 @@
             mywindow.document.write(document.getElementById(elem).innerHTML);
             mywindow.document.write('</body></html>');
 
-            mywindow.document.close(); // IE >= 10
+            mywindow.document.close(); // IE>= 10
 
             // Wait for the window and its contents to load
             mywindow.onload = function() {

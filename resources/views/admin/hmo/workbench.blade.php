@@ -1218,7 +1218,7 @@
                 <div class="ml-auto d-flex align-items-center">
                     <span id="detail_validation_status" class="mr-3"></span>
                     <span id="detail_coverage_mode" class="mr-3"></span>
-                    <button type="button" class="close text-white ml-2" data-bs-dismiss="modal"><span>&times;</span></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close text-white ml-2 btn-close-white" aria-label="Close"></button>
                 </div>
             </div>
             <div class="modal-body p-3" style="font-size: 0.88rem;">
@@ -1409,9 +1409,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-check-circle mr-2"></i>Approve Request</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="approveForm">
                 @csrf
@@ -1515,9 +1513,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle mr-2"></i>Reject Request</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="rejectForm">
                 @csrf
@@ -1624,9 +1620,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-dark" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-undo mr-2"></i>Reverse Approval</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="reverseForm">
                 @csrf
@@ -1659,9 +1653,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-check-decagram mr-2"></i>Re-approve Request</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="reapproveForm">
                 @csrf
@@ -1764,9 +1756,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-check-all mr-2"></i>Batch Approve Requests</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="batchApproveForm">
                 @csrf
@@ -1798,9 +1788,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle-multiple mr-2"></i>Batch Reject Requests</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="batchRejectForm">
                 @csrf
@@ -1840,9 +1828,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #7c4dff 0%, #b388ff 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-key-plus mr-2"></i>Batch Enter Auth Codes</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="batchAuthCodeForm">
                 @csrf
@@ -1887,9 +1873,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #7c4dff 0%, #b388ff 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-key-plus mr-2"></i>Enter Auth Code</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="singleAuthCodeForm">
                 @csrf
@@ -1925,7 +1909,7 @@
 </div>
 
 <!-- Validate by Group Modal -->
-<div class="modal fade" id="validateGroupModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+<div class="modal fade" id="validateGroupModal" tabindex="-1" role="dialog" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
@@ -1933,7 +1917,7 @@
                     <h5 class="modal-title mb-0"><i class="mdi mdi-account-check-outline mr-2"></i>Validate Patient Requests — <span id="vg_patient_name"></span></h5>
                     <small id="vg_patient_subtitle" class="text-white-50"></small>
                 </div>
-                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-3">
                 {{-- Summary bar --}}
@@ -2083,9 +2067,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-history mr-2"></i>Patient HMO History</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row mb-4">
@@ -2239,7 +2221,7 @@ $(function() {
             // Emergency count
             var emergencyCount = data.emergency || 0;
             $('#emergency_count').text(emergencyCount);
-            if (emergencyCount > 0) {
+            if (emergencyCount> 0) {
                 $('#emergency-hmo-card').show();
             } else {
                 $('#emergency-hmo-card').hide();
@@ -2275,7 +2257,7 @@ $(function() {
     // Update batch action bar
     function updateBatchActionBar() {
         $('#selectedCount').text(selectedIds.length);
-        if (selectedIds.length > 0) {
+        if (selectedIds.length> 0) {
             $('#batchActionsBar').slideDown();
         } else {
             $('#batchActionsBar').slideUp();
@@ -2803,7 +2785,7 @@ $(function() {
 
         let html = '';
 
-        if (allergiesArray.length > 0) {
+        if (allergiesArray.length> 0) {
             html += `
                 <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
                     <i class="mdi mdi-alert-circle mdi-24px me-2"></i>
@@ -2873,24 +2855,24 @@ $(function() {
     function hmoGetTempClass(temp) {
         if (temp === 'N/A') return '';
         var t = parseFloat(temp);
-        if (t < 34 || t > 39) return 'vital-critical';
-        if (t < 36.1 || t > 38.0) return 'vital-warning';
+        if (t < 34 || t> 39) return 'vital-critical';
+        if (t < 36.1 || t> 38.0) return 'vital-warning';
         return 'vital-normal';
     }
 
     function hmoGetHeartRateClass(heartRate) {
         if (heartRate === 'N/A') return '';
         var hr = parseInt(heartRate);
-        if (hr < 50 || hr > 220) return 'vital-critical';
-        if (hr < 60 || hr > 100) return 'vital-warning';
+        if (hr < 50 || hr> 220) return 'vital-critical';
+        if (hr < 60 || hr> 100) return 'vital-warning';
         return 'vital-normal';
     }
 
     function hmoGetRespRateClass(respRate) {
         if (respRate === 'N/A') return '';
         var rr = parseInt(respRate);
-        if (rr < 10 || rr > 35) return 'vital-critical';
-        if (rr < 12 || rr > 30) return 'vital-warning';
+        if (rr < 10 || rr> 35) return 'vital-critical';
+        if (rr < 12 || rr> 30) return 'vital-warning';
         return 'vital-normal';
     }
 
@@ -2898,8 +2880,8 @@ $(function() {
         if (bp === 'N/A' || !bp.includes('/')) return '';
         var parts = bp.split('/').map(function(v) { return parseInt(v); });
         var systolic = parts[0], diastolic = parts[1];
-        if (systolic > 180 || systolic < 80 || diastolic > 110 || diastolic < 50) return 'vital-critical';
-        if (systolic > 140 || systolic < 90 || diastolic > 90 || diastolic < 60) return 'vital-warning';
+        if (systolic> 180 || systolic < 80 || diastolic> 110 || diastolic < 50) return 'vital-critical';
+        if (systolic> 140 || systolic < 90 || diastolic> 90 || diastolic < 60) return 'vital-warning';
         return 'vital-normal';
     }
 
@@ -3430,7 +3412,7 @@ $(function() {
         return '₦' + parseFloat(val || 0).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    // SLA color: green <2h, yellow <4h, red >4h
+    // SLA color: green <2h, yellow <4h, red>4h
     function vgSlaColor(hoursAgo) {
         if (!hoursAgo) return 'secondary';
         if (hoursAgo < 2) return 'success';
@@ -3595,7 +3577,7 @@ $(function() {
             if (!r.created_at) return true;
             let d = new Date(r.created_at);
             if (isNaN(d.getTime())) return true;
-            return d >= cutoff;
+            return d>= cutoff;
         });
     }
 
@@ -3728,7 +3710,7 @@ $(function() {
 
     function vgUpdateGroupCheckbox(groupKey) {
         let allInGroup = $('#vg_collapse_' + groupKey + ' .vg-item-check');
-        let allChecked = allInGroup.length > 0 && allInGroup.filter(':checked').length === allInGroup.length;
+        let allChecked = allInGroup.length> 0 && allInGroup.filter(':checked').length === allInGroup.length;
         $('#vg_grp_' + groupKey).prop('checked', allChecked);
     }
 
@@ -3821,14 +3803,14 @@ $(function() {
         $('#vg_secondary_selected_count').text(secondarySelected);
 
         // Show/hide auth section
-        if (secondarySelected > 0) {
+        if (secondarySelected> 0) {
             $('#vg_auth_section').show();
         } else {
             $('#vg_auth_section').hide();
         }
 
         // Enable/disable buttons
-        let hasSelection = selectedReqs.length > 0;
+        let hasSelection = selectedReqs.length> 0;
         $('#vg_approve_btn').prop('disabled', !hasSelection);
         $('#vg_reject_btn').prop('disabled', !hasSelection);
     }
@@ -3843,7 +3825,7 @@ $(function() {
         let authMode = $('input[name="vg_auth_mode"]:checked').val();
 
         // Validate auth codes for secondary items
-        if (secondarySelected.length > 0 && authMode !== 'skip') {
+        if (secondarySelected.length> 0 && authMode !== 'skip') {
             if (authMode === 'shared') {
                 let code = $('#vg_shared_auth_code').val().trim();
                 if (!code) {
@@ -3857,7 +3839,7 @@ $(function() {
                     let val = vgIndividualCodes[r.id];
                     if (!val || !val.trim()) missing.push(r.name);
                 });
-                if (missing.length > 0) {
+                if (missing.length> 0) {
                     toastr.warning('Missing auth codes for: ' + missing.join(', '), 'Auth Code Required');
                     return;
                 }
@@ -3890,14 +3872,14 @@ $(function() {
             type: 'POST',
             data: payload,
             success: function(resp) {
-                if (resp.errors && resp.errors.length > 0) {
+                if (resp.errors && resp.errors.length> 0) {
                     toastr.warning(resp.message + '<br>' + resp.errors.join('<br>'), 'Partial Approval');
                 } else {
                     toastr.success(resp.message);
                 }
 
                 // Remove approved items from vgData and refresh
-                if (resp.approved > 0) {
+                if (resp.approved> 0) {
                     vgRemoveApprovedItems();
                 }
 
@@ -3926,7 +3908,7 @@ $(function() {
             enc.requests = enc.requests.filter(function(r) { return vgSelectedIds.indexOf(r.id) === -1; });
         });
         // Remove empty encounter groups
-        vgData.encounters = vgData.encounters.filter(function(enc) { return enc.requests.length > 0; });
+        vgData.encounters = vgData.encounters.filter(function(enc) { return enc.requests.length> 0; });
         // Update summary
         let allReqs = vgAllRequests();
         vgData.summary.total_count = allReqs.length;
@@ -3990,7 +3972,7 @@ $(function() {
                 toastr.success(resp.message);
                 $('#vg_reject_section').slideUp(200);
 
-                if (resp.rejected > 0) {
+                if (resp.rejected> 0) {
                     vgRemoveApprovedItems();
                 }
 
@@ -4357,7 +4339,7 @@ $(function() {
             }
             patients.forEach(function(p) {
                 var hmoLabel = p.hmo || 'Private';
-                var pendingHtml = (p.pending_count && p.pending_count > 0)
+                var pendingHtml = (p.pending_count && p.pending_count> 0)
                     ? '<span class="badge badge-warning pf-ri-badge ml-2">' + p.pending_count + ' pending</span>' : '';
                 var $item = $('<div class="pf-result-item" data-id="' + p.id + '" data-name="' + escHtml(p.name) + '" data-photo="' + escHtml(p.photo) + '" data-fileno="' + escHtml(p.file_no) + '">' +
                     '<img src="' + escHtml(p.photo) + '" alt="">' +
@@ -4396,7 +4378,7 @@ $(function() {
         function addRecentPatient(id, name, photo, fileno) {
             var list = getRecentPatients().filter(function(r) { return r.id !== id; });
             list.unshift({ id: id, name: name, photo: photo, fileno: fileno });
-            if (list.length > PF_RECENT_MAX) list = list.slice(0, PF_RECENT_MAX);
+            if (list.length> PF_RECENT_MAX) list = list.slice(0, PF_RECENT_MAX);
             localStorage.setItem(PF_RECENT_KEY, JSON.stringify(list));
             renderRecentPatients();
         }
@@ -4479,7 +4461,7 @@ $(function() {
                 var $bal = $('#pfPatientBalance');
                 $bal.text('₦' + fmtN(bal));
                 $bal.removeClass('pf-balance-positive pf-balance-negative pf-balance-zero');
-                $bal.addClass(bal > 0 ? 'pf-balance-positive' : (bal < 0 ? 'pf-balance-negative' : 'pf-balance-zero'));
+                $bal.addClass(bal> 0 ? 'pf-balance-positive' : (bal < 0 ? 'pf-balance-negative' : 'pf-balance-zero'));
 
                 // Quick action links
                 $('#pfPrintReportLink').attr('href', "{{ url('hmo/reports/patient') }}/" + patientId);
@@ -4548,7 +4530,7 @@ $(function() {
                     var rd = parsePfDate(r.created_at);
                     if (rd) {
                         if (fromDate && rd < fromDate) return false;
-                        if (toDate && rd > toDate) return false;
+                        if (toDate && rd> toDate) return false;
                     }
                 }
                 // Type filter
@@ -4584,7 +4566,7 @@ $(function() {
                 if (!pfPages[tabKey]) pfPages[tabKey] = 1;
                 // Clamp page
                 var totalPages = Math.max(1, Math.ceil(filtered.length / PF_PAGE_SIZE));
-                if (pfPages[tabKey] > totalPages) pfPages[tabKey] = totalPages;
+                if (pfPages[tabKey]> totalPages) pfPages[tabKey] = totalPages;
                 renderPfTabPage(tabKey, bodyKey);
             });
         }
@@ -4606,14 +4588,14 @@ $(function() {
                 $pag.find('.pf-page-info').text('Showing ' + showFrom + '-' + showTo + ' of ' + filtered.length);
                 $pag.find('.pf-page-num').text(page + ' / ' + totalPages);
                 $pag.find('.pf-page-prev').prop('disabled', page <= 1);
-                $pag.find('.pf-page-next').prop('disabled', page >= totalPages);
+                $pag.find('.pf-page-next').prop('disabled', page>= totalPages);
             }
         }
 
         // Pagination button clicks
         $(document).on('click', '.pf-pagination .pf-page-prev', function() {
             var tabKey = $(this).closest('.pf-pagination').data('tab');
-            if (pfPages[tabKey] > 1) {
+            if (pfPages[tabKey]> 1) {
                 pfPages[tabKey]--;
                 var tabMap = { pending:'pending', awaiting_code:'awaiting', approved:'approved', express:'express', rejected:'rejected', past:'past' };
                 renderPfTabPage(tabKey, tabMap[tabKey]);
@@ -4853,7 +4835,7 @@ $(function() {
 
         function updatePfBatchBar() {
             $('#pfSelectedCount').text(pfSelectedIds.length);
-            if (pfSelectedIds.length > 0) {
+            if (pfSelectedIds.length> 0) {
                 $('#pfBatchBar').slideDown();
             } else {
                 $('#pfBatchBar').slideUp();
@@ -5051,7 +5033,7 @@ function _initHmoAdmissions() {
             onBadgeUpdate: function(count) {
                 var badge = $('#pfBadgeAdmissions');
                 badge.text(count);
-                if (count > 0) badge.show(); else badge.hide();
+                if (count> 0) badge.show(); else badge.hide();
             }
         });
     }

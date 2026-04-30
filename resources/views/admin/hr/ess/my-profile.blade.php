@@ -300,7 +300,7 @@
             </div>
 
             <!-- Roles Card -->
-            @if($user->getRoleNames()->count() > 0)
+            @if($user->getRoleNames()->count()> 0)
             <div class="info-card">
                 <div class="info-card-header header-purple">
                     <span><i class="mdi mdi-shield-key-outline"></i> System Roles</span>
@@ -319,7 +319,7 @@
                     <span><i class="mdi mdi-account-supervisor-outline"></i> My Supervisors</span>
                 </div>
                 <div class="info-card-body">
-                    @if(isset($supervisors) && $supervisors->count() > 0)
+                    @if(isset($supervisors) && $supervisors->count()> 0)
                         @foreach($supervisors as $supervisor)
                             <div class="d-flex align-items-center mb-2 {{ !$loop->last ? 'pb-2 border-bottom' : '' }}">
                                 <div class="mr-3">

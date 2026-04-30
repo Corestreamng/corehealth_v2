@@ -187,8 +187,7 @@
                                 <td>
                                     <div class="batch-actions">
                                         @if($daysLeft !== null && $daysLeft < 0)
-                                        <button type="button" class="btn btn-danger btn-sm"
-                                                onclick="writeOffExpired({{ $batch->id }})">
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="writeOffExpired({{ $batch->id }})">
                                             <i class="mdi mdi-delete"></i> Write Off
                                         </button>
                                         @else

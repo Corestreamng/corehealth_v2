@@ -157,9 +157,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-file-document-outline mr-2"></i>Journal Entry Preview
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row mb-3">
@@ -288,21 +286,21 @@ $(document).ready(function() {
 
         // Event handlers
         $tr.find('.debit-input').on('input', function() {
-            if (parseFloat($(this).val()) > 0) {
+            if (parseFloat($(this).val())> 0) {
                 $tr.find('.credit-input').val('');
             }
             calculateTotals();
         });
 
         $tr.find('.credit-input').on('input', function() {
-            if (parseFloat($(this).val()) > 0) {
+            if (parseFloat($(this).val())> 0) {
                 $tr.find('.debit-input').val('');
             }
             calculateTotals();
         });
 
         $tr.find('.remove-line-btn').on('click', function() {
-            if ($('#linesBody tr').length > 2) {
+            if ($('#linesBody tr').length> 2) {
                 $tr.remove();
                 calculateTotals();
             } else {
@@ -373,12 +371,12 @@ $(document).ready(function() {
             const debit = parseFloat($(this).find('.debit-input').val()) || 0;
             const credit = parseFloat($(this).find('.credit-input').val()) || 0;
 
-            if (debit > 0 || credit > 0) {
+            if (debit> 0 || credit> 0) {
                 $tbody.append(`
                     <tr>
                         <td>${accountText || '-'}</td>
-                        <td class="text-right">${debit > 0 ? numberFormat(debit) : ''}</td>
-                        <td class="text-right">${credit > 0 ? numberFormat(credit) : ''}</td>
+                        <td class="text-right">${debit> 0 ? numberFormat(debit) : ''}</td>
+                        <td class="text-right">${credit> 0 ? numberFormat(credit) : ''}</td>
                     </tr>
                 `);
                 totalDebit += debit;
@@ -413,12 +411,12 @@ $(document).ready(function() {
             const debit = parseFloat($(this).find('.debit-input').val()) || 0;
             const credit = parseFloat($(this).find('.credit-input').val()) || 0;
 
-            if (debit > 0 || credit > 0) {
+            if (debit> 0 || credit> 0) {
                 if (!accountId) {
                     hasInvalidLine = true;
                 }
-                if (debit > 0) hasDebit = true;
-                if (credit > 0) hasCredit = true;
+                if (debit> 0) hasDebit = true;
+                if (credit> 0) hasCredit = true;
             }
         });
 
@@ -445,7 +443,7 @@ $(document).ready(function() {
             const credit = parseFloat($(this).find('.credit-input').val()) || 0;
             const desc = $(this).find('.line-desc').val();
 
-            if (accountId && (debit > 0 || credit > 0)) {
+            if (accountId && (debit> 0 || credit> 0)) {
                 lines.push({
                     account_id: accountId,
                     debit_amount: debit,

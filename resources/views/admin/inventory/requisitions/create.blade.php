@@ -1269,7 +1269,7 @@ $(function() {
                 (p.code || '').toLowerCase().indexOf(search) === -1) return false;
             if (category && p.category_id != category) return false;
             if (stockFilter === 'in-stock' && p.source_qty <= 0) return false;
-            if (stockFilter === 'low' && p.source_qty > 10) return false;
+            if (stockFilter === 'low' && p.source_qty> 10) return false;
             return true;
         });
 
@@ -1300,9 +1300,9 @@ $(function() {
             if (!outOfStock) {
                 var cartPkg = inCart && cartItems[p.id].packaging_id ? cartItems[p.id].packaging_id : '';
                 var defMax = p.source_qty;
-                if (inCart && cartItems[p.id].packaging_base_qty > 1) defMax = Math.floor(p.source_qty / cartItems[p.id].packaging_base_qty);
+                if (inCart && cartItems[p.id].packaging_base_qty> 1) defMax = Math.floor(p.source_qty / cartItems[p.id].packaging_base_qty);
                 html += '    <input type="number" class="qty-mini-input" value="' + (inCart ? cartItems[p.id].qty : 1) + '" min="1" max="' + defMax + '" data-product-id="' + p.id + '">';
-                if (p.packagings && p.packagings.length > 0) {
+                if (p.packagings && p.packagings.length> 0) {
                     html += '    <select class="pkg-select" data-product-id="' + p.id + '">';
                     html += '      <option value="" data-base-qty="1">' + escapeHtml(unitLabel) + '</option>';
                     p.packagings.forEach(function(pkg) {
@@ -1347,10 +1347,10 @@ $(function() {
         var $qtyInput = $card.find('.qty-mini-input');
         var maxPkgUnits = Math.floor((product ? product.source_qty : 9999) / baseQtyPerUnit);
         $qtyInput.attr('max', maxPkgUnits);
-        if (parseInt($qtyInput.val()) > maxPkgUnits) $qtyInput.val(maxPkgUnits || 1);
+        if (parseInt($qtyInput.val())> maxPkgUnits) $qtyInput.val(maxPkgUnits || 1);
         var qty = parseInt($qtyInput.val()) || 0;
         var $equiv = $card.find('.base-equiv-label');
-        if (baseQtyPerUnit > 1 && qty > 0) {
+        if (baseQtyPerUnit> 1 && qty> 0) {
             $equiv.text('= ' + parseFloat((qty * baseQtyPerUnit).toFixed(4)) + ' ' + (product ? product.base_unit_name : 'units'));
         } else {
             $equiv.text('');
@@ -1379,7 +1379,7 @@ $(function() {
         var packagingName = ($pkgSelect.length && $pkgSelect.val()) ? $pkgSelect.find(':selected').text().split(' (')[0] : '';
         var baseQty = qty * packagingBaseQty;
 
-        if (baseQty > available) {
+        if (baseQty> available) {
             toastr.error('Quantity exceeds available stock (' + available + ' ' + baseUnitName + ')');
             return;
         }
@@ -1427,7 +1427,7 @@ $(function() {
         var idx = 0;
         for (var id in cartItems) {
             var item = cartItems[id];
-            var cartMax = item.packaging_base_qty > 1 ? Math.floor(item.available / item.packaging_base_qty) : item.available;
+            var cartMax = item.packaging_base_qty> 1 ? Math.floor(item.available / item.packaging_base_qty) : item.available;
             var pkgLabel = item.packaging_name ? (' <small class="text-info">' + escapeHtml(item.packaging_name) + '</small>') : '';
             var equivLabel = (item.packaging_name && item.base_qty) ? ('<br><small class="text-muted">= ' + parseFloat(Number(item.base_qty).toFixed(4)) + ' ' + escapeHtml(item.base_unit_name || 'units') + '</small>') : '';
             html += '<div class="cart-item" data-product-id="' + id + '">';
@@ -1466,8 +1466,8 @@ $(function() {
         var pkgBase = parseFloat($(this).data('pkg-base')) || 1;
 
         if (cartItems[productId]) {
-            var maxPkgQty = pkgBase > 1 ? Math.floor(cartItems[productId].available / pkgBase) : cartItems[productId].available;
-            if (newQty > maxPkgQty) {
+            var maxPkgQty = pkgBase> 1 ? Math.floor(cartItems[productId].available / pkgBase) : cartItems[productId].available;
+            if (newQty> maxPkgQty) {
                 newQty = maxPkgQty;
                 $(this).val(newQty);
                 toastr.warning('Maximum available: ' + maxPkgQty + (cartItems[productId].packaging_name ? ' ' + cartItems[productId].packaging_name : ''));
@@ -1501,7 +1501,7 @@ $(function() {
         for (var id in cartItems) {
             var item = cartItems[id];
             var baseQty = item.base_qty || item.qty;
-            var warning = baseQty > item.available ? '<span class="text-danger ml-1"><i class="mdi mdi-alert"></i></span>' : '';
+            var warning = baseQty> item.available ? '<span class="text-danger ml-1"><i class="mdi mdi-alert"></i></span>' : '';
             var qtyDisplay = '<strong>' + baseQty + '</strong> ' + escapeHtml(item.base_unit_name || 'units');
             if (item.packaging_name) {
                 qtyDisplay = '<strong>' + item.qty + '</strong> ' + escapeHtml(item.packaging_name) + '<br><small class="text-muted">= ' + baseQty + ' ' + escapeHtml(item.base_unit_name || 'units') + '</small>';

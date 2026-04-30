@@ -20,8 +20,7 @@
                                         <input type="text" name="q" id="q" required class="form-control"
                                             placeholder="Enter File Number or Name to Search..." required>
                                         <span class="input-group-btn">
-                                            <button id="btnFiterSubmitSearch" class="btn m-1 btn-primary"
-                                                type="submit">Go!</button>
+                                            <button id="btnFiterSubmitSearch" class="btn m-1 btn-primary" type="submit">Go!</button>
                                         </span>
                                         <div class="help-block"></div>
                                     </div>
@@ -99,8 +98,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button id="myButtonForPaymentValidation" type="button" class="btn btn-primary edit"
-                        dal">
+                    <button id="myButtonForPaymentValidation" type="button" class="btn btn-primary edit" dal">
                         <span class='glyphicon glyphicon-check'></span> Continue
                     </button>
                     <button type="button" class="btn btn-warning" dal">

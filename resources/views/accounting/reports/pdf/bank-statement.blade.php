@@ -239,7 +239,7 @@
         </tr>
     </thead>
     <tbody>
-        @if(count($exportData['transactions']) > 0)
+        @if(count($exportData['transactions'])> 0)
             @php
                 $runningBalance = $exportData['opening_balance'];
             @endphp
@@ -247,7 +247,7 @@
             @foreach($exportData['transactions'] as $transaction)
                 @php
                     $runningBalance += ($transaction['debit'] - $transaction['credit']);
-                    $isDeposit = $transaction['debit'] > 0;
+                    $isDeposit = $transaction['debit']> 0;
                 @endphp
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($transaction['date'])->format('M d, Y') }}</td>
@@ -269,7 +269,7 @@
             </tr>
         @endif
     </tbody>
-    @if(count($exportData['transactions']) > 0)
+    @if(count($exportData['transactions'])> 0)
     <tfoot>
         <tr>
             <td colspan="4" class="text-right">Totals:</td>
@@ -279,15 +279,15 @@
         </tr>
         <tr>
             <td colspan="6" class="text-right">Net Movement:</td>
-            <td class="text-right" style="color: {{ ($exportData['closing_balance'] - $exportData['opening_balance']) >= 0 ? '#28a745' : '#dc3545' }};">
-                {{ ($exportData['closing_balance'] - $exportData['opening_balance']) >= 0 ? '+' : '' }}₦{{ number_format($exportData['closing_balance'] - $exportData['opening_balance'], 2) }}
+            <td class="text-right" style="color: {{ ($exportData['closing_balance'] - $exportData['opening_balance'])>= 0 ? '#28a745' : '#dc3545' }};">
+                {{ ($exportData['closing_balance'] - $exportData['opening_balance'])>= 0 ? '+' : '' }}₦{{ number_format($exportData['closing_balance'] - $exportData['opening_balance'], 2) }}
             </td>
         </tr>
     </tfoot>
     @endif
 </table>
 
-@if(count($exportData['transactions']) > 0)
+@if(count($exportData['transactions'])> 0)
 <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #dee2e6;">
     <p style="font-size: 9px; color: #6c757d; margin: 0;">
         <strong>Transaction Summary:</strong><br>
@@ -295,7 +295,7 @@
         from {{ $startDate->format('M d, Y') }} to {{ $endDate->format('M d, Y') }}.<br>
         Opening Balance: ₦{{ number_format($exportData['opening_balance'], 2) }} |
         Closing Balance: ₦{{ number_format($exportData['closing_balance'], 2) }} |
-        Net Change: {{ ($exportData['closing_balance'] - $exportData['opening_balance']) >= 0 ? '+' : '' }}₦{{ number_format($exportData['closing_balance'] - $exportData['opening_balance'], 2) }}
+        Net Change: {{ ($exportData['closing_balance'] - $exportData['opening_balance'])>= 0 ? '+' : '' }}₦{{ number_format($exportData['closing_balance'] - $exportData['opening_balance'], 2) }}
     </p>
 </div>
 @endif

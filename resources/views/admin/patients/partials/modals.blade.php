@@ -7,7 +7,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
                             id="invest_res_service_name"></span>)</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <!-- V1 Template: WYSIWYG Editor -->
@@ -44,9 +44,8 @@
 
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
-                    <button type="submit" id="invest_res_submit_btn"
-                        class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" id="invest_res_submit_btn" class="btn btn-primary">Save changes</button>
                 </div>
             </form>
         </div>
@@ -66,7 +65,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="imagingResModalLabel">Enter Imaging Result (<span
                             id="imaging_res_service_name"></span>)</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <textarea id="imaging_res_template_editor" class="ckeditor"></textarea>
@@ -92,9 +91,8 @@
 
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
-                    <button type="submit" id="imaging_res_submit_btn"
-                        class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" id="imaging_res_submit_btn" class="btn btn-primary">Save changes</button>
                 </div>
             </form>
         </div>
@@ -280,7 +278,7 @@
                 <h5 class="modal-title" id="imagingResViewModalLabel">
                     <i class="mdi mdi-image-multiple"></i> Imaging Results
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
 
             <div class="modal-body p-0">
@@ -396,7 +394,7 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
                         id="note_type_name_"></span>)</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="nursing_note_template_" class="table-reponsive" style="border: 1px solid black;">
@@ -404,7 +402,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
             </form>
         </div>
@@ -419,7 +417,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Assign Bill </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="assign_bed_req_id_" name="assign_bed_req_id">
@@ -439,10 +437,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
-                    <button type="submit"
-                        onclick="return confirm('Are you sure you wish to save this entry? It can not be edited after!')"
-                        class="btn btn-primary">Save Bill </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" onclick="return confirm('Are you sure you wish to save this entry? It can not be edited after!')" class="btn btn-primary">Save Bill </button>
                 </div>
             </form>
         </div>
@@ -457,7 +453,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Assign Bed </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="assign_bed_req_id" name="assign_bed_req_id">
@@ -503,10 +499,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
-                    <button type="submit"
-                        onclick="return confirm('Are you sure you wish to save this entry? It can not be edited after!')"
-                        class="btn btn-primary">Assign Bed </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" onclick="return confirm('Are you sure you wish to save this entry? It can not be edited after!')" class="btn btn-primary">Assign Bed </button>
                 </div>
             </form>
         </div>
@@ -603,7 +597,7 @@
                 <h5 class="modal-title" id="editEncounterModalLabel">
                     <i class="mdi mdi-pencil"></i> Edit Encounter Note
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editEncounterId">
@@ -689,7 +683,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fa fa-times"></i> Cancel
                 </button>
                 <button type="button" class="btn btn-primary" id="saveEncounterEditBtn">
@@ -1142,7 +1136,7 @@ $('#saveEncounterEditBtn').on('click', function() {
 
     // Build per-diagnosis comments JSON if we have per-reason data
     @if(appsettings('requirediagnosis', 0))
-    if (diagnosisApplicable && selectedReasons && selectedReasons.length > 0) {
+    if (diagnosisApplicable && selectedReasons && selectedReasons.length> 0) {
         let perDiag = selectedReasons.map(r => ({
             code: r.code || r.value.split('-')[0] || '',
             name: r.name || r.value.split('-').slice(1).join('-') || r.value,

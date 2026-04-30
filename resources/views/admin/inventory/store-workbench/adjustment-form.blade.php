@@ -122,15 +122,28 @@
                         @enderror
                     </div>
 
-                    <!-- Quantity -->
-                    <div class="form-group">
-                        <label for="qty">Quantity <span class="text-danger">*</span></label>
-                        <input type="number" name="qty" id="qty" class="form-control @error('qty') is-invalid @enderror"
-                               min="1" max="{{ $batch->current_qty }}" value="{{ old('qty', 1) }}" required>
-                        <small class="text-muted">Max: {{ $batch->current_qty }} (for subtract)</small>
-                        @error('qty')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                    <!-- Quantity and Packaging -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="qty">Quantity <span class="text-danger">*</span></label>
+                                <input type="number" name="qty" id="qty" class="form-control @error('qty') is-invalid @enderror"
+                                       min="1" value="{{ old('qty', 1) }}" required>
+                                <small class="text-muted" id="max-qty-hint">Max: {{ $batch->current_qty }}</small>
+                                @error('qty')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="packaging_id">Packaging Unit</label>
+                                <select id="packaging_id" class="form-control">
+                                    <option value="" data-base="1">{{ $batch->product->base_unit_name ?? 'Base Unit' }}</option>
+                                </select>
+                                <small class="text-muted" id="base-equiv-hint" style="display:none;">= <strong id="base-equiv-qty">0</strong> units</small>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Reason -->
@@ -184,7 +197,10 @@
 
 @section('scripts')
 <script>
+let selectedTypeVar = '';
+
 function selectType(type) {
+    selectedTypeVar = type;
     // Remove selected class from all
     document.querySelectorAll('.adjustment-type-btn').forEach(btn => {
         btn.classList.remove('selected');
@@ -194,23 +210,93 @@ function selectType(type) {
     document.querySelector('.adjustment-type-btn.' + type).classList.add('selected');
     document.getElementById('type-' + type).checked = true;
 
-    // Update max quantity for subtract
-    const qtyInput = document.getElementById('qty');
-    if (type === 'subtract') {
-        qtyInput.max = {{ $batch->current_qty }};
-    } else {
-        qtyInput.max = 99999;
-    }
+    updateMaxQty();
 
     // Enable submit button
     document.getElementById('submitBtn').disabled = false;
 }
 
+function updateMaxQty() {
+    if (!selectedTypeVar) return;
+    
+    const qtyInput = document.getElementById('qty');
+    const pkgSelect = document.getElementById('packaging_id');
+    const baseFactor = parseFloat(pkgSelect.options[pkgSelect.selectedIndex].dataset.base) || 1;
+    const maxHint = document.getElementById('max-qty-hint');
+    
+    if (selectedTypeVar === 'subtract') {
+        const maxPkg = Math.floor({{ $batch->current_qty }} / baseFactor);
+        qtyInput.max = maxPkg;
+        maxHint.textContent = 'Max: ' + maxPkg + ' (based on current pieces)';
+        if (parseInt(qtyInput.val || qtyInput.value) > maxPkg) {
+            qtyInput.value = maxPkg;
+        }
+    } else {
+        qtyInput.removeAttribute('max');
+        maxHint.textContent = 'Enter quantity to add';
+    }
+    
+    updateBaseEquiv();
+}
+
+function updateBaseEquiv() {
+    const qtyInput = document.getElementById('qty');
+    const pkgSelect = document.getElementById('packaging_id');
+    const baseFactor = parseFloat(pkgSelect.options[pkgSelect.selectedIndex].dataset.base) || 1;
+    const hint = document.getElementById('base-equiv-hint');
+    const qtyValue = parseFloat(qtyInput.value) || 0;
+    
+    if (baseFactor > 1 && qtyValue > 0) {
+        document.getElementById('base-equiv-qty').textContent = parseFloat((qtyValue * baseFactor).toFixed(4));
+        hint.style.display = 'block';
+    } else {
+        hint.style.display = 'none';
+    }
+}
+
+// Load packaging options
+$(function() {
+    const productId = {{ $batch->product_id }};
+    const pkgSelect = document.getElementById('packaging_id');
+    
+    fetch('/products/' + productId + '/packagings')
+    .then(response => response.json())
+    .then(data => {
+        const baseUnit = data.base_unit_name || 'pcs';
+        pkgSelect.innerHTML = '<option value="" data-base="1">' + baseUnit + ' (base)</option>';
+        
+        if (data.packagings && data.packagings.length > 0) {
+            data.packagings.forEach(pkg => {
+                const opt = document.createElement('option');
+                opt.value = pkg.id;
+                opt.dataset.base = pkg.base_unit_qty;
+                opt.textContent = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + baseUnit + ')';
+                pkgSelect.appendChild(opt);
+            });
+        }
+    });
+});
+
+document.getElementById('packaging_id').addEventListener('change', updateMaxQty);
+document.getElementById('qty').addEventListener('input', updateBaseEquiv);
+
 // Form submission via AJAX
 document.getElementById('adjustmentForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
+    const pkgSelect = document.getElementById('packaging_id');
+    const baseFactor = parseFloat(pkgSelect.options[pkgSelect.selectedIndex].dataset.base) || 1;
+    const qtyInput = document.getElementById('qty');
+    const originalQty = qtyInput.value;
+    
+    // Convert to base units for submission
+    qtyInput.value = Math.round(parseFloat(originalQty) * baseFactor);
+
     const formData = new FormData(this);
+    
+    // Restore original qty for UI if needed (though we redirect)
+    // qtyInput.value = originalQty;
+
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Processing...';

@@ -720,7 +720,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-hospital-building"></i> Admission Full Detail</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                 <div class="row mb-3">
@@ -781,7 +781,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-warning adm-mod-fd-print-btn"><i class="mdi mdi-printer"></i> Print Bill</button>
-                <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -793,7 +793,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-printer"></i> Admission Bill</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="d-flex gap-2 mb-3" style="border-bottom: 2px solid #dee2e6;">
@@ -805,7 +805,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary adm-mod-do-print-btn"><i class="mdi mdi-printer"></i> Print</button>
-                <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

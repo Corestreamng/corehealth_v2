@@ -76,7 +76,7 @@
                     </div>
                 </div>
 
-                @if($category->procedures->count() > 0)
+                @if($category->procedures->count()> 0)
                 <div class="alert alert-info mt-4">
                     <i class="mdi mdi-information-outline mr-2"></i>
                     This category has <strong>{{ $category->procedures->count() }}</strong> associated procedure(s).

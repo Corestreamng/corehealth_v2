@@ -574,7 +574,7 @@ $(document).ready(function() {
 
         for (var i = 1; i <= months; i++) {
             // Apply escalation annually
-            if (escalation > 0 && i > 1 && (i - 1) % 12 === 0) {
+            if (escalation> 0 && i> 1 && (i - 1) % 12 === 0) {
                 currentPayment *= (1 + escalation / 100);
             }
             var pvFactor = 1 / Math.pow(1 + monthlyRate, i);
@@ -584,7 +584,7 @@ $(document).ready(function() {
         var newLiability = pvPayments;
         var adjustment = newLiability - currentLiability;
         var newRouAsset = currentRouAsset + adjustment;
-        var monthlyDepreciation = months > 0 ? newRouAsset / months : 0;
+        var monthlyDepreciation = months> 0 ? newRouAsset / months : 0;
 
         // Update display
         $('#estimated_liability').text('₦' + newLiability.toLocaleString('en-US', {
@@ -592,14 +592,14 @@ $(document).ready(function() {
             maximumFractionDigits: 2
         }));
 
-        var adjustmentText = (adjustment >= 0 ? '+' : '') + '₦' + adjustment.toLocaleString('en-US', {
+        var adjustmentText = (adjustment>= 0 ? '+' : '') + '₦' + adjustment.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
         $('#estimated_adjustment')
             .text(adjustmentText)
             .removeClass('text-success text-danger')
-            .addClass(adjustment >= 0 ? 'text-danger' : 'text-success');
+            .addClass(adjustment>= 0 ? 'text-danger' : 'text-success');
 
         $('#estimated_rou').text('₦' + newRouAsset.toLocaleString('en-US', {
             minimumFractionDigits: 2,
@@ -632,7 +632,7 @@ $(document).ready(function() {
                 '<i class="mdi mdi-check-circle text-success mr-1"></i> No adjustment needed - values unchanged'
             );
             $('#je-total-debit, #je-total-credit').text('₦0.00');
-        } else if (adjustment > 0) {
+        } else if (adjustment> 0) {
             // Increase in liability - DEBIT ROU, CREDIT Liability
             $('#je-increase-rou, #je-increase-liability').removeClass('d-none');
             $('#je-rou-debit').text(formattedAdjustment);

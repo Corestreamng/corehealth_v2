@@ -266,7 +266,7 @@
                 </div>
 
                 <!-- Payment History -->
-                @if($purchaseOrder->payments->count() > 0)
+                @if($purchaseOrder->payments->count()> 0)
                 <div class="detail-card">
                     <h5><i class="mdi mdi-history"></i> Payment History</h5>
 

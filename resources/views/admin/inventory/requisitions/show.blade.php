@@ -728,7 +728,7 @@
                         ->where('store_id', $requisition->to_store_id)
                         ->where('current_qty', '>', 0)
                         ->sum('current_qty');
-                    $canFulfill = $sourceStock >= $item->requested_qty;
+                    $canFulfill = $sourceStock>= $item->requested_qty;
                 @endphp
                 <div class="approval-item">
                     <div class="row align-items-center">
@@ -764,7 +764,7 @@
                                 <label>Approve Qty:</label>
                                 <input type="number"
                                        name="approved_qtys[{{ $item->id }}]"
-                                       class="qty-input {{ !$canFulfill ? ($sourceStock > 0 ? 'warning' : 'danger') : '' }}"
+                                       class="qty-input {{ !$canFulfill ? ($sourceStock> 0 ? 'warning' : 'danger') : '' }}"
                                        value="{{ min($item->requested_qty, $sourceStock) }}"
                                        min="0"
                                        max="{{ $item->requested_qty }}"
@@ -895,7 +895,7 @@
                             ->where('current_qty', '>', 0)
                             ->sum('current_qty');
                         $pending = ($item->approved_qty ?? $item->requested_qty) - ($item->fulfilled_qty ?? 0);
-                        $fulfillmentPercent = $item->approved_qty > 0
+                        $fulfillmentPercent = $item->approved_qty> 0
                             ? round((($item->fulfilled_qty ?? 0) / $item->approved_qty) * 100)
                             : 0;
                     @endphp
@@ -950,28 +950,28 @@
                                     </div>
                                 </div>
                                 <div class="qty-arrow"><i class="mdi mdi-arrow-right"></i></div>
-                                <div class="qty-stage {{ ($item->fulfilled_qty ?? 0) >= ($item->approved_qty ?? 0) && $item->approved_qty > 0 ? 'complete' : '' }}">
+                                <div class="qty-stage {{ ($item->fulfilled_qty ?? 0)>= ($item->approved_qty ?? 0) && $item->approved_qty> 0 ? 'complete' : '' }}">
                                     <div class="qty-label">Fulfilled</div>
                                     <div class="qty-value">{{ $item->fulfilled_qty ?? 0 }}</div>
                                 </div>
                             </div>
 
-                            @if($item->approved_qty > 0)
+                            @if($item->approved_qty> 0)
                             <div class="progress-section">
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-{{ $fulfillmentPercent >= 100 ? 'success' : ($fulfillmentPercent > 0 ? 'warning' : 'secondary') }}"
+                                    <div class="progress-bar bg-{{ $fulfillmentPercent>= 100 ? 'success' : ($fulfillmentPercent> 0 ? 'warning' : 'secondary') }}"
                                          style="width: {{ $fulfillmentPercent }}%"></div>
                                 </div>
                                 <small class="text-muted">{{ $fulfillmentPercent }}% fulfilled</small>
                             </div>
                             @endif
 
-                            @if(in_array($requisition->status, ['approved', 'partial']) && $pending > 0)
+                            @if(in_array($requisition->status, ['approved', 'partial']) && $pending> 0)
                             <div class="pending-info">
                                 <span class="badge badge-outline-warning">
                                     <i class="mdi mdi-clock-outline"></i> {{ $pending }} pending fulfillment
                                 </span>
-                                <span class="badge badge-outline-{{ $sourceStock >= $pending ? 'success' : 'danger' }}">
+                                <span class="badge badge-outline-{{ $sourceStock>= $pending ? 'success' : 'danger' }}">
                                     <i class="mdi mdi-store"></i> {{ $sourceStock }} available at source
                                 </span>
                             </div>
@@ -1068,7 +1068,7 @@
 @can('requisitions.fulfill')
 @php
     $hasPendingItems = $requisition->items->contains(function($item) {
-        return ($item->approved_qty ?? 0) - ($item->fulfilled_qty ?? 0) > 0;
+        return ($item->approved_qty ?? 0) - ($item->fulfilled_qty ?? 0)> 0;
     });
 @endphp
 @if($hasPendingItems)
@@ -1115,7 +1115,7 @@
                 $approvedQty = $item->approved_qty ?? 0;
                 $fulfilledQty = $item->fulfilled_qty ?? 0;
                 $pendingQty = $approvedQty - $fulfilledQty;
-                $fulfillPercent = $approvedQty > 0 ? round(($fulfilledQty / $approvedQty) * 100) : 0;
+                $fulfillPercent = $approvedQty> 0 ? round(($fulfilledQty / $approvedQty) * 100) : 0;
 
                 // Get available batches from source store
                 $availableBatches = \App\Models\StockBatch::where('product_id', $item->product_id)
@@ -1127,18 +1127,19 @@
                     ->get();
                 $totalAvailable = $availableBatches->sum('current_qty');
             @endphp
-            @if($pendingQty > 0)
+            @if($pendingQty> 0)
             <div class="fulfill-item">
                 <div class="fulfill-item-header">
                     <div>
                         <div class="h6 mb-1">{{ $item->product->product_name }}</div>
                         <small class="text-muted">{{ $item->product->product_code }}</small>
                         @if($item->packaging)
-                            <br><small class="text-info"><i class="mdi mdi-package-variant"></i> Ordered as: {{ $item->packaging_qty }} {{ $item->packaging->name }}</small>
+                            <br><small class="text-info"><i class="mdi mdi-package-variant"></i> Requested: <strong>{{ $item->packaging_qty }} {{ $item->packaging->name }}</strong></small>
+                            <br><small class="text-muted"><i class="mdi mdi-calculator"></i> 1 {{ $item->packaging->name }} = {{ $item->packaging->base_unit_qty }} {{ $item->product->base_unit_name ?? 'pcs' }}</small>
                         @endif
                     </div>
                     <div class="text-right">
-                        <span class="badge badge-{{ $totalAvailable >= $pendingQty ? 'success' : 'warning' }}">
+                        <span class="badge badge-{{ $totalAvailable>= $pendingQty ? 'success' : 'warning' }}">
                             {{ $totalAvailable }} {{ $item->product->base_unit_name ?? '' }} available
                         </span>
                     </div>
@@ -1186,8 +1187,11 @@
                                     </td>
                                     <td class="text-center">
                                         <span class="badge badge-{{ $batch->current_qty > 10 ? 'success' : ($batch->current_qty > 0 ? 'warning' : 'danger') }}">
-                                            {{ $batch->current_qty }}
+                                            {{ $batch->current_qty }} {{ $item->product->base_unit_name ?? 'pcs' }}
                                         </span>
+                                        @if($item->packaging)
+                                            <br><small class="text-muted">≈ {{ round($batch->current_qty / $item->packaging->base_unit_qty, 1) }} {{ $item->packaging->name }}</small>
+                                        @endif
                                     </td>
                                     <td class="text-center">
                                         @if($batch->expiry_date)
@@ -1303,7 +1307,7 @@ $(function() {
         var pending = parseInt($input.data('pending'));
 
         // Limit to available quantity
-        if (val > available) {
+        if (val> available) {
             $input.val(available);
             val = available;
             toastr.warning('Limited to available stock (' + available + ')');
@@ -1316,7 +1320,7 @@ $(function() {
         });
 
         // Check if exceeding pending
-        if (itemTotal > pending) {
+        if (itemTotal> pending) {
             var excess = itemTotal - pending;
             $input.val(Math.max(0, val - excess));
             toastr.warning('Total cannot exceed pending quantity (' + pending + ')');
@@ -1327,9 +1331,9 @@ $(function() {
         $('.item-transfer-total[data-item-id="' + itemId + '"]').text(itemTotal);
 
         // ── Plan §7.3, §R11 — FIFO Override Warning ──────────────────────────
-        // If this input is for a non-first batch and val > 0,
+        // If this input is for a non-first batch and val> 0,
         // check if an earlier batch for the same item still has untouched stock.
-        if (val > 0) {
+        if (val> 0) {
             var $allBatchInputs = $('input[data-item-id="' + itemId + '"]');
             var thisIndex = $allBatchInputs.index($input);
             var fifoViolation = false;
@@ -1431,11 +1435,11 @@ $(function() {
         // Reset classes
         $(this).removeClass('warning danger');
 
-        if (val > available) {
+        if (val> available) {
             $(this).addClass('danger');
             $(this).val(available);
             toastr.warning('Adjusted to available stock (' + available + ')');
-        } else if (val < requested && val > 0) {
+        } else if (val < requested && val> 0) {
             $(this).addClass('warning');
         }
     });
@@ -1445,9 +1449,9 @@ function submitApproval() {
     var hasItems = false;
     var formData = $('#approval-form').serialize();
 
-    // Check if at least one item has quantity > 0
+    // Check if at least one item has quantity> 0
     $('.qty-input').each(function() {
-        if (parseInt($(this).val()) > 0) {
+        if (parseInt($(this).val())> 0) {
             hasItems = true;
         }
     });

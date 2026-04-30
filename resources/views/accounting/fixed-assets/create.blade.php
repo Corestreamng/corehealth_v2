@@ -530,7 +530,7 @@ $(document).ready(function() {
         }
 
         // Auto-calculate salvage if percentage provided
-        if (salvage > 0) {
+        if (salvage> 0) {
             updateCostCalculations();
         }
     });

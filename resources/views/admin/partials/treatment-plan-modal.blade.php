@@ -10,7 +10,7 @@
                 <h5 class="modal-title" id="treatmentPlanModalLabel">
                     <i class="fa fa-clipboard-list"></i> Treatment Plans
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 {{-- Browse / Preview tabs --}}
@@ -69,7 +69,7 @@
                 <h5 class="modal-title" id="saveTemplateModalLabel">
                     <i class="fa fa-save"></i> Save as Template
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">

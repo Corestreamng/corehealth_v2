@@ -186,7 +186,7 @@
                     </table>
 
                     {{-- Stock in packaging --}}
-                    @if($totalQty > 0)
+                    @if($totalQty> 0)
                     <div class="mt-3 p-3" style="background: #f8f9fa; border-radius: 6px;">
                         <strong><i class="mdi mdi-package-variant"></i> Current Stock Breakdown:</strong>
                         <span class="ml-2">{{ $pp->formatQty($totalQty) }}</span>

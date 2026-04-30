@@ -143,11 +143,11 @@
             @php
                 $netAmount = $summary['total_revenue'] - $summary['total_expenses'];
             @endphp
-            <div class="stat-box" style="background: linear-gradient(135deg, {{ $netAmount >= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $netAmount >= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
-                <div class="amount {{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">
+            <div class="stat-box" style="background: linear-gradient(135deg, {{ $netAmount>= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $netAmount>= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
+                <div class="amount {{ $netAmount>= 0 ? 'text-success' : 'text-danger' }}">
                     ₦{{ number_format(abs($netAmount), 2) }}
                 </div>
-                <div class="label">{{ $netAmount >= 0 ? 'Net Surplus' : 'Net Deficit' }}</div>
+                <div class="label">{{ $netAmount>= 0 ? 'Net Surplus' : 'Net Deficit' }}</div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
@@ -163,19 +163,19 @@
             <!-- Expenses by Account -->
             <div class="report-card">
                 <h6><i class="mdi mdi-format-list-bulleted mr-2"></i>Breakdown by Account</h6>
-                @if(count($expensesByAccount) > 0)
+                @if(count($expensesByAccount)> 0)
                     @foreach($expensesByAccount as $item)
                         <div class="account-row">
                             <div>
                                 <strong>{{ $item->account_code }}</strong> - {{ $item->account_name }}
                             </div>
                             <div class="text-right">
-                                @if($item->total_debit > 0)
+                                @if($item->total_debit> 0)
                                     <span class="text-danger mr-2">
                                         Dr: ₦{{ number_format($item->total_debit, 2) }}
                                     </span>
                                 @endif
-                                @if($item->total_credit > 0)
+                                @if($item->total_credit> 0)
                                     <span class="text-success">
                                         Cr: ₦{{ number_format($item->total_credit, 2) }}
                                     </span>
@@ -223,8 +223,8 @@
                                     </td>
                                     <td>{{ $txn->account->code ?? 'N/A' }}</td>
                                     <td>{{ Str::limit($txn->description ?? $txn->journalEntry->description, 40) }}</td>
-                                    <td class="text-right">{{ $txn->debit > 0 ? '₦' . number_format($txn->debit, 2) : '-' }}</td>
-                                    <td class="text-right">{{ $txn->credit > 0 ? '₦' . number_format($txn->credit, 2) : '-' }}</td>
+                                    <td class="text-right">{{ $txn->debit> 0 ? '₦' . number_format($txn->debit, 2) : '-' }}</td>
+                                    <td class="text-right">{{ $txn->credit> 0 ? '₦' . number_format($txn->credit, 2) : '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -247,8 +247,8 @@
                     $budgetUsed = $summary['total_expenses'];
                     $budgetAmount = $budget->budgeted_amount;
                     $variance = $budgetAmount - $budgetUsed;
-                    $utilization = $budgetAmount > 0 ? ($budgetUsed / $budgetAmount) * 100 : 0;
-                    $progressColor = $utilization > 90 ? 'danger' : ($utilization > 75 ? 'warning' : 'success');
+                    $utilization = $budgetAmount> 0 ? ($budgetUsed / $budgetAmount) * 100 : 0;
+                    $progressColor = $utilization> 90 ? 'danger' : ($utilization> 75 ? 'warning' : 'success');
                 @endphp
                 <div class="text-center mb-3">
                     <h4 class="mb-0">{{ number_format($utilization, 1) }}%</h4>
@@ -267,8 +267,8 @@
                 </div>
                 <div class="d-flex justify-content-between">
                     <span>Variance:</span>
-                    <strong class="{{ $variance >= 0 ? 'text-success' : 'text-danger' }}">
-                        {{ $variance >= 0 ? '+' : '' }}₦{{ number_format($variance, 2) }}
+                    <strong class="{{ $variance>= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ $variance>= 0 ? '+' : '' }}₦{{ number_format($variance, 2) }}
                     </strong>
                 </div>
             </div>

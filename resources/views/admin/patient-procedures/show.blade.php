@@ -341,7 +341,7 @@
                                     <span>Procedure Fee</span>
                                     <strong>₦{{ number_format(($billing->amount ?? 0) + ($billing->claims_amount ?? 0), 2) }}</strong>
                                 </div>
-                                @if(($billing->claims_amount ?? 0) > 0)
+                                @if(($billing->claims_amount ?? 0)> 0)
                                     <div class="billing-row">
                                         <span>Patient Pays</span>
                                         <span>₦{{ number_format($billing->amount ?? 0, 2) }}</span>
@@ -369,7 +369,7 @@
                                         </span>
                                     </span>
                                 </div>
-                                @if(($billing->coverage_mode ?? '') === 'hmo' || ($billing->claims_amount ?? 0) > 0)
+                                @if(($billing->coverage_mode ?? '') === 'hmo' || ($billing->claims_amount ?? 0)> 0)
                                     <div class="info-item">
                                         <span class="info-label">Validation</span>
                                         <span class="info-value">
@@ -734,7 +734,7 @@
                             <span class="info-label">Reason</span>
                             <span class="info-value">{{ $procedure->cancellation_reason ?? 'N/A' }}</span>
                         </div>
-                        @if(($procedure->refund_amount ?? 0) > 0)
+                        @if(($procedure->refund_amount ?? 0)> 0)
                         <div class="info-item">
                             <span class="info-label">Refund</span>
                             <span class="info-value text-success font-weight-bold">₦{{ number_format($procedure->refund_amount, 2) }}</span>
@@ -809,7 +809,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: {{ $hosColor }}; color: white;">
                 <h5 class="modal-title"><i class="fa fa-print"></i> Print Options</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p class="text-muted mb-3">Select sections to include in the printout:</p>
@@ -921,7 +921,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: {{ $hosColor }}; color: white;">
                 <h5 class="modal-title"><i class="fa fa-user-plus"></i> Add Team Member</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="addTeamForm">
                 <div class="modal-body">
@@ -971,7 +971,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Add Team Member</button>
                 </div>
             </form>
@@ -985,7 +985,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: {{ $hosColor }}; color: white;">
                 <h5 class="modal-title" id="noteModalTitle"><i class="fa fa-sticky-note"></i> Add Note</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="addNoteForm">
                 <input type="hidden" id="note_id" name="note_id" value="">
@@ -1014,7 +1014,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="noteSubmitBtn">Save Note</button>
                 </div>
             </form>
@@ -1028,7 +1028,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: {{ $hosColor }}; color: white;">
                 <h5 class="modal-title" id="addItemModalTitle"><i class="fa fa-plus"></i> Add Item</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="addItemForm">
                 <input type="hidden" id="item_type" name="item_type" value="lab">
@@ -1070,7 +1070,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Add to Procedure</button>
                 </div>
             </form>
@@ -1084,7 +1084,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="fa fa-exclamation-triangle"></i> Cancel Procedure</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="cancelProcedureForm">
                 <div class="modal-body">
@@ -1110,7 +1110,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Keep Procedure</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Procedure</button>
                     <button type="submit" class="btn btn-danger">Cancel & Refund</button>
                 </div>
             </form>
@@ -1124,7 +1124,7 @@
         <div class="modal-content">
             <div class="modal-header" id="confirmModalHeader" style="background: {{ $hosColor }}; color: white;">
                 <h5 class="modal-title" id="confirmModalTitle"><i class="fa fa-question-circle"></i> Confirm Action</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center py-4">
                 <div id="confirmModalIcon" class="mb-3">

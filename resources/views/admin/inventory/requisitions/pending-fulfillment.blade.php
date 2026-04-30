@@ -84,7 +84,7 @@
                         @php
                             $remaining = $item->approved_qty - ($item->fulfilled_qty ?? 0);
                         @endphp
-                        @if($remaining > 0)
+                        @if($remaining> 0)
                         <tr>
                             <td>
                                 {{ $item->product->product_name ?? 'Unknown' }}
@@ -146,7 +146,7 @@ function fulfillRequisition(id, btn) {
 
     card.find('.fulfill-qty').each(function() {
         const qty = parseInt($(this).val()) || 0;
-        if (qty > 0) {
+        if (qty> 0) {
             fulfillments.push({
                 item_id: $(this).data('item-id'),
                 qty: qty

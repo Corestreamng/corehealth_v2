@@ -14,7 +14,7 @@
                 <!-- /.card-header -->
                 <div class="card-body">
                     {{-- <div class="pull-right">
-                        <!-- <a href="{{ route('hmo.create') }}" class="btn btn-primary" >New Role</a> -->
+                        <!-- <a href="{{ route('hmo.create') }}" class="btn btn-primary">New Role</a> -->
                     </div> --}}
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped" style="width: 100%" id="vitals_history">

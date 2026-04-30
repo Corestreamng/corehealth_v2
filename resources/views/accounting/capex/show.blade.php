@@ -178,7 +178,7 @@
                         <i class="mdi mdi-play"></i> Start Execution
                     </button>
                 @elseif($capex->status == 'in_progress')
-                    <button class="btn btn-primary btn-sm mr-1" data-toggle="modal" data-target="#expenseModal">
+                    <button class="btn btn-primary btn-sm mr-1" data-bs-toggle="modal" data-bs-target="#expenseModal">
                         <i class="mdi mdi-cash-plus"></i> Record Expense
                     </button>
                     <button class="btn btn-success btn-sm" id="completeBtn">
@@ -250,8 +250,8 @@
             @php
                 $remaining = ($capex->approved_amount ?? 0) - $expenses->sum('amount');
             @endphp
-            <div class="stat-box" style="background: linear-gradient(135deg, {{ $remaining >= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $remaining >= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
-                <div class="amount {{ $remaining >= 0 ? 'text-success' : 'text-danger' }}">₦{{ number_format($remaining, 2) }}</div>
+            <div class="stat-box" style="background: linear-gradient(135deg, {{ $remaining>= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $remaining>= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
+                <div class="amount {{ $remaining>= 0 ? 'text-success' : 'text-danger' }}">₦{{ number_format($remaining, 2) }}</div>
                 <div class="label">Remaining Budget</div>
             </div>
         </div>
@@ -326,12 +326,12 @@
             </div>
 
             <!-- Expenses -->
-            @if($expenses->count() > 0 || in_array($capex->status, ['approved', 'in_progress', 'completed']))
+            @if($expenses->count()> 0 || in_array($capex->status, ['approved', 'in_progress', 'completed']))
                 <div class="info-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="mb-0"><i class="mdi mdi-cash-multiple mr-2"></i>Expenses Recorded ({{ $expenses->count() }})</h6>
                         @if($capex->status == 'in_progress')
-                            <button class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#expenseModal">
+                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#expenseModal">
                                 <i class="mdi mdi-plus mr-1"></i> Add Expense
                             </button>
                         @endif
@@ -387,7 +387,7 @@
                             <small>No expenses recorded yet</small>
                         </div>
                     @endforelse
-                    @if($expenses->count() > 0)
+                    @if($expenses->count()> 0)
                         <div class="d-flex justify-content-between mt-3 pt-3 border-top">
                             <strong>Total Spent:</strong>
                             <strong class="text-info">₦{{ number_format($expenses->sum('amount'), 2) }}</strong>
@@ -400,7 +400,7 @@
             @php
                 $journalEntries = collect($expenses)->filter(fn($e) => $e->journal_entry_id)->pluck('journal_entry_id')->unique();
             @endphp
-            @if($journalEntries->count() > 0)
+            @if($journalEntries->count()> 0)
                 <div class="info-card">
                     <h6><i class="mdi mdi-book-open-variant mr-2"></i>Related Journal Entries</h6>
                     <p class="text-muted small mb-3">
@@ -430,7 +430,7 @@
             @endif
 
             <!-- Linked Assets -->
-            @if($assets->count() > 0)
+            @if($assets->count()> 0)
                 <div class="info-card">
                     <h6><i class="mdi mdi-tag-multiple mr-2"></i>Linked Fixed Assets</h6>
                     @foreach($assets as $asset)
@@ -534,7 +534,7 @@
             <form id="expenseForm">
                 <div class="modal-header">
                     <h5 class="modal-title">Record Expense</h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info py-2 px-3 mb-3">
@@ -629,7 +629,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save mr-1"></i> Save Expense
                     </button>
@@ -646,7 +646,7 @@
             <form id="approveForm">
                 <div class="modal-header">
                     <h5 class="modal-title">Approve Capex Request</h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-success py-2 px-3 mb-3">
@@ -672,7 +672,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success">
                         <i class="mdi mdi-check mr-1"></i> Approve
                     </button>

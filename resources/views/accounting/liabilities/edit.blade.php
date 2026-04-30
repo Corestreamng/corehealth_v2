@@ -21,7 +21,7 @@
                     Contact your administrator if restructuring is needed.
                 </div>
 
-                @if($paidPayments > 0)
+                @if($paidPayments> 0)
                 <div class="alert alert-warning mb-4">
                     <i class="mdi mdi-alert mr-2"></i>
                     <strong>Payments Already Made:</strong> {{ $paidPayments }} of {{ $totalPayments }} payments have been recorded.
@@ -91,7 +91,7 @@
                                 </div>
                                 @error('interest_rate')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                 <small class="text-muted">
-                                    @if($paidPayments > 0)
+                                    @if($paidPayments> 0)
                                         <i class="mdi mdi-information-outline text-warning"></i>
                                         Changing this will recalculate only the {{ $totalPayments - $paidPayments }} unpaid payments
                                         based on current balance of ₦{{ number_format($liability->current_balance, 2) }}
@@ -183,14 +183,14 @@ $(document).ready(function() {
 
     $('#interest_rate').on('change keyup', function() {
         var newRate = parseFloat($(this).val()) || 0;
-        var rateChanged = Math.abs(newRate - originalRate) > 0.0001;
+        var rateChanged = Math.abs(newRate - originalRate)> 0.0001;
 
-        if (rateChanged && unpaidPayments > 0) {
+        if (rateChanged && unpaidPayments> 0) {
             // Simple estimate: monthly payment calculation
             var monthlyRate = newRate / 100 / 12;
             var estimatedPayment = 0;
 
-            if (monthlyRate > 0) {
+            if (monthlyRate> 0) {
                 estimatedPayment = currentBalance * (monthlyRate * Math.pow(1 + monthlyRate, unpaidPayments))
                                  / (Math.pow(1 + monthlyRate, unpaidPayments) - 1);
             } else {
@@ -200,7 +200,7 @@ $(document).ready(function() {
             var changeText = 'Rate changed from ' + originalRate.toFixed(2) + '% to ' + newRate.toFixed(2) + '%. ';
             changeText += 'Estimated new payment: ₦' + estimatedPayment.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-            if (paidPayments > 0) {
+            if (paidPayments> 0) {
                 changeText += ' (for remaining ' + unpaidPayments + ' payments)';
             }
 

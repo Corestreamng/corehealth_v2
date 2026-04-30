@@ -4,12 +4,10 @@
 <div class="nurse-chart-tabs">
     <ul class="nav nav-tabs" id="nurseChartTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="medication-tab" data-bs-toggle="tab" data-bs-target="#medicationChart"
-                type="button" role="tab">Medication Chart</button>
+            <button class="nav-link active" id="medication-tab" data-bs-toggle="tab" data-bs-target="#medicationChart" type="button" role="tab">Medication Chart</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="intake-output-tab" data-bs-toggle="tab" data-bs-target="#intakeOutputChart"
-                type="button" role="tab">Intake & Output Chart</button>
+            <button class="nav-link" id="intake-output-tab" data-bs-toggle="tab" data-bs-target="#intakeOutputChart" type="button" role="tab">Intake & Output Chart</button>
         </li>
     </ul>
     <div class="tab-content pt-3">

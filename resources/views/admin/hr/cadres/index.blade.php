@@ -84,7 +84,7 @@
                 <input type="hidden" name="_method" id="formMethod" value="POST">
                 <div class="modal-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                     <h5 class="modal-title" id="modalTitle"><i class="mdi mdi-account-group mr-2" style="color: var(--primary-color);"></i> Add Cadre</h5>
-                    <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div class="mb-3">

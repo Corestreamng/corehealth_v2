@@ -875,7 +875,7 @@ $(document).ready(function() {
             var months = (endDate.getFullYear() - startDate.getFullYear()) * 12 +
                          (endDate.getMonth() - startDate.getMonth());
 
-            if (months > 0) {
+            if (months> 0) {
                 $('#lease-term-display').text(months + ' months');
                 return months;
             }
@@ -907,7 +907,7 @@ $(document).ready(function() {
         var currentPayment = payment;
 
         for (var i = 1; i <= months; i++) {
-            if (escalation > 0 && i > 1 && (i - 1) % 12 === 0) {
+            if (escalation> 0 && i> 1 && (i - 1) % 12 === 0) {
                 currentPayment *= (1 + escalation / 100);
             }
             totalPayments += currentPayment;

@@ -11,9 +11,9 @@
         $months = $dob->copy()->addYears($years)->diffInMonths($now);
         $days = $dob->copy()->addYears($years)->addMonths($months)->diffInDays($now);
         $ageParts = [];
-        if ($years > 0) $ageParts[] = $years . 'y';
-        if ($months > 0) $ageParts[] = $months . 'm';
-        if ($days > 0 || empty($ageParts)) $ageParts[] = $days . 'd';
+        if ($years> 0) $ageParts[] = $years . 'y';
+        if ($months> 0) $ageParts[] = $months . 'm';
+        if ($days> 0 || empty($ageParts)) $ageParts[] = $days . 'd';
         $ageText = implode(' ', $ageParts);
     }
     $dobText = ($req->patient && $req->patient->dob) ? \Carbon\Carbon::parse($req->patient->dob)->format('d/m/Y') : null;
@@ -241,7 +241,7 @@
                     </thead>
                     <tbody>
                         @foreach($groupedParams as $category => $params)
-                            @if(count($groupedParams) > 1)
+                            @if(count($groupedParams)> 1)
                                 <tr class="grp-header"><td colspan="5">{{ $category }}</td></tr>
                             @endif
                             @foreach($params as $param)

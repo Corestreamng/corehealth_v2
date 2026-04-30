@@ -138,9 +138,7 @@
                     <i class="mdi mdi-file-alert mr-2" style="color: var(--primary-color);"></i>
                     <span id="modalTitleText">Issue Disciplinary Query</span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="queryForm" enctype="multipart/form-data">
                 @csrf
@@ -217,9 +215,7 @@
                     <i class="mdi mdi-eye mr-2" style="color: var(--primary-color);"></i>
                     Query Details - <span id="viewQueryNumber"></span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem; max-height: 80vh; overflow-y: auto;">
                 <div class="row">
@@ -408,9 +404,7 @@
                     <i class="mdi mdi-scale-balance mr-2"></i>
                     Process Decision
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="decisionForm">
                 @csrf
@@ -774,7 +768,7 @@ $(function() {
         }
 
         // Attachments
-        if (data.attachments && data.attachments.length > 0) {
+        if (data.attachments && data.attachments.length> 0) {
             $('#attachmentsCard').show();
             let attachHtml = '';
             data.attachments.forEach(att => {
@@ -1023,7 +1017,7 @@ $(function() {
     function calculateSuspensionEndDate() {
         const startDate = $('#suspension_start_date').val();
         const days = parseInt($('#suspension_days').val()) || 0;
-        if (startDate && days > 0) {
+        if (startDate && days> 0) {
             const start = new Date(startDate);
             start.setDate(start.getDate() + days);
             const endDate = start.toISOString().split('T')[0];

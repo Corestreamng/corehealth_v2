@@ -11,8 +11,9 @@
         padding: 1.5rem;
         border-radius: 8px;
         margin-bottom: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
+
     .form-section h5 {
         border-bottom: 2px solid #007bff;
         padding-bottom: 0.5rem;
@@ -123,10 +124,10 @@
                                 <div class="form-group">
                                     <label for="batch_number">Batch Number <span class="text-danger">*</span></label>
                                     <input type="text" name="batch_number" id="batch_number"
-                                           class="form-control @error('batch_number') is-invalid @enderror"
-                                           value="{{ old('batch_number') }}"
-                                           placeholder="e.g., BTH001, LOT2026A"
-                                           required>
+                                        class="form-control @error('batch_number') is-invalid @enderror"
+                                        value="{{ old('batch_number') }}"
+                                        placeholder="e.g., BTH001, LOT2026A"
+                                        required>
                                     @error('batch_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -143,8 +144,8 @@
                                 <div class="form-group">
                                     <label for="quantity">Quantity <span class="text-danger">*</span></label>
                                     <input type="number" name="quantity" id="quantity"
-                                           class="form-control @error('quantity') is-invalid @enderror"
-                                           value="{{ old('quantity', 1) }}" min="1" required>
+                                        class="form-control @error('quantity') is-invalid @enderror"
+                                        value="{{ old('quantity', 1) }}" min="1" required>
                                     @error('quantity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -163,8 +164,8 @@
                                 <div class="form-group">
                                     <label for="received_date">Received Date</label>
                                     <input type="date" name="received_date" id="received_date"
-                                           class="form-control"
-                                           value="{{ old('received_date', date('Y-m-d')) }}">
+                                        class="form-control"
+                                        value="{{ old('received_date', date('Y-m-d')) }}">
                                 </div>
                             </div>
                         </div>
@@ -174,8 +175,8 @@
                                 <div class="form-group">
                                     <label for="expiry_date">Expiry Date</label>
                                     <input type="date" name="expiry_date" id="expiry_date"
-                                           class="form-control @error('expiry_date') is-invalid @enderror"
-                                           value="{{ old('expiry_date') }}">
+                                        class="form-control @error('expiry_date') is-invalid @enderror"
+                                        value="{{ old('expiry_date') }}">
                                     @error('expiry_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -185,8 +186,8 @@
                                 <div class="form-group">
                                     <label for="manufacture_date">Manufacture Date</label>
                                     <input type="date" name="manufacture_date" id="manufacture_date"
-                                           class="form-control"
-                                           value="{{ old('manufacture_date') }}">
+                                        class="form-control"
+                                        value="{{ old('manufacture_date') }}">
                                 </div>
                             </div>
                         </div>
@@ -200,8 +201,8 @@
                                             <span class="input-group-text">₦</span>
                                         </div>
                                         <input type="number" name="cost_price" id="cost_price"
-                                               class="form-control"
-                                               value="{{ old('cost_price', 0) }}" step="0.01" min="0">
+                                            class="form-control"
+                                            value="{{ old('cost_price', 0) }}" step="0.01" min="0">
                                     </div>
                                 </div>
                             </div>
@@ -252,143 +253,179 @@
 @section('scripts')
 <script src="{{ asset('assets/js/select2.min.js') }}"></script>
 <script>
-$(function() {
-    // Product search with Select2
-    var productSelect = $('#product_id').select2({
-        placeholder: 'Search product...',
-        allowClear: true,
-        minimumInputLength: 2,
-        ajax: {
-            url: '{{ route("inventory.purchase-orders.search-products") }}',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                return { q: params.term };
-            },
-            processResults: function(data) {
-                return {
-                    results: data.map(function(item) {
-                        return {
-                            id: item.id,
-                            text: item.product_name + ' (' + item.product_code + ')'
-                        };
-                    })
-                };
-            }
-        }
-    });
-
-    // Supplier search with Select2
-    var supplierSelect = $('#supplier_id').select2({
-        placeholder: 'Select supplier...',
-        allowClear: true,
-        minimumInputLength: 1,
-        ajax: {
-            url: '{{ route("suppliers.search") }}',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                return { q: params.term };
-            },
-            processResults: function(data) {
-                return {
-                    results: data.map(function(item) {
-                        return {
-                            id: item.id,
-                            text: item.text
-                        };
-                    })
-                };
-            }
-        }
-    });
-
-    // Batch name preview - updates as user types batch number
-    function updateBatchNamePreview() {
-        var batchNumber = $('#batch_number').val();
-        if (batchNumber) {
-            var now = new Date();
-            var timestamp = now.getFullYear().toString() +
-                ('0' + (now.getMonth() + 1)).slice(-2) +
-                ('0' + now.getDate()).slice(-2) +
-                ('0' + now.getHours()).slice(-2) +
-                ('0' + now.getMinutes()).slice(-2) +
-                ('0' + now.getSeconds()).slice(-2);
-            $('#batch-name-preview').text(batchNumber + '-' + timestamp);
-        } else {
-            $('#batch-name-preview').text('-');
-        }
-    }
-
-    $('#batch_number').on('input', updateBatchNamePreview);
-    updateBatchNamePreview(); // Initial call in case of old() value
-
-    // Pre-select product if provided
-    @if(isset($selectedProduct) && $selectedProduct)
-    var preselectedProduct = {
-        id: {{ $selectedProduct->id }},
-        text: '{{ $selectedProduct->product_name }} ({{ $selectedProduct->product_code }})'
-    };
-    var newOption = new Option(preselectedProduct.text, preselectedProduct.id, true, true);
-    productSelect.append(newOption).trigger('change');
-    @endif
-
-    // Load packaging options when product changes
-    $('#product_id').on('change', function() {
-        var productId = $(this).val();
-        var $pkgSelect = $('#batch_packaging');
-        $pkgSelect.html('<option value="" data-base="1">Base Unit</option>');
-        $('#batch-base-equiv').hide();
-
-        if (!productId) return;
-
-        $.ajax({
-            url: '/products/' + productId + '/packagings',
-            method: 'GET',
-            success: function(response) {
-                var baseUnit = response.base_unit_name || 'units';
-                $pkgSelect.html('<option value="" data-base="1">' + baseUnit + ' (base)</option>');
-                $('#batch-base-unit-name').text(baseUnit);
-
-                if (response.packagings && response.packagings.length > 0) {
-                    response.packagings.forEach(function(pkg) {
-                        var sel = pkg.is_default_purchase ? ' selected' : '';
-                        $pkgSelect.append('<option value="' + pkg.id + '" data-base="' + pkg.base_unit_qty + '"' + sel + '>' + pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + baseUnit + ')</option>');
-                    });
-                    updateBatchBaseEquiv();
+    $(function() {
+        // Product search with Select2
+        var productSelect = $('#product_id').select2({
+            placeholder: 'Search product...',
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: '{{ route("inventory.purchase-orders.search-products") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.product_name + ' (' + item.product_code + ')'
+                            };
+                        })
+                    };
                 }
+            }
+        });
 
-                if (response.allow_decimal_qty) {
-                    $('#quantity').attr('step', 'any').attr('min', '0.01');
-                } else {
-                    $('#quantity').attr('step', '1').attr('min', '1');
+        // Supplier search with Select2
+        var supplierSelect = $('#supplier_id').select2({
+            placeholder: 'Select supplier...',
+            allowClear: true,
+            minimumInputLength: 1,
+            ajax: {
+                url: '{{ route("suppliers.search") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                }
+            }
+        });
+
+        // Batch name preview - updates as user types batch number
+        function updateBatchNamePreview() {
+            var batchNumber = $('#batch_number').val();
+            if (batchNumber) {
+                var now = new Date();
+                var timestamp = now.getFullYear().toString() +
+                    ('0' + (now.getMonth() + 1)).slice(-2) +
+                    ('0' + now.getDate()).slice(-2) +
+                    ('0' + now.getHours()).slice(-2) +
+                    ('0' + now.getMinutes()).slice(-2) +
+                    ('0' + now.getSeconds()).slice(-2);
+                $('#batch-name-preview').text(batchNumber + '-' + timestamp);
+            } else {
+                $('#batch-name-preview').text('-');
+            }
+        }
+
+        $('#batch_number').on('input', updateBatchNamePreview);
+        updateBatchNamePreview(); // Initial call in case of old() value
+
+        // Pre-select product if provided
+        @if(isset($selectedProduct) && $selectedProduct)
+        var preselectedProduct = {
+            id: {
+                {
+                    $selectedProduct - > id
+                }
+            },
+            text: '{{ $selectedProduct->product_name }} ({{ $selectedProduct->product_code }})'
+        };
+        var newOption = new Option(preselectedProduct.text, preselectedProduct.id, true, true);
+        productSelect.append(newOption).trigger('change');
+        @endif
+
+        // Load packaging options when product changes
+        $('#product_id').on('change', function() {
+            var productId = $(this).val();
+            var $pkgSelect = $('#batch_packaging');
+            $pkgSelect.html('<option value="" data-base="1">Base Unit</option>');
+            $('#batch-base-equiv').hide();
+
+            if (!productId) return;
+
+            $.ajax({
+                url: '/products/' + productId + '/packagings',
+                method: 'GET',
+                success: function(response) {
+                    var baseUnit = response.base_unit_name || 'units';
+                    $pkgSelect.html('<option value="" data-base="1">' + baseUnit + ' (base)</option>');
+                    $('#batch-base-unit-name').text(baseUnit);
+
+                    if (response.packagings && response.packagings.length > 0) {
+                        var defaultFactor = 1;
+                        response.packagings.forEach(function(pkg) {
+                            var sel = '';
+                            if (pkg.is_default_purchase) {
+                                sel = ' selected';
+                                defaultFactor = pkg.base_unit_qty;
+                            }
+                            $pkgSelect.append('<option value="' + pkg.id + '" data-base="' + pkg.base_unit_qty + '"' + sel + '>' + pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + baseUnit + ')</option>');
+                        });
+                        
+                        $pkgSelect.data('prev-factor', defaultFactor);
+                        
+                        // Initial scale if default is selected
+                        var costInput = $('#cost_price');
+                        var baseCost = parseFloat(costInput.val()) || 0;
+                        if (baseCost > 0 && defaultFactor > 1) {
+                            costInput.val(parseFloat((baseCost * defaultFactor).toFixed(4)));
+                        }
+
+                        updateBatchBaseEquiv();
+                    }
+
+                    if (response.allow_decimal_qty) {
+                        $('#quantity').attr('step', 'any').attr('min', '0.01');
+                    } else {
+                        $('#quantity').attr('step', '1').attr('min', '1');
+                    }
+                }
+            });
+        });
+
+        function handlePackagingChange() {
+            var select = $('#batch_packaging');
+            var prevFactor = parseFloat(select.data('prev-factor')) || 1;
+            var newFactor = parseFloat(select.find(':selected').data('base')) || 1;
+            var costInput = $('#cost_price');
+            var currentCost = parseFloat(costInput.val()) || 0;
+
+            if (currentCost > 0) {
+                var newCost = (currentCost / prevFactor) * newFactor;
+                costInput.val(parseFloat(newCost.toFixed(4)));
+            }
+
+            select.data('prev-factor', newFactor);
+            updateBatchBaseEquiv();
+        }
+
+        $('#batch_packaging').on('change', handlePackagingChange);
+        $('#quantity').on('change input', updateBatchBaseEquiv);
+
+        // Convert to base units before form submission
+        $('form').on('submit', function() {
+            var base = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
+            if (base > 1) {
+                var qty = parseFloat($('#quantity').val()) || 0;
+                var cost = parseFloat($('#cost_price').val()) || 0;
+
+                // Convert quantity to pieces
+                $('#quantity').val(Math.round(qty * base));
+
+                // Convert cost price to cost per piece
+                if (cost > 0) {
+                    $('#cost_price').val((cost / base).toFixed(4));
                 }
             }
         });
     });
-
-    function updateBatchBaseEquiv() {
-        var base = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
-        var qty = parseFloat($('#quantity').val()) || 0;
-        var total = qty * base;
-        if (base > 1) {
-            $('#batch-base-qty').text(parseFloat(total.toFixed(4)));
-            $('#batch-base-equiv').show();
-        } else {
-            $('#batch-base-equiv').hide();
-        }
-    }
-
-    $('#batch_packaging, #quantity').on('change input', updateBatchBaseEquiv);
-
-    // Convert to base units before form submission
-    $('form').on('submit', function() {
-        var base = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
-        if (base > 1) {
-            var qty = parseFloat($('#quantity').val()) || 0;
-            $('#quantity').val(Math.round(qty * base));
-        }
-    });
-});
 </script>
 @endsection

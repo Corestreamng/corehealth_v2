@@ -132,9 +132,7 @@
                     <i class="mdi mdi-calendar-plus mr-2" style="color: var(--primary-color);"></i>
                     <span id="modalTitleText">New Leave Request</span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="leaveRequestForm" enctype="multipart/form-data">
                 @csrf
@@ -286,9 +284,7 @@
                     <i class="mdi mdi-eye mr-2" style="color: var(--primary-color);"></i>
                     Leave Request Details
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem;">
                 <div id="requestDetails"></div>
@@ -307,9 +303,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header" id="actionModalHeader" style="border-radius: 12px 12px 0 0;">
                 <h5 class="modal-title text-white" id="actionModalTitle"></h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="actionForm">
                 <div class="modal-body" style="padding: 1.5rem;">
@@ -463,7 +457,7 @@ $(document).ready(function() {
                 details.push('<li><strong>Max Consecutive Days:</strong> ' + selectedLeaveType.maxConsecutive + ' days per request</li>');
             }
 
-            if (selectedLeaveType.minNotice > 0) {
+            if (selectedLeaveType.minNotice> 0) {
                 details.push('<li><strong>Minimum Notice:</strong> ' + selectedLeaveType.minNotice + ' days in advance</li>');
             }
 
@@ -509,7 +503,7 @@ $(document).ready(function() {
     function updateDateMinimum() {
         var minDate = new Date();
 
-        if (selectedLeaveType && selectedLeaveType.minNotice > 0) {
+        if (selectedLeaveType && selectedLeaveType.minNotice> 0) {
             minDate.setDate(minDate.getDate() + parseInt(selectedLeaveType.minNotice));
 
             $('#minNoticeWarning').html(
@@ -561,19 +555,19 @@ $(document).ready(function() {
                 days = 0.5;
             }
 
-            if (days > 0) {
+            if (days> 0) {
                 var warnings = [];
                 var alertClass = 'alert-info';
 
                 // Check against max consecutive days
-                if (selectedLeaveType.maxConsecutive && days > selectedLeaveType.maxConsecutive) {
+                if (selectedLeaveType.maxConsecutive && days> selectedLeaveType.maxConsecutive) {
                     warnings.push('<span class=\"text-danger\"><i class=\"mdi mdi-alert-circle\"></i> Exceeds maximum of ' +
                                 selectedLeaveType.maxConsecutive + ' consecutive days</span>');
                     alertClass = 'alert-danger';
                 }
 
                 // Check start date against notice period
-                if (selectedLeaveType.minNotice > 0) {
+                if (selectedLeaveType.minNotice> 0) {
                     var today = new Date();
                     today.setHours(0, 0, 0, 0);
                     var minStartDate = new Date(today);
@@ -587,7 +581,7 @@ $(document).ready(function() {
                 }
 
                 $('#totalDays').text(days);
-                $('#daysWarning').html(warnings.length > 0 ? '<br>' + warnings.join('<br>') : '');
+                $('#daysWarning').html(warnings.length> 0 ? '<br>' + warnings.join('<br>') : '');
                 $('#daysInfo').removeClass('alert-info alert-warning alert-danger').addClass(alertClass).show();
             } else if (days <= 0) {
                 $('#daysInfo').hide();
@@ -616,13 +610,13 @@ $(document).ready(function() {
         }
 
         // Check max consecutive days
-        if (selectedLeaveType.maxConsecutive && days > selectedLeaveType.maxConsecutive) {
+        if (selectedLeaveType.maxConsecutive && days> selectedLeaveType.maxConsecutive) {
             toastr.error('Cannot request more than ' + selectedLeaveType.maxConsecutive + ' consecutive days for this leave type');
             return false;
         }
 
         // Check minimum notice
-        if (selectedLeaveType.minNotice > 0) {
+        if (selectedLeaveType.minNotice> 0) {
             var today = new Date();
             today.setHours(0, 0, 0, 0);
             var minStartDate = new Date(today);

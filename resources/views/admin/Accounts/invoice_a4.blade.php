@@ -94,7 +94,7 @@
                     <td style="text-align: right;">{{ number_format($row['price'], 2) }}</td>
                     <td style="text-align: center;">{{ $row['qty'] }}</td>
                     <td style="text-align: center;">{{ $row['discount_percent'] }}%</td>
-                    <td style="text-align: right; color: #059669;">{{ $row['hmo_coverage'] > 0 ? number_format($row['hmo_coverage'], 2) : '-' }}</td>
+                    <td style="text-align: right; color: #059669;">{{ $row['hmo_coverage']> 0 ? number_format($row['hmo_coverage'], 2) : '-' }}</td>
                     <td style="text-align: right;">{{ number_format($row['amount'], 2) }}</td>
                 </tr>
             @endforeach
@@ -104,7 +104,7 @@
                     <td colspan="7" style="text-align: right;">Subtotal</td>
                     <td style="text-align: right;">₦{{ number_format($totalAmount + $totalDiscount, 2) }}</td>
                 </tr>
-                @if($totalDiscount > 0)
+                @if($totalDiscount> 0)
                 <tr>
                     <td colspan="7" style="text-align: right;">Total Discount</td>
                     <td style="text-align: right; color: #dc2626;">-₦{{ number_format($totalDiscount, 2) }}</td>
@@ -114,7 +114,7 @@
                     <td colspan="7" style="text-align: right;">Total Amount</td>
                     <td style="text-align: right;">₦{{ number_format($totalAmount, 2) }}</td>
                 </tr>
-                @if($totalHmoCoverage > 0)
+                @if($totalHmoCoverage> 0)
                 <tr class="hmo-row">
                     <td colspan="7" style="text-align: right;">HMO Coverage</td>
                     <td style="text-align: right;">-₦{{ number_format($totalHmoCoverage, 2) }}</td>

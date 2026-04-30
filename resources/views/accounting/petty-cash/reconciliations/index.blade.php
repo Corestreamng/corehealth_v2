@@ -30,7 +30,7 @@
         <div>
             <h4 class="mb-1">
                 <i class="mdi mdi-scale-balance mr-2"></i>Petty Cash Reconciliations
-                @if($pendingCount > 0)
+                @if($pendingCount> 0)
                     <span class="badge badge-warning">{{ $pendingCount }} Pending Approval</span>
                 @endif
             </h4>
@@ -113,7 +113,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Reject Reconciliation</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="rejectForm">
                 <div class="modal-body">

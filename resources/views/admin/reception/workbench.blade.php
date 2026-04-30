@@ -1984,17 +1984,17 @@
     }
 
     /* Disable DataTables responsive expansion */
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable > tbody > tr.child {
+    #history-tab table.dataTable> tbody> tr.child {
         display: none !important;
     }
 
@@ -3414,7 +3414,7 @@
                 <div class="modal-content" style="border-radius:12px;border:none;">
                     <div class="modal-header py-2" style="background:linear-gradient(135deg,#0d6efd 0%,#0a58ca 100%);color:#fff;border-radius:12px 12px 0 0;">
                         <h5 class="modal-title"><i class="mdi mdi-shield-check"></i> <span id="hvc-title">Confirm Validation</span></h5>
-                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+                        <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         {{-- Single request details --}}
@@ -3445,7 +3445,7 @@
                         </div>
                     </div>
                     <div class="modal-footer py-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-sm btn-primary" id="hvc-confirm-btn"><i class="mdi mdi-check"></i> Confirm Validation</button>
                     </div>
                 </div>
@@ -4496,9 +4496,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: var(--hospital-primary); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> My Transactions</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="my-transactions-modal-body">
                 <!-- Filter Panel -->
@@ -4598,7 +4596,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -4665,9 +4663,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> Receipt Preview</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <div class="receipt-modal-tabs">
@@ -4708,7 +4704,7 @@
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title"><i class="mdi mdi-account-plus"></i> Quick Patient Registration</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="quick-register-form">
                 <div class="modal-body">
@@ -4806,7 +4802,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success">
                         <i class="mdi mdi-account-plus"></i> Register Patient
                     </button>
@@ -4824,7 +4820,7 @@
                 <h5 class="modal-title" id="request-details-title">
                     <i class="mdi mdi-clipboard-text"></i> Request Details
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="request-details-body">
                 <div class="text-center py-5" id="request-details-loading">
@@ -4959,7 +4955,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-delete-alert"></i> Discard Request</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="discardRequestForm">
                 <div class="modal-body">
@@ -4998,7 +4994,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: {{ appsettings()->hos_color ?? '#0066cc' }}; color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-card-account-details"></i> Hospital Patient Card</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
                 <!-- Card View Tabs -->
@@ -5972,7 +5968,7 @@ function displayPatientInfo(patient) {
                 allergies = [];
             }
         }
-        if (Array.isArray(allergies) && allergies.length > 0) {
+        if (Array.isArray(allergies) && allergies.length> 0) {
             allergiesHtml = `
                 <div class="patient-allergies">
                     <i class="mdi mdi-alert-circle text-danger"></i>
@@ -6108,7 +6104,7 @@ function displayUpcomingAppointments(appointments) {
     let alertHtml = '';
 
     // Prepaid follow-up — highlight prominently
-    if (prepaidFollowUps.length > 0) {
+    if (prepaidFollowUps.length> 0) {
         alertHtml += `<div class="alert alert-success border-success mb-2 py-2 px-3 d-flex align-items-center gap-2" style="border-left: 4px solid #198754;">
             <i class="mdi mdi-calendar-check mdi-24px text-success"></i>
             <div class="flex-grow-1">
@@ -6123,7 +6119,7 @@ function displayUpcomingAppointments(appointments) {
 
     // Other today appointments
     const otherToday = todayAppts.filter(a => !a.is_prepaid_followup);
-    if (otherToday.length > 0) {
+    if (otherToday.length> 0) {
         alertHtml += `<div class="alert alert-info border-info mb-2 py-2 px-3" style="border-left: 4px solid #0dcaf0;">
             <i class="mdi mdi-calendar-today text-info"></i>
             <strong>Scheduled Today:</strong>
@@ -6135,14 +6131,14 @@ function displayUpcomingAppointments(appointments) {
     }
 
     // Future appointments (compact)
-    if (futureAppts.length > 0) {
+    if (futureAppts.length> 0) {
         alertHtml += `<div class="alert alert-light border mb-2 py-2 px-3" style="border-left: 4px solid #6c757d;">
             <i class="mdi mdi-calendar-range text-muted"></i>
             <strong>Upcoming:</strong>
             <small>${futureAppts.slice(0, 3).map(a => {
                 let badge = a.is_follow_up ? '<span class="badge bg-info-subtle text-info ms-1">Follow-up</span>' : '';
                 return `${a.date} ${a.time} — ${a.clinic}${badge}`;
-            }).join('<br>')}${futureAppts.length > 3 ? '<br><em>+' + (futureAppts.length - 3) + ' more</em>' : ''}</small>
+            }).join('<br>')}${futureAppts.length> 3 ? '<br><em>+' + (futureAppts.length - 3) + ' more</em>' : ''}</small>
         </div>`;
     }
 
@@ -6187,7 +6183,7 @@ function updateProfileTab(patient) {
         }
     }
 
-    const allergiesBadges = allergies.length > 0
+    const allergiesBadges = allergies.length> 0
         ? allergies.map(a => `<span class="badge badge-danger mr-1">${a}</span>`).join(' ')
         : '<span class="text-muted">No known allergies</span>';
 
@@ -6383,7 +6379,7 @@ function switchWorkspaceTab(tab) {
             onBadgeUpdate: function(count) {
                 var badge = $('#reception-admissions-badge');
                 badge.text(count);
-                if (count > 0) badge.show(); else badge.hide();
+                if (count> 0) badge.show(); else badge.hide();
             }
         });
     }
@@ -6402,7 +6398,7 @@ function loadQueueCounts() {
         $('#queue-emergency-count').text(emergencyCount);
         $('#queue-appointments-count').text(counts.scheduled || 0);
         // Pulse animation when emergency patients exist
-        if (emergencyCount > 0) {
+        if (emergencyCount> 0) {
             $('#queue-emergency-count').closest('.queue-item').addClass('emergency-pulse');
         } else {
             $('#queue-emergency-count').closest('.queue-item').removeClass('emergency-pulse');
@@ -6423,7 +6419,7 @@ function loadQueueCounts() {
     $.get('{{ route("reception.hmo-pending-count") }}', function(data) {
         var count = data.count || 0;
         $('#queue-hmo-pending-count').text(count);
-        if (count > 0) {
+        if (count> 0) {
             $('#queue-hmo-pending-item').addClass('emergency-pulse');
         } else {
             $('#queue-hmo-pending-item').removeClass('emergency-pulse');
@@ -6604,7 +6600,7 @@ function loadReportsStatistics() {
 
             // Update top clinics table
             let clinicsHtml = '';
-            if (data.top_clinics && data.top_clinics.length > 0) {
+            if (data.top_clinics && data.top_clinics.length> 0) {
                 data.top_clinics.forEach(function(clinic) {
                     clinicsHtml += `
                         <tr>
@@ -6966,7 +6962,7 @@ function displayTariffPreview(data) {
     $('#tariff-base-price').text(`₦${parseFloat(data.total_base_price || data.base_price || 0).toLocaleString()}`);
     $('#tariff-payable-amount').text(`₦${parseFloat(data.payable_amount || 0).toLocaleString()}`);
 
-    if (data.hmo_name && data.claims_amount > 0) {
+    if (data.hmo_name && data.claims_amount> 0) {
         $('#tariff-hmo-row').show();
         $('#tariff-coverage-mode').text(data.coverage_mode || 'N/A');
         $('#tariff-claims-amount').text(`₦${parseFloat(data.claims_amount || 0).toLocaleString()}`);
@@ -7161,11 +7157,7 @@ function searchWalkinServices(query, type) {
                 </div>
                 <div>
                     <span class="text-muted mr-2">₦${price.toLocaleString()}</span>
-                    <button class="btn btn-sm btn-primary add-to-cart"
-                            data-id="${service.id}"
-                            data-type="${type}"
-                            data-name="${service.name}"
-                            data-price="${price}">
+                    <button class="btn btn-sm btn-primary add-to-cart" data-id="${service.id}" data-type="${type}" data-name="${service.name}" data-price="${price}">
                         <i class="mdi mdi-plus"></i>
                     </button>
                 </div>
@@ -7182,7 +7174,7 @@ function addToWalkinCart(id, type, name, price) {
 
     // Check if item already in cart
     const existingIndex = walkinCart.findIndex(item => item.id == id && item.type == type);
-    if (existingIndex >= 0) {
+    if (existingIndex>= 0) {
         toastr.info('Item already in cart');
         return;
     }
@@ -7278,7 +7270,7 @@ function updateWalkinCartUI() {
         }
 
         // Coverage info
-        const hasHmoCoverage = itemClaims > 0;
+        const hasHmoCoverage = itemClaims> 0;
         const coverageLabel = item.coverage_mode ? item.coverage_mode.charAt(0).toUpperCase() + item.coverage_mode.slice(1) : '';
         const coverageBadge = hasHmoCoverage
             ? `<span class="badge badge-success" style="font-size: 0.7rem;">${coverageLabel}</span>`
@@ -7313,7 +7305,7 @@ function updateWalkinCartUI() {
     // Update summary
     $('#walkin-subtotal').text(`₦${subtotal.toLocaleString()}`);
 
-    if (totalClaims > 0) {
+    if (totalClaims> 0) {
         $('#walkin-hmo-row').show();
         $('#walkin-hmo-name').text(hmoName);
         $('#walkin-hmo-amount').text(`-₦${totalClaims.toLocaleString()}`);
@@ -7383,7 +7375,7 @@ function loadRecentRequests() {
         url: `{{ url('reception/patient') }}/${currentPatient}/recent-requests`,
         method: 'GET',
         success: function(response) {
-            if (response.success && response.requests && response.requests.length > 0) {
+            if (response.success && response.requests && response.requests.length> 0) {
                 let html = '';
                 response.requests.forEach(req => {
                     const typeClass = getTypeClass(req.type);
@@ -7410,7 +7402,7 @@ function loadRecentRequests() {
                                     </span>
                                     <span>
                                         <span class="price-label">HMO</span>
-                                        <span class="price-value text-success">${req.hmo_covers > 0 ? '-₦' + parseFloat(req.hmo_covers).toLocaleString() : '-'}</span>
+                                        <span class="price-value text-success">${req.hmo_covers> 0 ? '-₦' + parseFloat(req.hmo_covers).toLocaleString() : '-'}</span>
                                     </span>
                                     <span>
                                         <span class="price-label">Payable</span>
@@ -7761,7 +7753,7 @@ function populateRequestDetails(details) {
 
     // Pricing
     $('#detail-price').text('₦' + numberFormat(details.price));
-    $('#detail-hmo-row').toggle(details.hmo_covers > 0);
+    $('#detail-hmo-row').toggle(details.hmo_covers> 0);
     $('#detail-hmo-covers').text('-₦' + numberFormat(details.hmo_covers));
     $('#detail-payable').text('₦' + numberFormat(details.payable));
 
@@ -7897,7 +7889,7 @@ function buildRequestTimeline(details) {
                 </div>
             `;
 
-            if (details.has_attachments && details.attachment_count > 0) {
+            if (details.has_attachments && details.attachment_count> 0) {
                 timelineHtml += `
                     <div class="timeline-item completed">
                         <div class="timeline-title"><i class="mdi mdi-image-multiple text-info"></i> Images Attached</div>
@@ -8009,7 +8001,7 @@ function generateFileNumber() {
             // Populate recent file numbers
             const $recentList = $('#qr-recent-file-nos');
             $recentList.empty();
-            if (response.recent_file_nos && response.recent_file_nos.length > 0) {
+            if (response.recent_file_nos && response.recent_file_nos.length> 0) {
                 response.recent_file_nos.forEach(fileNo => {
                     $recentList.append(`<span class="file-no-recent-item qr-recent-item" data-file-no="${fileNo}">${fileNo}</span>`);
                 });
@@ -8134,7 +8126,7 @@ function checkQRFileNumberDuplicate(fileNo) {
                     response.patients.forEach(p => {
                         html += `<div class="duplicate-patient"><i class="mdi mdi-account"></i> ${p.name} (${p.file_no})</div>`;
                     });
-                    if (response.count > 3) {
+                    if (response.count> 3) {
                         html += `<div class="duplicate-patient text-muted">...and ${response.count - 3} more</div>`;
                     }
                     $patients.html(html);
@@ -8249,7 +8241,7 @@ function displayTodayStats(data) {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title"><i class="mdi mdi-chart-bar"></i> Today's Statistics</h5>
-                        <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row">
@@ -8280,7 +8272,7 @@ function displayTodayStats(data) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -8357,7 +8349,7 @@ function showHospitalCard(patientData) {
     let allergiesText = 'None known';
     if (patientData.allergies) {
         if (Array.isArray(patientData.allergies)) {
-            allergiesText = patientData.allergies.length > 0 ? patientData.allergies.join(', ') : 'None known';
+            allergiesText = patientData.allergies.length> 0 ? patientData.allergies.join(', ') : 'None known';
         } else {
             allergiesText = patientData.allergies;
         }
@@ -8685,7 +8677,7 @@ function loadAvailableSlots() {
         $select.empty().append('<option value="">-- Select Time --</option>');
 
         var availableCount = 0;
-        if (response.success && response.slots && response.slots.length > 0) {
+        if (response.success && response.slots && response.slots.length> 0) {
             response.slots.forEach(function(slot) {
                 if (slot.available) {
                     $select.append('<option value="' + slot.time + '">' + slot.time + '</option>');
@@ -8923,14 +8915,7 @@ function loadHmoValidationList() {
             html += '<td>' + coverageBadge + '</td>';
             html += '<td><strong>₦' + Number(r.claims_amount).toLocaleString() + '</strong></td>';
             html += '<td>' + slaBadge + '<br><small class="text-muted">' + (r.created_at || '') + '</small></td>';
-            html += '<td><button class="btn btn-sm btn-success hmo-validate-btn" data-id="' + r.id + '"'
-                + ' data-patient="' + (r.patient_name || '').replace(/"/g,'&quot;') + '"'
-                + ' data-fileno="' + (r.file_no || '') + '"'
-                + ' data-hmo="' + (r.hmo_name || '').replace(/"/g,'&quot;') + '"'
-                + ' data-item="' + (r.item_name || '').replace(/"/g,'&quot;') + '"'
-                + ' data-coverage="' + (r.coverage_mode || '') + '"'
-                + ' data-amount="' + (r.claims_amount || 0) + '"'
-                + '><i class="mdi mdi-check"></i> Validate</button></td>';
+            html += '<td><button class="btn btn-sm btn-success hmo-validate-btn" data-id="' + r.id + '"' + ' data-patient="' + (r.patient_name || '').replace(/"/g,'&quot;') + '"' + ' data-fileno="' + (r.file_no || '') + '"' + ' data-hmo="' + (r.hmo_name || '').replace(/"/g,'&quot;') + '"' + ' data-item="' + (r.item_name || '').replace(/"/g,'&quot;') + '"' + ' data-coverage="' + (r.coverage_mode || '') + '"' + ' data-amount="' + (r.claims_amount || 0) + '"' + '><i class="mdi mdi-check"></i> Validate</button></td>';
             html += '</tr>';
         });
 
@@ -9986,7 +9971,7 @@ $(document).on('change', '#reschedule-date, #reschedule-clinic, #reschedule-doct
     }, function(response) {
         var $sel = $('#reschedule-time');
         $sel.empty().append('<option value="">-- Select Time --</option>');
-        if (response.success && response.slots && response.slots.length > 0) {
+        if (response.success && response.slots && response.slots.length> 0) {
             var hasSlots = false;
             response.slots.forEach(function(slot) {
                 if (slot.available) {
@@ -10220,7 +10205,7 @@ function loadPatientAppointments(patientId) {
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title"><i class="mdi mdi-calendar-edit"></i> Reschedule Appointment</h5>
-                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="reschedule-form">
                 <div class="modal-body">
@@ -10291,7 +10276,7 @@ function loadPatientAppointments(patientId) {
         <div class="modal-content">
             <div class="modal-header" style="background:#6f42c1; color:#fff;">
                 <h5 class="modal-title"><i class="mdi mdi-account-switch"></i> Reassign Doctor</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="reassign-form">
                 <div class="modal-body">
@@ -10332,7 +10317,7 @@ function loadPatientAppointments(patientId) {
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title"><i class="mdi mdi-link-variant"></i> Appointment History Chain</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="chain-body">
                 <div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>
@@ -10370,7 +10355,7 @@ function loadPatientAppointments(patientId) {
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h6 class="modal-title"><i class="mdi mdi-calendar-plus me-1"></i> Book Referral Appointment</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="book-ref-id">
@@ -10432,7 +10417,7 @@ function loadPatientAppointments(patientId) {
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h6 class="modal-title"><i class="mdi mdi-arrow-right-bold me-1"></i> Mark as Referred Out</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="refer-out-ref-id">
@@ -10462,7 +10447,7 @@ function loadPatientAppointments(patientId) {
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h6 class="modal-title"><i class="mdi mdi-close-circle me-1"></i> Decline Referral</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="decline-ref-id">
@@ -10491,7 +10476,7 @@ function loadPatientAppointments(patientId) {
         <div class="modal-content">
             <div class="modal-header bg-light">
                 <h6 class="modal-title"><i class="mdi mdi-file-document-outline me-1"></i> Referral Details</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <div id="referral-detail-loading" class="text-center py-4">

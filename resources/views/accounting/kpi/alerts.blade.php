@@ -146,8 +146,7 @@
                     </div>
                     <div class="d-flex flex-column">
                         @if(!$alert->acknowledged_at)
-                        <button type="button" class="btn btn-sm btn-outline-success btn-acknowledge mb-2"
-                                data-id="{{ $alert->id }}" title="Acknowledge">
+                        <button type="button" class="btn btn-sm btn-outline-success btn-acknowledge mb-2" data-id="{{ $alert->id }}" title="Acknowledge">
                             <i class="mdi mdi-check"></i> Acknowledge
                         </button>
                         @endif

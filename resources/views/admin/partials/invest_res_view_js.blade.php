@@ -76,7 +76,7 @@ function setResViewInModal(obj) {
         if (resultData && typeof resultData === 'object') {
             var paramsArray = Array.isArray(resultData) ? resultData : [];
 
-            if (paramsArray.length > 0) {
+            if (paramsArray.length> 0) {
                 var resultsHtml = '<table class="result-table"><thead><tr>';
                 resultsHtml += '<th style="width: 40%;">Test Parameter</th>';
                 resultsHtml += '<th style="width: 25%;">Results</th>';
@@ -140,7 +140,7 @@ function setResViewInModal(obj) {
     $('#invest_attachments').html('');
     if (res_obj.attachments) {
         var attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
-        if (attachments && attachments.length > 0) {
+        if (attachments && attachments.length> 0) {
             var attachHtml = '<div class="result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
             attachments.forEach(function(attachment) {
                 var url = '{{ asset("storage") }}/' + attachment.path;

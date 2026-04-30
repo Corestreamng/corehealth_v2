@@ -151,7 +151,7 @@ function setImagingResViewInModal(obj) {
     $('#imaging_attachments').html('');
     if (res_obj.attachments) {
         let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
-        if (attachments && attachments.length > 0) {
+        if (attachments && attachments.length> 0) {
             let attachHtml = '<div class="imaging-result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
             attachments.forEach(function(attachment) {
                 let url = '{{ asset("storage") }}/' + attachment.path;

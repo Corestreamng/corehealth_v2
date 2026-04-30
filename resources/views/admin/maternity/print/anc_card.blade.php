@@ -64,12 +64,12 @@
             display: flex;
             gap: 8px;
         }
-        .cols-3 > div { flex: 1; }
+        .cols-3> div { flex: 1; }
         .cols-2 {
             display: flex;
             gap: 8px;
         }
-        .cols-2 > div { flex: 1; }
+        .cols-2> div { flex: 1; }
 
         /* ── Panels & Section Headers ── */
         .section {
@@ -404,7 +404,7 @@
                                 <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
                             @endfor
                         @endforelse
-                        @if($prevPregnancies->count() > 0 && $prevPregnancies->count() < 8)
+                        @if($prevPregnancies->count()> 0 && $prevPregnancies->count() < 8)
                             @for($i = 0; $i < 8 - $prevPregnancies->count(); $i++)
                                 <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
                             @endfor
@@ -499,7 +499,7 @@
             @php
                 $bpVal = $v->blood_pressure ?? (($v->blood_pressure_systolic && $v->blood_pressure_diastolic) ? $v->blood_pressure_systolic . '/' . $v->blood_pressure_diastolic : '-');
                 $bpParts = explode('/', $bpVal);
-                $bpHighlight = (count($bpParts) == 2 && (intval($bpParts[0]) >= 140 || intval($bpParts[1]) >= 90));
+                $bpHighlight = (count($bpParts) == 2 && (intval($bpParts[0])>= 140 || intval($bpParts[1])>= 90));
 
                 $urineStr = '';
                 if (!empty($v->urine_protein) || !empty($v->urine_glucose)) {
@@ -512,7 +512,7 @@
                 <td>{{ $v->visit_date ? \Carbon\Carbon::parse($v->visit_date)->format('d/m/Y') : '-' }}</td>
                 <td>{{ $v->fundal_height_cm ? $v->fundal_height_cm . ' cm' : ($v->height_of_fundus ?? '-') }}</td>
                 <td class="text-left">{{ $v->presentation ?? ($v->presentation_and_position ?? '-') }}</td>
-                <td>{!! $v->fetal_heart_rate ? (($v->fetal_heart_rate < 110 || $v->fetal_heart_rate > 160) ? '<span style="color:#dc3545;font-weight:700;">' . $v->fetal_heart_rate . '</span>' : $v->fetal_heart_rate) : '-' !!}</td>
+                <td>{!! $v->fetal_heart_rate ? (($v->fetal_heart_rate < 110 || $v->fetal_heart_rate> 160) ? '<span style="color:#dc3545;font-weight:700;">' . $v->fetal_heart_rate . '</span>' : $v->fetal_heart_rate) : '-' !!}</td>
                 <td>{{ $v->oedema ?? '-' }}</td>
                 <td>{{ $urineStr }}</td>
                 <td>{{ $v->weight_kg ? $v->weight_kg . ' kg' : '-' }}</td>
@@ -527,7 +527,7 @@
             @endfor
         @endforelse
         {{-- Pad remaining rows to fill the card --}}
-        @if($ancVisits->count() > 0 && $ancVisits->count() < 20)
+        @if($ancVisits->count()> 0 && $ancVisits->count() < 20)
             @for($i = 0; $i < 20 - $ancVisits->count(); $i++)
                 <tr class="empty-row"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
             @endfor

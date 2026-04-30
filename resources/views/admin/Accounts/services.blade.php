@@ -86,9 +86,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="invoicePrintModalLabel">Invoice</h5>
-                    <button type="button" class="close text-white"  data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times; <small>ESC</small></span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="invoiceContent">
                     <div id="invoicePrintableArea">
@@ -154,7 +152,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" onclick="printInvoiceArea('invoicePrintableArea')" class="btn btn-primary">
                         <i class="fa fa-print"></i> Print
                     </button>
@@ -233,7 +231,7 @@
             $(document).on('change', '#service-list tbody input[type=checkbox][name="someCheckbox[]"]', function() {
                 let all = $('#service-list tbody input[type=checkbox][name="someCheckbox[]"]').length;
                 let checked = $('#service-list tbody input[type=checkbox][name="someCheckbox[]"]:checked').length;
-                $('#selectAllServices').prop('checked', all > 0 && all === checked);
+                $('#selectAllServices').prop('checked', all> 0 && all === checked);
             });
 
             // Select All / Deselect All logic for products
@@ -244,7 +242,7 @@
             $(document).on('change', '#products-list tbody input[type=checkbox][name="productChecked[]"]', function() {
                 let all = $('#products-list tbody input[type=checkbox][name="productChecked[]"]').length;
                 let checked = $('#products-list tbody input[type=checkbox][name="productChecked[]"]:checked').length;
-                $('#selectAllProducts').prop('checked', all > 0 && all === checked);
+                $('#selectAllProducts').prop('checked', all> 0 && all === checked);
             });
 
             // Form submission validation

@@ -120,7 +120,7 @@
         $totalBudgeted = $itemsWithActuals->sum('budgeted_amount');
         $totalActual = $itemsWithActuals->sum('actual_amount');
         $totalVariance = $totalBudgeted - $totalActual;
-        $overallUtilization = $totalBudgeted > 0 ? ($totalActual / $totalBudgeted) * 100 : 0;
+        $overallUtilization = $totalBudgeted> 0 ? ($totalActual / $totalBudgeted) * 100 : 0;
     @endphp
     <div class="row">
         <div class="col-md-3 mb-3">
@@ -136,18 +136,18 @@
             </div>
         </div>
         <div class="col-md-3 mb-3">
-            <div class="stat-box" style="background: linear-gradient(135deg, {{ $totalVariance >= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $totalVariance >= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
-                <div class="amount {{ $totalVariance >= 0 ? 'text-success' : 'text-danger' }}">
-                    {{ $totalVariance >= 0 ? '+' : '' }}₦{{ number_format($totalVariance, 2) }}
+            <div class="stat-box" style="background: linear-gradient(135deg, {{ $totalVariance>= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $totalVariance>= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
+                <div class="amount {{ $totalVariance>= 0 ? 'text-success' : 'text-danger' }}">
+                    {{ $totalVariance>= 0 ? '+' : '' }}₦{{ number_format($totalVariance, 2) }}
                 </div>
                 <div class="label">Variance</div>
             </div>
         </div>
         <div class="col-md-3 mb-3">
             @php
-                $utilizationColor = $overallUtilization > 90 ? '#dc3545' : ($overallUtilization > 75 ? '#ffc107' : '#28a745');
+                $utilizationColor = $overallUtilization> 90 ? '#dc3545' : ($overallUtilization> 75 ? '#ffc107' : '#28a745');
             @endphp
-            <div class="stat-box" style="background: linear-gradient(135deg, rgba({{ $overallUtilization > 90 ? '220,53,69' : ($overallUtilization > 75 ? '255,193,7' : '40,167,69') }}, 0.1) 0%, rgba({{ $overallUtilization > 90 ? '220,53,69' : ($overallUtilization > 75 ? '255,193,7' : '40,167,69') }}, 0.2) 100%);">
+            <div class="stat-box" style="background: linear-gradient(135deg, rgba({{ $overallUtilization> 90 ? '220,53,69' : ($overallUtilization> 75 ? '255,193,7' : '40,167,69') }}, 0.1) 0%, rgba({{ $overallUtilization> 90 ? '220,53,69' : ($overallUtilization> 75 ? '255,193,7' : '40,167,69') }}, 0.2) 100%);">
                 <div class="amount" style="color: {{ $utilizationColor }}">{{ number_format($overallUtilization, 1) }}%</div>
                 <div class="label">Utilization</div>
             </div>
@@ -161,7 +161,7 @@
                 <h6><i class="mdi mdi-format-list-numbered mr-2"></i>Budget Line Items</h6>
                 @foreach($itemsWithActuals as $item)
                     @php
-                        $itemColor = $item->utilization > 90 ? 'danger' : ($item->utilization > 75 ? 'warning' : 'success');
+                        $itemColor = $item->utilization> 90 ? 'danger' : ($item->utilization> 75 ? 'warning' : 'success');
                     @endphp
                     <div class="item-row">
                         <div class="row align-items-center">
@@ -179,8 +179,8 @@
                             </div>
                             <div class="col-md-2 text-right">
                                 <small class="text-muted">Variance</small><br>
-                                <strong class="{{ $item->variance >= 0 ? 'text-success' : 'text-danger' }}">
-                                    {{ $item->variance >= 0 ? '+' : '' }}₦{{ number_format($item->variance, 2) }}
+                                <strong class="{{ $item->variance>= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $item->variance>= 0 ? '+' : '' }}₦{{ number_format($item->variance, 2) }}
                                 </strong>
                             </div>
                             <div class="col-md-2">
@@ -207,8 +207,8 @@
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Remaining Balance -->
-            <div class="balance-card" style="background: linear-gradient(135deg, {{ $totalVariance >= 0 ? '#28a745' : '#dc3545' }} 0%, {{ $totalVariance >= 0 ? '#20c997' : '#c82333' }} 100%);">
-                <div class="label">{{ $totalVariance >= 0 ? 'Remaining Budget' : 'Over Budget' }}</div>
+            <div class="balance-card" style="background: linear-gradient(135deg, {{ $totalVariance>= 0 ? '#28a745' : '#dc3545' }} 0%, {{ $totalVariance>= 0 ? '#20c997' : '#c82333' }} 100%);">
+                <div class="label">{{ $totalVariance>= 0 ? 'Remaining Budget' : 'Over Budget' }}</div>
                 <div class="amount">₦{{ number_format(abs($totalVariance), 2) }}</div>
             </div>
 
@@ -412,7 +412,7 @@ $(document).ready(function() {
     // Unapprove budget
     $('#unapproveBudget').on('click', function() {
         var reason = prompt('⚠️ IMPORTANT: Please provide a detailed reason for unapproving this budget (minimum 10 characters):');
-        if (reason && reason.length >= 10) {
+        if (reason && reason.length>= 10) {
             if (confirm('Are you sure you want to unapprove this budget? This action will be logged in the audit trail.')) {
                 $.ajax({
                     url: '{{ route('accounting.budgets.unapprove', $budget->id) }}',

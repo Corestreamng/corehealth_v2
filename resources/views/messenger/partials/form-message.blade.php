@@ -8,7 +8,7 @@
         <textarea name="message" class="form-control">{{ old('message') }}</textarea>
     </div>
 
-    @if ($users->count() > 0)
+    @if ($users->count()> 0)
 
 
         <h3>Select recipients</h3><br>

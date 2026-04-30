@@ -23,7 +23,7 @@
                 <a href="{{ route('accounting.petty-cash.reconciliations.index') }}" class="btn btn-outline-info">
                     <i class="mdi mdi-scale-balance"></i> Reconciliations
                     @php $pendingReconCount = \App\Models\Accounting\PettyCashReconciliation::pendingApproval()->count(); @endphp
-                    @if($pendingReconCount > 0)
+                    @if($pendingReconCount> 0)
                         <span class="badge badge-warning ml-1">{{ $pendingReconCount }}</span>
                     @endif
                 </a>
@@ -82,9 +82,9 @@
                 </div>
             </div>
             <div class="col-md-4 col-sm-6 mb-3">
-                <div class="stat-card border-left {{ $stats['low_balance_funds'] > 0 ? 'border-danger' : 'border-success' }}" style="border-left-width: 4px !important;">
+                <div class="stat-card border-left {{ $stats['low_balance_funds']> 0 ? 'border-danger' : 'border-success' }}" style="border-left-width: 4px !important;">
                     <h5><i class="mdi mdi-alert-circle mr-1"></i> Low Balance Funds</h5>
-                    <div class="value {{ $stats['low_balance_funds'] > 0 ? 'text-danger' : 'text-success' }}">
+                    <div class="value {{ $stats['low_balance_funds']> 0 ? 'text-danger' : 'text-success' }}">
                         {{ $stats['low_balance_funds'] }}
                     </div>
                     <small class="text-muted">&lt; 20% of limit</small>
@@ -221,7 +221,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Reject Transaction</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="rejectForm">
                 <div class="modal-body">
@@ -232,7 +232,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Reject Transaction</button>
                 </div>
             </form>

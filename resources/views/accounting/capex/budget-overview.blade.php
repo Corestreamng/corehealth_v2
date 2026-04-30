@@ -94,7 +94,7 @@
             <div class="info-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="mb-0"><i class="mdi mdi-wallet-outline mr-2"></i>Budget Allocations</h6>
-                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addBudgetModal">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
                         <i class="mdi mdi-plus mr-1"></i> Add Budget
                     </button>
                 </div>
@@ -186,7 +186,7 @@
                         <small class="text-muted">Completed</small>
                     </div>
                 </div>
-                @if(($capexStats->pending ?? 0) > 0)
+                @if(($capexStats->pending ?? 0)> 0)
                     <div class="alert alert-warning py-2 px-3 mt-2 mb-0">
                         <small>
                             <i class="mdi mdi-alert mr-1"></i>
@@ -207,7 +207,7 @@
                     Overall budget performance metrics showing total allocated budget, committed amounts (approved requests), actual spending, and remaining available budget.
                 </p>
                 @php
-                    $utilization = $totalBudget > 0 ? round(($totalCommitted / $totalBudget) * 100, 1) : 0;
+                    $utilization = $totalBudget> 0 ? round(($totalCommitted / $totalBudget) * 100, 1) : 0;
                 @endphp
 
                 <div class="d-flex justify-content-between mb-3">
@@ -225,7 +225,7 @@
                 <hr>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Remaining:</span>
-                    <strong class="{{ ($totalBudget - $totalCommitted) >= 0 ? 'text-success' : 'text-danger' }}">
+                    <strong class="{{ ($totalBudget - $totalCommitted)>= 0 ? 'text-success' : 'text-danger' }}">
                         ₦{{ number_format($totalBudget - $totalCommitted, 0) }}
                     </strong>
                 </div>
@@ -248,7 +248,7 @@
                 @forelse($byCategory as $cat)
                     @php
                         $catTotal = $cat->committed ?? 0;
-                        $catUtil = $totalCommitted > 0 ? round(($cat->committed / $totalCommitted) * 100, 1) : 0;
+                        $catUtil = $totalCommitted> 0 ? round(($cat->committed / $totalCommitted) * 100, 1) : 0;
                     @endphp
                     <div class="category-bar">
                         <span style="width: 100px;">{{ $categories[$cat->category] ?? ucfirst($cat->category ?? 'Other') }}</span>
@@ -291,7 +291,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Add Capex Budget</h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     @if($errors->any())
@@ -354,7 +354,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save mr-1"></i> Save Budget
                     </button>
