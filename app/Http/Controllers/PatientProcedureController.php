@@ -1379,9 +1379,9 @@ class PatientProcedureController extends Controller
      * List procedures for a specific patient (for clinical context modal)
      * Returns card-modern formatted HTML for workbench history tabs
      */
-    public function listByPatient($patientId)
+    public function listByPatient($patientId, \Illuminate\Http\Request $request = null)
     {
-        $procedures = Procedure::with([
+        $query = Procedure::with([
             'service.price',
             'procedureDefinition.procedureCategory',
             'requestedByUser',
@@ -1390,8 +1390,24 @@ class PatientProcedureController extends Controller
             'productOrServiceRequest.payment',
         ])
             ->where('patient_id', $patientId)
-            ->orderBy('created_at', 'DESC')
-            ->get();
+            ->orderBy('created_at', 'DESC');
+
+        // Filter by surgical type if requested
+        if ($request && $request->has('type')) {
+            if ($request->type === 'surgical') {
+                $query->whereHas('procedureDefinition', function ($q) {
+                    $q->where('is_surgical', true);
+                });
+            } elseif ($request->type === 'non-surgical') {
+                $query->where(function ($q) {
+                    $q->whereHas('procedureDefinition', function ($inner) {
+                        $inner->where('is_surgical', false);
+                    })->orWhereDoesntHave('procedureDefinition');
+                });
+            }
+        }
+
+        $procedures = $query->get();
 
         return \Yajra\DataTables\Facades\DataTables::of($procedures)
             ->addColumn('info', function ($procedure) {

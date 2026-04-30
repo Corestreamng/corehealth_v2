@@ -220,6 +220,87 @@ class ImportExportController extends Controller
     }
 
     /**
+     * Download XLSX template pre-filled with existing product data for a specific store.
+     * Same columns as the blank template; rows contain current product info + store stock.
+     */
+    public function downloadProductStockTemplate(Store $store)
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Products');
+
+        $headers = [
+            'A1' => 'product_name',
+            'B1' => 'product_code',
+            'C1' => 'category_name',
+            'D1' => 'product_type',
+            'E1' => 'base_unit_name',
+            'F1' => 'allow_decimal_qty',
+            'G1' => 'description',
+            'H1' => 'cost_price',
+            'I1' => 'sale_price',
+            'J1' => 'reorder_level',
+            'K1' => 'initial_quantity',
+            'L1' => 'store_name',
+            'M1' => 'batch_number',
+            'N1' => 'expiry_date',
+            'O1' => 'is_active',
+            'P1' => 'packaging_levels',
+        ];
+
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        $this->styleHeaders($sheet, 'A1:P1');
+
+        // Load all active products with their category, price, packagings and store stock
+        $products = Product::with(['category', 'price', 'packagings', 'storeStock' => function ($q) use ($store) {
+            $q->where('store_id', $store->id);
+        }])->where('status', 1)->orderBy('product_name')->get();
+
+        $row = 2;
+        foreach ($products as $product) {
+            $storeStock = $product->storeStock->first();
+            $price = $product->price;
+
+            // Build packaging levels string e.g. "Strip:10;Box:200"
+            $packagingStr = $product->packagings->map(function ($pkg) {
+                return ($pkg->name ?? '') . ':' . ($pkg->base_unit_qty ?? '');
+            })->filter()->implode(';');
+
+            $sheet->setCellValue('A' . $row, $product->product_name);
+            $sheet->setCellValue('B' . $row, $product->product_code);
+            $sheet->setCellValue('C' . $row, $product->category->category_name ?? '');
+            $sheet->setCellValue('D' . $row, $product->product_type);
+            $sheet->setCellValue('E' . $row, $product->base_unit_name);
+            $sheet->setCellValue('F' . $row, $product->allow_decimal_qty ? '1' : '0');
+            $sheet->setCellValue('G' . $row, '');
+            $sheet->setCellValue('H' . $row, $price?->pr_buy_price ?? '');
+            $sheet->setCellValue('I' . $row, $price?->current_sale_price ?? $price?->initial_sale_price ?? '');
+            $sheet->setCellValue('J' . $row, $storeStock?->reorder_level ?? $product->reorder_alert ?? '');
+            $sheet->setCellValue('K' . $row, $storeStock?->current_quantity ?? 0);
+            $sheet->setCellValue('L' . $row, $store->store_name);
+            $sheet->setCellValue('M' . $row, '');
+            $sheet->setCellValue('N' . $row, '');
+            $sheet->setCellValue('O' . $row, $product->status ? '1' : '0');
+            $sheet->setCellValue('P' . $row, $packagingStr);
+
+            $row++;
+        }
+
+        // Auto-size columns
+        foreach (range('A', 'P') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $store->store_name);
+        return $this->downloadXlsx($spreadsheet, "products_stock_{$safeName}.xlsx");
+    }
+
+    /**
      * Download XLSX template for services with dropdown validations
      */
     public function downloadServiceTemplate()
