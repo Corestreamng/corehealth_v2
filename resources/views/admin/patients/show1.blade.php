@@ -8,9 +8,61 @@
 @endphp
 
 <div class="col-12">
-    <div class="card-modern">
-        <div class="card-header">
-            <h3 class="card-title">Patient Data</h3>
+    {{-- Workbench Patient Header --}}
+    <div class="card-modern mb-3">
+        <div class="card-header-modern">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h2 class="mb-1 font-weight-bold text-dark">
+                        <i class="mdi mdi-account-circle-outline text-primary"></i>
+                        {{ userfullname($user->id) }}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        <span class="mr-3"><i class="mdi mdi-identifier mr-1"></i>File No: <strong>{{ $patient->file_no ?? 'N/A' }}</strong></span>
+                        <span class="mr-3"><i class="mdi mdi-gender-male-female mr-1"></i>{{ ucfirst($patient->gender ?? 'N/A') }}</span>
+                        <span class="mr-3"><i class="mdi mdi-cake-variant mr-1"></i>DOB: {{ $patient->dob ?? 'N/A' }}</span>
+                        @if($patient->hmo)
+                            <span class="mr-3"><i class="mdi mdi-shield-check mr-1"></i>{{ $patient->hmo->name }}</span>
+                        @endif
+                    </p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ route('patient-services-rendered', ['patient_id' => $patient->id]) }}"
+                       class="btn btn-outline-primary btn-sm" target="_blank">
+                        <i class="mdi mdi-clipboard-list-outline mr-1"></i> Services Rendered
+                    </a>
+                    @php
+                        $show1Workbenches = [
+                            ['route' => 'reception.workbench',     'icon' => 'mdi-desktop-mac',             'label' => 'Reception'],
+                            ['route' => 'billing.workbench',       'icon' => 'mdi-cash-multiple',           'label' => 'Billing'],
+                            ['route' => 'pharmacy.workbench',      'icon' => 'mdi-pill',                    'label' => 'Pharmacy'],
+                            ['route' => 'nursing-workbench.index', 'icon' => 'mdi-heart-pulse',             'label' => 'Nursing'],
+                            ['route' => 'lab.workbench',           'icon' => 'mdi-flask-outline',           'label' => 'Lab'],
+                            ['route' => 'imaging.workbench',       'icon' => 'mdi-image-filter-center-focus','label' => 'Imaging'],
+                            ['route' => 'hmo.workbench',           'icon' => 'mdi-shield-account-outline',  'label' => 'HMO'],
+                        ];
+                    @endphp
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="mdi mdi-briefcase-outline mr-1"></i> Workbenches
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            @foreach($show1Workbenches as $wb)
+                                @if(\Route::has($wb['route']))
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route($wb['route']) }}?patient_id={{ $patient->id }}">
+                                            <i class="mdi {{ $wb['icon'] }} me-2"></i>{{ $wb['label'] }}
+                                        </a>
+                                    </li>
+                                @endif
+                            @endforeach
+                        </ul>
+                    </div>
+                    <a href="{{ route('patient.index') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="mdi mdi-arrow-left mr-1"></i> Back to Patients
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -62,23 +114,22 @@
                 </button>
             </li>
         @endcan
-        @can('see-procedures')
+        @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'wardNotesCardBody' ? 'active' : '' }}" id="procedures-tab"
                     data-bs-toggle="tab" data-bs-target="#wardNotesCardBody" type="button" role="tab">
                     <i class="fa fa-procedures me-1"></i> Procedure Notes
                 </button>
             </li>
-        @endcan
-        @can('see-nursing-notes')
-        <!-- replaced by new nurse notes -->
-            <!-- <li class="nav-item" role="presentation">
+        @endhasanyrole
+        @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
+            <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'nurseingNotesCardBody' ? 'active' : '' }}" id="nursing-tab"
                     data-bs-toggle="tab" data-bs-target="#nurseingNotesCardBody" type="button" role="tab">
                     <i class="fa fa-user-nurse me-1"></i> Nursing Notes
                 </button>
-            </li> -->
-        @endcan
+            </li>
+        @endhasanyrole
         @can('see-doctor-notes')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'doctorNotesCardBody' ? 'active' : '' }}" id="doctor-tab"
@@ -87,14 +138,14 @@
                 </button>
             </li>
         @endcan
-        @can('see-prescriptions')
+        @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'prescriptionsNotesCardBody' ? 'active' : '' }}" id="prescriptions-tab"
                     data-bs-toggle="tab" data-bs-target="#prescriptionsNotesCardBody" type="button" role="tab">
                     <i class="fa fa-pills me-1"></i> Prescriptions
                 </button>
             </li>
-        @endcan
+        @endhasanyrole
         @can('see-investigations')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'investigationsCardBody' ? 'active' : '' }}" id="investigations-tab"
@@ -150,7 +201,7 @@
         @can('see-nursing-notes')
             <div class="tab-pane fade {{ $section == 'nurseChartCardBody' ? 'show active' : '' }}" id="nurseChartCardBody" role="tabpanel">
                 <div class="card-modern">
-                    <div class="card-body">@include('admin.patients.partials.nurse_chart')</div>
+                    <div class="card-body">@include('admin.patients.partials.show1_nurse_chart')</div>
                 </div>
             </div>
         @endcan
@@ -164,32 +215,31 @@
         @can('see-accounts')
             <div class="tab-pane fade {{ $section == 'accountsCardBody' ? 'show active' : '' }}" id="accountsCardBody" role="tabpanel">
                 <div class="card-modern">
-                    <div class="card-body">@include('admin.patients.partials.accounts')</div>
+                    <div class="card-body">@include('admin.patients.partials.show1_accounts')</div>
                 </div>
             </div>
         @endcan
         @can('see-admissions')
             <div class="tab-pane fade {{ $section == 'addmissionsCardBody' ? 'show active' : '' }}" id="addmissionsCardBody" role="tabpanel">
                 <div class="card-modern">
-                    <div class="card-body">@include('admin.patients.partials.admissions')</div>
+                    <div class="card-body">@include('admin.patients.partials.show1_admissions')</div>
                 </div>
             </div>
         @endcan
-        @can('see-procedures')
+        @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
             <div class="tab-pane fade {{ $section == 'wardNotesCardBody' ? 'show active' : '' }}" id="wardNotesCardBody" role="tabpanel">
                 <div class="card-modern">
-                    <div class="card-body">@include('admin.patients.partials.procedure_notes')</div>
+                    <div class="card-body">@include('admin.patients.partials.show1_procedures')</div>
                 </div>
             </div>
-        @endcan
-        <!-- replaced by new enhbced nurse  notes -->
-        <!-- @can('see-nursing-notes')
+        @endhasanyrole
+        @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
             <div class="tab-pane fade {{ $section == 'nurseingNotesCardBody' ? 'show active' : '' }}" id="nurseingNotesCardBody" role="tabpanel">
                 <div class="card-modern">
-                    <div class="card-body">@include('admin.patients.partials.nurse_notes')</div>
+                    <div class="card-body">@include('admin.patients.partials.show1_nursing_notes')</div>
                 </div>
             </div>
-        @endcan -->
+        @endhasanyrole
         @can('see-doctor-notes')
             <div class="tab-pane fade {{ $section == 'doctorNotesCardBody' ? 'show active' : '' }}" id="doctorNotesCardBody" role="tabpanel">
                 <div class="card-modern">
@@ -197,34 +247,27 @@
                 </div>
             </div>
         @endcan
-        @can('see-prescriptions')
+        @hasanyrole('ADMIN|SUPERADMIN|NURSE|DOCTOR|RECEPTIONIST')
             <div class="tab-pane fade {{ $section == 'prescriptionsNotesCardBody' ? 'show active' : '' }}" id="prescriptionsNotesCardBody" role="tabpanel">
                 <div class="card-modern">
-                    <div class="card-body">@include('admin.patients.partials.presc')</div>
+                    <div class="card-body">@include('admin.patients.partials.show1_presc')</div>
                 </div>
             </div>
-        @endcan
+        @endhasanyrole
         @can('see-investigations')
             <div class="tab-pane fade {{ $section == 'investigationsCardBody' ? 'show active' : '' }}" id="investigationsCardBody" role="tabpanel">
                 <div class="card-modern">
-                    <div class="card-body">@include('admin.patients.partials.invest')</div>
+                    <div class="card-body">@include('admin.patients.partials.show1_invest')</div>
                 </div>
             </div>
         @endcan
         @can('see-investigations')
             <div class="tab-pane fade {{ $section == 'imagingCardBody' ? 'show active' : '' }}" id="imagingCardBody" role="tabpanel">
                 <div class="card-modern">
-                    <div class="card-body">@include('admin.patients.partials.imaging')</div>
+                    <div class="card-body">@include('admin.patients.partials.show1_imaging')</div>
                 </div>
             </div>
         @endcan
-    </div>
-
-    {{-- Back button --}}
-    <div class="row mt-4">
-        <div class="col-12">
-            <a href="{{ route('patient.index') }}" class="btn btn-danger"><i class="fa fa-close"></i> Back</a>
-        </div>
     </div>
 </div>
 
@@ -239,36 +282,6 @@
     <script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
     <!-- Bootstrap 4 -->
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}"></script>
-    <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
-    <script>
-        ClassicEditor
-            .create(document.querySelector('.classic-editor'), {
-                toolbar: {
-                    items: [
-                        'undo', 'redo',
-                        '|', 'heading',
-                        '|', 'bold', 'italic',
-                        '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
-                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                    ]
-                },
-                cloudServices: {
-                    // All predefined builds include the Easy Image feature.
-                    // Provide correct configuration values to use it.
-                    // tokenUrl: 'https://example.com/cs-token-endpoint',
-                    // uploadUrl: 'https://your-organization-id.cke-cs.com/easyimage/upload/'
-                    // Read more about Easy Image - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/easy-image.html.
-                    // For other image upload methods see the guide - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/image-upload.html.
-                }
-            })
-            .then(editor => {
-                window.editor = editor;
-            })
-            .catch(err => {
-                console.error(err);
-            });
-    </script>
-
     <script>
         $(document).ready(function() {
             $(".select2").select2();
@@ -401,44 +414,6 @@
     </script>
     <script>
         $(function() {
-            $('#misc_bill_bills').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('miscBillList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "select",
-                        name: "select"
-                    },
-                    {
-                        data: "dose",
-                        name: "dose"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
-                ],
-
-                "paging": true
-            });
-        });
-    </script>
-    <script>
-        $(function() {
             $('#misc_bill_bills_hist').DataTable({
                 "dom": 'Bfrtip',
                 "iDisplayLength": 50,
@@ -471,787 +446,6 @@
             });
         });
     </script>
-    <script>
-        function add_to_total_presc_bill(v) {
-            let new_tot = parseFloat($('#presc_bill_tot').val()) + parseFloat(v);
-            $('#presc_bill_tot').val(new_tot);
-            $('#presc_billed_tot').val(new_tot);
-        }
-
-        function subtract_from_total_presc_bill(v) {
-            let new_tot = parseFloat($('#presc_bill_tot').val()) - parseFloat(v);
-            //in order to prevent negative values
-            if (new_tot > 0) {
-                $('#presc_bill_tot').val(new_tot);
-                $('#presc_billed_tot').val(new_tot);
-            } else {
-                $('#presc_bill_tot').val(0);
-                $('#presc_billed_tot').val(0);
-            }
-        }
-
-        function checkPrescBillRow(obj) {
-            // console.log($(obj).val());
-            var row_val = $(obj).attr('data-price');
-            if ($(obj).is(':checked')) {
-                // console.log('ch')
-                add_to_total_presc_bill(row_val);
-            } else {
-                // console.log('unch')
-                subtract_from_total_presc_bill(row_val);
-            }
-        }
-    </script>
-    <script>
-        function add_to_total_misc_bill(v) {
-            let new_tot = parseFloat($('#misc_bill_tot').val()) + parseFloat(v);
-            $('#misc_bill_tot').val(new_tot);
-            $('#misc_billed_tot').val(new_tot);
-        }
-
-        function subtract_from_total_misc_bill(v) {
-            let new_tot = parseFloat($('#misc_bill_tot').val()) - parseFloat(v);
-            //in order to prevent negative values
-            if (new_tot > 0) {
-                $('#misc_bill_tot').val(new_tot);
-                $('#misc_billed_tot').val(new_tot);
-            } else {
-                $('#misc_bill_tot').val(0);
-                $('#misc_billed_tot').val(0);
-            }
-        }
-
-        function checkMiscBillRow(obj) {
-            // console.log($(obj).val());
-            var row_val = $(obj).attr('data-price');
-            if ($(obj).is(':checked')) {
-                // console.log('ch')
-                add_to_total_misc_bill(row_val);
-            } else {
-                // console.log('unch')
-                subtract_from_total_misc_bill(row_val);
-            }
-        }
-    </script>
-    <script>
-        function removeProdRow(obj, price) {
-            subtract_from_total_presc_bill(price);
-            subtract_from_total_invest_bill(price);
-            $(obj).closest('tr').remove();
-        }
-
-        function setSearchValProd(name, id, price, coverageMode = null, claims = null, payable = null) {
-            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
-            var mk = `
-                <tr>
-                    <td><input type='checkbox' name='addedPrescBillRows[]' onclick='checkPrescBillRow(this)' data-price = '${payable ?? price}' value='${id}' class='form-control addedRows'></td>
-                    <td>${name}${coverageBadge}</td>
-                    <td>${payable ?? price}</td>
-                    <td>
-                        <input type = 'text' class='form-control' name=consult_presc_dose[] required>
-                    </td>
-                    <td><button class='btn btn-danger' onclick="removeProdRow(this,'${payable ?? price}')">x</button></td>
-                </tr>
-            `;
-
-            $('#selected-products').append(mk);
-            $('#consult_presc_res').html('');
-
-        }
-
-        function searchProducts(q) {
-            if (q !== "") {
-                searchRequest = $.ajax({
-                    url: "{{ url('live-search-products') }}",
-                    method: "GET",
-                    dataType: 'json',
-                    data: { term: q, patient_id: '{{ $patient->id }}' },
-                    success: function(data) {
-                        $('#consult_presc_res').html('');
-
-                        for (var i = 0; i < data.length; i++) {
-                            const item = data[i] || {};
-                            const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
-                            const name = item.product_name || 'Unknown';
-                            const code = item.product_code || '';
-                            const qty = item.stock && item.stock.current_quantity !== undefined ? item.stock.current_quantity : 0;
-                            const price = item.price && item.price.initial_sale_price !== undefined ? item.price.initial_sale_price : 0;
-                            const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
-                            const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
-                            const mode = item.coverage_mode || null;
-                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
-                            const displayName = `${name}[${code}](${qty} avail.)`;
-
-                            const mk =
-                                `<li class='list-group-item'
-                                   style="background-color: #f0f0f0;"
-                                   onclick="setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
-                                   [${category}]<b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}</li>`;
-                            $('#consult_presc_res').append(mk);
-                            $('#consult_presc_res').show();
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Product search failed', xhr);
-                        $('#consult_presc_res').html('');
-                    }
-                });
-            } else {
-                $('#consult_presc_res').html('');
-            }
-        }
-    </script>
-    <script>
-        $(function() {
-            $('#invest_history_sample').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('investSampleList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "select",
-                        name: "select"
-                    },
-                    {
-                        data: "result",
-                        name: "result"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
-                ],
-
-                "paging": true
-            });
-        });
-    </script>
-    <script>
-        $(function() {
-            $('#invest_history_bills').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('investBillList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "select",
-                        name: "select"
-                    },
-                    {
-                        data: "result",
-                        name: "result"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
-                ],
-
-                "paging": true
-            });
-        });
-    </script>
-
-    <script>
-        $(function() {
-            $('#invest_history_res').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('investResList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "result",
-                        name: "result"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
-                    {
-                        data: "select",
-                        name: "select"
-                    },
-                ],
-
-                "paging": true
-            });
-        });
-    </script>
-    <script>
-        function add_to_total_invest_bill(v) {
-            let new_tot = parseFloat($('#invest_bill_tot').val()) + parseFloat(v);
-            $('#invest_bill_tot').val(new_tot);
-            $('#invest_billed_tot').val(new_tot);
-        }
-
-        function subtract_from_total_invest_bill(v) {
-            let new_tot = parseFloat($('#invest_bill_tot').val()) - parseFloat(v);
-            //in order to avoid having negative values
-            if (new_tot > 0) {
-                $('#invest_bill_tot').val(new_tot);
-                $('#invest_billed_tot').val(new_tot);
-            } else {
-                $('#invest_bill_tot').val(0);
-                $('#invest_billed_tot').val(0);
-            }
-        }
-
-        function checkInvestBillRow(obj) {
-            // console.log($(obj).val());
-            var row_val = $(obj).attr('data-price');
-            if ($(obj).is(':checked')) {
-                // console.log('ch')
-                add_to_total_invest_bill(row_val);
-            } else {
-                // console.log('unch')
-                subtract_from_total_invest_bill(row_val);
-            }
-        }
-
-        function setSearchValSer(name, id, price, coverageMode = null, claims = null, payable = null) {
-            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
-            var mk = `
-                <tr>
-                    <td><input type='checkbox' name='addedInvestBillRows[]' onclick='checkInvestBillRow(this)' data-price = '${payable ?? price}' value='${id}' class='form-control addedRows'></td>
-                    <td>${name}${coverageBadge}</td>
-                    <td>${payable ?? price}</td>
-                    <td>
-                        <input type = 'text' class='form-control' name=consult_invest_note[]>
-                    </td>
-                    <td><button class='btn btn-danger' onclick="removeProdRow(this,'${payable ?? price}')">x</button></td>
-                </tr>
-            `;
-
-            $('#selected-services').append(mk);
-            $('#consult_invest_res').html('');
-
-        }
-
-        function searchServices(q) {
-            if (q != "") {
-                searchRequest = $.ajax({
-                    url: "{{ url('live-search-services') }}",
-                    method: "GET",
-                    dataType: 'json',
-                    data: {
-                        term: q,
-                        patient_id: '{{ $patient->id }}'
-                    },
-                    success: function(data) {
-                        // Clear existing options from the select field
-                        $('#consult_invest_res').html('');
-                        console.log(data);
-                        // data = JSON.parse(data);
-
-                        for (var i = 0; i < data.length; i++) {
-                            const item = data[i] || {};
-                            const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
-                            const name = item.service_name || 'Unknown';
-                            const code = item.service_code || '';
-                            const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
-                            const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
-                            const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
-                            const mode = item.coverage_mode || null;
-                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
-                            const displayName = `${name}[${code}]`;
-
-                            var mk =
-                                `<li class='list-group-item'
-                                   style="background-color: #f0f0f0;"
-                                   onclick="setSearchValSer('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
-                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
-                            $('#consult_invest_res').append(mk);
-                            $('#consult_invest_res').show();
-                        }
-                    }
-                });
-            } else {
-                $('#consult_invest_res').html('');
-            }
-        }
-    </script>
-    <script>
-        // CKEditor instances
-        let investResEditor = null;
-        let imagingResEditor = null;
-        let deletedAttachments = [];
-        let imagingDeletedAttachments = [];
-
-        function setResTempInModal(obj) {
-            $('#invest_res_service_name').text($(obj).attr('data-service-name'));
-            $('#invest_res_entry_id').val($(obj).attr('data-id'));
-            $('#invest_res_is_edit').val('0'); // Set to create mode
-
-            // Clear existing attachments and reset
-            deletedAttachments = [];
-            $('#deleted_attachments').val('[]');
-            $('#existing_attachments_container').hide();
-            $('#existing_attachments_list').html('');
-
-            // Check if V2 template exists
-            let templateV2Str = $(obj).attr('data-template-v2');
-            let templateV1 = $(obj).attr('data-template');
-
-            if (templateV2Str && templateV2Str !== '') {
-                // Use V2 Template (structured form)
-                try {
-                    let templateV2 = JSON.parse(templateV2Str);
-                    loadV2Template(templateV2, null); // null means new entry, not editing
-                } catch (e) {
-                    console.error('Error parsing V2 template:', e);
-                    // Fallback to V1
-                    loadV1Template(templateV1);
-                }
-            } else {
-                // Use V1 Template (WYSIWYG editor)
-                loadV1Template(templateV1);
-            }
-
-            $('#investResModal').modal('show');
-        }
-
-        function loadV1Template(template) {
-            $('#invest_res_template_version').val('1');
-            $('#v1_template_container').show();
-            $('#v2_template_container').hide();
-
-            // Initialize CKEditor if not already initialized
-            if (!investResEditor) {
-                ClassicEditor
-                    .create(document.querySelector('#invest_res_template_editor'), {
-                        toolbar: {
-                            items: [
-                                'undo', 'redo',
-                                '|', 'heading',
-                                '|', 'bold', 'italic',
-                                '|', 'link', 'insertTable',
-                                '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                            ]
-                        }
-                    })
-                    .then(editor => {
-                        investResEditor = editor;
-                        editor.setData(template);
-                    })
-                    .catch(err => {
-                        console.error(err);
-                    });
-            } else {
-                investResEditor.setData(template);
-            }
-        }
-
-        function loadV2Template(template, existingData) {
-            $('#invest_res_template_version').val('2');
-            $('#v1_template_container').hide();
-            $('#v2_template_container').show();
-
-            let formHtml = '<div class="v2-result-form">';
-            formHtml += '<h6 class="mb-3">' + template.template_name + '</h6>';
-
-            // Sort parameters by order
-            let parameters = template.parameters.sort((a, b) => a.order - b.order);
-
-            parameters.forEach(param => {
-                if (param.show_in_report === false) {
-                    return; // Skip hidden parameters
-                }
-
-                formHtml += '<div class="form-group row">';
-                formHtml += '<label class="col-md-4 col-form-label">';
-                formHtml += param.name;
-                if (param.unit) {
-                    formHtml += ' <small class="text-muted">(' + param.unit + ')</small>';
-                }
-                if (param.required) {
-                    formHtml += ' <span class="text-danger">*</span>';
-                }
-                formHtml += '</label>';
-                formHtml += '<div class="col-md-8">';
-
-                let fieldId = 'param_' + param.id;
-                let value = existingData && existingData[param.id] ? existingData[param.id] : '';
-
-                // Generate form field based on type
-                if (param.type === 'string') {
-                    formHtml += '<input type="text" class="form-control v2-param-field" ';
-                    formHtml += 'data-param-id="' + param.id + '" ';
-                    formHtml += 'data-param-type="' + param.type + '" ';
-                    formHtml += 'id="' + fieldId + '" ';
-                    formHtml += 'value="' + value + '" ';
-                    if (param.required) formHtml += 'required ';
-                    formHtml += 'placeholder="Enter ' + param.name + '">';
-
-                } else if (param.type === 'integer') {
-                    formHtml += '<input type="number" step="1" class="form-control v2-param-field" ';
-                    formHtml += 'data-param-id="' + param.id + '" ';
-                    formHtml += 'data-param-type="' + param.type + '" ';
-                    if (param.reference_range) {
-                        formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
-                        formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
-                    }
-                    formHtml += 'id="' + fieldId + '" ';
-                    formHtml += 'value="' + value + '" ';
-                    if (param.required) formHtml += 'required ';
-                    formHtml += 'placeholder="Enter ' + param.name + '">';
-
-                } else if (param.type === 'float') {
-                    formHtml += '<input type="number" step="0.01" class="form-control v2-param-field" ';
-                    formHtml += 'data-param-id="' + param.id + '" ';
-                    formHtml += 'data-param-type="' + param.type + '" ';
-                    if (param.reference_range) {
-                        formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
-                        formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
-                    }
-                    formHtml += 'id="' + fieldId + '" ';
-                    formHtml += 'value="' + value + '" ';
-                    if (param.required) formHtml += 'required ';
-                    formHtml += 'placeholder="Enter ' + param.name + '">';
-
-                } else if (param.type === 'boolean') {
-                    formHtml += '<select class="form-control v2-param-field" ';
-                    formHtml += 'data-param-id="' + param.id + '" ';
-                    formHtml += 'data-param-type="' + param.type + '" ';
-                    if (param.reference_range && param.reference_range.reference_value !== undefined) {
-                        formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
-                    }
-                    formHtml += 'id="' + fieldId + '" ';
-                    if (param.required) formHtml += 'required ';
-                    formHtml += '>';
-                    formHtml += '<option value="">Select</option>';
-                    formHtml += '<option value="true" ' + (value === true || value === 'true' ? 'selected' : '') + '>Yes/Positive</option>';
-                    formHtml += '<option value="false" ' + (value === false || value === 'false' ? 'selected' : '') + '>No/Negative</option>';
-                    formHtml += '</select>';
-
-                } else if (param.type === 'enum') {
-                    formHtml += '<select class="form-control v2-param-field" ';
-                    formHtml += 'data-param-id="' + param.id + '" ';
-                    formHtml += 'data-param-type="' + param.type + '" ';
-                    if (param.reference_range && param.reference_range.reference_value) {
-                        formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
-                    }
-                    formHtml += 'id="' + fieldId + '" ';
-                    if (param.required) formHtml += 'required ';
-                    formHtml += '>';
-                    formHtml += '<option value="">Select</option>';
-                    if (param.options) {
-                        param.options.forEach(opt => {
-                            formHtml += '<option value="' + opt.value + '" ' + (value === opt.value ? 'selected' : '') + '>' + opt.label + '</option>';
-                        });
-                    }
-                    formHtml += '</select>';
-
-                } else if (param.type === 'long_text') {
-                    formHtml += '<textarea class="form-control v2-param-field" ';
-                    formHtml += 'data-param-id="' + param.id + '" ';
-                    formHtml += 'data-param-type="' + param.type + '" ';
-                    formHtml += 'id="' + fieldId + '" ';
-                    formHtml += 'rows="3" ';
-                    if (param.required) formHtml += 'required ';
-                    formHtml += 'placeholder="Enter ' + param.name + '">' + value + '</textarea>';
-                }
-
-                // Add reference range info if available
-                if (param.reference_range) {
-                    formHtml += '<small class="form-text text-muted">';
-                    if (param.type === 'integer' || param.type === 'float') {
-                        if (param.reference_range.min !== null && param.reference_range.max !== null) {
-                            formHtml += 'Normal range: ' + param.reference_range.min + ' - ' + param.reference_range.max;
-                        }
-                    } else if (param.type === 'boolean' && param.reference_range.reference_value !== undefined) {
-                        formHtml += 'Normal: ' + (param.reference_range.reference_value ? 'Yes/Positive' : 'No/Negative');
-                    } else if (param.type === 'enum' && param.reference_range.reference_value) {
-                        formHtml += 'Normal: ' + param.reference_range.reference_value;
-                    } else if (param.reference_range.text) {
-                        formHtml += param.reference_range.text;
-                    }
-                    formHtml += '</small>';
-                }
-
-                // Status indicator (will be updated on blur)
-                formHtml += '<div class="mt-1"><span class="param-status" id="status_' + param.id + '"></span></div>';
-
-                formHtml += '</div>';
-                formHtml += '</div>';
-            });
-
-            formHtml += '</div>';
-
-            $('#v2_form_fields').html(formHtml);
-
-            // Add event listeners for value changes to show status
-            $('.v2-param-field').on('blur change', function() {
-                updateParameterStatus($(this));
-            });
-        }
-
-        function updateParameterStatus($field) {
-            let paramId = $field.data('param-id');
-            let paramType = $field.data('param-type');
-            let value = $field.val();
-            let $statusSpan = $('#status_' + paramId);
-
-            if (!value || value === '') {
-                $statusSpan.html('');
-                return;
-            }
-
-            let status = '';
-            let statusClass = '';
-
-            if (paramType === 'integer' || paramType === 'float') {
-                let numValue = parseFloat(value);
-                let min = $field.data('ref-min');
-                let max = $field.data('ref-max');
-
-                if (min !== '' && max !== '') {
-                    if (numValue < min) {
-                        status = 'Low';
-                        statusClass = 'badge-warning';
-                    } else if (numValue > max) {
-                        status = 'High';
-                        statusClass = 'badge-danger';
-                    } else {
-                        status = 'Normal';
-                        statusClass = 'badge-success';
-                    }
-                }
-            } else if (paramType === 'boolean') {
-                let refValue = $field.data('ref-value');
-                if (refValue !== undefined) {
-                    let boolValue = value === 'true';
-                    let refBool = refValue === true || refValue === 'true';
-
-                    if (boolValue === refBool) {
-                        status = 'Normal';
-                        statusClass = 'badge-success';
-                    } else {
-                        status = 'Abnormal';
-                        statusClass = 'badge-warning';
-                    }
-                }
-            } else if (paramType === 'enum') {
-                let refValue = $field.data('ref-value');
-                if (refValue) {
-                    if (value === refValue) {
-                        status = 'Normal';
-                        statusClass = 'badge-success';
-                    } else {
-                        status = 'Abnormal';
-                        statusClass = 'badge-warning';
-                    }
-                }
-            }
-
-            if (status) {
-                $statusSpan.html('<span class="badge ' + statusClass + '">' + status + '</span>');
-            } else {
-                $statusSpan.html('');
-            }
-        }
-
-        function copyResTemplateToField() {
-            let version = $('#invest_res_template_version').val();
-
-            if (version === '2') {
-                // Collect V2 structured data
-                let data = {};
-                $('.v2-param-field').each(function() {
-                    let paramId = $(this).data('param-id');
-                    let paramType = $(this).data('param-type');
-                    let value = $(this).val();
-
-                    // Convert values to appropriate types
-                    if (paramType === 'integer') {
-                        data[paramId] = value ? parseInt(value) : null;
-                    } else if (paramType === 'float') {
-                        data[paramId] = value ? parseFloat(value) : null;
-                    } else if (paramType === 'boolean') {
-                        data[paramId] = value === 'true' ? true : (value === 'false' ? false : null);
-                    } else {
-                        data[paramId] = value || null;
-                    }
-                });
-
-                $('#invest_res_template_data').val(JSON.stringify(data));
-                // For V2, we still save a simple HTML representation to result column for backward compat
-                $('#invest_res_template_submited').val('<p>Structured result data (V2 template)</p>');
-            } else {
-                // V1: Copy from CKEditor
-                if (investResEditor) {
-                    $('#invest_res_template_submited').val(investResEditor.getData());
-                }
-            }
-            return true;
-        }
-
-        // Handle form submission
-        $('#investResModal form').on('submit', function(e) {
-            copyResTemplateToField();
-
-            let isEdit = $('#invest_res_is_edit').val() === '1';
-            let message = isEdit
-                ? 'Are you sure you want to update this result?'
-                : 'Are you sure you wish to save this result entry? It can not be edited after!';
-
-            if (!confirm(message)) {
-                e.preventDefault();
-                return false;
-            }
-        });
-
-        // Function to edit lab result
-        function editLabResult(obj) {
-            $('#invest_res_service_name').text($(obj).attr('data-service-name'));
-            $('#invest_res_entry_id').val($(obj).attr('data-id'));
-            $('#invest_res_is_edit').val('1'); // Set to edit mode
-
-            // Reset deleted attachments
-            deletedAttachments = [];
-            $('#deleted_attachments').val('[]');
-
-            // Load existing result into CKEditor
-            let result = $(obj).attr('data-result');
-
-            // Load existing attachments
-            let attachments = $(obj).attr('data-attachments');
-            if (attachments) {
-                try {
-                    attachments = JSON.parse(attachments);
-                    displayExistingAttachments(attachments);
-                } catch(e) {
-                    console.error('Error parsing attachments:', e);
-                }
-            } else {
-                $('#existing_attachments_container').hide();
-            }
-
-            // Initialize CKEditor if not already initialized
-            if (!investResEditor) {
-                ClassicEditor
-                    .create(document.querySelector('#invest_res_template_editor'), {
-                        toolbar: {
-                            items: [
-                                'undo', 'redo',
-                                '|', 'heading',
-                                '|', 'bold', 'italic',
-                                '|', 'link', 'insertTable',
-                                '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                            ]
-                        }
-                    })
-                    .then(editor => {
-                        investResEditor = editor;
-                        editor.setData(result);
-                    })
-                    .catch(err => {
-                        console.error(err);
-                    });
-            } else {
-                investResEditor.setData(result);
-            }
-
-            // Update modal title and button text
-            $('#investResModal .modal-title').text('Edit Investigation Result');
-            $('#invest_res_submit_btn').html('<i class="mdi mdi-content-save"></i> Update Result');
-
-            $('#investResModal').modal('show');
-
-            // Reset modal on close
-            $('#investResModal').on('hidden.bs.modal', function() {
-                $('#investResModal .modal-title').text('Investigation Result Entry');
-                $('#invest_res_submit_btn').html('Save changes');
-                $('#invest_res_is_edit').val('0');
-                deletedAttachments = [];
-                $('#deleted_attachments').val('[]');
-                $('#existing_attachments_container').hide();
-            });
-        }
-
-        // Function to display existing attachments for lab results
-        function displayExistingAttachments(attachments) {
-            if (!attachments || attachments.length === 0) {
-                $('#existing_attachments_container').hide();
-                return;
-            }
-
-            let html = '';
-            attachments.forEach((attachment, index) => {
-                if (!deletedAttachments.includes(index)) {
-                    let icon = getFileIcon(attachment.type);
-                    html += `
-                        <div class="badge badge-secondary mr-2 mb-2 p-2" id="attachment_${index}">
-                            ${icon} ${attachment.name}
-                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ml-2"
-                                onclick="removeAttachment(${index})" title="Remove">
-                                <i class="mdi mdi-close-circle"></i>
-                            </button>
-                        </div>
-                    `;
-                }
-            });
-
-            $('#existing_attachments_list').html(html);
-            $('#existing_attachments_container').show();
-        }
-
-        // Function to remove an attachment
-        function removeAttachment(index) {
-            if (!deletedAttachments.includes(index)) {
-                deletedAttachments.push(index);
-                $('#deleted_attachments').val(JSON.stringify(deletedAttachments));
-                $(`#attachment_${index}`).fadeOut(300, function() {
-                    $(this).remove();
-                    // Hide container if no attachments left
-                    if ($('#existing_attachments_list').children(':visible').length === 0) {
-                        $('#existing_attachments_container').fadeOut();
-                    }
-                });
-            }
-        }
-    </script>
-    <script>
-        // setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
-    </script>
 
     {{-- Imaging JavaScript Functions --}}
     <script>
@@ -1280,337 +474,7 @@
                 ],
                 "paging": true
             });
-
-            $('#imaging_history_bills').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('imagingBillList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "select",
-                        name: "select"
-                    },
-                    {
-                        data: "result",
-                        name: "result"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
-                ],
-                "paging": true
-            });
-
-            $('#imaging_history_res').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('imagingResList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "result",
-                        name: "result"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
-                    {
-                        data: "select",
-                        name: "select"
-                    },
-                ],
-                "paging": true
-            });
         });
-
-        // Imaging billing functions
-        function add_to_total_imaging_bill(v) {
-            let new_tot = parseFloat($('#imaging_bill_tot').val()) + parseFloat(v);
-            $('#imaging_bill_tot').val(new_tot);
-        }
-
-        function subtract_from_total_imaging_bill(v) {
-            let new_tot = parseFloat($('#imaging_bill_tot').val()) - parseFloat(v);
-            if (new_tot > 0) {
-                $('#imaging_bill_tot').val(new_tot);
-            } else {
-                $('#imaging_bill_tot').val(0);
-            }
-        }
-
-        function checkImagingBillRow(obj) {
-            var row_val = $(obj).attr('data-price');
-            if ($(obj).is(':checked')) {
-                add_to_total_imaging_bill(row_val);
-            } else {
-                subtract_from_total_imaging_bill(row_val);
-            }
-        }
-
-        function setSearchValImagingSer(name, id, price, coverageMode = null, claims = null, payable = null) {
-            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
-            var mk = `
-                <tr>
-                    <td><input type='checkbox' name='addedImagingBillRows[]' onclick='checkImagingBillRow(this)' data-price = '${payable ?? price}' value='${id}' class='form-control addedRows'></td>
-                    <td>${name}${coverageBadge}</td>
-                    <td>${payable ?? price}</td>
-                    <td>
-                        <input type = 'text' class='form-control' name='consult_imaging_note[]'>
-                    </td>
-                    <td><button class='btn btn-danger' onclick="removeImagingProdRow(this,'${payable ?? price}')">x</button></td>
-                </tr>
-            `;
-            $('#selected-imaging-services').append(mk);
-            $('#consult_imaging_search').val('');
-            $('#consult_imaging_res').html('');
-        }
-
-        function removeImagingProdRow(obj, price) {
-            subtract_from_total_imaging_bill(price);
-            $(obj).closest('tr').remove();
-        }
-
-        function searchImagingServices(q) {
-            if (q != "") {
-                $.ajax({
-                    url: "{{ url('live-search-services') }}",
-                    method: "GET",
-                    dataType: 'json',
-                    data: {
-                        term: q,
-                        category_id: 6, // Imaging category ID
-                        patient_id: '{{ $patient->id }}'
-                    },
-                    success: function(data) {
-                        $('#consult_imaging_res').html('');
-                        for (var i = 0; i < data.length; i++) {
-                            const item = data[i] || {};
-                            const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
-                            const name = item.service_name || 'Unknown';
-                            const code = item.service_code || '';
-                            const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
-                            const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
-                            const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
-                            const mode = item.coverage_mode || null;
-                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
-                            const displayName = `${name}[${code}]`;
-
-                            var mk =
-                                `<li class='list-group-item'
-                                   style="background-color: #f0f0f0;"
-                                   onclick="setSearchValImagingSer('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
-                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
-                            $('#consult_imaging_res').append(mk);
-                            $('#consult_imaging_res').show();
-                        }
-                    }
-                });
-            } else {
-                $('#consult_imaging_res').html('');
-            }
-        }
-
-        function setImagingResTempInModal(obj) {
-            $('#imaging_res_service_name').text($(obj).attr('data-service-name'));
-            $('#imaging_res_entry_id').val($(obj).attr('data-id'));
-            $('#imaging_res_is_edit').val('0'); // Set to create mode
-
-            // Clear existing attachments and reset
-            imagingDeletedAttachments = [];
-            $('#imaging_deleted_attachments').val('[]');
-            $('#imaging_existing_attachments_container').hide();
-            $('#imaging_existing_attachments_list').html('');
-
-            // Load template into CKEditor
-            let template = $(obj).attr('data-template');
-
-            // Initialize CKEditor if not already initialized
-            if (!imagingResEditor) {
-                ClassicEditor
-                    .create(document.querySelector('#imaging_res_template_editor'), {
-                        toolbar: {
-                            items: [
-                                'undo', 'redo',
-                                '|', 'heading',
-                                '|', 'bold', 'italic',
-                                '|', 'link', 'insertTable',
-                                '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                            ]
-                        }
-                    })
-                    .then(editor => {
-                        imagingResEditor = editor;
-                        editor.setData(template);
-                    })
-                    .catch(err => {
-                        console.error(err);
-                    });
-            } else {
-                imagingResEditor.setData(template);
-            }
-
-            $('#imagingResModal').modal('show');
-        }
-
-        function copyImagingResTemplateToField() {
-            if (imagingResEditor) {
-                $('#imaging_res_template_submited').val(imagingResEditor.getData());
-            }
-            return true;
-        }
-
-        // Handle imaging form submission
-        $('#imagingResModal form').on('submit', function(e) {
-            copyImagingResTemplateToField();
-
-            let isEdit = $('#imaging_res_is_edit').val() === '1';
-            let message = isEdit
-                ? 'Are you sure you want to update this result?'
-                : 'Are you sure you wish to save this result entry? It can not be edited after!';
-
-            if (!confirm(message)) {
-                e.preventDefault();
-                return false;
-            }
-        });
-
-        // Function to edit imaging result
-        function editImagingResult(obj) {
-            $('#imaging_res_service_name').text($(obj).attr('data-service-name'));
-            $('#imaging_res_entry_id').val($(obj).attr('data-id'));
-            $('#imaging_res_is_edit').val('1'); // Set to edit mode
-
-            // Reset deleted attachments
-            imagingDeletedAttachments = [];
-            $('#imaging_deleted_attachments').val('[]');
-
-            // Load existing result into CKEditor
-            let result = $(obj).attr('data-result');
-
-            // Load existing attachments
-            let attachments = $(obj).attr('data-attachments');
-            if (attachments) {
-                try {
-                    attachments = JSON.parse(attachments);
-                    displayImagingExistingAttachments(attachments);
-                } catch(e) {
-                    console.error('Error parsing attachments:', e);
-                }
-            } else {
-                $('#imaging_existing_attachments_container').hide();
-            }
-
-            // Initialize CKEditor if not already initialized
-            if (!imagingResEditor) {
-                ClassicEditor
-                    .create(document.querySelector('#imaging_res_template_editor'), {
-                        toolbar: {
-                            items: [
-                                'undo', 'redo',
-                                '|', 'heading',
-                                '|', 'bold', 'italic',
-                                '|', 'link', 'insertTable',
-                                '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                            ]
-                        }
-                    })
-                    .then(editor => {
-                        imagingResEditor = editor;
-                        editor.setData(result);
-                    })
-                    .catch(err => {
-                        console.error(err);
-                    });
-            } else {
-                imagingResEditor.setData(result);
-            }
-
-            // Update modal title and button text
-            $('#imagingResModal .modal-title').text('Edit Imaging Result');
-            $('#imaging_res_submit_btn').html('<i class="mdi mdi-content-save"></i> Update Result');
-
-            $('#imagingResModal').modal('show');
-
-            // Reset modal on close
-            $('#imagingResModal').on('hidden.bs.modal', function() {
-                $('#imagingResModal .modal-title').text('Imaging Result Entry');
-                $('#imaging_res_submit_btn').html('Save changes');
-                $('#imaging_res_is_edit').val('0');
-                imagingDeletedAttachments = [];
-                $('#imaging_deleted_attachments').val('[]');
-                $('#imaging_existing_attachments_container').hide();
-            });
-        }
-
-        // Function to display existing attachments for imaging results
-        function displayImagingExistingAttachments(attachments) {
-            if (!attachments || attachments.length === 0) {
-                $('#imaging_existing_attachments_container').hide();
-                return;
-            }
-
-            let html = '';
-            attachments.forEach((attachment, index) => {
-                if (!imagingDeletedAttachments.includes(index)) {
-                    let icon = getFileIcon(attachment.type);
-                    html += `
-                        <div class="badge badge-secondary mr-2 mb-2 p-2" id="imaging_attachment_${index}">
-                            ${icon} ${attachment.name}
-                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ml-2"
-                                onclick="removeImagingAttachment(${index})" title="Remove">
-                                <i class="mdi mdi-close-circle"></i>
-                            </button>
-                        </div>
-                    `;
-                }
-            });
-
-            $('#imaging_existing_attachments_list').html(html);
-            $('#imaging_existing_attachments_container').show();
-        }
-
-        // Function to remove an imaging attachment
-        function removeImagingAttachment(index) {
-            if (!imagingDeletedAttachments.includes(index)) {
-                imagingDeletedAttachments.push(index);
-                $('#imaging_deleted_attachments').val(JSON.stringify(imagingDeletedAttachments));
-                $(`#imaging_attachment_${index}`).fadeOut(300, function() {
-                    $(this).remove();
-                    // Hide container if no attachments left
-                    if ($('#imaging_existing_attachments_list').children(':visible').length === 0) {
-                        $('#imaging_existing_attachments_container').fadeOut();
-                    }
-                });
-            }
-        }
-
         function setImagingResViewInModal(obj) {
             let res_obj = JSON.parse($(obj).attr('data-result-obj'));
 
@@ -2087,7 +951,6 @@
             $('#assignBillModal').modal('show');
         }
     </script>
-    @include('admin.partials.nursing-note-save-scripts')
     <script>
         $(function() {
             $('#nurse_note_hist_1').DataTable({
@@ -2300,29 +1163,6 @@
     </script>
 
     <script>
-        function addMiscBillRow() {
-            let mrkup = `
-            <tr>
-                <td>
-                    <input type="text" class="form-control" name="names[]" placeholder="Describe service rendered...">
-                </td>
-                <td>
-                    <input type="number" class="form-control" name="prices[]" min="1">
-                </td>
-                <td><button type="button" onclick="removeMiscBillRow(this)" class="btn btn-danger btn-sm"><i
-                            class="fa fa-times"></i></button></td>
-            </tr>
-            `;
-
-            $('#misc-bill-row').append(mrkup);
-        }
-
-        function removeMiscBillRow(obj) {
-            $(obj).closest('tr').remove();
-        }
-    </script>
-
-    <script>
         $(function() {
             $('#pending-paymnet-list').DataTable({
                 "dom": 'Bfrtip',
@@ -2360,7 +1200,115 @@
         });
     </script>
 
+    {{-- Prescriptions history --}}
+    <script>
+        $(function () {
+            $('#show1_presc_history_table').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('prescHistoryList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'product_name', name: 'product_name' },
+                    { data: 'product_code', name: 'product_code' },
+                    { data: 'dose', name: 'dose' },
+                    { data: 'qty', name: 'qty' },
+                    {
+                        data: 'status', name: 'status',
+                        render: function (data) {
+                            var m = {0: ['secondary','Requested'], 1: ['info','Billed'], 2: ['success','Dispensed'], 3: ['danger','Cancelled'], 4: ['warning','Pending']};
+                            var s = m[parseInt(data)] || ['secondary', data];
+                            return '<span class="badge badge-' + s[0] + '">' + s[1] + '</span>';
+                        }
+                    },
+                    { data: 'requested_by', name: 'requested_by' },
+                    { data: 'requested_at', name: 'requested_at' },
+                    {
+                        data: 'is_paid', name: 'is_paid',
+                        render: function (data) {
+                            return data ? '<span class="badge badge-success">Paid</span>' : '<span class="badge badge-warning">Unpaid</span>';
+                        }
+                    }
+                ],
+                "paging": true
+            });
+        });
+    </script>
+
+    {{-- Nursing notes (type_id = 5) --}}
+    <script>
+        $(function () {
+            $('#show1_nursing_notes_table').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('nursing-workbench/patient/' . $patient->id . '/nursing-notes') }}",
+                    "type": "GET",
+                    "data": function (d) { d.type_id = 5; }
+                },
+                "columns": [
+                    { data: 'info', name: 'info', orderable: false, searchable: false }
+                ],
+                "ordering": false,
+                "lengthChange": false,
+                "pageLength": 10,
+                "searching": false,
+                "dom": "<'row'<'col-sm-12'tr>><'row'<'col-sm-5'i><'col-sm-7'p>>",
+                "paging": true
+            });
+        });
+    </script>
+
+    {{-- Procedures (all / surgical / non-surgical) --}}
+    <script>
+        $(function () {
+            var procBaseUrl = '{{ url("patient-procedures/list-by-patient") }}/{{ $patient->id }}';
+
+            function dtCfgProc(extraParam) {
+                return {
+                    "dom": 'Bfrtip',
+                    "iDisplayLength": 25,
+                    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
+                    "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                    "processing": true,
+                    "serverSide": true,
+                    "ajax": {
+                        "url": procBaseUrl + (extraParam ? '?type=' + extraParam : ''),
+                        "type": "GET"
+                    },
+                    "columns": [
+                        { data: 'info', name: 'info', orderable: false, searchable: false }
+                    ],
+                    "paging": true
+                };
+            }
+
+            $('#show1_proc_all_table').DataTable(dtCfgProc(null));
+
+            var surgicalInited = false, nonSurgicalInited = false;
+
+            $('#show1ProcSurgicalTab').on('click', function () {
+                if (!surgicalInited) {
+                    surgicalInited = true;
+                    $('#show1_proc_surgical_table').DataTable(dtCfgProc('surgical'));
+                }
+            });
+
+            $('#show1ProcNonSurgicalTab').on('click', function () {
+                if (!nonSurgicalInited) {
+                    nonSurgicalInited = true;
+                    $('#show1_proc_nonsurgical_table').DataTable(dtCfgProc('non-surgical'));
+                }
+            });
+        });
+    </script>
+
     @include('admin.partials.vitals-scripts')
-    @include('admin.patients.partials.nurse_chart_scripts_enhanced')
-    @include('admin.patients.partials.presc_unified_scripts')
 @endsection

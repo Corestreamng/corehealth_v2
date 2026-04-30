@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NursingNote;
+use App\Models\HmoScheme;
 use App\Models\Patient;
 use App\Models\NursingNoteType;
 use App\Models\User;
@@ -49,90 +50,109 @@ class PatientController extends Controller
      */
     public function index()
     {
-        return view('admin.patients.index');
+        // Grouped HMOs by scheme (for Select2 optgroups)
+        $hmosByScheme = Hmo::where('status', 1)
+            ->with('scheme')
+            ->orderBy('name')
+            ->get()
+            ->groupBy(fn($h) => $h->scheme ? $h->scheme->name : 'Uncategorized');
+
+        // Flat list for scheme filter dropdown
+        $schemes = HmoScheme::orderBy('name')->get(['id', 'name']);
+
+        $stats = [
+            'total'   => Patient::count(),
+            'hmo'     => Patient::whereNotNull('hmo_id')->count(),
+            'today'   => Patient::whereDate('created_at', today())->count(),
+            'month'   => Patient::whereMonth('created_at', now()->month)
+                                ->whereYear('created_at', now()->year)->count(),
+        ];
+        return view('admin.patients.index', compact('hmosByScheme', 'schemes', 'stats'));
     }
 
-    public function patientsList()
+    public function patientsList(Request $request)
     {
         try {
-            // Optimized query: Pagination at DB level, fixed N+1 queries, column selection
             $query = Patient::select([
-                'id', 'user_id', 'file_no', 'hmo_id', 'hmo_no', 'phone_no', 'created_at'
-            ])->with(['user', 'hmo']); // Eager load relationships
+                'id', 'user_id', 'file_no', 'hmo_id', 'hmo_no', 'phone_no',
+                'gender', 'dob', 'blood_group', 'genotype', 'created_at',
+                'next_of_kin_name', 'next_of_kin_phone',
+            ])->with(['user', 'hmo.scheme']);
 
-            // Use DataTables with server-side pagination (properly paginated at DB level)
+            // Server-side filters
+            if ($request->filled('hmo_id')) {
+                $query->where('hmo_id', $request->hmo_id);
+            }
+            if ($request->filled('scheme_id')) {
+                $query->whereHas('hmo', fn($q) => $q->where('hmo_scheme_id', $request->scheme_id));
+            }
+            if ($request->filled('gender')) {
+                $query->where('gender', $request->gender);
+            }
+            if ($request->filled('date_from')) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            }
+
             return Datatables::of($query->orderBy('created_at', 'DESC'))
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($pc) {
                     return ($pc->user) ? (userfullname($pc->user->id)) : ($pc->user_id);
                 })
-                ->editColumn('created_at', function ($note) {
-                    return date('h:i a D M j, Y', strtotime($note->created_at));
+                ->addColumn('email', function ($patient) {
+                    return $patient->user ? ($patient->user->email ?? 'N/A') : 'N/A';
+                })
+                ->editColumn('created_at', function ($patient) {
+                    return date('D M j, Y', strtotime($patient->created_at));
                 })
                 ->editColumn('hmo_id', function ($patient) {
-                    // HMO already eager loaded - no additional query
                     return $patient->hmo ? $patient->hmo->name : 'N/A';
                 })
-                ->addColumn('view', function ($patient) {
-
-                    // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-
-                    $url =  route('patient.show', $patient->id);
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
-                    // } else {
-
-                    //     $label = '<span class="label label-warning">Not Allowed</span>';
-                    //     return $label;
-                    // }
+                ->addColumn('scheme', function ($patient) {
+                    return $patient->hmo && $patient->hmo->scheme ? $patient->hmo->scheme->name : 'N/A';
                 })
-                ->addColumn('edit', function ($patient) {
-
-                    // if (Auth::user()->hasPermissionTo('user-edit') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-
-                    $url =  route('patient.edit', $patient->id);
-                    return '<a href="' . $url . '" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>';
-                    // } else {
-
-                    //     $label = '<span class="label label-warning">Not Allow</span>';
-                    //     return $label;
-                    // }
+                ->addColumn('age', function ($patient) {
+                    if (!$patient->dob) return 'N/A';
+                    return \Carbon\Carbon::parse($patient->dob)->age . ' yrs';
                 })
-                ->addColumn('workbenches', function ($patient) {
+                ->addColumn('nok', function ($patient) {
+                    $name  = $patient->next_of_kin_name  ?? null;
+                    $phone = $patient->next_of_kin_phone ?? null;
+                    if (!$name && !$phone) return 'N/A';
+                    return trim(($name ?? '') . ($phone ? ' · ' . $phone : ''));
+                })
+                ->addColumn('actions', function ($patient) {
                     $id = $patient->id;
-                    $items = '';
+                    $profileUrl   = route('patient.show', $id);
+                    $editUrl      = route('patient.edit', $id);
                     $wb = [
-                        ['route' => 'reception.workbench',      'icon' => 'fa fa-desktop',        'label' => 'Reception',  'param' => 'patient_id'],
-                        ['route' => 'billing.workbench',        'icon' => 'fa fa-money',          'label' => 'Billing',    'param' => 'patient_id'],
-                        ['route' => 'pharmacy.workbench',       'icon' => 'fa fa-medkit',         'label' => 'Pharmacy',   'param' => 'patient_id'],
-                        ['route' => 'nursing-workbench.index',  'icon' => 'fa fa-heartbeat',      'label' => 'Nursing',    'param' => 'patient_id'],
-                        ['route' => 'lab.workbench',            'icon' => 'fa fa-flask',          'label' => 'Lab',        'param' => 'patient_id'],
-                        ['route' => 'imaging.workbench',        'icon' => 'fa fa-x-ray',          'label' => 'Imaging',    'param' => 'patient_id'],
-                        ['route' => 'hmo.workbench',            'icon' => 'fa fa-building',       'label' => 'HMO',        'param' => 'patient_id'],
+                        ['route' => 'reception.workbench',     'icon' => 'fa fa-desktop',   'label' => 'Reception'],
+                        ['route' => 'billing.workbench',       'icon' => 'fa fa-money',     'label' => 'Billing'],
+                        ['route' => 'pharmacy.workbench',      'icon' => 'fa fa-medkit',    'label' => 'Pharmacy'],
+                        ['route' => 'nursing-workbench.index', 'icon' => 'fa fa-heartbeat', 'label' => 'Nursing'],
+                        ['route' => 'lab.workbench',           'icon' => 'fa fa-flask',     'label' => 'Lab'],
+                        ['route' => 'imaging.workbench',       'icon' => 'fa fa-x-ray',     'label' => 'Imaging'],
+                        ['route' => 'hmo.workbench',           'icon' => 'fa fa-building',  'label' => 'HMO'],
                     ];
+                    $items = '<li><a class="dropdown-item" href="' . $profileUrl . '"><i class="mdi mdi-account-details me-2"></i>Patient Profile</a></li>'
+                           . '<li><hr class="dropdown-divider"></li>';
                     foreach ($wb as $w) {
                         try {
-                            $url = route($w['route']) . '?' . $w['param'] . '=' . $id;
+                            $url = route($w['route']) . '?patient_id=' . $id;
                             $items .= '<li><a class="dropdown-item" href="' . $url . '"><i class="' . $w['icon'] . ' me-2"></i>' . $w['label'] . '</a></li>';
-                        } catch (\Exception $e) {
-                            // Route may not exist — skip
-                        }
+                        } catch (\Exception $e) { /* Route may not exist — skip */ }
                     }
-                    return '<div class="btn-group">' .
-                        '<button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">' .
-                        '<i class="fa fa-briefcase me-1"></i>Workbench</button>' .
-                        '<ul class="dropdown-menu dropdown-menu-end">' . $items . '</ul></div>';
+                    return '<div class="d-flex flex-column gap-1" style="min-width:140px">'
+                        . '<a href="' . $profileUrl . '" class="btn btn-primary btn-sm w-100"><i class="mdi mdi-account-details me-1"></i>Profile</a>'
+                        . '<a href="' . $editUrl . '" class="btn btn-info btn-sm w-100"><i class="fa fa-pencil me-1"></i>Edit</a>'
+                        . '<div class="btn-group w-100">'
+                        . '<button type="button" class="btn btn-secondary btn-sm dropdown-toggle w-100" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-briefcase me-1"></i>Workbench</button>'
+                        . '<ul class="dropdown-menu dropdown-menu-end">' . $items . '</ul>'
+                        . '</div></div>';
                 })
-                ->addColumn('delete', function ($patient) {
-
-                    // if (Auth::user()->hasPermissionTo('user-delete') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-                    $id = $patient->id;
-                    return '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="' . $id . '"><i class="fa fa-trash"></i> Delete</button>';
-                    // } else {
-                    //     $label = '<span class="label label-danger">Not Allow</span>';
-                    //     return $label;
-                    // }
-                })
-                ->rawColumns(['fullname', 'view', 'edit', 'workbenches', 'delete'])
+                ->rawColumns(['fullname', 'actions'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
