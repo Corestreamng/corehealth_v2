@@ -110,7 +110,7 @@
             </tr>
             @endforelse
         </tbody>
-        @if($leases->count() > 0)
+        @if($leases->count()> 0)
         <tfoot>
             <tr class="total-row">
                 <th colspan="4">Total ({{ $activeLeases->count() }} active)</th>

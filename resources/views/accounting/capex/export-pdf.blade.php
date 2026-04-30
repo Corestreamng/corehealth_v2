@@ -134,7 +134,7 @@
             </tr>
             @endforelse
         </tbody>
-        @if($capexList->count() > 0)
+        @if($capexList->count()> 0)
         <tfoot>
             <tr class="total-row">
                 <th colspan="4">Totals</th>

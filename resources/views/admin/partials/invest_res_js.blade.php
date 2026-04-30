@@ -381,7 +381,7 @@ window.InvestResultEntry = (function() {
                 if (numValue < min) {
                     status = 'Low';
                     statusClass = 'badge-warning';
-                } else if (numValue > max) {
+                } else if (numValue> max) {
                     status = 'High';
                     statusClass = 'badge-danger';
                 } else {
@@ -435,7 +435,7 @@ window.InvestResultEntry = (function() {
             url: attachUrl,
             method: 'GET',
             success: function(attachments) {
-                if (attachments && attachments.length > 0) {
+                if (attachments && attachments.length> 0) {
                     wrapper.show();
                     attachments.forEach(att => {
                         const attDiv = $('<div>').addClass('attachment-item mb-2 d-flex justify-content-between align-items-center');
@@ -565,7 +565,7 @@ function copyResTemplateToField() {
     window._loadV1ResultTemplates = function() {
         if (_v1TemplatesLoaded) return;
         $.get('{{ route("v1-result-templates.list") }}', function(response) {
-            if (response.success && response.groups && response.groups.length > 0) {
+            if (response.success && response.groups && response.groups.length> 0) {
                 _v1TemplateData = response.groups;
                 _v1TemplatesLoaded = true;
                 _populateV1TemplateSelect();

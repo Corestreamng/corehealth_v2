@@ -383,7 +383,7 @@ $(document).ready(function() {
         $('#je-credit-total').text('₦' + total.toLocaleString('en-NG', {minimumFractionDigits: 2}));
 
         // Show/hide late fee row
-        if (lateFee > 0) {
+        if (lateFee> 0) {
             $('#je-late-fee-row').removeClass('d-none');
             $('#je-late-fee').text('₦' + lateFee.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         } else {

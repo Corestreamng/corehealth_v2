@@ -243,7 +243,7 @@
     </div>
 
     {{-- Payment Priority Alert --}}
-    @if(count($priorities) > 0)
+    @if(count($priorities)> 0)
     <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
         <i class="mdi mdi-alert-circle mdi-24px mr-3"></i>
         <div>
@@ -590,7 +590,7 @@
                             <tbody>
                                 @forelse($priorities as $index => $priority)
                                 @php
-                                    $priorityClass = $priority['days_overdue'] >= 60 ? 'priority-high' : ($priority['days_overdue'] >= 30 ? 'priority-medium' : 'priority-low');
+                                    $priorityClass = $priority['days_overdue']>= 60 ? 'priority-high' : ($priority['days_overdue']>= 30 ? 'priority-medium' : 'priority-low');
                                 @endphp
                                 <tr class="{{ $priorityClass }}">
                                     <td><strong>{{ $index + 1 }}</strong></td>
@@ -605,7 +605,7 @@
                                     <td><code>{{ $priority['reference'] }}</code></td>
                                     <td>{{ $priority['date'] }}</td>
                                     <td>
-                                        <span class="aging-badge {{ $priority['days_overdue'] >= 60 ? 'aging-over-90' : ($priority['days_overdue'] >= 30 ? 'aging-31-60' : 'aging-1-30') }}">
+                                        <span class="aging-badge {{ $priority['days_overdue']>= 60 ? 'aging-over-90' : ($priority['days_overdue']>= 30 ? 'aging-31-60' : 'aging-1-30') }}">
                                             {{ $priority['days_overdue'] }}+ days
                                         </span>
                                     </td>
@@ -613,9 +613,9 @@
                                         <strong class="text-danger">₦{{ number_format($priority['amount'], 2) }}</strong>
                                     </td>
                                     <td>
-                                        @if($priority['days_overdue'] >= 60)
+                                        @if($priority['days_overdue']>= 60)
                                         <span class="badge bg-danger">HIGH</span>
-                                        @elseif($priority['days_overdue'] >= 30)
+                                        @elseif($priority['days_overdue']>= 30)
                                         <span class="badge bg-warning text-dark">MEDIUM</span>
                                         @else
                                         <span class="badge bg-success">LOW</span>
@@ -655,7 +655,7 @@ $(document).ready(function() {
     Object.keys(tableConfigs).forEach(function(tableId) {
         var config = tableConfigs[tableId];
         var rows = $(tableId + ' tbody tr:not(:has(.text-center))');
-        if (rows.length > 0) {
+        if (rows.length> 0) {
             $(tableId).DataTable({
                 dom: 'Bfrtip',
                 pageLength: 25,

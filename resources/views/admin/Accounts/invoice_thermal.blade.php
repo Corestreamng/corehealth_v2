@@ -79,7 +79,7 @@
             <tr>
                 <td>{{ Str::limit($row['name'], 18) }}</td>
                 <td class="amount">{{ $row['qty'] }}</td>
-                <td class="amount hmo-coverage">{{ $row['hmo_coverage'] > 0 ? number_format($row['hmo_coverage'], 0) : '-' }}</td>
+                <td class="amount hmo-coverage">{{ $row['hmo_coverage']> 0 ? number_format($row['hmo_coverage'], 0) : '-' }}</td>
                 <td class="amount">{{ number_format($row['amount'], 0) }}</td>
             </tr>
         @endforeach
@@ -90,11 +90,11 @@
 
     <div class="total-section">
         <div><span>Subtotal:</span><span>₦{{ number_format($totalAmount + $totalDiscount, 2) }}</span></div>
-        @if($totalDiscount > 0)
+        @if($totalDiscount> 0)
         <div><span>Discount:</span><span>-₦{{ number_format($totalDiscount, 2) }}</span></div>
         @endif
         <div><span>Total:</span><span>₦{{ number_format($totalAmount, 2) }}</span></div>
-        @if($totalHmoCoverage > 0)
+        @if($totalHmoCoverage> 0)
         <div class="hmo-coverage"><span>HMO Coverage:</span><span>-₦{{ number_format($totalHmoCoverage, 2) }}</span></div>
         @endif
         <div class="grand-total"><span>PAYABLE:</span><span>₦{{ number_format($patientPayable, 2) }}</span></div>

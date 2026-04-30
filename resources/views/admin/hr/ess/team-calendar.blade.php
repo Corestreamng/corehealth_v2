@@ -185,7 +185,7 @@
                                 </div>
                             </div>
                             @endforeach
-                            @if($teamMembers->count() > 10)
+                            @if($teamMembers->count()> 10)
                             <div class="text-center py-1">
                                 <small class="text-muted">+{{ $teamMembers->count() - 10 }} more members</small>
                             </div>
@@ -266,15 +266,13 @@
                 <h5 class="modal-title text-white">
                     <i class="mdi mdi-calendar-account mr-2"></i>Leave Details
                 </h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="leaveDetailContent">
                 <!-- Content loaded dynamically -->
             </div>
             <div class="modal-footer" id="leaveDetailFooter">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             </div>
         </div>
     </div>
@@ -288,15 +286,13 @@
                 <h5 class="modal-title text-white" id="dayDetailTitle">
                     <i class="mdi mdi-calendar mr-2"></i>Leave Details
                 </h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="dayDetailContent" style="max-height: 400px; overflow-y: auto;">
                 <!-- Content loaded dynamically -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             </div>
         </div>
     </div>
@@ -367,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="leave-items-container">
                         ${displayLeaves.map(leave => renderLeaveItem(leave)).join('')}
-                        ${moreCount > 0 ? `<div class="more-leaves" onclick="showDayDetail('${dateStr}')">+${moreCount} more</div>` : ''}
+                        ${moreCount> 0 ? `<div class="more-leaves" onclick="showDayDetail('${dateStr}')">+${moreCount} more</div>` : ''}
                     </div>
                 </div>
             `;
@@ -403,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const start = new Date(leave.start_date);
             const end = new Date(leave.end_date);
             const check = new Date(dateStr);
-            return check >= start && check <= end;
+            return check>= start && check <= end;
         });
     }
 
@@ -487,11 +483,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="{{ url('hr/ess/team-approvals') }}/${leave.leave_id}" class="btn btn-primary" style="border-radius: 8px;">
                     <i class="mdi mdi-eye mr-1"></i>View & Approve
                 </a>
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             `);
         } else {
             $('#leaveDetailFooter').html(`
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             `);
         }
 
@@ -595,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('nextMonthBtn').addEventListener('click', function() {
         currentMonth++;
-        if (currentMonth > 11) {
+        if (currentMonth> 11) {
             currentMonth = 0;
             currentYear++;
         }

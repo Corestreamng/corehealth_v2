@@ -829,7 +829,7 @@ class StoreWorkbenchController extends Controller
                 $q->where('product_id', (int) $request->product_id);
             }
         })
-        ->with(['stockBatch.product', 'stockBatch.store', 'performer'])
+        ->with(['stockBatch.product.packaging', 'stockBatch.store', 'performer'])
         ->when($dateFrom, fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
         ->when($dateTo,   fn($q) => $q->whereDate('created_at', '<=', $dateTo))
         ->orderBy('created_at')
@@ -988,6 +988,14 @@ class StoreWorkbenchController extends Controller
                 'ref_url'         => $refUrl,
                 'performer'       => $tx->performer->name ?? 'System',
                 'notes'           => $tx->notes,
+                'packaging'       => $tx->stockBatch->product->packaging->map(function($p) {
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'base_unit_qty' => $p->base_unit_qty,
+                    ];
+                }),
+                'base_unit'       => $tx->stockBatch->product->base_unit_name ?? 'Piece',
             ];
         });
 

@@ -176,7 +176,7 @@
                                 </select>
                             </div>
 
-                            @if($fund->requires_approval && $fund->approval_threshold > 0)
+                            @if($fund->requires_approval && $fund->approval_threshold> 0)
                                 <div class="alert alert-info">
                                     <i class="mdi mdi-information mr-2"></i>
                                     Disbursements below ₦{{ number_format($fund->approval_threshold, 2) }} will be auto-approved.
@@ -249,12 +249,12 @@ $(document).ready(function() {
         var limit = {{ $fund->transaction_limit }};
         var balance = {{ $fund->current_balance }};
 
-        if (amount > limit) {
+        if (amount> limit) {
             toastr.warning('Amount exceeds transaction limit of ₦' + limit.toLocaleString());
             $(this).val(limit);
         }
 
-        if (amount > balance) {
+        if (amount> balance) {
             toastr.warning('Amount exceeds available balance of ₦' + balance.toLocaleString());
         }
 

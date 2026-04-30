@@ -133,21 +133,21 @@
                                             <small class="text-muted">{{ $transaction['source_type'] ?? '-' }}</small>
                                         </td>
                                         <td class="text-end">
-                                            @if(($transaction['debit'] ?? 0) > 0)
+                                            @if(($transaction['debit'] ?? 0)> 0)
                                                 <span class="text-success fw-bold">₦{{ number_format($transaction['debit'], 2) }}</span>
                                             @else
                                                 <span class="text-muted">-</span>
                                             @endif
                                         </td>
                                         <td class="text-end">
-                                            @if(($transaction['credit'] ?? 0) > 0)
+                                            @if(($transaction['credit'] ?? 0)> 0)
                                                 <span class="text-danger fw-bold">₦{{ number_format($transaction['credit'], 2) }}</span>
                                             @else
                                                 <span class="text-muted">-</span>
                                             @endif
                                         </td>
                                         <td class="text-end">
-                                            <strong class="{{ ($transaction['running_balance'] ?? 0) >= 0 ? 'text-dark' : 'text-danger' }}">
+                                            <strong class="{{ ($transaction['running_balance'] ?? 0)>= 0 ? 'text-dark' : 'text-danger' }}">
                                                 ₦{{ number_format($transaction['running_balance'] ?? 0, 2) }}
                                             </strong>
                                         </td>

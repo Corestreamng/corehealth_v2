@@ -115,7 +115,7 @@
     </div>
 
     <!-- Budget Utilization -->
-    @if($stats['budget_data']['total_budget'] > 0)
+    @if($stats['budget_data']['total_budget']> 0)
     <div class="row mb-4">
         <div class="col-12">
             <div class="card-modern">
@@ -123,7 +123,7 @@
                     <h6 class="mb-3">Budget Utilization</h6>
                     @php
                         $utilizationPercent = min(100, ($stats['budget_data']['utilized'] / $stats['budget_data']['total_budget']) * 100);
-                        $utilizationColor = $utilizationPercent > 90 ? 'danger' : ($utilizationPercent > 75 ? 'warning' : 'success');
+                        $utilizationColor = $utilizationPercent> 90 ? 'danger' : ($utilizationPercent> 75 ? 'warning' : 'success');
                     @endphp
                     <div class="budget-progress">
                         <div class="fill bg-{{ $utilizationColor }}" style="width: {{ $utilizationPercent }}%">

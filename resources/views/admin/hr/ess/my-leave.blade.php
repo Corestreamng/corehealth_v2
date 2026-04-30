@@ -29,8 +29,8 @@
             $balance = $balances[$leaveType->id] ?? null;
             $available = $balance ? $balance->available : 0;
             $entitled = $balance ? $balance->total_entitled : $leaveType->max_days_per_year;
-            $percentage = $entitled > 0 ? (($available / $entitled) * 100) : 0;
-            $colorClass = $percentage > 50 ? 'success' : ($percentage > 20 ? 'warning' : 'danger');
+            $percentage = $entitled> 0 ? (($available / $entitled) * 100) : 0;
+            $colorClass = $percentage> 50 ? 'success' : ($percentage> 20 ? 'warning' : 'danger');
         @endphp
         <div class="col-md-3 mb-3">
             <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -128,9 +128,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-calendar-plus mr-2"></i>Request Leave
                 </h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="leaveRequestForm">
                 @csrf
@@ -267,7 +265,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
                     <button type="submit" class="btn btn-primary" style="border-radius: 8px;">
                         <i class="mdi mdi-send mr-1"></i>Submit Request
                     </button>
@@ -285,9 +283,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-eye mr-2"></i>Leave Request Details
                 </h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -321,7 +317,7 @@
                 </div>
             </div>
             <div class="modal-footer" id="view_modal_footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             </div>
         </div>
     </div>
@@ -399,7 +395,7 @@ $(document).ready(function() {
                 details.push('<li><strong>Max Consecutive Days:</strong> ' + selectedLeaveType.maxConsecutive + ' days per request</li>');
             }
 
-            if (selectedLeaveType.minNotice > 0) {
+            if (selectedLeaveType.minNotice> 0) {
                 details.push('<li><strong>Minimum Notice:</strong> ' + selectedLeaveType.minNotice + ' days in advance</li>');
             }
 
@@ -445,7 +441,7 @@ $(document).ready(function() {
     function updateDateMinimum() {
         var minDate = new Date();
 
-        if (selectedLeaveType && selectedLeaveType.minNotice > 0) {
+        if (selectedLeaveType && selectedLeaveType.minNotice> 0) {
             minDate.setDate(minDate.getDate() + parseInt(selectedLeaveType.minNotice));
 
             $('#minNoticeWarning').html(
@@ -497,26 +493,26 @@ $(document).ready(function() {
                 days = 0.5;
             }
 
-            if (days > 0) {
+            if (days> 0) {
                 var warnings = [];
                 var alertClass = 'alert-info';
 
                 // Check against max consecutive days
-                if (selectedLeaveType.maxConsecutive && days > selectedLeaveType.maxConsecutive) {
+                if (selectedLeaveType.maxConsecutive && days> selectedLeaveType.maxConsecutive) {
                     warnings.push('<span class="text-danger"><i class="mdi mdi-alert-circle"></i> Exceeds maximum of ' +
                                 selectedLeaveType.maxConsecutive + ' consecutive days</span>');
                     alertClass = 'alert-danger';
                 }
 
                 // Check against balance
-                if (selectedLeaveType.balance !== undefined && days > selectedLeaveType.balance) {
+                if (selectedLeaveType.balance !== undefined && days> selectedLeaveType.balance) {
                     warnings.push('<span class="text-warning"><i class="mdi mdi-alert"></i> Exceeds available balance of ' +
                                 parseFloat(selectedLeaveType.balance).toFixed(1) + ' days</span>');
                     alertClass = alertClass === 'alert-danger' ? 'alert-danger' : 'alert-warning';
                 }
 
                 // Check start date against notice period
-                if (selectedLeaveType.minNotice > 0) {
+                if (selectedLeaveType.minNotice> 0) {
                     var today = new Date();
                     today.setHours(0, 0, 0, 0);
                     var minStartDate = new Date(today);
@@ -530,7 +526,7 @@ $(document).ready(function() {
                 }
 
                 $('#totalDays').text(days);
-                $('#daysWarning').html(warnings.length > 0 ? '<br>' + warnings.join('<br>') : '');
+                $('#daysWarning').html(warnings.length> 0 ? '<br>' + warnings.join('<br>') : '');
                 $('#daysInfo').removeClass('alert-info alert-warning alert-danger').addClass(alertClass).show();
             } else if (days <= 0) {
                 $('#daysInfo').hide();
@@ -559,20 +555,20 @@ $(document).ready(function() {
         }
 
         // Check max consecutive days
-        if (selectedLeaveType.maxConsecutive && days > selectedLeaveType.maxConsecutive) {
+        if (selectedLeaveType.maxConsecutive && days> selectedLeaveType.maxConsecutive) {
             toastr.error('Cannot request more than ' + selectedLeaveType.maxConsecutive + ' consecutive days for this leave type');
             return false;
         }
 
         // Check balance
-        if (selectedLeaveType.balance !== undefined && days > selectedLeaveType.balance) {
+        if (selectedLeaveType.balance !== undefined && days> selectedLeaveType.balance) {
             if (!confirm('You are requesting more days than your available balance. Do you want to proceed?')) {
                 return false;
             }
         }
 
         // Check minimum notice
-        if (selectedLeaveType.minNotice > 0) {
+        if (selectedLeaveType.minNotice> 0) {
             var today = new Date();
             today.setHours(0, 0, 0, 0);
             var minStartDate = new Date(today);

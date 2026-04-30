@@ -243,11 +243,11 @@
                 <div class="account-balance-card">
                     <h6 class="mb-3"><i class="mdi mdi-wallet mr-2"></i>Current Account Balance</h6>
                     @if($patientAccount)
-                        <div class="balance-amount {{ $patientAccount->balance >= 0 ? 'positive' : 'negative' }}">
+                        <div class="balance-amount {{ $patientAccount->balance>= 0 ? 'positive' : 'negative' }}">
                             ₦{{ number_format(abs($patientAccount->balance), 2) }}
                         </div>
                         <div class="text-muted">
-                            @if($patientAccount->balance > 0)
+                            @if($patientAccount->balance> 0)
                                 <span class="text-success"><i class="mdi mdi-check-circle mr-1"></i>Credit Balance (Hospital Owes Patient)</span>
                             @elseif($patientAccount->balance < 0)
                                 <span class="text-danger"><i class="mdi mdi-alert-circle mr-1"></i>Debt (Patient Owes Hospital)</span>
@@ -376,8 +376,8 @@ $(document).ready(function() {
             $('#patient-preview').html(html).show();
 
             // Update balance display
-            var balanceClass = currentBalance >= 0 ? 'positive' : 'negative';
-            var balanceText = currentBalance > 0 ? 'Credit Balance' : (currentBalance < 0 ? 'Debt' : 'Zero Balance');
+            var balanceClass = currentBalance>= 0 ? 'positive' : 'negative';
+            var balanceText = currentBalance> 0 ? 'Credit Balance' : (currentBalance < 0 ? 'Debt' : 'Zero Balance');
 
             // Trigger amount recalc
             $('#deposit-amount').trigger('input');

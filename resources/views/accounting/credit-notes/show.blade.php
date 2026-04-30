@@ -198,10 +198,10 @@
                                                 {{ $line->account->code }} - {{ $line->account->name }}
                                             </td>
                                             <td class="text-end">
-                                                {{ $line->debit > 0 ? number_format($line->debit, 2) : '-' }}
+                                                {{ $line->debit> 0 ? number_format($line->debit, 2) : '-' }}
                                             </td>
                                             <td class="text-end">
-                                                {{ $line->credit > 0 ? number_format($line->credit, 2) : '-' }}
+                                                {{ $line->credit> 0 ? number_format($line->credit, 2) : '-' }}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -334,7 +334,7 @@
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Void Credit Note</h5>
-                        <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                        <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="alert alert-warning">
@@ -366,7 +366,7 @@
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Process Refund</h5>
-                        <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                        <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="alert alert-info">

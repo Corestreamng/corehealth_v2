@@ -275,7 +275,7 @@
                     <div class="amount">₦{{ number_format($fixedAsset->book_value, 2) }}</div>
                     <div class="opacity-75 mt-2">
                         @php
-                            $depPercent = $fixedAsset->depreciable_amount > 0
+                            $depPercent = $fixedAsset->depreciable_amount> 0
                                 ? min(100, ($fixedAsset->accumulated_depreciation / $fixedAsset->depreciable_amount) * 100)
                                 : 0;
                         @endphp
@@ -328,10 +328,10 @@
                         @foreach($fixedAsset->journalEntry->lines as $line)
                         <div class="d-flex justify-content-between align-items-center py-2 border-top">
                             <div>
-                                <span class="badge badge-{{ $line->debit > 0 ? 'primary' : 'success' }} px-2">{{ $line->debit > 0 ? 'DEBIT' : 'CREDIT' }}</span>
+                                <span class="badge badge-{{ $line->debit> 0 ? 'primary' : 'success' }} px-2">{{ $line->debit> 0 ? 'DEBIT' : 'CREDIT' }}</span>
                                 <span class="ml-2">{{ $line->account->code }} - {{ $line->account->name }}</span>
                             </div>
-                            <span class="font-weight-bold">₦{{ number_format($line->debit > 0 ? $line->debit : $line->credit, 2) }}</span>
+                            <span class="font-weight-bold">₦{{ number_format($line->debit> 0 ? $line->debit : $line->credit, 2) }}</span>
                         </div>
                         @endforeach
                     </div>

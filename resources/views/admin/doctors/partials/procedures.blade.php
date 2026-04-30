@@ -48,12 +48,10 @@
         {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
         <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
             <div class="btn-group">
-                <button class="btn btn-sm btn-outline-secondary"
-                        data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
                     <i class="fa fa-clipboard-list"></i> Treatment Plans
                 </button>
-                <button class="btn btn-sm btn-outline-success"
-                        onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                     <i class="fa fa-save"></i> Save as Template
                 </button>
             </div>
@@ -62,14 +60,12 @@
         {{-- Sub-tabs for History and New Request --}}
         <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="proc-history-tab" data-bs-toggle="tab"
-                    data-bs-target="#proc-history" type="button" role="tab">
+                <button class="nav-link active" id="proc-history-tab" data-bs-toggle="tab" data-bs-target="#proc-history" type="button" role="tab">
                     <i class="fa fa-history"></i> Procedure History
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="proc-new-tab" data-bs-toggle="tab"
-                    data-bs-target="#proc-new" type="button" role="tab">
+                <button class="nav-link" id="proc-new-tab" data-bs-toggle="tab" data-bs-target="#proc-new" type="button" role="tab">
                     <i class="fa fa-plus-circle"></i> Request Procedure
                 </button>
             </li>
@@ -173,7 +169,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="procedureDetailsModalLabel"><i class="fa fa-user-md"></i> Procedure Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="procedureDetailsContent">
@@ -205,7 +201,7 @@
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title" id="procedureTeamModalLabel"><i class="fa fa-users"></i> Procedure Team</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 {{-- Add Team Member Form --}}
@@ -319,7 +315,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning">
                 <h5 class="modal-title" id="procedureNotesModalLabel"><i class="fa fa-sticky-note"></i> Procedure Notes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 {{-- Add Note Form --}}

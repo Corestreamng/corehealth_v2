@@ -27,7 +27,7 @@
         <!-- /.card-header -->
         <div class="card-body">
           <div class="pull-right">
-            <button type="button" class="add-modal btn btn-primary" data-toggle="modal">New User</button>
+            <button type="button" class="add-modal btn btn-primary" data-bs-toggle="modal">New User</button>
           </div>
           <table id="ghaji" class="table table-sm table-responsive table-bordered table-striped display">
             <thead>
@@ -161,7 +161,7 @@
 </div>
 
 <!-- Modal form to edit a user -->
-<div id="editModal" class="modal fade" role="dialog" >
+<div id="editModal" class="modal fade" role="dialog">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">

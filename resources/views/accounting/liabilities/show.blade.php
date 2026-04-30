@@ -242,7 +242,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        @if($paymentSchedule->count() > 12)
+                        @if($paymentSchedule->count()> 12)
                         <div class="text-center mt-3">
                             <a href="{{ route('accounting.liabilities.schedule', $liability->id) }}" class="btn btn-link">
                                 View all {{ $paymentSchedule->count() }} payments →
@@ -275,7 +275,7 @@
                                 </div>
                             </div>
                         </div>
-                        @if($overdueCount > 0)
+                        @if($overdueCount> 0)
                         <div class="alert alert-danger mb-3">
                             <i class="mdi mdi-alert-circle mr-1"></i>
                             <strong>{{ $overdueCount }}</strong> payment(s) overdue!
@@ -290,7 +290,7 @@
                             <h5 class="mb-0 text-danger">₦{{ number_format($liability->current_balance, 2) }}</h5>
                         </div>
                         @php
-                            $progress = $liability->principal_amount > 0
+                            $progress = $liability->principal_amount> 0
                                 ? (($liability->principal_amount - $liability->current_balance) / $liability->principal_amount) * 100
                                 : 0;
                         @endphp

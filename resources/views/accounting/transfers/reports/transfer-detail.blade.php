@@ -401,7 +401,7 @@
     @endif
 
     <!-- Fee Information -->
-    @if($transfer->transfer_fee > 0)
+    @if($transfer->transfer_fee> 0)
     <div class="detail-section">
         <div class="section-title">Fee Information</div>
         <div class="two-column">
@@ -447,8 +447,8 @@
                     <td>{{ $line->account?->account_number ?? '-' }}</td>
                     <td>{{ $line->account?->account_name ?? '-' }}</td>
                     <td>{{ $line->description }}</td>
-                    <td class="text-right">{{ $line->debit > 0 ? '₦' . number_format($line->debit, 2) : '-' }}</td>
-                    <td class="text-right">{{ $line->credit > 0 ? '₦' . number_format($line->credit, 2) : '-' }}</td>
+                    <td class="text-right">{{ $line->debit> 0 ? '₦' . number_format($line->debit, 2) : '-' }}</td>
+                    <td class="text-right">{{ $line->credit> 0 ? '₦' . number_format($line->credit, 2) : '-' }}</td>
                 </tr>
                 @endforeach
             </tbody>

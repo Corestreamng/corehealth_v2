@@ -386,7 +386,7 @@
                     <h6><i class="mdi mdi-help-circle mr-2"></i>Capex Guidelines</h6>
                     <small class="text-muted">
                         <ul class="pl-3 mb-2">
-                            <li><strong>Definition:</strong> Capital expenditures are for assets with useful life > 1 year and value > ₦100,000</li>
+                            <li><strong>Definition:</strong> Capital expenditures are for assets with useful life> 1 year and value> ₦100,000</li>
                             <li><strong>Documentation:</strong> Include detailed business justification explaining ROI and operational benefits</li>
                             <li><strong>Approval Levels:</strong> Requests above ₦500,000 require senior management approval</li>
                             <li><strong>Budget Tracking:</strong> All capex is tracked against annual fiscal year budgets by category</li>
@@ -490,14 +490,14 @@ $(document).ready(function() {
         itemIndex++;
 
         // Enable remove on first item if more than one
-        if ($('.item-row').length > 1) {
+        if ($('.item-row').length> 1) {
             $('.remove-item').prop('disabled', false);
         }
     });
 
     // Remove item
     $(document).on('click', '.remove-item', function() {
-        if ($('.item-row').length > 1) {
+        if ($('.item-row').length> 1) {
             $(this).closest('.item-row').remove();
             calculateTotal();
 

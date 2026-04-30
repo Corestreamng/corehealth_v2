@@ -462,20 +462,17 @@
     <!-- Sub-tabs: Entry and Overview -->
     <ul class="nav med-sub-tabs" id="medSubTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="med-entry-tab" data-bs-toggle="tab" data-bs-target="#med-entry-content"
-                    type="button" role="tab" aria-controls="med-entry-content" aria-selected="true">
+            <button class="nav-link active" id="med-entry-tab" data-bs-toggle="tab" data-bs-target="#med-entry-content" type="button" role="tab" aria-controls="med-entry-content" aria-selected="true">
                 <i class="mdi mdi-pencil-plus"></i>Entry
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="med-overview-tab" data-bs-toggle="tab" data-bs-target="#med-overview-content"
-                    type="button" role="tab" aria-controls="med-overview-content" aria-selected="false">
+            <button class="nav-link" id="med-overview-tab" data-bs-toggle="tab" data-bs-target="#med-overview-content" type="button" role="tab" aria-controls="med-overview-content" aria-selected="false">
                 <i class="mdi mdi-view-grid"></i>Overview
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="med-rx-tab" data-bs-toggle="tab" data-bs-target="#med-rx-content"
-                    type="button" role="tab" aria-controls="med-rx-content" aria-selected="false">
+            <button class="nav-link" id="med-rx-tab" data-bs-toggle="tab" data-bs-target="#med-rx-content" type="button" role="tab" aria-controls="med-rx-content" aria-selected="false">
                 <i class="mdi mdi-clipboard-list"></i>Prescriptions
                 <span class="badge bg-primary ms-1" id="rx-tab-badge" style="display:none;">0</span>
             </button>
@@ -754,8 +751,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="setScheduleModalLabel">Set Medication Schedule</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close">x</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="schedule_patient_id" name="patient_id"
@@ -866,8 +862,7 @@
                 <div class="modal-content">
                     <div class="modal-header bg-success text-white">
                         <h5 class="modal-title" id="administerModalLabel"><i class="mdi mdi-needle"></i> Administer Medication</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="administer_schedule_id" name="schedule_id">
@@ -988,8 +983,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="discontinueModalLabel">Discontinue Medication</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close">x</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="discontinue_patient_id" name="patient_id"
@@ -1030,8 +1024,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="resumeModalLabel">Resume Medication</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close">x</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="resume_patient_id" name="patient_id"
@@ -1073,8 +1066,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="editAdminModalLabel">Edit Administration</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close">x</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="edit_admin_id" name="administration_id">
@@ -1140,8 +1132,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="deleteAdminModalLabel">Delete Administration</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close">x</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="delete_admin_id" name="administration_id">
@@ -1182,7 +1173,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="adminDetailsModalLabel">Administration Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="admin-details-content">
@@ -1206,7 +1197,7 @@
                     <h5 class="modal-title" id="overviewMedDetailsModalLabel">
                         <i class="mdi mdi-pill me-2"></i>Medication Details
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="overviewMedDetailsModalBody">
                     <!-- Content populated by JavaScript -->
@@ -1224,7 +1215,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="dismissRxModalLabel"><i class="mdi mdi-close-circle"></i> Dismiss Prescription</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="dismiss-rx-id">
@@ -1259,7 +1250,7 @@
                         <h5 class="modal-title" id="patientOwnModalLabel">
                             <i class="mdi mdi-account-heart me-1"></i> Administer Patient's Own Drug
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="drug_source" value="patient_own">
@@ -1346,7 +1337,7 @@
                         <h5 class="modal-title" id="wardStockModalLabel">
                             <i class="mdi mdi-hospital-building me-1"></i> Administer from Ward Stock
                         </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="drug_source" value="ward_stock">

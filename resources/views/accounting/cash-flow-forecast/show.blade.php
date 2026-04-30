@@ -150,9 +150,9 @@
             @php
                 $netFlow = $periodsWithBalance->sum('forecasted_inflows') - $periodsWithBalance->sum('forecasted_outflows');
             @endphp
-            <div class="stat-box" style="background: linear-gradient(135deg, {{ $netFlow >= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $netFlow >= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
-                <div class="amount {{ $netFlow >= 0 ? 'text-success' : 'text-danger' }}">
-                    {{ $netFlow >= 0 ? '+' : '' }}₦{{ number_format($netFlow, 2) }}
+            <div class="stat-box" style="background: linear-gradient(135deg, {{ $netFlow>= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $netFlow>= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
+                <div class="amount {{ $netFlow>= 0 ? 'text-success' : 'text-danger' }}">
+                    {{ $netFlow>= 0 ? '+' : '' }}₦{{ number_format($netFlow, 2) }}
                 </div>
                 <div class="label">Net Cash Flow</div>
             </div>
@@ -206,21 +206,21 @@
                                 </div>
                                 <div class="col-md-2 text-right">
                                     <small class="text-muted">Net Flow</small><br>
-                                    <span class="{{ $period->net_cash_flow >= 0 ? 'text-success' : 'text-danger' }}">
-                                        {{ $period->net_cash_flow >= 0 ? '+' : '' }}₦{{ number_format($period->net_cash_flow, 0) }}
+                                    <span class="{{ $period->net_cash_flow>= 0 ? 'text-success' : 'text-danger' }}">
+                                        {{ $period->net_cash_flow>= 0 ? '+' : '' }}₦{{ number_format($period->net_cash_flow, 0) }}
                                     </span>
                                 </div>
                                 <div class="col-md-2 text-right">
                                     <small class="text-muted">Ending Balance</small><br>
-                                    <strong class="{{ $period->ending_balance >= 0 ? 'text-success' : 'text-danger' }}">
+                                    <strong class="{{ $period->ending_balance>= 0 ? 'text-success' : 'text-danger' }}">
                                         ₦{{ number_format($period->ending_balance, 0) }}
                                     </strong>
                                 </div>
                                 <div class="col-md-2 text-right">
                                     @if($hasVariance)
                                         <small class="text-muted">Variance</small><br>
-                                        <span class="{{ $period->variance >= 0 ? 'variance-positive' : 'variance-negative' }}">
-                                            {{ $period->variance >= 0 ? '+' : '' }}₦{{ number_format($period->variance, 0) }}
+                                        <span class="{{ $period->variance>= 0 ? 'variance-positive' : 'variance-negative' }}">
+                                            {{ $period->variance>= 0 ? '+' : '' }}₦{{ number_format($period->variance, 0) }}
                                         </span>
                                     @else
                                         <i class="mdi mdi-chevron-down"></i>
@@ -251,11 +251,11 @@
                                     </div>
                                     <div class="d-flex justify-content-between">
                                         <span>Net:</span>
-                                        <strong class="{{ $period->net_cash_flow >= 0 ? 'text-success' : 'text-danger' }}">
+                                        <strong class="{{ $period->net_cash_flow>= 0 ? 'text-success' : 'text-danger' }}">
                                             ₦{{ number_format($period->net_cash_flow, 2) }}
                                         </strong>
                                     </div>
-                                    @if($period->items->count() > 0)
+                                    @if($period->items->count()> 0)
                                         <div class="mt-3">
                                             <small class="text-muted d-block mb-1"><strong>{{ $period->items->count() }} Line Items:</strong></small>
                                             @foreach($period->items->take(3) as $item)
@@ -266,7 +266,7 @@
                                                     </span>
                                                 </small>
                                             @endforeach
-                                            @if($period->items->count() > 3)
+                                            @if($period->items->count()> 3)
                                                 <small class="text-muted">...and {{ $period->items->count() - 3 }} more</small>
                                             @endif
                                         </div>
@@ -276,16 +276,16 @@
                                     <h6 class="text-muted mb-2"><i class="mdi mdi-check-circle mr-1"></i>Actual (if recorded)</h6>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>Actual Closing Balance:</span>
-                                        <strong class="{{ ($period->actual_closing_balance ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                        <strong class="{{ ($period->actual_closing_balance ?? 0)>= 0 ? 'text-success' : 'text-danger' }}">
                                             ₦{{ number_format($period->actual_closing_balance ?? 0, 2) }}
                                         </strong>
                                     </div>
                                     @if($period->variance !== null)
                                         <div class="d-flex justify-content-between mb-2">
                                             <span>Variance:</span>
-                                            <strong class="{{ $period->variance >= 0 ? 'text-success' : 'text-danger' }}" title="Actual minus Forecasted closing">
-                                                {{ $period->variance >= 0 ? '+' : '' }}₦{{ number_format($period->variance, 2) }}
-                                                @if($period->variance > 0)
+                                            <strong class="{{ $period->variance>= 0 ? 'text-success' : 'text-danger' }}" title="Actual minus Forecasted closing">
+                                                {{ $period->variance>= 0 ? '+' : '' }}₦{{ number_format($period->variance, 2) }}
+                                                @if($period->variance> 0)
                                                     <small class="text-muted">(Better than forecast)</small>
                                                 @elseif($period->variance < 0)
                                                     <small class="text-muted">(Below forecast)</small>
@@ -327,7 +327,7 @@
             @php
                 $projectedEnding = $periodsWithBalance->last()->ending_balance ?? $currentCash;
             @endphp
-            <div class="balance-card" style="background: linear-gradient(135deg, {{ $projectedEnding >= 0 ? '#28a745' : '#dc3545' }} 0%, {{ $projectedEnding >= 0 ? '#20c997' : '#c82333' }} 100%);">
+            <div class="balance-card" style="background: linear-gradient(135deg, {{ $projectedEnding>= 0 ? '#28a745' : '#dc3545' }} 0%, {{ $projectedEnding>= 0 ? '#20c997' : '#c82333' }} 100%);">
                 <div class="label">Projected Ending Cash</div>
                 <div class="amount">₦{{ number_format($projectedEnding, 2) }}</div>
                 <div class="label">{{ \Carbon\Carbon::parse($forecast->end_date)->format('M d, Y') }}</div>
@@ -407,7 +407,7 @@
             <form id="actualsForm">
                 <div class="modal-header">
                     <h5 class="modal-title">Update Actual Cash Flows</h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="actualsPeriodId">
@@ -427,7 +427,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save mr-1"></i> Save
                     </button>

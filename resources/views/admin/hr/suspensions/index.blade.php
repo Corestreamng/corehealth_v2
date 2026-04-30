@@ -131,9 +131,7 @@
                     <i class="mdi mdi-account-lock mr-2"></i>
                     Create Staff Suspension
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="suspensionForm">
                 @csrf
@@ -218,9 +216,7 @@
                     <i class="mdi mdi-lock-open mr-2"></i>
                     Lift Suspension
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="liftForm">
                 @csrf
@@ -253,9 +249,7 @@
                     <i class="mdi mdi-account-lock mr-2" style="color: var(--primary-color);"></i>
                     Suspension Details - <span id="viewSuspensionNumber"></span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem; max-height: 80vh; overflow-y: auto;">
                 <div class="row">
@@ -482,7 +476,7 @@ $(function() {
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'staff_name', name: 'staff.user.firstname' },
             { data: 'reason', name: 'reason', render: function(data, type, row) {
-                var s = data ? (data.length > 35 ? data.substring(0, 35) + '...' : data) : '-';
+                var s = data ? (data.length> 35 ? data.substring(0, 35) + '...' : data) : '-';
                 s += '<br>' + (row.is_paid ? '<span class="badge badge-success">With Pay</span>' : '<span class="badge badge-secondary">Without Pay</span>');
                 return s;
             }},

@@ -658,7 +658,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <select class="form-control form-control-sm" id="monthlyYear" style="border-radius: 6px;">
-                                            @for($y = date('Y'); $y >= date('Y') - 5; $y--)
+                                            @for($y = date('Y'); $y>= date('Y') - 5; $y--)
                                                 <option value="{{ $y }}">{{ $y }}</option>
                                             @endfor
                                         </select>
@@ -866,9 +866,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-cash-plus mr-2"></i><span id="remittanceModalTitle">Record HMO Remittance</span></h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="remittanceForm">
                 <div class="modal-body">
@@ -973,9 +971,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                 <h5 class="modal-title"><i class="mdi mdi-eye mr-2"></i>Remittance Details</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="viewRemittanceContent">
                 <div class="text-center py-4">
@@ -998,9 +994,7 @@
         <div class="modal-content" style="border-radius: 12px; border: none;">
             <div class="modal-header" style="border-radius: 12px 12px 0 0;">
                 <h5 class="modal-title"><i class="mdi mdi-printer mr-2"></i>Print Preview</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="printPreviewContent" class="print-preview">
@@ -1148,7 +1142,7 @@ $(function() {
                     <td class="aging-cell-current">₦${formatNumber(item.aging_current)}</td>
                     <td class="aging-cell-warning">₦${formatNumber(item.aging_31_60)}</td>
                     <td class="aging-cell-danger">₦${formatNumber(item.aging_61_90)}</td>
-                    <td class="${item.aging_over_90 > 0 ? 'aging-cell-critical' : ''}">₦${formatNumber(item.aging_over_90)}</td>
+                    <td class="${item.aging_over_90> 0 ? 'aging-cell-critical' : ''}">₦${formatNumber(item.aging_over_90)}</td>
                     <td>
                         <button class="btn btn-sm btn-info view-hmo-claims" data-hmo-id="${item.hmo_id}">
                             <i class="fa fa-eye"></i>

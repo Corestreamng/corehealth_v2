@@ -73,7 +73,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <span class="text-muted">Last calculated: <strong>{{ date('M d, Y H:i') }}</strong></span>
-                        @if($stats['active_alerts'] > 0)
+                        @if($stats['active_alerts']> 0)
                             <span class="badge badge-danger ml-3">
                                 <i class="mdi mdi-bell-ring"></i> {{ $stats['active_alerts'] }} Active Alerts
                             </span>
@@ -86,7 +86,7 @@
                         <a href="{{ route('accounting.kpi.alerts') }}" class="btn btn-outline-warning btn-sm mr-2">
                             <i class="mdi mdi-bell"></i> View Alerts
                         </a>
-                        <button type="button" class="btn btn-outline-success btn-sm mr-2" data-toggle="modal" data-target="#calculateModal">
+                        <button type="button" class="btn btn-outline-success btn-sm mr-2" data-bs-toggle="modal" data-bs-target="#calculateModal">
                             <i class="mdi mdi-calculator"></i> Calculate All
                         </button>
                         <a href="{{ route('accounting.kpi.index') }}" class="btn btn-outline-primary btn-sm mr-2">
@@ -175,14 +175,14 @@
                                 </h3>
 
                                 @if($latest->change_percentage !== null)
-                                <small class="{{ $latest->change_percentage >= 0 ? 'text-success' : 'text-danger' }}">
-                                    <i class="mdi {{ $latest->change_percentage >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}"></i>
+                                <small class="{{ $latest->change_percentage>= 0 ? 'text-success' : 'text-danger' }}">
+                                    <i class="mdi {{ $latest->change_percentage>= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}"></i>
                                     {{ number_format(abs($latest->change_percentage), 1) }}% from last period
                                 </small>
                                 @endif
 
                                 <!-- Mini Trend Line -->
-                                @if($history->count() > 1)
+                                @if($history->count()> 1)
                                 <div class="mt-3" style="height: 40px;">
                                     <canvas id="trend-{{ $kpi->id }}" data-values="{{ $history->pluck('value')->toJson() }}"></canvas>
                                 </div>
@@ -245,9 +245,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="mdi mdi-calculator mr-2"></i>Calculate All KPIs</h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info">
@@ -261,7 +259,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success">
                         <i class="mdi mdi-calculator"></i> Calculate
                     </button>

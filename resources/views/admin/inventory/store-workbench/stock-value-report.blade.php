@@ -147,7 +147,7 @@
                                 @endif
                                 <td class="text-right">{{ number_format($item['total_qty'] ?? 0) }}</td>
                                 <td class="text-right">
-                                    @php $avgCost = $item['total_qty'] > 0 ? $item['total_value'] / $item['total_qty'] : 0; @endphp
+                                    @php $avgCost = $item['total_qty']> 0 ? $item['total_value'] / $item['total_qty'] : 0; @endphp
                                     ₦{{ number_format($avgCost, 2) }}
                                 </td>
                                 <td class="text-right font-weight-bold">₦{{ number_format($item['total_value'] ?? 0, 2) }}</td>

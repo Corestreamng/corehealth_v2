@@ -7,7 +7,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-delete mr-2"></i>Dispose Asset</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="dispose-form">
                 <input type="hidden" id="dispose-asset-id">
@@ -229,7 +229,7 @@
         $('#calc-book-value').text('₦' + bookValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
         $('#calc-result').text('₦' + Math.abs(gainLoss).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
 
-        if (gainLoss >= 0) {
+        if (gainLoss>= 0) {
             $('#calc-result').removeClass('text-danger').addClass('text-success');
             $('#calc-result-label').text('Gain on Disposal:');
         } else {
@@ -238,7 +238,7 @@
         }
 
         // Show/hide payment source section
-        if (proceeds > 0) {
+        if (proceeds> 0) {
             $('#payment-source-section').slideDown();
         } else {
             $('#payment-source-section').slideUp();
@@ -261,8 +261,8 @@
         const deprAccountName = currentAssetData.depreciation_account_name || 'Accumulated Depreciation';
         const deprAccountCode = currentAssetData.depreciation_account_code || '1500';
 
-        // 1. DEBIT: Cash/Bank (if proceeds > 0)
-        if (proceeds > 0) {
+        // 1. DEBIT: Cash/Bank (if proceeds> 0)
+        if (proceeds> 0) {
             let accountName = 'Cash Account (1010)';
             if (paymentMethod === 'bank_transfer' && bankId) {
                 const bankName = $('#dispose-bank-id option:selected').text().split(' - ')[0];
@@ -303,7 +303,7 @@
         totalCredit += totalCost;
 
         // 5. CREDIT: Gain on Disposal (if gain)
-        if (gainLoss > 0) {
+        if (gainLoss> 0) {
             html += `<tr>
                 <td><strong>Gain on Disposal (4200)</strong></td>
                 <td class="text-right">-</td>

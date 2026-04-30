@@ -6,16 +6,13 @@
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="biodata_tab" data-bs-toggle="tab" data-bs-target="#biodata" type="button"
-                    role="tab" aria-controls="biodata" aria-selected="true">Scheduled</button>
+            <button class="nav-link active" id="biodata_tab" data-bs-toggle="tab" data-bs-target="#biodata" type="button" role="tab" aria-controls="biodata" aria-selected="true">Scheduled</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="private_data_tab" data-bs-toggle="tab" data-bs-target="#private_data"
-                    type="button" role="tab" aria-controls="private_data" aria-selected="false">New</button>
+            <button class="nav-link" id="private_data_tab" data-bs-toggle="tab" data-bs-target="#private_data" type="button" role="tab" aria-controls="private_data" aria-selected="false">New</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="family-tab" data-bs-toggle="tab" data-bs-target="#family" type="button"
-                    role="tab" aria-controls="family" aria-selected="false">Continuing</button>
+            <button class="nav-link" id="family-tab" data-bs-toggle="tab" data-bs-target="#family" type="button" role="tab" aria-controls="family" aria-selected="false">Continuing</button>
         </li>
 
     </ul>
@@ -286,8 +283,7 @@
                             </div>
                         </div>
                         <div class="col-md-2 ">
-                            <button type="button" class="btn btn-success" style="margin-top: 25px"
-                                    onclick="add_row()"><span class="mdi mdi-plus"></span></button>
+                            <button type="button" class="btn btn-success" style="margin-top: 25px" onclick="add_row()"><span class="mdi mdi-plus"></span></button>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary mr-2"> Save </button>
@@ -323,7 +319,7 @@
                             <div class="form-group">
                                 <label for="">Select HMO </label>
                                 <div class="input-group">
-                                        <span class="input-group-text" ><i
+                                        <span class="input-group-text"><i
                                                 class="mdi mdi-account"></i></span>
                                     <select name="hmo_id" id="hmo_id" class="form-control">
                                         <option value="">Select HMO</option>

@@ -60,12 +60,12 @@
             <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
-                        <div class="stat-icon {{ $stats['balance_difference'] > 0.01 ? 'bg-danger-light' : 'bg-info-light' }} mr-3">
-                            <i class="mdi mdi-scale-balance {{ $stats['balance_difference'] > 0.01 ? 'text-danger' : 'text-info' }}"></i>
+                        <div class="stat-icon {{ $stats['balance_difference']> 0.01 ? 'bg-danger-light' : 'bg-info-light' }} mr-3">
+                            <i class="mdi mdi-scale-balance {{ $stats['balance_difference']> 0.01 ? 'text-danger' : 'text-info' }}"></i>
                         </div>
                         <div>
                             <h6 class="text-muted mb-1">Difference</h6>
-                            <h4 class="mb-0 {{ $stats['balance_difference'] > 0.01 ? 'text-danger' : '' }}">
+                            <h4 class="mb-0 {{ $stats['balance_difference']> 0.01 ? 'text-danger' : '' }}">
                                 ₦{{ number_format($stats['balance_difference'], 2) }}
                             </h4>
                         </div>
@@ -174,9 +174,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-pencil mr-2"></i>Edit Opening Balance
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="editBalanceForm">
                 @csrf

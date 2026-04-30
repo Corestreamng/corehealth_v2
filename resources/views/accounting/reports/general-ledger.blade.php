@@ -128,10 +128,10 @@
                                         <td>{{ Str::limit($transaction['description'], 40) }}</td>
                                         <td>{{ $transaction['source_type'] ?? '-' }}</td>
                                         <td class="text-end">
-                                            {{ $transaction['debit'] > 0 ? number_format($transaction['debit'], 2) : '-' }}
+                                            {{ $transaction['debit']> 0 ? number_format($transaction['debit'], 2) : '-' }}
                                         </td>
                                         <td class="text-end">
-                                            {{ $transaction['credit'] > 0 ? number_format($transaction['credit'], 2) : '-' }}
+                                            {{ $transaction['credit']> 0 ? number_format($transaction['credit'], 2) : '-' }}
                                         </td>
                                         <td class="text-end fw-bold">
                                             {{ number_format($transaction['running_balance'], 2) }}

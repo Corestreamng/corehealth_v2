@@ -265,12 +265,12 @@
                                         </td>
                                         <td>{{ $line->description ?? '-' }}</td>
                                         <td class="text-end">
-                                            @if($line->debit_amount > 0)
+                                            @if($line->debit_amount> 0)
                                                 ₦{{ number_format($line->debit_amount, 2) }}
                                             @endif
                                         </td>
                                         <td class="text-end">
-                                            @if($line->credit_amount > 0)
+                                            @if($line->credit_amount> 0)
                                                 ₦{{ number_format($line->credit_amount, 2) }}
                                             @endif
                                         </td>
@@ -290,13 +290,13 @@
             </div>
 
             <!-- Edit Requests -->
-            @if($entry->edits && $entry->edits->count() > 0)
+            @if($entry->edits && $entry->edits->count()> 0)
                 <div modern shadow mt-4">
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">
                             <i class="mdi mdi-file-document-edit mr-2"></i>Edit Requests
                         </h6>
-                        <span class="badge badge-{{ $entry->edits->where('status', 'pending')->count() > 0 ? 'warning' : 'secondary' }}">
+                        <span class="badge badge-{{ $entry->edits->where('status', 'pending')->count()> 0 ? 'warning' : 'secondary' }}">
                             {{ $entry->edits->where('status', 'pending')->count() }} Pending
                         </span>
                     </div>
@@ -370,8 +370,7 @@
                                                             </p>
                                                             <form action="{{ route('accounting.journal-entries.edit-requests.approve', $edit->id) }}" method="POST">
                                                                 @csrf
-                                                                <button type="submit" class="btn btn-success btn-block"
-                                                                    onclick="return confirm('Are you sure you want to approve this edit request?\n\nThis will:\n1. Mark this request as approved\n2. REVERSE the original journal entry #{{ $entry->entry_number }}\n3. Redirect you to create a new correcting entry\n\nThis action cannot be undone.')">
+                                                                <button type="submit" class="btn btn-success btn-block" onclick="return confirm('Are you sure you want to approve this edit request?\n\nThis will:\n1. Mark this request as approved\n2. REVERSE the original journal entry #{{ $entry->entry_number }}\n3. Redirect you to create a new correcting entry\n\nThis action cannot be undone.')">
                                                                     <i class="mdi mdi-check mr-1"></i> Approve & Reverse Entry
                                                                 </button>
                                                             </form>
@@ -443,9 +442,7 @@
                                             @csrf
                                             <div class="modal-header bg-danger text-white">
                                                 <h5 class="modal-title" id="rejectEditModalLabel{{ $edit->id }}"><i class="mdi mdi-close-circle mr-2"></i>Reject Edit Request</h5>
-                                                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button>
+                                                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
                                                 <div class="alert alert-light border mb-3">
@@ -491,7 +488,7 @@
                 @csrf
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title"><i class="mdi mdi-close-circle mr-2"></i>Reject Journal Entry</h5>
-                    <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-light border mb-3">
@@ -534,7 +531,7 @@
                 @csrf
                 <div class="modal-header bg-warning">
                     <h5 class="modal-title"><i class="mdi mdi-undo-variant mr-2"></i>Reverse Journal Entry</h5>
-                    <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning border-0" style="background: #fff8e1;">
@@ -586,7 +583,7 @@
                 @csrf
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title"><i class="mdi mdi-file-document-edit mr-2"></i>Request Edit for Posted Entry</h5>
-                    <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <!-- Step indicator -->

@@ -312,7 +312,7 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.remove-line', function() {
-        if ($('.line-item-row').length > 1) {
+        if ($('.line-item-row').length> 1) {
             $(this).closest('.line-item-row').remove();
             updateTotals();
             updateRemoveButtons();
@@ -338,7 +338,7 @@ $(document).ready(function() {
     }
 
     function updateRemoveButtons() {
-        if ($('.line-item-row').length > 1) {
+        if ($('.line-item-row').length> 1) {
             $('.remove-line').prop('disabled', false);
         } else {
             $('.remove-line').prop('disabled', true);

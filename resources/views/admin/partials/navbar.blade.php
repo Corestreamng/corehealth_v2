@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 currentIndex = Math.max(currentIndex - 1, -1);
                 updateActiveItem(items);
-            } else if (e.key === 'Enter' && currentIndex >= 0) {
+            } else if (e.key === 'Enter' && currentIndex>= 0) {
                 e.preventDefault();
                 items[currentIndex]?.click();
             }
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             items.forEach((item, i) => {
                 item.classList.toggle('active', i === currentIndex);
             });
-            if (currentIndex >= 0) {
+            if (currentIndex>= 0) {
                 items[currentIndex]?.scrollIntoView({ block: 'nearest' });
             }
         }
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Focus shows results if query exists
         searchInput.addEventListener('focus', function() {
-            if (this.value.trim().length >= 2 && resultsList.children.length > 0) {
+            if (this.value.trim().length>= 2 && resultsList.children.length> 0) {
                 searchResults.classList.add('show');
             }
         });

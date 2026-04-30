@@ -18,7 +18,7 @@
                     <input type="hidden" id="reportId" value="">
                     <input type="hidden" id="reportStatus" value="draft">
                     <span class="badge bg-light text-dark" id="reportStatusBadge">Draft</span>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
             </div>
             <div class="modal-body p-0" style="overflow: hidden;">
@@ -46,8 +46,7 @@
                                 {{-- Demographics --}}
                                 <div class="accordion-item border-0 mb-1">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#reportDemoSection">
+                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#reportDemoSection">
                                             <i class="mdi mdi-account me-2 text-primary"></i> <small class="fw-bold">Demographics</small>
                                         </button>
                                     </h2>
@@ -64,8 +63,7 @@
                                 {{-- Vitals --}}
                                 <div class="accordion-item border-0 mb-1">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#reportVitalsSection">
+                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#reportVitalsSection">
                                             <i class="mdi mdi-heart-pulse me-2 text-danger"></i> <small class="fw-bold">Latest Vitals</small>
                                         </button>
                                     </h2>
@@ -82,8 +80,7 @@
                                 {{-- Diagnoses --}}
                                 <div class="accordion-item border-0 mb-1">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#reportDiagSection">
+                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#reportDiagSection">
                                             <i class="mdi mdi-stethoscope me-2 text-warning"></i> <small class="fw-bold">Recent Diagnoses</small>
                                         </button>
                                     </h2>
@@ -100,8 +97,7 @@
                                 {{-- Medications --}}
                                 <div class="accordion-item border-0 mb-1">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#reportMedsSection">
+                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#reportMedsSection">
                                             <i class="mdi mdi-pill me-2 text-success"></i> <small class="fw-bold">Recent Medications</small>
                                         </button>
                                     </h2>
@@ -118,8 +114,7 @@
                                 {{-- Lab Results --}}
                                 <div class="accordion-item border-0 mb-1">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#reportLabsSection">
+                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#reportLabsSection">
                                             <i class="mdi mdi-flask me-2 text-info"></i> <small class="fw-bold">Recent Lab Results</small>
                                         </button>
                                     </h2>
@@ -136,8 +131,7 @@
                                 {{-- Imaging Results --}}
                                 <div class="accordion-item border-0 mb-1">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#reportImagingSection">
+                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#reportImagingSection">
                                             <i class="mdi mdi-radiology-box me-2 text-purple"></i> <small class="fw-bold">Imaging Results</small>
                                         </button>
                                     </h2>
@@ -154,8 +148,7 @@
                                 {{-- Procedures --}}
                                 <div class="accordion-item border-0 mb-1">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#reportProceduresSection">
+                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#reportProceduresSection">
                                             <i class="mdi mdi-hospital me-2 text-danger"></i> <small class="fw-bold">Procedures</small>
                                         </button>
                                     </h2>
@@ -172,8 +165,7 @@
                                 {{-- Clinical Notes --}}
                                 <div class="accordion-item border-0 mb-1">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#reportNotesSection">
+                                        <button class="accordion-button collapsed py-2 px-3 bg-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#reportNotesSection">
                                             <i class="mdi mdi-note-text me-2 text-secondary"></i> <small class="fw-bold">Clinical Notes</small>
                                         </button>
                                     </h2>
@@ -467,7 +459,7 @@ function renderPatientDataSections(data) {
     }
 
     // Diagnoses
-    if (data.diagnoses && data.diagnoses.length > 0) {
+    if (data.diagnoses && data.diagnoses.length> 0) {
         let html = '<ul class="list-unstyled mb-0" style="font-size:0.8rem;">';
         data.diagnoses.forEach(enc => {
             html += `<li class="mb-1"><strong>${enc.date}:</strong> ${enc.diagnoses.join(', ')}</li>`;
@@ -479,7 +471,7 @@ function renderPatientDataSections(data) {
     }
 
     // Medications
-    if (data.medications && data.medications.length > 0) {
+    if (data.medications && data.medications.length> 0) {
         let html = '<table class="table table-sm mb-0" style="font-size:0.8rem;"><thead><tr><th>Medication</th><th>Dose</th><th>Date</th></tr></thead><tbody>';
         data.medications.forEach(m => {
             html += `<tr><td>${m.name}</td><td>${m.dose}</td><td>${m.date}</td></tr>`;
@@ -491,7 +483,7 @@ function renderPatientDataSections(data) {
     }
 
     // Labs
-    if (data.labs && data.labs.length > 0) {
+    if (data.labs && data.labs.length> 0) {
         let html = '<table class="table table-sm mb-0" style="font-size:0.8rem;"><thead><tr><th>Test</th><th>Status</th><th>Date</th></tr></thead><tbody>';
         data.labs.forEach(l => {
             html += `<tr><td>${l.name}</td><td>${l.status}</td><td>${l.date}</td></tr>`;
@@ -503,7 +495,7 @@ function renderPatientDataSections(data) {
     }
 
     // Imaging
-    if (data.imaging && data.imaging.length > 0) {
+    if (data.imaging && data.imaging.length> 0) {
         let html = '<table class="table table-sm mb-0" style="font-size:0.8rem;"><thead><tr><th>Study</th><th>Priority</th><th>Date</th></tr></thead><tbody>';
         data.imaging.forEach(img => {
             let priorityBadge = img.priority === 'urgent' ? '<span class="badge bg-warning">Urgent</span>' :
@@ -518,7 +510,7 @@ function renderPatientDataSections(data) {
     }
 
     // Procedures
-    if (data.procedures && data.procedures.length > 0) {
+    if (data.procedures && data.procedures.length> 0) {
         let html = '<table class="table table-sm mb-0" style="font-size:0.8rem;"><thead><tr><th>Procedure</th><th>Status</th><th>Outcome</th><th>Date</th></tr></thead><tbody>';
         data.procedures.forEach(p => {
             html += `<tr><td>${p.name} <small class="text-muted">(${p.code})</small></td><td>${p.status}</td><td>${p.outcome}</td><td>${p.scheduled_date}</td></tr>`;
@@ -530,7 +522,7 @@ function renderPatientDataSections(data) {
     }
 
     // Clinical Notes
-    if (data.clinical_notes && data.clinical_notes.length > 0) {
+    if (data.clinical_notes && data.clinical_notes.length> 0) {
         let html = '';
         data.clinical_notes.forEach(n => {
             let preview = n.notes.replace(/<[^>]*>/g, '').substring(0, 100);
@@ -771,7 +763,7 @@ function copyDataSection(section) {
 function loadPreviousReports() {
     const patientId = '{{ $patient->id }}';
     $.get(`{{ url('patient') }}/${patientId}/medical-reports`, function(response) {
-        if (response.success && response.reports.length > 0) {
+        if (response.success && response.reports.length> 0) {
             let html = '';
             response.reports.forEach(r => {
                 let statusBadge = r.status === 'finalized'

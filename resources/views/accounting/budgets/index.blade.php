@@ -108,16 +108,16 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stat-card" style="border-color: {{ $stats['variance'] >= 0 ? '#28a745' : '#dc3545' }};">
+            <div class="stat-card" style="border-color: {{ $stats['variance']>= 0 ? '#28a745' : '#dc3545' }};">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="stat-value {{ $stats['variance'] >= 0 ? 'text-success' : 'text-danger' }}">
-                            {{ $stats['variance'] >= 0 ? '+' : '' }}₦{{ number_format($stats['variance'], 0) }}
+                        <div class="stat-value {{ $stats['variance']>= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ $stats['variance']>= 0 ? '+' : '' }}₦{{ number_format($stats['variance'], 0) }}
                         </div>
                         <div class="stat-label">YTD Variance</div>
                     </div>
-                    <div class="stat-icon" style="background: rgba({{ $stats['variance'] >= 0 ? '40, 167, 69' : '220, 53, 69' }}, 0.1); color: {{ $stats['variance'] >= 0 ? '#28a745' : '#dc3545' }};">
-                        <i class="mdi mdi-{{ $stats['variance'] >= 0 ? 'trending-down' : 'trending-up' }}"></i>
+                    <div class="stat-icon" style="background: rgba({{ $stats['variance']>= 0 ? '40, 167, 69' : '220, 53, 69' }}, 0.1); color: {{ $stats['variance']>= 0 ? '#28a745' : '#dc3545' }};">
+                        <i class="mdi mdi-{{ $stats['variance']>= 0 ? 'trending-down' : 'trending-up' }}"></i>
                     </div>
                 </div>
             </div>
@@ -138,14 +138,14 @@
     </div>
 
     <!-- Budget Utilization Bar -->
-    @if($stats['total_budget'] > 0)
+    @if($stats['total_budget']> 0)
     <div class="filter-card mb-3">
         <div class="d-flex justify-content-between mb-2">
             <span><strong>YTD Budget Utilization</strong></span>
             <span>₦{{ number_format($stats['ytd_actual'], 2) }} of ₦{{ number_format($stats['total_budget'], 2) }}</span>
         </div>
         @php
-            $progressColor = $stats['utilization'] > 90 ? '#dc3545' : ($stats['utilization'] > 75 ? '#ffc107' : '#28a745');
+            $progressColor = $stats['utilization']> 90 ? '#dc3545' : ($stats['utilization']> 75 ? '#ffc107' : '#28a745');
         @endphp
         <div class="utilization-bar">
             <div class="progress-fill" style="width: {{ min($stats['utilization'], 100) }}%; background: {{ $progressColor }};"></div>
@@ -266,7 +266,7 @@
             </div>
 
             <!-- Top Departments -->
-            @if(count($stats['top_departments']) > 0)
+            @if(count($stats['top_departments'])> 0)
             <div class="table-card">
                 <h6 class="font-weight-bold mb-3"><i class="mdi mdi-domain mr-2"></i>Top Departments by Budget</h6>
                 @foreach($stats['top_departments'] as $dept)
@@ -277,7 +277,7 @@
                         </div>
                         <div class="text-right">
                             @php
-                                $color = $dept['utilization'] > 90 ? 'danger' : ($dept['utilization'] > 75 ? 'warning' : 'success');
+                                $color = $dept['utilization']> 90 ? 'danger' : ($dept['utilization']> 75 ? 'warning' : 'success');
                             @endphp
                             <span class="badge badge-{{ $color }}">{{ number_format($dept['utilization'], 1) }}%</span>
                         </div>
@@ -401,7 +401,7 @@ $(document).ready(function() {
     $(document).on('click', '.unapprove-budget', function() {
         var id = $(this).data('id');
         var reason = prompt('⚠️ IMPORTANT: Please provide a detailed reason for unapproving this budget (minimum 10 characters):');
-        if (reason && reason.length >= 10) {
+        if (reason && reason.length>= 10) {
             if (confirm('Are you sure you want to unapprove this budget? This action will be logged in the audit trail.')) {
                 $.ajax({
                     url: '/accounting/budgets/' + id + '/unapprove',

@@ -203,7 +203,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-eye"></i> Return Details</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="viewReturnModalBody">
                 <div class="text-center p-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>
@@ -218,7 +218,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-check-circle"></i> Approve Return</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="approveReturnForm">
                 <input type="hidden" id="approve_return_id">
@@ -252,7 +252,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle"></i> Reject Return</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="rejectReturnForm">
                 <input type="hidden" id="reject_return_id">

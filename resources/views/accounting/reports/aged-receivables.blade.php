@@ -476,7 +476,7 @@
 $(document).ready(function() {
     // Initialize DataTables only if there's actual data (not just the empty state row)
     var patientRows = $('#patientTable tbody tr:not(:has(.text-center))');
-    if (patientRows.length > 0) {
+    if (patientRows.length> 0) {
         $('#patientTable').DataTable({
             dom: 'Bfrtip',
             pageLength: 25,
@@ -491,7 +491,7 @@ $(document).ready(function() {
     }
 
     var glRows = $('#glTable tbody tr:not(:has(.text-center))');
-    if (glRows.length > 0) {
+    if (glRows.length> 0) {
         $('#glTable').DataTable({
             dom: 'Bfrtip',
             pageLength: 25,

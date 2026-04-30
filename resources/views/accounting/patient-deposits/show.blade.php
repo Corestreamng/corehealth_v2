@@ -202,12 +202,12 @@
                     </div>
                 </div>
                 @if($patientAccount)
-                    <div class="mt-3 p-3 rounded {{ $patientAccount->balance >= 0 ? 'bg-success-light' : 'bg-danger-light' }}" style="background: {{ $patientAccount->balance >= 0 ? '#e8f5e9' : '#ffebee' }};">
+                    <div class="mt-3 p-3 rounded {{ $patientAccount->balance>= 0 ? 'bg-success-light' : 'bg-danger-light' }}" style="background: {{ $patientAccount->balance>= 0 ? '#e8f5e9' : '#ffebee' }};">
                         <div class="d-flex justify-content-between align-items-center">
                             <span>Current Account Balance:</span>
-                            <span class="h5 mb-0 {{ $patientAccount->balance >= 0 ? 'text-success' : 'text-danger' }}">
+                            <span class="h5 mb-0 {{ $patientAccount->balance>= 0 ? 'text-success' : 'text-danger' }}">
                                 ₦{{ number_format(abs($patientAccount->balance), 2) }}
-                                @if($patientAccount->balance > 0)
+                                @if($patientAccount->balance> 0)
                                     <small>(Credit)</small>
                                 @elseif($patientAccount->balance < 0)
                                     <small>(Debt)</small>
@@ -270,15 +270,15 @@
 
                 <div class="progress-bar-custom mb-3">
                     @php
-                        $utilizedPercent = $patientDeposit->amount > 0
+                        $utilizedPercent = $patientDeposit->amount> 0
                             ? min(100, ($patientDeposit->utilized_amount / $patientDeposit->amount) * 100)
                             : 0;
-                        $refundedPercent = $patientDeposit->amount > 0
+                        $refundedPercent = $patientDeposit->amount> 0
                             ? min(100 - $utilizedPercent, ($patientDeposit->refunded_amount / $patientDeposit->amount) * 100)
                             : 0;
                     @endphp
                     <div class="fill bg-success" style="width: {{ $utilizedPercent }}%">
-                        @if($utilizedPercent > 10)
+                        @if($utilizedPercent> 10)
                             {{ number_format($utilizedPercent, 0) }}% Used
                         @endif
                     </div>
@@ -317,8 +317,8 @@
                         @foreach($patientDeposit->journalEntry->lines as $line)
                             <div class="je-line">
                                 <div>
-                                    <span class="badge badge-{{ $line->debit > 0 ? 'primary' : 'success' }}">
-                                        {{ $line->debit > 0 ? 'DR' : 'CR' }}
+                                    <span class="badge badge-{{ $line->debit> 0 ? 'primary' : 'success' }}">
+                                        {{ $line->debit> 0 ? 'DR' : 'CR' }}
                                     </span>
                                     {{ $line->account->display_name ?? $line->account->account_name }}
                                 </div>
@@ -332,7 +332,7 @@
             @endif
 
             <!-- Applications History -->
-            @if($patientDeposit->applications->count() > 0)
+            @if($patientDeposit->applications->count()> 0)
                 <div class="info-card">
                     <h6><i class="mdi mdi-history mr-2"></i>Application History</h6>
                     <table class="table table-sm">
@@ -368,7 +368,7 @@
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Balance Card -->
-            <div class="balance-card {{ $patientDeposit->balance > 0 ? 'positive' : ($patientDeposit->balance < 0 ? 'negative' : 'zero') }} mb-4">
+            <div class="balance-card {{ $patientDeposit->balance> 0 ? 'positive' : ($patientDeposit->balance < 0 ? 'negative' : 'zero') }} mb-4">
                 <div class="label">Available Balance</div>
                 <div class="amount">₦{{ number_format($patientDeposit->balance, 2) }}</div>
                 <div class="label">{{ $patientDeposit->utilization_percentage }}% utilized</div>
@@ -382,11 +382,11 @@
                         <i class="mdi mdi-arrow-left mr-1"></i> Back to List
                     </a>
 
-                    @if($patientDeposit->isActive() && $patientDeposit->balance > 0)
-                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#applyModal">
+                    @if($patientDeposit->isActive() && $patientDeposit->balance> 0)
+                        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#applyModal">
                             <i class="mdi mdi-credit-card mr-1"></i> Apply to Bill
                         </button>
-                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#refundModal">
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#refundModal">
                             <i class="mdi mdi-cash-refund mr-1"></i> Process Refund
                         </button>
                     @endif
@@ -398,7 +398,7 @@
             </div>
 
             <!-- Refund Info -->
-            @if($patientDeposit->refunded_amount > 0)
+            @if($patientDeposit->refunded_amount> 0)
                 <div class="info-card">
                     <h6><i class="mdi mdi-cash-refund mr-2"></i>Refund Information</h6>
                     <div class="info-row">
@@ -423,7 +423,7 @@
             @endif
 
             <!-- Other Deposits -->
-            @if($otherDeposits->count() > 0)
+            @if($otherDeposits->count()> 0)
                 <div class="info-card">
                     <h6><i class="mdi mdi-format-list-bulleted mr-2"></i>Other Deposits</h6>
                     @foreach($otherDeposits as $deposit)
@@ -451,7 +451,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-credit-card mr-2"></i>Apply Deposit</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="apply-form">
                 <div class="modal-body">
@@ -467,7 +467,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Apply</button>
                 </div>
             </form>
@@ -481,7 +481,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cash-refund mr-2"></i>Process Refund</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="refund-form">
                 <div class="modal-body">
@@ -501,7 +501,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Process Refund</button>
                 </div>
             </form>

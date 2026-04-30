@@ -2746,17 +2746,17 @@
     }
 
     /* Disable DataTables responsive expansion */
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable > tbody > tr.child {
+    #history-tab table.dataTable> tbody> tr.child {
         display: none !important;
     }
 
@@ -4028,9 +4028,7 @@
             {{ $resolvedStore->distributionRoleLabel() }}
         </span>
         @can('store-context.change-manual')
-        <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2"
-                onclick="openStoreContextOverride()"
-                title="Change active store context">
+        <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2" onclick="openStoreContextOverride()" title="Change active store context">
             <i class="fas fa-exchange-alt"></i> Change
         </button>
         @endcan
@@ -5098,7 +5096,7 @@
                     <i class="mdi mdi-cart-check"></i> Selected Items
                     <span class="badge bg-light text-primary ms-2" id="modal-cart-count">0</span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0" id="cart-review-body">
                 <!-- Populated by JS -->
@@ -5121,7 +5119,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-alert-circle"></i> Confirm Dismissal</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="text-center mb-3">
@@ -5153,9 +5151,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: var(--hospital-primary); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> My Transactions</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="my-transactions-modal-body">
                 <!-- Filter Panel -->
@@ -5313,9 +5309,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: var(--hospital-primary); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-file-document-outline"></i> Transaction Details</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="transaction-details-body">
                 <div class="row">
@@ -5436,9 +5430,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-swap-horizontal"></i> Adapt Prescription</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Step indicator -->
@@ -5743,9 +5735,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
                 <h5 class="modal-title"><i class="mdi mdi-counter"></i> Adjust Quantity</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Status-specific guidance -->
@@ -5870,9 +5860,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #3949ab, #1a237e); color: #fff;">
                 <h5 class="modal-title"><i class="mdi mdi-cash-edit"></i> Adjust Price (Pre-Billing)</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Guidance -->
@@ -6164,9 +6152,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> Receipt Preview</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <div class="receipt-modal-tabs">
@@ -6206,7 +6192,7 @@
                     <i class="mdi mdi-cart-check"></i> Dispense Cart
                     <span id="modal-cart-count" class="badge bg-light text-success ms-2">0</span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <!-- Store Selection in Modal -->
@@ -6649,7 +6635,7 @@ function displayProductSearchResults(results) {
 
         // Packaging chain info
         let packagingInfo = '';
-        if (product.packagings && product.packagings.length > 0) {
+        if (product.packagings && product.packagings.length> 0) {
             const baseUnit = product.base_unit_name || 'Piece';
             const chain = [baseUnit, ...product.packagings.sort((a,b) => a.level - b.level).map(p => p.name)];
             packagingInfo = `<div class="mt-1 small text-muted"><i class="mdi mdi-package-variant-closed"></i> ${chain.join(' → ')}</div>`;
@@ -6768,7 +6754,7 @@ function renderSelectedProducts() {
 
         if (product.coverageMode) {
             coverage = product.coverageMode.toUpperCase();
-        } else if (currentPatientData && currentPatientData.hmo_name && hmoPays > 0) {
+        } else if (currentPatientData && currentPatientData.hmo_name && hmoPays> 0) {
             coverage = 'HMO';
         }
 
@@ -6929,7 +6915,7 @@ function submitNewPrescriptionRequest() {
 let availableBanks = [];
 
 function loadBanks() {
-    if (availableBanks.length > 0) {
+    if (availableBanks.length> 0) {
         return; // Already loaded
     }
 
@@ -7130,29 +7116,25 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
             <!-- Sub-tabs Navigation -->
             <ul class="nav nav-tabs nav-tabs-modern mb-3" id="prescSubTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="presc-billing-tab" data-bs-toggle="tab"
-                            data-bs-target="#presc-billing-pane" type="button" role="tab">
+                    <button class="nav-link active" id="presc-billing-tab" data-bs-toggle="tab" data-bs-target="#presc-billing-pane" type="button" role="tab">
                         <i class="mdi mdi-cash-register me-1"></i> Billing
                         <span class="badge bg-warning ms-1" id="presc-billing-count">0</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="presc-pending-tab" data-bs-toggle="tab"
-                            data-bs-target="#presc-pending-pane" type="button" role="tab">
+                    <button class="nav-link" id="presc-pending-tab" data-bs-toggle="tab" data-bs-target="#presc-pending-pane" type="button" role="tab">
                         <i class="mdi mdi-clock-outline me-1"></i> Pending
                         <span class="badge bg-danger ms-1" id="presc-pending-count">0</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="presc-dispense-tab" data-bs-toggle="tab"
-                            data-bs-target="#presc-dispense-pane" type="button" role="tab">
+                    <button class="nav-link" id="presc-dispense-tab" data-bs-toggle="tab" data-bs-target="#presc-dispense-pane" type="button" role="tab">
                         <i class="mdi mdi-pill me-1"></i> Ready to Dispense
                         <span class="badge bg-success ms-1" id="presc-dispense-count">0</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="presc-history-tab" data-bs-toggle="tab"
-                            data-bs-target="#presc-history-pane" type="button" role="tab">
+                    <button class="nav-link" id="presc-history-tab" data-bs-toggle="tab" data-bs-target="#presc-history-pane" type="button" role="tab">
                         <i class="mdi mdi-history me-1"></i> History
                         <span class="badge bg-secondary ms-1" id="presc-history-count">0</span>
                     </button>
@@ -7710,7 +7692,7 @@ function openCartReviewModal() {
         </div>`;
     } else {
         // Billing section
-        if (data.billing.length > 0) {
+        if (data.billing.length> 0) {
             const billingTotal = data.billing.reduce((s, i) => s + i.price, 0);
             html += `<div class="cart-section">
                 <div class="cart-section-header">
@@ -7741,7 +7723,7 @@ function openCartReviewModal() {
         }
 
         // Pending section
-        if (data.pending.length > 0) {
+        if (data.pending.length> 0) {
             html += `<div class="cart-section">
                 <div class="cart-section-header">
                     <span><i class="mdi mdi-clock-outline text-warning"></i> Pending</span>
@@ -7770,7 +7752,7 @@ function openCartReviewModal() {
         }
 
         // Dispense section
-        if (data.dispense.length > 0) {
+        if (data.dispense.length> 0) {
             const dispenseTotal = data.dispense.reduce((s, i) => s + i.price, 0);
             html += `<div class="cart-section">
                 <div class="cart-section-header">
@@ -7989,7 +7971,7 @@ function renderPrescCardPharmacy(row, type) {
         cardClass += ' border-warning';
         cardStyle = 'border-left: 4px solid #ffc107;';
 
-        if (payableAmount > 0 && !isPaid) {
+        if (payableAmount> 0 && !isPaid) {
             statusBadges += '<span class="badge bg-danger">Awaiting Payment</span>';
             pendingAlert = `
                 <div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
@@ -7997,7 +7979,7 @@ function renderPrescCardPharmacy(row, type) {
                 </div>
             `;
         }
-        if (claimsAmount > 0 && !isValidated) {
+        if (claimsAmount> 0 && !isValidated) {
             statusBadges += ' <span class="badge bg-info">Awaiting HMO Validation</span>';
             pendingAlert += `
                 <div class="alert alert-info py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
@@ -8010,10 +7992,10 @@ function renderPrescCardPharmacy(row, type) {
         cardClass += ' border-success';
         cardStyle = 'border-left: 4px solid #28a745;';
 
-        if (payableAmount > 0) {
+        if (payableAmount> 0) {
             statusBadges += '<span class="presc-card-status paid"><i class="mdi mdi-check"></i> Paid</span>';
         }
-        if (claimsAmount > 0) {
+        if (claimsAmount> 0) {
             statusBadges += ' <span class="presc-card-status validated"><i class="mdi mdi-check"></i> HMO Validated</span>';
         }
         if (payableAmount == 0 && claimsAmount == 0) {
@@ -8031,14 +8013,14 @@ function renderPrescCardPharmacy(row, type) {
         } else if (status === 2) {
             // Check if ready to dispense or awaiting something
             const pendingReasons = [];
-            if (payableAmount > 0 && !isPaid) {
+            if (payableAmount> 0 && !isPaid) {
                 pendingReasons.push('Payment');
             }
-            if (claimsAmount > 0 && !isValidated) {
+            if (claimsAmount> 0 && !isValidated) {
                 pendingReasons.push('HMO Validation');
             }
 
-            if (pendingReasons.length > 0) {
+            if (pendingReasons.length> 0) {
                 statusBadges = `<span class="badge bg-info">Awaiting ${pendingReasons.join(' & ')}</span>`;
             } else {
                 statusBadges = '<span class="badge bg-success">Ready to Dispense</span>';
@@ -8114,7 +8096,7 @@ function renderPrescCardPharmacy(row, type) {
                     <div class="d-flex flex-wrap" style="gap:1rem;">
                         <span><strong class="text-danger">Patient Pays:</strong> ₦${formatMoneyPharmacy(tpPayable)}</span>
                         <span><strong class="text-success">HMO Claim:</strong> ₦${formatMoneyPharmacy(tpClaims)}</span>
-                        ${tpTotal > 0 ? `<span class="text-muted">Total: ₦${formatMoneyPharmacy(tpTotal)}</span>` : ''}
+                        ${tpTotal> 0 ? `<span class="text-muted">Total: ₦${formatMoneyPharmacy(tpTotal)}</span>` : ''}
                     </div>
                 </div>`;
         }
@@ -8176,10 +8158,10 @@ function renderPrescCardPharmacy(row, type) {
                     ${stockBadge}
                 </div>
         `;
-        if (storeStocks.length > 0) {
+        if (storeStocks.length> 0) {
             stockInfo += '<div class="mt-1"><strong>By Store:</strong></div>';
             storeStocks.forEach(function(ss) {
-                const storeClass = ss.quantity >= qty ? 'text-success' : 'text-warning';
+                const storeClass = ss.quantity>= qty ? 'text-success' : 'text-warning';
                 stockInfo += `<div class="${storeClass}"><i class="mdi mdi-store"></i> ${ss.store_name}: ${ss.quantity}</div>`;
             });
         }
@@ -8197,8 +8179,8 @@ function renderPrescCardPharmacy(row, type) {
         const overridePrice = parseFloat(row.price_override);
         const origPrice = parseFloat(row.price_original || price);
         const diff = overridePrice - origPrice;
-        const diffClass = diff < 0 ? 'text-success' : (diff > 0 ? 'text-danger' : 'text-muted');
-        const diffSign = diff >= 0 ? '+' : '';
+        const diffClass = diff < 0 ? 'text-success' : (diff> 0 ? 'text-danger' : 'text-muted');
+        const diffSign = diff>= 0 ? '+' : '';
         priceOverrideBadge = `
             <div class="small mt-1 p-2 rounded border border-primary" style="background: #f0f4ff;">
                 <i class="mdi mdi-cash-edit text-primary me-1"></i>
@@ -8220,50 +8202,13 @@ function renderPrescCardPharmacy(row, type) {
         // Unbilled items - can always be adapted, qty adjusted, or price adjusted (no billing impact yet)
         actionButtons = `
             <div class="presc-card-actions mt-2 pt-2 border-top">
-                <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card"
-                        data-id="${row.id}"
-                        data-product="${row.product_name || 'Unknown'}"
-                        data-product-code="${row.product_code || ''}"
-                        data-dose="${row.dose || ''}"
-                        data-qty="${qty}"
-                        data-price="${price}"
-                        data-status="unbilled"
-                        data-payable="${payableAmount}"
-                        data-claims="${claimsAmount}"
-                        data-is-paid="false"
-                        data-is-validated="false"
-                        data-coverage-mode="${coverageMode}"
-                        title="Change to a different product">
+                <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${price}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change to a different product">
                     <i class="mdi mdi-swap-horizontal"></i> Adapt Product
                 </button>
-                <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1"
-                        data-id="${row.id}"
-                        data-product="${row.product_name || 'Unknown'}"
-                        data-qty="${qty}"
-                        data-price="${price}"
-                        data-status="unbilled"
-                        data-payable="${payableAmount}"
-                        data-claims="${claimsAmount}"
-                        data-is-paid="false"
-                        data-is-validated="false"
-                        data-coverage-mode="${coverageMode}"
-                        title="Change the quantity">
+                <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${price}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change the quantity">
                     <i class="mdi mdi-counter"></i> Adjust Qty
                 </button>
-                <button type="button" class="btn btn-xs btn-outline-primary btn-adjust-price-card ms-1"
-                        data-id="${row.id}"
-                        data-product="${row.product_name || 'Unknown'}"
-                        data-product-code="${row.product_code || ''}"
-                        data-qty="${qty}"
-                        data-price="${price}"
-                        data-coverage-mode="${coverageMode}"
-                        data-tariff-payable="${tariffPayableUnit}"
-                        data-tariff-claims="${tariffClaimsUnit}"
-                        data-price-override="${row.price_override ?? ''}"
-                        data-price-override-reason="${row.price_override_reason || ''}"
-                        data-price-override-by="${row.price_override_by || ''}"
-                        data-price-override-at="${row.price_override_at || ''}"
-                        title="Adjust the unit price before billing">
+                <button type="button" class="btn btn-xs btn-outline-primary btn-adjust-price-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-qty="${qty}" data-price="${price}" data-coverage-mode="${coverageMode}" data-tariff-payable="${tariffPayableUnit}" data-tariff-claims="${tariffClaimsUnit}" data-price-override="${row.price_override ?? ''}" data-price-override-reason="${row.price_override_reason || ''}" data-price-override-by="${row.price_override_by || ''}" data-price-override-at="${row.price_override_at || ''}" title="Adjust the unit price before billing">
                     <i class="mdi mdi-cash-edit"></i> Adjust Price
                 </button>
             </div>
@@ -8275,8 +8220,8 @@ function renderPrescCardPharmacy(row, type) {
         // 2. Payable + Claims: NEITHER paid nor validated
         // 3. Claims only: NOT validated
 
-        const hasPayable = payableAmount > 0;
-        const hasClaims = claimsAmount > 0;
+        const hasPayable = payableAmount> 0;
+        const hasClaims = claimsAmount> 0;
         const canModify = (
             (hasPayable && !hasClaims && !isPaid) || // Payable only, not paid
             (hasPayable && hasClaims && !isPaid && !isValidated) || // Both, neither settled
@@ -8286,34 +8231,10 @@ function renderPrescCardPharmacy(row, type) {
         if (canModify) {
             actionButtons = `
                 <div class="presc-card-actions mt-2 pt-2 border-top">
-                    <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card"
-                            data-id="${row.id}"
-                            data-product="${row.product_name || 'Unknown'}"
-                            data-product-code="${row.product_code || ''}"
-                            data-dose="${row.dose || ''}"
-                            data-qty="${qty}"
-                            data-price="${price}"
-                            data-status="billed"
-                            data-payable="${payableAmount}"
-                            data-claims="${claimsAmount}"
-                            data-is-paid="${isPaid}"
-                            data-is-validated="${isValidated}"
-                            data-coverage-mode="${row.coverage_mode || 'none'}"
-                            title="Change to a different product (will update billing)">
+                    <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${price}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change to a different product (will update billing)">
                         <i class="mdi mdi-swap-horizontal"></i> Adapt Product
                     </button>
-                    <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1"
-                            data-id="${row.id}"
-                            data-product="${row.product_name || 'Unknown'}"
-                            data-qty="${qty}"
-                            data-price="${price}"
-                            data-status="billed"
-                            data-payable="${payableAmount}"
-                            data-claims="${claimsAmount}"
-                            data-is-paid="${isPaid}"
-                            data-is-validated="${isValidated}"
-                            data-coverage-mode="${row.coverage_mode || 'none'}"
-                            title="Change the quantity (will update billing)">
+                    <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${price}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change the quantity (will update billing)">
                         <i class="mdi mdi-counter"></i> Adjust Qty
                     </button>
                 </div>
@@ -8477,7 +8398,7 @@ function loadQueueCounts() {
         $('#queue-hmo-count').text(counts.hmo || 0);
         var emergencyCount = counts.emergency || 0;
         $('#queue-emergency-count').text(emergencyCount);
-        if (emergencyCount > 0) {
+        if (emergencyCount> 0) {
             $('#queue-emergency-count').closest('.queue-item').addClass('emergency-pulse');
         } else {
             $('#queue-emergency-count').closest('.queue-item').removeClass('emergency-pulse');
@@ -8515,9 +8436,9 @@ let checkedItemsState = {
 
 // Check if any tab has checked items
 function hasCheckedItems() {
-    return checkedItemsState.billing.size > 0 ||
-           checkedItemsState.pending.size > 0 ||
-           checkedItemsState.dispense.size > 0;
+    return checkedItemsState.billing.size> 0 ||
+           checkedItemsState.pending.size> 0 ||
+           checkedItemsState.dispense.size> 0;
 }
 
 // Get checked items for a specific tab
@@ -8609,7 +8530,7 @@ function refreshCurrentPatientData() {
                        activeSubtab.includes('pending') ? 'pending' :
                        activeSubtab.includes('dispense') ? 'dispense' : null;
 
-        if (tabKey && checkedItemsState[tabKey].size > 0) {
+        if (tabKey && checkedItemsState[tabKey].size> 0) {
             console.log('Skipping auto-refresh: active tab has checked items');
             return;
         }
@@ -8814,7 +8735,7 @@ function updateAccountBalanceDisplays(accountData) {
 
     // Update billing tab balance
     $('#billing-balance-amount').text(formattedBalance);
-    if (balance > 0) {
+    if (balance> 0) {
         $('#billing-account-balance').show();
         // Show account payment option if balance is positive
         $('#account-payment-option').show();
@@ -8844,7 +8765,7 @@ function displayAccountInfo(account, pendingBills) {
 
     $('#hero-balance-amount').text(`₦${balance.toLocaleString()}`);
 
-    if (balance > 0) {
+    if (balance> 0) {
         heroBalance.addClass('credit');
         $('#hero-balance-status').text('Credit Balance');
     } else if (balance < 0) {
@@ -8915,7 +8836,7 @@ function updateAccountStats(summary) {
 function renderAccountTransactions(transactions) {
     console.log('renderAccountTransactions called with:', transactions);
     const timeline = $('#transaction-timeline');
-    console.log('Timeline element found:', timeline.length > 0);
+    console.log('Timeline element found:', timeline.length> 0);
     timeline.empty();
 
     if (!transactions || transactions.length === 0) {
@@ -8932,8 +8853,8 @@ function renderAccountTransactions(transactions) {
 
     console.log('Rendering', transactions.length, 'transactions');
     transactions.forEach((tx, index) => {
-        const amountClass = parseFloat(tx.amount) >= 0 ? 'positive' : 'negative';
-        const amountPrefix = parseFloat(tx.amount) >= 0 ? '+' : '';
+        const amountClass = parseFloat(tx.amount)>= 0 ? 'positive' : 'negative';
+        const amountPrefix = parseFloat(tx.amount)>= 0 ? '+' : '';
 
         const item = `
             <div class="timeline-item">
@@ -9062,7 +8983,7 @@ function updateBalancePreview() {
     previewElement.text(`₦${newBalance.toLocaleString()}`);
     previewElement.removeClass('positive negative');
 
-    if (newBalance > 0) {
+    if (newBalance> 0) {
         previewElement.addClass('positive');
     } else if (newBalance < 0) {
         previewElement.addClass('negative');
@@ -9132,7 +9053,7 @@ function processAccountTransaction() {
     }
 
     // Check if withdraw amount exceeds balance
-    if (type === 'withdraw' && amount > currentAccountBalance) {
+    if (type === 'withdraw' && amount> currentAccountBalance) {
         if (!confirm(`Warning: This withdrawal (₦${amount.toLocaleString()}) exceeds the current balance (₦${currentAccountBalance.toLocaleString()}). Continue anyway?`)) {
             return;
         }
@@ -9459,12 +9380,12 @@ function renderAllPendingWidgets(items) {
 
             let isReady = false;
 
-            // If payable_amount > 0, must be paid
-            if (payableAmount > 0 && !isPaid) {
+            // If payable_amount> 0, must be paid
+            if (payableAmount> 0 && !isPaid) {
                 isReady = false;
             }
-            // If claims_amount > 0, must be validated
-            else if (claimsAmount > 0 && !isValidated) {
+            // If claims_amount> 0, must be validated
+            else if (claimsAmount> 0 && !isValidated) {
                 isReady = false;
             }
             // All requirements met
@@ -9483,7 +9404,7 @@ function renderAllPendingWidgets(items) {
     $container.empty();
 
     // Unbilled Section (Status 1)
-    if (unbilledItems.length > 0) {
+    if (unbilledItems.length> 0) {
         const unbilledHtml = `
             <div class="request-section" data-section="unbilled">
                 <div class="request-section-header">
@@ -9519,7 +9440,7 @@ function renderAllPendingWidgets(items) {
     }
 
     // Billed (Awaiting Payment/Validation) Section
-    if (billedItems.length > 0) {
+    if (billedItems.length> 0) {
         const billedHtml = `
             <div class="request-section" data-section="billed">
                 <div class="request-section-header">
@@ -9550,7 +9471,7 @@ function renderAllPendingWidgets(items) {
     }
 
     // Ready to Dispense Section
-    if (readyItems.length > 0) {
+    if (readyItems.length> 0) {
         const readyHtml = `
             <div class="request-section" data-section="ready">
                 <div class="request-section-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
@@ -9705,12 +9626,12 @@ function createFilteredTableRow(item) {
         statusClass = 'status-requested';
     } else if (item.status == 2) {
         // Check readiness
-        if (payableAmount > 0 && !isPaid) {
+        if (payableAmount> 0 && !isPaid) {
             isReady = false;
             blockingReason = 'Awaiting Payment';
             statusClass = 'status-billed';
             statusText = 'Awaiting Payment';
-        } else if (claimsAmount > 0 && !isValidated) {
+        } else if (claimsAmount> 0 && !isValidated) {
             isReady = false;
             blockingReason = 'Awaiting HMO Validation';
             statusClass = 'status-billed';
@@ -9742,34 +9663,10 @@ function createFilteredTableRow(item) {
     // Unbilled items (status 1) - always show adapt/adjust buttons
     if (item.status == 1) {
         actionButtons = `
-            <button class="btn btn-info btn-sm btn-adapt-product"
-                data-id="${item.id}"
-                data-product-name="${item.product_name || 'Unknown'}"
-                data-product-code="${item.product_code || ''}"
-                data-dose="${item.dose || ''}"
-                data-price="${basePrice}"
-                data-qty="${qty}"
-                data-status="unbilled"
-                data-payable="${payableAmount}"
-                data-claims="${claimsAmount}"
-                data-is-paid="${isPaid}"
-                data-is-validated="${isValidated}"
-                data-coverage-mode="${coverageMode}"
-                title="Adapt Product">
+            <button class="btn btn-info btn-sm btn-adapt-product" data-id="${item.id}" data-product-name="${item.product_name || 'Unknown'}" data-product-code="${item.product_code || ''}" data-dose="${item.dose || ''}" data-price="${basePrice}" data-qty="${qty}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${coverageMode}" title="Adapt Product">
                 <i class="mdi mdi-swap-horizontal"></i>
             </button>
-            <button class="btn btn-warning btn-sm btn-adjust-qty"
-                data-id="${item.id}"
-                data-product-name="${item.product_name || 'Unknown'}"
-                data-price="${basePrice}"
-                data-qty="${qty}"
-                data-status="unbilled"
-                data-payable="${payableAmount}"
-                data-claims="${claimsAmount}"
-                data-is-paid="${isPaid}"
-                data-is-validated="${isValidated}"
-                data-coverage-mode="${coverageMode}"
-                title="Adjust Quantity">
+            <button class="btn btn-warning btn-sm btn-adjust-qty" data-id="${item.id}" data-product-name="${item.product_name || 'Unknown'}" data-price="${basePrice}" data-qty="${qty}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${coverageMode}" title="Adjust Quantity">
                 <i class="mdi mdi-plus-minus"></i>
             </button>
         `;
@@ -9777,34 +9674,10 @@ function createFilteredTableRow(item) {
     // Billed items (status 2) - show buttons only if NOT settled
     else if (item.status == 2 && !isReady && canModifyBilled(payableAmount, claimsAmount, isPaid, isValidated)) {
         actionButtons = `
-            <button class="btn btn-info btn-sm btn-adapt-product"
-                data-id="${item.id}"
-                data-product-name="${item.product_name || 'Unknown'}"
-                data-product-code="${item.product_code || ''}"
-                data-dose="${item.dose || ''}"
-                data-price="${basePrice}"
-                data-qty="${qty}"
-                data-status="billed"
-                data-payable="${payableAmount}"
-                data-claims="${claimsAmount}"
-                data-is-paid="${isPaid}"
-                data-is-validated="${isValidated}"
-                data-coverage-mode="${coverageMode}"
-                title="Adapt Product">
+            <button class="btn btn-info btn-sm btn-adapt-product" data-id="${item.id}" data-product-name="${item.product_name || 'Unknown'}" data-product-code="${item.product_code || ''}" data-dose="${item.dose || ''}" data-price="${basePrice}" data-qty="${qty}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${coverageMode}" title="Adapt Product">
                 <i class="mdi mdi-swap-horizontal"></i>
             </button>
-            <button class="btn btn-warning btn-sm btn-adjust-qty"
-                data-id="${item.id}"
-                data-product-name="${item.product_name || 'Unknown'}"
-                data-price="${basePrice}"
-                data-qty="${qty}"
-                data-status="billed"
-                data-payable="${payableAmount}"
-                data-claims="${claimsAmount}"
-                data-is-paid="${isPaid}"
-                data-is-validated="${isValidated}"
-                data-coverage-mode="${coverageMode}"
-                title="Adjust Quantity">
+            <button class="btn btn-warning btn-sm btn-adjust-qty" data-id="${item.id}" data-product-name="${item.product_name || 'Unknown'}" data-price="${basePrice}" data-qty="${qty}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${coverageMode}" title="Adjust Quantity">
                 <i class="mdi mdi-plus-minus"></i>
             </button>
         `;
@@ -9851,8 +9724,8 @@ function canModifyBilled(item) {
     const isPaid = item.payment_id != null;
     const isValidated = item.validation_status === 'validated' || item.validation_status === 'approved';
 
-    const hasPayable = payableAmount > 0;
-    const hasClaims = claimsAmount > 0;
+    const hasPayable = payableAmount> 0;
+    const hasClaims = claimsAmount> 0;
 
     // If payable only, must NOT be paid
     if (hasPayable && !hasClaims) {
@@ -9882,20 +9755,20 @@ function createPrescriptionCard(item, section) {
 
     // Determine payment mode display
     let paymentModeHtml = '';
-    if (payableAmount > 0 && claimsAmount > 0) {
+    if (payableAmount> 0 && claimsAmount> 0) {
         paymentModeHtml = '<span class="badge badge-info">Co-Pay</span>';
-    } else if (payableAmount > 0 && claimsAmount === 0) {
+    } else if (payableAmount> 0 && claimsAmount === 0) {
         paymentModeHtml = '<span class="badge badge-secondary">Cash</span>';
-    } else if (payableAmount === 0 && claimsAmount > 0) {
+    } else if (payableAmount === 0 && claimsAmount> 0) {
         paymentModeHtml = '<span class="badge badge-primary">Full HMO</span>';
     }
 
     // Check delivery readiness
-    if (payableAmount > 0 && !isPaid) {
+    if (payableAmount> 0 && !isPaid) {
         canDeliver = false;
         blockReason = 'Awaiting Payment';
         deliveryHint = `Patient owes ${formatMoney(payableAmount)}`;
-    } else if (claimsAmount > 0 && !isValidated) {
+    } else if (claimsAmount> 0 && !isValidated) {
         canDeliver = false;
         blockReason = 'Awaiting HMO Validation';
         deliveryHint = `Claims of ${formatMoney(claimsAmount)} pending validation`;
@@ -9903,10 +9776,10 @@ function createPrescriptionCard(item, section) {
 
     // Payment status badges
     let paymentStatusHtml = '';
-    if (isPaid && payableAmount > 0) {
+    if (isPaid && payableAmount> 0) {
         paymentStatusHtml = '<span class="badge badge-success ml-1"><i class="mdi mdi-check"></i> Paid</span>';
     }
-    if (isValidated && claimsAmount > 0) {
+    if (isValidated && claimsAmount> 0) {
         paymentStatusHtml += '<span class="badge badge-success ml-1"><i class="mdi mdi-check"></i> HMO Validated</span>';
     }
 
@@ -9947,66 +9820,18 @@ function createPrescriptionCard(item, section) {
                     <div class="card-meta">
                         <span class="text-muted">Qty: ${item.qty || item.quantity || 'N/A'}</span>
                         ${section === 'unbilled' ? `
-                            <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product"
-                                    data-id="${item.id}"
-                                    data-product="${item.product_name || item.medication_name || 'N/A'}"
-                                    data-product-code="${item.product_code || ''}"
-                                    data-dose="${item.dose || ''}"
-                                    data-qty="${item.qty || item.quantity || 1}"
-                                    data-price="${item.base_price || item.price || 0}"
-                                    data-status="unbilled"
-                                    data-payable="0"
-                                    data-claims="0"
-                                    data-is-paid="false"
-                                    data-is-validated="false"
-                                    data-coverage-mode="${item.coverage_mode || 'cash'}"
-                                    title="Change to a different product">
+                            <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product" data-id="${item.id}" data-product="${item.product_name || item.medication_name || 'N/A'}" data-product-code="${item.product_code || ''}" data-dose="${item.dose || ''}" data-qty="${item.qty || item.quantity || 1}" data-price="${item.base_price || item.price || 0}" data-status="unbilled" data-payable="0" data-claims="0" data-is-paid="false" data-is-validated="false" data-coverage-mode="${item.coverage_mode || 'cash'}" title="Change to a different product">
                                 <i class="mdi mdi-swap-horizontal"></i> Adapt
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-warning ml-1 btn-adjust-qty"
-                                    data-id="${item.id}"
-                                    data-product="${item.product_name || item.medication_name || 'N/A'}"
-                                    data-qty="${item.qty || item.quantity || 1}"
-                                    data-price="${item.base_price || item.price || 0}"
-                                    data-status="unbilled"
-                                    data-payable="0"
-                                    data-claims="0"
-                                    data-is-paid="false"
-                                    data-is-validated="false"
-                                    data-coverage-mode="${item.coverage_mode || 'cash'}"
-                                    title="Change the quantity">
+                            <button type="button" class="btn btn-xs btn-outline-warning ml-1 btn-adjust-qty" data-id="${item.id}" data-product="${item.product_name || item.medication_name || 'N/A'}" data-qty="${item.qty || item.quantity || 1}" data-price="${item.base_price || item.price || 0}" data-status="unbilled" data-payable="0" data-claims="0" data-is-paid="false" data-is-validated="false" data-coverage-mode="${item.coverage_mode || 'cash'}" title="Change the quantity">
                                 <i class="mdi mdi-counter"></i> Adjust Qty
                             </button>
                         ` : ''}
                         ${section === 'billed' && canModifyBilled(item) ? `
-                            <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product"
-                                    data-id="${item.id}"
-                                    data-product="${item.product_name || item.medication_name || 'N/A'}"
-                                    data-product-code="${item.product_code || ''}"
-                                    data-dose="${item.dose || ''}"
-                                    data-qty="${item.qty || item.quantity || 1}"
-                                    data-price="${item.base_price || item.price || 0}"
-                                    data-status="billed"
-                                    data-payable="${payableAmount}"
-                                    data-claims="${claimsAmount}"
-                                    data-is-paid="${isPaid}"
-                                    data-is-validated="${isValidated}"
-                                    data-coverage-mode="${item.coverage_mode || 'none'}"
-                                    title="Change to a different product (will update billing)">
+                            <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product" data-id="${item.id}" data-product="${item.product_name || item.medication_name || 'N/A'}" data-product-code="${item.product_code || ''}" data-dose="${item.dose || ''}" data-qty="${item.qty || item.quantity || 1}" data-price="${item.base_price || item.price || 0}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${item.coverage_mode || 'none'}" title="Change to a different product (will update billing)">
                                 <i class="mdi mdi-swap-horizontal"></i> Adapt
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-warning ml-1 btn-adjust-qty"
-                                    data-id="${item.id}"
-                                    data-product="${item.product_name || item.medication_name || 'N/A'}"
-                                    data-qty="${item.qty || item.quantity || 1}"
-                                    data-price="${item.base_price || item.price || 0}"
-                                    data-status="billed"
-                                    data-payable="${payableAmount}"
-                                    data-claims="${claimsAmount}"
-                                    data-is-paid="${isPaid}"
-                                    data-is-validated="${isValidated}"
-                                    data-coverage-mode="${item.coverage_mode || 'none'}"
-                                    title="Change the quantity (will update billing)">
+                            <button type="button" class="btn btn-xs btn-outline-warning ml-1 btn-adjust-qty" data-id="${item.id}" data-product="${item.product_name || item.medication_name || 'N/A'}" data-qty="${item.qty || item.quantity || 1}" data-price="${item.base_price || item.price || 0}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${item.coverage_mode || 'none'}" title="Change the quantity (will update billing)">
                                 <i class="mdi mdi-counter"></i> Adjust Qty
                             </button>
                         ` : ''}
@@ -10040,13 +9865,13 @@ function createPrescriptionCard(item, section) {
                 </div>
 
                 <div class="card-pricing">
-                    ${payableAmount > 0 ? `
+                    ${payableAmount> 0 ? `
                         <div class="pricing-item">
                             <span class="label">Patient Pays:</span>
                             <span class="value text-primary">${formatMoney(payableAmount)}</span>
                         </div>
                     ` : ''}
-                    ${claimsAmount > 0 ? `
+                    ${claimsAmount> 0 ? `
                         <div class="pricing-item">
                             <span class="label">HMO Pays:</span>
                             <span class="value text-info">${formatMoney(claimsAmount)}</span>
@@ -10079,12 +9904,12 @@ function createPrescriptionRow(item) {
         statusText = 'Unbilled';
     } else if (item.status == 2) {
         // Check readiness
-        if (payableAmount > 0 && !isPaid) {
+        if (payableAmount> 0 && !isPaid) {
             isReady = false;
             blockingReason = 'Awaiting Payment';
             statusClass = 'status-billed';
             statusText = 'Awaiting Payment';
-        } else if (claimsAmount > 0 && !isValidated) {
+        } else if (claimsAmount> 0 && !isValidated) {
             isReady = false;
             blockingReason = 'Awaiting HMO Validation';
             statusClass = 'status-billed';
@@ -10104,9 +9929,9 @@ function createPrescriptionRow(item) {
 
     // Determine payment type badge
     let paymentBadge = '';
-    if (hmoPays > 0 && patientPays > 0) {
+    if (hmoPays> 0 && patientPays> 0) {
         paymentBadge = '<span class="badge badge-info">Co-Pay</span>';
-    } else if (hmoPays > 0 && patientPays == 0) {
+    } else if (hmoPays> 0 && patientPays == 0) {
         paymentBadge = '<span class="badge badge-success">Full HMO</span>';
     } else {
         paymentBadge = '<span class="badge badge-secondary">Cash</span>';
@@ -10161,12 +9986,12 @@ function createPrescriptionRow(item) {
                 </td>
                 <td class="text-center">${qty}</td>
                 <td class="text-right">
-                    <strong class="${patientPays > 0 ? 'text-danger' : 'text-success'}">
+                    <strong class="${patientPays> 0 ? 'text-danger' : 'text-success'}">
                         ₦${(patientPays * qty).toLocaleString()}
                     </strong>
                 </td>
                 <td class="text-right">
-                    ${hmoPays > 0 ? `<strong class="text-primary">₦${(hmoPays * qty).toLocaleString()}</strong>` : '<span class="text-muted">-</span>'}
+                    ${hmoPays> 0 ? `<strong class="text-primary">₦${(hmoPays * qty).toLocaleString()}</strong>` : '<span class="text-muted">-</span>'}
                 </td>
                 <td>
                     <span class="request-status-badge ${statusClass}">${statusText}</span>
@@ -10283,14 +10108,14 @@ function initializePrescriptionHandlers() {
     // Action button handlers
     $('#btn-record-billing').off('click').on('click', function() {
         const selected = getSelectedPrescriptions('unbilled');
-        if (selected.length > 0) {
+        if (selected.length> 0) {
             recordBillingForPrescriptions(selected);
         }
     });
 
     $('#btn-dispense-ready').off('click').on('click', function() {
         const selected = getSelectedPrescriptions('ready');
-        if (selected.length > 0) {
+        if (selected.length> 0) {
             dispenseItems(selected);
         }
     });
@@ -10298,7 +10123,7 @@ function initializePrescriptionHandlers() {
     $('#btn-dismiss-unbilled, #btn-dismiss-billed').off('click').on('click', function() {
         const section = $(this).attr('id').includes('unbilled') ? 'unbilled' : 'billed';
         const selected = getSelectedPrescriptions(section);
-        if (selected.length > 0) {
+        if (selected.length> 0) {
             dismissPrescriptions(selected);
         }
     });
@@ -10745,12 +10570,12 @@ function renderDispensingHistory(history) {
                 <td class="text-center">${qty}</td>
                 <td class="text-right"><span class="text-muted">₦${(basePrice * qty).toLocaleString()}</span></td>
                 <td class="text-right">
-                    <strong class="${patientPaid > 0 ? 'text-danger' : 'text-success'}">
+                    <strong class="${patientPaid> 0 ? 'text-danger' : 'text-success'}">
                         ₦${(patientPaid * qty).toLocaleString()}
                     </strong>
                 </td>
                 <td class="text-right">
-                    ${hmoPaid > 0 ? `<strong class="text-primary">₦${(hmoPaid * qty).toLocaleString()}</strong>` : '<span class="text-muted">-</span>'}
+                    ${hmoPaid> 0 ? `<strong class="text-primary">₦${(hmoPaid * qty).toLocaleString()}</strong>` : '<span class="text-muted">-</span>'}
                 </td>
                 <td>${item.dispensed_by || 'System'}</td>
                 <td>
@@ -10923,7 +10748,7 @@ function processPayment() {
             toastr.error('Insufficient account balance');
             return;
         }
-        if (totalPayable > currentAccountBalance) {
+        if (totalPayable> currentAccountBalance) {
             toastr.error(`Insufficient account balance. Available: ₦${currentAccountBalance.toLocaleString()}`);
             return;
         }
@@ -11171,7 +10996,7 @@ function renderAccountSummary(data) {
 
     $('#hero-balance-amount').text(`₦${balance.toLocaleString()}`);
 
-    if (balance > 0) {
+    if (balance> 0) {
         heroBalance.addClass('credit');
         $('#hero-balance-status').text('Credit Balance');
     } else if (balance < 0) {
@@ -11212,7 +11037,7 @@ function populateMyTransactionsBankDropdown() {
     const $bankSelect = $('#my-trans-bank');
     $bankSelect.find('option:not(:first)').remove();
 
-    if (availableBanks.length > 0) {
+    if (availableBanks.length> 0) {
         availableBanks.forEach(bank => {
             $bankSelect.append(`<option value="${bank.id}">${bank.name}</option>`);
         });
@@ -11437,7 +11262,7 @@ $(document).on('click', '#export-my-transactions-excel', function() {
 
     const transactions = [];
     $('#my-transactions-tbody tr').each(function() {
-        if ($(this).find('td').length > 1) {
+        if ($(this).find('td').length> 1) {
             const row = {};
             row['Date'] = $(this).find('td:eq(0)').text().trim();
             row['Patient'] = $(this).find('td:eq(1)').text().trim();
@@ -11608,7 +11433,7 @@ function renderMyTransactionsSummary(summary) {
     const breakdown = $('#payment-type-breakdown');
     breakdown.empty();
 
-    if (summary.by_type && Object.keys(summary.by_type).length > 0) {
+    if (summary.by_type && Object.keys(summary.by_type).length> 0) {
         let html = '<h6 class="mt-3 mb-2">Breakdown by Payment Type</h6><div class="row">';
         Object.keys(summary.by_type).forEach(type => {
             const data = summary.by_type[type];
@@ -11635,7 +11460,7 @@ function renderMyTransactionsSummary(summary) {
 
 function renderMyTransactionsCharts(transactions, summary) {
     // Payment Method Pie Chart
-    if (summary.by_type && Object.keys(summary.by_type).length > 0) {
+    if (summary.by_type && Object.keys(summary.by_type).length> 0) {
         const ctx = document.getElementById('my-trans-payment-chart');
         if (ctx) {
             // Destroy existing chart
@@ -11688,7 +11513,7 @@ function renderMyTransactionsCharts(transactions, summary) {
     }
 
     // Top Products Bar Chart
-    if (transactions && transactions.length > 0) {
+    if (transactions && transactions.length> 0) {
         const productSales = {};
         transactions.forEach(tx => {
             if (tx.product_name) {
@@ -11703,7 +11528,7 @@ function renderMyTransactionsCharts(transactions, summary) {
             .sort((a, b) => b[1] - a[1])
             .slice(0, 5);
 
-        if (sortedProducts.length > 0) {
+        if (sortedProducts.length> 0) {
             const ctx = document.getElementById('my-trans-products-chart');
             if (ctx) {
                 // Destroy existing chart
@@ -11714,7 +11539,7 @@ function renderMyTransactionsCharts(transactions, summary) {
                 window.myTransProductsChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: sortedProducts.map(p => p[0].length > 20 ? p[0].substring(0, 20) + '...' : p[0]),
+                        labels: sortedProducts.map(p => p[0].length> 20 ? p[0].substring(0, 20) + '...' : p[0]),
                         datasets: [{
                             label: 'Sales Amount',
                             data: sortedProducts.map(p => p[1]),
@@ -12155,7 +11980,7 @@ function updateParameterStatus($field) {
             if (numValue < min) {
                 status = 'Low';
                 statusClass = 'badge-warning';
-            } else if (numValue > max) {
+            } else if (numValue> max) {
                 status = 'High';
                 statusClass = 'badge-danger';
             } else {
@@ -12207,7 +12032,7 @@ function loadExistingAttachments(requestId) {
         url: `/lab-workbench/lab-service-requests/${requestId}/attachments`,
         method: 'GET',
         success: function(attachments) {
-            if (attachments && attachments.length > 0) {
+            if (attachments && attachments.length> 0) {
                 wrapper.show();
                 attachments.forEach(att => {
                     const attDiv = $('<div>').addClass('attachment-item mb-2 d-flex justify-content-between align-items-center');
@@ -12450,18 +12275,18 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
         const temp = parseFloat(value);
         const idealTemp = 37.0;
         const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
-        status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
+        deviation = temp> idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
+        status = (temp>= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'pulse' && value !== 'N/A') {
         const pulse = parseInt(value);
         const idealPulse = 80;
         const diff = Math.abs(pulse - idealPulse);
-        deviation = pulse > idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
-        status = (pulse >= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
+        deviation = pulse> idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
+        status = (pulse>= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'bp' && value !== 'N/A' && value.includes('/')) {
         const [sys, dia] = value.split('/').map(v => parseInt(v));
-        status = (sys >= 90 && sys <= 140 && dia >= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
-        deviation = sys > 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
+        status = (sys>= 90 && sys <= 140 && dia>= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
+        deviation = sys> 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
     }
 
     const content = `
@@ -12491,14 +12316,14 @@ function checkForAllergies(medications, patientAllergies) {
 
     if (typeof patientAllergies === 'string') {
         // Handle comma-separated string
-        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length > 0);
+        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length> 0);
     } else if (Array.isArray(patientAllergies)) {
         // Handle array (could be array of strings or array of objects)
         allergiesArray = patientAllergies.map(a => {
             if (typeof a === 'string') return a.trim();
             if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
             return '';
-        }).filter(a => a.length > 0);
+        }).filter(a => a.length> 0);
     } else if (typeof patientAllergies === 'object' && patientAllergies !== null) {
         // Handle single object or object with values
         if (patientAllergies.name || patientAllergies.allergy || patientAllergies.allergen) {
@@ -12509,7 +12334,7 @@ function checkForAllergies(medications, patientAllergies) {
                 if (typeof a === 'string') return a.trim();
                 if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
                 return '';
-            }).filter(a => a.length > 0);
+            }).filter(a => a.length> 0);
         }
     }
 
@@ -12669,8 +12494,8 @@ function initializeQueueDataTable(filter) {
                             </div>
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
                                 <i class="mdi mdi-pill"></i> ${row.prescription_count || 0} prescription(s)
-                                ${row.unbilled_count > 0 ? `<span class="badge badge-warning ml-2">${row.unbilled_count} unbilled</span>` : ''}
-                                ${row.ready_count > 0 ? `<span class="badge badge-success ml-2">${row.ready_count} ready</span>` : ''}
+                                ${row.unbilled_count> 0 ? `<span class="badge badge-warning ml-2">${row.unbilled_count} unbilled</span>` : ''}
+                                ${row.ready_count> 0 ? `<span class="badge badge-success ml-2">${row.ready_count} ready</span>` : ''}
                                 ${row.hmo ? `<br><small><i class="mdi mdi-hospital-building"></i> ${row.hmo}</small>` : ''}
                             </div>
                         </div>
@@ -12861,10 +12686,10 @@ function loadReportsStatistics(filters = {}) {
             }
 
             // Update top services
-            if (data.top_services && data.top_services.length > 0) {
+            if (data.top_services && data.top_services.length> 0) {
                 let servicesHtml = '<ul class="list-group list-group-flush">';
                 data.top_services.forEach(function(service, index) {
-                    const percentage = data.summary.total_requests > 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
+                    const percentage = data.summary.total_requests> 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
                     servicesHtml += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <div style="flex: 1; min-width: 0; margin-right: 15px;">
                             <div class="d-flex justify-content-between mb-1">
@@ -12989,7 +12814,7 @@ function renderQueueCard(data) {
 
     // Attachments
     let attachmentsSection = '';
-    if (data.attachments && data.attachments.length > 0) {
+    if (data.attachments && data.attachments.length> 0) {
         const attachmentLinks = data.attachments.map(att => {
             const icon = getFileIcon(att.type);
             return `<a href="/storage/${att.path}" target="_blank" class="queue-card-attachment">
@@ -13079,7 +12904,7 @@ function getStatusBadges(data) {
                 <div class="queue-card-status-value">${data.sample_taken_by}<br><small>${data.sample_taken_at}</small></div>
             </div>
         `;
-    } else if (data.status >= 2) {
+    } else if (data.status>= 2) {
         badges += `
             <div class="queue-card-status-item pending">
                 <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample</div>
@@ -13096,7 +12921,7 @@ function getStatusBadges(data) {
                 <div class="queue-card-status-value">${data.result_by}<br><small>${data.result_at}</small></div>
             </div>
         `;
-    } else if (data.status >= 3) {
+    } else if (data.status>= 3) {
         badges += `
             <div class="queue-card-status-item pending">
                 <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
@@ -13262,7 +13087,7 @@ function renderTopServices(services, totalRequests = 0) {
     let html = '<ul class="list-group list-group-flush">';
 
     services.forEach((service, index) => {
-        const percentage = totalRequests > 0 ? Math.round((service.count / totalRequests) * 100) : 0;
+        const percentage = totalRequests> 0 ? Math.round((service.count / totalRequests) * 100) : 0;
 
         html += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
             <div style="flex: 1; min-width: 0; margin-right: 15px;">
@@ -13331,7 +13156,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         4: { name: 'Completed', color: '#28a745' }
     };
 
-    if (byStatus && byStatus.length > 0) {
+    if (byStatus && byStatus.length> 0) {
         byStatus.forEach(item => {
             const info = statusMap[item.status] || { name: 'Unknown', color: '#6c757d' };
             statusLabels.push(info.name);
@@ -13374,7 +13199,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
     const trendLabels = [];
     const trendData = [];
 
-    if (monthlyTrends && monthlyTrends.length > 0) {
+    if (monthlyTrends && monthlyTrends.length> 0) {
         monthlyTrends.forEach(item => {
             trendLabels.push(item.month);
             trendData.push(item.count);
@@ -13418,9 +13243,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-file-document"></i> Prescription Slip Preview</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 75vh; overflow-y: auto; background: #f7f9fb;">
                 <div id="prescription-slip-content"></div>
@@ -13631,7 +13454,7 @@ function openDispenseCartModal() {
 
     // If store is selected and cart has items, fetch stock
     const storeId = $('#modal-store-select').val();
-    if (storeId && dispenseCart.length > 0) {
+    if (storeId && dispenseCart.length> 0) {
         fetchCartStockLevels();
     }
 }
@@ -13686,7 +13509,7 @@ function addSelectedToCartAndOpen() {
     // Uncheck select all
     $('#select-all-dispense').prop('checked', false);
 
-    if (addedCount > 0) {
+    if (addedCount> 0) {
         toastr.success(`Added ${addedCount} item(s) to cart`);
     }
 
@@ -13720,7 +13543,7 @@ function renderDispenseCart() {
     const cartCount = dispenseCart.length;
     $modalCartCount.text(cartCount);
 
-    if (cartCount > 0) {
+    if (cartCount> 0) {
         $headerCartCount.text(cartCount).show();
         $floatingCartCount.text(cartCount).show();
     } else {
@@ -13853,7 +13676,7 @@ function fetchCartStockLevels() {
 
                 dispenseCart[index].stock = totalAvailable;
                 dispenseCart[index].batches = batches;
-                dispenseCart[index].stock_status = totalAvailable >= item.qty ? 'sufficient' : 'insufficient';
+                dispenseCart[index].stock_status = totalAvailable>= item.qty ? 'sufficient' : 'insufficient';
 
                 updateCartRowStock(index);
 
@@ -14069,14 +13892,14 @@ function dispenseFromCart() {
 
     // Check for insufficient stock
     const insufficientItems = dispenseCart.filter(i => i.stock_status === 'insufficient');
-    if (insufficientItems.length > 0) {
+    if (insufficientItems.length> 0) {
         toastr.error('Cannot dispense: Some items have insufficient stock');
         return;
     }
 
     // Check for loading items
     const loadingItems = dispenseCart.filter(i => i.stock_status === 'loading');
-    if (loadingItems.length > 0) {
+    if (loadingItems.length> 0) {
         toastr.warning('Please wait for stock check to complete');
         return;
     }
@@ -14169,7 +13992,7 @@ $(document).on('change', '#modal-store-select', function() {
     const storeId = $(this).val();
     console.log('Store changed to:', storeId); // Debug log
 
-    if (dispenseCart.length > 0 && storeId) {
+    if (dispenseCart.length> 0 && storeId) {
         // Reset stock status and re-fetch
         dispenseCart.forEach((item, index) => {
             dispenseCart[index].stock = null;
@@ -14502,7 +14325,7 @@ function loadPaymentMethods() {
             const total = methods.reduce((sum, m) => sum + parseFloat(m.amount || 0), 0);
 
             methods.forEach(m => {
-                const percent = total > 0 ? ((parseFloat(m.amount || 0) / total) * 100).toFixed(1) : 0;
+                const percent = total> 0 ? ((parseFloat(m.amount || 0) / total) * 100).toFixed(1) : 0;
                 const icon = getPaymentIcon(m.payment_type);
                 $tbody.append(`
                     <tr>
@@ -14903,7 +14726,7 @@ function initPharmacyReportsCharts() {
                         callbacks: {
                             label: function(context) {
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                                const percentage = total> 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
                                 return `${context.label}: ${formatCurrency(context.raw)} (${percentage}%)`;
                             }
                         }
@@ -14943,7 +14766,7 @@ $('#export-reports-excel').on('click', function() {
 });
 
 $('#export-reports-pdf').on('click', function() {
-    toastr.info('PDF export will be generated. Please use Print > Save as PDF for now.');
+    toastr.info('PDF export will be generated. Please use Print> Save as PDF for now.');
     printReports();
 });
 
@@ -15016,7 +14839,7 @@ function exportOverviewData(wb) {
     // Top Products
     const topProducts = [];
     $('#pharm-top-products-tbody tr').each(function() {
-        if ($(this).find('td').length > 1) {
+        if ($(this).find('td').length> 1) {
             topProducts.push({
                 'Rank': $(this).find('td:eq(0)').text(),
                 'Product': $(this).find('td:eq(1)').text(),
@@ -15025,7 +14848,7 @@ function exportOverviewData(wb) {
             });
         }
     });
-    if (topProducts.length > 0) {
+    if (topProducts.length> 0) {
         const ws1 = XLSX.utils.json_to_sheet(topProducts);
         XLSX.utils.book_append_sheet(wb, ws1, 'Top Products');
     }
@@ -15033,7 +14856,7 @@ function exportOverviewData(wb) {
     // Payment Methods
     const paymentMethods = [];
     $('#pharm-payment-methods-tbody tr').each(function() {
-        if ($(this).find('td').length > 1) {
+        if ($(this).find('td').length> 1) {
             paymentMethods.push({
                 'Method': $(this).find('td:eq(0)').text(),
                 'Transactions': $(this).find('td:eq(1)').text(),
@@ -15042,7 +14865,7 @@ function exportOverviewData(wb) {
             });
         }
     });
-    if (paymentMethods.length > 0) {
+    if (paymentMethods.length> 0) {
         const ws2 = XLSX.utils.json_to_sheet(paymentMethods);
         XLSX.utils.book_append_sheet(wb, ws2, 'Payment Methods');
     }
@@ -15357,7 +15180,7 @@ function buildOverviewPrintContent() {
     // Top Products
     html += '<h6>Top 10 Products</h6><table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>';
     $('#pharm-top-products-tbody tr').each(function() {
-        if ($(this).find('td').length > 1) {
+        if ($(this).find('td').length> 1) {
             html += '<tr>';
             $(this).find('td').each(function() {
                 html += `<td>${$(this).text()}</td>`;
@@ -15370,7 +15193,7 @@ function buildOverviewPrintContent() {
     // Payment Methods
     html += '<h6>Payment Methods</h6><table><thead><tr><th>Method</th><th>Transactions</th><th>Amount</th><th>%</th></tr></thead><tbody>';
     $('#pharm-payment-methods-tbody tr').each(function() {
-        if ($(this).find('td').length > 1) {
+        if ($(this).find('td').length> 1) {
             html += '<tr>';
             $(this).find('td').each(function() {
                 html += `<td>${$(this).text()}</td>`;
@@ -15726,7 +15549,7 @@ function updateAdaptationPreview() {
     }
 
     // Display store stocks with intuitive thresholds
-    if (storeStocks.length > 0) {
+    if (storeStocks.length> 0) {
         storeStocks.forEach(function(store) {
             let stockClass, stockIcon;
             if (store.quantity <= 0) {
@@ -15761,7 +15584,7 @@ function updateAdaptationPreview() {
     let diffHtml = '';
     let calcNote = '';
 
-    if (priceDiff > 0) {
+    if (priceDiff> 0) {
         diffHtml = `<span class="text-danger fw-bold">+₦${formatMoneyPharmacy(priceDiff)}</span>`;
         calcNote = '<i class="mdi mdi-arrow-up text-danger"></i> Patient will pay more';
     } else if (priceDiff < 0) {
@@ -15803,7 +15626,7 @@ function updateAdaptationPreview() {
         let impactClaims = 0;
 
         // Apply same coverage ratio if HMO coverage exists
-        if (coverageMode && coverageMode !== 'none' && currentTotal > 0) {
+        if (coverageMode && coverageMode !== 'none' && currentTotal> 0) {
             const payableRatio = currentPayable / currentTotal;
             const claimsRatio = currentClaims / currentTotal;
             impactPayable = newTotal * payableRatio;
@@ -15825,7 +15648,7 @@ function updateAdaptationPreview() {
 
         // Add note about billing update
         let note = 'The billing record will be automatically updated with the new amounts.';
-        if (newTotal > currentTotal) {
+        if (newTotal> currentTotal) {
             note += ' The patient/HMO will owe an additional amount.';
         } else if (newTotal < currentTotal) {
             note += ' A credit/refund will be recorded.';
@@ -15839,7 +15662,7 @@ function updateAdaptationPreview() {
     const productName = selectedNewProduct.product_name || 'selected product';
     let summaryText = `Adapting to "${productName}" × ${newQty} = ₦${formatMoneyPharmacy(newTotal)}`;
     if (priceDiff !== 0) {
-        summaryText += ` (${priceDiff > 0 ? '+' : ''}₦${formatMoneyPharmacy(priceDiff)})`;
+        summaryText += ` (${priceDiff> 0 ? '+' : ''}₦${formatMoneyPharmacy(priceDiff)})`;
     }
     $('#adapt-summary-text').html(summaryText);
 
@@ -15850,8 +15673,8 @@ function updateAdaptationPreview() {
 
 // Helper to update diff badge with color
 function updateDiffBadge(selector, diff) {
-    const formatted = (diff >= 0 ? '+' : '') + '₦' + formatMoneyPharmacy(Math.abs(diff));
-    const badgeClass = diff > 0 ? 'text-danger' : (diff < 0 ? 'text-success' : 'text-muted');
+    const formatted = (diff>= 0 ? '+' : '') + '₦' + formatMoneyPharmacy(Math.abs(diff));
+    const badgeClass = diff> 0 ? 'text-danger' : (diff < 0 ? 'text-success' : 'text-muted');
     $(selector).html(`<span class="${badgeClass}">${formatted}</span>`);
 }
 
@@ -15864,7 +15687,7 @@ $('#adapt-new-qty').on('change input', function() {
 $('#adapt-qty-minus').on('click', function() {
     const $input = $('#adapt-new-qty');
     const current = parseInt($input.val()) || 1;
-    if (current > 1) {
+    if (current> 1) {
         $input.val(current - 1);
         updateAdaptationPreview();
     }
@@ -15989,7 +15812,7 @@ function adjustQtyIncrement() {
 function adjustQtyDecrement() {
     const $input = $('#qty-adjust-new');
     const current = parseInt($input.val() || 0);
-    if (current > 1) {
+    if (current> 1) {
         $input.val(current - 1);
         updateQtyAdjustmentPreview();
     }
@@ -16015,7 +15838,7 @@ function updateQtyAdjustmentPreview() {
     let newClaims = 0;
 
     // Apply same coverage ratio if HMO coverage
-    if (coverageMode && coverageMode !== 'none' && currentTotal > 0) {
+    if (coverageMode && coverageMode !== 'none' && currentTotal> 0) {
         const payableRatio = currentPayable / currentTotal;
         const claimsRatio = currentClaims / currentTotal;
         newPayable = newTotal * payableRatio;
@@ -16033,8 +15856,8 @@ function updateQtyAdjustmentPreview() {
 }
 
 function updateQtyDiffBadge(selector, diff) {
-    const formatted = (diff >= 0 ? '+' : '-') + '₦' + formatMoneyPharmacy(Math.abs(diff));
-    const badgeClass = diff > 0 ? 'bg-danger' : (diff < 0 ? 'bg-success' : 'bg-secondary');
+    const formatted = (diff>= 0 ? '+' : '-') + '₦' + formatMoneyPharmacy(Math.abs(diff));
+    const badgeClass = diff> 0 ? 'bg-danger' : (diff < 0 ? 'bg-success' : 'bg-secondary');
     $(selector).removeClass('bg-danger bg-success bg-secondary').addClass(badgeClass).text(formatted);
 }
 
@@ -16119,7 +15942,7 @@ function openPriceAdjustmentModal(requestId, productName, productCode, currentPr
     // HMO tariff info
     const tariffPay = parseFloat(tariffPayable) || 0;
     const tariffCl = parseFloat(tariffClaims) || 0;
-    const hasTariff = tariffPay > 0 || tariffCl > 0;
+    const hasTariff = tariffPay> 0 || tariffCl> 0;
     $('#price-adjust-tariff-info').toggle(hasTariff);
     $('#price-adjust-tariff-payable').text('₦' + formatMoneyPharmacy(tariffPay));
     $('#price-adjust-tariff-claims').text('₦' + formatMoneyPharmacy(tariffCl));
@@ -16156,7 +15979,7 @@ function updatePriceAdjustmentPreview() {
     const coverageMode = $('#price-adjust-coverage-mode').val();
     const tariffPayUnit = parseFloat($('#price-adjust-tariff-payable-unit').val()) || 0;
     const tariffClaimsUnit = parseFloat($('#price-adjust-tariff-claims-unit').val()) || 0;
-    const hasTariff = tariffPayUnit > 0 || tariffClaimsUnit > 0;
+    const hasTariff = tariffPayUnit> 0 || tariffClaimsUnit> 0;
 
     const oldPayable = hasTariff ? tariffPayUnit * qty : originalPrice * qty;
     const oldClaims = hasTariff ? tariffClaimsUnit * qty : 0;
@@ -16187,11 +16010,11 @@ function updatePriceAdjustmentPreview() {
 
     // Warnings
     let warning = '';
-    if (newPrice > originalPrice * 2) {
+    if (newPrice> originalPrice * 2) {
         warning = 'New price is more than double the original price. Please verify.';
     } else if (newPrice <= 0) {
         warning = 'Setting price to zero will make this item free for the patient.';
-    } else if (hasTariff && newPayable > (tariffPayUnit + tariffClaimsUnit) * qty) {
+    } else if (hasTariff && newPayable> (tariffPayUnit + tariffClaimsUnit) * qty) {
         warning = 'New patient payable exceeds the total tariff amount. HMO claims will be ₦0.';
     }
     $('#price-adjust-warning').toggle(!!warning);
@@ -16199,8 +16022,8 @@ function updatePriceAdjustmentPreview() {
 }
 
 function updatePriceDiffBadge(selector, diff) {
-    const formatted = (diff >= 0 ? '+' : '-') + '₦' + formatMoneyPharmacy(Math.abs(diff));
-    const badgeClass = diff > 0 ? 'bg-danger' : (diff < 0 ? 'bg-success' : 'bg-secondary');
+    const formatted = (diff>= 0 ? '+' : '-') + '₦' + formatMoneyPharmacy(Math.abs(diff));
+    const badgeClass = diff> 0 ? 'bg-danger' : (diff < 0 ? 'bg-success' : 'bg-secondary');
     $(selector).removeClass('bg-danger bg-success bg-secondary').addClass(badgeClass).text(formatted);
 }
 
@@ -16431,7 +16254,7 @@ $(document).on('click', '.return-item-select', function(e) {
         '<div class="col-md-4"><strong>Total Amount:</strong> ₦' + formatMoneyPharmacy($el.data('amount')) + '</div>' +
         '<div class="col-md-4"><strong>Store:</strong> ' + $el.data('store') + '</div>' +
         '</div>';
-    if ($el.data('claims') > 0) {
+    if ($el.data('claims')> 0) {
         infoHtml += '<div class="mt-1"><span class="badge badge-info">HMO Split</span> Patient: ₦' +
             formatMoneyPharmacy($el.data('payable')) + ' | HMO: ₦' + formatMoneyPharmacy($el.data('claims')) + '</div>';
     }
@@ -16478,7 +16301,7 @@ function updateReturnJEPreview() {
     var refundAmt = (totalAmount / originalQty) * qtyReturned;
     var isRestock = (condition === 'good' || condition === 'wrong_item');
     var debitAcct = isRestock ? 'Inventory - Pharmacy (1300)' : 'Loss on Returns (5060)';
-    var hasHmo = claims > 0;
+    var hasHmo = claims> 0;
 
     var rows = '<tr><td>' + debitAcct + '</td><td class="text-right">₦' + formatMoneyPharmacy(refundAmt) + '</td><td class="text-right">—</td></tr>';
 
@@ -16557,7 +16380,7 @@ $(document).on('click', '.btn-view-return', function() {
             html += '<div class="col-md-6"><table class="table table-sm table-borderless">';
             html += '<tr><th width="40%">Qty Returned</th><td>' + r.qty_returned + ' / ' + r.original_qty + '</td></tr>';
             html += '<tr><th>Refund Amount</th><td class="text-success fw-bold">₦' + formatMoneyPharmacy(r.refund_amount) + '</td></tr>';
-            if (r.refund_to_hmo > 0) {
+            if (r.refund_to_hmo> 0) {
                 html += '<tr><th>Patient Portion</th><td>₦' + formatMoneyPharmacy(r.refund_to_patient) + '</td></tr>';
                 html += '<tr><th>HMO Portion</th><td>₦' + formatMoneyPharmacy(r.refund_to_hmo) + '</td></tr>';
             }
@@ -16593,8 +16416,8 @@ $(document).on('click', '.btn-view-return', function() {
                 var totalDebit = 0, totalCredit = 0;
                 r.journal_entry.lines.forEach(function(line) {
                     html += '<tr><td>' + line.account_name + '</td><td><code>' + line.account_code + '</code></td>';
-                    html += '<td class="text-right">' + (line.debit > 0 ? '₦' + formatMoneyPharmacy(line.debit) : '—') + '</td>';
-                    html += '<td class="text-right">' + (line.credit > 0 ? '₦' + formatMoneyPharmacy(line.credit) : '—') + '</td></tr>';
+                    html += '<td class="text-right">' + (line.debit> 0 ? '₦' + formatMoneyPharmacy(line.debit) : '—') + '</td>';
+                    html += '<td class="text-right">' + (line.credit> 0 ? '₦' + formatMoneyPharmacy(line.credit) : '—') + '</td></tr>';
                     totalDebit += parseFloat(line.debit) || 0;
                     totalCredit += parseFloat(line.credit) || 0;
                 });
@@ -16914,7 +16737,7 @@ $('#damage_product_id').on('select2:select', function(e) {
     var productQty = parseFloat(data.current_quantity) || 0;
 
     // Set product-level cost as default (batch will override if selected)
-    if (productCost > 0) {
+    if (productCost> 0) {
         $('#damage_unit_cost').val(productCost.toFixed(2));
         recalcDamageTotal();
     }
@@ -16951,8 +16774,8 @@ $('#damage_batch_id').on('change', function() {
     var $opt = $(this).find(':selected');
     var cost = parseFloat($opt.data('cost')) || 0;
     var qty = parseFloat($opt.data('qty')) || 0;
-    if (cost > 0) $('#damage_unit_cost').val(cost.toFixed(2));
-    if (qty > 0) $('#damage_available_stock').val(qty);
+    if (cost> 0) $('#damage_unit_cost').val(cost.toFixed(2));
+    if (qty> 0) $('#damage_available_stock').val(qty);
     recalcDamageTotal();
     updateDamageJEPreview();
 });
@@ -17103,8 +16926,8 @@ $(document).on('click', '.btn-view-damage', function() {
                 var totalDebit = 0, totalCredit = 0;
                 d.journal_entry.lines.forEach(function(line) {
                     html += '<tr><td>' + line.account_name + '</td><td><code>' + line.account_code + '</code></td>';
-                    html += '<td class="text-right">' + (line.debit > 0 ? '₦' + formatMoneyPharmacy(line.debit) : '—') + '</td>';
-                    html += '<td class="text-right">' + (line.credit > 0 ? '₦' + formatMoneyPharmacy(line.credit) : '—') + '</td></tr>';
+                    html += '<td class="text-right">' + (line.debit> 0 ? '₦' + formatMoneyPharmacy(line.debit) : '—') + '</td>';
+                    html += '<td class="text-right">' + (line.credit> 0 ? '₦' + formatMoneyPharmacy(line.credit) : '—') + '</td></tr>';
                     totalDebit += parseFloat(line.debit) || 0;
                     totalCredit += parseFloat(line.credit) || 0;
                 });
@@ -17576,7 +17399,7 @@ function confirmStoreContextOverride() {
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h6 class="modal-title mb-0"><i class="fas fa-exchange-alt me-1"></i> Change Active Store</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body pb-2">
                 <label class="form-label small fw-bold mb-1">Select Store</label>
@@ -17592,8 +17415,7 @@ function confirmStoreContextOverride() {
             </div>
             <div class="modal-footer py-2">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm"
-                        onclick="confirmStoreContextOverride()">
+                <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm" onclick="confirmStoreContextOverride()">
                     <i class="fas fa-check me-1"></i> Apply
                 </button>
             </div>

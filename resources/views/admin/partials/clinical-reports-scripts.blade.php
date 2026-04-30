@@ -179,7 +179,7 @@
                 var total = data.summary.reduce(function (s, r) { return s + parseInt(r.total); }, 0);
                 var rows = '';
                 (data.summary || []).forEach(function (r) {
-                    var pct = total > 0 ? ((r.total / total) * 100).toFixed(1) : 0;
+                    var pct = total> 0 ? ((r.total / total) * 100).toFixed(1) : 0;
                     rows += '<tr style="cursor:pointer" class="cr-unit-visit-row" data-clinic-id="' + r.clinic_id + '" data-clinic-name="' + r.clinic_name + '">'
                           + '<td>' + r.clinic_name + '</td>'
                           + '<td class="text-center">' + parseInt(r.total).toLocaleString() + '</td>'
@@ -508,7 +508,7 @@
                 Object.keys(ss).forEach(function (k) {
                     badgeHtml += '<div class="col-auto mb-1"><span class="badge badge-' + (ssBadgeMap[k] || 'secondary') + ' p-2">' + k.charAt(0).toUpperCase() + k.slice(1) + ': <strong>' + ss[k] + '</strong></span></div>';
                 });
-                if (ss['overdue'] && ss['overdue'] > 0) {
+                if (ss['overdue'] && ss['overdue']> 0) {
                     badgeHtml += '<div class="col-12"><div class="alert alert-danger py-1 small mb-1"><i class="mdi mdi-alert"></i> <strong>' + ss['overdue'] + '</strong> overdue vaccination(s) require attention.</div></div>';
                 }
                 $('#cr-vacc-schedule-stats').html(badgeHtml);
@@ -585,7 +585,7 @@
                 var wards = data.wards || [];
                 var rows = '';
                 wards.forEach(function (w) {
-                    var pctColor = w.occupancy_pct >= 90 ? 'danger' : (w.occupancy_pct >= 70 ? 'warning' : 'success');
+                    var pctColor = w.occupancy_pct>= 90 ? 'danger' : (w.occupancy_pct>= 70 ? 'warning' : 'success');
                     rows += '<tr style="cursor:pointer" class="cr-occ-ward-row" data-ward-id="' + w.ward_id + '" data-ward-name="' + w.ward_name + '">'
                           + '<td>' + w.ward_name + '</td>'
                           + '<td><small>' + w.type + '</small></td>'
@@ -621,7 +621,7 @@
                 // Current patients
                 var pRows = '';
                 (data.current_patients || []).forEach(function (r) {
-                    var daysColor = r.days > 14 ? 'danger' : (r.days > 7 ? 'warning' : 'success');
+                    var daysColor = r.days> 14 ? 'danger' : (r.days> 7 ? 'warning' : 'success');
                     pRows += '<tr><td>' + (r.patient_id ? '<a href="/patient/' + r.patient_id + '">' + r.patient + '</a>' : r.patient) + '</td><td>' + r.file_no + '</td><td>' + r.ward + '</td><td>' + r.bed + '</td><td>' + r.admitted_at + '</td><td class="text-center"><span class="badge badge-' + daysColor + '">' + r.days + 'd</span></td></tr>';
                 });
                 if (pRows) {

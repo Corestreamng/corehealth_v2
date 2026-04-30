@@ -445,7 +445,7 @@
         </div>
     @endif
 
-    @if(session('import_errors') && count(session('import_errors')) > 0)
+    @if(session('import_errors') && count(session('import_errors'))> 0)
         <div class="alert-import-errors">
             <h6><i class="mdi mdi-alert"></i> Import Warnings ({{ count(session('import_errors')) }} issues)</h6>
             <ul class="error-list mb-0">
@@ -480,6 +480,12 @@
                 </a>
             </li>
         </ul>
+
+        <div class="alert alert-warning m-4 mb-0">
+            <i class="mdi mdi-information-outline"></i> <strong>Standardization Notice:</strong> 
+            All quantity fields (initial_quantity, current_quantity) and price fields (cost_price, sale_price) MUST be provided in <strong>Base Units (Pieces)</strong>. 
+            Packaging definitions in the <code>packaging_levels</code> column will be used for display and bulk-buying calculations, but stock counting always uses the base unit.
+        </div>
 
         <div class="tab-content p-4" id="importExportTabsContent">
             <!-- Products Tab -->
@@ -1020,7 +1026,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateFileDisplay(zone, input) {
-        if (input.files.length > 0) {
+        if (input.files.length> 0) {
             zone.classList.add('file-selected');
             const icon = zone.querySelector('i');
             icon.className = 'mdi mdi-check-circle';
@@ -1264,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </small>
         `;
 
-        if (progress.errors && progress.errors.length > 0) {
+        if (progress.errors && progress.errors.length> 0) {
             html += `
                     <details class="mt-2">
                         <summary class="text-warning" style="cursor:pointer;">

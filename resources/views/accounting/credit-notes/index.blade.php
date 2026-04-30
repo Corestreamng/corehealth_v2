@@ -196,9 +196,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle mr-2"></i>Reject Credit Note</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="rejectForm">
                 <div class="modal-body">
@@ -227,9 +225,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cash-refund mr-2"></i>Apply Refund</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="applyForm">
                 <div class="modal-body">
@@ -392,7 +388,7 @@ $(document).ready(function() {
     function updateSelectedCount() {
         var count = $('.row-checkbox:checked').length;
         $('#selectedCount').text(count);
-        if (count > 0) {
+        if (count> 0) {
             $('#bulkActionsBar').slideDown();
         } else {
             $('#bulkActionsBar').slideUp();

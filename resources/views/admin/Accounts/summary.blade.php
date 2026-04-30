@@ -51,7 +51,7 @@
                                                     @endphp
                                                     <span class="service-price">{{ $servicePrice }}</span>
                                                     <input type="hidden" name="servicePrice[]" value="{{ $servicePrice }}">
-                                                    @if($service->payable_amount !== null && $service->claims_amount > 0)
+                                                    @if($service->payable_amount !== null && $service->claims_amount> 0)
                                                         <br><small class="text-success">HMO covers: &#8358;{{ number_format($service->claims_amount, 2) }}</small>
                                                     @endif
                                                 </td>
@@ -105,7 +105,7 @@
                                                     @endphp
                                                     <span class="product-price">{{ $productPrice }}</span>
                                                     <input type="hidden" name="productPrice[]" value="{{ $productPrice }}">
-                                                    @if($product->payable_amount !== null && $product->claims_amount > 0)
+                                                    @if($product->payable_amount !== null && $product->claims_amount> 0)
                                                         <br><small class="text-success">HMO covers: &#8358;{{ number_format($product->claims_amount, 2) }}</small>
                                                     @endif
                                                 </td>
@@ -158,8 +158,7 @@
                             <input type="hidden" name="patient_id" value="{{(($services) ? $services[0]->user->patient_profile->id : (($products) ? $products[0]->user->patient_profile->id : "N/A"))}}">
                         </div>
                         <div>
-                            <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary"
-                                style="margin-top: auto;">Complete Payment</button>
+                            <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">Complete Payment</button>
                         </div>
                     </div>
             </div>

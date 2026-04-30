@@ -237,7 +237,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 ₦ {{ number_format($statement['total_debit'], 2) }}
                             </div>
-                            <small class="text-muted">{{ count(array_filter($statement['transactions'], fn($t) => $t['debit'] > 0)) }} transactions</small>
+                            <small class="text-muted">{{ count(array_filter($statement['transactions'], fn($t) => $t['debit']> 0)) }} transactions</small>
                         </div>
                         <div class="col-auto">
                             <i class="mdi mdi-arrow-down-bold-circle mdi-36px text-gray-300"></i>
@@ -256,7 +256,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 ₦ {{ number_format($statement['total_credit'], 2) }}
                             </div>
-                            <small class="text-muted">{{ count(array_filter($statement['transactions'], fn($t) => $t['credit'] > 0)) }} transactions</small>
+                            <small class="text-muted">{{ count(array_filter($statement['transactions'], fn($t) => $t['credit']> 0)) }} transactions</small>
                         </div>
                         <div class="col-auto">
                             <i class="mdi mdi-arrow-up-bold-circle mdi-36px text-gray-300"></i>
@@ -299,7 +299,7 @@
             </div>
         </div>
         <div class="card-body">
-            @if(count($statement['transactions']) > 0)
+            @if(count($statement['transactions'])> 0)
             <div class="table-responsive">
                 <table class="table table-sm table-hover" id="statementTable">
                     <thead class="table-light sticky-top">
@@ -336,10 +336,10 @@
                                 <span class="badge badge-secondary">{{ $transaction['source_type'] ?? '-' }}</span>
                             </td>
                             <td class="text-end text-success fw-bold">
-                                {{ $transaction['debit'] > 0 ? '₦ ' . number_format($transaction['debit'], 2) : '-' }}
+                                {{ $transaction['debit']> 0 ? '₦ ' . number_format($transaction['debit'], 2) : '-' }}
                             </td>
                             <td class="text-end text-danger fw-bold">
-                                {{ $transaction['credit'] > 0 ? '₦ ' . number_format($transaction['credit'], 2) : '-' }}
+                                {{ $transaction['credit']> 0 ? '₦ ' . number_format($transaction['credit'], 2) : '-' }}
                             </td>
                             <td class="text-end fw-bold">
                                 ₦ {{ number_format($transaction['running_balance'], 2) }}
@@ -362,8 +362,8 @@
                             <td colspan="6" class="text-end">Net Movement:</td>
                             <td class="text-end">
                                 @php $netMovement = $statement['closing_balance'] - $statement['opening_balance']; @endphp
-                                <span class="{{ $netMovement >= 0 ? 'text-success' : 'text-danger' }}">
-                                    {{ $netMovement >= 0 ? '+' : '' }}₦ {{ number_format($netMovement, 2) }}
+                                <span class="{{ $netMovement>= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $netMovement>= 0 ? '+' : '' }}₦ {{ number_format($netMovement, 2) }}
                                 </span>
                             </td>
                         </tr>

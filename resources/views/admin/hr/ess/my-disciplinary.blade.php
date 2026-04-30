@@ -163,7 +163,7 @@
     @endif
 
     <!-- Suspensions History -->
-    @if(isset($suspensions) && $suspensions->count() > 0)
+    @if(isset($suspensions) && $suspensions->count()> 0)
     <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
             <h6 class="mb-0" style="font-weight: 600;">
@@ -253,9 +253,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-file-document mr-2"></i>Query Details - <span id="viewQueryNumber"></span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem; max-height: 80vh; overflow-y: auto;">
                 <div class="row">
@@ -652,7 +650,7 @@ function renderQueryDetails(data) {
     }
 
     // Attachments
-    if (data.attachments && data.attachments.length > 0) {
+    if (data.attachments && data.attachments.length> 0) {
         $('#attachmentsCard').show();
         let attachHtml = '';
         data.attachments.forEach(att => {

@@ -177,9 +177,7 @@
                 <h5 class="modal-title">
                     <i class="fa fa-info-circle"></i> Audit Details
                 </h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -258,7 +256,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -366,13 +364,13 @@ $(document).ready(function() {
 
             // Format old and new values as JSON
             $('#detail-old-values').text(
-                Object.keys(data.old_values).length > 0
+                Object.keys(data.old_values).length> 0
                     ? JSON.stringify(data.old_values, null, 2)
                     : 'No old values'
             );
 
             $('#detail-new-values').text(
-                Object.keys(data.new_values).length > 0
+                Object.keys(data.new_values).length> 0
                     ? JSON.stringify(data.new_values, null, 2)
                     : 'No new values'
             );

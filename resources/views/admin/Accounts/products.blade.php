@@ -41,8 +41,7 @@
                             </table>
                         </div>
                         <input type="hidden" name="id" id="myInput" value="{{ $id }}"> <br>
-                        <button type="submit" class="align-self-end btn btn-primary"
-                            style="margin-top: auto;">Proceed</button>
+                        <button type="submit" class="align-self-end btn btn-primary" style="margin-top: auto;">Proceed</button>
                     </div>
                 </form>
             </div>

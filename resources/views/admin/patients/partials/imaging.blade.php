@@ -42,11 +42,8 @@
             required>
 
     </div>
-    <button type="submit" class="btn btn-primary"
-        onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
-    <button type="submit" value="dismiss_imaging_bill" name="dismiss_imaging_bill" class="btn btn-danger"
-        onclick="return confirm('Are you sure you wish to dismiss the selected items')"
-        style="float: right">Dismiss</button>
+    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
+    <button type="submit" value="dismiss_imaging_bill" name="dismiss_imaging_bill" class="btn btn-danger" onclick="return confirm('Are you sure you wish to dismiss the selected items')" style="float: right">Dismiss</button>
 </form>
 <hr>
 

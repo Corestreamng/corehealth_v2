@@ -6,24 +6,19 @@
     @if (null == Request::get('user_id'))
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="biodata_tab" data-bs-toggle="tab" data-bs-target="#biodata" type="button"
-                    role="tab" aria-controls="biodata" aria-selected="true">Biodata</button>
+                <button class="nav-link active" id="biodata_tab" data-bs-toggle="tab" data-bs-target="#biodata" type="button" role="tab" aria-controls="biodata" aria-selected="true">Biodata</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="private_data_tab" data-bs-toggle="tab" data-bs-target="#private_data"
-                    type="button" role="tab" aria-controls="private_data" aria-selected="false">Private data</button>
+                <button class="nav-link" id="private_data_tab" data-bs-toggle="tab" data-bs-target="#private_data" type="button" role="tab" aria-controls="private_data" aria-selected="false">Private data</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="family_tab" data-bs-toggle="tab" data-bs-target="#family" type="button"
-                    role="tab" aria-controls="family" aria-selected="false">Family</button>
+                <button class="nav-link" id="family_tab" data-bs-toggle="tab" data-bs-target="#family" type="button" role="tab" aria-controls="family" aria-selected="false">Family</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="insurance_tab" data-bs-toggle="tab" data-bs-target="#insurance" type="button"
-                    role="tab" aria-controls="insurance" aria-selected="false">Insurance</button>
+                <button class="nav-link" id="insurance_tab" data-bs-toggle="tab" data-bs-target="#insurance" type="button" role="tab" aria-controls="insurance" aria-selected="false">Insurance</button>
             </li>
             {{-- <li class="nav-item" role="presentation">
-                <button class="nav-link" id="review-tab" data-bs-toggle="tab" data-bs-target="#review" type="button"
-                    role="tab" aria-controls="review" aria-selected="false">Review</button>
+                <button class="nav-link" id="review-tab" data-bs-toggle="tab" data-bs-target="#review" type="button" role="tab" aria-controls="review" aria-selected="false">Review</button>
             </li> --}}
         </ul>
         <form action="{{ route('patient.store') }}" method="POST" enctype="multipart/form-data">
@@ -138,8 +133,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button type="button" onclick="switch_tab(event,'private_data_tab')"
-                            class="btn btn-primary mr-2">
+                        <button type="button" onclick="switch_tab(event,'private_data_tab')" class="btn btn-primary mr-2">
                             Next </button>
                         <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
 
@@ -331,8 +325,7 @@
                 <button type="button" onclick="switch_tab(event,'private_data_tab')" class="btn btn-secondary mr-2">
                     Prev
                 </button>
-                <button type="button" onclick="switch_tab(event,'insurance_tab')"
-                    class="btn btn-primary mr-2">Next</button>
+                <button type="button" onclick="switch_tab(event,'insurance_tab')" class="btn btn-primary mr-2">Next</button>
                 <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
                 </form>
 
@@ -391,7 +384,7 @@
                 </div>
 
                 {{-- Registration Fee (Optional) --}}
-                @if(isset($registrationServices) && $registrationServices->count() > 0)
+                @if(isset($registrationServices) && $registrationServices->count()> 0)
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">

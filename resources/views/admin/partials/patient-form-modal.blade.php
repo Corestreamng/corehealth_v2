@@ -261,8 +261,8 @@
 
     /* Hide the parent step's own .step-header and .step-content when one of
        its direct child steps is active (so only the child step content shows) */
-    .form-step:has(> .form-step.active) > .step-header,
-    .form-step:has(> .form-step.active) > .step-content {
+    .form-step:has(> .form-step.active)> .step-header,
+    .form-step:has(> .form-step.active)> .step-content {
         display: none !important;
     }
 
@@ -704,7 +704,7 @@
         padding: 1.25rem;
     }
 
-    .registration-summary > h6 {
+    .registration-summary> h6 {
         margin: 0 0 1rem;
         color: #2e7d32;
         font-weight: 700;
@@ -1534,7 +1534,7 @@ function generatePatientFormFileNumber() {
             // Populate recent file numbers
             const $recentList = $('#pf-recent-file-nos');
             $recentList.empty();
-            if (response.recent_file_nos && response.recent_file_nos.length > 0) {
+            if (response.recent_file_nos && response.recent_file_nos.length> 0) {
                 response.recent_file_nos.forEach(fileNo => {
                     $recentList.append(`<span class="file-no-recent-item" data-file-no="${fileNo}">${fileNo}</span>`);
                 });
@@ -1601,7 +1601,7 @@ function checkFileNumberDuplicate(fileNo, excludePatientId = null) {
                     response.patients.forEach(p => {
                         html += `<div class="duplicate-patient"><i class="mdi mdi-account"></i> ${p.name} (${p.file_no})</div>`;
                     });
-                    if (response.count > 3) {
+                    if (response.count> 3) {
                         html += `<div class="duplicate-patient text-muted">...and ${response.count - 3} more</div>`;
                     }
                     $patients.html(html);
@@ -1677,8 +1677,8 @@ function checkDuplicatePatient() {
     var dob = $('#pf-dob').val();
 
     // Need at least surname+firstname (2+ chars each) or phone (7+ chars)
-    var hasName = surname.length >= 2 && firstname.length >= 2;
-    var hasPhone = phone.length >= 7;
+    var hasName = surname.length>= 2 && firstname.length>= 2;
+    var hasPhone = phone.length>= 7;
     if (!hasName && !hasPhone) {
         $('#pf-duplicate-panel').slideUp(200);
         return;
@@ -1699,7 +1699,7 @@ function checkDuplicatePatient() {
             },
             success: function(resp) {
                 if (_dupDismissed) return;
-                if (resp.count > 0) {
+                if (resp.count> 0) {
                     renderDuplicateHints(resp.matches);
                 } else {
                     $('#pf-duplicate-panel').slideUp(200);
@@ -1711,11 +1711,11 @@ function checkDuplicatePatient() {
 
 function renderDuplicateHints(matches) {
     var $list = $('#pf-dup-list').empty();
-    $('#pf-dup-plural').text(matches.length > 1 ? 's' : '');
+    $('#pf-dup-plural').text(matches.length> 1 ? 's' : '');
 
     matches.forEach(function(m) {
         var initials = (m.name || '??').split(' ').map(function(w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
-        var scoreClass = m.score >= 50 ? 'high' : (m.score >= 30 ? 'medium' : 'low');
+        var scoreClass = m.score>= 50 ? 'high' : (m.score>= 30 ? 'medium' : 'low');
 
         var metaParts = [];
         if (m.file_no) metaParts.push('<i class="mdi mdi-file-document-outline"></i> ' + m.file_no);
@@ -2008,10 +2008,10 @@ function updatePatientFormNavigation() {
 }
 
 function goToPatientFormStep(step) {
-    if (step < 1 || step > patientFormTotalSteps) return;
+    if (step < 1 || step> patientFormTotalSteps) return;
 
     // Validate current step before moving forward
-    if (step > patientFormCurrentStep && !validatePatientFormStep(patientFormCurrentStep)) {
+    if (step> patientFormCurrentStep && !validatePatientFormStep(patientFormCurrentStep)) {
         return;
     }
 
@@ -2156,14 +2156,14 @@ function updatePatientFormAge() {
     }
 
     let ageText = '';
-    if (years > 0) {
+    if (years> 0) {
         ageText = `${years} year${years !== 1 ? 's' : ''}`;
-        if (months > 0) {
+        if (months> 0) {
             ageText += `, ${months} month${months !== 1 ? 's' : ''}`;
         }
-    } else if (months > 0) {
+    } else if (months> 0) {
         ageText = `${months} month${months !== 1 ? 's' : ''}`;
-        if (days > 0) {
+        if (days> 0) {
             ageText += `, ${days} day${days !== 1 ? 's' : ''}`;
         }
     } else {
@@ -2259,7 +2259,7 @@ function updatePatientFormSummary() {
     $('#summary-ethnicity').text($('#pf-ethnicity').val() || '-');
 
     // Allergies
-    if (patientFormAllergies && patientFormAllergies.length > 0) {
+    if (patientFormAllergies && patientFormAllergies.length> 0) {
         $('#summary-allergies').html(patientFormAllergies.map(a => '<span class="badge bg-danger me-1">' + a + '</span>').join(' '));
     } else {
         $('#summary-allergies').text('None');
@@ -2454,7 +2454,7 @@ $(document).ready(function() {
 
         var val = parseInt($('#pf-age-val').val());
         var unit = $('#pf-age-unit').val();
-        if (!isNaN(val) && val >= 0) {
+        if (!isNaN(val) && val>= 0) {
             var d = new Date();
             if (unit === 'years') d.setFullYear(d.getFullYear() - val);
             else if (unit === 'months') d.setMonth(d.getMonth() - val);
@@ -2594,7 +2594,7 @@ $(document).ready(function() {
 
     dropzone.on('drop', function(e) {
         const files = e.originalEvent.dataTransfer.files;
-        if (files.length > 0 && files[0].type.startsWith('image/')) {
+        if (files.length> 0 && files[0].type.startsWith('image/')) {
             fileInput[0].files = files;
             fileInput.trigger('change');
         }
@@ -2604,7 +2604,7 @@ $(document).ready(function() {
     fileInput.on('change', function() {
         const file = this.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) {
+            if (file.size> 5 * 1024 * 1024) {
                 toastr.error('File size must be less than 5MB');
                 this.value = '';
                 return;
@@ -2913,7 +2913,7 @@ $(document).ready(function() {
                 // Show recent EX- numbers as hint
                 var recent = response.recent_file_nos || [];
                 var lastTwo = recent.slice(0, 2);
-                if (lastTwo.length > 0) {
+                if (lastTwo.length> 0) {
                     $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
                 }
             },
@@ -3035,7 +3035,7 @@ $(document).ready(function() {
 
         // Pre-fill allergies if existing
         var allergies = $el.data('allergies');
-        if (allergies && allergies !== 'null' && String(allergies).length > 2) {
+        if (allergies && allergies !== 'null' && String(allergies).length> 2) {
             $('#pf-allergy-has').prop('checked', true).trigger('change');
             var clean = String(allergies);
             try { var arr = JSON.parse(clean); if (Array.isArray(arr)) clean = arr.join(', '); } catch(e) {}
@@ -3399,7 +3399,7 @@ $(document).ready(function() {
         }
 
         // Validate when moving forward
-        if (targetIdx > currentIdx) {
+        if (targetIdx> currentIdx) {
             for (var i = currentIdx; i < targetIdx; i++) {
                 if (!validateEmergencyStep(pfStepSequence[i])) return;
             }
@@ -3564,7 +3564,7 @@ $(document).ready(function() {
     $(document).off('click.pfEmergencyPrev').on('click.pfEmergencyPrev', '#pf-btn-prev', function() {
         if (!pfEmergencyMode) return;
         var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
-        if (currentIdx > 0) {
+        if (currentIdx> 0) {
             goToPatientFormStep(pfStepSequence[currentIdx - 1]);
         }
     });
@@ -3837,7 +3837,7 @@ $(document).ready(function() {
         $('#emg-summary-complaint').text($('#pf-chief-complaint').val() || '-');
         var gcs = $('#pf-gcs-total-val').val();
         $('#emg-summary-gcs').text(gcs ? gcs + '/15' : 'Not assessed');
-        $('#emg-summary-pain').text($('#pf-pain-scale').val() > 0 ? $('#pf-pain-scale').val() + '/10' : '0/10');
+        $('#emg-summary-pain').text($('#pf-pain-scale').val()> 0 ? $('#pf-pain-scale').val() + '/10' : '0/10');
 
         var allergyStatus = $('input[name="pf_allergy_status"]:checked').val();
         if (allergyStatus === 'nkda') $('#emg-summary-allergy').html('<span class="badge bg-success">NKDA</span>');
@@ -3854,7 +3854,7 @@ $(document).ready(function() {
         var rr = $('#pf-vital-rr').val(); if (rr) vitals.push({label:'RR', val: rr + '/min'});
         var bs = $('#pf-vital-bs').val(); if (bs) vitals.push({label:'BS', val: bs + ' mg/dl'});
 
-        if (vitals.length > 0) {
+        if (vitals.length> 0) {
             var html = '';
             vitals.forEach(function(v) {
                 html += '<div class="summary-item"><span class="summary-label">' + v.label + ':</span><span class="summary-value">' + v.val + '</span></div>';
@@ -4000,7 +4000,7 @@ $(document).ready(function() {
             <div class="modal-header" id="patient-form-header">
                 <h5 class="modal-title" id="patient-form-title"><i class="mdi mdi-account-plus"></i> New Patient Registration</h5>
                 <span class="pf-emergency-timer badge text-white ms-2" id="pf-emergency-timer">00:00</span>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="patient-form" novalidate>
                 <input type="hidden" id="patient-form-mode" value="create">
@@ -4674,24 +4674,19 @@ $(document).ready(function() {
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">ESI Triage Level <span class="text-danger">*</span></label>
                                     <div class="d-flex flex-wrap gap-2" id="pf-esi-buttons">
-                                        <button type="button" class="btn btn-outline-danger pf-esi-btn" data-esi="1"
-                                                data-hint="Immediate life-saving intervention? Intubation, surgical airway, IV push meds, emergency procedure?">
+                                        <button type="button" class="btn btn-outline-danger pf-esi-btn" data-esi="1" data-hint="Immediate life-saving intervention? Intubation, surgical airway, IV push meds, emergency procedure?">
                                             <strong>1</strong><br><small>Resuscitation</small>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger pf-esi-btn" data-esi="2"
-                                                data-hint="High risk situation? Confused, lethargic, disoriented? Severe pain/distress (Pain ≥ 8/10)?">
+                                        <button type="button" class="btn btn-outline-danger pf-esi-btn" data-esi="2" data-hint="High risk situation? Confused, lethargic, disoriented? Severe pain/distress (Pain ≥ 8/10)?">
                                             <strong>2</strong><br><small>Emergent</small>
                                         </button>
-                                        <button type="button" class="btn btn-outline-warning pf-esi-btn" data-esi="3"
-                                                data-hint="Needs 2+ resources (labs, imaging, IV fluids, specialty consult)? Vitals may be outside normal range.">
+                                        <button type="button" class="btn btn-outline-warning pf-esi-btn" data-esi="3" data-hint="Needs 2+ resources (labs, imaging, IV fluids, specialty consult)? Vitals may be outside normal range.">
                                             <strong>3</strong><br><small>Urgent</small>
                                         </button>
-                                        <button type="button" class="btn btn-outline-info pf-esi-btn" data-esi="4"
-                                                data-hint="Needs only 1 resource (e.g., one X-ray OR one lab test OR simple procedure). Vitals normal.">
+                                        <button type="button" class="btn btn-outline-info pf-esi-btn" data-esi="4" data-hint="Needs only 1 resource (e.g., one X-ray OR one lab test OR simple procedure). Vitals normal.">
                                             <strong>4</strong><br><small>Less Urgent</small>
                                         </button>
-                                        <button type="button" class="btn btn-outline-success pf-esi-btn" data-esi="5"
-                                                data-hint="No resources needed. Simple exam, prescription refill, minor complaint. Stable vitals.">
+                                        <button type="button" class="btn btn-outline-success pf-esi-btn" data-esi="5" data-hint="No resources needed. Simple exam, prescription refill, minor complaint. Stable vitals.">
                                             <strong>5</strong><br><small>Non-Urgent</small>
                                         </button>
                                     </div>
@@ -5031,7 +5026,7 @@ $(document).ready(function() {
                                 </div>
 
                                 {{-- Registration Fee (Optional) --}}
-                                @if(isset($registrationServices) && $registrationServices->count() > 0)
+                                @if(isset($registrationServices) && $registrationServices->count()> 0)
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
@@ -5287,7 +5282,7 @@ $(document).ready(function() {
                         </button>
                     </div>
                     <div class="footer-right">
-                        <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary" id="pf-btn-next">
                             Next <i class="mdi mdi-chevron-right"></i>
                         </button>

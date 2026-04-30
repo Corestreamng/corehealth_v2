@@ -8,7 +8,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0">Pharmacy Returns</h4>
-            <button class="btn btn-primary" data-toggle="modal" data-target="#createReturnModal">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createReturnModal">
                 <i class="mdi mdi-plus"></i> Create Return
             </button>
         </div>
@@ -82,9 +82,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Create Pharmacy Return</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="createReturnForm">
                 <div class="modal-body">
@@ -150,9 +148,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Approve Return</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="approveForm">
                 <input type="hidden" id="approve_return_id" name="return_id">
@@ -180,9 +176,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Reject Return</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="rejectForm">
                 <input type="hidden" id="reject_return_id" name="return_id">

@@ -20,14 +20,14 @@
             <td>{{ $account['account_code'] ?? $account['code'] ?? '' }}</td>
             <td>{{ $account['account_name'] ?? $account['name'] ?? '' }}</td>
             <td class="text-right">
-                @if(($account['debit'] ?? 0) > 0)
+                @if(($account['debit'] ?? 0)> 0)
                     {{ number_format($account['debit'], 2) }}
                 @else
                     -
                 @endif
             </td>
             <td class="text-right">
-                @if(($account['credit'] ?? 0) > 0)
+                @if(($account['credit'] ?? 0)> 0)
                     {{ number_format($account['credit'], 2) }}
                 @else
                     -

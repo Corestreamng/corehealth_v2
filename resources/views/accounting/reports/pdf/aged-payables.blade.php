@@ -152,7 +152,7 @@
 </div>
 
 <!-- Payment Priority Alert -->
-@if(count($priorities) > 0)
+@if(count($priorities)> 0)
 <div class="priority-box">
     <h5>⚠️ PAYMENT PRIORITY ALERT</h5>
     <p style="font-size: 9px; margin: 0; color: #721c24;">

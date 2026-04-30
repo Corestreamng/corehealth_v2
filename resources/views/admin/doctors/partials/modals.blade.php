@@ -6,7 +6,7 @@
                 <h5 class="modal-title" id="deleteConfirmModalLabel">
                     <i class="fa fa-trash-alt"></i> Confirm Deletion
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-3">You are about to delete the following request:</p>
@@ -66,7 +66,7 @@
                 <h5 class="modal-title" id="deleteDeniedModalLabel">
                     <i class="fa fa-ban"></i> Deletion Not Allowed
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger mb-3">
@@ -99,7 +99,7 @@
                 <h5 class="modal-title" id="editEncounterModalLabel">
                     <i class="mdi mdi-pencil"></i> Edit Encounter Note
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editEncounterId">

@@ -116,7 +116,7 @@
 
     <!-- Alerts Row -->
     <div class="row">
-        @if($stats['warranty_expiring_soon'] > 0)
+        @if($stats['warranty_expiring_soon']> 0)
         <div class="col-md-6">
             <div class="alert-card">
                 <i class="mdi mdi-shield-alert-outline text-warning mr-2"></i>
@@ -124,7 +124,7 @@
             </div>
         </div>
         @endif
-        @if($stats['insurance_expiring_soon'] > 0)
+        @if($stats['insurance_expiring_soon']> 0)
         <div class="col-md-6">
             <div class="alert-card">
                 <i class="mdi mdi-shield-alert-outline text-warning mr-2"></i>
@@ -145,7 +145,7 @@
                     <a href="{{ route('accounting.fixed-assets.categories.index') }}" class="btn btn-outline-secondary ml-2">
                         <i class="mdi mdi-folder-outline mr-1"></i> Categories
                     </a>
-                    <button type="button" class="btn btn-outline-warning ml-2" data-toggle="modal" data-target="#depreciationModal">
+                    <button type="button" class="btn btn-outline-warning ml-2" data-bs-toggle="modal" data-bs-target="#depreciationModal">
                         <i class="mdi mdi-chart-bell-curve mr-1"></i> Run Depreciation
                     </button>
                 </div>
@@ -281,7 +281,7 @@
                     <hr>
                     <div class="d-flex justify-content-between">
                         <span><strong>YTD Disposal Gain/(Loss)</strong></span>
-                        <span class="{{ $stats['ytd_disposal_gain_loss'] >= 0 ? 'text-success' : 'text-danger' }}">
+                        <span class="{{ $stats['ytd_disposal_gain_loss']>= 0 ? 'text-success' : 'text-danger' }}">
                             ₦{{ number_format($stats['ytd_disposal_gain_loss'], 2) }}
                         </span>
                     </div>
@@ -297,7 +297,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title"><i class="mdi mdi-chart-bell-curve mr-2"></i>Run Monthly Depreciation</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="depreciation-form">
                 <div class="modal-body">
@@ -360,7 +360,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-warning">
                         <i class="mdi mdi-play mr-1"></i> Run Depreciation
                     </button>
@@ -383,9 +383,7 @@
                     <h5 class="modal-title" id="voidModalLabel">
                         <i class="mdi mdi-close-circle mr-2"></i>Void Asset
                     </h5>
-                    <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="void-asset-id">
@@ -481,7 +479,7 @@ $(document).ready(function() {
                 name: 'depreciation_percent',
                 orderable: false,
                 render: function(data) {
-                    var color = data > 80 ? 'danger' : (data > 50 ? 'warning' : 'success');
+                    var color = data> 80 ? 'danger' : (data> 50 ? 'warning' : 'success');
                     return '<div class="depreciation-bar"><div class="fill bg-' + color + '" style="width: ' + data + '%"></div></div><small>' + data + '%</small>';
                 }
             },
@@ -544,7 +542,7 @@ $(document).ready(function() {
     // Show/hide payment source based on disposal amount
     $('#dispose-amount').on('input', function() {
         var amount = parseFloat($(this).val()) || 0;
-        if (amount > 0) {
+        if (amount> 0) {
             $('#payment-source-section').show();
         } else {
             $('#payment-source-section').hide();
@@ -647,7 +645,7 @@ $(document).ready(function() {
         var bankId = $('#dispose-bank-id').val();
 
         // Validate payment source if there are proceeds
-        if (disposalAmount > 0) {
+        if (disposalAmount> 0) {
             if (!paymentMethod) {
                 toastr.error('Please select a payment source for the disposal proceeds');
                 return;

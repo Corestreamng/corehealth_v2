@@ -271,7 +271,7 @@
                     <td>{{ $transfer->toBank?->bank_name ?? 'N/A' }}</td>
                     <td class="text-right">₦{{ number_format($transfer->amount, 2) }}</td>
                     <td class="text-right">
-                        @if($transfer->transfer_fee > 0)
+                        @if($transfer->transfer_fee> 0)
                             ₦{{ number_format($transfer->transfer_fee, 2) }}
                         @else
                             -

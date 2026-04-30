@@ -117,7 +117,7 @@
                                 <a href="{{ route('accounting.leases.modification', $lease->id) }}" class="btn btn-light btn-sm">
                                     <i class="mdi mdi-file-edit"></i>
                                 </a>
-                                <button type="button" class="btn btn-light btn-sm" data-toggle="modal" data-target="#terminateModal">
+                                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#terminateModal">
                                     <i class="mdi mdi-close-circle text-danger"></i>
                                 </button>
                             </div>
@@ -251,7 +251,7 @@
                                 </div>
                             </div>
                         </div>
-                        @if($lease->initial_direct_costs > 0 || $lease->lease_incentives_received > 0)
+                        @if($lease->initial_direct_costs> 0 || $lease->lease_incentives_received> 0)
                         <hr>
                         <div class="row">
                             <div class="col-md-6">
@@ -287,7 +287,7 @@
                 <div class="card-modern mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0"><i class="mdi mdi-book-open-variant mr-2"></i>Journal Entries</h6>
-                        @if(isset($journalEntries) && $journalEntries->count() > 0)
+                        @if(isset($journalEntries) && $journalEntries->count()> 0)
                         <a href="{{ route('accounting.journal-entries.index', ['reference_type' => 'lease', 'reference_id' => $lease->id]) }}" class="btn btn-outline-primary btn-sm">
                             View All ({{ $journalEntries->count() }})
                         </a>
@@ -334,7 +334,7 @@
                         @endif
 
                         {{-- Recent JE List --}}
-                        @if(isset($journalEntries) && $journalEntries->count() > 0)
+                        @if(isset($journalEntries) && $journalEntries->count()> 0)
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
                                 <thead class="thead-light">
@@ -377,7 +377,7 @@
                 </div>
 
                 {{-- Lease Options --}}
-                @if($lease->has_purchase_option || $lease->has_termination_option || $lease->residual_value_guarantee > 0)
+                @if($lease->has_purchase_option || $lease->has_termination_option || $lease->residual_value_guarantee> 0)
                 <div class="card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-cog mr-2"></i>Lease Options</h6>
@@ -405,7 +405,7 @@
                                 </div>
                             </div>
                             @endif
-                            @if($lease->residual_value_guarantee > 0)
+                            @if($lease->residual_value_guarantee> 0)
                             <div class="col-md-4">
                                 <div class="border rounded p-3 h-100">
                                     <h6 class="text-info"><i class="mdi mdi-shield-check mr-1"></i>Residual Guarantee</h6>
@@ -482,7 +482,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        @if($schedule->count() >= 12)
+                        @if($schedule->count()>= 12)
                         <p class="text-center text-muted mt-2 mb-0 small">
                             <a href="{{ route('accounting.leases.schedule', $lease->id) }}">View all {{ $paymentSummary->total_payments ?? 0 }} payments →</a>
                         </p>
@@ -491,7 +491,7 @@
                 </div>
 
                 {{-- Modifications --}}
-                @if(isset($modifications) && $modifications->count() > 0)
+                @if(isset($modifications) && $modifications->count()> 0)
                 <div class="card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-history mr-2"></i>Modification History</h6>
@@ -513,8 +513,8 @@
                                         <td>{{ \Carbon\Carbon::parse($mod->modification_date)->format('M d, Y') }}</td>
                                         <td><span class="badge badge-info">{{ ucfirst(str_replace('_', ' ', $mod->modification_type)) }}</span></td>
                                         <td>{{ $mod->description }}</td>
-                                        <td class="text-right {{ $mod->adjustment_amount >= 0 ? 'text-success' : 'text-danger' }}">
-                                            {{ $mod->adjustment_amount >= 0 ? '+' : '' }}₦{{ number_format($mod->adjustment_amount, 2) }}
+                                        <td class="text-right {{ $mod->adjustment_amount>= 0 ? 'text-success' : 'text-danger' }}">
+                                            {{ $mod->adjustment_amount>= 0 ? '+' : '' }}₦{{ number_format($mod->adjustment_amount, 2) }}
                                         </td>
                                     </tr>
                                     @endforeach
@@ -537,10 +537,10 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between small text-muted mb-1">
                                 <span>Progress</span>
-                                <span>{{ $paymentSummary->paid_count ?? 0 }} / {{ $paymentSummary->total_payments ?? 0 }} ({{ $paymentSummary->total_payments > 0 ? round(($paymentSummary->paid_count / $paymentSummary->total_payments) * 100) : 0 }}%)</span>
+                                <span>{{ $paymentSummary->paid_count ?? 0 }} / {{ $paymentSummary->total_payments ?? 0 }} ({{ $paymentSummary->total_payments> 0 ? round(($paymentSummary->paid_count / $paymentSummary->total_payments) * 100) : 0 }}%)</span>
                             </div>
                             <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: {{ $paymentSummary->total_payments > 0 ? round(($paymentSummary->paid_count / $paymentSummary->total_payments) * 100) : 0 }}%"></div>
+                                <div class="progress-bar bg-success" style="width: {{ $paymentSummary->total_payments> 0 ? round(($paymentSummary->paid_count / $paymentSummary->total_payments) * 100) : 0 }}%"></div>
                             </div>
                         </div>
                         <table class="table table-sm table-borderless mb-0">
@@ -652,7 +652,7 @@
                 @csrf
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title"><i class="mdi mdi-alert-circle mr-2"></i>Terminate Lease</h5>
-                    <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning">

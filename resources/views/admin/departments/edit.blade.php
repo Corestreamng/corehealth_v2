@@ -91,7 +91,7 @@
                             </div>
                         </div>
 
-                        @if($department->staff->count() > 0)
+                        @if($department->staff->count()> 0)
                         <div class="alert alert-info mt-4">
                             <i class="mdi mdi-information-outline mr-1"></i>
                             This department has <strong>{{ $department->staff->count() }}</strong> staff member(s) assigned.

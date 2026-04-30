@@ -11,7 +11,7 @@
                     <span>Emergency / Walk-In Intake</span>
                     <span class="badge bg-dark ms-2" id="emergency-timer" style="font-size:0.75rem; font-family:monospace;">00:00</span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <!-- Step Progress Bar -->
@@ -209,29 +209,19 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold">ESI Triage Level <span class="text-danger">*</span></label>
                                 <div class="d-flex flex-wrap gap-2" id="emergency-esi-buttons">
-                                    <button type="button" class="btn btn-outline-danger esi-btn flex-fill" data-esi="1"
-                                            aria-label="ESI level 1 resuscitation"
-                                            data-hint="Immediate life-saving intervention? Intubation, surgical airway, IV push meds, emergency procedure?">
+                                    <button type="button" class="btn btn-outline-danger esi-btn flex-fill" data-esi="1" aria-label="ESI level 1 resuscitation" data-hint="Immediate life-saving intervention? Intubation, surgical airway, IV push meds, emergency procedure?">
                                         <strong>1</strong><br><small>Resuscitation</small>
                                     </button>
-                                    <button type="button" class="btn btn-outline-danger esi-btn flex-fill" data-esi="2"
-                                            aria-label="ESI level 2 emergent"
-                                            data-hint="High risk situation? Confused, lethargic, disoriented? Severe pain/distress (Pain ≥ 8/10)?">
+                                    <button type="button" class="btn btn-outline-danger esi-btn flex-fill" data-esi="2" aria-label="ESI level 2 emergent" data-hint="High risk situation? Confused, lethargic, disoriented? Severe pain/distress (Pain ≥ 8/10)?">
                                         <strong>2</strong><br><small>Emergent</small>
                                     </button>
-                                    <button type="button" class="btn btn-outline-warning esi-btn flex-fill" data-esi="3"
-                                            aria-label="ESI level 3 urgent"
-                                            data-hint="Needs 2+ resources (labs, imaging, IV fluids, specialty consult)? Vitals may be outside normal range.">
+                                    <button type="button" class="btn btn-outline-warning esi-btn flex-fill" data-esi="3" aria-label="ESI level 3 urgent" data-hint="Needs 2+ resources (labs, imaging, IV fluids, specialty consult)? Vitals may be outside normal range.">
                                         <strong>3</strong><br><small>Urgent</small>
                                     </button>
-                                    <button type="button" class="btn btn-outline-info esi-btn flex-fill" data-esi="4"
-                                            aria-label="ESI level 4 less urgent"
-                                            data-hint="Needs only 1 resource (e.g., one X-ray OR one lab test OR simple procedure). Vitals normal.">
+                                    <button type="button" class="btn btn-outline-info esi-btn flex-fill" data-esi="4" aria-label="ESI level 4 less urgent" data-hint="Needs only 1 resource (e.g., one X-ray OR one lab test OR simple procedure). Vitals normal.">
                                         <strong>4</strong><br><small>Less Urgent</small>
                                     </button>
-                                    <button type="button" class="btn btn-outline-success esi-btn flex-fill" data-esi="5"
-                                            aria-label="ESI level 5 non urgent"
-                                            data-hint="No resources needed. Simple exam, prescription refill, minor complaint. Stable vitals.">
+                                    <button type="button" class="btn btn-outline-success esi-btn flex-fill" data-esi="5" aria-label="ESI level 5 non urgent" data-hint="No resources needed. Simple exam, prescription refill, minor complaint. Stable vitals.">
                                         <strong>5</strong><br><small>Non-Urgent</small>
                                     </button>
                                 </div>

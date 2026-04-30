@@ -253,7 +253,7 @@
                     <i class="mdi mdi-chevron-down chevron mr-2"></i>
                     <strong>{{ $scheme['name'] }}</strong>
                     <span class="badge-scheme ml-2">{{ $scheme['hmo_count'] }} HMOs</span>
-                    @if ($scheme['manual_count'] > 0)
+                    @if ($scheme['manual_count']> 0)
                         <span class="ml-2" style="font-size: 0.72rem; color: #c62828;">
                             <i class="mdi mdi-account-edit"></i> {{ $scheme['manual_count'] }} manual
                         </span>
@@ -330,7 +330,7 @@
         @endforeach
 
         {{-- Standalone HMOs --}}
-        @if (count($standaloneData) > 0)
+        @if (count($standaloneData)> 0)
         @php
             $standaloneWithTariff = collect($standaloneData)->where('has_tariff', true)->count();
             $standaloneTotal = count($standaloneData);
@@ -371,7 +371,7 @@
                         <tr class="tariff-row hmo-row standalone-row" data-hmo-id="{{ $hmo['id'] }}" data-name="{{ strtolower($hmo['name']) }}"
                             data-orig-payable="{{ $hmo['payable_amount'] }}" data-orig-claims="{{ $hmo['claims_amount'] }}"
                             data-orig-coverage="{{ $hmo['coverage_mode'] }}"
-                            {!! $si >= $standalonePageSize ? 'style="display:none" data-paged="1"' : '' !!}>
+                            {!! $si>= $standalonePageSize ? 'style="display:none" data-paged="1"' : '' !!}>
                             <td>
                                 <i class="mdi mdi-shield-outline text-muted mr-1"></i>
                                 {{ $hmo['name'] }}
@@ -415,7 +415,7 @@
                         @endforeach
                     </tbody>
                 </table>
-                @if ($standaloneTotal > $standalonePageSize)
+                @if ($standaloneTotal> $standalonePageSize)
                 <div class="load-more-bar" id="standaloneLoadMore">
                     <i class="mdi mdi-chevron-down mr-1"></i>
                     Show {{ min($standalonePageSize, $standaloneTotal - $standalonePageSize) }} more
@@ -473,7 +473,7 @@
                     <tr class="tariff-row hmo-row flat-row" data-hmo-id="{{ $hmo['id'] }}" data-name="{{ strtolower($hmo['name']) }}"
                         data-orig-payable="{{ $hmo['payable_amount'] }}" data-orig-claims="{{ $hmo['claims_amount'] }}"
                         data-orig-coverage="{{ $hmo['coverage_mode'] }}"
-                        {!! $fi >= $flatPageSize ? 'style="display:none" data-paged="1"' : '' !!}>
+                        {!! $fi>= $flatPageSize ? 'style="display:none" data-paged="1"' : '' !!}>
                         <td>
                             <i class="mdi mdi-shield-outline text-muted mr-1"></i>
                             {{ $hmo['name'] }}
@@ -518,7 +518,7 @@
                     @endforeach
                 </tbody>
             </table>
-            @if ($flatList->count() > $flatPageSize)
+            @if ($flatList->count()> $flatPageSize)
             <div class="load-more-bar" id="flatLoadMore">
                 <i class="mdi mdi-chevron-down mr-1"></i>
                 Show more <span class="text-muted ml-1" id="flatRemaining">({{ $flatList->count() - $flatPageSize }} remaining)</span>
@@ -570,7 +570,7 @@ $(function() {
         });
         updateStandaloneCounter();
         // Hide/show load-more when searching
-        $('#standaloneLoadMore').toggle(term === '' && $('#standaloneBody .standalone-row[data-paged]').length > 0);
+        $('#standaloneLoadMore').toggle(term === '' && $('#standaloneBody .standalone-row[data-paged]').length> 0);
     });
 
     // ── Flat search ──
@@ -584,7 +584,7 @@ $(function() {
             }
         });
         updateFlatCounter();
-        $('#flatLoadMore').toggle(term === '' && $('#flatBody .flat-row[data-paged]').length > 0);
+        $('#flatLoadMore').toggle(term === '' && $('#flatBody .flat-row[data-paged]').length> 0);
     });
 
     // ── Load more: Standalone ──
@@ -741,7 +741,7 @@ $(function() {
                 setTimeout(() => $row.find('.tariff-input').removeClass('saved'), 1500);
 
                 // Update status cell
-                let statusHtml = payable > 0
+                let statusHtml = payable> 0
                     ? '<span style="font-size:0.72rem;color:#c62828;"><i class="mdi mdi-account-edit mr-1"></i>Manual</span>'
                     : '<span style="font-size:0.72rem;color:#1565c0;"><i class="mdi mdi-sync mr-1"></i>Auto</span>';
                 // Update status in all matching rows

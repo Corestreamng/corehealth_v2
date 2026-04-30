@@ -42,11 +42,8 @@
             required>
 
     </div>
-    <button type="submit" class="btn btn-primary"
-        onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
-    <button type="submit" value="dismiss_invest_bill" name="dismiss_invest_bill" class="btn btn-danger"
-        onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
-        style="float: right">Dismiss</button>
+    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
+    <button type="submit" value="dismiss_invest_bill" name="dismiss_invest_bill" class="btn btn-danger" onclick="return confirm('Are you sure you wish to dissmiss the selected items')" style="float: right">Dismiss</button>
 </form>
 <hr>
 <h4>Requested Investigations(sample collection)</h4>
@@ -64,12 +61,9 @@
         </thead>
     </table>
     <hr>
-    <button type="submit" class="btn btn-primary"
-        onclick="return confirm('Are you sure you wish to mark the selected items as \'sample taken\'?')">Take
+    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to mark the selected items as \'sample taken\'?')">Take
         Sample</button>
-    <button type="submit" value="dismiss_invest_sample" name="dismiss_invest_bill" class="btn btn-danger"
-        onclick="return confirm('Are you sure you wish to dissmiss the selected items, you cannot undo this!!!')"
-        style="float: right">Dismiss</button>
+    <button type="submit" value="dismiss_invest_sample" name="dismiss_invest_bill" class="btn btn-danger" onclick="return confirm('Are you sure you wish to dissmiss the selected items, you cannot undo this!!!')" style="float: right">Dismiss</button>
 </form>
 <hr>
 

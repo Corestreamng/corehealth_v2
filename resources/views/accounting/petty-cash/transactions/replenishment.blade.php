@@ -69,10 +69,10 @@
                         </div>
 
                         @php
-                            $utilizationPct = $fund->fund_limit > 0 ? (($fund->fund_limit - $fund->current_balance) / $fund->fund_limit) * 100 : 0;
+                            $utilizationPct = $fund->fund_limit> 0 ? (($fund->fund_limit - $fund->current_balance) / $fund->fund_limit) * 100 : 0;
                         @endphp
                         <div class="progress mt-3" style="height: 10px;">
-                            <div class="progress-bar {{ $utilizationPct > 80 ? 'bg-danger' : ($utilizationPct > 50 ? 'bg-warning' : 'bg-success') }}"
+                            <div class="progress-bar {{ $utilizationPct> 80 ? 'bg-danger' : ($utilizationPct> 50 ? 'bg-warning' : 'bg-success') }}"
                                  style="width: {{ $utilizationPct }}%"></div>
                         </div>
                         <small class="text-muted">{{ number_format($utilizationPct, 1) }}% utilized</small>
@@ -227,7 +227,7 @@ $(document).ready(function() {
         $('#replenish-amount').text(amount.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         $('#new-balance').text(newBalance.toLocaleString('en-NG', {minimumFractionDigits: 2}));
 
-        if (newBalance > fundLimit) {
+        if (newBalance> fundLimit) {
             toastr.warning('New balance will exceed fund limit of ₦' + fundLimit.toLocaleString());
         }
     });

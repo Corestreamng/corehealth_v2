@@ -78,7 +78,7 @@
                 // $report['accounts'] = [{account_id, account_code, account_name, class_name, group_name, debit, credit}]
                 // $report['total_debit'], $report['total_credit'], $report['is_balanced']
             @endphp
-            @if(isset($report['accounts']) && count($report['accounts']) > 0)
+            @if(isset($report['accounts']) && count($report['accounts'])> 0)
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead class="table-light">
@@ -106,12 +106,12 @@
                                         </a>
                                     </td>
                                     <td class="text-end">
-                                        @if(($account['debit'] ?? 0) > 0)
+                                        @if(($account['debit'] ?? 0)> 0)
                                             ₦{{ number_format($account['debit'], 2) }}
                                         @endif
                                     </td>
                                     <td class="text-end">
-                                        @if(($account['credit'] ?? 0) > 0)
+                                        @if(($account['credit'] ?? 0)> 0)
                                             ₦{{ number_format($account['credit'], 2) }}
                                         @endif
                                     </td>

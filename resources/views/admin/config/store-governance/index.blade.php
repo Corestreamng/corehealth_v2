@@ -142,14 +142,12 @@
                                 @can('store-governance.manage')
                                 <td class="text-center">
                                     @if($isImmutable)
-                                        <button class="btn btn-xs btn-outline-secondary" disabled
-                                                title="Protected store — cannot be edited">
+                                        <button class="btn btn-xs btn-outline-secondary" disabled title="Protected store — cannot be edited">
                                             <i class="fas fa-lock d-block mx-auto mb-1"></i>
                                             <span class="d-block" style="font-size:0.7rem">Locked</span>
                                         </button>
                                     @else
-                                        <button class="btn btn-xs btn-outline-primary sg-edit-btn"
-                                                data-store="{{ $store->id }}">
+                                        <button class="btn btn-xs btn-outline-primary sg-edit-btn" data-store="{{ $store->id }}">
                                             <i class="fas fa-pencil-alt d-block mx-auto mb-1"></i>
                                             <span class="d-block" style="font-size:0.7rem">Edit</span>
                                         </button>
@@ -176,7 +174,7 @@
                 <h5 class="modal-title">
                     <i class="fas fa-store me-2"></i><span id="editStoreTitle">Edit Store</span>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editStoreId">
@@ -263,7 +261,7 @@
                 <h5 class="modal-title">
                     <i class="fas fa-exclamation-triangle me-2"></i>Breaking Change Warning
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="saveGuardMessage"></div>
             <div class="modal-footer">

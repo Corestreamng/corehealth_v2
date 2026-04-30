@@ -458,7 +458,7 @@
                         </a>
                     </div>
                     <div class="card-body">
-                        @if($trialBalance && count($trialBalance['accounts'] ?? []) > 0)
+                        @if($trialBalance && count($trialBalance['accounts'] ?? [])> 0)
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>
@@ -472,8 +472,8 @@
                                         @foreach(array_slice($trialBalance['accounts'] ?? [], 0, 8) as $account)
                                             <tr>
                                                 <td>{{ $account['account_code'] ?? '' }} - {{ Str::limit($account['account_name'] ?? $account['name'] ?? '', 25) }}</td>
-                                                <td class="text-right">{{ ($account['debit'] ?? 0) > 0 ? number_format($account['debit'], 2) : '-' }}</td>
-                                                <td class="text-right">{{ ($account['credit'] ?? 0) > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                                <td class="text-right">{{ ($account['debit'] ?? 0)> 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                                <td class="text-right">{{ ($account['credit'] ?? 0)> 0 ? number_format($account['credit'], 2) : '-' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -506,7 +506,7 @@
                         </a>
                     </div>
                     <div class="card-body">
-                        @if(isset($pendingEntries) && $pendingEntries->count() > 0)
+                        @if(isset($pendingEntries) && $pendingEntries->count()> 0)
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover">
                                     <thead>

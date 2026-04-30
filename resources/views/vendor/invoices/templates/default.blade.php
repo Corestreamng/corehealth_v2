@@ -402,7 +402,7 @@
     </p>
 
     <script type="text/php">
-        if (isset($pdf) && $PAGE_COUNT > 1) {
+        if (isset($pdf) && $PAGE_COUNT> 1) {
             $text = "Page {PAGE_NUM} / {PAGE_COUNT}";
             $size = 10;
             $font = $fontMetrics->getFont("Verdana");

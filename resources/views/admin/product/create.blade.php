@@ -128,9 +128,9 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label-modern">Allow Decimal Quantities?</label>
-                                                <div class="custom-control custom-switch mt-2">
-                                                    <input type="checkbox" class="custom-control-input" id="allow_decimal_qty" name="allow_decimal_qty" {{ old('allow_decimal_qty') ? 'checked' : '' }}>
-                                                    <label class="custom-control-label" for="allow_decimal_qty">Enable for liquids, creams</label>
+                                                <div class="form-check form-switch mt-2">
+                                                    <input type="checkbox" class="form-check-input" id="allow_decimal_qty" name="allow_decimal_qty" {{ old('allow_decimal_qty') ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="allow_decimal_qty">Enable for liquids, creams</label>
                                                 </div>
                                                 <small class="text-muted">When ON: 15.5 ml, 0.5 Tablets allowed</small>
                                             </div>
@@ -144,7 +144,7 @@
 
                                         {{-- Base unit display --}}
                                         <div class="d-flex align-items-center p-2 mb-2" style="background:#e8f5e9; border-radius:6px">
-                                            <span class="badge badge-success mr-2">Base</span>
+                                            <span class="badge bg-success me-2 mr-2">Base</span>
                                             <span class="base-unit-name-display font-weight-bold">{{ old('base_unit_name', 'Piece') }}</span>
                                             <span class="text-muted ml-2">= 1 base unit</span>
                                         </div>

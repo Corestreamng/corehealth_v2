@@ -558,23 +558,49 @@ class StoreRequisitionController extends Controller
      */
     public function getAvailableBatches(Request $request, StoreRequisition $requisition)
     {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-        ]);
+        // If product_id is provided, return batches for that specific product (legacy/singular use)
+        if ($request->filled('product_id')) {
+            $batches = $this->stockService->getAvailableBatches(
+                $request->product_id,
+                $requisition->from_store_id
+            );
 
-        $batches = $this->stockService->getAvailableBatches(
-            $request->product_id,
-            $requisition->from_store_id
-        );
+            return response()->json([
+                'success' => true,
+                'batches' => $batches->map(fn($b) => [
+                    'id' => $b->id,
+                    'batch_number' => $b->batch_number,
+                    'current_qty' => $b->current_qty,
+                    'expiry_date' => $b->expiry_date?->format('Y-m-d'),
+                    'cost_price' => $b->cost_price,
+                ]),
+            ]);
+        }
+
+        // Otherwise return all fulfillable items with their available batches (fulfillment modal use)
+        $items = $this->requisitionService->getAvailableStockForRequisition($requisition);
 
         return response()->json([
             'success' => true,
-            'batches' => $batches->map(fn($b) => [
-                'id' => $b->id,
-                'batch_number' => $b->batch_number,
-                'current_qty' => $b->current_qty,
-                'expiry_date' => $b->expiry_date?->format('Y-m-d'),
-                'cost_price' => $b->cost_price,
+            'items' => $items->map(fn($i) => [
+                'id' => $i['item_id'],
+                'product_id' => $i['product']->id,
+                'product_name' => $i['product']->product_name,
+                'requested_qty' => $i['requested_qty'],
+                'approved_qty' => $i['approved_qty'],
+                'fulfilled_qty' => $i['fulfilled_qty'],
+                'remaining_qty' => $i['remaining_qty'],
+                'available_batches' => collect($i['batches'])->map(fn($b) => [
+                    'id' => $b['id'],
+                    'batch_number' => $b['batch_number'],
+                    'current_qty' => $b['current_qty'],
+                    'expiry_date' => $b['expiry_date'],
+                ]),
+                'packaging' => $i['product']->packaging->map(fn($p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'base_unit_qty' => $p->base_unit_qty,
+                ]),
             ]),
         ]);
     }

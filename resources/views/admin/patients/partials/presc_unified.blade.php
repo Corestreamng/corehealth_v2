@@ -119,29 +119,25 @@
     <!-- Sub-tabs Navigation -->
     <ul class="nav nav-tabs nav-tabs-modern mb-3" id="prescSubTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="presc-billing-tab" data-bs-toggle="tab"
-                    data-bs-target="#presc-billing-pane" type="button" role="tab">
+            <button class="nav-link active" id="presc-billing-tab" data-bs-toggle="tab" data-bs-target="#presc-billing-pane" type="button" role="tab">
                 <i class="mdi mdi-cash-register me-1"></i> Billing
                 <span class="badge bg-warning ms-1" id="presc-billing-count">0</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="presc-pending-tab" data-bs-toggle="tab"
-                    data-bs-target="#presc-pending-pane" type="button" role="tab">
+            <button class="nav-link" id="presc-pending-tab" data-bs-toggle="tab" data-bs-target="#presc-pending-pane" type="button" role="tab">
                 <i class="mdi mdi-clock-outline me-1"></i> Pending
                 <span class="badge bg-danger ms-1" id="presc-pending-count">0</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="presc-dispense-tab" data-bs-toggle="tab"
-                    data-bs-target="#presc-dispense-pane" type="button" role="tab">
+            <button class="nav-link" id="presc-dispense-tab" data-bs-toggle="tab" data-bs-target="#presc-dispense-pane" type="button" role="tab">
                 <i class="mdi mdi-pill me-1"></i> Ready to Dispense
                 <span class="badge bg-success ms-1" id="presc-dispense-count">0</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="presc-history-tab" data-bs-toggle="tab"
-                    data-bs-target="#presc-history-pane" type="button" role="tab">
+            <button class="nav-link" id="presc-history-tab" data-bs-toggle="tab" data-bs-target="#presc-history-pane" type="button" role="tab">
                 <i class="mdi mdi-history me-1"></i> History
                 <span class="badge bg-secondary ms-1" id="presc-history-count">0</span>
             </button>

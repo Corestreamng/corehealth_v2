@@ -137,7 +137,7 @@
                         return $isInflow ? ($p->expected_amount * $multiplier) : -($p->expected_amount * $multiplier);
                     });
                 @endphp
-                <div class="count {{ $monthlyRecurring >= 0 ? 'text-success' : 'text-danger' }}">
+                <div class="count {{ $monthlyRecurring>= 0 ? 'text-success' : 'text-danger' }}">
                     ₦{{ number_format(abs($monthlyRecurring), 0) }}
                 </div>
                 <div class="label">Monthly Net Impact</div>
@@ -151,7 +151,7 @@
             <div class="info-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="mb-0"><i class="mdi mdi-repeat mr-2"></i>Recurring Patterns</h6>
-                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#patternModal">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#patternModal">
                         <i class="mdi mdi-plus mr-1"></i> Add Pattern
                     </button>
                 </div>
@@ -223,8 +223,7 @@
                                     Created {{ $pattern->created_at->format('M d, Y') }}
                                 </small>
                                 <div>
-                                    <button class="btn btn-outline-primary btn-sm edit-pattern"
-                                            data-id="{{ $pattern->id }}"
+                                    <button class="btn btn-outline-primary btn-sm edit-pattern" data-id="{{ $pattern->id }}"
                                             data-pattern_name="{{ $pattern->pattern_name }}"
                                             data-cash_flow_category="{{ $pattern->cash_flow_category }}"
                                             data-frequency="{{ $pattern->frequency }}"
@@ -268,38 +267,32 @@
                 <h6><i class="mdi mdi-flash mr-2"></i>Quick Add</h6>
                 <div class="row">
                     <div class="col-6">
-                        <button class="btn btn-outline-success btn-block btn-sm mb-2 quick-add"
-                                data-category="operating_inflow" data-name="Cash Sales">
+                        <button class="btn btn-outline-success btn-block btn-sm mb-2 quick-add" data-category="operating_inflow" data-name="Cash Sales">
                             <i class="mdi mdi-cash-register"></i> Cash Sales
                         </button>
                     </div>
                     <div class="col-6">
-                        <button class="btn btn-outline-success btn-block btn-sm mb-2 quick-add"
-                                data-category="operating_inflow" data-name="Collections">
+                        <button class="btn btn-outline-success btn-block btn-sm mb-2 quick-add" data-category="operating_inflow" data-name="Collections">
                             <i class="mdi mdi-account-cash"></i> Collections
                         </button>
                     </div>
                     <div class="col-6">
-                        <button class="btn btn-outline-danger btn-block btn-sm mb-2 quick-add"
-                                data-category="operating_outflow" data-name="Payroll">
+                        <button class="btn btn-outline-danger btn-block btn-sm mb-2 quick-add" data-category="operating_outflow" data-name="Payroll">
                             <i class="mdi mdi-account-group"></i> Payroll
                         </button>
                     </div>
                     <div class="col-6">
-                        <button class="btn btn-outline-danger btn-block btn-sm mb-2 quick-add"
-                                data-category="operating_outflow" data-name="Rent">
+                        <button class="btn btn-outline-danger btn-block btn-sm mb-2 quick-add" data-category="operating_outflow" data-name="Rent">
                             <i class="mdi mdi-home"></i> Rent
                         </button>
                     </div>
                     <div class="col-6">
-                        <button class="btn btn-outline-danger btn-block btn-sm quick-add"
-                                data-category="operating_outflow" data-name="Utilities">
+                        <button class="btn btn-outline-danger btn-block btn-sm quick-add" data-category="operating_outflow" data-name="Utilities">
                             <i class="mdi mdi-flash"></i> Utilities
                         </button>
                     </div>
                     <div class="col-6">
-                        <button class="btn btn-outline-danger btn-block btn-sm quick-add"
-                                data-category="financing_outflow" data-name="Loan Payment">
+                        <button class="btn btn-outline-danger btn-block btn-sm quick-add" data-category="financing_outflow" data-name="Loan Payment">
                             <i class="mdi mdi-bank"></i> Loan Payment
                         </button>
                     </div>
@@ -355,7 +348,7 @@
                     <h5 class="modal-title">
                         <span id="modalTitle">Add New Pattern</span>
                     </h5>
-                    <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">

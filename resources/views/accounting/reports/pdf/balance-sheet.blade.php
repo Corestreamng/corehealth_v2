@@ -71,7 +71,7 @@
             <div class="section-title">ASSETS</div>
 
             @php $calculatedAssets = 0; @endphp
-            @if(is_array($assetGroups) && count($assetGroups) > 0)
+            @if(is_array($assetGroups) && count($assetGroups)> 0)
                 @foreach($assetGroups as $group)
                     <div class="subsection">
                         <div class="subsection-title">{{ $group['name'] ?? 'Assets' }}</div>
@@ -112,7 +112,7 @@
 
             <!-- Liabilities Section -->
             @php $calculatedLiabilities = 0; @endphp
-            @if(is_array($liabilityGroups) && count($liabilityGroups) > 0)
+            @if(is_array($liabilityGroups) && count($liabilityGroups)> 0)
                 @foreach($liabilityGroups as $group)
                     <div class="subsection">
                         <div class="subsection-title">{{ $group['name'] ?? 'Liabilities' }}</div>
@@ -139,7 +139,7 @@
 
             <!-- Equity Section -->
             @php $calculatedEquity = 0; @endphp
-            @if(is_array($equityGroups) && count($equityGroups) > 0)
+            @if(is_array($equityGroups) && count($equityGroups)> 0)
                 @foreach($equityGroups as $group)
                     <div class="subsection">
                         <div class="subsection-title">{{ $group['name'] ?? 'Equity' }}</div>

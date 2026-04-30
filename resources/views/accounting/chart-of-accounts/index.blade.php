@@ -154,7 +154,7 @@
                                         </div>
                                         <div class="collapse show" id="group{{ $group->id }}">
                                             <div class="card-body p-0">
-                                                @if($group->accounts->count() > 0)
+                                                @if($group->accounts->count()> 0)
                                                     <table class="table table-hover table-sm mb-0">
                                                         <thead class="thead-light">
                                                             <tr>
@@ -204,8 +204,7 @@
                                                                     </td>
                                                                     <td>
                                                                         <div class="dropdown">
-                                                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                                                                    data-bs-toggle="dropdown">
+                                                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                                                                 <i class="mdi mdi-dots-vertical"></i>
                                                                             </button>
                                                                             <div class="dropdown-menu dropdown-menu-right">
@@ -459,7 +458,7 @@ $(document).ready(function() {
         } else {
             $('.account-row').each(function() {
                 var text = $(this).data('account');
-                if (text.indexOf(search) > -1) {
+                if (text.indexOf(search)> -1) {
                     $(this).show().addClass('highlight');
                 } else {
                     $(this).hide().removeClass('highlight');
@@ -467,12 +466,12 @@ $(document).ready(function() {
             });
             // Show/hide groups based on visible accounts
             $('.account-group-card').each(function() {
-                var hasVisible = $(this).find('.account-row:visible').length > 0;
+                var hasVisible = $(this).find('.account-row:visible').length> 0;
                 $(this).toggle(hasVisible);
             });
             // Show/hide classes based on visible groups
             $('.account-class-card').each(function() {
-                var hasVisible = $(this).find('.account-group-card:visible').length > 0;
+                var hasVisible = $(this).find('.account-group-card:visible').length> 0;
                 $(this).toggle(hasVisible);
             });
         }

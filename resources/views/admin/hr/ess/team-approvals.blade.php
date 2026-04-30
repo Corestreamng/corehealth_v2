@@ -238,15 +238,13 @@
                                         <i class="mdi mdi-eye"></i>
                                     </a>
                                     @if($request->status === 'pending')
-                                        <button type="button" class="btn btn-sm btn-success approve-btn"
-                                                data-id="{{ $request->id }}"
+                                        <button type="button" class="btn btn-sm btn-success approve-btn" data-id="{{ $request->id }}"
                                                 data-name="{{ $request->staff->user->name ?? 'Employee' }}"
                                                 data-bs-toggle="modal" data-bs-target="#approveModal"
                                                 style="border-radius: 6px;" title="Approve">
                                             <i class="mdi mdi-check"></i>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-danger reject-btn"
-                                                data-id="{{ $request->id }}"
+                                        <button type="button" class="btn btn-sm btn-danger reject-btn" data-id="{{ $request->id }}"
                                                 data-name="{{ $request->staff->user->name ?? 'Employee' }}"
                                                 data-bs-toggle="modal" data-bs-target="#rejectModal"
                                                 style="border-radius: 6px;" title="Reject">
@@ -289,9 +287,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-check-circle mr-2"></i>Approve Leave Request
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="approveForm" method="POST">
                 @csrf
@@ -322,9 +318,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-close-circle mr-2"></i>Reject Leave Request
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="rejectForm" method="POST">
                 @csrf

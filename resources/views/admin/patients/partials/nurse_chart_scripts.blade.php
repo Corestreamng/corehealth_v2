@@ -254,7 +254,7 @@
                 const scheduleDate = new Date(schedule.scheduled_time);
                 const dayIndex = getDayDifference(calendarStart, scheduleDate);
 
-                if (dayIndex >= 0 && dayIndex < 30) {
+                if (dayIndex>= 0 && dayIndex < 30) {
                     timeSlots[time][dayIndex] = schedule;
                 }
             });
@@ -782,8 +782,7 @@
                 periods.forEach(function(p) {
                     html += `<div class='card mb-2'>
                         <div class='card-header'>Period: ${p.started_at} ${(p.ended_at ? ' - ' + p.ended_at : '')}`;
-                    if (!p.ended_at) html += ` <button class='btn btn-sm btn-danger float-end end-period-btn' data-id='${p.id}'
-                                data-type='${type}'>End Period</button>`;
+                    if (!p.ended_at) html += ` <button class='btn btn-sm btn-danger float-end end-period-btn' data-id='${p.id}' data-type='${type}'>End Period</button>`;
                     html += `</div>
                         <div class='card-body'>
                             <table class='table table-sm'>
@@ -926,7 +925,7 @@
 
             // Don't go beyond today
             const today = new Date();
-            if (newEndDate > today) {
+            if (newEndDate> today) {
                 newEndDate.setTime(today.getTime());
                 newStartDate.setTime(today.getTime());
                 newStartDate.setDate(newStartDate.getDate() - 30);
@@ -998,7 +997,7 @@
 
             // Don't go beyond today
             const today = new Date();
-            if (newEndDate > today) {
+            if (newEndDate> today) {
                 newEndDate.setTime(today.getTime());
                 newStartDate.setTime(today.getTime());
                 newStartDate.setDate(newStartDate.getDate() - 30);

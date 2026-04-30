@@ -6,7 +6,7 @@
                 <h5 class="modal-title" id="rePrescribeEncounterModalLabel">
                     <i class="fa fa-redo"></i> Re-prescribe from Previous Encounter
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p class="text-muted mb-2">
@@ -19,8 +19,7 @@
             </div>
             <div class="modal-footer">
                 <div class="d-flex w-100 justify-content-between align-items-center">
-                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                            onclick="$('#rePrescribeEncounterModal .rp-item-check:not(:disabled)').prop('checked', true)">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="$('#rePrescribeEncounterModal .rp-item-check:not(:disabled)').prop('checked', true)">
                         <i class="fa fa-check-double"></i> Select All
                     </button>
                     <div>

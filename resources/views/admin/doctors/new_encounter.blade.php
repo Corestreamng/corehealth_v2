@@ -119,68 +119,57 @@
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="patient_data_tab" data-bs-toggle="tab" data-bs-target="#patient_data"
-                type="button" role="tab" aria-controls="patient_data" aria-selected="true">
+            <button class="nav-link active" id="patient_data_tab" data-bs-toggle="tab" data-bs-target="#patient_data" type="button" role="tab" aria-controls="patient_data" aria-selected="true">
                 <i class="fa fa-user me-1"></i> Patient Data
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="vitals_data_tab" data-bs-toggle="tab" data-bs-target="#vitals" type="button"
-                role="tab" aria-controls="vitals_data" aria-selected="false">
+            <button class="nav-link" id="vitals_data_tab" data-bs-toggle="tab" data-bs-target="#vitals" type="button" role="tab" aria-controls="vitals_data" aria-selected="false">
                 <i class="fa fa-heartbeat me-1"></i> Vitals/ Allergies
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="nurse_charts_tab" data-bs-toggle="tab" data-bs-target="#nurse_charts"
-                type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">
+            <button class="nav-link" id="nurse_charts_tab" data-bs-toggle="tab" data-bs-target="#nurse_charts" type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">
                 <i class="fa fa-notes-medical me-1"></i> Nurse Charts
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="inj_imm_history_tab" data-bs-toggle="tab" data-bs-target="#inj_imm_history"
-                type="button" role="tab" aria-controls="inj_imm_history" aria-selected="false">
+            <button class="nav-link" id="inj_imm_history_tab" data-bs-toggle="tab" data-bs-target="#inj_imm_history" type="button" role="tab" aria-controls="inj_imm_history" aria-selected="false">
                 <i class="fa fa-syringe me-1"></i> Inj/Imm History
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="clinical_notes_tab" data-bs-toggle="tab" data-bs-target="#clinical_notes"
-                type="button" role="tab" aria-controls="clinical_notes" aria-selected="false">
+            <button class="nav-link" id="clinical_notes_tab" data-bs-toggle="tab" data-bs-target="#clinical_notes" type="button" role="tab" aria-controls="clinical_notes" aria-selected="false">
                 <i class="mdi mdi-note-text me-1"></i> Clinical Notes/Diagnosis
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="laboratory_services_tab" data-bs-toggle="tab" data-bs-target="#laboratory_services"
-                type="button" role="tab" aria-controls="laboratory_services" aria-selected="false">
+            <button class="nav-link" id="laboratory_services_tab" data-bs-toggle="tab" data-bs-target="#laboratory_services" type="button" role="tab" aria-controls="laboratory_services" aria-selected="false">
                 <i class="fa fa-flask me-1"></i> Laboratory Services
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="imaging_services_tab" data-bs-toggle="tab" data-bs-target="#imaging_services"
-                type="button" role="tab" aria-controls="imaging_services" aria-selected="false">
+            <button class="nav-link" id="imaging_services_tab" data-bs-toggle="tab" data-bs-target="#imaging_services" type="button" role="tab" aria-controls="imaging_services" aria-selected="false">
                 <i class="fa fa-x-ray me-1"></i> Imaging Services
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="medications_tab" data-bs-toggle="tab" data-bs-target="#medications"
-                type="button" role="tab" aria-controls="medications" aria-selected="false">
+            <button class="nav-link" id="medications_tab" data-bs-toggle="tab" data-bs-target="#medications" type="button" role="tab" aria-controls="medications" aria-selected="false">
                 <i class="fa fa-pills me-1"></i> Medications
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="procedures_tab" data-bs-toggle="tab" data-bs-target="#procedures"
-                type="button" role="tab" aria-controls="procedures" aria-selected="false">
+            <button class="nav-link" id="procedures_tab" data-bs-toggle="tab" data-bs-target="#procedures" type="button" role="tab" aria-controls="procedures" aria-selected="false">
                 <i class="fa fa-user-md me-1"></i> Procedures
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="admissions_tab" data-bs-toggle="tab" data-bs-target="#admissions"
-                type="button" role="tab" aria-controls="admissions" aria-selected="false">
+            <button class="nav-link" id="admissions_tab" data-bs-toggle="tab" data-bs-target="#admissions" type="button" role="tab" aria-controls="admissions" aria-selected="false">
                 <i class="fa fa-bed me-1"></i> Admission History
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="referrals_tab" data-bs-toggle="tab" data-bs-target="#referrals"
-                type="button" role="tab" aria-controls="referrals" aria-selected="false">
+            <button class="nav-link" id="referrals_tab" data-bs-toggle="tab" data-bs-target="#referrals" type="button" role="tab" aria-controls="referrals" aria-selected="false">
                 <i class="mdi mdi-account-switch me-1"></i> Referrals <span class="badge bg-purple ms-1" id="referral-count-badge" style="display:none;">0</span>
             </button>
         </li>
@@ -330,8 +319,7 @@
                         </div>
                         <hr>
                     @endif
-                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')"
-                        class="btn btn-primary mr-2">Next</button>
+                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')" class="btn btn-primary mr-2">Next</button>
                     <a href="{{ route('encounters.index') }}"
                         onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
                         class="btn btn-light">Exit</a>
@@ -344,12 +332,10 @@
             </div>
             <div class="card-modern mt-2 border-0">
                  <div class="card-body px-0">
-                    <button type="button" onclick="switch_tab(event,'patient_data_tab')"
-                        class="btn btn-secondary mr-2">
+                    <button type="button" onclick="switch_tab(event,'patient_data_tab')" class="btn btn-secondary mr-2">
                         Prev
                     </button>
-                    <button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
-                        class="btn btn-primary mr-2">Next</button>
+                    <button type="button" onclick="switch_tab(event,'nursing_notes_tab')" class="btn btn-primary mr-2">Next</button>
                     <a href="{{ route('encounters.index') }}"
                         onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
                         class="btn btn-light">Exit</a>
@@ -819,8 +805,7 @@
                                             <div class="accordion-body">
                                                 <div class="d-flex justify-content-between">
                                                     <h5>Forms/Profiles</h5>
-                                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                                        data-bs-target="#profileModal"> <span class="fa fa-plus"></span>
+                                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal"> <span class="fa fa-plus"></span>
                                                         Fill New patient Profile
                                                     </button>
                                                 </div>
@@ -907,7 +892,7 @@
                     <h5 class="modal-title" id="medDetailsModalLabel">
                         <i class="mdi mdi-pill me-2"></i>Medication Details
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="medDetailsModalBody">
                     <!-- Content populated by JavaScript -->
@@ -925,7 +910,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="profileModalLabel">Fill Profile / Form</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="card-modern">
@@ -964,9 +949,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
                             id="note_type_name_"></span>)</h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="nursing_note_template_" class="table-reponsive" style="border: 1px solid black;">
@@ -974,7 +957,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
                 </form>
             </div>
@@ -2223,7 +2206,7 @@
 
                 // For administration records with a product_or_service_request_id
                 // Look up the corresponding prescription
-                if (obj.product_or_service_request_id && prescriptions && prescriptions.length > 0) {
+                if (obj.product_or_service_request_id && prescriptions && prescriptions.length> 0) {
                     const prescription = prescriptions.find(p => p.id === obj.product_or_service_request_id);
                     if (prescription) {
                         // Recursively call the function to extract the name from the prescription
@@ -2235,7 +2218,7 @@
                 // Extract from dosage if it contains medication name
                 if (obj.dose && typeof obj.dose === 'string' && obj.dose.includes(':')) {
                     const parts = obj.dose.split(':');
-                    if (parts.length > 0) return parts[0].trim();
+                    if (parts.length> 0) return parts[0].trim();
                 }
 
                 return 'N/A';
@@ -2359,13 +2342,13 @@
                             <span class="badge bg-info rounded-pill fs-6">
                                 <i class="mdi mdi-history me-1"></i> ${administrationCount} administrations
                             </span>`;
-                        if (wardStockCount > 0) {
+                        if (wardStockCount> 0) {
                             statsHtml += `
                             <span class="badge bg-primary rounded-pill fs-6" style="background-color: #0d6efd !important;">
                                 <i class="mdi mdi-hospital-box me-1"></i> ${wardStockCount} ward stock
                             </span>`;
                         }
-                        if (patientOwnCount > 0) {
+                        if (patientOwnCount> 0) {
                             statsHtml += `
                             <span class="badge bg-warning text-dark rounded-pill fs-6">
                                 <i class="mdi mdi-account-arrow-left me-1"></i> ${patientOwnCount} patient's own
@@ -3282,7 +3265,7 @@
                     });
 
                     const balance = intakeTotal - outputTotal;
-                    const balanceClass = balance > 0 ? 'text-success' : (balance < 0 ? 'text-danger' : 'text-muted');
+                    const balanceClass = balance> 0 ? 'text-success' : (balance < 0 ? 'text-danger' : 'text-muted');
 
                     // Period card
                     html += `<div class="card-modern shadow-sm mb-3 period-card">
@@ -3315,7 +3298,7 @@
                                     </thead>
                                     <tbody>`;
 
-                    if (sortedRecords.length > 0) {
+                    if (sortedRecords.length> 0) {
                         sortedRecords.forEach(record => {
                             const recordTime = new Date(record.created_at).toLocaleString();
                             const recordType = record.type === 'intake' ? 'Intake' : 'Output';
@@ -3649,7 +3632,7 @@
             });
 
             // If all items were auto-saved and nothing new to batch-save
-            if (services.length === 0 && autoSavedCount > 0) {
+            if (services.length === 0 && autoSavedCount> 0) {
                 showMessage('labs_save_message', autoSavedCount + ' lab(s) already saved', 'success');
                 updateSummary();
                 $('#selected-services').empty();
@@ -3722,7 +3705,7 @@
                 }
             });
 
-            if (services.length === 0 && autoSavedCount > 0) {
+            if (services.length === 0 && autoSavedCount> 0) {
                 showMessage('imaging_save_message', autoSavedCount + ' imaging request(s) already saved', 'success');
                 updateSummary();
                 $('#selected-imaging-services').empty();
@@ -3805,7 +3788,7 @@
             });
 
             // If ALL rows are auto-saved, show success and clear
-            if (products.length === 0 && autoSavedCount > 0) {
+            if (products.length === 0 && autoSavedCount> 0) {
                 showMessage('prescriptions_save_message', autoSavedCount + ' prescription(s) already auto-saved', 'success');
                 $('#selected-products').empty();
                 ClinicalOrdersKit.addedIds.meds.clear(); // A3 fix: only clear meds
@@ -3838,8 +3821,8 @@
                     _token: $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function(response) {
-                    const saved = autoSavedCount > 0 ? ` (${autoSavedCount} auto-saved earlier)` : '';
-                    const msgType = response.empty_doses && response.empty_doses.length > 0 ? 'warning' : 'success';
+                    const saved = autoSavedCount> 0 ? ` (${autoSavedCount} auto-saved earlier)` : '';
+                    const msgType = response.empty_doses && response.empty_doses.length> 0 ? 'warning' : 'success';
                     showMessage('prescriptions_save_message', response.message + saved, msgType);
                     updateSummary();
                     // Clear selected list
@@ -3922,7 +3905,7 @@
                         // Update diagnosis summary
                         if (data.diagnosis.saved) {
                             const notesPreview = data.diagnosis.notes ?
-                                (data.diagnosis.notes.substring(0, 100) + (data.diagnosis.notes.length > 100 ? '...' : '')) :
+                                (data.diagnosis.notes.substring(0, 100) + (data.diagnosis.notes.length> 100 ? '...' : '')) :
                                 'Saved';
                             $('#summary_diagnosis').html(`
                                 <span class="text-success"><i class="fa fa-check-circle"></i> <strong>Saved</strong></span>
@@ -3933,7 +3916,7 @@
                         }
 
                         // Update labs summary
-                        if (data.labs.length > 0) {
+                        if (data.labs.length> 0) {
                             let labsHtml = `<span class="badge bg-success mb-2">${data.labs.length} service(s)</span><br>`;
                             labsHtml += '<ul class="small mb-0 ps-3">';
                             data.labs.forEach(lab => {
@@ -3946,7 +3929,7 @@
                         }
 
                         // Update imaging summary
-                        if (data.imaging.length > 0) {
+                        if (data.imaging.length> 0) {
                             let imagingHtml = `<span class="badge bg-success mb-2">${data.imaging.length} service(s)</span><br>`;
                             imagingHtml += '<ul class="small mb-0 ps-3">';
                             data.imaging.forEach(img => {
@@ -3959,7 +3942,7 @@
                         }
 
                         // Update prescriptions summary
-                        if (data.prescriptions.length > 0) {
+                        if (data.prescriptions.length> 0) {
                             let prescHtml = `<span class="badge bg-success mb-2">${data.prescriptions.length} medication(s)</span><br>`;
                             prescHtml += '<ul class="small mb-0 ps-3">';
                             data.prescriptions.forEach(presc => {
@@ -3998,7 +3981,7 @@
                     <h5 class="modal-title" id="admitDischargeModalLabel">
                         <i class="fa fa-bed" id="modal_icon"></i> <span id="modal_title_text">Admit Patient</span>
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info">
@@ -4150,7 +4133,7 @@
                     <h5 class="modal-title" id="concludeEncounterModalLabel">
                         <i class="fa fa-check-circle"></i> Conclude Encounter
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <!-- Encounter Summary -->
@@ -4393,8 +4376,8 @@
 
                 wards.forEach(function(ward) {
                     const pct = ward.occupancy_pct;
-                    let barColor = pct >= 90 ? '#dc3545' : (pct >= 70 ? '#ffc107' : '#28a745');
-                    let textColor = pct >= 90 ? 'text-danger' : (pct >= 70 ? 'text-warning' : 'text-success');
+                    let barColor = pct>= 90 ? '#dc3545' : (pct>= 70 ? '#ffc107' : '#28a745');
+                    let textColor = pct>= 90 ? 'text-danger' : (pct>= 70 ? 'text-warning' : 'text-success');
                     let typeIcons = {
                         'general': 'fa-bed', 'icu': 'fa-heartbeat', 'pediatric': 'fa-child',
                         'maternity': 'fa-baby', 'emergency': 'fa-ambulance', 'psychiatric': 'fa-brain',
@@ -4678,7 +4661,7 @@
                     // Update diagnosis summary
                     if (data.diagnosis.saved) {
                         const notesPreview = data.diagnosis.notes ?
-                            (data.diagnosis.notes.substring(0, 100) + (data.diagnosis.notes.length > 100 ? '...' : '')) :
+                            (data.diagnosis.notes.substring(0, 100) + (data.diagnosis.notes.length> 100 ? '...' : '')) :
                             'Saved';
                         $('#modal_summary_diagnosis').html(`
                             <span class="text-success"><i class="fa fa-check-circle"></i> <strong>Saved</strong></span>
@@ -4689,7 +4672,7 @@
                     }
 
                     // Update labs summary
-                    if (data.labs.count > 0) {
+                    if (data.labs.count> 0) {
                         $('#modal_summary_labs').html(`
                             <span class="text-success"><i class="fa fa-check-circle"></i> ${data.labs.count} lab service(s) requested</span>
                         `);
@@ -4698,7 +4681,7 @@
                     }
 
                     // Update imaging summary
-                    if (data.imaging.count > 0) {
+                    if (data.imaging.count> 0) {
                         $('#modal_summary_imaging').html(`
                             <span class="text-success"><i class="fa fa-check-circle"></i> ${data.imaging.count} imaging service(s) requested</span>
                         `);
@@ -4707,7 +4690,7 @@
                     }
 
                     // Update prescriptions summary
-                    if (data.prescriptions.count > 0) {
+                    if (data.prescriptions.count> 0) {
                         $('#modal_summary_prescriptions').html(`
                             <span class="text-success"><i class="fa fa-check-circle"></i> ${data.prescriptions.count} prescription(s) added</span>
                         `);
@@ -4770,7 +4753,7 @@
                 data: { date: date, clinic_id: '{{ $clinic->id ?? '' }}' },
                 success: function(data) {
                     var html = '<option value="">-- Select time (optional) --</option>';
-                    if (data.slots && data.slots.length > 0) {
+                    if (data.slots && data.slots.length> 0) {
                         data.slots.forEach(function(slot) {
                             if (slot.available) {
                                 html += '<option value="' + slot.time + '">' + slot.time + '</option>';
@@ -4848,7 +4831,7 @@
                 success: function(data) {
                     $('#referrals-loading').hide();
                     var html = '';
-                    if (data.referrals && data.referrals.length > 0) {
+                    if (data.referrals && data.referrals.length> 0) {
                         $('#referral-count-badge').text(data.referrals.length).show();
                         $('#ref-encounter-count').text(data.referrals.length);
                         data.referrals.forEach(function(ref) {
@@ -4942,7 +4925,7 @@
                 success: function(data) {
                     $('#patient-referrals-loading').hide();
                     var html = '';
-                    if (data.referrals && data.referrals.length > 0) {
+                    if (data.referrals && data.referrals.length> 0) {
                         $('#ref-patient-count').text(data.referrals.length);
                         data.referrals.forEach(function(ref) {
                             var urgencyBadge = { 'emergency': 'bg-danger', 'urgent': 'bg-warning text-dark', 'routine': 'bg-secondary' }[ref.urgency] || 'bg-secondary';
@@ -5029,7 +5012,7 @@
                 success: function(data) {
                     $('#incoming-referrals-loading').hide();
                     var html = '';
-                    if (data.referrals && data.referrals.length > 0) {
+                    if (data.referrals && data.referrals.length> 0) {
                         $('#incoming-referral-count').text(data.referrals.length).show();
                         data.referrals.forEach(function(ref) {
                             var urgencyBadge = { 'emergency': 'bg-danger', 'urgent': 'bg-warning text-dark', 'routine': 'bg-secondary' }[ref.urgency] || 'bg-secondary';
@@ -5137,7 +5120,7 @@
             e.preventDefault();
             var btn = $('#referral-submit-btn');
             var editId = $('#referral-edit-id').val();
-            var isEdit = editId && editId.length > 0;
+            var isEdit = editId && editId.length> 0;
             btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> ' + (isEdit ? 'Updating...' : 'Submitting...'));
 
             var url, method;

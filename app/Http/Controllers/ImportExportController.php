@@ -113,6 +113,8 @@ class ImportExportController extends Controller
             'N1' => 'expiry_date',
             'O1' => 'is_active',
             'P1' => 'packaging_levels',
+            'Q1' => 'default_bulk_pack_name',
+            'R1' => 'default_bulk_pack_qty',
         ];
 
         foreach ($headers as $cell => $value) {
@@ -120,7 +122,8 @@ class ImportExportController extends Controller
         }
 
         // Style headers
-        $this->styleHeaders($sheet, 'A1:P1');
+        $this->styleHeaders($sheet, 'A1:S1');
+        $sheet->getStyle('S1')->getFont()->getColor()->setARGB('FFFF0000');
 
         // Get valid values for dropdowns
         $categories = ProductCategory::orderBy('category_name')->pluck('category_name')->toArray();
@@ -194,8 +197,8 @@ class ImportExportController extends Controller
 
         // Add sample data
         $sampleData = [
-            ['Paracetamol 500mg', 'PARA-500', $categories[0] ?? 'General', 'drug', 'Tablet', '0', 'Pain relief tablets', '50.00', '100.00', '100', '500', $stores[0] ?? '', 'BTH-001', '2027-12-31', '1', 'Strip:10;Box:200'],
-            ['Surgical Gloves (M)', 'GLV-M', $categories[0] ?? 'General', 'consumable', 'Piece', '0', 'Medium latex gloves', '5.00', '15.00', '50', '200', $stores[0] ?? '', 'BTH-002', '2026-06-30', '1', 'Box:100;Carton:1200'],
+            ['Paracetamol 500mg', 'PARA-500', $categories[0] ?? 'General', 'drug', 'Tablet', '0', 'Pain relief tablets', '50.00', '100.00', '100', '500', $stores[0] ?? '', 'BTH-001', '2027-12-31', '1', 'Strip:10;Box:200', 'Box', '200'],
+            ['Surgical Gloves (M)', 'GLV-M', $categories[0] ?? 'General', 'consumable', 'Piece', '0', 'Medium latex gloves', '5.00', '15.00', '50', '200', $stores[0] ?? '', 'BTH-002', '2026-06-30', '1', 'Box:100;Carton:1200', 'Box', '100'],
         ];
 
         $rowNum = 2;
@@ -209,7 +212,7 @@ class ImportExportController extends Controller
         }
 
         // Auto-size columns
-        foreach (range('A', 'P') as $col) {
+        foreach (range('A', 'R') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -246,13 +249,16 @@ class ImportExportController extends Controller
             'N1' => 'expiry_date',
             'O1' => 'is_active',
             'P1' => 'packaging_levels',
+            'Q1' => 'default_bulk_pack_name',
+            'R1' => 'default_bulk_pack_qty',
         ];
 
         foreach ($headers as $cell => $value) {
             $sheet->setCellValue($cell, $value);
         }
 
-        $this->styleHeaders($sheet, 'A1:P1');
+        $this->styleHeaders($sheet, 'A1:S1');
+        $sheet->getStyle('S1')->getFont()->getColor()->setARGB('FFFF0000');
 
         // Load all active products with their category, price, packagings and store stock
         $products = Product::with(['category', 'price', 'packagings', 'storeStock' => function ($q) use ($store) {
@@ -268,6 +274,7 @@ class ImportExportController extends Controller
             $packagingStr = $product->packagings->map(function ($pkg) {
                 return ($pkg->name ?? '') . ':' . ($pkg->base_unit_qty ?? '');
             })->filter()->implode(';');
+            $defaultBulkPackaging = $product->packagings->firstWhere('is_default_purchase', true);
 
             $sheet->setCellValue('A' . $row, $product->product_name);
             $sheet->setCellValue('B' . $row, $product->product_code);
@@ -285,12 +292,14 @@ class ImportExportController extends Controller
             $sheet->setCellValue('N' . $row, '');
             $sheet->setCellValue('O' . $row, $product->status ? '1' : '0');
             $sheet->setCellValue('P' . $row, $packagingStr);
+            $sheet->setCellValue('Q' . $row, $defaultBulkPackaging->name ?? '');
+            $sheet->setCellValue('R' . $row, $defaultBulkPackaging->base_unit_qty ?? '');
 
             $row++;
         }
 
         // Auto-size columns
-        foreach (range('A', 'P') as $col) {
+        foreach (range('A', 'R') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -841,7 +850,8 @@ class ImportExportController extends Controller
 
                         $costPrice = floatval($row['cost_price'] ?? 0);
                         $salePrice = floatval($row['sale_price'] ?? 0);
-                        $initialQty = intval($row['initial_quantity'] ?? 0);
+                        // Support both template uploads (initial_quantity) and CSV exports (current_quantity).
+                        $initialQty = intval($row['initial_quantity'] ?? $row['current_quantity'] ?? 0);
                         $reorderLevel = intval($row['reorder_level'] ?? 10);
                         $isActive = ($row['is_active'] ?? 1) == 1;
 
@@ -850,6 +860,38 @@ class ImportExportController extends Controller
                         $baseUnitName = trim($row['base_unit_name'] ?? 'Piece') ?: 'Piece';
                         $allowDecimalQty = ($row['allow_decimal_qty'] ?? 0) == 1;
                         $packagingLevels = trim($row['packaging_levels'] ?? '');
+                        $defaultBulkName = trim($row['default_bulk_pack_name'] ?? '');
+                        $defaultBulkQty = floatval($row['default_bulk_pack_qty'] ?? 0);
+
+                        // If default bulk packaging is provided, ensure it is represented in packaging_levels.
+                        if ($defaultBulkName && $defaultBulkQty > 0) {
+                            if (!$packagingLevels) {
+                                $packagingLevels = $defaultBulkName . ':' . $defaultBulkQty;
+                            } else {
+                                $levels = collect(explode(';', $packagingLevels))
+                                    ->map(fn ($level) => trim($level))
+                                    ->filter();
+
+                                $matchedByName = false;
+                                $levels = $levels->map(function ($level) use ($defaultBulkName, $defaultBulkQty, &$matchedByName) {
+                                    $parts = explode(':', $level, 2);
+                                    $name = trim($parts[0] ?? '');
+
+                                    if (!$matchedByName && strcasecmp($name, $defaultBulkName) === 0) {
+                                        $matchedByName = true;
+                                        return $defaultBulkName . ':' . $defaultBulkQty;
+                                    }
+
+                                    return $level;
+                                });
+
+                                if (!$matchedByName) {
+                                    $levels->push($defaultBulkName . ':' . $defaultBulkQty);
+                                }
+
+                                $packagingLevels = $levels->implode(';');
+                            }
+                        }
 
                         // Check if product exists (update) or create new
                         if (isset($existingProducts[$productCode])) {
@@ -863,7 +905,7 @@ class ImportExportController extends Controller
                                 'base_unit_name' => $baseUnitName,
                                 'allow_decimal_qty' => $allowDecimalQty,
                                 'reorder_alert' => $reorderLevel,
-                                'visible' => $isActive,
+                                'status' => $isActive ? 1 : 0,
                             ]);
 
                             // Update Price
@@ -925,6 +967,19 @@ class ImportExportController extends Controller
                             // Sync packaging levels for updated product
                             if ($packagingLevels) {
                                 $this->syncImportPackagings($productId, $packagingLevels);
+                                if ($defaultBulkName) {
+                                    $defaultPackagingQuery = ProductPackaging::where('product_id', $productId)
+                                        ->whereRaw('LOWER(name) = ?', [strtolower($defaultBulkName)]);
+                                    if ($defaultBulkQty > 0) {
+                                        $defaultPackagingQuery->where('base_unit_qty', $defaultBulkQty);
+                                    }
+
+                                    $defaultPackaging = $defaultPackagingQuery->first();
+                                    if ($defaultPackaging) {
+                                        ProductPackaging::where('product_id', $productId)->update(['is_default_purchase' => false]);
+                                        $defaultPackaging->update(['is_default_purchase' => true]);
+                                    }
+                                }
                             }
                         } else {
                             // CREATE new product
@@ -937,7 +992,7 @@ class ImportExportController extends Controller
                                 'base_unit_name' => $baseUnitName,
                                 'allow_decimal_qty' => $allowDecimalQty,
                                 'reorder_alert' => $reorderLevel,
-                                'visible' => $isActive,
+                                'status' => $isActive ? 1 : 0,
                                 'current_quantity' => $initialQty,
                             ]);
 
@@ -998,6 +1053,19 @@ class ImportExportController extends Controller
                             // Sync packaging levels for new product
                             if ($packagingLevels) {
                                 $this->syncImportPackagings($product->id, $packagingLevels);
+                                if ($defaultBulkName) {
+                                    $defaultPackagingQuery = ProductPackaging::where('product_id', $product->id)
+                                        ->whereRaw('LOWER(name) = ?', [strtolower($defaultBulkName)]);
+                                    if ($defaultBulkQty > 0) {
+                                        $defaultPackagingQuery->where('base_unit_qty', $defaultBulkQty);
+                                    }
+
+                                    $defaultPackaging = $defaultPackagingQuery->first();
+                                    if ($defaultPackaging) {
+                                        ProductPackaging::where('product_id', $product->id)->update(['is_default_purchase' => false]);
+                                        $defaultPackaging->update(['is_default_purchase' => true]);
+                                    }
+                                }
                             }
 
                             $report['created']++;
@@ -1015,7 +1083,7 @@ class ImportExportController extends Controller
 
             $duration = round(microtime(true) - $startTime, 2);
 
-            return back()->with('import_report', [
+            $importReport = [
                 'type' => 'Products',
                 'created' => $report['created'],
                 'updated' => $report['updated'],
@@ -1024,10 +1092,18 @@ class ImportExportController extends Controller
                 'duration' => $duration,
                 'total_rows' => count($data),
                 'batches_processed' => $totalBatches,
-            ]);
+            ];
+
+            if ($request->ajax()) {
+                return response()->json($importReport);
+            }
+            return back()->with('import_report', $importReport);
 
         } catch (\Exception $e) {
             Log::error('Product import failed: ' . $e->getMessage());
+            if ($request->ajax()) {
+                return response()->json(['error' => 'Import failed: ' . $e->getMessage()], 500);
+            }
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
@@ -1865,7 +1941,9 @@ class ImportExportController extends Controller
         $headers = [
             'id', 'product_name', 'product_code', 'category_name', 'product_type',
             'base_unit_name', 'allow_decimal_qty', 'cost_price', 'sale_price',
-            'reorder_level', 'current_quantity', 'is_active', 'packaging_levels', 'created_at'
+            'reorder_level', 'current_quantity', 'is_active',
+            'packaging_levels', 'default_bulk_pack_name', 'default_bulk_pack_qty',
+            'created_at'
         ];
 
         $data = [];
@@ -1874,6 +1952,9 @@ class ImportExportController extends Controller
             $pkgStr = $product->packagings->sortBy('level')->map(function ($p) {
                 return $p->name . ':' . rtrim(rtrim(number_format($p->base_unit_qty, 4), '0'), '.');
             })->implode(';');
+
+            // Default bulk (purchase) packaging
+            $defaultBulkPkg = $product->packagings->firstWhere('is_default_purchase', true);
 
             $data[] = [
                 $product->id,
@@ -1887,8 +1968,10 @@ class ImportExportController extends Controller
                 $product->price->current_sale_price ?? 0,
                 $product->reorder_alert ?? 10,
                 $product->current_quantity ?? 0,
-                $product->visible ? 1 : 0,
+                $product->status ? 1 : 0,
                 $pkgStr,
+                $defaultBulkPkg->name ?? '',
+                $defaultBulkPkg ? rtrim(rtrim(number_format($defaultBulkPkg->base_unit_qty, 4), '0'), '.') : '',
                 $product->created_at->format('Y-m-d H:i:s'),
             ];
         }

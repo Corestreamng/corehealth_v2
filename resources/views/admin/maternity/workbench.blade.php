@@ -1370,9 +1370,7 @@ $sett = appsettings();
             {{ $resolvedStore->distributionRoleLabel() }}
         </span>
         @can('store-context.change-manual')
-        <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2"
-            onclick="openStoreContextOverride()"
-            title="Change active store context">
+        <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2" onclick="openStoreContextOverride()" title="Change active store context">
             <i class="fas fa-exchange-alt"></i> Change
         </button>
         @endcan
@@ -1728,7 +1726,7 @@ $sett = appsettings();
                 <h5 class="modal-title" id="administerVaccineModalSharedLabel">
                     <i class="mdi mdi-needle"></i> Administer Vaccine
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info mb-3" id="imm-modal-schedule-info">
@@ -1875,7 +1873,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="addHistoryModalLabel"><i class="mdi mdi-clipboard-text-clock"></i> Add Medical History</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i> Record relevant past medical, surgical, obstetric, family, or social history that may affect pregnancy management.</div>
@@ -1923,7 +1921,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="addPregnancyModalLabel"><i class="mdi mdi-baby-carriage"></i> Add Previous Pregnancy</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i> Document each prior pregnancy to build a complete obstetric profile. This helps assess current risk factors.</div>
@@ -1972,7 +1970,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title" id="addGrowthModalLabel"><i class="mdi mdi-chart-line"></i> Add Growth Record</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-form-help mb-3"><i class="mdi mdi-information"></i> Track baby's growth over time. Compare with WHO growth standards for age-appropriate percentiles.</div>
@@ -2001,7 +1999,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="addPartographModalLabel"><i class="mdi mdi-chart-timeline-variant"></i> Add Partograph Entry</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
@@ -2030,10 +2028,10 @@ $sett = appsettings();
                             <div class="col-md-3 mb-3"><label class="form-label">Contractions /10 min <span class="mat-tooltip-icon" title="Count contractions felt in 10 minutes. Active labour: ≥3 per 10 min"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contractions_per_10min" class="form-control" min="0" max="20">
                                 <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Active labour: ≥ 3 contractions in 10 min</div>
                             </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Duration (sec) <span class="mat-tooltip-icon" title="Duration of each contraction in seconds. <20s = mild, 20-40s = moderate, >40s = strong"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contraction_duration_sec" class="form-control" min="0" max="180">
+                            <div class="col-md-3 mb-3"><label class="form-label">Duration (sec) <span class="mat-tooltip-icon" title="Duration of each contraction in seconds. <20s = mild, 20-40s = moderate,>40s = strong"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contraction_duration_sec" class="form-control" min="0" max="180">
                                 <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> &lt;20s mild, 20–40s moderate, &gt;40s strong</div>
                             </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm. <110 = bradycardia, >160 = tachycardia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fetal_heart_rate" class="form-control" min="60" max="220">
+                            <div class="col-md-3 mb-3"><label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm. <110 = bradycardia,>160 = tachycardia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fetal_heart_rate" class="form-control" min="60" max="220">
                                 <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 110–160 bpm</div>
                             </div>
                             <div class="col-md-3 mb-3"><label class="form-label">Amniotic Fluid <span class="mat-tooltip-icon" title="C = Clear (normal), I = Intact membranes, M = Meconium-stained (fetal distress risk), B = Bloody, A = Absent"><i class="mdi mdi-help-circle"></i></span></label><select name="amniotic_fluid" class="form-select">
@@ -2106,7 +2104,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="addNoteModalLabel"><i class="mdi mdi-note-plus"></i> Add Clinical Note</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
@@ -2144,7 +2142,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title" id="postnatalModalLabel"><i class="mdi mdi-account-heart"></i> Record Postnatal Visit</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
@@ -2223,7 +2221,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header text-white" style="background: var(--maternity-pink);">
                 <h5 class="modal-title" id="ancVisitModalLabel"><i class="mdi mdi-stethoscope"></i> Record ANC Visit</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
@@ -2328,7 +2326,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="registerBabyModalLabel"><i class="mdi mdi-baby-face-outline"></i> Register Baby</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i> Record the newborn's identity, measurements, and immediate care provided at birth.</div>
@@ -2360,7 +2358,7 @@ $sett = appsettings();
                         <div class="mat-form-section-title"><i class="mdi mdi-human-child"></i> Anthropometrics</div>
                         <div class="mat-form-help mb-2"><i class="mdi mdi-information"></i> Normal birth weight: 2.5–4.0 kg. Normal length: 48–53 cm. Normal head circumference: 33–37 cm</div>
                         <div class="row">
-                            <div class="col-md-4 mb-3"><label class="form-label">Birth Weight (kg) <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="Normal: 2.5–4.0 kg. Low birth weight: <2.5 kg. Macrosomia: >4.0 kg"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="birth_weight_kg" class="form-control" step="0.01" min="0.3" max="8" placeholder="e.g. 3.20" required></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Birth Weight (kg) <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="Normal: 2.5–4.0 kg. Low birth weight: <2.5 kg. Macrosomia:>4.0 kg"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="birth_weight_kg" class="form-control" step="0.01" min="0.3" max="8" placeholder="e.g. 3.20" required></div>
                             <div class="col-md-4 mb-3"><label class="form-label">Length (cm) <span class="mat-tooltip-icon" title="Crown-to-heel length. Normal: 48–53 cm at term"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="length_cm" class="form-control" step="0.1" placeholder="e.g. 50.0"></div>
                             <div class="col-md-4 mb-3"><label class="form-label">Head Circumference (cm) <span class="mat-tooltip-icon" title="Occipitofrontal circumference. Normal: 33–37 cm"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="head_circumference_cm" class="form-control" step="0.1" placeholder="e.g. 35.0"></div>
                         </div>
@@ -2423,7 +2421,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="dischargeModalLabel"><i class="mdi mdi-exit-run"></i> Discharge Maternity Enrollment</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="discharge-warnings-container" style="display:none;" class="mb-3"></div>
@@ -2456,7 +2454,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-account-remove"></i> Mark Baby as Deceased</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="mark-baby-deceased-form">
@@ -2590,7 +2588,7 @@ $sett = appsettings();
                 // Show last 2 ANC numbers as hint
                 var recent = response.recent_file_nos || [];
                 var lastTwo = recent.slice(0, 2);
-                if (lastTwo.length > 0) {
+                if (lastTwo.length> 0) {
                     $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
                 } else {
                     $('#pf-file-no-hint').html('').hide();
@@ -3007,12 +3005,12 @@ $sett = appsettings();
                 allergiesArray = Object.values(patient.allergies).filter(a => a);
             }
         }
-        if (allergiesArray.length > 0) {
+        if (allergiesArray.length> 0) {
             detailsHtml += `<div class="patient-detail-item full-width"><div class="patient-detail-label"><i class="mdi mdi-alert-circle"></i> Allergies</div><div class="patient-detail-value"><div class="allergies-list">${allergiesArray.map(a => `<span class="allergy-tag"><i class="mdi mdi-alert"></i> ${a}</span>`).join('')}</div></div></div>`;
         }
 
         // Risk factors
-        if (patient.enrollment && patient.enrollment.risk_factors && patient.enrollment.risk_factors.length > 0) {
+        if (patient.enrollment && patient.enrollment.risk_factors && patient.enrollment.risk_factors.length> 0) {
             const risks = patient.enrollment.risk_factors;
             const riskHtml = (Array.isArray(risks) ? risks : [risks]).map(r => `<span class="allergy-tag" style="background: rgba(220,53,69,0.15); border-color: rgba(220,53,69,0.4);"><i class="mdi mdi-alert"></i> ${r}</span>`).join('');
             detailsHtml += `<div class="patient-detail-item full-width"><div class="patient-detail-label"><i class="mdi mdi-alert-octagon"></i> Risk Factors</div><div class="patient-detail-value"><div class="allergies-list">${riskHtml}</div></div></div>`;
@@ -3115,7 +3113,7 @@ $sett = appsettings();
             const postpartumRemDays = postpartumDays % 7;
             // Standard postnatal period is 6 weeks (42 days)
             const pnProgressPct = Math.min(100, Math.max(0, (postpartumDays / 42) * 100));
-            const pnColor = postpartumDays > 42 ? '#6c757d' : '#2196f3';
+            const pnColor = postpartumDays> 42 ? '#6c757d' : '#2196f3';
 
             html += `
         <div class="card-modern mb-3" style="border-left: 4px solid #2196f3;">
@@ -3146,7 +3144,7 @@ $sett = appsettings();
             const progressPct = Math.min(100, Math.max(0, (totalGaDays / totalDays) * 100));
             const trimester = gaWeeks < 13 ? 1 : (gaWeeks < 28 ? 2 : 3);
             const trimesterLabel = ['', '1st Trimester', '2nd Trimester', '3rd Trimester'][trimester];
-            const progressColor = gaWeeks > 41 ? '#dc3545' : (gaWeeks >= 37 ? '#ffc107' : '#28a745');
+            const progressColor = gaWeeks> 41 ? '#dc3545' : (gaWeeks>= 37 ? '#ffc107' : '#28a745');
             const postDates = e.remaining_days !== null && e.remaining_days < 0;
 
             html += `
@@ -3260,7 +3258,7 @@ $sett = appsettings();
                 });
             }
             // Near term
-            if (e.remaining_days !== null && e.remaining_days >= 0 && e.remaining_days <= 14) {
+            if (e.remaining_days !== null && e.remaining_days>= 0 && e.remaining_days <= 14) {
                 alerts.push({
                     type: 'info',
                     icon: 'mdi-calendar-clock',
@@ -3272,7 +3270,7 @@ $sett = appsettings();
             const gaMatch2 = (e.gestational_age || '').match(/(\d+)\s*weeks?/i);
             const gaW = gaMatch2 ? parseInt(gaMatch2[1]) : 0;
             const expectedVisits = gaW < 16 ? 1 : (gaW < 28 ? 2 : (gaW < 36 ? 3 : 4));
-            if (gaW >= 16 && (e.anc_visit_count || 0) < expectedVisits) {
+            if (gaW>= 16 && (e.anc_visit_count || 0) < expectedVisits) {
                 alerts.push({
                     type: 'warning',
                     icon: 'mdi-stethoscope',
@@ -3286,7 +3284,7 @@ $sett = appsettings();
                 if (bpParts.length === 2) {
                     const sys = parseInt(bpParts[0]);
                     const dia = parseInt(bpParts[1]);
-                    if (sys >= 140 || dia >= 90) {
+                    if (sys>= 140 || dia>= 90) {
                         alerts.push({
                             type: 'danger',
                             icon: 'mdi-heart-pulse',
@@ -3298,7 +3296,7 @@ $sett = appsettings();
             }
             // Obese BMI
             const bmiVal = (e.booking_weight_kg && e.height_cm) ? (e.booking_weight_kg / ((e.height_cm / 100) ** 2)) : null;
-            if (bmiVal && bmiVal >= 30) {
+            if (bmiVal && bmiVal>= 30) {
                 alerts.push({
                     type: 'warning',
                     icon: 'mdi-weight',
@@ -3307,7 +3305,7 @@ $sett = appsettings();
                 });
             }
 
-            if (alerts.length > 0) {
+            if (alerts.length> 0) {
                 html += '<div class="mb-3">';
                 html += '<h6 class="small fw-bold text-muted mb-2"><i class="mdi mdi-bell-alert"></i> Clinical Alerts</h6>';
                 alerts.forEach(a => {
@@ -3350,7 +3348,7 @@ $sett = appsettings();
             let bpClass = '';
             if (v.bp && v.bp !== 'N/A') {
                 const bpSplit = v.bp.split('/');
-                if (bpSplit.length === 2 && (parseInt(bpSplit[0]) >= 140 || parseInt(bpSplit[1]) >= 90)) bpClass = 'text-danger fw-bold';
+                if (bpSplit.length === 2 && (parseInt(bpSplit[0])>= 140 || parseInt(bpSplit[1])>= 90)) bpClass = 'text-danger fw-bold';
             }
             html += `<table class="table table-sm table-borderless mb-0">
             <tr><td class="text-muted" style="width:40%;"><i class="mdi mdi-heart-pulse text-danger"></i> BP</td><td class="${bpClass}">${v.bp || 'N/A'} mmHg</td></tr>
@@ -3377,7 +3375,7 @@ $sett = appsettings();
         // Load timeline with icons & color coding
         if (currentEnrollmentId) {
             $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/timeline`, function(resp) {
-                if (resp.success && resp.timeline.length > 0) {
+                if (resp.success && resp.timeline.length> 0) {
                     const typeIcons = {
                         enrollment: 'mdi-clipboard-plus',
                         anc: 'mdi-stethoscope',
@@ -3505,12 +3503,12 @@ $sett = appsettings();
                             <label class="form-label">BMI <small class="text-muted">(auto-calculated)</small></label>
                             <div class="form-control bg-light" id="enroll-bmi-display" style="font-weight:600;">—</div>
                         </div>
-                        <div class="col-md-3 mb-3"><label class="form-label">Risk Level <span class="mat-tooltip-icon" title="Low: uncomplicated pregnancy. Moderate: age >35, prior C-section, mild anaemia. High: pre-eclampsia, multiple gestation. Very High: eclampsia, placenta praevia"><i class="mdi mdi-help-circle"></i></span></label><select name="risk_level" class="form-select"><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option><option value="very_high">Very High</option></select></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Risk Level <span class="mat-tooltip-icon" title="Low: uncomplicated pregnancy. Moderate: age>35, prior C-section, mild anaemia. High: pre-eclampsia, multiple gestation. Very High: eclampsia, placenta praevia"><i class="mdi mdi-help-circle"></i></span></label><select name="risk_level" class="form-select"><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option><option value="very_high">Very High</option></select></div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label class="form-label">Risk Factors <span class="mat-tooltip-icon" title="List specific risk factors: e.g. previous stillbirth, pre-eclampsia history, sickle cell disease, multiple gestation, age >40"><i class="mdi mdi-help-circle"></i></span></label>
-                            <textarea name="risk_factors" class="form-control" rows="2" placeholder="List risk factors separated by commas (e.g. previous C-section, anaemia, age >35)"></textarea>
+                            <label class="form-label">Risk Factors <span class="mat-tooltip-icon" title="List specific risk factors: e.g. previous stillbirth, pre-eclampsia history, sickle cell disease, multiple gestation, age>40"><i class="mdi mdi-help-circle"></i></span></label>
+                            <textarea name="risk_factors" class="form-control" rows="2" placeholder="List risk factors separated by commas (e.g. previous C-section, anaemia, age>35)"></textarea>
                         </div>
                     </div>
                 </div>
@@ -3542,7 +3540,7 @@ $sett = appsettings();
             // GA at booking (from LMP to today)
             const today = new Date();
             const diffDays = Math.floor((today - lmp) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 0) {
+            if (diffDays>= 0) {
                 const weeks = Math.floor(diffDays / 7);
                 const days = diffDays % 7;
                 const trimester = weeks < 13 ? '1st' : (weeks < 28 ? '2nd' : '3rd');
@@ -3553,7 +3551,7 @@ $sett = appsettings();
 
             // Days to EDD countdown
             const daysToEdd = Math.floor((edd - today) / (1000 * 60 * 60 * 24));
-            if (daysToEdd > 0) {
+            if (daysToEdd> 0) {
                 const countdownColor = daysToEdd <= 14 ? '#ffc107' : (daysToEdd <= 42 ? '#17a2b8' : '#28a745');
                 $('#enroll-edd-countdown').html(`<span style="color:${countdownColor};">${daysToEdd} days</span>`);
             } else if (daysToEdd === 0) {
@@ -3568,7 +3566,7 @@ $sett = appsettings();
         function updateBmiCalc() {
             const wt = parseFloat($('#enroll-weight').val());
             const ht = parseFloat($('#enroll-height').val());
-            if (wt > 0 && ht > 0) {
+            if (wt> 0 && ht> 0) {
                 const bmi = (wt / ((ht / 100) ** 2)).toFixed(1);
                 const category = bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'));
                 const color = bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'));
@@ -3768,14 +3766,14 @@ $sett = appsettings();
             $('#edit-enroll-edd').val(edd.toISOString().split('T')[0]);
             const today = new Date();
             const diffDays = Math.floor((today - lmp) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 0) {
+            if (diffDays>= 0) {
                 const weeks = Math.floor(diffDays / 7),
                     days = diffDays % 7;
                 const tri = weeks < 13 ? '1st' : (weeks < 28 ? '2nd' : '3rd');
                 $('#edit-enroll-ga-display').html(`<span>${weeks}w ${days}d</span> <span class="badge bg-secondary" style="font-size:0.65rem;">${tri} trimester</span>`);
             }
             const daysToEdd = Math.floor((edd - today) / (1000 * 60 * 60 * 24));
-            $('#edit-enroll-edd-countdown').html(daysToEdd > 0 ? daysToEdd + ' days' : (daysToEdd === 0 ? '<span class="text-danger">DUE TODAY</span>' : `<span class="text-danger">${Math.abs(daysToEdd)}d overdue</span>`));
+            $('#edit-enroll-edd-countdown').html(daysToEdd> 0 ? daysToEdd + ' days' : (daysToEdd === 0 ? '<span class="text-danger">DUE TODAY</span>' : `<span class="text-danger">${Math.abs(daysToEdd)}d overdue</span>`));
         }
         $('#edit-enroll-lmp').on('change', editUpdateLmpCalcs);
 
@@ -3783,7 +3781,7 @@ $sett = appsettings();
         function editUpdateBmi() {
             const wt = parseFloat($('#edit-enroll-weight').val()),
                 ht = parseFloat($('#edit-enroll-height').val());
-            if (wt > 0 && ht > 0) {
+            if (wt> 0 && ht> 0) {
                 const bmi = (wt / ((ht / 100) ** 2)).toFixed(1);
                 const cat = bmi < 18.5 ? 'Underweight' : (bmi < 25 ? 'Normal' : (bmi < 30 ? 'Overweight' : 'Obese'));
                 const clr = bmi < 18.5 ? '#17a2b8' : (bmi < 25 ? '#28a745' : (bmi < 30 ? '#ffc107' : '#dc3545'));
@@ -3845,7 +3843,7 @@ $sett = appsettings();
 
             // Medical History
             html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-clipboard-text"></i> Medical / Surgical History</h6></div><div class="card-body">';
-            if (enrollment.medical_history && enrollment.medical_history.length > 0) {
+            if (enrollment.medical_history && enrollment.medical_history.length> 0) {
                 html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Category</th><th>Description</th><th>Year</th><th>Notes</th><th style="width:80px">Actions</th></tr></thead><tbody>';
                 enrollment.medical_history.forEach(h => {
                     html += `<tr><td><span class="badge bg-secondary">${h.category}</span></td><td>${h.description}</td><td>${h.year || '-'}</td><td>${h.notes || '-'}</td>
@@ -3859,7 +3857,7 @@ $sett = appsettings();
 
             // Previous Pregnancies
             html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-human-pregnant"></i> Previous Pregnancies</h6></div><div class="card-body">';
-            if (enrollment.previous_pregnancies && enrollment.previous_pregnancies.length > 0) {
+            if (enrollment.previous_pregnancies && enrollment.previous_pregnancies.length> 0) {
                 html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Year</th><th>Duration</th><th>Place</th><th>Outcome</th><th>Sex</th><th>Weight</th><th>Notes</th><th style="width:60px">Edit</th></tr></thead><tbody>';
                 enrollment.previous_pregnancies.forEach(p => {
                     const outcome = p.baby_alive ? '✅ Alive' : (p.baby_dead ? '❌ Dead' : (p.baby_stillbirth ? '💔 Stillbirth' : '-'));
@@ -4135,7 +4133,7 @@ $sett = appsettings();
                 });
             }
             $('#anc-content').html(html);
-            if (resp.visits.length >= 2) {
+            if (resp.visits.length>= 2) {
                 renderAncTrendCharts(resp.visits);
             }
         });
@@ -5670,8 +5668,8 @@ $sett = appsettings();
             <div class="mat-form-section">
                 <div class="mat-form-section-title"><i class="mdi mdi-medical-bag"></i> Labour Details</div>
                 <div class="row">
-                    <div class="col-md-4 mb-2"><label class="form-label">Duration of Labour (hrs) <span class="mat-tooltip-icon" title="Total active labour duration in hours. Prolonged labour: >12hrs primigravida, >8hrs multigravida"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="duration_of_labour_hours" class="form-control" step="0.5" placeholder="e.g. 8.5"></div>
-                    <div class="col-md-4 mb-2"><label class="form-label">Estimated Blood Loss (ml) <span class="mat-tooltip-icon" title="Normal: SVD \u2264500ml, CS \u22641000ml. >500ml SVD or >1000ml CS = postpartum haemorrhage"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="blood_loss_ml" class="form-control" placeholder="e.g. 300"></div>
+                    <div class="col-md-4 mb-2"><label class="form-label">Duration of Labour (hrs) <span class="mat-tooltip-icon" title="Total active labour duration in hours. Prolonged labour:>12hrs primigravida,>8hrs multigravida"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="duration_of_labour_hours" class="form-control" step="0.5" placeholder="e.g. 8.5"></div>
+                    <div class="col-md-4 mb-2"><label class="form-label">Estimated Blood Loss (ml) <span class="mat-tooltip-icon" title="Normal: SVD \u2264500ml, CS \u22641000ml.>500ml SVD or>1000ml CS = postpartum haemorrhage"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="blood_loss_ml" class="form-control" placeholder="e.g. 300"></div>
                     <div class="col-md-4 mb-2"><label class="form-label">Oxytocin Given <span class="mat-tooltip-icon" title="Active management of third stage: Oxytocin 10 IU IM within 1 minute of delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="oxytocin_given" class="form-select"><option value="1">Yes</option><option value="0">No</option></select></div>
                 </div>
             </div>
@@ -5924,7 +5922,7 @@ $sett = appsettings();
             entries.forEach(function(e) {
                 const bp = e.maternal_bp || ((e.maternal_bp_systolic || e.maternal_bp_diastolic) ? `${e.maternal_bp_systolic || ''}/${e.maternal_bp_diastolic || ''}` : '—');
                 const fhrVal = e.fetal_heart_rate ?? '—';
-                const fhrClass = fhrVal !== '—' && (fhrVal < 110 || fhrVal > 160) ? 'text-danger fw-bold' : '';
+                const fhrClass = fhrVal !== '—' && (fhrVal < 110 || fhrVal> 160) ? 'text-danger fw-bold' : '';
                 rows += `<tr>
                 <td class="small">${e.recorded_at || '—'}</td>
                 <td>${e.cervical_dilation_cm ?? '—'}</td>
@@ -6026,16 +6024,16 @@ $sett = appsettings();
             });
         });
 
-        // WHO partograph: alert line starts at the first entry with dilation >= 4 cm
+        // WHO partograph: alert line starts at the first entry with dilation>= 4 cm
         // and rises at 1 cm/hour. Action line is 4 hours to the right of alert line.
         const alertLine = [];
         const actionLine = [];
         const maxHour = Math.max(...sorted.map(e => toHours(e.recorded_at)), 12);
 
-        // Find the first time dilation >= 4 cm (active labour onset)
+        // Find the first time dilation>= 4 cm (active labour onset)
         let alertStartHour = null;
         for (const pt of dilation) {
-            if (pt.y >= 4) {
+            if (pt.y>= 4) {
                 alertStartHour = pt.x;
                 break;
             }
@@ -6045,7 +6043,7 @@ $sett = appsettings();
             // Alert line: starts at (alertStartHour, 4) and rises 1cm per hour
             for (let h = 0; h <= maxHour + 2; h += 0.5) {
                 const alertY = 4 + (h - alertStartHour);
-                if (h >= alertStartHour && alertY <= 10) {
+                if (h>= alertStartHour && alertY <= 10) {
                     alertLine.push({
                         x: h,
                         y: alertY
@@ -6054,7 +6052,7 @@ $sett = appsettings();
                 // Action line: 4 hours to the right of alert line
                 const actionH = h - 4;
                 const actionY = 4 + (actionH - alertStartHour);
-                if (actionH >= alertStartHour && actionY >= 4 && actionY <= 10) {
+                if (actionH>= alertStartHour && actionY>= 4 && actionY <= 10) {
                     actionLine.push({
                         x: h,
                         y: actionY
@@ -6188,7 +6186,7 @@ $sett = appsettings();
             const f = $('#delivery-form');
             // Parse dates from Eloquent serialization (ISO string or Y-m-d)
             const delivDate = d.delivery_date ? d.delivery_date.substring(0, 10) : '';
-            const delivTime = d.delivery_time ? (d.delivery_time.length > 10 ? d.delivery_time.substring(11, 16) : d.delivery_time) : '';
+            const delivTime = d.delivery_time ? (d.delivery_time.length> 10 ? d.delivery_time.substring(11, 16) : d.delivery_time) : '';
             f.find('input[name="delivery_date"]').val(delivDate);
             f.find('input[name="delivery_time"]').val(delivTime);
             f.find('select[name="type_of_delivery"]').val(d.type_of_delivery || 'svd');
@@ -6623,7 +6621,7 @@ $sett = appsettings();
         ];
 
         // Child measurement line (scatter + line)
-        if (childPts.length > 0) {
+        if (childPts.length> 0) {
             datasets.push({
                 label: 'Child',
                 data: childPts,
@@ -7361,7 +7359,7 @@ $sett = appsettings();
                 tHtml += '</div></div>';
                 $('#delivery-stats-body').html(tHtml);
 
-                if (typeof Chart !== 'undefined' && types.length > 0) {
+                if (typeof Chart !== 'undefined' && types.length> 0) {
                     new Chart(document.getElementById('delivery-donut-chart').getContext('2d'), {
                         type: 'doughnut',
                         data: {
@@ -7406,7 +7404,7 @@ $sett = appsettings();
                 cHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Vaccine</th><th>Given</th><th>Total</th><th>%</th></tr></thead><tbody>';
                 vaccines.forEach(vaccine => {
                     const data = r.coverage[vaccine];
-                    const color = data.percentage >= 80 ? 'text-success' : (data.percentage >= 50 ? 'text-warning' : 'text-danger');
+                    const color = data.percentage>= 80 ? 'text-success' : (data.percentage>= 50 ? 'text-warning' : 'text-danger');
                     cHtml += `<tr><td>${vaccine}</td><td>${data.given}</td><td>${data.total}</td><td class="fw-bold ${color}">${data.percentage}%</td></tr>`;
                 });
                 cHtml += '</tbody></table>';
@@ -7487,11 +7485,11 @@ $sett = appsettings();
                     new Chart(document.getElementById('defaulters-bar-chart').getContext('2d'), {
                         type: 'bar',
                         data: {
-                            labels: r.defaulters.map(d => d.name.length > 20 ? d.name.substr(0, 18) + '...' : d.name),
+                            labels: r.defaulters.map(d => d.name.length> 20 ? d.name.substr(0, 18) + '...' : d.name),
                             datasets: [{
                                 label: 'Days Overdue',
                                 data: r.defaulters.map(d => d.days_overdue),
-                                backgroundColor: r.defaulters.map(d => d.days_overdue > 30 ? 'rgba(220,53,69,0.7)' : (d.days_overdue > 14 ? 'rgba(255,152,0,0.7)' : 'rgba(255,193,7,0.7)')),
+                                backgroundColor: r.defaulters.map(d => d.days_overdue> 30 ? 'rgba(220,53,69,0.7)' : (d.days_overdue> 14 ? 'rgba(255,152,0,0.7)' : 'rgba(255,193,7,0.7)')),
                                 borderWidth: 1
                             }]
                         },
@@ -7533,7 +7531,7 @@ $sett = appsettings();
                 });
 
                 let hHtml = '';
-                if (Object.keys(riskDist).length > 0) {
+                if (Object.keys(riskDist).length> 0) {
                     const riskLabels = Object.keys(riskDist).map(k => k.replace('_', ' ').toUpperCase());
                     const riskCounts = Object.values(riskDist);
                     const riskClrs = Object.keys(riskDist).map(k => k === 'very_high' ? '#dc3545' : (k === 'high' ? '#fd7e14' : '#ffc107'));
@@ -7741,7 +7739,7 @@ $sett = appsettings();
                 confirm: 0
             },
             success: function(resp) {
-                if (resp.confirm && resp.warnings && resp.warnings.length > 0) {
+                if (resp.confirm && resp.warnings && resp.warnings.length> 0) {
                     let wHtml = '<div class="alert alert-warning py-2 px-3 mb-0"><h6 class="mb-2 small fw-bold"><i class="mdi mdi-alert"></i> Please review before discharging:</h6><ul class="mb-0 small">';
                     resp.warnings.forEach(w => {
                         wHtml += `<li>${w}</li>`;
@@ -7877,7 +7875,7 @@ $sett = appsettings();
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h6 class="modal-title mb-0"><i class="fas fa-exchange-alt me-1"></i> Change Active Store</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body pb-2">
                 <label class="form-label small fw-bold mb-1">Select Store</label>
@@ -7893,8 +7891,7 @@ $sett = appsettings();
             </div>
             <div class="modal-footer py-2">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm"
-                    onclick="confirmStoreContextOverride()">
+                <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm" onclick="confirmStoreContextOverride()">
                     <i class="fas fa-check me-1"></i> Apply
                 </button>
             </div>

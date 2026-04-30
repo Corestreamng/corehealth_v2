@@ -62,7 +62,7 @@
     <table>
         <tbody>
             @php $totalIncome = 0; @endphp
-            @if(is_array($incomeGroups) && count($incomeGroups) > 0)
+            @if(is_array($incomeGroups) && count($incomeGroups)> 0)
                 @foreach($incomeGroups as $group)
                     <tr>
                         <td colspan="2" style="font-weight: bold; padding-top: 10px;">{{ $group['name'] ?? 'Income' }}</td>
@@ -98,7 +98,7 @@
     <table>
         <tbody>
             @php $totalExpenses = 0; @endphp
-            @if(is_array($expenseGroups) && count($expenseGroups) > 0)
+            @if(is_array($expenseGroups) && count($expenseGroups)> 0)
                 @foreach($expenseGroups as $group)
                     <tr>
                         <td colspan="2" style="font-weight: bold; padding-top: 10px;">{{ $group['name'] ?? 'Expenses' }}</td>
@@ -133,7 +133,7 @@
     <table>
         <tr>
             <td class="label">NET INCOME (LOSS)</td>
-            <td class="text-right amount" style="width: 150px; color: {{ $netIncome >= 0 ? '#28a745' : '#dc3545' }};">
+            <td class="text-right amount" style="width: 150px; color: {{ $netIncome>= 0 ? '#28a745' : '#dc3545' }};">
                 ₦{{ number_format($netIncome, 2) }}
             </td>
         </tr>

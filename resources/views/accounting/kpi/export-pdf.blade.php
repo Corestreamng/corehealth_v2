@@ -78,7 +78,7 @@
         </div>
     </div>
 
-    @if(isset($kpis) && count($kpis) > 0)
+    @if(isset($kpis) && count($kpis)> 0)
         @php
             $groupedKpis = collect($kpis)->groupBy('category');
         @endphp
@@ -131,7 +131,7 @@
                         <td class="text-right">
                             @php
                                 $variance = $value - $target;
-                                $varianceClass = $variance >= 0 ? 'trend-up' : 'trend-down';
+                                $varianceClass = $variance>= 0 ? 'trend-up' : 'trend-down';
                             @endphp
                             <span class="{{ $varianceClass }}">
                                 @if($format === 'currency')

@@ -19,9 +19,7 @@
                 <a class="navbar-brand" href="index.html">
                     <i class="fas fa-user-md"></i>Corehealth
                 </a>
-                <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false"
-                    aria-label="Toggle navigation">
+                <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon fa icon-expand fa-bars"></span>
                     <span class="navbar-toggler-icon fa icon-close fa-times"></span>
                 </button>
@@ -187,7 +185,7 @@
         };
 
         function scrollFunction() {
-            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            if (document.body.scrollTop> 20 || document.documentElement.scrollTop> 20) {
                 document.getElementById("movetop").style.display = "block";
             } else {
                 document.getElementById("movetop").style.display = "none";
@@ -247,7 +245,7 @@
         $(window).on("scroll", function() {
             var scroll = $(window).scrollTop();
 
-            if (scroll >= 80) {
+            if (scroll>= 80) {
                 $("#site-header").addClass("nav-fixed");
             } else {
                 $("#site-header").removeClass("nav-fixed");
@@ -259,11 +257,11 @@
             $("header").toggleClass("active");
         });
         $(document).on("ready", function() {
-            if ($(window).width() > 991) {
+            if ($(window).width()> 991) {
                 $("header").removeClass("active");
             }
             $(window).on("resize", function() {
-                if ($(window).width() > 991) {
+                if ($(window).width()> 991) {
                     $("header").removeClass("active");
                 }
             });

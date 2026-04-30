@@ -237,7 +237,7 @@
     </div>
 
     {{-- Saved Filters --}}
-    @if($savedFilters->count() > 0)
+    @if($savedFilters->count()> 0)
     <div class="card-modern card-modern">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="mdi mdi-bookmark-outline mr-2"></i>Saved Report Filters</h5>
@@ -272,13 +272,11 @@
                                     {{ $filter->last_used_at ? $filter->last_used_at->format('M d, Y') : 'Never' }}
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-outline-primary load-filter"
-                                            data-filter-id="{{ $filter->id }}">
+                                    <button type="button" class="btn btn-sm btn-outline-primary load-filter" data-filter-id="{{ $filter->id }}">
                                         <i class="mdi mdi-play"></i> Load
                                     </button>
                                     @if($filter->user_id === auth()->id())
-                                        <button type="button" class="btn btn-sm btn-outline-danger delete-filter"
-                                                data-filter-id="{{ $filter->id }}">
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-filter" data-filter-id="{{ $filter->id }}">
                                             <i class="mdi mdi-delete"></i>
                                         </button>
                                     @endif

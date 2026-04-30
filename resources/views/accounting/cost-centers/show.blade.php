@@ -158,7 +158,7 @@
                         <h6><i class="mdi mdi-cash-minus mr-2 text-danger"></i>Year-to-Date Expenses</h6>
                         <div class="text-center">
                             <h2 class="text-danger mb-0">₦{{ number_format($periodData['ytd_expenses'], 2) }}</h2>
-                            @if($periodData['budget'] > 0)
+                            @if($periodData['budget']> 0)
                                 @php
                                     $utilization = ($periodData['ytd_expenses'] / $periodData['budget']) * 100;
                                 @endphp
@@ -170,13 +170,13 @@
             </div>
 
             <!-- Budget Utilization -->
-            @if($periodData['budget'] > 0)
+            @if($periodData['budget']> 0)
             <div class="info-card">
                 <h6><i class="mdi mdi-chart-pie mr-2"></i>Budget Utilization</h6>
                 @php
                     $utilization = ($periodData['ytd_expenses'] / $periodData['budget']) * 100;
                     $remaining = $periodData['budget'] - $periodData['ytd_expenses'];
-                    $progressColor = $utilization > 90 ? 'danger' : ($utilization > 75 ? 'warning' : 'success');
+                    $progressColor = $utilization> 90 ? 'danger' : ($utilization> 75 ? 'warning' : 'success');
                 @endphp
                 <div class="budget-progress">
                     <div class="d-flex justify-content-between mb-2">
@@ -189,7 +189,7 @@
                         </div>
                     </div>
                     <div class="text-center mt-2">
-                        @if($remaining >= 0)
+                        @if($remaining>= 0)
                             <span class="text-success">₦{{ number_format($remaining, 2) }} remaining</span>
                         @else
                             <span class="text-danger">₦{{ number_format(abs($remaining), 2) }} over budget</span>
@@ -202,7 +202,7 @@
             <!-- Recent Transactions -->
             <div class="info-card">
                 <h6><i class="mdi mdi-history mr-2"></i>Recent Transactions</h6>
-                @if(count($recentTransactions) > 0)
+                @if(count($recentTransactions)> 0)
                     <div class="table-responsive">
                         <table class="table table-hover table-sm">
                             <thead class="thead-light">
@@ -226,8 +226,8 @@
                                         </td>
                                         <td>{{ Str::limit($txn->description ?? $txn->journalEntry->description, 30) }}</td>
                                         <td>{{ $txn->account->code ?? 'N/A' }} - {{ Str::limit($txn->account->name ?? 'N/A', 20) }}</td>
-                                        <td class="text-right">{{ $txn->debit > 0 ? number_format($txn->debit, 2) : '-' }}</td>
-                                        <td class="text-right">{{ $txn->credit > 0 ? number_format($txn->credit, 2) : '-' }}</td>
+                                        <td class="text-right">{{ $txn->debit> 0 ? number_format($txn->debit, 2) : '-' }}</td>
+                                        <td class="text-right">{{ $txn->credit> 0 ? number_format($txn->credit, 2) : '-' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -253,10 +253,10 @@
             @php
                 $netBalance = $periodData['ytd_revenue'] - $periodData['ytd_expenses'];
             @endphp
-            <div class="balance-card" style="background: linear-gradient(135deg, {{ $netBalance >= 0 ? '#28a745' : '#dc3545' }} 0%, {{ $netBalance >= 0 ? '#20c997' : '#c82333' }} 100%);">
+            <div class="balance-card" style="background: linear-gradient(135deg, {{ $netBalance>= 0 ? '#28a745' : '#dc3545' }} 0%, {{ $netBalance>= 0 ? '#20c997' : '#c82333' }} 100%);">
                 <div class="label">YTD Net Balance</div>
                 <div class="amount">₦{{ number_format(abs($netBalance), 2) }}</div>
-                <div class="label">{{ $netBalance >= 0 ? 'Surplus' : 'Deficit' }}</div>
+                <div class="label">{{ $netBalance>= 0 ? 'Surplus' : 'Deficit' }}</div>
             </div>
 
             <!-- Organization Info -->
@@ -296,7 +296,7 @@
             </div>
 
             <!-- Hierarchy -->
-            @if($costCenter->parent || $costCenter->children->count() > 0)
+            @if($costCenter->parent || $costCenter->children->count()> 0)
             <div class="info-card">
                 <h6><i class="mdi mdi-family-tree mr-2"></i>Hierarchy</h6>
                 @if($costCenter->parent)
@@ -307,7 +307,7 @@
                         </a>
                     </div>
                 @endif
-                @if($costCenter->children->count() > 0)
+                @if($costCenter->children->count()> 0)
                     <div>
                         <small class="text-muted">Children ({{ $costCenter->children->count() }})</small><br>
                         @foreach($costCenter->children as $child)
@@ -321,7 +321,7 @@
             @endif
 
             <!-- Budget History -->
-            @if($costCenter->budgets->count() > 0)
+            @if($costCenter->budgets->count()> 0)
             <div class="info-card">
                 <h6><i class="mdi mdi-calendar-month mr-2"></i>Budget History</h6>
                 @foreach($costCenter->budgets->sortByDesc('fiscal_year')->take(3) as $budget)

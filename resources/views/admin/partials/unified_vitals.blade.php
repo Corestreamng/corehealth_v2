@@ -498,7 +498,7 @@ function calculateAndDisplayBMI($container) {
     var $display = $container.find('.vitals-bmi-display');
     var $hidden = $container.find('.vitals-bmi-hidden');
 
-    if (weight && height && height > 0) {
+    if (weight && height && height> 0) {
         var bmi = weight / Math.pow(height / 100, 2);
         bmi = Math.round(bmi * 10) / 10;
 
@@ -536,26 +536,26 @@ function validateVitalInput($group, type, value) {
             var sys = parseInt(parts[0]);
             var dia = parseInt(parts[1]);
             if (isNaN(sys) || isNaN(dia)) return;
-            if (sys > 180 || sys < 80 || dia > 110 || dia < 50) status = 'vital-critical';
-            else if (sys > 140 || sys < 90 || dia > 90 || dia < 60) status = 'vital-warning';
+            if (sys> 180 || sys < 80 || dia> 110 || dia < 50) status = 'vital-critical';
+            else if (sys> 140 || sys < 90 || dia> 90 || dia < 60) status = 'vital-warning';
             else status = 'vital-normal';
             break;
         case 'temp':
             var t = parseFloat(value);
-            if (t < 34 || t > 39) status = 'vital-critical';
-            else if (t < 36.1 || t > 38) status = 'vital-warning';
+            if (t < 34 || t> 39) status = 'vital-critical';
+            else if (t < 36.1 || t> 38) status = 'vital-warning';
             else status = 'vital-normal';
             break;
         case 'hr':
             var hr = parseInt(value);
-            if (hr < 50 || hr > 150) status = 'vital-critical';
-            else if (hr < 60 || hr > 100) status = 'vital-warning';
+            if (hr < 50 || hr> 150) status = 'vital-critical';
+            else if (hr < 60 || hr> 100) status = 'vital-warning';
             else status = 'vital-normal';
             break;
         case 'rr':
             var rr = parseInt(value);
-            if (rr < 8 || rr > 30) status = 'vital-critical';
-            else if (rr < 12 || rr > 20) status = 'vital-warning';
+            if (rr < 8 || rr> 30) status = 'vital-critical';
+            else if (rr < 12 || rr> 20) status = 'vital-warning';
             else status = 'vital-normal';
             break;
         case 'spo2':
@@ -566,8 +566,8 @@ function validateVitalInput($group, type, value) {
             break;
         case 'sugar':
             var sugar = parseFloat(value);
-            if (sugar < 70 || sugar > 200) status = 'vital-critical';
-            else if (sugar < 80 || sugar > 140) status = 'vital-warning';
+            if (sugar < 70 || sugar> 200) status = 'vital-critical';
+            else if (sugar < 80 || sugar> 140) status = 'vital-warning';
             else status = 'vital-normal';
             break;
     }

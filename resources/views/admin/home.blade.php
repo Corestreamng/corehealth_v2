@@ -94,8 +94,8 @@
         $firstTabKey = array_key_first($roleTabs);
     @endphp
 
-    @if(count($roleTabs) > 0)
-        @if(count($roleTabs) > 1)
+    @if(count($roleTabs)> 0)
+        @if(count($roleTabs)> 1)
             {{-- Multi-Role Tab Layout --}}
             <div class="row mb-4">
                 <div class="col-12">
@@ -944,7 +944,7 @@ $(document).ready(function () {
                 var html = '';
                 var maxVal = Math.max.apply(null, d.departmentRevenue.map(function(x){return parseFloat(x.total);}));
                 d.departmentRevenue.forEach(function(dept) {
-                    var pct = maxVal > 0 ? (parseFloat(dept.total) / maxVal * 100) : 0;
+                    var pct = maxVal> 0 ? (parseFloat(dept.total) / maxVal * 100) : 0;
                     html += '<div class="dash-aging-bar"><div class="dash-aging-label"><span>' + dept.department + '</span><span>' + fmt(dept.total) + '</span></div>' +
                         '<div class="dash-aging-track"><div class="dash-aging-fill" style="width:' + pct + '%;background:#3b82f6;"></div></div></div>';
                 });
@@ -958,7 +958,7 @@ $(document).ready(function () {
                 var ahtml = '';
                 Object.keys(agingData).forEach(function(key) {
                     var val = parseFloat(agingData[key]);
-                    var pct = agingMax > 0 ? (val / agingMax * 100) : 0;
+                    var pct = agingMax> 0 ? (val / agingMax * 100) : 0;
                     ahtml += '<div class="dash-aging-bar"><div class="dash-aging-label"><span>' + key + '</span><span>' + fmt(val) + '</span></div>' +
                         '<div class="dash-aging-track"><div class="dash-aging-fill" style="width:' + pct + '%;background:' + (agingColors[key] || '#6b7280') + ';"></div></div></div>';
                 });

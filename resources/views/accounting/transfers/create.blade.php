@@ -649,9 +649,9 @@ $(document).ready(function() {
         $('#je-to-debit').text('₦' + amount.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         $('#je-from-credit').text('₦' + total.toLocaleString('en-NG', {minimumFractionDigits: 2}));
 
-        if (fee > 0) {
+        if (fee> 0) {
             $('#je-fee-row').show();
-            $('#je-fee-account').text(feeAccount.length > 35 ? feeAccount.substring(0, 35) + '...' : feeAccount);
+            $('#je-fee-account').text(feeAccount.length> 35 ? feeAccount.substring(0, 35) + '...' : feeAccount);
             $('#je-fee-debit').text('₦' + fee.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         } else {
             $('#je-fee-row').hide();

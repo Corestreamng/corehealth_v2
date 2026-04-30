@@ -242,7 +242,7 @@
         <!-- Procedure Team -->
         <div class="result-section">
             <div class="result-section-title">Procedure Team</div>
-            @if($procedure->teamMembers->count() > 0)
+            @if($procedure->teamMembers->count()> 0)
             <table class="table">
                 <thead>
                     <tr>
@@ -287,7 +287,7 @@
         <!-- Procedure Notes -->
         <div class="result-section">
             <div class="result-section-title">Procedure Notes</div>
-            @if($procedure->notes->count() > 0)
+            @if($procedure->notes->count()> 0)
                 @foreach($procedure->notes as $note)
                 <div style="margin-bottom: 20px; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden;">
                     <div style="padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">

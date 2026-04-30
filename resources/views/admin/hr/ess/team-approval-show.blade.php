@@ -142,7 +142,7 @@
             </div>
 
             <!-- Attachments Card -->
-            @if($leaveRequest->attachments && $leaveRequest->attachments->count() > 0)
+            @if($leaveRequest->attachments && $leaveRequest->attachments->count()> 0)
             <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
@@ -263,7 +263,7 @@
                     @php
                         $balanceRemaining = $balance->balance_remaining ?? 0;
                         $entitlement = $balance->entitlement ?? 0;
-                        $percentage = $entitlement > 0 ? ($balanceRemaining / $entitlement) * 100 : 0;
+                        $percentage = $entitlement> 0 ? ($balanceRemaining / $entitlement) * 100 : 0;
                         $afterApproval = $balanceRemaining - $leaveRequest->total_days;
                     @endphp
 
@@ -289,7 +289,7 @@
                     @endif
 
                     <div class="progress mt-3" style="height: 8px; border-radius: 4px;">
-                        <div class="progress-bar bg-{{ $percentage > 50 ? 'success' : ($percentage > 20 ? 'warning' : 'danger') }}"
+                        <div class="progress-bar bg-{{ $percentage> 50 ? 'success' : ($percentage> 20 ? 'warning' : 'danger') }}"
                              style="width: {{ min($percentage, 100) }}%"></div>
                     </div>
                     <small class="text-muted">{{ number_format($percentage, 0) }}% of {{ $entitlement }} days remaining</small>

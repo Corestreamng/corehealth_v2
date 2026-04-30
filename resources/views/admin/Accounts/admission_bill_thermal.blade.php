@@ -107,13 +107,13 @@
             <span>Gross Total:</span>
             <span>₦{{ number_format($totals['gross'], 2) }}</span>
         </div>
-        @if($totals['discount'] > 0)
+        @if($totals['discount']> 0)
         <div class="total-row">
             <span>Discount:</span>
             <span>-₦{{ number_format($totals['discount'], 2) }}</span>
         </div>
         @endif
-        @if($totals['hmo'] > 0)
+        @if($totals['hmo']> 0)
         <div class="total-row">
             <span>HMO:</span>
             <span>-₦{{ number_format($totals['hmo'], 2) }}</span>

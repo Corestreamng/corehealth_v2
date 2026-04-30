@@ -177,7 +177,7 @@
         <i class="mdi mdi-history"></i> Transaction History
     </div>
 
-    @if($transactions->count() > 0)
+    @if($transactions->count()> 0)
         <table class="transactions-table">
             <thead>
                 <tr>

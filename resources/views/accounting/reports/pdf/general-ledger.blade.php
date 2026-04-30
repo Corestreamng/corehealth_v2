@@ -66,7 +66,7 @@
                 </tr>
             </thead>
             <tbody>
-                @if(count($accountData['transactions'] ?? []) > 0)
+                @if(count($accountData['transactions'] ?? [])> 0)
                     @php $runningBalance = $accountData['opening_balance'] ?? 0; @endphp
                     @foreach($accountData['transactions'] as $transaction)
                         @php
@@ -77,8 +77,8 @@
                             <td>{{ $transaction['entry_number'] ?? '-' }}</td>
                             <td>{{ Str::limit($transaction['description'] ?? '', 35) }}</td>
                             <td>{{ $transaction['reference'] ?? '-' }}</td>
-                            <td class="text-right">{{ ($transaction['debit'] ?? 0) > 0 ? '₦' . number_format($transaction['debit'], 2) : '-' }}</td>
-                            <td class="text-right">{{ ($transaction['credit'] ?? 0) > 0 ? '₦' . number_format($transaction['credit'], 2) : '-' }}</td>
+                            <td class="text-right">{{ ($transaction['debit'] ?? 0)> 0 ? '₦' . number_format($transaction['debit'], 2) : '-' }}</td>
+                            <td class="text-right">{{ ($transaction['credit'] ?? 0)> 0 ? '₦' . number_format($transaction['credit'], 2) : '-' }}</td>
                             <td class="text-right">₦{{ number_format($runningBalance, 2) }}</td>
                         </tr>
                     @endforeach

@@ -217,7 +217,7 @@ function renderPrescCard(row, type) {
     // Different status display based on tab type
     if (type === 'pending') {
         // Show clear indication of what's pending
-        if (payable > 0 && !isPaid) {
+        if (payable> 0 && !isPaid) {
             statusBadges += `<span class="badge bg-danger">Awaiting Payment</span>`;
             pendingAlert = `
                 <div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
@@ -225,7 +225,7 @@ function renderPrescCard(row, type) {
                 </div>
             `;
         }
-        if (claims > 0 && !isValidated) {
+        if (claims> 0 && !isValidated) {
             statusBadges += ` <span class="badge bg-info">Awaiting HMO Validation</span>`;
             pendingAlert += `
                 <div class="alert alert-info py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
@@ -235,10 +235,10 @@ function renderPrescCard(row, type) {
         }
     } else if (type === 'dispense') {
         // Items in dispense tab are ready - show green badges
-        if (payable > 0) {
+        if (payable> 0) {
             statusBadges += '<span class="presc-card-status paid"><i class="mdi mdi-check"></i> Paid</span>';
         }
-        if (claims > 0) {
+        if (claims> 0) {
             statusBadges += ' <span class="presc-card-status validated"><i class="mdi mdi-check"></i> HMO Validated</span>';
         }
         if (payable == 0 && claims == 0) {
@@ -255,14 +255,14 @@ function renderPrescCard(row, type) {
         } else if (status === 2) {
             // Check if ready to dispense or awaiting something
             const pendingReasons = [];
-            if (payable > 0 && !isPaid) {
+            if (payable> 0 && !isPaid) {
                 pendingReasons.push('Payment');
             }
-            if (claims > 0 && !isValidated) {
+            if (claims> 0 && !isValidated) {
                 pendingReasons.push('HMO Validation');
             }
 
-            if (pendingReasons.length > 0) {
+            if (pendingReasons.length> 0) {
                 statusBadges = `<span class="badge bg-info">Awaiting ${pendingReasons.join(' & ')}</span>`;
             } else {
                 statusBadges = '<span class="badge bg-success">Ready to Dispense</span>';
@@ -273,7 +273,7 @@ function renderPrescCard(row, type) {
     }
 
     let hmoInfo = '';
-    if (coverageMode !== 'none' && claims > 0) {
+    if (coverageMode !== 'none' && claims> 0) {
         hmoInfo = `
             <div class="presc-card-hmo-info">
                 <span class="badge bg-info me-2">${coverageMode.toUpperCase()}</span>
@@ -471,7 +471,7 @@ function searchProductsForPresc(query) {
                 const claims = item.claims_amount || 0;
                 const mode = item.coverage_mode || null;
 
-                const stockClass = qty > 0 ? 'text-success' : 'text-danger';
+                const stockClass = qty> 0 ? 'text-success' : 'text-danger';
                 const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ₦${payable}</span> <span class='text-success ms-1'>Claim: ₦${claims}</span>` : '';
                 const displayName = `${name}[${code}](${qty} avail.)`;
 
@@ -726,7 +726,7 @@ function dismissPrescItems(type) {
 // Auto-initialize if patient data is available in the DOM
 $(document).ready(function() {
     const container = $('.presc-management-container');
-    if (container.length > 0) {
+    if (container.length> 0) {
         const patientId = container.data('patient-id');
         const patientUserId = container.data('patient-user-id');
         if (patientId) {

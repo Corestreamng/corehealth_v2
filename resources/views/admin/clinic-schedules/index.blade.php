@@ -159,7 +159,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="clinicScheduleModalTitle">Add Clinic Schedule</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <form id="clinicScheduleForm">
                 <div class="modal-body">
@@ -225,7 +225,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="doctorAvailModalTitle">Add Doctor Availability</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <form id="doctorAvailForm">
                 <div class="modal-body">
@@ -290,7 +290,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="overrideModalTitle">Add Availability Override</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <form id="overrideForm">
                 <div class="modal-body">

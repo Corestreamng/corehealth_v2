@@ -115,21 +115,21 @@
                 <div class="summary-col">
                     @php
                         $variance = ($budget->total_amount ?? 0) - ($budget->actual_amount ?? 0);
-                        $varianceClass = $variance >= 0 ? 'positive' : 'negative';
+                        $varianceClass = $variance>= 0 ? 'positive' : 'negative';
                     @endphp
                     <div class="value {{ $varianceClass }}">₦{{ number_format(abs($variance), 2) }}</div>
-                    <div class="label">{{ $variance >= 0 ? 'Under Budget' : 'Over Budget' }}</div>
+                    <div class="label">{{ $variance>= 0 ? 'Under Budget' : 'Over Budget' }}</div>
                 </div>
                 <div class="summary-col">
                     @php
-                        $utilization = $budget->total_amount > 0 ? (($budget->actual_amount ?? 0) / $budget->total_amount) * 100 : 0;
+                        $utilization = $budget->total_amount> 0 ? (($budget->actual_amount ?? 0) / $budget->total_amount) * 100 : 0;
                     @endphp
                     <div class="value">{{ number_format($utilization, 1) }}%</div>
                     <div class="label">Utilization</div>
                 </div>
             </div>
 
-            @if($budget->items && $budget->items->count() > 0)
+            @if($budget->items && $budget->items->count()> 0)
             <table class="detail-table">
                 <thead>
                     <tr>
@@ -152,7 +152,7 @@
                             @php
                                 $itemVariance = $item->budgeted_amount - ($item->actual_amount ?? 0);
                             @endphp
-                            <span class="{{ $itemVariance >= 0 ? 'positive' : 'negative' }}">
+                            <span class="{{ $itemVariance>= 0 ? 'positive' : 'negative' }}">
                                 ₦{{ number_format(abs($itemVariance), 2) }}
                             </span>
                         </td>

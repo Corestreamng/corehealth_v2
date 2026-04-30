@@ -214,7 +214,7 @@
                 <div class="info-section">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0"><i class="mdi mdi-file-document"></i> Recent Purchase Orders</h5>
-                        @if($supplier->purchaseOrders->count() > 0)
+                        @if($supplier->purchaseOrders->count()> 0)
                         <a href="{{ route('inventory.purchase-orders.index', ['supplier_id' => $supplier->id]) }}" class="btn btn-sm btn-outline-primary">
                             View All
                         </a>

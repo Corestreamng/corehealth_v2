@@ -169,8 +169,8 @@
                         $available = $balance ? $balance->available : 0;
                         $entitled = $balance ? $balance->total_entitled : $type->max_days_per_year;
                         $used = $entitled - $available;
-                        $percentage = $entitled > 0 ? (($entitled - $available) / $entitled * 100) : 0;
-                        $remainingPercentage = $entitled > 0 ? ($available / $entitled * 100) : 0;
+                        $percentage = $entitled> 0 ? (($entitled - $available) / $entitled * 100) : 0;
+                        $remainingPercentage = $entitled> 0 ? ($available / $entitled * 100) : 0;
                     @endphp
                     <div class="mb-3 p-3" style="border-radius: 8px; background: {{ $type->color }}08; border-left: 3px solid {{ $type->color }};">
                         <!-- Leave Type Header -->
@@ -179,9 +179,9 @@
                                 <i class="mdi mdi-calendar-blank" style="font-size: 1rem;"></i>
                                 {{ $type->name }}
                             </h6>
-                            @if($available <= 0 && $entitled > 0)
+                            @if($available <= 0 && $entitled> 0)
                             <span class="badge badge-danger">Exhausted</span>
-                            @elseif($remainingPercentage <= 20 && $entitled > 0)
+                            @elseif($remainingPercentage <= 20 && $entitled> 0)
                             <span class="badge badge-warning">Low</span>
                             @else
                             <span class="badge badge-success">Available</span>
@@ -200,7 +200,7 @@
                             </div>
                             <div class="col-4 text-center">
                                 <div class="small text-muted">Left</div>
-                                <div class="font-weight-bold" style="font-size: 1.1rem; color: {{ $available > 0 ? '#28a745' : '#dc3545' }};">{{ number_format($available, 1) }}</div>
+                                <div class="font-weight-bold" style="font-size: 1.1rem; color: {{ $available> 0 ? '#28a745' : '#dc3545' }};">{{ number_format($available, 1) }}</div>
                             </div>
                         </div>
 
@@ -241,15 +241,13 @@
                 <h5 class="modal-title text-white">
                     <i class="mdi mdi-calendar-account mr-2"></i>Leave Details
                 </h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="leaveDetailContent">
                 <!-- Content loaded dynamically -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             </div>
         </div>
     </div>
@@ -352,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const start = new Date(leave.start_date);
             const end = new Date(leave.end_date);
             const check = new Date(dateStr);
-            return check >= start && check <= end;
+            return check>= start && check <= end;
         });
     }
 
@@ -441,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('nextMonthBtn').addEventListener('click', function() {
         currentMonth++;
-        if (currentMonth > 11) {
+        if (currentMonth> 11) {
             currentMonth = 0;
             currentYear++;
         }

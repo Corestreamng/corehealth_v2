@@ -185,12 +185,12 @@
                         @endif
                     </td>
                     <td class="amount debit" style="text-align: right;">
-                        @if($tx['debit'] > 0)
+                        @if($tx['debit']> 0)
                         {{ number_format($tx['debit'], 2) }}
                         @endif
                     </td>
                     <td class="amount credit" style="text-align: right;">
-                        @if($tx['credit'] > 0)
+                        @if($tx['credit']> 0)
                         {{ number_format($tx['credit'], 2) }}
                         @endif
                     </td>
@@ -204,7 +204,7 @@
                 </tr>
                 @endforelse
             </tbody>
-            @if(count($transactions) > 0)
+            @if(count($transactions)> 0)
             <tfoot>
                 <tr class="totals-row">
                     <td colspan="4" style="text-align: right; font-weight: 700;">Period Totals:</td>

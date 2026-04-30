@@ -71,7 +71,7 @@
                 <h5 class="modal-title" id="templateModalTitle">
                     <i class="mdi mdi-file-document-edit"></i> New Template
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="templateId" value="">

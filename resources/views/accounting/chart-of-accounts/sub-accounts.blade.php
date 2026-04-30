@@ -19,7 +19,7 @@
             <p class="text-muted mb-0">{{ $account->full_code }} - {{ $account->name }}</p>
         </div>
         <div>
-            <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#createSubAccountModal">
+            <button type="button" class="btn btn-primary mr-2" data-bs-toggle="modal" data-bs-target="#createSubAccountModal">
                 <i class="mdi mdi-plus mr-1"></i> Create Sub-Account
             </button>
             <a href="{{ route('accounting.chart-of-accounts.show', $account->id) }}" class="btn btn-outline-secondary">
@@ -34,7 +34,7 @@
             <h6 class="m-0 font-weight-bold text-primary">Sub-Accounts</h6>
         </div>
         <div class="card-body">
-            @if($account->subAccounts->count() > 0)
+            @if($account->subAccounts->count()> 0)
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-light">
@@ -85,7 +85,7 @@
                 <i class="mdi mdi-folder-open mdi-48px text-muted mb-3"></i>
                 <h5>No Sub-Accounts</h5>
                 <p class="text-muted mb-3">This account has no sub-accounts yet.</p>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createSubAccountModal">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSubAccountModal">
                     <i class="mdi mdi-plus mr-1"></i> Create First Sub-Account
                 </button>
             </div>
@@ -102,9 +102,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Create Sub-Account</h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -150,7 +148,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create Sub-Account</button>
                 </div>
             </form>

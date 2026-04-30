@@ -409,7 +409,7 @@
                         </div>
                         <div class="summary-row">
                             <div class="summary-label">Variance:</div>
-                            <div class="summary-value {{ $period->variance >= 0 ? 'variance-positive' : 'variance-negative' }}">
+                            <div class="summary-value {{ $period->variance>= 0 ? 'variance-positive' : 'variance-negative' }}">
                                 ₦{{ number_format($period->variance, 2) }}
                             </div>
                         </div>

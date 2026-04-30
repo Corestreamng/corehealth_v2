@@ -189,9 +189,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-close-circle"></i> Reject Journal Entry
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -226,9 +224,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-undo"></i> Reverse Journal Entry
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -357,7 +353,7 @@ function updateSelectedEntries() {
         selectedEntries.push($(this).val());
     });
 
-    if (selectedEntries.length > 0) {
+    if (selectedEntries.length> 0) {
         $('#bulk-actions-bar').removeClass('d-none');
         $('#selected-count').text(selectedEntries.length);
     } else {

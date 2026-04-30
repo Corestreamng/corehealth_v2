@@ -423,7 +423,7 @@
         @endif
 
         {{-- Surgical Team --}}
-        @if($showTeam && $procedure->teamMembers->count() > 0)
+        @if($showTeam && $procedure->teamMembers->count()> 0)
             <div class="section">
                 <div class="section-title">Surgical Team</div>
                 <table>
@@ -455,7 +455,7 @@
                 @php
                     $typeNotes = $procedure->notes->where('note_type', $noteType);
                 @endphp
-                @if($typeNotes->count() > 0)
+                @if($typeNotes->count()> 0)
                     <div class="section">
                         <div class="section-title">{{ $noteTitle }}</div>
                         @foreach($typeNotes as $note)
@@ -477,7 +477,7 @@
             @php
                 $labItems = $procedure->items->filter(fn($i) => $i->lab_service_request_id !== null);
             @endphp
-            @if($labItems->count() > 0)
+            @if($labItems->count()> 0)
                 <div class="section">
                     <div class="section-title">Laboratory Results</div>
                     @foreach($labItems as $item)
@@ -538,7 +538,7 @@
             @php
                 $imagingItems = $procedure->items->filter(fn($i) => $i->imaging_service_request_id !== null);
             @endphp
-            @if($imagingItems->count() > 0)
+            @if($imagingItems->count()> 0)
                 <div class="section">
                     <div class="section-title">Imaging Results</div>
                     @foreach($imagingItems as $item)
@@ -594,7 +594,7 @@
             @php
                 $medItems = $procedure->items->filter(fn($i) => $i->product_request_id !== null);
             @endphp
-            @if($medItems->count() > 0)
+            @if($medItems->count()> 0)
                 <div class="section">
                     <div class="section-title">Medications</div>
                     <table>
@@ -677,7 +677,7 @@
                         <td>Procedure Fee</td>
                         <td>₦{{ number_format(($billing->amount ?? 0) + ($billing->claims_amount ?? 0), 2) }}</td>
                     </tr>
-                    @if(($billing->claims_amount ?? 0) > 0)
+                    @if(($billing->claims_amount ?? 0)> 0)
                         <tr>
                             <td>Patient Responsibility</td>
                             <td>₦{{ number_format($billing->amount ?? 0, 2) }}</td>
@@ -712,7 +712,7 @@
                         <span class="info-label">Reason:</span>
                         <span class="info-value">{{ $procedure->cancellation_reason ?? 'N/A' }}</span>
                     </div>
-                    @if(($procedure->refund_amount ?? 0) > 0)
+                    @if(($procedure->refund_amount ?? 0)> 0)
                         <div class="info-item">
                             <span class="info-label">Refund Amount:</span>
                             <span class="info-value" style="color: #28a745; font-weight: bold;">₦{{ number_format($procedure->refund_amount, 2) }}</span>

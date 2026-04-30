@@ -164,20 +164,17 @@
                                     </a>
                                     @endif
                                     @if($remittance->status === 'draft')
-                                    <button type="button" class="btn btn-outline-success submit-btn"
-                                            data-id="{{ $remittance->id }}" title="Submit for Approval">
+                                    <button type="button" class="btn btn-outline-success submit-btn" data-id="{{ $remittance->id }}" title="Submit for Approval">
                                         <i class="mdi mdi-send"></i>
                                     </button>
                                     @endif
                                     @if($remittance->canApprove())
-                                    <button type="button" class="btn btn-outline-success approve-btn"
-                                            data-id="{{ $remittance->id }}" title="Approve">
+                                    <button type="button" class="btn btn-outline-success approve-btn" data-id="{{ $remittance->id }}" title="Approve">
                                         <i class="mdi mdi-check"></i>
                                     </button>
                                     @endif
                                     @if($remittance->canPay())
-                                    <button type="button" class="btn btn-outline-primary pay-btn"
-                                            data-id="{{ $remittance->id }}"
+                                    <button type="button" class="btn btn-outline-primary pay-btn" data-id="{{ $remittance->id }}"
                                             data-amount="{{ $remittance->amount }}"
                                             data-payee="{{ $remittance->payee_name }}"
                                             title="Mark as Paid">
@@ -185,8 +182,7 @@
                                     </button>
                                     @endif
                                     @if($remittance->canVoid())
-                                    <button type="button" class="btn btn-outline-danger void-btn"
-                                            data-id="{{ $remittance->id }}" title="Void">
+                                    <button type="button" class="btn btn-outline-danger void-btn" data-id="{{ $remittance->id }}" title="Void">
                                         <i class="mdi mdi-cancel"></i>
                                     </button>
                                     @endif
@@ -219,7 +215,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cash-check mr-2"></i>Record Payment</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="payForm" method="POST">
                 @csrf
@@ -271,7 +267,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cancel mr-2"></i>Void Remittance</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="voidForm" method="POST">
                 @csrf

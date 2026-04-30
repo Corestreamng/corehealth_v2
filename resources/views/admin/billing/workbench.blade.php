@@ -1937,17 +1937,17 @@
     }
 
     /* Disable DataTables responsive expansion */
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable > tbody > tr.child {
+    #history-tab table.dataTable> tbody> tr.child {
         display: none !important;
     }
 
@@ -3465,7 +3465,7 @@
                                     <i class="mdi mdi-cart-check"></i> Checkout
                                     <span class="item-count-badge"><span id="modal-item-count">0</span> items</span>
                                 </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
                                 <div class="payment-summary-card" id="payment-summary-card">
@@ -3836,9 +3836,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: var(--hospital-primary); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> My Transactions</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="my-transactions-modal-body">
                 <!-- Filter Panel -->
@@ -3938,7 +3936,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -4108,9 +4106,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title"><i class="mdi mdi-file-document-outline"></i> Account Statement</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <!-- Config Panel -->
@@ -4219,9 +4215,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> Receipt Preview</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <div class="receipt-modal-tabs">
@@ -4474,7 +4468,7 @@ function initializeEventListeners() {
 let availableBanks = [];
 
 function loadBanks() {
-    if (availableBanks.length > 0) {
+    if (availableBanks.length> 0) {
         return; // Already loaded
     }
 
@@ -4702,10 +4696,10 @@ function restoreCheckedItemsState() {
         // Sync select-all checkbox
         const total = $(`.request-checkbox[data-section="${section}"]`).length;
         const checked = $(`.request-checkbox[data-section="${section}"]:checked`).length;
-        $(`#select-all-${section}`).prop('checked', total > 0 && checked === total);
+        $(`#select-all-${section}`).prop('checked', total> 0 && checked === total);
 
         // Re-enable action buttons if items are checked
-        if (checked > 0) {
+        if (checked> 0) {
             $(`#btn-record-${section}, #btn-collect-${section}, #btn-dismiss-${section}`).prop('disabled', false);
         }
     });
@@ -4720,7 +4714,7 @@ function clearCheckedItems(section) {
 }
 
 function hasActiveSelections() {
-    return Object.values(checkedItemsState).some(s => s.size > 0);
+    return Object.values(checkedItemsState).some(s => s.size> 0);
 }
 // ── End Selection Preservation State ─────────────────────────────────
 
@@ -4757,7 +4751,7 @@ function renderPendingSubtabContent(filter) {
     }
 
     // Billing Section (Status 1)
-    if ((filter === 'all' || filter === 'billing') && requests.billing.length > 0) {
+    if ((filter === 'all' || filter === 'billing') && requests.billing.length> 0) {
         const billingHtml = `
             <div class="request-section" data-section="billing">
                 <div class="request-section-header">
@@ -4793,7 +4787,7 @@ function renderPendingSubtabContent(filter) {
     }
 
     // Sample Section (Status 2)
-    if ((filter === 'all' || filter === 'sample') && requests.sample.length > 0) {
+    if ((filter === 'all' || filter === 'sample') && requests.sample.length> 0) {
         const sampleHtml = `
             <div class="request-section" data-section="sample">
                 <div class="request-section-header">
@@ -4829,7 +4823,7 @@ function renderPendingSubtabContent(filter) {
     }
 
     // Results Section (Status 3)
-    if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
+    if ((filter === 'all' || filter === 'results') && requests.results.length> 0) {
         const resultsHtml = `
             <div class="request-section" data-section="results">
                 <div class="request-section-header">
@@ -4890,9 +4884,7 @@ function createRequestCard(request, section) {
 
     // Results section has individual action button instead of checkbox
     const checkboxOrAction = section === 'results' ? `
-        <button class="btn btn-sm btn-primary enter-result-btn"
-                data-request-id="${request.id}"
-                ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
+        <button class="btn btn-sm btn-primary enter-result-btn" data-request-id="${request.id}" ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
             <i class="mdi mdi-file-document-edit"></i>
             Enter Result
         </button>
@@ -4981,7 +4973,7 @@ function initializeRequestHandlers() {
             return $(this).data('request-id');
         }).get();
 
-        if (selectedIds.length > 0) {
+        if (selectedIds.length> 0) {
             recordBilling(selectedIds);
         }
     });
@@ -4992,7 +4984,7 @@ function initializeRequestHandlers() {
             return $(this).data('request-id');
         }).get();
 
-        if (selectedIds.length > 0) {
+        if (selectedIds.length> 0) {
             collectSample(selectedIds);
         }
     });
@@ -5005,7 +4997,7 @@ function initializeRequestHandlers() {
             return $(this).data('request-id');
         }).get();
 
-        if (selectedIds.length > 0) {
+        if (selectedIds.length> 0) {
             dismissRequests(selectedIds, section);
         }
     });
@@ -5069,7 +5061,7 @@ function loadQueueCounts() {
         $('#queue-credit-count').text(counts.credit || 0);
         var emergencyCount = counts.emergency || 0;
         $('#queue-emergency-count').text(emergencyCount);
-        if (emergencyCount > 0) {
+        if (emergencyCount> 0) {
             $('#queue-emergency-count').closest('.queue-item').addClass('emergency-pulse');
         } else {
             $('#queue-emergency-count').closest('.queue-item').removeClass('emergency-pulse');
@@ -5217,7 +5209,7 @@ function updateAccountBalanceDisplays(accountData) {
     if (balance < 0) {
         $('#billing-balance-amount').addClass('text-danger').removeClass('text-success');
         $('#header-balance-amount').addClass('text-danger').removeClass('text-success');
-    } else if (balance > 0) {
+    } else if (balance> 0) {
         $('#billing-balance-amount').addClass('text-success').removeClass('text-danger');
         $('#header-balance-amount').addClass('text-success').removeClass('text-danger');
     } else {
@@ -5246,7 +5238,7 @@ function displayAccountInfo(account, pendingBills) {
 
     $('#hero-balance-amount').text(`₦${balance.toLocaleString()}`);
 
-    if (balance > 0) {
+    if (balance> 0) {
         heroBalance.addClass('credit');
         $('#hero-balance-status').text('Credit Balance');
     } else if (balance < 0) {
@@ -5317,7 +5309,7 @@ function updateAccountStats(summary) {
 function renderAccountTransactions(transactions) {
     console.log('renderAccountTransactions called with:', transactions);
     const timeline = $('#transaction-timeline');
-    console.log('Timeline element found:', timeline.length > 0);
+    console.log('Timeline element found:', timeline.length> 0);
     timeline.empty();
 
     if (!transactions || transactions.length === 0) {
@@ -5334,8 +5326,8 @@ function renderAccountTransactions(transactions) {
 
     console.log('Rendering', transactions.length, 'transactions');
     transactions.forEach((tx, index) => {
-        const amountClass = parseFloat(tx.amount) >= 0 ? 'positive' : 'negative';
-        const amountPrefix = parseFloat(tx.amount) >= 0 ? '+' : '';
+        const amountClass = parseFloat(tx.amount)>= 0 ? 'positive' : 'negative';
+        const amountPrefix = parseFloat(tx.amount)>= 0 ? '+' : '';
 
         const item = `
             <div class="timeline-item">
@@ -5464,7 +5456,7 @@ function updateBalancePreview() {
     previewElement.text(`₦${newBalance.toLocaleString()}`);
     previewElement.removeClass('positive negative');
 
-    if (newBalance > 0) {
+    if (newBalance> 0) {
         previewElement.addClass('positive');
     } else if (newBalance < 0) {
         previewElement.addClass('negative');
@@ -5534,7 +5526,7 @@ function processAccountTransaction() {
     }
 
     // Check if withdraw amount exceeds balance
-    if (type === 'withdraw' && amount > currentAccountBalance) {
+    if (type === 'withdraw' && amount> currentAccountBalance) {
         if (!confirm(`Warning: This withdrawal (₦${amount.toLocaleString()}) exceeds the current balance (₦${currentAccountBalance.toLocaleString()}). Continue anyway?`)) {
             return;
         }
@@ -5814,7 +5806,7 @@ function loadAdmissionHistory() {
         onBadgeUpdate: function(count) {
             const badge = $('#admissions-badge');
             badge.text(count);
-            if (count > 0) badge.show(); else badge.hide();
+            if (count> 0) badge.show(); else badge.hide();
         }
     });
 }
@@ -5868,7 +5860,7 @@ function renderBillingItems(items) {
                 <td>₦${parseFloat(item.price).toLocaleString()}</td>
                 <td><input type="number" class="form-control item-qty-input" value="${item.qty}" min="1" data-id="${item.id}"></td>
                 <td><input type="number" class="form-control item-discount-input" value="${item.discount || 0}" min="0" max="100" data-id="${item.id}"></td>
-                <td>${item.claims_amount > 0 ? `<span class="hmo-badge">₦${parseFloat(item.claims_amount).toLocaleString()}</span>` : '-'}</td>
+                <td>${item.claims_amount> 0 ? `<span class="hmo-badge">₦${parseFloat(item.claims_amount).toLocaleString()}</span>` : '-'}</td>
                 <td class="item-total" data-id="${item.id}">₦${calculateItemTotal(item).toLocaleString()}</td>
             </tr>
         `;
@@ -5957,7 +5949,7 @@ function applyBillingFilters() {
                 if (dateTo) {
                     const toDate = new Date(dateTo);
                     toDate.setHours(23, 59, 59, 999);
-                    if (itemDate > toDate) {
+                    if (itemDate> toDate) {
                         visible = false;
                     }
                 }
@@ -6005,17 +5997,17 @@ function parseDateFromDisplay(dateText) {
 // Update filter stats display
 function updateBillingFilterStats() {
     const totalRows = $('#billing-items-tbody tr').filter(function() {
-        return $(this).find('td').length >= 3;
+        return $(this).find('td').length>= 3;
     }).length;
 
     const visibleRows = $('#billing-items-tbody tr').filter(function() {
-        return $(this).find('td').length >= 3 && !$(this).hasClass('filtered-out');
+        return $(this).find('td').length>= 3 && !$(this).hasClass('filtered-out');
     }).length;
 
     let visibleTotal = 0;
     $('#billing-items-tbody tr').each(function() {
         const row = $(this);
-        if (row.find('td').length >= 3 && !row.hasClass('filtered-out')) {
+        if (row.find('td').length>= 3 && !row.hasClass('filtered-out')) {
             const totalText = row.find('.item-total').text().replace('₦', '').replace(/,/g, '');
             visibleTotal += parseFloat(totalText) || 0;
         }
@@ -6195,9 +6187,9 @@ function processPayment() {
     if (paymentType === 'ACCOUNT') {
         const balanceAfter = currentAccountBalance - totalPayable;
 
-        if (totalPayable > currentAccountBalance) {
+        if (totalPayable> currentAccountBalance) {
             // Show warning for credit/negative balance
-            const warningMsg = currentAccountBalance >= 0
+            const warningMsg = currentAccountBalance>= 0
                 ? `This payment of ₦${totalPayable.toLocaleString()} exceeds the available balance of ₦${currentAccountBalance.toLocaleString()}.\n\nBalance after payment: ₦${balanceAfter.toLocaleString()} (CREDIT/DEBIT)\n\nDo you want to proceed with credit facility?`
                 : `Current balance is already ₦${currentAccountBalance.toLocaleString()} (debit).\n\nThis payment will increase the debit to ₦${balanceAfter.toLocaleString()}.\n\nDo you want to proceed?`;
 
@@ -6756,7 +6748,7 @@ function renderAccountSummary(data) {
 
     $('#hero-balance-amount').text(`₦${balance.toLocaleString()}`);
 
-    if (balance > 0) {
+    if (balance> 0) {
         heroBalance.addClass('credit');
         $('#hero-balance-status').text('Credit Balance');
     } else if (balance < 0) {
@@ -6793,7 +6785,7 @@ function populateMyTransactionsBankDropdown() {
     const $bankSelect = $('#my-trans-bank');
     $bankSelect.find('option:not(:first)').remove();
 
-    if (availableBanks.length > 0) {
+    if (availableBanks.length> 0) {
         availableBanks.forEach(bank => {
             $bankSelect.append(`<option value="${bank.id}">${bank.name}</option>`);
         });
@@ -7314,7 +7306,7 @@ function updateParameterStatus($field) {
             if (numValue < min) {
                 status = 'Low';
                 statusClass = 'badge-warning';
-            } else if (numValue > max) {
+            } else if (numValue> max) {
                 status = 'High';
                 statusClass = 'badge-danger';
             } else {
@@ -7366,7 +7358,7 @@ function loadExistingAttachments(requestId) {
         url: `/lab-workbench/lab-service-requests/${requestId}/attachments`,
         method: 'GET',
         success: function(attachments) {
-            if (attachments && attachments.length > 0) {
+            if (attachments && attachments.length> 0) {
                 wrapper.show();
                 attachments.forEach(att => {
                     const attDiv = $('<div>').addClass('attachment-item mb-2 d-flex justify-content-between align-items-center');
@@ -7600,18 +7592,18 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
         const temp = parseFloat(value);
         const idealTemp = 37.0;
         const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
-        status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
+        deviation = temp> idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
+        status = (temp>= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'pulse' && value !== 'N/A') {
         const pulse = parseInt(value);
         const idealPulse = 80;
         const diff = Math.abs(pulse - idealPulse);
-        deviation = pulse > idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
-        status = (pulse >= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
+        deviation = pulse> idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
+        status = (pulse>= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'bp' && value !== 'N/A' && value.includes('/')) {
         const [sys, dia] = value.split('/').map(v => parseInt(v));
-        status = (sys >= 90 && sys <= 140 && dia >= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
-        deviation = sys > 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
+        status = (sys>= 90 && sys <= 140 && dia>= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
+        deviation = sys> 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
     }
 
     const content = `
@@ -7641,14 +7633,14 @@ function checkForAllergies(medications, patientAllergies) {
 
     if (typeof patientAllergies === 'string') {
         // Handle comma-separated string
-        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length > 0);
+        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length> 0);
     } else if (Array.isArray(patientAllergies)) {
         // Handle array (could be array of strings or array of objects)
         allergiesArray = patientAllergies.map(a => {
             if (typeof a === 'string') return a.trim();
             if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
             return '';
-        }).filter(a => a.length > 0);
+        }).filter(a => a.length> 0);
     } else if (typeof patientAllergies === 'object' && patientAllergies !== null) {
         // Handle single object or object with values
         if (patientAllergies.name || patientAllergies.allergy || patientAllergies.allergen) {
@@ -7659,7 +7651,7 @@ function checkForAllergies(medications, patientAllergies) {
                 if (typeof a === 'string') return a.trim();
                 if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
                 return '';
-            }).filter(a => a.length > 0);
+            }).filter(a => a.length> 0);
         }
     }
 
@@ -7814,7 +7806,7 @@ function initializeQueueDataTable(filter) {
                             </div>
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
                                 <i class="mdi mdi-file-document-outline"></i> ${row.unpaid_count} unpaid item(s)
-                                ${row.hmo_items > 0 ? `<span class="hmo-badge ml-2"><i class="mdi mdi-shield-check"></i> ${row.hmo_items} HMO</span>` : ''}
+                                ${row.hmo_items> 0 ? `<span class="hmo-badge ml-2"><i class="mdi mdi-shield-check"></i> ${row.hmo_items} HMO</span>` : ''}
                                 ${row.hmo ? `<br><small><i class="mdi mdi-hospital-building"></i> ${row.hmo}</small>` : ''}
                             </div>
                         </div>
@@ -8001,10 +7993,10 @@ function loadReportsStatistics(filters = {}) {
             }
 
             // Update top services
-            if (data.top_services && data.top_services.length > 0) {
+            if (data.top_services && data.top_services.length> 0) {
                 let servicesHtml = '<ul class="list-group list-group-flush">';
                 data.top_services.forEach(function(service, index) {
-                    const percentage = data.summary.total_requests > 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
+                    const percentage = data.summary.total_requests> 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
                     servicesHtml += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <div style="flex: 1; min-width: 0; margin-right: 15px;">
                             <div class="d-flex justify-content-between mb-1">
@@ -8129,7 +8121,7 @@ function renderQueueCard(data) {
 
     // Attachments
     let attachmentsSection = '';
-    if (data.attachments && data.attachments.length > 0) {
+    if (data.attachments && data.attachments.length> 0) {
         const attachmentLinks = data.attachments.map(att => {
             const icon = getFileIcon(att.type);
             return `<a href="/storage/${att.path}" target="_blank" class="queue-card-attachment">
@@ -8219,7 +8211,7 @@ function getStatusBadges(data) {
                 <div class="queue-card-status-value">${data.sample_taken_by}<br><small>${data.sample_taken_at}</small></div>
             </div>
         `;
-    } else if (data.status >= 2) {
+    } else if (data.status>= 2) {
         badges += `
             <div class="queue-card-status-item pending">
                 <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample</div>
@@ -8236,7 +8228,7 @@ function getStatusBadges(data) {
                 <div class="queue-card-status-value">${data.result_by}<br><small>${data.result_at}</small></div>
             </div>
         `;
-    } else if (data.status >= 3) {
+    } else if (data.status>= 3) {
         badges += `
             <div class="queue-card-status-item pending">
                 <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
@@ -8402,7 +8394,7 @@ function renderTopServices(services, totalRequests = 0) {
     let html = '<ul class="list-group list-group-flush">';
 
     services.forEach((service, index) => {
-        const percentage = totalRequests > 0 ? Math.round((service.count / totalRequests) * 100) : 0;
+        const percentage = totalRequests> 0 ? Math.round((service.count / totalRequests) * 100) : 0;
 
         html += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
             <div style="flex: 1; min-width: 0; margin-right: 15px;">
@@ -8471,7 +8463,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         4: { name: 'Completed', color: '#28a745' }
     };
 
-    if (byStatus && byStatus.length > 0) {
+    if (byStatus && byStatus.length> 0) {
         byStatus.forEach(item => {
             const info = statusMap[item.status] || { name: 'Unknown', color: '#6c757d' };
             statusLabels.push(info.name);
@@ -8514,7 +8506,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
     const trendLabels = [];
     const trendData = [];
 
-    if (monthlyTrends && monthlyTrends.length > 0) {
+    if (monthlyTrends && monthlyTrends.length> 0) {
         monthlyTrends.forEach(item => {
             trendLabels.push(item.month);
             trendData.push(item.count);

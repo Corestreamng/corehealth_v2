@@ -271,7 +271,7 @@
             </div>
 
             <!-- Balance Warning -->
-            @if($fund->current_balance > $fund->fund_limit)
+            @if($fund->current_balance> $fund->fund_limit)
             <div class="alert alert-warning">
                 <i class="mdi mdi-alert"></i>
                 <strong>Balance Exceeds Limit</strong>

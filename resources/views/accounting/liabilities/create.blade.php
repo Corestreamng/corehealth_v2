@@ -415,7 +415,7 @@ $(document).ready(function() {
         var startDate = $('#start_date').val();
         var termMonths = parseInt($('#term_months').val()) || 0;
 
-        if (startDate && termMonths > 0) {
+        if (startDate && termMonths> 0) {
             var maturity = new Date(startDate);
             maturity.setMonth(maturity.getMonth() + termMonths);
             $('#maturity_date').val(maturity.toISOString().split('T')[0]);
@@ -461,8 +461,8 @@ $(document).ready(function() {
         var totalInterest = 0;
         var total = 0;
 
-        if (principal > 0 && totalPayments > 0) {
-            if (periodicRate > 0) {
+        if (principal> 0 && totalPayments> 0) {
+            if (periodicRate> 0) {
                 payment = principal * (periodicRate * Math.pow(1 + periodicRate, totalPayments))
                          / (Math.pow(1 + periodicRate, totalPayments) - 1);
             } else {
@@ -485,8 +485,8 @@ $(document).ready(function() {
         $('#je-credit-amount').text('₦' + principal.toLocaleString('en-NG', {minimumFractionDigits: 2}));
 
         // Update Payment JE preview (first payment estimate)
-        var firstPrincipal = payment > 0 ? (payment - (principal * periodicRate)) : 0;
-        var firstInterest = payment > 0 ? (principal * periodicRate) : 0;
+        var firstPrincipal = payment> 0 ? (payment - (principal * periodicRate)) : 0;
+        var firstInterest = payment> 0 ? (principal * periodicRate) : 0;
         $('#je-pay-principal').text('₦' + firstPrincipal.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         $('#je-pay-interest').text('₦' + firstInterest.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         $('#je-pay-total').text('₦' + payment.toLocaleString('en-NG', {minimumFractionDigits: 2}));

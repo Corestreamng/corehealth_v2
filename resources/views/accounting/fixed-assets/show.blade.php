@@ -228,15 +228,15 @@
                 <!-- Depreciation Progress -->
                 <div class="mt-4">
                     @php
-                        $depPercent = $fixedAsset->depreciable_amount > 0
+                        $depPercent = $fixedAsset->depreciable_amount> 0
                             ? min(100, ($fixedAsset->accumulated_depreciation / $fixedAsset->depreciable_amount) * 100)
                             : 0;
-                        $depColor = $depPercent > 80 ? 'danger' : ($depPercent > 50 ? 'warning' : 'success');
+                        $depColor = $depPercent> 80 ? 'danger' : ($depPercent> 50 ? 'warning' : 'success');
                     @endphp
                     <label>Depreciation Progress</label>
                     <div class="depreciation-progress">
                         <div class="fill bg-{{ $depColor }}" style="width: {{ $depPercent }}%">
-                            @if($depPercent > 10)
+                            @if($depPercent> 10)
                                 {{ number_format($depPercent, 1) }}%
                             @endif
                         </div>
@@ -373,8 +373,8 @@
                         @foreach($fixedAsset->journalEntry->lines as $line)
                             <div class="je-line">
                                 <div>
-                                    <span class="badge badge-{{ $line->debit_amount > 0 ? 'primary' : 'success' }}">
-                                        {{ $line->debit_amount > 0 ? 'DR' : 'CR' }}
+                                    <span class="badge badge-{{ $line->debit_amount> 0 ? 'primary' : 'success' }}">
+                                        {{ $line->debit_amount> 0 ? 'DR' : 'CR' }}
                                     </span>
                                     {{ $line->account->display_name ?? $line->account->account_name }}
                                 </div>
@@ -388,7 +388,7 @@
             @endif
 
             <!-- Disposal Information -->
-            @if($fixedAsset->status === 'disposed' && $fixedAsset->disposals->count() > 0)
+            @if($fixedAsset->status === 'disposed' && $fixedAsset->disposals->count()> 0)
                 @php
                     // Get the completed disposal (the one that actually disposed the asset)
                     $disposal = $fixedAsset->disposals->where('status', 'completed')->first()
@@ -431,7 +431,7 @@
                             </div>
                             <div class="info-row">
                                 <span class="label">Gain/(Loss) on Disposal</span>
-                                <span class="value font-weight-bold {{ $disposal->gain_loss_on_disposal >= 0 ? 'text-success' : 'text-danger' }}">
+                                <span class="value font-weight-bold {{ $disposal->gain_loss_on_disposal>= 0 ? 'text-success' : 'text-danger' }}">
                                     ₦{{ number_format($disposal->gain_loss_on_disposal, 2) }}
                                 </span>
                             </div>
@@ -460,7 +460,7 @@
                         </div>
                     @endif
 
-                    @if($disposal->payment_method && $disposal->disposal_proceeds > 0)
+                    @if($disposal->payment_method && $disposal->disposal_proceeds> 0)
                         <hr>
                         <div class="row">
                             <div class="col-md-6">
@@ -502,8 +502,8 @@
                             @foreach($disposal->journalEntry->lines as $line)
                                 <div class="je-line">
                                     <div>
-                                        <span class="badge badge-{{ $line->debit > 0 ? 'primary' : 'success' }}">
-                                            {{ $line->debit > 0 ? 'DR' : 'CR' }}
+                                        <span class="badge badge-{{ $line->debit> 0 ? 'primary' : 'success' }}">
+                                            {{ $line->debit> 0 ? 'DR' : 'CR' }}
                                         </span>
                                         {{ $line->account->display_name ?? $line->account->account_name }}
                                     </div>
@@ -600,7 +600,7 @@
             @endif
 
             <!-- Depreciation History -->
-            @if($depreciationHistory->count() > 0)
+            @if($depreciationHistory->count()> 0)
                 <div class="info-card">
                     <h6><i class="mdi mdi-history mr-2"></i>Depreciation History</h6>
                     <table class="table table-sm">
@@ -663,7 +663,7 @@
                     @endif
 
                     @if($fixedAsset->status === 'active')
-                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#disposeModal">
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#disposeModal">
                             <i class="mdi mdi-delete mr-1"></i> Dispose Asset
                         </button>
                     @endif
@@ -760,7 +760,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-delete mr-2"></i>Dispose Asset</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="dispose-form">
                 <div class="modal-body">
@@ -804,7 +804,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Dispose Asset</button>
                 </div>
             </form>
@@ -850,7 +850,7 @@ $(document).ready(function() {
         var bankId = $('#dispose-bank-id').val();
 
         // Validate payment source if there are proceeds
-        if (disposalAmount > 0) {
+        if (disposalAmount> 0) {
             if (!paymentMethod) {
                 toastr.error('Please select a payment source for the disposal proceeds');
                 return;

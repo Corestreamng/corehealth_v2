@@ -26,8 +26,7 @@
             <input type="number" name="amount" id="" class="form-control"
                 placeholder="Enter amount to deposit" required>
         </div>
-        <button type="submit" class="btn btn-primary"
-            onclick="return confirm('Are you sure you wish to save this deposit?')">Save</button>
+        <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save this deposit?')">Save</button>
     </form>
 @else
     <h4>Patient Has no acc</h4>
@@ -69,8 +68,7 @@
         </tbody>
     </table>
 
-    <button type="submit" class="btn btn-primary"
-        onclick="return confirm('Are you sure you wish to Save these Misc. bills?')">Save</button>
+    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to Save these Misc. bills?')">Save</button>
 </form>
 <hr>
 <h4>Requested Misc. Bill Items</h4>
@@ -93,11 +91,8 @@
             required>
 
     </div>
-    <button type="submit" class="btn btn-primary"
-        onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
-    <button type="submit" value="dismiss_misc_bill" name="dismiss_misc_bill" class="btn btn-danger"
-        onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
-        style="float: right">Dismiss</button>
+    <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
+    <button type="submit" value="dismiss_misc_bill" name="dismiss_misc_bill" class="btn btn-danger" onclick="return confirm('Are you sure you wish to dissmiss the selected items')" style="float: right">Dismiss</button>
 </form>
 <hr>
 <h4>All Previous Misc. Bill Items</h4>

@@ -415,7 +415,7 @@ $('#editEncounterModal').on('hidden.bs.modal', function() {
 
 // Initialize Select2 for the edit modal diagnosis selection
 $(document).ready(function() {
-    if ($('#editEncounterReasons').length > 0) {
+    if ($('#editEncounterReasons').length> 0) {
         $('#editEncounterReasons').select2({
             placeholder: "Select Reason(s)",
             allowClear: true,

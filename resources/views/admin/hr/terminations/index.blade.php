@@ -144,9 +144,7 @@
                     <i class="mdi mdi-account-off mr-2"></i>
                     Process Staff Termination
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="terminationForm">
                 @csrf
@@ -242,9 +240,7 @@
                     <i class="mdi mdi-account-off mr-2" style="color: var(--primary-color);"></i>
                     Termination Details - <span id="viewTerminationNumber"></span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem; max-height: 80vh; overflow-y: auto;">
                 <div class="row">
@@ -364,9 +360,7 @@
                     <i class="mdi mdi-check-decagram mr-2"></i>
                     Process Exit Checklist
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="completeExitForm">
                 @csrf
@@ -607,7 +601,7 @@ $(function() {
             { data: 'termination_type_badge', name: 'type', render: function(data, type, row) {
                 var s = data;
                 var reason = row.reason_details || '';
-                if (reason.length > 40) reason = reason.substring(0, 40) + '...';
+                if (reason.length> 40) reason = reason.substring(0, 40) + '...';
                 if (reason) s += '<br><small class="text-muted">' + reason + '</small>';
                 return s;
             }},
@@ -831,7 +825,7 @@ $(function() {
             }
 
             // Severance Card
-            if (data.is_eligible_for_severance || data.severance_amount > 0) {
+            if (data.is_eligible_for_severance || data.severance_amount> 0) {
                 $('#severanceCard').show();
                 $('#viewSeveranceEligible').html(data.is_eligible_for_severance
                     ? '<span class="text-success"><i class="mdi mdi-check-circle mr-1"></i>Eligible</span>'

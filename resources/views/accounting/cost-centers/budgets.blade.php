@@ -94,7 +94,7 @@
                 </div>
             </div>
             <div class="col-md-4 text-md-right mt-3 mt-md-0">
-                <button class="btn btn-light btn-sm" data-toggle="modal" data-target="#addBudgetModal">
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
                     <i class="mdi mdi-plus"></i> Add Budget
                 </button>
             </div>
@@ -111,9 +111,9 @@
                     @php
                         $isCurrent = $budget->fiscal_year == date('Y');
                         $actualSpent = $budgetActuals[$budget->fiscal_year] ?? 0;
-                        $utilization = $budget->budgeted_amount > 0 ? ($actualSpent / $budget->budgeted_amount) * 100 : 0;
+                        $utilization = $budget->budgeted_amount> 0 ? ($actualSpent / $budget->budgeted_amount) * 100 : 0;
                         $remaining = $budget->budgeted_amount - $actualSpent;
-                        $progressColor = $utilization > 90 ? 'danger' : ($utilization > 75 ? 'warning' : 'success');
+                        $progressColor = $utilization> 90 ? 'danger' : ($utilization> 75 ? 'warning' : 'success');
                     @endphp
                     <div class="budget-year-card {{ $isCurrent ? 'current' : '' }}">
                         <div class="row align-items-center">
@@ -133,13 +133,12 @@
                             </div>
                             <div class="col-md-2 text-center">
                                 <div class="text-muted small">Remaining</div>
-                                <h5 class="mb-0 {{ $remaining >= 0 ? 'text-success' : 'text-danger' }}">
+                                <h5 class="mb-0 {{ $remaining>= 0 ? 'text-success' : 'text-danger' }}">
                                     ₦{{ number_format(abs($remaining), 2) }}
                                 </h5>
                             </div>
                             <div class="col-md-2 text-right">
-                                <button class="btn btn-sm btn-outline-primary edit-budget"
-                                        data-id="{{ $budget->id }}"
+                                <button class="btn btn-sm btn-outline-primary edit-budget" data-id="{{ $budget->id }}"
                                         data-year="{{ $budget->fiscal_year }}"
                                         data-amount="{{ $budget->budgeted_amount }}"
                                         data-notes="{{ $budget->notes }}">
@@ -166,7 +165,7 @@
                     <div class="text-center py-4">
                         <i class="mdi mdi-cash-remove text-muted" style="font-size: 3rem;"></i>
                         <p class="text-muted mt-2">No budgets defined yet</p>
-                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addBudgetModal">
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
                             <i class="mdi mdi-plus"></i> Add First Budget
                         </button>
                     </div>
@@ -189,7 +188,7 @@
                         <small class="text-muted">{{ date('Y') }} Budget</small>
                     </div>
                     @php
-                        $utilization = $currentBudget->budgeted_amount > 0 ? ($currentActual / $currentBudget->budgeted_amount) * 100 : 0;
+                        $utilization = $currentBudget->budgeted_amount> 0 ? ($currentActual / $currentBudget->budgeted_amount) * 100 : 0;
                         $remaining = $currentBudget->budgeted_amount - $currentActual;
                     @endphp
                     <div class="d-flex justify-content-between mb-2">
@@ -198,7 +197,7 @@
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Remaining:</span>
-                        <strong class="{{ $remaining >= 0 ? 'text-success' : 'text-danger' }}">
+                        <strong class="{{ $remaining>= 0 ? 'text-success' : 'text-danger' }}">
                             ₦{{ number_format(abs($remaining), 2) }}
                         </strong>
                     </div>
@@ -209,7 +208,7 @@
                 @else
                     <div class="text-center py-3">
                         <p class="text-muted mb-2">No budget for {{ date('Y') }}</p>
-                        <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#addBudgetModal">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addBudgetModal">
                             Add {{ date('Y') }} Budget
                         </button>
                     </div>
@@ -217,7 +216,7 @@
             </div>
 
             <!-- Budget Trend -->
-            @if($budgets->count() >= 2)
+            @if($budgets->count()>= 2)
             <div class="budget-card">
                 <h6><i class="mdi mdi-trending-up mr-2"></i>Budget Trend</h6>
                 <canvas id="budgetTrendChart" height="200"></canvas>
@@ -249,7 +248,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Add Budget</h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -294,7 +293,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save mr-1"></i> Save Budget
                     </button>
@@ -313,7 +312,7 @@
                 @method('PUT')
                 <div class="modal-header">
                     <h5 class="modal-title">Edit Budget - <span id="editYear"></span></h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -331,7 +330,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save mr-1"></i> Update Budget
                     </button>
@@ -370,7 +369,7 @@ $(document).ready(function() {
     });
 
     // Budget trend chart
-    @if($budgets->count() >= 2)
+    @if($budgets->count()>= 2)
     var budgetData = @json($budgets->sortBy('fiscal_year')->values());
     var actualsData = @json($budgetActuals);
 

@@ -157,9 +157,7 @@
                     <i class="mdi mdi-account-cash mr-2" style="color: var(--primary-color);"></i>
                     <span id="modalTitleText">New Salary Profile</span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="profileForm">
                 @csrf
@@ -289,9 +287,7 @@
                     <i class="mdi mdi-eye mr-2" style="color: var(--primary-color);"></i>
                     Salary Profile Details
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem;">
                 <div id="profileDetails"></div>
@@ -513,8 +509,8 @@ $(function() {
                 count++;
             }
         });
-        // If count > 1, there's a duplicate (current selection + another)
-        return count > 1;
+        // If count> 1, there's a duplicate (current selection + another)
+        return count> 1;
     }
 
     // Validate no duplicates before form submission
@@ -536,7 +532,7 @@ $(function() {
             }
         });
 
-        if (duplicates.length > 0) {
+        if (duplicates.length> 0) {
             toastr.error(`Duplicate pay heads detected: ${duplicates.join(', ')}. Please remove duplicates before saving.`, 'Validation Error');
             return false;
         }

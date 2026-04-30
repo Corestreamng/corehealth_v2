@@ -153,11 +153,11 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <small class="text-muted text-uppercase">Overdue Payments</small>
-                                <h4 class="mb-0 font-weight-bold {{ $stats['overdue_payments'] > 0 ? 'text-danger' : '' }}">
+                                <h4 class="mb-0 font-weight-bold {{ $stats['overdue_payments']> 0 ? 'text-danger' : '' }}">
                                     ₦{{ number_format($stats['overdue_payments'], 2) }}
                                 </h4>
                             </div>
-                            <i class="mdi mdi-alert-circle mdi-36px {{ $stats['overdue_payments'] > 0 ? 'text-danger' : 'text-muted' }}"></i>
+                            <i class="mdi mdi-alert-circle mdi-36px {{ $stats['overdue_payments']> 0 ? 'text-danger' : 'text-muted' }}"></i>
                         </div>
                     </div>
                 </div>
@@ -168,11 +168,11 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <small class="text-muted text-uppercase">Expiring (90 days)</small>
-                                <h4 class="mb-0 font-weight-bold {{ $stats['expiring_soon'] > 0 ? 'text-warning' : '' }}">
+                                <h4 class="mb-0 font-weight-bold {{ $stats['expiring_soon']> 0 ? 'text-warning' : '' }}">
                                     {{ $stats['expiring_soon'] }} leases
                                 </h4>
                             </div>
-                            <i class="mdi mdi-clock-alert mdi-36px {{ $stats['expiring_soon'] > 0 ? 'text-warning' : 'text-muted' }}"></i>
+                            <i class="mdi mdi-clock-alert mdi-36px {{ $stats['expiring_soon']> 0 ? 'text-warning' : 'text-muted' }}"></i>
                         </div>
                     </div>
                 </div>

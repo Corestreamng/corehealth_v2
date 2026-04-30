@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove line
     function attachLineEvents(row) {
         row.querySelector('.remove-line').addEventListener('click', function() {
-            if (document.querySelectorAll('.line-row').length > 2) {
+            if (document.querySelectorAll('.line-row').length> 2) {
                 row.remove();
                 updateTotals();
             } else {
@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalDebit = parseFloat(document.getElementById('totalDebit').textContent);
         const totalCredit = parseFloat(document.getElementById('totalCredit').textContent);
 
-        if (Math.abs(totalDebit - totalCredit) >= 0.01) {
+        if (Math.abs(totalDebit - totalCredit)>= 0.01) {
             e.preventDefault();
             alert('Entry must be balanced. Total Debits must equal Total Credits.');
             return false;

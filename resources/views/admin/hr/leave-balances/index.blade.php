@@ -72,9 +72,7 @@
                     <i class="mdi mdi-plus-minus mr-2" style="color: var(--primary-color);"></i>
                     Adjust Leave Balance
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="adjustBalanceForm">
                 @csrf
@@ -127,9 +125,7 @@
                     <i class="mdi mdi-refresh mr-2" style="color: var(--primary-color);"></i>
                     Initialize Year Balances
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="initBalancesForm">
                 @csrf
@@ -193,15 +189,15 @@ $(function() {
             { data: 'leave_type', name: 'leaveType.name' },
             { data: 'entitled_days', name: 'entitled_days', render: function(data, type, row) {
                 var s = data + ' days';
-                if (parseFloat(row.carried_forward) > 0) s += '<br><small class="text-muted">+' + row.carried_forward + ' carried</small>';
+                if (parseFloat(row.carried_forward)> 0) s += '<br><small class="text-muted">+' + row.carried_forward + ' carried</small>';
                 return s;
             }},
             { data: 'available', name: 'available', orderable: false,
               render: function(data, type, row) {
                   var available = parseFloat(row.entitled_days) - parseFloat(row.used_days) - parseFloat(row.pending_days) + parseFloat(row.carried_forward);
-                  var cls = available > 0 ? 'success' : (available == 0 ? 'warning' : 'danger');
+                  var cls = available> 0 ? 'success' : (available == 0 ? 'warning' : 'danger');
                   var s = '<span class="badge badge-' + cls + '" style="font-size: 1em;">' + available.toFixed(1) + '</span>';
-                  s += '<br><small class="text-muted">' + row.used_days + ' used' + (parseFloat(row.pending_days) > 0 ? ', ' + row.pending_days + ' pending' : '') + '</small>';
+                  s += '<br><small class="text-muted">' + row.used_days + ' used' + (parseFloat(row.pending_days)> 0 ? ', ' + row.pending_days + ' pending' : '') + '</small>';
                   return s;
               }
             },

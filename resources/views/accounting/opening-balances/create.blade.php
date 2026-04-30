@@ -202,9 +202,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-file-document-outline mr-2"></i>Opening Balance Journal Entry Preview
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
@@ -330,7 +328,7 @@ $(document).ready(function() {
             hasEntries = true;
             var normalBalance = $(this).data('normal-balance');
 
-            if (amount > 0) {
+            if (amount> 0) {
                 if (normalBalance === 'debit') {
                     totalDebits += amount;
                 } else {
@@ -389,7 +387,7 @@ $(document).ready(function() {
             var debit = 0;
             var credit = 0;
 
-            if (amount > 0) {
+            if (amount> 0) {
                 if (normalBalance === 'debit') {
                     debit = amount;
                 } else {
@@ -409,8 +407,8 @@ $(document).ready(function() {
             $tbody.append(`
                 <tr>
                     <td>${accountCode} - ${accountName}</td>
-                    <td class="text-right">${debit > 0 ? numberFormat(debit) : ''}</td>
-                    <td class="text-right">${credit > 0 ? numberFormat(credit) : ''}</td>
+                    <td class="text-right">${debit> 0 ? numberFormat(debit) : ''}</td>
+                    <td class="text-right">${credit> 0 ? numberFormat(credit) : ''}</td>
                 </tr>
             `);
         });

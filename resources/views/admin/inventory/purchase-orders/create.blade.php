@@ -13,29 +13,35 @@
         border-radius: 4px;
         border: 1px solid #dee2e6;
     }
+
     .item-row:hover {
         background: #e9ecef;
     }
+
     .remove-item-btn {
         color: #dc3545;
         cursor: pointer;
     }
+
     .remove-item-btn:hover {
         color: #a71d2a;
     }
+
     .total-section {
         background: #fff;
         padding: 1rem;
         border-radius: 4px;
         border: 1px solid #dee2e6;
     }
+
     .form-section {
         background: #fff;
         padding: 1.5rem;
         border-radius: 8px;
         margin-bottom: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
+
     .form-section h5 {
         border-bottom: 2px solid #007bff;
         padding-bottom: 0.5rem;
@@ -56,7 +62,7 @@
             @endhasanyrole
         </div>
         <form id="po-form" method="POST"
-              action="{{ isset($purchaseOrder) ? route('inventory.purchase-orders.update', $purchaseOrder) : route('inventory.purchase-orders.store') }}">
+            action="{{ isset($purchaseOrder) ? route('inventory.purchase-orders.update', $purchaseOrder) : route('inventory.purchase-orders.store') }}">
             @csrf
             @if(isset($purchaseOrder))
             @method('PUT')
@@ -100,8 +106,8 @@
                         <div class="form-group">
                             <label for="expected_date">Expected Delivery Date</label>
                             <input type="date" name="expected_date" id="expected_date"
-                                   class="form-control @error('expected_date') is-invalid @enderror"
-                                   value="{{ old('expected_date', isset($purchaseOrder) && $purchaseOrder->expected_date ? $purchaseOrder->expected_date->format('Y-m-d') : '') }}">
+                                class="form-control @error('expected_date') is-invalid @enderror"
+                                value="{{ old('expected_date', isset($purchaseOrder) && $purchaseOrder->expected_date ? $purchaseOrder->expected_date->format('Y-m-d') : '') }}">
                             @error('expected_date')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -131,61 +137,61 @@
                 </div>
 
                 <div id="items-container">
-                    @if(isset($purchaseOrder) && $purchaseOrder->items->count() > 0)
-                        @foreach($purchaseOrder->items as $index => $item)
-                        <div class="item-row" data-index="{{ $index }}">
-                            <div class="row align-items-end">
-                                <div class="col-md-3">
-                                    <div class="form-group mb-0">
-                                        <label>Product <span class="text-danger">*</span></label>
-                                        <select name="items[{{ $index }}][product_id]" class="form-control product-select" required>
-                                            <option value="{{ $item->product_id }}" selected>{{ $item->product->product_name }}</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="form-group mb-0">
-                                        <label>Packaging</label>
-                                        <select name="items[{{ $index }}][packaging_id]" class="form-control packaging-select"
-                                                data-product-id="{{ $item->product_id }}" data-selected="{{ $item->packaging_id }}">
-                                            <option value="">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
-                                        </select>
-                                        <input type="hidden" name="items[{{ $index }}][packaging_qty]" class="packaging-qty-hidden" value="{{ $item->packaging_qty }}">
-                                    </div>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="form-group mb-0">
-                                        <label>Quantity <span class="text-danger">*</span></label>
-                                        <input type="number" name="items[{{ $index }}][quantity_ordered]"
-                                               class="form-control qty-input" value="{{ $item->quantity_ordered }}" min="1" required>
-                                        <small class="text-muted base-equiv-label"></small>
-                                    </div>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="form-group mb-0">
-                                        <label>Unit Price <span class="text-danger">*</span></label>
-                                        <input type="number" name="items[{{ $index }}][unit_price]"
-                                               class="form-control price-input" value="{{ $item->unit_price }}" step="0.01" min="0" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="form-group mb-0">
-                                        <label>Line Total</label>
-                                        <input type="text" class="form-control line-total" readonly value="{{ number_format($item->line_total, 2) }}">
-                                    </div>
-                                </div>
-                                <div class="col-md-1 text-right">
-                                    <span class="remove-item-btn" onclick="removeItem(this)">
-                                        <i class="mdi mdi-delete mdi-24px"></i>
-                                    </span>
+                    @if(isset($purchaseOrder) && $purchaseOrder->items->count()> 0)
+                    @foreach($purchaseOrder->items as $index => $item)
+                    <div class="item-row" data-index="{{ $index }}">
+                        <div class="row align-items-end">
+                            <div class="col-md-3">
+                                <div class="form-group mb-0">
+                                    <label>Product <span class="text-danger">*</span></label>
+                                    <select name="items[{{ $index }}][product_id]" class="form-control product-select" required>
+                                        <option value="{{ $item->product_id }}" selected>{{ $item->product->product_name }}</option>
+                                    </select>
                                 </div>
                             </div>
+                            <div class="col-md-2">
+                                <div class="form-group mb-0">
+                                    <label>Packaging</label>
+                                    <select name="items[{{ $index }}][packaging_id]" class="form-control packaging-select"
+                                        data-product-id="{{ $item->product_id }}" data-selected="{{ $item->packaging_id }}">
+                                        <option value="">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
+                                    </select>
+                                    <input type="hidden" name="items[{{ $index }}][packaging_qty]" class="packaging-qty-hidden" value="{{ $item->packaging_qty }}">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group mb-0">
+                                    <label>Quantity <span class="text-danger">*</span></label>
+                                    <input type="number" name="items[{{ $index }}][quantity_ordered]"
+                                        class="form-control qty-input" value="{{ $item->quantity_ordered }}" min="1" required>
+                                    <small class="text-muted base-equiv-label"></small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group mb-0">
+                                    <label>Unit Price <span class="text-danger">*</span></label>
+                                    <input type="number" name="items[{{ $index }}][unit_price]"
+                                        class="form-control price-input" value="{{ $item->unit_price }}" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group mb-0">
+                                    <label>Line Total</label>
+                                    <input type="text" class="form-control line-total" readonly value="{{ number_format($item->line_total, 2) }}">
+                                </div>
+                            </div>
+                            <div class="col-md-1 text-right">
+                                <span class="remove-item-btn" onclick="removeItem(this)">
+                                    <i class="mdi mdi-delete mdi-24px"></i>
+                                </span>
+                            </div>
                         </div>
-                        @endforeach
+                    </div>
+                    @endforeach
                     @endif
                 </div>
 
-                <div class="text-muted text-center py-3" id="no-items-message" style="{{ isset($purchaseOrder) && $purchaseOrder->items->count() > 0 ? 'display:none' : '' }}">
+                <div class="text-muted text-center py-3" id="no-items-message" style="{{ isset($purchaseOrder) && $purchaseOrder->items->count()> 0 ? 'display:none' : '' }}">
                     No items added yet. Click "Add Item" to add products.
                 </div>
             </div>
@@ -202,14 +208,14 @@
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Tax/VAT (%):</span>
                                 <input type="number" name="tax_amount" id="tax_amount"
-                                       class="form-control form-control-sm" style="width: 100px"
-                                       value="{{ old('tax_amount', $purchaseOrder->tax_amount ?? 0) }}" step="0.01" min="0">
+                                    class="form-control form-control-sm" style="width: 100px"
+                                    value="{{ old('tax_amount', $purchaseOrder->tax_amount ?? 0) }}" step="0.01" min="0">
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Shipping:</span>
                                 <input type="number" name="shipping_cost" id="shipping_cost"
-                                       class="form-control form-control-sm" style="width: 100px"
-                                       value="{{ old('shipping_cost', $purchaseOrder->shipping_cost ?? 0) }}" step="0.01" min="0">
+                                    class="form-control form-control-sm" style="width: 100px"
+                                    value="{{ old('shipping_cost', $purchaseOrder->shipping_cost ?? 0) }}" step="0.01" min="0">
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between">
@@ -266,7 +272,7 @@
                 <div class="form-group mb-0">
                     <label>Quantity <span class="text-danger">*</span></label>
                     <input type="number" name="items[__INDEX__][quantity_ordered]"
-                           class="form-control qty-input" value="1" min="1" required>
+                        class="form-control qty-input" value="1" min="1" required>
                     <small class="text-muted base-equiv-label"></small>
                 </div>
             </div>
@@ -274,7 +280,7 @@
                 <div class="form-group mb-0">
                     <label>Unit Price <span class="text-danger">*</span></label>
                     <input type="number" name="items[__INDEX__][unit_price]"
-                           class="form-control price-input" value="0" step="0.01" min="0" required>
+                        class="form-control price-input" value="0" step="0.01" min="0" required>
                 </div>
             </div>
             <div class="col-md-2">
@@ -296,290 +302,340 @@
 @section('scripts')
 <script src="{{ asset('assets/js/select2.min.js') }}"></script>
 <script>
-$(function() {
-    var itemIndex = {{ isset($purchaseOrder) ? $purchaseOrder->items->count() : 0 }};
-
-    // Initialize Supplier Select2
-    var supplierSelect = $('#supplier_id').select2({
-        placeholder: 'Select supplier...',
-        allowClear: true,
-        minimumInputLength: 1,
-        ajax: {
-            url: '{{ route("suppliers.search") }}',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                return { q: params.term };
-            },
-            processResults: function(data) {
-                return {
-                    results: data.map(function(item) {
-                        return {
-                            id: item.id,
-                            text: item.text
-                        };
-                    })
-                };
+    $(function() {
+        var itemIndex = {
+            {
+                isset($purchaseOrder) ? $purchaseOrder - > items - > count() : 0
             }
-        }
-    });
+        };
 
-    // Initialize Select2 for existing items
-    initProductSelect($('.product-select'));
-    calculateTotals();
+        // Initialize Supplier Select2
+        var supplierSelect = $('#supplier_id').select2({
+            placeholder: 'Select supplier...',
+            allowClear: true,
+            minimumInputLength: 1,
+            ajax: {
+                url: '{{ route("suppliers.search") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                }
+            }
+        });
 
-    // Load packagings for existing items that have a product_id and data-selected
-    $('.packaging-select[data-product-id]').each(function() {
-        var select = $(this);
-        var productId = select.data('product-id');
-        var selectedId = select.data('selected');
-        if (productId) {
-            $.get('/products/' + productId + '/packagings', function(data) {
-                select.empty().append('<option value="">' + (data.base_unit_name || 'Base Unit') + '</option>');
-                var row = select.closest('.item-row');
-                row.data('base-unit-name', data.base_unit_name);
-                (data.packagings || []).forEach(function(pkg) {
-                    var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
-                    var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
-                    select.append(opt);
+        // Initialize Select2 for existing items
+        initProductSelect($('.product-select'));
+        calculateTotals();
+
+        // Load packagings for existing items that have a product_id and data-selected
+        $('.packaging-select[data-product-id]').each(function() {
+            var select = $(this);
+            var productId = select.data('product-id');
+            var selectedId = select.data('selected');
+            if (productId) {
+                $.get('/products/' + productId + '/packagings', function(data) {
+                    select.empty().append('<option value="">' + (data.base_unit_name || 'Base Unit') + '</option>');
+                    var row = select.closest('.item-row');
+                    row.data('base-unit-name', data.base_unit_name);
+                    (data.packagings || []).forEach(function(pkg) {
+                        var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
+                        var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
+                        select.append(opt);
+                    });
+                    if (selectedId) select.val(selectedId);
+
+                    // Initialize prev-factor for existing rows
+                    var factor = parseFloat(select.find('option:selected').data('base-qty')) || 1;
+                    select.data('prev-factor', factor);
+
+                    updateBaseEquiv(row);
                 });
-                if (selectedId) select.val(selectedId);
-                updateBaseEquiv(row);
-            });
-        }
-    });
-
-    // Add item
-    $('#add-item-btn').on('click', function() {
-        var template = $('#item-row-template').html();
-        template = template.replace(/__INDEX__/g, itemIndex);
-        $('#items-container').append(template);
-
-        var newSelect = $('#items-container .item-row:last .product-select');
-        initProductSelect(newSelect);
-
-        $('#no-items-message').hide();
-        itemIndex++;
-    });
-
-    // Event delegation for quantity and price changes
-    $(document).on('input', '.qty-input, .price-input', function() {
-        var row = $(this).closest('.item-row');
-        var qty = parseFloat(row.find('.qty-input').val()) || 0;
-        var price = parseFloat(row.find('.price-input').val()) || 0;
-        row.find('.line-total').val((qty * price).toFixed(2));
-        updateBaseEquiv(row);
-        calculateTotals();
-    });
-
-    // Packaging dropdown change
-    $(document).on('change', '.packaging-select', function() {
-        var row = $(this).closest('.item-row');
-        updateBaseEquiv(row);
-    });
-
-    // Recalculate on tax/shipping change
-    $('#tax_amount, #shipping_cost').on('input', function() {
-        calculateTotals();
-    });
-
-    // Handle form submission via AJAX
-    $('#save-draft-btn, #save-submit-btn').on('click', function(e) {
-        e.preventDefault();
-        var action = $(this).attr('id') === 'save-draft-btn' ? 'save' : 'submit';
-        submitForm(action);
-    });
-});
-
-function initProductSelect(element) {
-    element.select2({
-        placeholder: 'Search product...',
-        allowClear: true,
-        minimumInputLength: 2,
-        ajax: {
-            url: '{{ route("inventory.purchase-orders.search-products") }}',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                return { q: params.term };
-            },
-            processResults: function(data) {
-                return {
-                    results: data.map(function(item) {
-                        return {
-                            id: item.id,
-                            text: item.product_name + ' (' + item.product_code + ')',
-                            price: item.purchase_price || item.unit_price || 0,
-                            packagings: item.packagings || [],
-                            base_unit_name: item.base_unit_name || 'Piece',
-                            product_type: item.product_type || 'drug'
-                        };
-                    })
-                };
             }
-        }
-    }).on('select2:select', function(e) {
-        var data = e.params.data;
-        var row = $(this).closest('.item-row');
-        if (data.price) {
-            row.find('.price-input').val(data.price);
-        }
-        // Populate packaging dropdown
-        var pkgSelect = row.find('.packaging-select');
-        pkgSelect.empty().append('<option value="">' + data.base_unit_name + ' (base)</option>');
-        if (data.packagings && data.packagings.length) {
-            var defaultPurchase = null;
-            data.packagings.forEach(function(pkg) {
-                var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
-                var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
-                if (pkg.is_default_purchase) { defaultPurchase = pkg.id; opt.attr('selected', true); }
-                pkgSelect.append(opt);
-            });
-            if (defaultPurchase) pkgSelect.val(defaultPurchase).trigger('change');
-        }
-        // Store packagings data on the row for later use
-        row.data('packagings', data.packagings || []);
-        row.data('base-unit-name', data.base_unit_name);
-        updateBaseEquiv(row);
-        calculateTotals();
-    });
-}
+        });
 
-function removeItem(btn) {
-    var container = $('#items-container');
-    $(btn).closest('.item-row').remove();
+        // Add item
+        $('#add-item-btn').on('click', function() {
+            var template = $('#item-row-template').html();
+            template = template.replace(/__INDEX__/g, itemIndex);
+            $('#items-container').append(template);
 
-    if (container.find('.item-row').length === 0) {
-        $('#no-items-message').show();
-    }
-    calculateTotals();
-}
+            var newSelect = $('#items-container .item-row:last .product-select');
+            initProductSelect(newSelect);
 
-function calculateTotals() {
-    var subtotal = 0;
-    $('.item-row').each(function() {
-        var lineTotal = parseFloat($(this).find('.line-total').val()) || 0;
-        subtotal += lineTotal;
-    });
+            $('#no-items-message').hide();
+            itemIndex++;
+        });
 
-    var tax = parseFloat($('#tax_amount').val()) || 0;
-    var shipping = parseFloat($('#shipping_cost').val()) || 0;
-    var total = subtotal + tax + shipping;
+        // Event delegation for quantity and price changes
+        $(document).on('input', '.qty-input, .price-input', function() {
+            var row = $(this).closest('.item-row');
+            var qty = parseFloat(row.find('.qty-input').val()) || 0;
+            var price = parseFloat(row.find('.price-input').val()) || 0;
+            row.find('.line-total').val((qty * price).toFixed(2));
+            updateBaseEquiv(row);
+            calculateTotals();
+        });
 
-    $('#subtotal').text('₦' + subtotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-    $('#grand-total').text('₦' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-}
+        // Packaging dropdown change
+        $(document).on('change', '.packaging-select', function() {
+            var row = $(this).closest('.item-row');
+            var select = $(this);
 
-function updateBaseEquiv(row) {
-    var pkgSelect = row.find('.packaging-select');
-    var selected = pkgSelect.find('option:selected');
-    var qty = parseFloat(row.find('.qty-input').val()) || 0;
-    var baseQty = parseFloat(selected.data('base-qty')) || 1;
-    var baseName = row.data('base-unit-name') || 'units';
-    var label = row.find('.base-equiv-label');
-    if (baseQty > 1 && qty > 0) {
-        label.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' ' + baseName);
-    } else {
-        label.text('');
-    }
-    // Update hidden packaging_qty
-    row.find('.packaging-qty-hidden').val(pkgSelect.val() ? qty : '');
-}
+            // Price scaling logic
+            var prevFactor = parseFloat(select.data('prev-factor')) || 1;
+            var newFactor = parseFloat(select.find('option:selected').data('base-qty')) || 1;
+            var priceInput = row.find('.price-input');
+            var currentPrice = parseFloat(priceInput.val()) || 0;
 
-function submitForm(action) {
-    var form = $('#po-form');
-    var items = [];
-    var hasErrors = false;
+            if (currentPrice > 0) {
+                var newPrice = (currentPrice / prevFactor) * newFactor;
+                priceInput.val(parseFloat(newPrice.toFixed(4)));
+            }
 
-    // Validate required fields
-    if (!$('#store_id').val()) {
-        alert('Please select a destination store');
-        return;
-    }
+            select.data('prev-factor', newFactor);
 
-    if (!$('#supplier_id').val()) {
-        alert('Please select a supplier');
-        return;
-    }
+            updateBaseEquiv(row);
+            row.find('.qty-input').trigger('input'); // Trigger total recalculation
+        });
 
-    // Collect items
-    $('.item-row').each(function() {
-        var row = $(this);
-        var productId = row.find('.product-select').val();
-        var quantity = row.find('.qty-input').val();
-        var unitPrice = row.find('.price-input').val();
+        // Recalculate on tax/shipping change
+        $('#tax_amount, #shipping_cost').on('input', function() {
+            calculateTotals();
+        });
 
-        if (!productId || !quantity || !unitPrice) {
-            hasErrors = true;
-            return false;
-        }
-
-        items.push({
-            product_id: productId,
-            ordered_qty: parseInt(quantity),
-            unit_cost: parseFloat(unitPrice),
-            packaging_id: row.find('.packaging-select').val() || null,
-            packaging_qty: row.find('.packaging-select').val() ? parseFloat(quantity) : null
+        // Handle form submission via AJAX
+        $('#save-draft-btn, #save-submit-btn').on('click', function(e) {
+            e.preventDefault();
+            var action = $(this).attr('id') === 'save-draft-btn' ? 'save' : 'submit';
+            submitForm(action);
         });
     });
 
-    if (hasErrors) {
-        alert('Please fill in all item fields');
-        return;
-    }
-
-    if (items.length === 0) {
-        alert('Please add at least one item');
-        return;
-    }
-
-    // Prepare form data
-    var formData = {
-        supplier_id: $('#supplier_id').val(),
-        target_store_id: $('#store_id').val(),
-        expected_date: $('#expected_date').val(),
-        notes: $('#notes').val(),
-        items: items,
-        action: action,
-        _token: $('input[name="_token"]').val()
-    };
-
-    // Disable buttons during submission
-    var buttons = $('#save-draft-btn, #save-submit-btn');
-    buttons.prop('disabled', true);
-
-    // Submit via AJAX
-    $.ajax({
-        url: form.attr('action'),
-        method: form.find('input[name="_method"]').length ? 'PUT' : 'POST',
-        data: JSON.stringify(formData),
-        contentType: 'application/json',
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert(response.message || 'Purchase order saved successfully');
-                if (response.redirect) {
-                    window.location.href = response.redirect;
-                } else {
-                    window.location.href = '{{ route("inventory.purchase-orders.index") }}';
+    function initProductSelect(element) {
+        element.select2({
+            placeholder: 'Search product...',
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: '{{ route("inventory.purchase-orders.search-products") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.product_name + ' (' + item.product_code + ')',
+                                price: item.purchase_price || item.unit_price || 0,
+                                packagings: item.packagings || [],
+                                base_unit_name: item.base_unit_name || 'Piece',
+                                product_type: item.product_type || 'drug'
+                            };
+                        })
+                    };
                 }
-            } else {
-                alert(response.message || 'Failed to save purchase order');
+            }
+        }).on('select2:select', function(e) {
+            var data = e.params.data;
+            var row = $(this).closest('.item-row');
+            if (data.price) {
+                row.find('.price-input').val(data.price);
+            }
+            // Populate packaging dropdown
+            var pkgSelect = row.find('.packaging-select');
+            pkgSelect.empty().append('<option value="" data-base-qty="1">' + data.base_unit_name + ' (base)</option>');
+            pkgSelect.data('prev-factor', 1); // Reset to base factor
+
+            if (data.packagings && data.packagings.length) {
+                var defaultPurchase = null;
+                var defaultFactor = 1;
+                data.packagings.forEach(function(pkg) {
+                    var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
+                    var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
+                    if (pkg.is_default_purchase) {
+                        defaultPurchase = pkg.id;
+                        defaultFactor = pkg.base_unit_qty;
+                        opt.attr('selected', true);
+                    }
+                    pkgSelect.append(opt);
+                });
+
+                if (defaultPurchase) {
+                    pkgSelect.val(defaultPurchase);
+                    pkgSelect.data('prev-factor', defaultFactor);
+                    // Scale initial price if default packaging is selected
+                    var priceInput = row.find('.price-input');
+                    var basePrice = parseFloat(priceInput.val()) || 0;
+                    if (basePrice > 0) {
+                        priceInput.val(parseFloat((basePrice * defaultFactor).toFixed(4)));
+                    }
+                }
+            }
+            // Store packagings data on the row for later use
+            row.data('packagings', data.packagings || []);
+            row.data('base-unit-name', data.base_unit_name);
+            updateBaseEquiv(row);
+            calculateTotals();
+        });
+    }
+
+    function removeItem(btn) {
+        var container = $('#items-container');
+        $(btn).closest('.item-row').remove();
+
+        if (container.find('.item-row').length === 0) {
+            $('#no-items-message').show();
+        }
+        calculateTotals();
+    }
+
+    function calculateTotals() {
+        var subtotal = 0;
+        $('.item-row').each(function() {
+            var lineTotal = parseFloat($(this).find('.line-total').val()) || 0;
+            subtotal += lineTotal;
+        });
+
+        var tax = parseFloat($('#tax_amount').val()) || 0;
+        var shipping = parseFloat($('#shipping_cost').val()) || 0;
+        var total = subtotal + tax + shipping;
+
+        $('#subtotal').text('₦' + subtotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+        $('#grand-total').text('₦' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+    }
+
+    function updateBaseEquiv(row) {
+        var pkgSelect = row.find('.packaging-select');
+        var selected = pkgSelect.find('option:selected');
+        var qty = parseFloat(row.find('.qty-input').val()) || 0;
+        var baseQty = parseFloat(selected.data('base-qty')) || 1;
+        var baseName = row.data('base-unit-name') || 'units';
+        var label = row.find('.base-equiv-label');
+        if (baseQty > 1 && qty > 0) {
+            label.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' ' + baseName);
+        } else {
+            label.text('');
+        }
+        // Update hidden packaging_qty
+        row.find('.packaging-qty-hidden').val(pkgSelect.val() ? qty : '');
+    }
+
+    function submitForm(action) {
+        var form = $('#po-form');
+        var items = [];
+        var hasErrors = false;
+
+        // Validate required fields
+        if (!$('#store_id').val()) {
+            alert('Please select a destination store');
+            return;
+        }
+
+        if (!$('#supplier_id').val()) {
+            alert('Please select a supplier');
+            return;
+        }
+
+        // Collect items
+        $('.item-row').each(function() {
+            var row = $(this);
+            var productId = row.find('.product-select').val();
+            var quantity = row.find('.qty-input').val();
+            var unitPrice = row.find('.price-input').val();
+
+            if (!productId || !quantity || !unitPrice) {
+                hasErrors = true;
+                return false;
+            }
+
+            var pkgSelect = row.find('.packaging-select');
+            var pkgId = pkgSelect.val() || null;
+            var baseFactor = parseFloat(pkgSelect.find('option:selected').data('base-qty')) || 1;
+
+            items.push({
+                product_id: productId,
+                ordered_qty: Math.round(quantity * baseFactor),
+                unit_cost: parseFloat((unitPrice / baseFactor).toFixed(4)),
+                packaging_id: pkgId,
+                packaging_qty: pkgId ? parseFloat(quantity) : null
+            });
+        });
+
+        if (hasErrors) {
+            alert('Please fill in all item fields');
+            return;
+        }
+
+        if (items.length === 0) {
+            alert('Please add at least one item');
+            return;
+        }
+
+        // Prepare form data
+        var formData = {
+            supplier_id: $('#supplier_id').val(),
+            target_store_id: $('#store_id').val(),
+            expected_date: $('#expected_date').val(),
+            notes: $('#notes').val(),
+            items: items,
+            action: action,
+            _token: $('input[name="_token"]').val()
+        };
+
+        // Disable buttons during submission
+        var buttons = $('#save-draft-btn, #save-submit-btn');
+        buttons.prop('disabled', true);
+
+        // Submit via AJAX
+        $.ajax({
+            url: form.attr('action'),
+            method: form.find('input[name="_method"]').length ? 'PUT' : 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message || 'Purchase order saved successfully');
+                    if (response.redirect) {
+                        window.location.href = response.redirect;
+                    } else {
+                        window.location.href = '{{ route("inventory.purchase-orders.index") }}';
+                    }
+                } else {
+                    alert(response.message || 'Failed to save purchase order');
+                    buttons.prop('disabled', false);
+                }
+            },
+            error: function(xhr) {
+                var message = 'Error saving purchase order';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    var errors = xhr.responseJSON.errors;
+                    message = Object.values(errors).flat().join('\n');
+                }
+                alert(message);
                 buttons.prop('disabled', false);
             }
-        },
-        error: function(xhr) {
-            var message = 'Error saving purchase order';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                message = xhr.responseJSON.message;
-            } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                var errors = xhr.responseJSON.errors;
-                message = Object.values(errors).flat().join('\n');
-            }
-            alert(message);
-            buttons.prop('disabled', false);
-        }
-    });
-}
+        });
+    }
 </script>
 @endsection

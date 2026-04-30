@@ -251,8 +251,7 @@
                                     placeholder="Type a message..."
                                     rows="1"
                                     oninput="fpAutoResize(this); fpNotifyTyping();"
-                                    onkeydown="fpHandleEnter(event)"
-                                ></textarea>
+                                    onkeydown="fpHandleEnter(event)"></textarea>
 
                                 <button type="button" class="composer-btn emoji-picker-btn" title="Emoji">
                                     <i class="mdi mdi-emoticon-outline"></i>
@@ -382,7 +381,7 @@
     function renderConversations(conversations, meta) {
         const container = document.getElementById('fp-conversation-list');
         const searchQuery = document.getElementById('fp-search-input').value;
-        const isSearching = fpSearchMode === 'chats' && searchQuery.length > 0;
+        const isSearching = fpSearchMode === 'chats' && searchQuery.length> 0;
 
         // Update search header
         const searchHeader = document.getElementById('fp-search-header');
@@ -480,7 +479,7 @@
 
         // Show participants
         const participantsDiv = document.getElementById('fp-header-participants');
-        if (conv.participants_list && conv.participants_list.length > 0) {
+        if (conv.participants_list && conv.participants_list.length> 0) {
             const others = conv.participants_list.filter(p => p.id !== chatCore.currentUserId);
             participantsDiv.innerText = others.map(p => p.name).join(', ');
             participantsDiv.style.display = 'block';
@@ -512,7 +511,7 @@
 
     // Handle window resize
     window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
+        if (window.innerWidth> 768) {
             // Reset mobile classes on desktop
             document.getElementById('chat-sidebar').classList.remove('hide');
             document.getElementById('chat-main').classList.remove('show');
@@ -584,7 +583,7 @@
             content = '<div style="font-style: italic; opacity: 0.6;">This message was deleted</div>';
         } else {
             // Attachments
-            if (msg.attachments && msg.attachments.length > 0) {
+            if (msg.attachments && msg.attachments.length> 0) {
                 content += '<div class="mb-2">';
                 msg.attachments.forEach(att => {
                     const icon = chatCore.getFileIcon(att.file_name);
@@ -660,7 +659,7 @@
             if (msg.is_deleted || msg.body === 'This message was deleted') {
                 content = '<div style="font-style: italic; opacity: 0.6;">This message was deleted</div>';
             } else {
-                if (msg.attachments && msg.attachments.length > 0) {
+                if (msg.attachments && msg.attachments.length> 0) {
                     content += '<div class="mb-2">';
                     msg.attachments.forEach(att => {
                         content += `
@@ -817,7 +816,7 @@
 
         container.innerHTML = '';
 
-        if (users.length > 0) {
+        if (users.length> 0) {
             container.style.display = 'flex';
             btn.style.display = 'block';
 
@@ -905,7 +904,7 @@
             messageSearchResults = results;
             currentSearchIndex = 0;
 
-            if (results.length > 0) {
+            if (results.length> 0) {
                 document.getElementById('fp-search-nav').style.display = 'flex';
                 document.getElementById('fp-search-count').textContent = `1 of ${results.length}`;
                 fpHighlightSearchResults(query);
@@ -1110,7 +1109,7 @@
 
     function fpHandleFileSelect(input) {
         const preview = document.getElementById('fp-file-preview');
-        if (input.files && input.files.length > 0) {
+        if (input.files && input.files.length> 0) {
             preview.innerHTML = '';
             preview.style.display = 'block';
 

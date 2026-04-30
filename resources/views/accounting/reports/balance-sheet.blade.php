@@ -96,7 +96,7 @@
                     </h4>
 
                     @php $calculatedAssets = 0; @endphp
-                    @if(is_array($assetGroups) && count($assetGroups) > 0)
+                    @if(is_array($assetGroups) && count($assetGroups)> 0)
                         @foreach($assetGroups as $group)
                             <div class="mb-4">
                                 <h6 class="text-secondary fw-bold">{{ $group['name'] ?? 'Assets' }}</h6>
@@ -144,7 +144,7 @@
 
                     <!-- Liabilities Section -->
                     @php $calculatedLiabilities = 0; @endphp
-                    @if(is_array($liabilityGroups) && count($liabilityGroups) > 0)
+                    @if(is_array($liabilityGroups) && count($liabilityGroups)> 0)
                         @foreach($liabilityGroups as $group)
                             <div class="mb-4">
                                 <h6 class="text-secondary fw-bold">{{ $group['name'] ?? 'Liabilities' }}</h6>
@@ -185,7 +185,7 @@
 
                     <!-- Equity Section -->
                     @php $calculatedEquity = 0; @endphp
-                    @if(is_array($equityGroups) && count($equityGroups) > 0)
+                    @if(is_array($equityGroups) && count($equityGroups)> 0)
                         @foreach($equityGroups as $group)
                             <div class="mb-4">
                                 <h6 class="text-secondary fw-bold">{{ $group['name'] ?? 'Equity' }}</h6>

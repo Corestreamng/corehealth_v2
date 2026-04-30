@@ -179,7 +179,7 @@
 
                     {{-- ── Scheme cards ── --}}
                     <div id="schemePanel" style="display: none;">
-                        @if(count($schemeSummary) > 0)
+                        @if(count($schemeSummary)> 0)
                         <div class="row">
                             @foreach($schemeSummary as $scheme)
                             <div class="col-md-6 col-lg-4 mb-3">
@@ -225,10 +225,10 @@
 
                                         {{-- Manual/Auto counts --}}
                                         <div>
-                                            @if($scheme['manual_count'] > 0)
+                                            @if($scheme['manual_count']> 0)
                                                 <span class="stat-badge manual">{{ $scheme['manual_count'] }} manual</span>
                                             @endif
-                                            @if($scheme['auto_count'] > 0)
+                                            @if($scheme['auto_count']> 0)
                                                 <span class="stat-badge auto">{{ $scheme['auto_count'] }} auto</span>
                                             @endif
                                         </div>
@@ -514,7 +514,7 @@ $(document).ready(function() {
             }
         } else if (scope === 'manual') {
             let count = $('.manual-hmo-checkbox:checked').length;
-            targetText = count > 0 ? count + ' HMO(s) selected' : '<span class="text-danger">No HMOs selected</span>';
+            targetText = count> 0 ? count + ' HMO(s) selected' : '<span class="text-danger">No HMOs selected</span>';
         } else {
             targetText = '<span class="text-danger">Choose a scope above</span>';
         }

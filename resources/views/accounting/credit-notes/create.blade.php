@@ -235,7 +235,7 @@ $(document).ready(function() {
             var $select = $('#paymentSelect');
             $select.html('<option value="">-- Select payment to credit --</option>');
 
-            if (data && data.length > 0) {
+            if (data && data.length> 0) {
                 data.forEach(function(payment) {
                     $select.append('<option value="' + payment.id + '" data-amount="' + payment.amount + '">' +
                         payment.receipt_number + ' - ₦' + parseFloat(payment.amount).toLocaleString() +

@@ -277,7 +277,7 @@ $(function() {
         $('#cnt-male').text(d.male);
         $('#cnt-female').text(d.female);
         var total = d.male + d.female;
-        if (total > 0) {
+        if (total> 0) {
             var malePct = Math.round(d.male / total * 100);
             $('#gender-bar-male').css('width', malePct + '%');
             $('#gender-bar-female').css('width', (100 - malePct) + '%');
@@ -341,7 +341,7 @@ $(function() {
             { data: 'years_of_service', render: function(data) {
                 if (!data) return '&mdash;';
                 var yrs = parseFloat(data);
-                var color = yrs >= 30 ? '#dc2626' : yrs >= 20 ? '#d97706' : yrs >= 10 ? '#059669' : '#6b7280';
+                var color = yrs>= 30 ? '#dc2626' : yrs>= 20 ? '#d97706' : yrs>= 10 ? '#059669' : '#6b7280';
                 return '<span style="color:' + color + ';font-weight:600;">' + data + '</span>';
             }},
             { data: 'salary', render: function(data) {
@@ -431,11 +431,11 @@ $(function() {
             if (d.entry_qualification.verified) h += ' <i class="mdi mdi-check-circle text-success"></i>';
             h += '</div></div>';
         }
-        h += fld('Additional Quals', d.additional_qualifications > 0 ? d.additional_qualifications + ' recorded' : null);
-        h += fld('Promotions', d.total_promotions > 0 ? d.total_promotions + ' recorded' : null);
-        h += fld('Trainings', d.total_trainings > 0 ? d.completed_trainings + '/' + d.total_trainings + ' completed' : null);
+        h += fld('Additional Quals', d.additional_qualifications> 0 ? d.additional_qualifications + ' recorded' : null);
+        h += fld('Promotions', d.total_promotions> 0 ? d.total_promotions + ' recorded' : null);
+        h += fld('Trainings', d.total_trainings> 0 ? d.completed_trainings + '/' + d.total_trainings + ' completed' : null);
         if (d.latest_medical_exam) h += fld('Last Medical', d.latest_medical_exam.date + ' &mdash; ' + d.latest_medical_exam.result.charAt(0).toUpperCase() + d.latest_medical_exam.result.slice(1));
-        h += fld('Open Follow-ups', d.open_follow_ups > 0 ? '<span class="text-danger font-weight-bold">' + d.open_follow_ups + ' open</span>' : '0');
+        h += fld('Open Follow-ups', d.open_follow_ups> 0 ? '<span class="text-danger font-weight-bold">' + d.open_follow_ups + ' open</span>' : '0');
         h += '<div class="mt-2"><a href="' + d.profile_url + '" class="btn btn-primary btn-sm" style="border-radius:8px;font-size:0.78rem;"><i class="mdi mdi-account-search mr-1"></i> Full Tracking Profile</a></div>';
         h += '</div></div>';
         h += '</div></div>';

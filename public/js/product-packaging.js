@@ -47,7 +47,7 @@
     function buildTemplate() {
         return '<div class="packaging-row card-modern p-3 mb-2" data-level="__LEVEL__">'
             + '<div class="d-flex justify-content-between align-items-center mb-2">'
-            + '<span class="badge badge-primary level-indicator">Level __LEVEL__</span>'
+            + '<span class="badge bg-primary level-indicator">Level __LEVEL__</span>'
             + '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-level">'
             + '<i class="mdi mdi-close"></i></button></div>'
             + '<input type="hidden" name="packagings[__IDX__][id]" value="">'
@@ -75,14 +75,14 @@
             + '</div>'
             + '<div class="row g-2 mt-2">'
             + '<div class="col-md-3">'
-            + '<div class="custom-control custom-checkbox">'
-            + '<input type="checkbox" class="custom-control-input" name="packagings[__IDX__][is_default_purchase]" id="pkg_dp___IDX__" value="1">'
-            + '<label class="custom-control-label" for="pkg_dp___IDX__">Default Purchase</label>'
+            + '<div class="form-check">'
+            + '<input type="checkbox" class="form-check-input" name="packagings[__IDX__][is_default_purchase]" id="pkg_dp___IDX__" value="1">'
+            + '<label class="form-check-label" for="pkg_dp___IDX__">Default Purchase</label>'
             + '</div></div>'
             + '<div class="col-md-3">'
-            + '<div class="custom-control custom-checkbox">'
-            + '<input type="checkbox" class="custom-control-input" name="packagings[__IDX__][is_default_dispense]" id="pkg_dd___IDX__" value="1">'
-            + '<label class="custom-control-label" for="pkg_dd___IDX__">Default Dispense</label>'
+            + '<div class="form-check">'
+            + '<input type="checkbox" class="form-check-input" name="packagings[__IDX__][is_default_dispense]" id="pkg_dd___IDX__" value="1">'
+            + '<label class="form-check-label" for="pkg_dd___IDX__">Default Dispense</label>'
             + '</div></div>'
             + '<div class="col-md-3">'
             + '<label class="form-label-modern">Barcode</label>'
@@ -165,6 +165,12 @@
         }
         return parseFloat(n.toFixed(4)).toLocaleString();
     }
+
+    window.ProductPackaging = {
+        addLevel: addLevel,
+        recalculate: recalculate,
+        reindex: reindex
+    };
 
     $(document).ready(init);
 

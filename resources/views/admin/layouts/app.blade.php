@@ -124,7 +124,7 @@
             overflow: hidden;
         }
 
-        .sidebar-icon-only .ch-sidebar .nav-brand > div {
+        .sidebar-icon-only .ch-sidebar .nav-brand> div {
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
@@ -140,7 +140,7 @@
             object-fit: contain !important;
         }
 
-        .sidebar-icon-only .ch-sidebar .nav-brand > div > div {
+        .sidebar-icon-only .ch-sidebar .nav-brand> div> div {
             width: 35px !important;
             height: 35px !important;
             font-size: 0.85rem !important;
@@ -201,8 +201,8 @@
             }
 
             /* Show submenu on hover */
-            .sidebar-icon-only .ch-sidebar .nav-item:hover > .collapse,
-            .sidebar-icon-only .ch-sidebar .nav-item:hover > .collapsing {
+            .sidebar-icon-only .ch-sidebar .nav-item:hover> .collapse,
+            .sidebar-icon-only .ch-sidebar .nav-item:hover> .collapsing {
                 display: block !important;
                 position: absolute;
                 left: 70px;
@@ -446,7 +446,7 @@
         }
 
         .ch-sidebar .nav-link.active,
-        .ch-sidebar .nav-item.active > .nav-link {
+        .ch-sidebar .nav-item.active> .nav-link {
             background: rgba(255, 255, 255, 0.1) !important;
             color: #fff !important;
             border-left-color: #fff !important;
@@ -774,7 +774,7 @@ rgba(255, 255, 255, 0.7) !important;
         }
 
         /* Add padding only to content-header for breadcrumbs */
-        .content-wrapper > .content-header {
+        .content-wrapper> .content-header {
             padding-left: 0;
             padding-right: 0;
         }
@@ -1729,7 +1729,7 @@ rgba(255, 255, 255, 0.7) !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        .card-modern > .card-header {
+        .card-modern> .card-header {
             background: #f9fafb;
             border-bottom: 1px solid #e5e7eb;
             padding: 0.875rem 1.25rem;
@@ -1738,23 +1738,23 @@ rgba(255, 255, 255, 0.7) !important;
             margin-bottom: 0;
         }
 
-        .card-modern > .card-header:first-child {
+        .card-modern> .card-header:first-child {
             border-radius: 11px 11px 0 0;
         }
 
-        .card-modern > .card-body {
+        .card-modern> .card-body {
             flex: 1 1 auto;
             padding: 1.25rem;
             color: #374151;
         }
 
-        .card-modern > .card-footer {
+        .card-modern> .card-footer {
             background: #f9fafb;
             border-top: 1px solid #e5e7eb;
             padding: 0.75rem 1.25rem;
         }
 
-        .card-modern > .card-footer:last-child {
+        .card-modern> .card-footer:last-child {
             border-radius: 0 0 11px 11px;
         }
 
@@ -1778,19 +1778,19 @@ rgba(255, 255, 255, 0.7) !important;
                 max-width: 100%;
             }
 
-            .card-modern > .card-header:first-child {
+            .card-modern> .card-header:first-child {
                 border-radius: 7px 7px 0 0;
             }
 
-            .card-modern > .card-footer:last-child {
+            .card-modern> .card-footer:last-child {
                 border-radius: 0 0 7px 7px;
             }
 
-            .card-modern > .card-body {
+            .card-modern> .card-body {
                 padding: 1rem;
             }
 
-            .card-modern > .card-header {
+            .card-modern> .card-header {
                 padding: 0.75rem 1rem;
             }
         }
@@ -2141,8 +2141,7 @@ rgba(255, 255, 255, 0.7) !important;
                         <div>
                             @if (count($errors))
                                 <div class="alert alert-danger alert-dismissible">
-                                    <button type="button" class="close" data-dismiss="alert"
-                                        aria-hidden="true">×</button>
+                                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
                                     <!-- <h5><i class="icon fa fa-info"></i> Alert!</h5> -->
                                     <ul>
                                         @foreach ($errors as $error)
@@ -2343,8 +2342,8 @@ rgba(255, 255, 255, 0.7) !important;
 
             // Disable submenu clicks in icon-only mode (Desktop only)
             $('body').on('click', '.sidebar-icon-only .ch-sidebar .nav-link[data-toggle="collapse"]', function(e) {
-                // Only prevent default if we are on desktop (width >= 992px)
-                if ($(window).width() >= 992) {
+                // Only prevent default if we are on desktop (width>= 992px)
+                if ($(window).width()>= 992) {
                     e.preventDefault();
                     return false;
                 }

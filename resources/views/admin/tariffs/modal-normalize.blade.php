@@ -8,9 +8,7 @@
                     </div>
                     <h5 class="modal-title font-weight-bold mb-0">Quick Normalization Tool</h5>
                 </div>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="normalizeForm">
                 @csrf

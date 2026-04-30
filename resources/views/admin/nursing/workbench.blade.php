@@ -2554,17 +2554,17 @@
     }
 
     /* Disable DataTables responsive expansion */
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control:before,
-    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before {
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed> tbody> tr.parent> th.dtr-control:before {
         display: none !important;
     }
 
-    #history-tab table.dataTable > tbody > tr.child {
+    #history-tab table.dataTable> tbody> tr.child {
         display: none !important;
     }
 
@@ -3059,9 +3059,7 @@
             {{ $resolvedStore->distributionRoleLabel() }}
         </span>
         @can('store-context.change-manual')
-        <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2"
-                onclick="openStoreContextOverride()"
-                title="Change active store context">
+        <button class="btn btn-outline-secondary btn-sm ms-auto py-0 px-2" onclick="openStoreContextOverride()" title="Change active store context">
             <i class="fas fa-exchange-alt"></i> Change
         </button>
         @endcan
@@ -4989,9 +4987,7 @@
                             <h5 class="modal-title" id="administerVaccineModalLabel">
                                 <i class="mdi mdi-needle"></i> Administer Vaccine
                             </h5>
-                            <button type="button" class="close text-white"  data-bs-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <!-- Schedule Info Banner -->
@@ -5140,7 +5136,7 @@
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                 <i class="mdi mdi-close"></i> Cancel
                             </button>
                             <button type="button" class="btn btn-success btn-lg" id="modal-submit-immunization">
@@ -5177,26 +5173,22 @@
                     <!-- Sub-tabs -->
                     <ul class="nav nav-tabs service-tabs mb-3" id="clinical-requests-sub-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="cr-prescriptions-tab" data-bs-toggle="tab"
-                                data-bs-target="#cr-prescriptions" type="button" role="tab">
+                            <button class="nav-link active" id="cr-prescriptions-tab" data-bs-toggle="tab" data-bs-target="#cr-prescriptions" type="button" role="tab">
                                 <i class="mdi mdi-pill"></i> Drug Prescription
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="cr-lab-tab" data-bs-toggle="tab"
-                                data-bs-target="#cr-lab" type="button" role="tab">
+                            <button class="nav-link" id="cr-lab-tab" data-bs-toggle="tab" data-bs-target="#cr-lab" type="button" role="tab">
                                 <i class="mdi mdi-flask"></i> Lab Requests
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="cr-imaging-tab" data-bs-toggle="tab"
-                                data-bs-target="#cr-imaging" type="button" role="tab">
+                            <button class="nav-link" id="cr-imaging-tab" data-bs-toggle="tab" data-bs-target="#cr-imaging" type="button" role="tab">
                                 <i class="mdi mdi-radioactive"></i> Imaging
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="cr-procedures-tab" data-bs-toggle="tab"
-                                data-bs-target="#cr-procedures" type="button" role="tab">
+                            <button class="nav-link" id="cr-procedures-tab" data-bs-toggle="tab" data-bs-target="#cr-procedures" type="button" role="tab">
                                 <i class="mdi mdi-medical-bag"></i> Procedures
                             </button>
                         </li>
@@ -5211,19 +5203,16 @@
                                     {{-- Treatment Plans + Re-prescribe buttons (Plan §6.4, §5.3) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary"
-                                                    data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
                                                 <i class="fa fa-clipboard-list"></i> Treatment Plans
                                             </button>
-                                            <button class="btn btn-sm btn-outline-success"
-                                                    onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                                            <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
                                         </div>
                                         {{-- Re-prescribe from previous encounter dropdown (Plan §5.3) --}}
                                         <div class="dropdown" id="cr-rp-encounter-dropdown">
-                                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
-                                                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                                 <i class="fa fa-redo"></i> Re-prescribe from Encounter
                                             </button>
                                             <ul class="dropdown-menu rp-encounter-menu" style="min-width: 320px; max-height: 300px; overflow-y: auto;">
@@ -5283,12 +5272,10 @@
                                     {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary"
-                                                    data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
                                                 <i class="fa fa-clipboard-list"></i> Treatment Plans
                                             </button>
-                                            <button class="btn btn-sm btn-outline-success"
-                                                    onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                                            <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
                                         </div>
@@ -5340,12 +5327,10 @@
                                     {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary"
-                                                    data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
                                                 <i class="fa fa-clipboard-list"></i> Treatment Plans
                                             </button>
-                                            <button class="btn btn-sm btn-outline-success"
-                                                    onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                                            <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
                                         </div>
@@ -5397,12 +5382,10 @@
                                     {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary"
-                                                    data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
                                                 <i class="fa fa-clipboard-list"></i> Treatment Plans
                                             </button>
-                                            <button class="btn btn-sm btn-outline-success"
-                                                    onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                                            <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
                                         </div>
@@ -5571,7 +5554,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="medication-logs-title">Activity Logs</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="medication-logs-content">
@@ -5591,7 +5574,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editNoteModalLabel">Edit Nursing Note</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="edit-note-form">
@@ -5616,7 +5599,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background-color: {{ $hosColor }}; color: white;">
                 <h5 class="modal-title" id="editVitalModalLabel"><i class="mdi mdi-heart-pulse"></i> Edit Vitals</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="edit-vital-form">
@@ -5678,9 +5661,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="fa fa-trash"></i> Delete Lab Request</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="deleteRequestForm">
                 <div class="modal-body">
@@ -5701,7 +5682,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fa fa-times"></i> Cancel
                     </button>
                     <button type="submit" class="btn btn-danger">
@@ -5719,9 +5700,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning">
                 <h5 class="modal-title"><i class="fa fa-ban"></i> Dismiss Lab Request</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="dismissRequestForm">
                 <div class="modal-body">
@@ -5742,7 +5721,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fa fa-times"></i> Cancel
                     </button>
                     <button type="submit" class="btn btn-warning">
@@ -5761,9 +5740,7 @@
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title"><i class="fa fa-clipboard-list"></i> Audit Trail</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row mb-3">
@@ -5812,7 +5789,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" id="exportAuditLog">
                     <i class="fa fa-download"></i> Export to Excel
                 </button>
@@ -5893,7 +5870,7 @@
                 <h5 class="modal-title" id="startShiftModalLabel">
                     <i class="mdi mdi-play-circle"></i> Start Your Shift
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Step 1: Shift Configuration -->
@@ -5962,7 +5939,7 @@
                 <h5 class="modal-title" id="endShiftModalLabel">
                     <i class="mdi mdi-stop-circle"></i> End Your Shift
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Shift Summary -->
@@ -6097,7 +6074,7 @@
                 <h5 class="modal-title" id="handoversListModalLabel">
                     <i class="mdi mdi-file-document-multiple"></i> Shift Handovers
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <!-- Filter Panel -->
@@ -6271,7 +6248,7 @@
                 <h5 class="modal-title" id="handoverDetailModalLabel">
                     <i class="mdi mdi-file-document"></i> Handover Details
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="handover-detail-content">
                 <!-- Dynamic content loaded here -->
@@ -6294,7 +6271,7 @@
                 <h5 class="modal-title" id="shiftSummaryModalLabel">
                     <i class="mdi mdi-chart-bar"></i> Current Shift Summary
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="shift-summary-content">
                 <!-- Dynamic content loaded here -->
@@ -6853,7 +6830,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title"><i class="mdi mdi-emoticon-dead"></i> Complete Last Office</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="last-office-form">
@@ -7119,7 +7096,7 @@ function displayAdmittedPatientsQueue(patients) {
             </select>
         </div>
         <div class="ms-auto d-flex gap-2 small">
-            <span class="badge bg-danger">${patients.filter(p => p.overdue_meds > 0).length} overdue meds</span>
+            <span class="badge bg-danger">${patients.filter(p => p.overdue_meds> 0).length} overdue meds</span>
             <span class="badge bg-warning text-dark">${patients.filter(p => p.vitals_due).length} vitals due</span>
             <span class="badge bg-info">${patients.filter(p => p.priority === 'emergency').length} emergency</span>
         </div>
@@ -7213,8 +7190,8 @@ function renderAdmittedCards(patients) {
                                 <span class="small text-muted"><i class="mdi mdi-heart-pulse"></i> ${p.last_vitals || 'Never'}</span>
                             </div>
                             <div class="d-flex flex-wrap gap-1 mt-2">
-                                ${p.overdue_meds > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-pill"></i> ${p.overdue_meds} overdue</span>` : ''}
-                                ${p.pending_meds > 0 && p.overdue_meds === 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-pill"></i> ${p.pending_meds} due</span>` : ''}
+                                ${p.overdue_meds> 0 ? `<span class="badge bg-danger"><i class="mdi mdi-pill"></i> ${p.overdue_meds} overdue</span>` : ''}
+                                ${p.pending_meds> 0 && p.overdue_meds === 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-pill"></i> ${p.pending_meds} due</span>` : ''}
                                 ${p.vitals_due ? '<span class="badge bg-warning text-dark"><i class="mdi mdi-heart-pulse"></i> Vitals due</span>' : ''}
                                 ${p.chief_complaint ? `<span class="badge bg-info" title="${p.chief_complaint}"><i class="mdi mdi-comment-medical"></i> CC</span>` : ''}
                             </div>
@@ -7272,9 +7249,9 @@ function displayVitalsQueue(patients) {
                 </select>
             </div>
             <div class="ms-auto d-flex gap-2 small">
-                ${emergencies > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-alert"></i> ${emergencies} emergency</span>` : ''}
-                ${criticalWaits > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-clock-alert"></i> ${criticalWaits} long wait</span>` : ''}
-                ${warningWaits > 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-clock"></i> ${warningWaits} moderate wait</span>` : ''}
+                ${emergencies> 0 ? `<span class="badge bg-danger"><i class="mdi mdi-alert"></i> ${emergencies} emergency</span>` : ''}
+                ${criticalWaits> 0 ? `<span class="badge bg-danger"><i class="mdi mdi-clock-alert"></i> ${criticalWaits} long wait</span>` : ''}
+                ${warningWaits> 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-clock"></i> ${warningWaits} moderate wait</span>` : ''}
                 <span class="badge bg-secondary">${patients.length} total in queue</span>
             </div>
         </div>`;
@@ -7342,7 +7319,7 @@ function renderVitalsCards(patients) {
                             <span class="small text-muted"><i class="mdi mdi-clock-outline"></i> Queued ${p.queued_at || ''}</span>
                             <span class="badge ${waitBg}"><i class="mdi mdi-timer-sand"></i> ${p.wait_display || '0min'}</span>
                         </div>
-                        ${p.triage_note ? `<div class="mt-2 p-2 bg-light rounded small"><i class="mdi mdi-note-text text-info"></i> ${p.triage_note.substring(0, 100)}${p.triage_note.length > 100 ? '...' : ''}</div>` : ''}
+                        ${p.triage_note ? `<div class="mt-2 p-2 bg-light rounded small"><i class="mdi mdi-note-text text-info"></i> ${p.triage_note.substring(0, 100)}${p.triage_note.length> 100 ? '...' : ''}</div>` : ''}
                     </div>
                 </div>
             </div>`;
@@ -7507,14 +7484,14 @@ function displayDischargeRequestsQueue(requests) {
     }
 
     // Summary bar
-    const withUnpaid = requests.filter(r => r.unpaid_bills > 0).length;
+    const withUnpaid = requests.filter(r => r.unpaid_bills> 0).length;
     const checklistPhase = requests.filter(r => r.admission_status === 'discharge_checklist').length;
 
     let summaryHtml = `<div class="d-flex flex-wrap gap-2 mb-3 p-2 bg-light rounded align-items-center">
         <span class="fw-bold small"><i class="mdi mdi-account-minus"></i> ${requests.length} discharge requests</span>
         <div class="ms-auto d-flex gap-2 small">
-            ${withUnpaid > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-cash-remove"></i> ${withUnpaid} unpaid bills</span>` : ''}
-            ${checklistPhase > 0 ? `<span class="badge bg-info"><i class="mdi mdi-clipboard-check"></i> ${checklistPhase} in checklist</span>` : ''}
+            ${withUnpaid> 0 ? `<span class="badge bg-danger"><i class="mdi mdi-cash-remove"></i> ${withUnpaid} unpaid bills</span>` : ''}
+            ${checklistPhase> 0 ? `<span class="badge bg-info"><i class="mdi mdi-clipboard-check"></i> ${checklistPhase} in checklist</span>` : ''}
         </div>
     </div>`;
 
@@ -7523,7 +7500,7 @@ function displayDischargeRequestsQueue(requests) {
         const patientName = (r.patient_name || r.name || 'N/A').replace(/'/g, "\\'");
         const fileNo = (r.file_no || '').replace(/'/g, "\\'");
         const bedName = (r.bed_name || 'No bed').replace(/'/g, "\\'");
-        const hasUnpaid = r.unpaid_bills > 0;
+        const hasUnpaid = r.unpaid_bills> 0;
         const borderStyle = hasUnpaid ? 'border-left: 4px solid #dc3545;' : 'border-left: 4px solid #ffc107;';
         const statusBadge = r.admission_status === 'discharge_checklist'
             ? '<span class="badge bg-info">Checklist In Progress</span>'
@@ -7593,8 +7570,8 @@ function displayMedicationDueQueue(patients) {
     let summaryHtml = `<div class="d-flex flex-wrap gap-2 mb-3 p-2 bg-light rounded align-items-center">
         <span class="fw-bold small"><i class="mdi mdi-pill"></i> Medication Round</span>
         <div class="ms-auto d-flex gap-2 small">
-            ${overdueCount > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-clock-alert"></i> ${overdueCount} overdue</span>` : ''}
-            ${dueCount > 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-clock"></i> ${dueCount} due now</span>` : ''}
+            ${overdueCount> 0 ? `<span class="badge bg-danger"><i class="mdi mdi-clock-alert"></i> ${overdueCount} overdue</span>` : ''}
+            ${dueCount> 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-clock"></i> ${dueCount} due now</span>` : ''}
             <span class="badge bg-secondary">${patients.length} patients total</span>
         </div>
     </div>`;
@@ -7627,7 +7604,7 @@ function displayMedicationDueQueue(patients) {
                             <span class="small text-muted"><i class="mdi mdi-hospital-building"></i> ${p.ward || 'N/A'}</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="small"><i class="mdi mdi-pill text-warning"></i> <strong>${p.medication_count || 0}</strong> medications${p.overdue_count > 0 ? ` (${p.overdue_count} overdue)` : ''}</span>
+                            <span class="small"><i class="mdi mdi-pill text-warning"></i> <strong>${p.medication_count || 0}</strong> medications${p.overdue_count> 0 ? ` (${p.overdue_count} overdue)` : ''}</span>
                             ${p.next_med_time ? `<span class="small text-muted"><i class="mdi mdi-clock-fast"></i> Next: ${p.next_med_time}</span>` : ''}
                         </div>
                     </div>
@@ -8694,7 +8671,7 @@ const ClinicalRequests = (function() {
         });
 
         // If ALL rows are auto-saved, show success and clear
-        if (products.length === 0 && autoSavedCount > 0) {
+        if (products.length === 0 && autoSavedCount> 0) {
             showMessage('cr_presc_message', autoSavedCount + ' prescription(s) already auto-saved', 'success');
             $('#cr-selected-products').empty();
             ClinicalOrdersKit.addedIds.meds.clear(); // A3 fix: only clear meds
@@ -8712,7 +8689,7 @@ const ClinicalRequests = (function() {
             data: { patient_id: patientId, product_ids: products, doses: doses, _token: CSRF_TOKEN },
             success: function(r) {
                 if (r.success) {
-                    const saved = autoSavedCount > 0 ? ` (${autoSavedCount} auto-saved earlier)` : '';
+                    const saved = autoSavedCount> 0 ? ` (${autoSavedCount} auto-saved earlier)` : '';
                     showMessage('cr_presc_message', r.message + saved, 'success');
                     $('#cr-selected-products').empty();
                     ClinicalOrdersKit.addedIds.meds.clear(); // A3 fix: only clear meds
@@ -8739,7 +8716,7 @@ const ClinicalRequests = (function() {
         });
 
         // If all items were auto-saved
-        if (services.length === 0 && autoSavedCount > 0) {
+        if (services.length === 0 && autoSavedCount> 0) {
             showMessage('cr_lab_message', autoSavedCount + ' lab(s) already saved', 'success');
             $('#cr-selected-labs').empty();
             ClinicalOrdersKit.addedIds.labs.clear(); // A3 fix: only clear labs
@@ -8781,7 +8758,7 @@ const ClinicalRequests = (function() {
             if (id) { services.push(id); notes.push(note || ''); }
         });
 
-        if (services.length === 0 && autoSavedCount > 0) {
+        if (services.length === 0 && autoSavedCount> 0) {
             showMessage('cr_imaging_message', autoSavedCount + ' imaging request(s) already saved', 'success');
             $('#cr-selected-imaging').empty();
             ClinicalOrdersKit.addedIds.imaging.clear(); // A3 fix: only clear imaging
@@ -9103,7 +9080,7 @@ function displayPatientInfo(patient) {
         }
     }
 
-    if (allergiesArray.length > 0) {
+    if (allergiesArray.length> 0) {
         const allergiesList = allergiesArray.map(allergy =>
             `<span class="allergy-tag"><i class="mdi mdi-alert"></i> ${allergy}</span>`
         ).join('');
@@ -9185,7 +9162,7 @@ function renderPendingSubtabContent(filter) {
     }
 
     // Billing Section (Status 1)
-    if ((filter === 'all' || filter === 'billing') && requests.billing.length > 0) {
+    if ((filter === 'all' || filter === 'billing') && requests.billing.length> 0) {
         const billingHtml = `
             <div class="request-section" data-section="billing">
                 <div class="request-section-header">
@@ -9221,7 +9198,7 @@ function renderPendingSubtabContent(filter) {
     }
 
     // Sample Section (Status 2)
-    if ((filter === 'all' || filter === 'sample') && requests.sample.length > 0) {
+    if ((filter === 'all' || filter === 'sample') && requests.sample.length> 0) {
         const sampleHtml = `
             <div class="request-section" data-section="sample">
                 <div class="request-section-header">
@@ -9257,7 +9234,7 @@ function renderPendingSubtabContent(filter) {
     }
 
     // Results Section (Status 3)
-    if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
+    if ((filter === 'all' || filter === 'results') && requests.results.length> 0) {
         const resultsHtml = `
             <div class="request-section" data-section="results">
                 <div class="request-section-header">
@@ -9317,9 +9294,7 @@ function createRequestCard(request, section) {
 
     // Results section has individual action button instead of checkbox
     const checkboxOrAction = section === 'results' ? `
-        <button class="btn btn-sm btn-primary enter-result-btn"
-                data-request-id="${request.id}"
-                ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
+        <button class="btn btn-sm btn-primary enter-result-btn" data-request-id="${request.id}" ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
             <i class="mdi mdi-file-document-edit"></i>
             Enter Result
         </button>
@@ -9382,7 +9357,7 @@ function initializeRequestHandlers() {
             return $(this).data('request-id');
         }).get();
 
-        if (selectedIds.length > 0) {
+        if (selectedIds.length> 0) {
             recordBilling(selectedIds);
         }
     });
@@ -9393,7 +9368,7 @@ function initializeRequestHandlers() {
             return $(this).data('request-id');
         }).get();
 
-        if (selectedIds.length > 0) {
+        if (selectedIds.length> 0) {
             collectSample(selectedIds);
         }
     });
@@ -9406,7 +9381,7 @@ function initializeRequestHandlers() {
             return $(this).data('request-id');
         }).get();
 
-        if (selectedIds.length > 0) {
+        if (selectedIds.length> 0) {
             dismissRequests(selectedIds, section);
         }
     });
@@ -9731,18 +9706,18 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
         const temp = parseFloat(value);
         const idealTemp = 37.0;
         const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}┬░C above ideal` : `-${diff.toFixed(1)}┬░C below ideal`;
-        status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
+        deviation = temp> idealTemp ? `+${diff.toFixed(1)}┬░C above ideal` : `-${diff.toFixed(1)}┬░C below ideal`;
+        status = (temp>= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'pulse' && value !== 'N/A') {
         const pulse = parseInt(value);
         const idealPulse = 80;
         const diff = Math.abs(pulse - idealPulse);
-        deviation = pulse > idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
-        status = (pulse >= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
+        deviation = pulse> idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
+        status = (pulse>= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'bp' && value !== 'N/A' && value.includes('/')) {
         const [sys, dia] = value.split('/').map(v => parseInt(v));
-        status = (sys >= 90 && sys <= 140 && dia >= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
-        deviation = sys > 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
+        status = (sys>= 90 && sys <= 140 && dia>= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
+        deviation = sys> 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
     }
 
     const content = `
@@ -9772,14 +9747,14 @@ function checkForAllergies(medications, patientAllergies) {
 
     if (typeof patientAllergies === 'string') {
         // Handle comma-separated string
-        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length > 0);
+        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length> 0);
     } else if (Array.isArray(patientAllergies)) {
         // Handle array (could be array of strings or array of objects)
         allergiesArray = patientAllergies.map(a => {
             if (typeof a === 'string') return a.trim();
             if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
             return '';
-        }).filter(a => a.length > 0);
+        }).filter(a => a.length> 0);
     } else if (typeof patientAllergies === 'object' && patientAllergies !== null) {
         // Handle single object or object with values
         if (patientAllergies.name || patientAllergies.allergy || patientAllergies.allergen) {
@@ -9790,7 +9765,7 @@ function checkForAllergies(medications, patientAllergies) {
                 if (typeof a === 'string') return a.trim();
                 if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
                 return '';
-            }).filter(a => a.length > 0);
+            }).filter(a => a.length> 0);
         }
     }
 
@@ -9982,10 +9957,10 @@ function loadReportsStatistics(filters = {}) {
             }
 
             // Update top services
-            if (data.top_services && data.top_services.length > 0) {
+            if (data.top_services && data.top_services.length> 0) {
                 let servicesHtml = '<ul class="list-group list-group-flush">';
                 data.top_services.forEach(function(service, index) {
-                    const percentage = data.summary.total_requests > 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
+                    const percentage = data.summary.total_requests> 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
                     servicesHtml += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <div style="flex: 1; min-width: 0; margin-right: 15px;">
                             <div class="d-flex justify-content-between mb-1">
@@ -10112,7 +10087,7 @@ function renderQueueCard(data) {
 
     // Attachments
     let attachmentsSection = '';
-    if (data.attachments && data.attachments.length > 0) {
+    if (data.attachments && data.attachments.length> 0) {
         const attachmentLinks = data.attachments.map(att => {
             const icon = getFileIcon(att.type);
             return `<a href="/storage/${att.path}" target="_blank" class="queue-card-attachment">
@@ -10197,7 +10172,7 @@ function getStatusBadges(data) {
                 <div class="queue-card-status-value">${data.sample_taken_by}<br><small>${data.sample_taken_at}</small></div>
             </div>
         `;
-    } else if (data.status >= 2) {
+    } else if (data.status>= 2) {
         badges += `
             <div class="queue-card-status-item pending">
                 <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample</div>
@@ -10214,7 +10189,7 @@ function getStatusBadges(data) {
                 <div class="queue-card-status-value">${data.result_by}<br><small>${data.result_at}</small></div>
             </div>
         `;
-    } else if (data.status >= 3) {
+    } else if (data.status>= 3) {
         badges += `
             <div class="queue-card-status-item pending">
                 <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
@@ -11066,7 +11041,7 @@ const NursingReports = (function() {
 
         data.forEach(ward => {
             const occupancyPct = parseInt(ward.occupancy_rate);
-            const barClass = occupancyPct > 90 ? 'bg-danger' : (occupancyPct > 70 ? 'bg-warning' : 'bg-success');
+            const barClass = occupancyPct> 90 ? 'bg-danger' : (occupancyPct> 70 ? 'bg-warning' : 'bg-success');
             $tbody.append(`
                 <tr>
                     <td><strong>${ward.ward}</strong></td>
@@ -11171,7 +11146,7 @@ function updateMedicationRoundBadge() {
     $.get('/nursing-workbench/queue-counts', function(counts) {
         var medCount = counts.medication_due || 0;
         var $badge = $('#med-round-badge');
-        if (medCount > 0) {
+        if (medCount> 0) {
             $badge.text(medCount).show();
         } else {
             $badge.hide();
@@ -11326,7 +11301,7 @@ function renderTopServices(services, totalRequests = 0) {
     let html = '<ul class="list-group list-group-flush">';
 
     services.forEach((service, index) => {
-        const percentage = totalRequests > 0 ? Math.round((service.count / totalRequests) * 100) : 0;
+        const percentage = totalRequests> 0 ? Math.round((service.count / totalRequests) * 100) : 0;
 
         html += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
             <div style="flex: 1; min-width: 0; margin-right: 15px;">
@@ -11397,7 +11372,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         6: { name: 'Rejected', color: '#dc3545' }
     };
 
-    if (byStatus && byStatus.length > 0) {
+    if (byStatus && byStatus.length> 0) {
         byStatus.forEach(item => {
             const info = statusMap[item.status] || { name: 'Unknown', color: '#6c757d' };
             statusLabels.push(info.name);
@@ -11440,7 +11415,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
     const trendLabels = [];
     const trendData = [];
 
-    if (monthlyTrends && monthlyTrends.length > 0) {
+    if (monthlyTrends && monthlyTrends.length> 0) {
         monthlyTrends.forEach(item => {
             trendLabels.push(item.month);
             trendData.push(item.count);
@@ -11592,7 +11567,7 @@ function populateOverviewTab(data) {
         }
     }
 
-    if (allergiesArray.length > 0) {
+    if (allergiesArray.length> 0) {
         allergiesHtml = '<div class="d-flex flex-wrap">';
         allergiesArray.forEach(function(allergy) {
             allergiesHtml += `<span class="badge badge-danger m-1 p-2"><i class="mdi mdi-alert"></i> ${allergy}</span>`;
@@ -11654,7 +11629,7 @@ function loadOverviewPendingMeds(patientId) {
                 pendingMeds = data.medications.filter(med => !med.is_administered);
             }
 
-            if (pendingMeds.length > 0) {
+            if (pendingMeds.length> 0) {
                 $('#overview-pending-meds-count').text(pendingMeds.length);
                 html = '<ul class="list-group list-group-flush">';
                 pendingMeds.slice(0, 5).forEach(function(med) {
@@ -11669,7 +11644,7 @@ function loadOverviewPendingMeds(patientId) {
                     `;
                 });
                 html += '</ul>';
-                if (pendingMeds.length > 5) {
+                if (pendingMeds.length> 5) {
                     html += `<small class="text-muted d-block text-center mt-2">+${pendingMeds.length - 5} more</small>`;
                 }
             } else {
@@ -11851,7 +11826,7 @@ function addInjectionRxToTable() {
     }
 
     // Prevent duplicates
-    if ($(`#injection-selected-body tr[data-product-request-id="${rx.id}"]`).length > 0) {
+    if ($(`#injection-selected-body tr[data-product-request-id="${rx.id}"]`).length> 0) {
         showNotification('info', 'Prescription already added');
         return;
     }
@@ -11948,7 +11923,7 @@ $('#injection-drug-search').on('input', function() {
                         ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ₦${payable}</span> <span class='text-success ms-1'>Claim: ₦${claims}</span>`
                         : '';
 
-                    const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
+                    const qtyClass = qty> 0 ? 'text-success' : 'text-danger';
 
                     const mk = `<li class='list-group-item list-group-item-action' style="cursor: pointer;"
                                data-id="${item.id}"
@@ -12018,7 +11993,7 @@ function addInjectionDrug(element) {
     }
 
     // Check if already added
-    if ($(`#injection-selected-body tr[data-product-id="${id}"]`).length > 0) {
+    if ($(`#injection-selected-body tr[data-product-id="${id}"]`).length> 0) {
         showNotification('warning', 'This drug is already in the list');
         $('#injection-drug-results').hide();
         $('#injection-drug-search').val('');
@@ -12098,7 +12073,7 @@ function addPatientOwnInjectionRow() {
     const duplicate = $('#injection-selected-body tr[data-source="patient_own"]').filter(function() {
         return $(this).find('td:eq(1) strong').text().toLowerCase() === drugName.toLowerCase();
     });
-    if (duplicate.length > 0) {
+    if (duplicate.length> 0) {
         showNotification('warning', 'This drug is already in the list');
         return;
     }
@@ -12184,7 +12159,7 @@ function fetchAndPopulateBatchDropdown(productId, storeId, rowSelector) {
         success: function(response) {
             $batchLoading.addClass('d-none');
 
-            if (response.success && response.batches.length > 0) {
+            if (response.success && response.batches.length> 0) {
                 // Build dropdown options
                 let options = '<option value="">Auto (FIFO)</option>';
                 response.batches.forEach((batch, index) => {
@@ -12206,8 +12181,8 @@ function fetchAndPopulateBatchDropdown(productId, storeId, rowSelector) {
                 // Update stock cell
                 const totalQty = response.total_available;
                 const reqQty = parseInt($row.find('.injection-qty').val()) || 1;
-                const stockClass = totalQty >= reqQty ? 'text-success' : 'text-danger';
-                const stockIcon = totalQty >= reqQty ? 'mdi-check-circle' : 'mdi-alert-circle';
+                const stockClass = totalQty>= reqQty ? 'text-success' : 'text-danger';
+                const stockIcon = totalQty>= reqQty ? 'mdi-check-circle' : 'mdi-alert-circle';
                 $stockCell.html(`<span class="${stockClass}"><i class="mdi ${stockIcon}"></i> ${totalQty}</span>`);
 
                 // Store batches data for later reference
@@ -12244,7 +12219,7 @@ function fetchProductBatchesForSelect(productId, storeId, selectId, callback) {
         success: function(response) {
             $select.prop('disabled', false);
 
-            if (response.success && response.batches.length > 0) {
+            if (response.success && response.batches.length> 0) {
                 let options = '<option value="">Auto (FIFO) - Recommended</option>';
 
                 response.batches.forEach((batch, index) => {
@@ -12340,8 +12315,8 @@ $(document).on('change', '.injection-qty', function() {
     if (batches) {
         const totalQty = batches.reduce((sum, b) => sum + b.current_qty, 0);
         const $stockCell = $row.find('.stock-cell');
-        const stockClass = totalQty >= reqQty ? 'text-success' : 'text-danger';
-        const stockIcon = totalQty >= reqQty ? 'mdi-check-circle' : 'mdi-alert-circle';
+        const stockClass = totalQty>= reqQty ? 'text-success' : 'text-danger';
+        const stockIcon = totalQty>= reqQty ? 'mdi-check-circle' : 'mdi-alert-circle';
         $stockCell.html(`<span class="${stockClass}"><i class="mdi ${stockIcon}"></i> ${totalQty}</span>`);
     }
 
@@ -12406,8 +12381,8 @@ function updateInjectionStockDisplay() {
             fetchProductStockByStore(productId, function(stockData) {
                 const storeStock = stockData.stores.find(s => s.store_id == storeId);
                 const availableQty = storeStock ? storeStock.quantity : 0;
-                const stockClass = availableQty >= qty ? 'text-success' : 'text-danger';
-                const stockIcon = availableQty >= qty ? 'mdi-check-circle' : 'mdi-alert-circle';
+                const stockClass = availableQty>= qty ? 'text-success' : 'text-danger';
+                const stockIcon = availableQty>= qty ? 'mdi-check-circle' : 'mdi-alert-circle';
 
                 $stockCell.html(`<span class="${stockClass}"><i class="mdi ${stockIcon}"></i> ${availableQty}</span>`);
             });
@@ -12444,8 +12419,8 @@ function updateConsumableStockDisplay() {
         const storeStock = stockData.stores.find(s => s.store_id == storeId);
         const availableQty = storeStock ? storeStock.quantity : 0;
         const qty = parseInt($('#consumable-quantity').val()) || 1;
-        const stockClass = availableQty >= qty ? 'text-success' : 'text-danger';
-        const stockIcon = availableQty >= qty ? 'mdi-check-circle' : 'mdi-alert-circle';
+        const stockClass = availableQty>= qty ? 'text-success' : 'text-danger';
+        const stockIcon = availableQty>= qty ? 'mdi-check-circle' : 'mdi-alert-circle';
 
         let html = `<div class="${stockClass}"><i class="mdi ${stockIcon}"></i> Available: <strong>${availableQty}</strong></div>`;
         if (availableQty < qty) {
@@ -12483,8 +12458,8 @@ function updateImmunizationStockDisplay() {
     fetchProductStockByStore(productId, function(stockData) {
         const storeStock = stockData.stores.find(s => s.store_id == storeId);
         const availableQty = storeStock ? storeStock.quantity : 0;
-        const stockClass = availableQty > 0 ? 'text-success' : 'text-danger';
-        const stockIcon = availableQty > 0 ? 'mdi-check-circle' : 'mdi-alert-circle';
+        const stockClass = availableQty> 0 ? 'text-success' : 'text-danger';
+        const stockIcon = availableQty> 0 ? 'mdi-check-circle' : 'mdi-alert-circle';
 
         let html = `<div class="${stockClass}"><i class="mdi ${stockIcon}"></i> Available: <strong>${availableQty}</strong></div>`;
         if (availableQty <= 0) {
@@ -12518,7 +12493,7 @@ function validateStockAvailability(storeId, products) {
                         product_name: p.product_name || 'Product',
                         requested_qty: parseInt(p.qty) || 1,
                         available_qty: availableQty,
-                        sufficient: availableQty >= (parseInt(p.qty) || 1)
+                        sufficient: availableQty>= (parseInt(p.qty) || 1)
                     });
                 });
             });
@@ -12526,7 +12501,7 @@ function validateStockAvailability(storeId, products) {
 
         Promise.all(stockChecks).then(results => {
             const insufficientItems = results.filter(r => !r.sufficient);
-            if (insufficientItems.length > 0) {
+            if (insufficientItems.length> 0) {
                 reject({
                     type: 'insufficient_stock',
                     items: insufficientItems,
@@ -12755,7 +12730,7 @@ function handleInjectionSubmitError(response, products) {
             }
         });
 
-        if (errorMessages.length > 0) {
+        if (errorMessages.length> 0) {
             showNotification('error', 'Validation failed: ' + errorMessages.join(', '));
         } else {
             showNotification('error', response.message || 'Validation failed');
@@ -12855,7 +12830,7 @@ $('#vaccine-drug-search').on('input', function() {
                         ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ₦${payable}</span> <span class='text-success ms-1'>Claim: ₦${claims}</span>`
                         : '';
 
-                    const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
+                    const qtyClass = qty> 0 ? 'text-success' : 'text-danger';
 
                     const mk = `<li class='list-group-item list-group-item-action' style="cursor: pointer;"
                                data-id="${item.id}"
@@ -12905,7 +12880,7 @@ function addVaccineDrug(element) {
     const mode = $el.data('mode') || 'cash';
 
     // Check if already added
-    if ($(`#vaccine-selected-body tr[data-product-id="${id}"]`).length > 0) {
+    if ($(`#vaccine-selected-body tr[data-product-id="${id}"]`).length> 0) {
         showNotification('warning', 'This vaccine is already in the list');
         $('#vaccine-drug-results').hide();
         $('#vaccine-drug-search').val('');
@@ -13138,7 +13113,7 @@ function renderScheduleTimeline(response) {
 
     // Update active schedules display
     let templateBadges = '';
-    if (active_templates && active_templates.length > 0) {
+    if (active_templates && active_templates.length> 0) {
         templateBadges = active_templates.map(t =>
             `<span class="badge badge-primary mr-1"><i class="mdi mdi-calendar-check"></i> ${t.name}</span>`
         ).join('');
@@ -13213,7 +13188,7 @@ function renderScheduleTimeline(response) {
                             <strong>${ageGroup.age_display}</strong>
                         </span>
                         <span>
-                            ${ageGroup.vaccines.length} vaccine${ageGroup.vaccines.length > 1 ? 's' : ''}
+                            ${ageGroup.vaccines.length} vaccine${ageGroup.vaccines.length> 1 ? 's' : ''}
                             <i class="mdi mdi-chevron-down ml-1"></i>
                         </span>
                     </div>
@@ -13561,7 +13536,7 @@ function selectModalProduct(element) {
     // storeId already declared above
     if (storeId) {
         fetchProductBatchesForSelect(product.id, storeId, '#modal-vaccine-batch-select', function(response) {
-            if (response.success && response.batches && response.batches.length > 0) {
+            if (response.success && response.batches && response.batches.length> 0) {
                 // Show batch help text
                 $('#modal-vaccine-batch-help').html(`
                     <span class="text-success"><i class="mdi mdi-check-circle"></i> ${response.total_available} available in ${response.batches.length} batch(es)</span>
@@ -13628,7 +13603,7 @@ $('#modal-vaccine-search').on('input', function() {
                         ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ₦${payable}</span> <span class='text-success ms-1'>Claim: ₦${claims}</span>`
                         : '';
 
-                    const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
+                    const qtyClass = qty> 0 ? 'text-success' : 'text-danger';
 
                     const mk = `<li class='list-group-item list-group-item-action' style="cursor: pointer;"
                                data-id="${item.id}"
@@ -14550,7 +14525,7 @@ function renderOverviewCalendar(data, startStr, endStr) {
 
 function truncate(str, len) {
     if (!str) return '';
-    return str.length > len ? str.substring(0, len) + '…' : str;
+    return str.length> len ? str.substring(0, len) + '…' : str;
 }
 
 // Overview nav buttons
@@ -14607,7 +14582,7 @@ function loadPrescriptionsTab() {
             $('#rx-count-billed').text(billed);
             $('#rx-count-requested').text(requested);
             $('#rx-count-total').text(total);
-            $('#rx-tab-badge').text(total).toggle(total > 0);
+            $('#rx-tab-badge').text(total).toggle(total> 0);
 
             // Render table
             renderPrescriptionsTable(rxList, directList, rxCurrentFilter);
@@ -14687,7 +14662,7 @@ function renderPrescriptionsTable(rxList, directList, filter) {
     });
 
     // Direct entries (show if filter = 'all')
-    if (filter === 'all' && directList.length > 0) {
+    if (filter === 'all' && directList.length> 0) {
         $body.append('<tr class="table-light"><td colspan="7" class="fw-bold small text-muted py-1"><i class="mdi mdi-arrow-right"></i> Direct Administrations</td></tr>');
 
         directList.forEach(function(entry) {
@@ -14707,11 +14682,7 @@ function renderPrescriptionsTable(rxList, directList, filter) {
                     '<td><span class="badge bg-secondary">' + (entry.times_administered || 0) + ' given</span>' +
                         '<br><small class="text-muted">Scheduled: ' + (entry.times_scheduled || 0) + '</small></td>' +
                     '<td class="text-center">' +
-                        '<button class="btn btn-sm btn-outline-primary rx-select-direct-btn" ' +
-                            'data-drug-source="' + entry.drug_source + '" ' +
-                            'data-product-id="' + (entry.product_id || '') + '" ' +
-                            'data-external-name="' + (entry.external_drug_name || '') + '" ' +
-                            'title="Select in chart"><i class="mdi mdi-pencil-plus"></i></button>' +
+                        '<button class="btn btn-sm btn-outline-primary rx-select-direct-btn" ' + 'data-drug-source="' + entry.drug_source + '" ' + 'data-product-id="' + (entry.product_id || '') + '" ' + 'data-external-name="' + (entry.external_drug_name || '') + '" ' + 'title="Select in chart"><i class="mdi mdi-pencil-plus"></i></button>' +
                     '</td>' +
                 '</tr>'
             );
@@ -15030,7 +15001,7 @@ function loadMedicationsList() {
 
                 // §6.1: Merge direct administration entries (ward stock + patient's own)
                 var directEntries = data.direct_entries || [];
-                if (directEntries.length > 0) {
+                if (directEntries.length> 0) {
                     // Add separator
                     var separator = new Option('── Direct Administrations ──', '', false, false);
                     separator.disabled = true;
@@ -15179,7 +15150,7 @@ $(document).on('click', '#apply-date-range-btn', function() {
         return;
     }
 
-    if (new Date(startDateStr) > new Date(endDateStr)) {
+    if (new Date(startDateStr)> new Date(endDateStr)) {
         toastr.warning('Start date cannot be after end date.');
         return;
     }
@@ -15482,7 +15453,7 @@ function renderCalendarView(medication, schedules, administrations, period) {
     let gridHtml = '<div class="medication-calendar-grid">';
 
     // Add empty cells for padding to align first day with correct weekday
-    const firstDayOfWeek = days.length > 0 ? days[0].getDay() : 0;
+    const firstDayOfWeek = days.length> 0 ? days[0].getDay() : 0;
     for (let i = 0; i < firstDayOfWeek; i++) {
         gridHtml += '<div class="calendar-day-cell empty-day"></div>';
     }
@@ -15540,7 +15511,7 @@ function renderCalendarView(medication, schedules, administrations, period) {
 
                 const isDiscontinued = medication.discontinued_at &&
                     new Date(medication.discontinued_at) < scheduleTime &&
-                    (!medication.resumed_at || new Date(medication.resumed_at) > scheduleTime);
+                    (!medication.resumed_at || new Date(medication.resumed_at)> scheduleTime);
 
                 if (isDiscontinued) {
                     badgeClass = 'bg-secondary';
@@ -15610,7 +15581,7 @@ function renderCalendarView(medication, schedules, administrations, period) {
     });
 
     // Add trailing empty cells to complete the last week row
-    const lastDayOfWeek = days.length > 0 ? days[days.length - 1].getDay() : 6;
+    const lastDayOfWeek = days.length> 0 ? days[days.length - 1].getDay() : 6;
     for (let i = lastDayOfWeek + 1; i < 7; i++) {
         gridHtml += '<div class="calendar-day-cell empty-day"></div>';
     }
@@ -16485,7 +16456,7 @@ $('#ws_product_search').on('input', function() {
                     var code = item.product_code || '';
                     var qty = (item.stock && item.stock.current_quantity !== undefined) ? item.stock.current_quantity : 0;
                     var price = (item.price && item.price.current_sale_price !== undefined) ? item.price.current_sale_price : 0;
-                    var qtyClass = qty > 0 ? 'text-success' : 'text-danger';
+                    var qtyClass = qty> 0 ? 'text-success' : 'text-danger';
 
                     var li = '<li class="list-group-item list-group-item-action" style="cursor:pointer;" ' +
                         'data-id="' + item.id + '" ' +
@@ -16552,7 +16523,7 @@ function updateWsStockDisplay(productId, storeId) {
             var available = storeStock ? storeStock.quantity : 0;
             var badge = $('#ws_available_stock');
             badge.text(available + ' in store');
-            if (available > 0) {
+            if (available> 0) {
                 badge.removeClass('bg-danger bg-info').addClass('bg-success');
             } else {
                 badge.removeClass('bg-success bg-info').addClass('bg-danger');
@@ -16718,7 +16689,7 @@ function renderFluidPeriods() {
 
         // Build records table
         let recordsHtml = '';
-        if (period.records && period.records.length > 0) {
+        if (period.records && period.records.length> 0) {
             recordsHtml = `
                 <div class="table-responsive mt-3">
                     <table class="table table-sm table-striped mb-0">
@@ -16773,7 +16744,7 @@ function renderFluidPeriods() {
                             <h6 class="text-warning mb-0"><i class="mdi mdi-water-off"></i> Output: ${totalOutput} ml</h6>
                         </div>
                         <div class="col-md-4">
-                            <h6 class="mb-0"><strong>Balance:</strong> <span class="${balance >= 0 ? 'text-success' : 'text-danger'}">${balance} ml</span></h6>
+                            <h6 class="mb-0"><strong>Balance:</strong> <span class="${balance>= 0 ? 'text-success' : 'text-danger'}">${balance} ml</span></h6>
                         </div>
                     </div>
                     ${recordsHtml}
@@ -16800,7 +16771,7 @@ function renderSolidPeriods() {
 
         // Build records table
         let recordsHtml = '';
-        if (period.records && period.records.length > 0) {
+        if (period.records && period.records.length> 0) {
             recordsHtml = `
                 <div class="table-responsive mt-3">
                     <table class="table table-sm table-striped mb-0">
@@ -16856,7 +16827,7 @@ function renderSolidPeriods() {
                             <h6 class="text-danger mb-0"><i class="mdi mdi-delete-empty"></i> Output: ${totalOutput} g</h6>
                         </div>
                         <div class="col-md-4">
-                            <h6 class="mb-0"><strong>Balance:</strong> <span class="${balance >= 0 ? 'text-success' : 'text-danger'}">${balance} g</span></h6>
+                            <h6 class="mb-0"><strong>Balance:</strong> <span class="${balance>= 0 ? 'text-success' : 'text-danger'}">${balance} g</span></h6>
                         </div>
                     </div>
                     ${recordsHtml}
@@ -17426,7 +17397,7 @@ const ShiftManager = {
                         const elapsedSeconds = response.shift.elapsed_seconds || 0;
                         const twelveHoursInSeconds = 12 * 60 * 60; // 43200
 
-                        if (elapsedSeconds > twelveHoursInSeconds) {
+                        if (elapsedSeconds> twelveHoursInSeconds) {
                             // Shift is overdue - force end shift
                             self.showWorkbench();
                             self.startShiftTimer();
@@ -17471,7 +17442,7 @@ const ShiftManager = {
                     <strong>Your shift has been running for ${hours} hours and ${minutes} minutes.</strong>
                 </p>
                 <p class="mb-2">
-                    Standard shifts are 8-12 hours. Your shift is now <strong class="text-danger">${overdueHours > 0 ? overdueHours + ' hour(s)' : 'more than 12 hours'}</strong> overdue.
+                    Standard shifts are 8-12 hours. Your shift is now <strong class="text-danger">${overdueHours> 0 ? overdueHours + ' hour(s)' : 'more than 12 hours'}</strong> overdue.
                 </p>
                 <p class="mb-0">
                     <i class="mdi mdi-information-outline"></i>
@@ -17550,7 +17521,7 @@ const ShiftManager = {
             type: 'GET',
             data: { hours: 24 },
             success: function(response) {
-                if (response.success && response.total_pending > 0) {
+                if (response.success && response.total_pending> 0) {
                     $('#pending-handovers-count').text(response.total_pending);
                     $('#pending-handovers-preview').show();
                     // Show simplified list
@@ -17567,7 +17538,7 @@ const ShiftManager = {
                             </div>
                         `;
                     });
-                    if (response.total_pending > 3) {
+                    if (response.total_pending> 3) {
                         html += `<p class="text-center text-muted mt-2 mb-0">+${response.total_pending - 3} more</p>`;
                     }
                     $('#pending-handovers-list').html(html);
@@ -17587,7 +17558,7 @@ const ShiftManager = {
             type: 'GET',
             data: { hours: 24 },
             success: function(response) {
-                if (response.success && response.total_pending > 0) {
+                if (response.success && response.total_pending> 0) {
                     $('#pending-handovers-count').text(response.total_pending);
 
                     let html = '';
@@ -17657,7 +17628,7 @@ const ShiftManager = {
                 hours: 24
             },
             success: function(response) {
-                if (response.success && response.handovers.length > 0) {
+                if (response.success && response.handovers.length> 0) {
                     self.renderPendingHandovers(response.handovers);
                     $('#shift-handovers-step').show();
                 } else {
@@ -17722,7 +17693,7 @@ const ShiftManager = {
                 hours: hours
             },
             success: function(response) {
-                if (response.success && response.handovers.length > 0) {
+                if (response.success && response.handovers.length> 0) {
                     self.renderPendingHandovers(response.handovers);
                     $('#shift-handovers-step').show();
                 } else {
@@ -17744,7 +17715,7 @@ const ShiftManager = {
             return !$(this).find('.handover-ack-checkbox').is(':checked');
         });
 
-        if (unacknowledgedCritical.length > 0) {
+        if (unacknowledgedCritical.length> 0) {
             // Highlight unacknowledged critical handovers
             unacknowledgedCritical.addClass('shake-highlight');
             setTimeout(() => unacknowledgedCritical.removeClass('shake-highlight'), 500);
@@ -17915,7 +17886,7 @@ const ShiftManager = {
         `;
 
         // Activity breakdown
-        if (preview.activity_summary && preview.activity_summary.length > 0) {
+        if (preview.activity_summary && preview.activity_summary.length> 0) {
             html += '<h6 class="mb-2"><i class="mdi mdi-chart-bar"></i> Activity Breakdown</h6>';
             html += '<div class="row">';
             preview.activity_summary.forEach(function(activity) {
@@ -17935,7 +17906,7 @@ const ShiftManager = {
         }
 
         // Patient highlights (collapsible)
-        if (preview.patient_highlights && preview.patient_highlights.length > 0) {
+        if (preview.patient_highlights && preview.patient_highlights.length> 0) {
             html += `
                 <h6 class="mb-2 mt-3"><i class="mdi mdi-account-group"></i> Patient Highlights</h6>
                 <div class="patient-highlights-preview">
@@ -17952,7 +17923,7 @@ const ShiftManager = {
                     </div>
                 `;
             });
-            if (preview.patient_highlights.length > 5) {
+            if (preview.patient_highlights.length> 5) {
                 html += `<div class="text-center py-2 text-muted small">... and ${preview.patient_highlights.length - 5} more patients</div>`;
             }
             html += '</div>';
@@ -18143,7 +18114,7 @@ const ShiftManager = {
             success: function(response) {
                 loadingEl.hide();
 
-                if (response.success && response.data && response.data.length > 0) {
+                if (response.success && response.data && response.data.length> 0) {
                     self.renderHandoversCards(response.data);
                     self.updateHandoverStats(response.stats);
                     self.renderHandoverPagination(response.pagination);
@@ -18230,7 +18201,7 @@ const ShiftManager = {
                             ` : ''}
                             <div class="handover-card-stats">
                                 ${isCritical ? '<span class="handover-card-stat danger"><i class="mdi mdi-alert"></i> Critical</span>' : ''}
-                                ${h.pending_tasks_count > 0 ? `<span class="handover-card-stat warning"><i class="mdi mdi-clipboard-list"></i> ${h.pending_tasks_count} tasks</span>` : ''}
+                                ${h.pending_tasks_count> 0 ? `<span class="handover-card-stat warning"><i class="mdi mdi-clipboard-list"></i> ${h.pending_tasks_count} tasks</span>` : ''}
                                 ${h.action_count ? `<span class="handover-card-stat"><i class="mdi mdi-chart-bar"></i> ${h.action_count} actions</span>` : ''}
                             </div>
                         </div>
@@ -18345,9 +18316,9 @@ const ShiftManager = {
         const startPage = Math.max(1, pagination.current_page - 2);
         const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
 
-        if (startPage > 1) {
+        if (startPage> 1) {
             html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
-            if (startPage > 2) {
+            if (startPage> 2) {
                 html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
             }
         }
@@ -18431,7 +18402,7 @@ const ShiftManager = {
     // Render handover detail content
     renderHandoverDetail: function(h) {
         let pendingTasksHtml = '';
-        if (h.pending_tasks && h.pending_tasks.length > 0) {
+        if (h.pending_tasks && h.pending_tasks.length> 0) {
             pendingTasksHtml = '<ul class="list-group list-group-flush">';
             h.pending_tasks.forEach(function(task) {
                 const priorityColors = { low: 'secondary', normal: 'primary', high: 'warning', urgent: 'danger' };
@@ -18449,7 +18420,7 @@ const ShiftManager = {
 
         // Build action summary HTML with icons and colors
         let actionSummaryHtml = '';
-        if (h.action_summary && Object.keys(h.action_summary).length > 0) {
+        if (h.action_summary && Object.keys(h.action_summary).length> 0) {
             actionSummaryHtml = '<div class="row text-center mt-3">';
             for (const [key, value] of Object.entries(h.action_summary)) {
                 const icon = value.icon || 'mdi-checkbox-blank-circle';
@@ -18471,7 +18442,7 @@ const ShiftManager = {
 
         // Build patient highlights HTML
         let patientHighlightsHtml = '';
-        if (h.patient_highlights && h.patient_highlights.length > 0) {
+        if (h.patient_highlights && h.patient_highlights.length> 0) {
             patientHighlightsHtml = `
                 <div class="mt-4">
                     <h6><i class="mdi mdi-account-group"></i> Patient Activity Summary</h6>
@@ -18484,8 +18455,7 @@ const ShiftManager = {
                     <div class="card-modern mb-2">
                         <div class="card-header p-2" id="heading${idx}">
                             <h6 class="mb-0">
-                                <button class="btn btn-link btn-sm w-100 text-left d-flex justify-content-between align-items-center"
-                                        type="button" data-toggle="collapse" data-target="#${collapseId}">
+                                <button class="btn btn-link btn-sm w-100 text-left d-flex justify-content-between align-items-center" type="button" data-toggle="collapse" data-target="#${collapseId}">
                                     <span>
                                         <i class="mdi mdi-account"></i> ${patient.patient_name}
                                         <span class="text-muted ml-2">(${patient.patient_no || 'N/A'})</span>
@@ -18499,15 +18469,15 @@ const ShiftManager = {
                                 <ul class="list-unstyled mb-0">
                 `;
 
-                if (patient.activities && patient.activities.length > 0) {
+                if (patient.activities && patient.activities.length> 0) {
                     patient.activities.forEach(function(activity) {
                         patientHighlightsHtml += `
                             <li class="mb-1">
                                 <i class="mdi ${activity.icon || 'mdi-circle'} text-${activity.color || 'secondary'} mr-1"></i>
                                 <span class="text-muted">${activity.label}:</span>
                                 <strong>${activity.count}</strong>
-                                ${activity.events && activity.events.length > 0 ?
-                                    `<span class="text-muted small">(${activity.events.slice(0, 3).join(', ')}${activity.events.length > 3 ? '...' : ''})</span>`
+                                ${activity.events && activity.events.length> 0 ?
+                                    `<span class="text-muted small">(${activity.events.slice(0, 3).join(', ')}${activity.events.length> 3 ? '...' : ''})</span>`
                                     : ''
                                 }
                             </li>
@@ -18528,7 +18498,7 @@ const ShiftManager = {
 
         // Build audit details HTML (detailed changes)
         let auditDetailsHtml = '';
-        if (h.audit_details && h.audit_details.length > 0) {
+        if (h.audit_details && h.audit_details.length> 0) {
             auditDetailsHtml = `
                 <div class="mt-4">
                     <h6><i class="mdi mdi-history"></i> Detailed Activity Log <small class="text-muted">(${h.audit_details.length} changes)</small></h6>
@@ -18562,7 +18532,7 @@ const ShiftManager = {
                         : '<span class="badge badge-danger badge-sm">Deleted</span>';
 
                     let changesHtml = '<ul class="list-unstyled mb-0 pl-3 small">';
-                    if (detail.changes && detail.changes.length > 0) {
+                    if (detail.changes && detail.changes.length> 0) {
                         detail.changes.forEach(function(change) {
                             if (change.type === 'created') {
                                 changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <strong>' + change.value + '</strong></li>';
@@ -18723,7 +18693,7 @@ const ShiftManager = {
         const counters = shift.counters || {};
 
         let actionsHtml = '';
-        if (data.actions && Object.keys(data.actions).length > 0) {
+        if (data.actions && Object.keys(data.actions).length> 0) {
             actionsHtml = '<div class="mt-4"><h6>Actions by Type</h6><div class="list-group">';
             for (const [type, info] of Object.entries(data.actions)) {
                 actionsHtml += `
@@ -18859,7 +18829,7 @@ const ShiftManager = {
         $('#shift-elapsed-time').text(this.formatElapsedTime(elapsed));
 
         // Check if overdue (past max shift duration)
-        if (this.activeShift.is_overdue || elapsed > 12 * 3600) {
+        if (this.activeShift.is_overdue || elapsed> 12 * 3600) {
             $('.shift-fab-timer').addClass('overdue');
         } else {
             $('.shift-fab-timer').removeClass('overdue');
@@ -18875,7 +18845,7 @@ const ShiftManager = {
         const minutes = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
 
-        if (hours > 0) {
+        if (hours> 0) {
             return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
         return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -18973,7 +18943,7 @@ $(document).ready(function() {
                 <h5 class="modal-title" id="transferWardModalLabel">
                     <i class="mdi mdi-swap-horizontal"></i> Transfer to Ward
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="transfer-ward-admission-id">
@@ -19009,7 +18979,7 @@ $(document).ready(function() {
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="fa fa-trash"></i> Delete Clinical Request</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -19161,7 +19131,7 @@ $(document).ready(function() {
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h6 class="modal-title mb-0"><i class="fas fa-exchange-alt me-1"></i> Change Active Store</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body pb-2">
                 <label class="form-label small fw-bold mb-1">Select Store</label>
@@ -19177,8 +19147,7 @@ $(document).ready(function() {
             </div>
             <div class="modal-footer py-2">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm"
-                        onclick="confirmStoreContextOverride()">
+                <button type="button" id="ctx-override-btn" class="btn btn-primary btn-sm" onclick="confirmStoreContextOverride()">
                     <i class="fas fa-check me-1"></i> Apply
                 </button>
             </div>

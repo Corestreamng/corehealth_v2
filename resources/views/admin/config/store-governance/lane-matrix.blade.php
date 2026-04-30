@@ -92,7 +92,7 @@
                 <h5 class="modal-title">
                     <i class="fas fa-exclamation-triangle me-2"></i>Active Requisitions Warning
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="laneGuardMessage"></div>
             <div class="modal-footer">

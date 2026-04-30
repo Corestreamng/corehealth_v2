@@ -68,7 +68,7 @@
                         <h5 class="mb-0"><i class="mdi mdi-chart-line mr-2"></i>Historical Trend</h5>
                     </div>
                     <div class="card-body">
-                        @if($history->count() > 0)
+                        @if($history->count()> 0)
                             <div style="height: 300px;">
                                 <canvas id="trendChart"></canvas>
                             </div>
@@ -121,8 +121,8 @@
                                         <td class="text-right">
                                             @if($record->change_percentage !== null)
                                                 @php $chgPct = $record->change_percentage; @endphp
-                                                <span class="{{ $chgPct >= 0 ? 'text-success' : 'text-danger' }}">
-                                                    <i class="mdi {{ $chgPct >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}"></i>
+                                                <span class="{{ $chgPct>= 0 ? 'text-success' : 'text-danger' }}">
+                                                    <i class="mdi {{ $chgPct>= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}"></i>
                                                     {{ number_format(abs($chgPct), 1) }}%
                                                 </span>
                                             @else
@@ -304,7 +304,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
 $(document).ready(function() {
-    @if($history->count() > 0)
+    @if($history->count()> 0)
     (function() {
         var ctx = document.getElementById('trendChart').getContext('2d');
         var chartData = @json($chartData);
