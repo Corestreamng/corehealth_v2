@@ -485,6 +485,16 @@
                                 <p>Add or edit product catalog</p>
                             </div>
                         </a>
+
+                        <a href="{{ route('inventory.store-workbench.tally-card') }}?store_id={{ $store->id ?? '' }}" class="action-card">
+                            <div class="action-icon primary">
+                                <i class="mdi mdi-table-large"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>Tally Card</h6>
+                                <p>Full stock ledger with actions</p>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
