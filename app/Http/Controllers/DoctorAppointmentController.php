@@ -1625,7 +1625,8 @@ class DoctorAppointmentController extends Controller
                     $priorityIcon = '<i class="mdi mdi-alert text-warning me-1" title="Urgent"></i>';
                 }
 
-                $name = $priorityIcon . '<strong>' . e($row['patient_name']) . '</strong>';
+                $profileUrl = route('patient.show', $row['patient_id']);
+                $name = $priorityIcon . '<a href="' . $profileUrl . '" class="text-dark"><strong>' . e($row['patient_name']) . '</strong></a>';
                 $fileNo = '<span class="text-muted small">' . e($row['file_no']) . '</span>';
 
                 $hmoLine = '';
