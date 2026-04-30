@@ -379,10 +379,11 @@
                 @endcan
             @endif
 
-            @if(in_array($purchaseOrder->status, ['approved', 'partial_received']))
+            @if(in_array($purchaseOrder->status, ['approved', 'partial']))
                 @can('purchase-orders.receive')
                 <a href="{{ route('inventory.purchase-orders.receive', $purchaseOrder) }}" class="btn btn-primary btn-sm action-btn">
-                    <i class="mdi mdi-package-down"></i> Receive Items
+                    <i class="mdi mdi-package-down"></i>
+                    {{ $purchaseOrder->status === 'partial' ? 'Receive Remaining' : 'Receive Items' }}
                 </a>
                 @endcan
             @endif

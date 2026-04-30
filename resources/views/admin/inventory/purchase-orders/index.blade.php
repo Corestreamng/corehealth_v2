@@ -92,7 +92,7 @@
                             <option value="draft">Draft</option>
                             <option value="submitted">Submitted</option>
                             <option value="approved">Approved</option>
-                            <option value="partial_received">Partially Received</option>
+                            <option value="partial">Partially Received</option>
                             <option value="received">Received</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
