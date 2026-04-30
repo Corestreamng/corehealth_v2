@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 use App\Http\Traits\ClinicalOrdersTrait;
+use App\Models\Procedure;
 
 class EncounterController extends Controller
 {
@@ -43,8 +44,8 @@ class EncounterController extends Controller
         // Clinics & doctors for referral filter dropdowns
         $filterClinics  = Clinic::orderBy('name')->get(['id', 'name']);
         $filterDoctors  = Staff::whereHas('user')
-                                ->orderBy('id')
-                                ->get(['id', 'user_id']);
+            ->orderBy('id')
+            ->get(['id', 'user_id']);
 
         return view('admin.doctors.my_queues', compact('filterClinics', 'filterDoctors'));
     }
@@ -412,13 +413,12 @@ class EncounterController extends Controller
                     $patient = Patient::find($queue->patient_id);
                     return $patient ? $patient->file_no : 'N/A';
                 })
+                ->addColumn('patient_link', function ($queue) {
+                    return $queue->patient_id ? route('patient.show', $queue->patient_id) : '';
+                })
                 ->addColumn('view', function ($queue) {
-                    $url = url('encounters/create') . '?patient_id=' . $queue->patient_id;
-                    if ($queue->request_entry_id) {
-                        $url .= '&req_entry_id=' . $queue->request_entry_id;
-                    }
-                    $url .= '&queue_id=' . $queue->id;
-                    return '<a href="' . e($url) . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
+                    $showUrl = route('encounters.show', $queue->id);
+                    return '<a href="' . e($showUrl) . '" class="btn btn-primary btn-sm"><i class="mdi mdi-eye-outline"></i> View</a>';
                 })
                 ->rawColumns(['view'])
                 ->make(true);
@@ -470,8 +470,7 @@ class EncounterController extends Controller
 
                 // HMO Coverage Badge
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->coverage_mode) {
-                    $coverageClass = $his->productOrServiceRequest->coverage_mode === 'express' ? 'success' :
-                                   ($his->productOrServiceRequest->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $coverageClass = $his->productOrServiceRequest->coverage_mode === 'express' ? 'success' : ($his->productOrServiceRequest->coverage_mode === 'primary' ? 'warning' : 'danger');
                     $str .= " <span class='badge bg-{$coverageClass}'>HMO: " . strtoupper($his->productOrServiceRequest->coverage_mode) . '</span>';
                 }
                 $str .= '</div>';
@@ -585,7 +584,8 @@ class EncounterController extends Controller
                 if (empty($his->result) && $canDeliver && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
-                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))) {
+                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))
+                    ) {
                         $canEnterResult = true;
                     }
                 }
@@ -733,8 +733,7 @@ class EncounterController extends Controller
 
                 // HMO Coverage Badge
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->coverage_mode) {
-                    $coverageClass = $his->productOrServiceRequest->coverage_mode === 'express' ? 'success' :
-                                   ($his->productOrServiceRequest->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $coverageClass = $his->productOrServiceRequest->coverage_mode === 'express' ? 'success' : ($his->productOrServiceRequest->coverage_mode === 'primary' ? 'warning' : 'danger');
                     $str .= " <span class='badge bg-{$coverageClass}'>HMO: " . strtoupper($his->productOrServiceRequest->coverage_mode) . '</span>';
                 }
                 $str .= '</div>';
@@ -838,7 +837,8 @@ class EncounterController extends Controller
                 if (empty($his->result) && $canDeliver && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
-                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))) {
+                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))
+                    ) {
                         $canEnterImagingResult = true;
                     }
                 }
@@ -1211,18 +1211,18 @@ class EncounterController extends Controller
         $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller'])
             ->where('status', 2)
             ->where('patient_id', $patient_id)
-            ->whereHas('productOrServiceRequest', function($q) {
-                $q->where(function($query) {
+            ->whereHas('productOrServiceRequest', function ($q) {
+                $q->where(function ($query) {
                     // Items awaiting payment (payable > 0 and not paid - payment_id is null)
                     $query->where('payable_amount', '>', 0)
-                          ->whereNull('payment_id');
-                })->orWhere(function($query) {
+                        ->whereNull('payment_id');
+                })->orWhere(function ($query) {
                     // Items awaiting HMO validation (claims > 0 and not validated)
                     $query->where('claims_amount', '>', 0)
-                          ->where(function($q2) {
-                              $q2->whereNull('validation_status')
-                                 ->orWhereNotIn('validation_status', ['validated', 'approved']);
-                          });
+                        ->where(function ($q2) {
+                            $q2->whereNull('validation_status')
+                                ->orWhereNotIn('validation_status', ['validated', 'approved']);
+                        });
                 });
             })
             ->orderBy('created_at', 'DESC')
@@ -1335,37 +1335,37 @@ class EncounterController extends Controller
         $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service'])
             ->where('status', 2)
             ->where('patient_id', $patient_id)
-            ->where(function($q) {
+            ->where(function ($q) {
                 // Items without POSR (direct billing) - always ready
                 $q->whereDoesntHave('productOrServiceRequest')
-                  // OR items with POSR that are ready
-                  ->orWhereHas('productOrServiceRequest', function($query) {
-                      $query->where(function($q2) {
-                          // Cash items: payable > 0, claims = 0 or null, paid (payment_id not null)
-                          $q2->where('payable_amount', '>', 0)
-                             ->where(function($q3) {
-                                 $q3->where('claims_amount', '<=', 0)->orWhereNull('claims_amount');
-                             })
-                             ->whereNotNull('payment_id');
-                      })->orWhere(function($q2) {
-                          // Full HMO items: payable = 0 or null, claims > 0, validated
-                          $q2->where(function($q3) {
-                                 $q3->where('payable_amount', '<=', 0)->orWhereNull('payable_amount');
-                             })
-                             ->where('claims_amount', '>', 0)
-                             ->whereIn('validation_status', ['validated', 'approved']);
-                      })->orWhere(function($q2) {
-                          // Co-pay items: payable > 0, claims > 0, both paid and validated
-                          $q2->where('payable_amount', '>', 0)
-                             ->where('claims_amount', '>', 0)
-                             ->whereIn('validation_status', ['validated', 'approved'])
-                             ->whereNotNull('payment_id');
-                      });
-                  })
-                  // OR bundled procedure items (no separate billing, procedure covers it)
-                  ->orWhereHas('procedureItem', function($query) {
-                      $query->where('is_bundled', true);
-                  });
+                    // OR items with POSR that are ready
+                    ->orWhereHas('productOrServiceRequest', function ($query) {
+                        $query->where(function ($q2) {
+                            // Cash items: payable > 0, claims = 0 or null, paid (payment_id not null)
+                            $q2->where('payable_amount', '>', 0)
+                                ->where(function ($q3) {
+                                    $q3->where('claims_amount', '<=', 0)->orWhereNull('claims_amount');
+                                })
+                                ->whereNotNull('payment_id');
+                        })->orWhere(function ($q2) {
+                            // Full HMO items: payable = 0 or null, claims > 0, validated
+                            $q2->where(function ($q3) {
+                                $q3->where('payable_amount', '<=', 0)->orWhereNull('payable_amount');
+                            })
+                                ->where('claims_amount', '>', 0)
+                                ->whereIn('validation_status', ['validated', 'approved']);
+                        })->orWhere(function ($q2) {
+                            // Co-pay items: payable > 0, claims > 0, both paid and validated
+                            $q2->where('payable_amount', '>', 0)
+                                ->where('claims_amount', '>', 0)
+                                ->whereIn('validation_status', ['validated', 'approved'])
+                                ->whereNotNull('payment_id');
+                        });
+                    })
+                    // OR bundled procedure items (no separate billing, procedure covers it)
+                    ->orWhereHas('procedureItem', function ($query) {
+                        $query->where('is_bundled', true);
+                    });
             })
             ->orderBy('created_at', 'DESC')
             ->get();
@@ -1968,8 +1968,8 @@ class EncounterController extends Controller
                         $reason = trim($reason);
                         if (empty($reason)) continue;
 
-                        $existingReason = ReasonForEncounter::where(function($query) use ($reason) {
-                            $query->where('code', 'LIKE', $reason.'%')
+                        $existingReason = ReasonForEncounter::where(function ($query) use ($reason) {
+                            $query->where('code', 'LIKE', $reason . '%')
                                 ->orWhereRaw("CONCAT(code, '-', name) = ?", [$reason]);
                         })->first();
 
@@ -2418,11 +2418,39 @@ class EncounterController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Display a single encounter with its labs, imaging, procedures and prescriptions.
      */
-    public function show(Encounter $encounter) {}
+    public function show(Encounter $encounter)
+    {
+        $encounter->load([
+            'patient.user',
+            'patient.hmo',
+            'doctor',
+            'labRequests.service',
+            'imagingRequests.service',
+            'productRequests.product',
+        ]);
+
+        $procedures = Procedure::with('procedureDefinition')
+            ->where('encounter_id', $encounter->id)
+            ->get();
+
+        $diagnosisItems = [];
+        if ($encounter->reasons_for_encounter) {
+            $decoded = json_decode($encounter->reasons_for_encounter, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $item) {
+                    $diagnosisItems[] = is_array($item)
+                        ? ($item['name'] ?? ($item['value'] ?? ''))
+                        : $item;
+                }
+            } else {
+                $diagnosisItems[] = $encounter->reasons_for_encounter;
+            }
+        }
+
+        return view('admin.encounters.show', compact('encounter', 'procedures', 'diagnosisItems'));
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -2742,7 +2770,7 @@ class EncounterController extends Controller
             $encounter->completed = true;
             $encounter->completed_at = now();
             $encounter->doctor_id = Auth::id();
-            
+
             if ($request->outcome) {
                 $encounter->outcome = $request->outcome;
             }
@@ -2837,7 +2865,7 @@ class EncounterController extends Controller
             $labs = LabServiceRequest::where('encounter_id', $encounter->id)
                 ->with('service')
                 ->get()
-                ->map(function($lab) {
+                ->map(function ($lab) {
                     return [
                         'id' => $lab->id,
                         'name' => $lab->service->service_name ?? 'N/A',
@@ -2852,7 +2880,7 @@ class EncounterController extends Controller
             $imaging = ImagingServiceRequest::where('encounter_id', $encounter->id)
                 ->with('service')
                 ->get()
-                ->map(function($img) {
+                ->map(function ($img) {
                     return [
                         'id' => $img->id,
                         'name' => $img->service->service_name ?? 'N/A',
@@ -2867,7 +2895,7 @@ class EncounterController extends Controller
             $prescriptions = ProductRequest::where('encounter_id', $encounter->id)
                 ->with('product')
                 ->get()
-                ->map(function($presc) {
+                ->map(function ($presc) {
                     return [
                         'id' => $presc->id,
                         'name' => $presc->product->product_name ?? 'N/A',
@@ -3106,21 +3134,21 @@ class EncounterController extends Controller
                 ->orWhere('category', 'LIKE', "%{$searchTerm}%")
                 ->orWhere('sub_category', 'LIKE', "%{$searchTerm}%");
         })
-        ->orderByRaw("CASE WHEN code LIKE '{$searchTerm}%' THEN 1 WHEN name LIKE '{$searchTerm}%' THEN 2 ELSE 3 END")
-        ->orderBy('code', 'ASC')
-        ->limit(20)
-        ->get()
-        ->map(function ($reason) {
-            return [
-                'id' => $reason->id,
-                'code' => $reason->code,
-                'name' => $reason->name,
-                'category' => $reason->category,
-                'sub_category' => $reason->sub_category,
-                'display' => $reason->code . ' - ' . $reason->name,
-                'value' => $reason->code . '-' . $reason->name // For compatibility
-            ];
-        });
+            ->orderByRaw("CASE WHEN code LIKE '{$searchTerm}%' THEN 1 WHEN name LIKE '{$searchTerm}%' THEN 2 ELSE 3 END")
+            ->orderBy('code', 'ASC')
+            ->limit(20)
+            ->get()
+            ->map(function ($reason) {
+                return [
+                    'id' => $reason->id,
+                    'code' => $reason->code,
+                    'name' => $reason->name,
+                    'category' => $reason->category,
+                    'sub_category' => $reason->sub_category,
+                    'display' => $reason->code . ' - ' . $reason->name,
+                    'value' => $reason->code . '-' . $reason->name // For compatibility
+                ];
+            });
 
         return response()->json($reasons);
     }
@@ -3394,8 +3422,17 @@ class EncounterController extends Controller
             ]);
 
             // Update allowed fields
-            $fillable = ['procedure_status', 'priority', 'scheduled_date', 'scheduled_time',
-                         'operating_room', 'outcome', 'outcome_notes', 'pre_notes', 'post_notes'];
+            $fillable = [
+                'procedure_status',
+                'priority',
+                'scheduled_date',
+                'scheduled_time',
+                'operating_room',
+                'outcome',
+                'outcome_notes',
+                'pre_notes',
+                'post_notes'
+            ];
 
             foreach ($fillable as $field) {
                 if ($request->has($field)) {
