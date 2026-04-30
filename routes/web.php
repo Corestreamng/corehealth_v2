@@ -183,6 +183,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         // Template Downloads
         Route::get('/template/products', [\App\Http\Controllers\ImportExportController::class, 'downloadProductTemplate'])->name('import-export.template.products');
+        Route::get('/template/products-stock/{store}', [\App\Http\Controllers\ImportExportController::class, 'downloadProductStockTemplate'])->name('import-export.template.products-stock');
         Route::get('/template/services', [\App\Http\Controllers\ImportExportController::class, 'downloadServiceTemplate'])->name('import-export.template.services');
         Route::get('/template/staff', [\App\Http\Controllers\ImportExportController::class, 'downloadStaffTemplate'])->name('import-export.template.staff');
         Route::get('/template/patients', [\App\Http\Controllers\ImportExportController::class, 'downloadPatientTemplate'])->name('import-export.template.patients');
@@ -996,4 +997,10 @@ Route::middleware(['auth'])->prefix('clinical-reports')->name('clinical-reports.
     Route::get('/search-diagnosis', [\App\Http\Controllers\ClinicalReportsController::class, 'searchDiagnosis'])->name('search-diagnosis');
     Route::get('/encounter-details/{id}', [\App\Http\Controllers\ClinicalReportsController::class, 'getEncounterDrillDown'])->name('encounter-details');
     Route::get('/drill-down', [\App\Http\Controllers\ClinicalReportsController::class, 'getDrillDownDetails'])->name('drill-down');
+    Route::get('/unit-visits', [\App\Http\Controllers\ClinicalReportsController::class, 'getUnitVisits'])->name('unit-visits');
+    Route::get('/hmo-trends', [\App\Http\Controllers\ClinicalReportsController::class, 'getHmoTrends'])->name('hmo-trends');
+    Route::get('/maternity', [\App\Http\Controllers\ClinicalReportsController::class, 'getMaternityReport'])->name('maternity');
+    Route::get('/referrals', [\App\Http\Controllers\ClinicalReportsController::class, 'getReferrals'])->name('referrals');
+    Route::get('/vaccinations', [\App\Http\Controllers\ClinicalReportsController::class, 'getVaccinations'])->name('vaccinations');
+    Route::get('/occupancy', [\App\Http\Controllers\ClinicalReportsController::class, 'getOccupancy'])->name('occupancy');
 });
