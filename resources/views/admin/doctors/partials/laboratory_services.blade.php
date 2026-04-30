@@ -28,12 +28,10 @@
         {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
         <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
             <div class="btn-group">
-                <button class="btn btn-sm btn-outline-secondary"
-                        data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
                     <i class="fa fa-clipboard-list"></i> Treatment Plans
                 </button>
-                <button class="btn btn-sm btn-outline-success"
-                        onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                     <i class="fa fa-save"></i> Save as Template
                 </button>
             </div>
@@ -42,14 +40,12 @@
         {{-- Sub-tabs for History and New Request --}}
         <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="lab-history-tab" data-bs-toggle="tab"
-                    data-bs-target="#lab-history" type="button" role="tab">
+                <button class="nav-link active" id="lab-history-tab" data-bs-toggle="tab" data-bs-target="#lab-history" type="button" role="tab">
                     <i class="fa fa-history"></i> Lab History
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="lab-new-tab" data-bs-toggle="tab"
-                    data-bs-target="#lab-new" type="button" role="tab">
+                <button class="nav-link" id="lab-new-tab" data-bs-toggle="tab" data-bs-target="#lab-new" type="button" role="tab">
                     <i class="fa fa-plus-circle"></i> New Lab Request
                 </button>
             </li>

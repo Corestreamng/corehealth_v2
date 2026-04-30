@@ -118,7 +118,7 @@
                     <tfoot>
                         <tr class="fw-bold bg-light">
                             <td>Net Cash from Operating Activities</td>
-                            <td class="text-end {{ ($report['net_operating'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                            <td class="text-end {{ ($report['net_operating'] ?? 0)>= 0 ? 'text-success' : 'text-danger' }}">
                                 {{ number_format($report['net_operating'] ?? 0, 2) }}
                             </td>
                         </tr>
@@ -148,7 +148,7 @@
                     <tfoot>
                         <tr class="fw-bold bg-light">
                             <td>Net Cash from Investing Activities</td>
-                            <td class="text-end {{ ($report['net_investing'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                            <td class="text-end {{ ($report['net_investing'] ?? 0)>= 0 ? 'text-success' : 'text-danger' }}">
                                 {{ number_format($report['net_investing'] ?? 0, 2) }}
                             </td>
                         </tr>
@@ -178,7 +178,7 @@
                     <tfoot>
                         <tr class="fw-bold bg-light">
                             <td>Net Cash from Financing Activities</td>
-                            <td class="text-end {{ ($report['net_financing'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                            <td class="text-end {{ ($report['net_financing'] ?? 0)>= 0 ? 'text-success' : 'text-danger' }}">
                                 {{ number_format($report['net_financing'] ?? 0, 2) }}
                             </td>
                         </tr>
@@ -196,7 +196,7 @@
                 <table class="table table-bordered">
                     <tr class="table-secondary">
                         <td class="fw-bold">Net Increase (Decrease) in Cash</td>
-                        <td class="text-end fw-bold {{ $netChange >= 0 ? 'text-success' : 'text-danger' }}" style="width: 180px;">
+                        <td class="text-end fw-bold {{ $netChange>= 0 ? 'text-success' : 'text-danger' }}" style="width: 180px;">
                             ₦ {{ number_format($netChange, 2) }}
                         </td>
                     </tr>

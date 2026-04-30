@@ -72,7 +72,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">Confirm Delete</h4>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <h5 class="text-center">Are you sure you want to delete this template?</h5>
@@ -83,7 +83,7 @@
                 <button type="button" class="btn btn-danger delete-confirm">
                     <i class="fa fa-trash"></i> Delete
                 </button>
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fa fa-times"></i> Cancel
                 </button>
             </div>

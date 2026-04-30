@@ -240,13 +240,13 @@
                     @endif
 
                     @if($remittance->canPay())
-                    <button type="button" class="btn btn-primary btn-block mb-2" data-toggle="modal" data-target="#payModal">
+                    <button type="button" class="btn btn-primary btn-block mb-2" data-bs-toggle="modal" data-bs-target="#payModal">
                         <i class="mdi mdi-cash-check mr-1"></i> Record Payment
                     </button>
                     @endif
 
                     @if($remittance->canVoid())
-                    <button type="button" class="btn btn-outline-danger btn-block" data-toggle="modal" data-target="#voidModal">
+                    <button type="button" class="btn btn-outline-danger btn-block" data-bs-toggle="modal" data-bs-target="#voidModal">
                         <i class="mdi mdi-cancel mr-1"></i> Void Remittance
                     </button>
                     @endif
@@ -306,7 +306,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cash-check mr-2"></i>Record Payment</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form action="{{ route('accounting.statutory-remittances.pay', $remittance) }}" method="POST">
                 @csrf
@@ -342,7 +342,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-check mr-1"></i> Confirm Payment
                     </button>
@@ -360,7 +360,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cancel mr-2"></i>Void Remittance</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form action="{{ route('accounting.statutory-remittances.void', $remittance) }}" method="POST">
                 @csrf
@@ -375,7 +375,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">
                         <i class="mdi mdi-cancel mr-1"></i> Void Remittance
                     </button>

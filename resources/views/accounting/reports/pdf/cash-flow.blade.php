@@ -111,7 +111,7 @@
         </tr>
         <tr style="font-size: 16px; font-weight: bold;">
             <td>Ending Cash Balance</td>
-            <td class="text-right" style="color: {{ ($report['ending_cash'] ?? 0) >= 0 ? '#4caf50' : '#f44336' }};">
+            <td class="text-right" style="color: {{ ($report['ending_cash'] ?? 0)>= 0 ? '#4caf50' : '#f44336' }};">
                 ₦{{ number_format($report['ending_cash'] ?? 0, 2) }}
             </td>
         </tr>

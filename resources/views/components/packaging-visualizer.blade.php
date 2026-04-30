@@ -25,7 +25,7 @@ Or dynamically via JS: call PackagingVisualizer.render(containerEl, productData)
         @endforeach
     </div>
 
-    @if($stockQty !== null && $stockQty > 0)
+    @if($stockQty !== null && $stockQty> 0)
     <div class="text-muted small">
         <i class="mdi mdi-package-variant"></i>
         In Stock: <strong>{{ $product->formatQty($stockQty) }}</strong>

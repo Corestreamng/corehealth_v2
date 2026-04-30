@@ -134,28 +134,13 @@
                 <div style="font-weight: 600; font-size: 13px; color: #333;">New Messages</div>
                 <div style="font-size: 12px; color: #666;">You have <strong id="unread-bubble-count">0</strong> unread message(s)</div>
             </div>
-            <button onclick="dismissUnreadBubble()" style="
-                background: none; border: none; cursor: pointer;
-                color: #999; font-size: 18px; padding: 0 2px;
-                line-height: 1;
-            ">&times;</button>
+            <button onclick="dismissUnreadBubble()" style=" background: none; border: none; cursor: pointer; color: #999; font-size: 18px; padding: 0 2px; line-height: 1; ">&times;</button>
         </div>
         <div style="display: flex; border-top: 1px solid #f0f0f0;">
-            <button onclick="snoozeNotifications()" style="
-                flex: 1; padding: 8px; border: none; background: #fafafa;
-                font-size: 12px; color: #888; cursor: pointer;
-                border-right: 1px solid #f0f0f0;
-                transition: background 0.2s;
-            " onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#fafafa'">
+            <button onclick="snoozeNotifications()" style=" flex: 1; padding: 8px; border: none; background: #fafafa; font-size: 12px; color: #888; cursor: pointer; border-right: 1px solid #f0f0f0; transition: background 0.2s; " onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#fafafa'">
                 <i class="mdi mdi-bell-off-outline"></i> Snooze
             </button>
-            <button onclick="acknowledgeMessages()" style="
-                flex: 1; padding: 8px; border: none;
-                background: var(--chat-primary, #011b33);
-                font-size: 12px; color: #fff; cursor: pointer;
-                font-weight: 600;
-                transition: opacity 0.2s;
-            " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+            <button onclick="acknowledgeMessages()" style=" flex: 1; padding: 8px; border: none; background: var(--chat-primary, #011b33); font-size: 12px; color: #fff; cursor: pointer; font-weight: 600; transition: opacity 0.2s; " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
                 <i class="mdi mdi-message-reply-text"></i> View
             </button>
         </div>
@@ -559,12 +544,12 @@
         const badge = document.getElementById('chat-total-unread');
         if (!badge) return;
 
-        if (count > 0) {
+        if (count> 0) {
             badge.innerText = count;
             badge.style.display = 'flex';
 
             // Play sound if count increased
-            if (count > lastUnreadCount) {
+            if (count> lastUnreadCount) {
                 playNotificationSound();
                 showUnreadPopup(count);
             }
@@ -587,7 +572,7 @@
         const chatWindow = document.getElementById('chat-window');
         const bubble = document.getElementById('unread-message-bubble');
         // Only show if chat window is closed AND not snoozed
-        if ((chatWindow.style.display === 'none' || chatWindow.style.display === '') && (!snoozeUntil || new Date() > snoozeUntil)) {
+        if ((chatWindow.style.display === 'none' || chatWindow.style.display === '') && (!snoozeUntil || new Date()> snoozeUntil)) {
             document.getElementById('unread-bubble-count').innerText = count;
             bubble.style.display = 'block';
             bubble.style.animation = 'bubbleSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -674,7 +659,7 @@
 
         // Show Participants
         const participantsDiv = document.getElementById('chat-header-participants');
-        if (conv.participants_list && conv.participants_list.length > 0) {
+        if (conv.participants_list && conv.participants_list.length> 0) {
             const others = conv.participants_list.filter(p => p.id !== widgetChatCore.currentUserId);
             const names = others.map(p => p.name).join(', ');
             participantsDiv.innerText = names;
@@ -756,7 +741,7 @@
             content = '<div style="font-style: italic; opacity: 0.6;">This message was deleted</div>';
         } else {
             // Attachments
-            if (msg.attachments && msg.attachments.length > 0) {
+            if (msg.attachments && msg.attachments.length> 0) {
                 content += '<div class="mb-2">';
                 msg.attachments.forEach(att => {
                     const icon = widgetChatCore.getFileIcon(att.file_name);
@@ -804,7 +789,7 @@
             div.className = `message-bubble ${isMe ? 'message-sent' : 'message-received'}`;
 
             let content = '';
-            if (msg.attachments && msg.attachments.length > 0) {
+            if (msg.attachments && msg.attachments.length> 0) {
                 content += '<div class="mb-2">';
                 msg.attachments.forEach(att => {
                     content += `
@@ -864,7 +849,7 @@
 
     function handleFileSelect(input) {
         const preview = document.getElementById('file-preview');
-        if (input.files && input.files.length > 0) {
+        if (input.files && input.files.length> 0) {
             preview.innerText = `Selected: ${input.files.length} file(s)`;
             preview.style.display = 'block';
         } else {
@@ -964,7 +949,7 @@
 
         container.innerHTML = '';
 
-        if (users.length > 0) {
+        if (users.length> 0) {
             container.style.display = 'flex';
             btn.style.display = 'block';
 

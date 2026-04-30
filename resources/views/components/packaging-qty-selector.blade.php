@@ -82,7 +82,7 @@ $(function() {
         function updateEquiv() {
             var baseQty = parseFloat($select.find(':selected').data('base-qty')) || 1;
             var qty = parseFloat($input.val()) || 0;
-            if (qty > 0 && baseQty > 1) {
+            if (qty> 0 && baseQty> 1) {
                 $equiv.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' ' + ($select.find('option:first').text().replace(' (base)', '') || 'units'));
             } else {
                 $equiv.text('');

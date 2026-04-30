@@ -275,7 +275,7 @@ $(document).ready(function() {
     // Handle initial funding visibility
     function toggleFundingFields() {
         var amount = parseFloat($('#initial_funding').val()) || 0;
-        if (amount > 0) {
+        if (amount> 0) {
             $('#funding_source_group').show();
             toggleBankField();
         } else {

@@ -90,10 +90,10 @@
                 <td>{{ $tx['short_date'] }}</td>
                 <td>{{ $tx['short_type'] }}</td>
                 <td class="text-right amount debit">
-                    @if($tx['debit'] > 0){{ number_format($tx['debit'], 0) }}@endif
+                    @if($tx['debit']> 0){{ number_format($tx['debit'], 0) }}@endif
                 </td>
                 <td class="text-right amount credit">
-                    @if($tx['credit'] > 0){{ number_format($tx['credit'], 0) }}@endif
+                    @if($tx['credit']> 0){{ number_format($tx['credit'], 0) }}@endif
                 </td>
                 <td class="text-right amount">{{ number_format($tx['running_balance'], 0) }}</td>
             </tr>

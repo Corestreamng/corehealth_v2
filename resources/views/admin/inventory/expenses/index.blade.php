@@ -71,8 +71,8 @@
                     <h5><i class="mdi mdi-currency-ngn mr-1"></i> This Month</h5>
                     <div class="value text-success">₦{{ number_format($stats['approved_this_month'] ?? 0, 2) }}</div>
                     @if(($stats['mom_change'] ?? 0) != 0)
-                        <small class="{{ ($stats['mom_change'] ?? 0) > 0 ? 'text-danger' : 'text-success' }}">
-                            <i class="mdi mdi-arrow-{{ ($stats['mom_change'] ?? 0) > 0 ? 'up' : 'down' }}"></i>
+                        <small class="{{ ($stats['mom_change'] ?? 0)> 0 ? 'text-danger' : 'text-success' }}">
+                            <i class="mdi mdi-arrow-{{ ($stats['mom_change'] ?? 0)> 0 ? 'up' : 'down' }}"></i>
                             {{ abs($stats['mom_change'] ?? 0) }}% vs last month
                         </small>
                     @else
@@ -177,9 +177,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-alert"></i> Void Expense
                 </h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -202,7 +200,7 @@
                 <input type="hidden" id="void_expense_id">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="mdi mdi-close"></i> Cancel
                 </button>
                 <button type="button" class="btn btn-warning" onclick="confirmVoid()">

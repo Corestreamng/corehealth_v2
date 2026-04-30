@@ -460,11 +460,11 @@
     </div>
 
     <!-- Results -->
-    @if(strlen($query) >= 2)
-        @if($routes->count() > 0)
+    @if(strlen($query)>= 2)
+        @if($routes->count()> 0)
             <div class="results-header">
                 <div class="results-count">
-                    Found <strong>{{ $routes->total() }}</strong> result{{ $routes->total() > 1 ? 's' : '' }}
+                    Found <strong>{{ $routes->total() }}</strong> result{{ $routes->total()> 1 ? 's' : '' }}
                     for "<span class="query-text">{{ $query }}</span>"
                 </div>
             </div>
@@ -494,8 +494,8 @@
                                         @endif
                                     </div>
                                     <div class="result-hierarchy">
-                                        @foreach(explode(' > ', $route->hierarchy_path) as $index => $part)
-                                            @if($index > 0)
+                                        @foreach(explode('> ', $route->hierarchy_path) as $index => $part)
+                                            @if($index> 0)
                                                 <span class="hierarchy-separator"><i class="mdi mdi-chevron-right" style="font-size:0.7rem;"></i></span>
                                             @endif
                                             <span>{{ $part }}</span>

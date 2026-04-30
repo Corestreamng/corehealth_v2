@@ -8,9 +8,7 @@
                     </div>
                     <h5 class="modal-title font-weight-bold mb-0">Export Tariff Catalog</h5>
                 </div>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form action="{{ route('hmo-tariffs.export-excel') }}" method="GET">
                 <div class="modal-body p-4">

@@ -61,9 +61,7 @@
                     <i class="mdi mdi-calendar-clock mr-2" style="color: var(--primary-color);"></i>
                     <span id="modalTitleText">Add Leave Type</span>
                 </h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="leaveTypeForm">
                 @csrf
@@ -228,9 +226,7 @@
                     <i class="mdi mdi-delete mr-2"></i>
                     Delete Leave Type
                 </h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center" style="padding: 1.5rem;">
                 <p class="mb-0">Are you sure you want to delete <strong id="deleteItemName"></strong>?</p>

@@ -31,8 +31,14 @@
                     <a href="{{ route('import-export.template.products') }}" class="btn btn-outline-secondary btn-sm">
                         <i class="mdi mdi-file-download-outline"></i> Template
                     </a>
-                    <button type="button" class="btn btn-outline-info btn-sm" id="btn-stock-template" data-toggle="modal" data-target="#storeSelectModal">
+                    <button type="button" class="btn btn-outline-info btn-sm" id="btn-stock-template" data-bs-toggle="modal" data-bs-target="#storeSelectModal">
                         <i class="mdi mdi-database-export-outline"></i> Stock Template
+                    </button>
+                    <a href="{{ route('import-export.export.products') }}" class="btn btn-outline-success btn-sm">
+                        <i class="mdi mdi-file-export-outline"></i> Export CSV
+                    </a>
+                    <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importProductsModal">
+                        <i class="mdi mdi-file-import-outline"></i> Import
                     </button>
                 </div>
             </div>
@@ -84,15 +90,13 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="statusModalLabel">Confirm Status Change</h5>
-                    <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     Are you sure you want to <span id="status-action-text" class="font-weight-bold text-lowercase"></span> the product "<span id="status-item-name" class="font-weight-bold"></span>"?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="confirm-status-btn">Confirm</button>
                 </div>
             </div>
@@ -105,9 +109,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="storeSelectModalLabel"><i class="mdi mdi-database-export-outline mr-1"></i> Select Store</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">Download a pre-filled product template with current stock levels for the selected store.</p>
@@ -122,10 +124,52 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                     <a href="#" id="btn-download-stock-template" class="btn btn-info btn-sm disabled">
                         <i class="mdi mdi-download"></i> Download
                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Products Modal -->
+    <div class="modal fade" id="importProductsModal" tabindex="-1" role="dialog" aria-labelledby="importProductsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importProductsModalLabel"><i class="mdi mdi-file-import-outline mr-1"></i> Import Products</h5>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="mdi mdi-information-outline"></i>
+                        Upload a <strong>.xlsx</strong> or <strong>.csv</strong> file. Products are matched by <code>product_code</code> — existing records are updated, new ones are created.
+                        <a href="{{ route('import-export.template.products') }}" class="ml-2 font-weight-bold">
+                            <i class="mdi mdi-download"></i> Download Template
+                        </a>
+                    </div>
+                    <div id="import-form-area">
+                        <div class="form-group">
+                            <label class="font-weight-bold">File <span class="text-danger">*</span></label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="import-file-input" accept=".xlsx,.xls,.csv">
+                                <label class="custom-file-label" for="import-file-input">Choose file&hellip;</label>
+                            </div>
+                            <small class="text-muted">Accepted: .xlsx, .xls, .csv &mdash; max 10 MB</small>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            <i class="mdi mdi-information-outline"></i>
+                            The <strong>default_bulk_pack_name</strong> and <strong>default_bulk_pack_qty</strong> columns set the default purchase (bulk) packaging unit for each product.
+                        </p>
+                    </div>
+                    <div id="import-result-area" style="display:none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success btn-sm" id="btn-run-import">
+                        <i class="mdi mdi-upload"></i> Run Import
+                    </button>
                 </div>
             </div>
         </div>
@@ -225,6 +269,69 @@
                 $('#stock-template-store').val('');
                 $('#btn-download-stock-template').attr('href', '#').addClass('disabled');
             });
+
+            // ---- Import Products ----
+            $('#import-file-input').on('change', function() {
+                var fileName = $(this).val().split('\\').pop() || 'Choose file\u2026';
+                $(this).next('.custom-file-label').text(fileName);
+            });
+
+            $('#importProductsModal').on('hidden.bs.modal', function() {
+                $('#import-file-input').val('');
+                $('.custom-file-label').text('Choose file\u2026');
+                $('#import-result-area').hide().html('');
+                $('#import-form-area').show();
+                $('#btn-run-import').prop('disabled', false).html('<i class="mdi mdi-upload"></i> Run Import');
+            });
+
+            $('#btn-run-import').on('click', function() {
+                var file = $('#import-file-input')[0].files[0];
+                if (!file) {
+                    toastr.warning('Please select a file first.');
+                    return;
+                }
+                var formData = new FormData();
+                formData.append('file', file);
+                formData.append('_token', '{{ csrf_token() }}');
+
+                $('#btn-run-import').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Importing\u2026');
+
+                $.ajax({
+                    url: '{{ route("import-export.import.products") }}',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: function(response) {
+                        $('#import-result-area').html(buildImportReport(response)).show();
+                        $('#import-form-area').hide();
+                        table.ajax.reload(null, false);
+                    },
+                    error: function(xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.error) || 'Import failed. Please check your file and try again.';
+                        toastr.error(msg);
+                        $('#btn-run-import').prop('disabled', false).html('<i class="mdi mdi-upload"></i> Run Import');
+                    }
+                });
+            });
+
+            function buildImportReport(r) {
+                var errHtml = '';
+                if (r.errors && r.errors.length) {
+                    errHtml = '<div class="alert alert-warning mt-2"><strong>Errors (' + r.errors.length + '):</strong><ul class="mb-0 mt-1">' +
+                        r.errors.map(function(e) { return '<li>' + e + '</li>'; }).join('') +
+                        '</ul></div>';
+                }
+                return '<div class="alert alert-success"><i class="mdi mdi-check-circle"></i> Import complete in ' + r.duration + 's &mdash; ' + r.total_rows + ' rows processed.</div>' +
+                    '<div class="row text-center mb-3">' +
+                    '<div class="col-4"><div class="border rounded p-2"><div class="h4 text-success mb-0">' + r.created + '</div><small class="text-muted">Created</small></div></div>' +
+                    '<div class="col-4"><div class="border rounded p-2"><div class="h4 text-primary mb-0">' + r.updated + '</div><small class="text-muted">Updated</small></div></div>' +
+                    '<div class="col-4"><div class="border rounded p-2"><div class="h4 text-warning mb-0">' + r.skipped + '</div><small class="text-muted">Skipped</small></div></div>' +
+                    '</div>' + errHtml +
+                    '<button class="btn btn-outline-secondary btn-sm mt-2" onclick="$(\"#import-form-area\").show(); $(\"#import-result-area\").hide(); $(\"#import-file-input\").val(\"\"); $(\".custom-file-label\").text(\"Choose file\u2026\"); $(\"#btn-run-import\").prop(\"disabled\", false).html(\"<i class=\\\"mdi mdi-upload\\\"></i> Run Import\");">' +
+                    '<i class="mdi mdi-reload"></i> Import Another File</button>';
+            }
         });
     </script>
 @endsection

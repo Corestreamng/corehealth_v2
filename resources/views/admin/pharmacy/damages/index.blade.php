@@ -8,7 +8,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0">Pharmacy Damage Reports</h4>
-            <button class="btn btn-danger" data-toggle="modal" data-target="#createDamageModal">
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#createDamageModal">
                 <i class="mdi mdi-alert-octagon"></i> Report Damage
             </button>
         </div>
@@ -107,9 +107,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">Report Pharmacy Damage</h5>
-                <button type="button" class="close text-white" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="createDamageForm">
                 <div class="modal-body">
@@ -218,9 +216,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Approve Damage Report</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="approveForm">
                 <input type="hidden" id="approve_damage_id" name="damage_id">
@@ -255,9 +251,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Reject Damage Report</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="rejectForm">
                 <input type="hidden" id="reject_damage_id" name="damage_id">

@@ -10,13 +10,10 @@
         <div class="card-body">
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="biodata_tab" data-bs-toggle="tab" data-bs-target="#consultation"
-                        type="button" role="tab" aria-controls="consultation"
-                        aria-selected="true">Consultation</button>
+                    <button class="nav-link active" id="biodata_tab" data-bs-toggle="tab" data-bs-target="#consultation" type="button" role="tab" aria-controls="consultation" aria-selected="true">Consultation</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="private_data_tab" data-bs-toggle="tab" data-bs-target="#other"
-                        type="button" role="tab" aria-controls="other" aria-selected="false">Other
+                    <button class="nav-link" id="private_data_tab" data-bs-toggle="tab" data-bs-target="#other" type="button" role="tab" aria-controls="other" aria-selected="false">Other
                         Services</button>
                 </li>
 

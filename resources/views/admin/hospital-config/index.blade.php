@@ -827,8 +827,7 @@
                         </div>
 
                         <!-- Save Button -->
-                        <button type="submit" class="btn btn-block"
-                                style="background: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 0.875rem; font-weight: 600; transition: all 0.2s;">
+                        <button type="submit" class="btn btn-block" style="background: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 0.875rem; font-weight: 600; transition: all 0.2s;">
                             <i class="mdi mdi-content-save mr-2"></i>Save Configuration
                         </button>
                     </div>

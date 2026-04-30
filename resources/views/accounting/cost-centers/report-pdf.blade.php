@@ -72,8 +72,8 @@
         @php
             $netAmount = $summary['total_revenue'] - $summary['total_expenses'];
         @endphp
-        <div class="summary-label">{{ $netAmount >= 0 ? 'Net Surplus' : 'Net Deficit' }}</div>
-        <div class="summary-value {{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">
+        <div class="summary-label">{{ $netAmount>= 0 ? 'Net Surplus' : 'Net Deficit' }}</div>
+        <div class="summary-value {{ $netAmount>= 0 ? 'text-success' : 'text-danger' }}">
             ₦{{ number_format(abs($netAmount), 2) }}
         </div>
     </div>
@@ -95,7 +95,7 @@
     @php
         $budgetAmount = $budget->budgeted_amount;
         $budgetUsed = $summary['total_expenses'];
-        $utilization = $budgetAmount > 0 ? ($budgetUsed / $budgetAmount) * 100 : 0;
+        $utilization = $budgetAmount> 0 ? ($budgetUsed / $budgetAmount) * 100 : 0;
     @endphp
     <tr>
         <td>Budget Amount</td>
@@ -109,7 +109,7 @@
     </tr>
     <tr>
         <td><strong>Variance</strong></td>
-        <td class="text-right {{ ($budgetAmount - $budgetUsed) >= 0 ? 'text-success' : 'text-danger' }}">
+        <td class="text-right {{ ($budgetAmount - $budgetUsed)>= 0 ? 'text-success' : 'text-danger' }}">
             <strong>₦{{ number_format($budgetAmount - $budgetUsed, 2) }}</strong>
         </td>
         <td class="text-right">-</td>
@@ -119,7 +119,7 @@
 
 <!-- Breakdown by Account -->
 <div class="section-title">Breakdown by Account</div>
-@if(count($expensesByAccount) > 0)
+@if(count($expensesByAccount)> 0)
 <table class="account-table">
     <thead>
         <tr>
@@ -135,10 +135,10 @@
             <td>{{ $item->account_code }}</td>
             <td>{{ $item->account_name }}</td>
             <td class="text-right text-danger">
-                {{ $item->total_debit > 0 ? '₦' . number_format($item->total_debit, 2) : '-' }}
+                {{ $item->total_debit> 0 ? '₦' . number_format($item->total_debit, 2) : '-' }}
             </td>
             <td class="text-right text-success">
-                {{ $item->total_credit > 0 ? '₦' . number_format($item->total_credit, 2) : '-' }}
+                {{ $item->total_credit> 0 ? '₦' . number_format($item->total_credit, 2) : '-' }}
             </td>
         </tr>
         @endforeach
@@ -168,8 +168,8 @@
             <td>{{ $txn->journalEntry->entry_number }}</td>
             <td>{{ $txn->account->code ?? 'N/A' }}</td>
             <td>{{ Str::limit($txn->description ?? $txn->journalEntry->description, 35) }}</td>
-            <td class="text-right text-danger">{{ $txn->debit > 0 ? '₦' . number_format($txn->debit, 2) : '-' }}</td>
-            <td class="text-right text-success">{{ $txn->credit > 0 ? '₦' . number_format($txn->credit, 2) : '-' }}</td>
+            <td class="text-right text-danger">{{ $txn->debit> 0 ? '₦' . number_format($txn->debit, 2) : '-' }}</td>
+            <td class="text-right text-success">{{ $txn->credit> 0 ? '₦' . number_format($txn->credit, 2) : '-' }}</td>
         </tr>
         @empty
         <tr>
@@ -179,7 +179,7 @@
     </tbody>
 </table>
 
-@if($transactions->count() > 50)
+@if($transactions->count()> 50)
 <p style="font-size: 9px; color: #6c757d; text-align: center; margin-top: 10px;">
     Showing 50 of {{ $transactions->count() }} transactions. Export to Excel for full list.
 </p>

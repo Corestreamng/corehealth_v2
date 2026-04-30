@@ -13,16 +13,12 @@
         {{-- Nav tabs for History and New Entry --}}
         <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active smooth-transition" id="notes-history-tab" data-bs-toggle="tab"
-                    data-bs-target="#notes-history" type="button" role="tab" aria-controls="notes-history"
-                    aria-selected="true">
+                <button class="nav-link active smooth-transition" id="notes-history-tab" data-bs-toggle="tab" data-bs-target="#notes-history" type="button" role="tab" aria-controls="notes-history" aria-selected="true">
                     <i class="mdi mdi-history"></i> Notes History
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link smooth-transition" id="notes-new-tab" data-bs-toggle="tab"
-                    data-bs-target="#notes-new" type="button" role="tab" aria-controls="notes-new"
-                    aria-selected="false">
+                <button class="nav-link smooth-transition" id="notes-new-tab" data-bs-toggle="tab" data-bs-target="#notes-new" type="button" role="tab" aria-controls="notes-new" aria-selected="false">
                     <i class="mdi mdi-plus-circle"></i> Enter New Notes
                 </button>
             </li>
@@ -75,8 +71,7 @@
                                     <div class="accordion-body">
                                         <div class="d-flex justify-content-between">
                                             <h5>Forms/Profiles</h5>
-                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                                data-bs-target="#profileModal"> <span class="fa fa-plus"></span>
+                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal"> <span class="fa fa-plus"></span>
                                                 Fill New patient Profile
                                             </button>
                                         </div>
@@ -125,8 +120,7 @@
                                     placeholder="Type to search diagnosis codes... (e.g., 'A03', 'Fever', 'Hypertension')"
                                     autocomplete="off">
                                 <div class="dropdown">
-                                    <button class="btn btn-outline-warning dropdown-toggle" type="button" id="favoritesDropdownBtn"
-                                            data-bs-toggle="dropdown" aria-expanded="false" onclick="loadDiagnosisFavorites()">
+                                    <button class="btn btn-outline-warning dropdown-toggle" type="button" id="favoritesDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" onclick="loadDiagnosisFavorites()">
                                         <i class="fa fa-star"></i> Favorites
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end" id="favorites_dropdown_menu" style="min-width: 280px; max-height: 300px; overflow-y: auto;">
@@ -176,7 +170,7 @@
                     </h5>
                     <small class="text-muted">Save your current diagnoses as a reusable favorite</small>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body pt-3">
                 <div class="mb-3">
@@ -213,7 +207,7 @@
                     </h5>
                     <small class="text-muted">Choose a template to insert into your clinical notes</small>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body pt-3">
                 <div class="mb-3">
@@ -263,17 +257,14 @@
 
                 <br>
                 <div class="d-flex justify-content-between align-items-center">
-                    <button type="button" onclick="switch_tab(event,'inj_imm_history_tab')"
-                        class="btn btn-secondary">
+                    <button type="button" onclick="switch_tab(event,'inj_imm_history_tab')" class="btn btn-secondary">
                         <i class="fa fa-arrow-left"></i> Previous
                     </button>
                     <div>
-                        <button type="button" onclick="saveDiagnosisAndNext()" id="save_diagnosis_next_btn"
-                            class="btn btn-success me-2">
+                        <button type="button" onclick="saveDiagnosisAndNext()" id="save_diagnosis_next_btn" class="btn btn-success me-2">
                             <i class="fa fa-save"></i> Save & Next
                         </button>
-                        <button type="button" onclick="saveDiagnosis()" id="save_diagnosis_btn"
-                            class="btn btn-outline-success">
+                        <button type="button" onclick="saveDiagnosis()" id="save_diagnosis_btn" class="btn btn-outline-success">
                             <i class="fa fa-save"></i> Save
                         </button>
                     </div>
@@ -472,7 +463,7 @@ var clinicalReasonSearchTimeout;
     if (savedDiagnosis) {
         try {
             var parsed = (typeof savedDiagnosis === 'string') ? JSON.parse(savedDiagnosis) : savedDiagnosis;
-            if (Array.isArray(parsed) && parsed.length > 0) {
+            if (Array.isArray(parsed) && parsed.length> 0) {
                 clinicalSelectedReasons = parsed.map(function(item) {
                     return {
                         value: item.value || item.code || item,
@@ -511,7 +502,7 @@ var clinicalReasonSearchTimeout;
         }
 
         // If we restored diagnoses, click the toggle to enable it and render
-        if (clinicalSelectedReasons.length > 0) {
+        if (clinicalSelectedReasons.length> 0) {
             $(function() {
                 // Defer the click so the change handler in new_encounter is registered first
                 setTimeout(function() {
@@ -792,7 +783,7 @@ function showInsertTemplateModal() {
 function loadTemplatesForModal() {
     const clinicId = '{{ $clinic->id ?? "" }}';
     $.get('{{ route("clinic-note-templates.by-clinic") }}', { clinic_id: clinicId }, function(response) {
-        if (response.success && response.groups && response.groups.length > 0) {
+        if (response.success && response.groups && response.groups.length> 0) {
             _templateData = response.groups;
             _templateModalLoaded = true;
             renderTemplateList(_templateData, '');

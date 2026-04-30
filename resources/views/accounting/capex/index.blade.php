@@ -107,7 +107,7 @@
         <button type="button" class="close" data-dismiss="alert">&times;</button>
         <h6 class="mb-2"><i class="mdi mdi-information-outline mr-2"></i>Capital Expenditure Management</h6>
         <small>
-            <strong>What is CAPEX?</strong> Capital expenditures are investments in long-term assets (life > 1 year, value > ₦100,000) such as equipment, facilities, technology, and vehicles.
+            <strong>What is CAPEX?</strong> Capital expenditures are investments in long-term assets (life> 1 year, value> ₦100,000) such as equipment, facilities, technology, and vehicles.
             <br>
             <strong>Workflow:</strong>
             <span class="badge badge-secondary badge-sm">Draft</span> →
@@ -190,7 +190,7 @@
             </div>
             <div class="col-3">
                 <small class="text-muted">Remaining</small><br>
-                <strong class="{{ $stats['remaining_budget'] >= 0 ? 'text-success' : 'text-danger' }}">
+                <strong class="{{ $stats['remaining_budget']>= 0 ? 'text-success' : 'text-danger' }}">
                     ₦{{ number_format($stats['remaining_budget'], 0) }}
                 </strong>
             </div>

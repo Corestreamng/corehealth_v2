@@ -217,7 +217,7 @@
                 </div>
 
                 <!-- Patterns -->
-                @if($patterns->count() > 0)
+                @if($patterns->count()> 0)
                 <div class="form-section">
                     <h6><i class="mdi mdi-repeat mr-2"></i>Available Patterns ({{ $patterns->count() }})</h6>
                     <p class="text-muted small mb-3">

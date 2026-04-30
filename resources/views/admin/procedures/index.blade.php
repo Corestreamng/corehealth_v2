@@ -5,20 +5,16 @@
 @section('content')
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="new_tab" data-bs-toggle="tab" data-bs-target="#new" type="button"
-                role="tab" aria-controls="new" aria-selected="true">New/Scheduled</button>
+            <button class="nav-link active" id="new_tab" data-bs-toggle="tab" data-bs-target="#new" type="button" role="tab" aria-controls="new" aria-selected="true">New/Scheduled</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="cont_data_tab" data-bs-toggle="tab" data-bs-target="#cont" type="button"
-                role="tab" aria-controls="cont_data" aria-selected="false">Concluded</button>
+            <button class="nav-link" id="cont_data_tab" data-bs-toggle="tab" data-bs-target="#cont" type="button" role="tab" aria-controls="cont_data" aria-selected="false">Concluded</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="prev_data_tab" data-bs-toggle="tab" data-bs-target="#prev" type="button"
-                role="tab" aria-controls="prev_data" aria-selected="false">Previous</button>
+            <button class="nav-link" id="prev_data_tab" data-bs-toggle="tab" data-bs-target="#prev" type="button" role="tab" aria-controls="prev_data" aria-selected="false">Previous</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="other_admissions_tab" data-bs-toggle="tab" data-bs-target="#other_admissions"
-                type="button" role="tab" aria-controls="other_admissions" aria-selected="false">Other
+            <button class="nav-link" id="other_admissions_tab" data-bs-toggle="tab" data-bs-target="#other_admissions" type="button" role="tab" aria-controls="other_admissions" aria-selected="false">Other
                 Procedures</button>
         </li>
     </ul>

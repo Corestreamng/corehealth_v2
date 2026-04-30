@@ -226,7 +226,7 @@ $(function() {
             store_id: storeId,
             ajax: 1
         }).done(function(response) {
-            if (response.batches && response.batches.length > 0) {
+            if (response.batches && response.batches.length> 0) {
                 var html = '';
                 response.batches.forEach(function(batch) {
                     var expiryClass = '';

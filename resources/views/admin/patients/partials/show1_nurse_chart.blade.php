@@ -328,7 +328,7 @@
         while (cur <= calEnd) {
             weeksHtml += '<div class="d-flex mb-1">';
             for (var dow = 0; dow < 7; dow++) {
-                var inRange = cur >= start && cur <= end;
+                var inRange = cur>= start && cur <= end;
                 var isToday = cur.getTime() === today.getTime();
                 var dateKey = cur.toISOString().split('T')[0];
                 var dayMeds = adminMap[dateKey] || [];

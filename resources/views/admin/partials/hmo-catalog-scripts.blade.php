@@ -13,9 +13,9 @@
             const total = p + c;
             const diff = total - base;
             const $indicator = $row.find('.divergence-indicator');
-            if (Math.abs(diff) > 0.01) {
+            if (Math.abs(diff)> 0.01) {
                 $row.addClass('diverged');
-                const sign = diff > 0 ? '+' : '';
+                const sign = diff> 0 ? '+' : '';
                 $indicator.html(`<span class="badge badge-warning" title="Total: &#8358;${total.toFixed(2)}"><i class="mdi mdi-alert-circle-outline mr-1"></i>${sign}${diff.toFixed(2)} from base</span>`);
             } else {
                 $row.removeClass('diverged'); $indicator.empty();
@@ -65,7 +65,7 @@
                 if (match) visibleCount++;
             });
             $('.scheme-modern-group').each(function() {
-                const hasVisible = $(this).find('.hmo-row-refined:visible').length > 0;
+                const hasVisible = $(this).find('.hmo-row-refined:visible').length> 0;
                 $(this).toggle(hasVisible);
                 if (term && hasVisible) $(this).addClass('open');
             });
@@ -79,7 +79,7 @@
             const base = parseFloat($row.data('base-price'));
             if ($('#globalSyncToggle').is(':checked')) {
                 const remainder = base - val;
-                if (remainder >= 0) $row.find('.claims-input-refined').val(remainder.toFixed(2));
+                if (remainder>= 0) $row.find('.claims-input-refined').val(remainder.toFixed(2));
             }
             updateDivergence($row); checkDirty($row);
         });
@@ -90,7 +90,7 @@
             const base = parseFloat($row.data('base-price'));
             if ($('#globalSyncToggle').is(':checked')) {
                 const remainder = base - val;
-                if (remainder >= 0) $row.find('.payable-input-refined').val(remainder.toFixed(2));
+                if (remainder>= 0) $row.find('.payable-input-refined').val(remainder.toFixed(2));
             }
             updateDivergence($row); checkDirty($row);
         });
@@ -112,7 +112,7 @@
             $row.toggleClass('dirty', dirty);
             const $group = $row.closest('.scheme-modern-group');
             if ($group.length) {
-                const hasDirty = $group.find('.hmo-row-refined.dirty').length > 0;
+                const hasDirty = $group.find('.hmo-row-refined.dirty').length> 0;
                 $group.find('.scheme-stats-pill').toggleClass('d-none', !hasDirty);
             }
             updateBulkCount();
@@ -120,7 +120,7 @@
 
         function updateBulkCount() {
             const count = $('.hmo-row-refined.dirty').length;
-            $('#impactSummary').text(`${count} item${count > 1 ? 's' : ''} modified`);
+            $('#impactSummary').text(`${count} item${count> 1 ? 's' : ''} modified`);
             $('#saveAllContainer').toggleClass('d-none', count === 0);
         }
 

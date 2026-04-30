@@ -153,7 +153,7 @@
                 <div class="card-body">
                     <a href="{{ route('hr.ess.team-approvals.index') }}" class="btn btn-danger btn-block py-3 mb-3 position-relative" style="border-radius: 8px;">
                         <i class="mdi mdi-clipboard-check-multiple mr-2"></i>Team Approvals
-                        @if(isset($pendingTeamApprovalsCount) && $pendingTeamApprovalsCount > 0)
+                        @if(isset($pendingTeamApprovalsCount) && $pendingTeamApprovalsCount> 0)
                         <span class="badge badge-light position-absolute" style="top: -8px; right: -8px; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
                             {{ $pendingTeamApprovalsCount }}
                         </span>
@@ -254,7 +254,7 @@
                         <div class="d-flex align-items-center">
                             <div class="progress mr-3" style="width: 150px; height: 8px; border-radius: 4px;">
                                 @php
-                                    $percentage = $balance->entitlement > 0
+                                    $percentage = $balance->entitlement> 0
                                         ? (($balance->balance_remaining / $balance->entitlement) * 100)
                                         : 0;
                                 @endphp
@@ -283,7 +283,7 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
-                        @if($pendingLeaveCount > 0)
+                        @if($pendingLeaveCount> 0)
                         <div class="list-group-item d-flex align-items-center">
                             <div class="mr-3">
                                 <span class="badge badge-warning badge-pill" style="width: 30px; height: 30px; line-height: 20px;">

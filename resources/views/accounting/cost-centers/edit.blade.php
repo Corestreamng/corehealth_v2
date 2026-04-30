@@ -182,7 +182,7 @@
                         <span class="label">Last Updated</span>
                         <span class="value">{{ $costCenter->updated_at->format('M d, Y') }}</span>
                     </div>
-                    @if($costCenter->children->count() > 0)
+                    @if($costCenter->children->count()> 0)
                     <div class="info-row">
                         <span class="label">Child Centers</span>
                         <span class="value">{{ $costCenter->children->count() }}</span>

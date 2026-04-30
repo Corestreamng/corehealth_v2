@@ -153,7 +153,7 @@
                     <h6 class="mb-0"><i class="mdi mdi-clock-outline mr-2"></i>Approved (Awaiting Disbursement)</h6>
                 </div>
                 <div class="card-body p-0">
-                    @if($fund->transactions->count() > 0)
+                    @if($fund->transactions->count()> 0)
                         <div class="table-responsive">
                             <table class="table table-sm table-hover mb-0">
                                 <thead class="thead-light">
@@ -227,7 +227,7 @@ $(document).ready(function() {
             $('#approvalNotice').hide();
             $('#notesRequired').hide();
             $('#submitText').text('Complete Reconciliation');
-        } else if (variance > 0) {
+        } else if (variance> 0) {
             $display.addClass('bg-warning').removeClass('bg-success bg-danger text-white');
             $display.html('<h4 class="mb-0 text-dark">+₦' + variance.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' Overage</h4><small class="text-dark">More cash than expected</small>');
             $('#approvalNotice').show();
@@ -255,7 +255,7 @@ $(document).ready(function() {
         }
 
         if (variance !== 0) {
-            var message = variance > 0
+            var message = variance> 0
                 ? 'There is an overage of ₦' + Math.abs(variance).toFixed(2) + '. This will be submitted for approval. Continue?'
                 : 'There is a shortage of ₦' + Math.abs(variance).toFixed(2) + '. This will be submitted for approval. Continue?';
 

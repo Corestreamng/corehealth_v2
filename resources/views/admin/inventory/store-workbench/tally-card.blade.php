@@ -585,13 +585,10 @@
             <div class="filter-group">
                 <label>View Axis</label>
                 <div class="axis-toggle">
-                    <button type="button" id="axis-product"
-                        class="axis-toggle-btn {{ ($axis ?? 'product') === 'product' ? 'active' : '' }}"
-                        data-axis="product">
+                    <button type="button" id="axis-product" class="axis-toggle-btn {{ ($axis ?? 'product') === 'product' ? 'active' : '' }}" data-axis="product">
                         <i class="mdi mdi-cube-outline"></i> Product
                     </button>
-                    <button type="button" id="axis-store"
-                        class="axis-toggle-btn {{ ($axis ?? 'product') === 'store' ? 'active' : '' }}" data-axis="store">
+                    <button type="button" id="axis-store" class="axis-toggle-btn {{ ($axis ?? 'product') === 'store' ? 'active' : '' }}" data-axis="store">
                         <i class="mdi mdi-store"></i> Store
                     </button>
                 </div>
@@ -642,8 +639,7 @@
 
             <div class="filter-group" style="justify-content: flex-end;">
                 <label>&nbsp;</label>
-                <button id="btn-apply-filter" class="btn btn-sm"
-                    style="background: {{ $hosColor }}; color:#fff; border-radius:8px; font-weight:600;">
+                <button id="btn-apply-filter" class="btn btn-sm" style="background: {{ $hosColor }}; color:#fff; border-radius:8px; font-weight:600;">
                     <i class="mdi mdi-magnify mr-1"></i>Apply
                 </button>
             </div>
@@ -737,8 +733,7 @@
                                     Incoming — To Fulfil
                                     <span class="badge badge-danger badge-pill">{{ $pendingIncomingReqs->count() }}</span>
                                 </h6>
-                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="incoming"
-                                    style="border-radius:6px; font-size:0.75rem;">
+                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="incoming" style="border-radius:6px; font-size:0.75rem;">
                                     <i class="mdi mdi-refresh"></i>
                                 </button>
                             </div>
@@ -753,7 +748,7 @@
                                                     {{ $item->product->product_name ?? '—' }}
                                                     ×{{ $item->requested_qty }}{{ !$loop->last ? ', ' : '' }}
                                                 @endforeach
-                                                @if ($req->items->count() > 2)
+                                                @if ($req->items->count()> 2)
                                                     +{{ $req->items->count() - 2 }} more
                                                 @endif
                                             </div>
@@ -761,8 +756,7 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <span
                                                 class="status-badge {{ $req->status }}">{{ ucfirst($req->status) }}</span>
-                                            <button class="btn btn-sm btn-primary btn-fulfill-req"
-                                                data-req-id="{{ $req->id }}"
+                                            <button class="btn btn-sm btn-primary btn-fulfill-req" data-req-id="{{ $req->id }}"
                                                 data-req-number="{{ $req->requisition_number }}"
                                                 style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
                                                 <i class="mdi mdi-check"></i> Fulfil
@@ -790,8 +784,7 @@
                                     <span
                                         class="badge badge-primary badge-pill">{{ $pendingOutgoingReqs->count() }}</span>
                                 </h6>
-                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="outgoing"
-                                    style="border-radius:6px; font-size:0.75rem;">
+                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="outgoing" style="border-radius:6px; font-size:0.75rem;">
                                     <i class="mdi mdi-refresh"></i>
                                 </button>
                             </div>
@@ -806,7 +799,7 @@
                                                     {{ $item->product->product_name ?? '—' }}
                                                     ×{{ $item->requested_qty }}{{ !$loop->last ? ', ' : '' }}
                                                 @endforeach
-                                                @if ($req->items->count() > 2)
+                                                @if ($req->items->count()> 2)
                                                     +{{ $req->items->count() - 2 }} more
                                                 @endif
                                             </div>
@@ -842,8 +835,7 @@
                                     <span class="badge badge-pill"
                                         style="background:#8b5cf6;color:#fff;">{{ $pendingPOs->count() }}</span>
                                 </h6>
-                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="pos"
-                                    style="border-radius:6px; font-size:0.75rem;">
+                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="pos" style="border-radius:6px; font-size:0.75rem;">
                                     <i class="mdi mdi-refresh"></i>
                                 </button>
                             </div>
@@ -858,7 +850,7 @@
                                                     {{ $item->product->product_name ?? '—' }}
                                                     ×{{ $item->ordered_qty }}{{ !$loop->last ? ', ' : '' }}
                                                 @endforeach
-                                                @if ($po->items->count() > 2)
+                                                @if ($po->items->count()> 2)
                                                     +{{ $po->items->count() - 2 }} more
                                                 @endif
                                             </div>
@@ -913,7 +905,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="mdi mdi-swap-horizontal mr-2"></i>New Requisition</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <form id="form-new-req">
                     @csrf
@@ -955,8 +947,7 @@
                         {{-- Items --}}
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <label class="mb-0 font-weight-bold">Items <span class="text-danger">*</span></label>
-                            <button type="button" id="btn-add-req-item" class="btn btn-sm btn-outline-primary"
-                                style="border-radius:6px;">
+                            <button type="button" id="btn-add-req-item" class="btn btn-sm btn-outline-primary" style="border-radius:6px;">
                                 <i class="mdi mdi-plus"></i> Add Item
                             </button>
                         </div>
@@ -980,9 +971,7 @@
                                             placeholder="Qty" min="1" required>
                                     </div>
                                     <div class="col-md-2">
-                                        <button type="button"
-                                            class="btn btn-sm btn-outline-danger btn-remove-req-item w-100"
-                                            style="border-radius:6px;" disabled>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-req-item w-100" style="border-radius:6px;" disabled>
                                             <i class="mdi mdi-delete-outline"></i>
                                         </button>
                                     </div>
@@ -1011,7 +1000,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="mdi mdi-package-variant-plus mr-2" style="color:#10b981;"></i>Add
                         Stock Batch</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <form id="form-add-batch">
                     @csrf
@@ -1100,8 +1089,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn" style="background:#10b981; color:#fff;"
-                            id="btn-submit-batch">
+                        <button type="submit" class="btn" style="background:#10b981; color:#fff;" id="btn-submit-batch">
                             <i class="mdi mdi-check mr-1"></i>Create Batch
                         </button>
                     </div>
@@ -1121,7 +1109,7 @@
                     <h5 class="modal-title"><i class="mdi mdi-check-circle-outline mr-2"
                             style="color:#10b981;"></i>Fulfil Requisition <span id="fulfill-req-number"
                             class="text-muted"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <form id="form-fulfill-req">
                     @csrf
@@ -1153,7 +1141,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="mdi mdi-cart-plus mr-2" style="color:#8b5cf6;"></i>New Purchase
                         Order</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <form id="form-new-po">
                     @csrf
@@ -1200,20 +1188,20 @@
                         {{-- PO Items --}}
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <label class="mb-0 font-weight-bold">Items <span class="text-danger">*</span></label>
-                            <button type="button" id="btn-add-po-item" class="btn btn-sm btn-outline-secondary"
-                                style="border-radius:6px;">
+                            <button type="button" id="btn-add-po-item" class="btn btn-sm btn-outline-secondary" style="border-radius:6px;">
                                 <i class="mdi mdi-plus"></i> Add Item
                             </button>
                         </div>
                         <div id="po-items-container">
                             <div class="po-item-row" data-index="0">
                                 <div class="row align-items-end mb-2">
-                                    <div class="col-md-5">
+                                    <div class="col-md-4">
                                         <select name="items[0][product_id]" class="form-control po-product-select"
-                                            required>
+                                            required onchange="loadProductPackaging(this, 0, 'po')">
                                             <option value="">— Select Product —</option>
                                             @foreach ($products as $p)
                                                 <option value="{{ $p->id }}"
+                                                    data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}"
                                                     {{ $selectedProduct && $selectedProduct->id == $p->id ? 'selected' : '' }}>
                                                     {{ $p->product_name }}
                                                 </option>
@@ -1221,17 +1209,23 @@
                                         </select>
                                     </div>
                                     <div class="col-md-2">
-                                        <input type="number" name="items[0][ordered_qty]" class="form-control"
-                                            placeholder="Qty" min="1" required>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="number" name="items[0][unit_cost]" class="form-control"
-                                            placeholder="Unit Cost" step="0.01" min="0" required>
+                                        <select name="items[0][packaging_id]" class="form-control po-packaging-select" onchange="calculatePoBaseQty(0)">
+                                            <option value="">Base Unit</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-2">
-                                        <button type="button"
-                                            class="btn btn-sm btn-outline-danger btn-remove-po-item w-100"
-                                            style="border-radius:6px;" disabled>
+                                        <input type="number" name="items[0][ordered_qty]" class="form-control po-qty-input"
+                                            placeholder="Qty" min="1" required oninput="calculatePoBaseQty(0)">
+                                        <small class="text-muted po-base-qty-hint" id="po-base-qty-hint-0"></small>
+                                        <input type="hidden" name="items[0][base_ordered_qty]" class="po-base-qty-hidden">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="number" name="items[0][unit_cost]" class="form-control po-cost-input"
+                                            placeholder="Unit Cost" step="0.01" min="0" required oninput="calculatePoBaseQty(0)">
+                                        <input type="hidden" name="items[0][base_unit_cost]" class="po-base-cost-hidden">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-po-item w-100" style="border-radius:6px;" disabled>
                                             <i class="mdi mdi-delete-outline"></i>
                                         </button>
                                     </div>
@@ -1241,12 +1235,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="action" value="save" class="btn btn-outline-secondary"
-                            id="btn-save-po">
+                        <button type="submit" name="action" value="save" class="btn btn-outline-secondary" id="btn-save-po">
                             <i class="mdi mdi-content-save mr-1"></i>Save Draft
                         </button>
-                        <button type="button" class="btn" style="background:#8b5cf6; color:#fff;"
-                            id="btn-submit-po">
+                        <button type="button" class="btn" style="background:#8b5cf6; color:#fff;" id="btn-submit-po">
                             <i class="mdi mdi-send mr-1"></i>Submit PO
                         </button>
                     </div>
@@ -1266,7 +1258,7 @@
                     <h5 class="modal-title"><i class="mdi mdi-download mr-2" style="color:#8b5cf6;"></i>Receive PO —
                         <span id="receive-po-number"></span>
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <form id="form-receive-po">
                     @csrf
@@ -1279,8 +1271,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn" style="background:#8b5cf6; color:#fff;"
-                            id="btn-submit-receive">
+                        <button type="submit" class="btn" style="background:#8b5cf6; color:#fff;" id="btn-submit-receive">
                             <i class="mdi mdi-check mr-1"></i>Confirm Receipt
                         </button>
                     </div>
@@ -1297,7 +1288,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="mdi mdi-tune-vertical mr-2" style="color:#f59e0b;"></i>Adjust Stock</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
 
@@ -1358,11 +1349,20 @@
                                 </div>
                             </div>
 
-                            {{-- Quantity --}}
-                            <div class="form-group">
-                                <label for="adj-qty">Quantity <span class="text-danger">*</span></label>
-                                <input type="number" name="qty" id="adj-qty" class="form-control" min="1" value="1" required>
-                                <small class="text-muted" id="adj-qty-hint"></small>
+                            {{-- Quantity & Packaging --}}
+                            <div class="row align-items-end mb-3">
+                                <div class="col-md-5">
+                                    <label class="font-weight-600 mb-1">Packaging Unit</label>
+                                    <select name="packaging_id" id="adj-packaging" class="form-control" onchange="calculateAdjBaseQty()">
+                                        <option value="">Base Unit</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-7">
+                                    <label for="adj-qty" class="font-weight-600 mb-1">Quantity <span class="text-danger">*</span></label>
+                                    <input type="number" name="qty" id="adj-qty" class="form-control" min="1" value="1" required oninput="calculateAdjBaseQty()">
+                                    <small class="text-muted" id="adj-qty-hint"></small>
+                                    <input type="hidden" name="base_qty" id="adj-base-qty-hidden">
+                                </div>
                             </div>
 
                             {{-- Reason --}}
@@ -1535,7 +1535,7 @@
                 // Summary strip
                 $('#sum-in').text(sum.total_in);
                 $('#sum-out').text(sum.total_out);
-                $('#sum-net').text((sum.net_movement >= 0 ? '+' : '') + sum.net_movement);
+                $('#sum-net').text((sum.net_movement>= 0 ? '+' : '') + sum.net_movement);
                 if (axis === 'product') {
                     $('#sum-balance').text(sum.closing_balance !== null ? sum.closing_balance : '—');
                     $('#sum-balance-chip').show();
@@ -1570,12 +1570,24 @@
                         '<span style="color:#ccc;">—</span>';
                     var outCell = r.out_qty > 0 ? '<span class="qty-out">' + r.out_qty + '</span>' :
                         '<span style="color:#ccc;">—</span>';
+                    
+                    // Add packaging hint if available
+                    if (r.packaging && r.packaging.length > 0) {
+                        var pkg = r.packaging[0]; // Just use the first one as a hint
+                        var qty = r.in_qty || r.out_qty;
+                        if (qty >= pkg.base_unit_qty) {
+                            var packs = (qty / pkg.base_unit_qty).toFixed(1);
+                            var hint = '<div style="font-size:0.65rem; color:#6b7280; margin-top:1px;">≈ ' + packs + ' ' + pkg.name + '</div>';
+                            if (r.in_qty > 0) inCell += hint;
+                            else if (r.out_qty > 0) outCell += hint;
+                        }
+                    }
                     var refCell = r.ref_url ?
                         '<a href="' + escHtml(r.ref_url) + '" target="_blank" rel="noopener">' + escHtml(r
                             .ref_label) + '</a>' :
                         escHtml(r.ref_label);
                     var notes = r.notes ? '<small class="text-muted" title="' + escHtml(r.notes) + '">' +
-                        escHtml(r.notes.substring(0, 30)) + (r.notes.length > 30 ? '…' : '') + '</small>' : '—';
+                        escHtml(r.notes.substring(0, 30)) + (r.notes.length> 30 ? '…' : '') + '</small>' : '—';
 
                     if (axis === 'product') {
                         html += '<tr class="' + dirClass + '">' +
@@ -1615,7 +1627,7 @@
                 $('#tally-body').html(html);
 
                 // Product chips for store axis
-                if (axis === 'store' && Object.keys(productRegistry).length > 0) {
+                if (axis === 'store' && Object.keys(productRegistry).length> 0) {
                     var chipHtml = '<span class="product-chip all" data-pid="all">All Products</span>';
                     $.each(productRegistry, function(pid, name) {
                         chipHtml += '<span class="product-chip" data-pid="' + pid + '">' + escHtml(name) +
@@ -1682,16 +1694,23 @@
                 reqItemIndex++;
                 var row = `<div class="req-item-row" data-index="${reqItemIndex}">
             <div class="row align-items-end mb-2">
-                <div class="col-md-7">
-                    <select name="items[${reqItemIndex}][product_id]" class="form-control req-product-select" required>
+                <div class="col-md-5">
+                    <select name="items[${reqItemIndex}][product_id]" class="form-control req-product-select" required onchange="loadProductPackaging(this, ${reqItemIndex}, 'req')">
                         <option value="">— Select Product —</option>
                         @foreach ($products as $p)
                             <option value="{{ $p->id }}">{{ $p->product_name }}</option>
                         @endforeach
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <select name="items[${reqItemIndex}][packaging_id]" class="form-control req-packaging-select" onchange="calculateReqBaseQty(${reqItemIndex})">
+                        <option value="">Base Unit</option>
+                    </select>
+                </div>
                 <div class="col-md-3">
-                    <input type="number" name="items[${reqItemIndex}][requested_qty]" class="form-control" placeholder="Qty" min="1" required>
+                    <input type="number" name="items[${reqItemIndex}][requested_qty]" class="form-control req-qty-input" placeholder="Qty" min="1" required oninput="calculateReqBaseQty(${reqItemIndex})">
+                    <small class="text-muted req-base-qty-hint" id="req-base-qty-hint-${reqItemIndex}"></small>
+                    <input type="hidden" name="items[${reqItemIndex}][base_requested_qty]" class="req-base-qty-hidden">
                 </div>
                 <div class="col-md-2">
                     <button type="button" class="btn btn-sm btn-outline-danger btn-remove-req-item w-100" style="border-radius:6px;">
@@ -1723,7 +1742,7 @@
                 $.ajax({
                         url: '{{ route('inventory.requisitions.store') }}',
                         method: 'POST',
-                        data: $(this).serialize(),
+                        data: $(this).serialize().replace(/requested_qty=/g, 'ignore_qty=').replace(/base_requested_qty=/g, 'requested_qty='),
                         dataType: 'json',
                     })
                     .done(function(res) {
@@ -1828,11 +1847,18 @@
                 }
 
                 $.each(items, function(i, item) {
-                    html += `<div class="card mb-3" style="border-left:3px solid {{ $hosColor }};">
+                    var pkgHint = '';
+                    if (item.packaging && item.packaging.length > 0) {
+                        var p = item.packaging[0];
+                        var packs = (item.requested_qty / p.base_unit_qty).toFixed(1);
+                        pkgHint = ` <small class="text-muted">(${packs} ${p.name})</small>`;
+                    }
+
+                    html += `<div class="card mb-3 fulfill-item-row" style="border-left:3px solid {{ $hosColor }};" data-index="${i}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <strong>${escHtml(item.product_name)}</strong>
-                        <span class="badge badge-info">Requested: ${item.requested_qty} | Fulfilled: ${item.fulfilled_qty || 0}</span>
+                        <span class="badge badge-info">Requested: ${item.requested_qty}${pkgHint} | Fulfilled: ${item.fulfilled_qty || 0}</span>
                     </div>
                     <input type="hidden" name="items[${i}][requisition_item_id]" value="${item.id}">
                     <input type="hidden" name="items[${i}][product_id]" value="${item.product_id}">`;
@@ -1841,9 +1867,18 @@
                         html += `<div class="table-responsive"><table class="table table-sm mb-0">
                     <thead><tr><th>Batch</th><th>Available</th><th>Expiry</th><th>Fulfil Qty</th></tr></thead><tbody>`;
                         $.each(item.available_batches, function(_, batch) {
+                            var batchPkgHint = '';
+                            if (item.packaging && item.packaging.length > 0) {
+                                var p = item.packaging[0];
+                                if (batch.current_qty >= p.base_unit_qty) {
+                                    var bPacks = (batch.current_qty / p.base_unit_qty).toFixed(1);
+                                    batchPkgHint = `<div class="small text-muted">≈ ${bPacks} ${p.name}</div>`;
+                                }
+                            }
+
                             html += `<tr>
                         <td><code>${escHtml(batch.batch_number)}</code></td>
-                        <td>${batch.current_qty}</td>
+                        <td>${batch.current_qty}${batchPkgHint}</td>
                         <td>${batch.expiry_date || '—'}</td>
                         <td><input type="number" name="items[${i}][batches][${batch.id}]" class="form-control form-control-sm" min="0" max="${batch.current_qty}" value="0" style="width:80px;"></td>
                     </tr>`;
@@ -1899,19 +1934,27 @@
                 poItemIndex++;
                 var row = `<div class="po-item-row" data-index="${poItemIndex}">
             <div class="row align-items-end mb-2">
-                <div class="col-md-5">
-                    <select name="items[${poItemIndex}][product_id]" class="form-control po-product-select" required>
+                <div class="col-md-4">
+                    <select name="items[${poItemIndex}][product_id]" class="form-control po-product-select" required onchange="loadProductPackaging(this, ${poItemIndex}, 'po')">
                         <option value="">— Select Product —</option>
                         @foreach ($products as $p)
-                            <option value="{{ $p->id }}">{{ $p->product_name }}</option>
+                            <option value="{{ $p->id }}" data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}">{{ $p->product_name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <input type="number" name="items[${poItemIndex}][ordered_qty]" class="form-control" placeholder="Qty" min="1" required>
+                    <select name="items[${poItemIndex}][packaging_id]" class="form-control po-packaging-select" onchange="calculatePoBaseQty(${poItemIndex})">
+                        <option value="">Base Unit</option>
+                    </select>
                 </div>
-                <div class="col-md-3">
-                    <input type="number" name="items[${poItemIndex}][unit_cost]" class="form-control" placeholder="Unit Cost" step="0.01" min="0" required>
+                <div class="col-md-2">
+                    <input type="number" name="items[${poItemIndex}][ordered_qty]" class="form-control po-qty-input" placeholder="Qty" min="1" required oninput="calculatePoBaseQty(${poItemIndex})">
+                    <small class="text-muted po-base-qty-hint" id="po-base-qty-hint-${poItemIndex}"></small>
+                    <input type="hidden" name="items[${poItemIndex}][base_ordered_qty]" class="po-base-qty-hidden">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="items[${poItemIndex}][unit_cost]" class="form-control po-cost-input" placeholder="Unit Cost" step="0.01" min="0" required oninput="calculatePoBaseQty(${poItemIndex})">
+                    <input type="hidden" name="items[${poItemIndex}][base_unit_cost]" class="po-base-cost-hidden">
                 </div>
                 <div class="col-md-2">
                     <button type="button" class="btn btn-sm btn-outline-danger btn-remove-po-item w-100" style="border-radius:6px;">
@@ -1942,7 +1985,7 @@
                 $.ajax({
                         url: '{{ route('inventory.purchase-orders.store') }}',
                         method: 'POST',
-                        data: formData,
+                        data: formData.replace(/ordered_qty=/g, 'ignore_qty=').replace(/base_ordered_qty=/g, 'ordered_qty=').replace(/unit_cost=/g, 'ignore_cost=').replace(/base_unit_cost=/g, 'unit_cost='),
                         dataType: 'json',
                     })
                     .done(function(res) {
@@ -2069,33 +2112,55 @@
                 var html = '<div class="mb-2"><strong>' + items.length + ' item(s) to receive</strong></div>';
                 $.each(items, function(i, item) {
                     var remaining = (item.ordered_qty || 0) - (item.received_qty || 0);
-                    html += `<div class="card mb-3" style="border-left:3px solid #8b5cf6;">
+                    var productId = item.product_id;
+                    html += `<div class="card mb-3 receive-item-row" style="border-left:3px solid #8b5cf6;" data-index="${i}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <strong>${escHtml(item.product ? item.product.product_name : 'Product #' + item.product_id)}</strong>
-                        <span class="badge badge-secondary">Ordered: ${item.ordered_qty} | Remaining: ${remaining}</span>
+                        <span class="badge badge-secondary">Remaining: ${remaining} base units</span>
                     </div>
                     <input type="hidden" name="items[${i}][item_id]" value="${item.id}">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label class="small font-weight-bold">Receive Qty <span class="text-danger">*</span></label>
-                            <input type="number" name="items[${i}][qty]" class="form-control form-control-sm" min="1" max="${remaining}" value="${remaining}" required>
+                    <div class="row align-items-end">
+                        <div class="col-md-2">
+                            <label class="small font-weight-bold">Packaging</label>
+                            <select name="items[${i}][packaging_id]" class="form-control form-control-sm rec-packaging-select" onchange="updateRecBaseQty(${i}, ${remaining})">
+                                <option value="">Base Unit</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small font-weight-bold">Qty <span class="text-danger">*</span></label>
+                            <input type="number" name="items[${i}][qty]" class="form-control form-control-sm rec-qty-input" min="1" value="${remaining}" required oninput="updateRecBaseQty(${i}, ${remaining})">
+                            <small class="text-muted rec-base-qty-hint"></small>
+                            <input type="hidden" name="items[${i}][base_qty]" class="rec-base-qty-hidden" value="${remaining}">
                         </div>
                         <div class="col-md-3">
-                            <label class="small font-weight-bold">Batch Number <span class="text-danger">*</span></label>
+                            <label class="small font-weight-bold">Batch <span class="text-danger">*</span></label>
                             <input type="text" name="items[${i}][batch_number]" class="form-control form-control-sm" maxlength="100" required>
                         </div>
-                        <div class="col-md-3">
-                            <label class="small font-weight-bold">Expiry Date</label>
+                        <div class="col-md-2">
+                            <label class="small font-weight-bold">Expiry</label>
                             <input type="date" name="items[${i}][expiry_date]" class="form-control form-control-sm">
                         </div>
                         <div class="col-md-3">
-                            <label class="small font-weight-bold">Actual Cost</label>
-                            <input type="number" name="items[${i}][actual_cost]" class="form-control form-control-sm" step="0.01" min="0" value="${item.unit_cost || ''}">
+                            <label class="small font-weight-bold">Cost (per Unit)</label>
+                            <input type="number" name="items[${i}][actual_cost]" class="form-control form-control-sm rec-cost-input" step="0.01" min="0" value="${item.unit_cost || ''}" oninput="updateRecBaseQty(${i}, ${remaining})">
+                            <input type="hidden" name="items[${i}][base_actual_cost]" class="rec-base-cost-hidden" value="${item.unit_cost || ''}">
                         </div>
                     </div>
                 </div>
             </div>`;
+                    
+                    // Fetch packaging for this product
+                    $.get('{{ url("products") }}/' + productId + '/packaging')
+                        .done(function(res) {
+                            if (res.success && res.packaging) {
+                                var $sel = $(`.receive-item-row[data-index="${i}"] .rec-packaging-select`);
+                                $sel.data('prev-factor', 1);
+                                $.each(res.packaging, function(_, p) {
+                                    $sel.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
+                                });
+                            }
+                        });
                 });
 
                 html += `<div class="row mt-2">
@@ -2122,7 +2187,7 @@
                 $.ajax({
                         url: '{{ url('inventory/purchase-orders') }}/' + poId + '/receive',
                         method: 'POST',
-                        data: $(this).serialize(),
+                        data: $(this).serialize().replace(/qty=/g, 'ignore_qty=').replace(/base_qty=/g, 'qty=').replace(/actual_cost=/g, 'ignore_cost=').replace(/base_actual_cost=/g, 'actual_cost='),
                         dataType: 'json',
                     })
                     .done(function(res) {
@@ -2157,6 +2222,131 @@
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#039;');
+            }
+
+            // ─── Packaging Helpers ───────────────────────────────────────────────────
+            window.loadProductPackaging = function(select, index, type) {
+                var productId = $(select).val();
+                var $row = $(select).closest('.' + type + '-item-row');
+                var $pkgSelect = $row.find('.' + type + '-packaging-select');
+                
+                $pkgSelect.html('<option value="" data-qty="1">Base Unit</option>');
+                $pkgSelect.data('prev-factor', 1);
+                if (!productId) return;
+
+                $.get('{{ url("products") }}/' + productId + '/packaging')
+                    .done(function(res) {
+                        if (res.success && res.packaging) {
+                            $.each(res.packaging, function(_, p) {
+                                $pkgSelect.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
+                            });
+                        }
+                    });
+            }
+
+            window.calculatePoBaseQty = function(index) {
+                var $row = $(`.po-item-row[data-index="${index}"]`);
+                var $pkgSelect = $row.find('.po-packaging-select');
+                var qty = parseFloat($row.find('.po-qty-input').val()) || 0;
+                var $costInput = $row.find('.po-cost-input');
+                var cost = parseFloat($costInput.val()) || 0;
+                var $pkgOpt = $pkgSelect.find('option:selected');
+                var factor = parseFloat($pkgOpt.data('qty')) || 1;
+                var prevFactor = parseFloat($pkgSelect.data('prev-factor')) || 1;
+                var baseUnit = $row.find('.po-product-select option:selected').data('base-unit') || 'Piece';
+
+                // Scale cost if factor changed
+                if (window.event && window.event.type === 'change' && $(window.event.target).hasClass('po-packaging-select')) {
+                    if (cost > 0) {
+                        cost = (cost / prevFactor) * factor;
+                        $costInput.val(parseFloat(cost.toFixed(4)));
+                    }
+                }
+                $pkgSelect.data('prev-factor', factor);
+
+                var baseQty = qty * factor;
+                var baseCost = factor > 0 ? (cost / factor) : cost;
+
+                $row.find('.po-base-qty-hidden').val(baseQty);
+                $row.find('.po-base-cost-hidden').val(baseCost);
+                
+                if (factor > 1) {
+                    $row.find('.po-base-qty-hint').text(`= ${baseQty} ${baseUnit}`);
+                } else {
+                    $row.find('.po-base-qty-hint').text('');
+                }
+            }
+
+            window.calculateReqBaseQty = function(index) {
+                var $row = $(`.req-item-row[data-index="${index}"]`);
+                var qty = parseFloat($row.find('.req-qty-input').val()) || 0;
+                var $pkgOpt = $row.find('.req-packaging-select option:selected');
+                var factor = parseFloat($pkgOpt.data('qty')) || 1;
+                
+                var baseQty = qty * factor;
+                $row.find('.req-base-qty-hidden').val(baseQty);
+                
+                if (factor > 1) {
+                    $row.find('.req-base-qty-hint').text(`= ${baseQty} base units`);
+                } else {
+                    $row.find('.req-base-qty-hint').text('');
+                }
+            }
+
+            window.calculateAdjBaseQty = function() {
+                var qty = parseFloat($('#adj-qty').val()) || 0;
+                var $pkgOpt = $('#adj-packaging option:selected');
+                var factor = parseFloat($pkgOpt.data('qty')) || 1;
+                var currentStock = adjSelectedBatch ? adjSelectedBatch.current_qty : 0;
+                
+                var baseQty = qty * factor;
+                $('#adj-base-qty-hidden').val(baseQty);
+                
+                if (adjSelectedType === 'subtract' && baseQty > currentStock) {
+                    $('#adj-qty-hint').html(`<span class="text-danger">Exceeds available stock (${currentStock} pieces)</span>`);
+                    $('#btn-apply-adjustment').prop('disabled', true);
+                } else {
+                    if (factor > 1) {
+                        $('#adj-qty-hint').text(`= ${baseQty} pieces`);
+                    } else {
+                        $('#adj-qty-hint').text('');
+                    }
+                    if (adjSelectedType && qty > 0) $('#btn-apply-adjustment').prop('disabled', false);
+                }
+            }
+
+            window.updateRecBaseQty = function(index, remaining) {
+                var $row = $(`.receive-item-row[data-index="${index}"]`);
+                var $pkgSelect = $row.find('.rec-packaging-select');
+                var qty = parseFloat($row.find('.rec-qty-input').val()) || 0;
+                var $costInput = $row.find('.rec-cost-input');
+                var cost = parseFloat($costInput.val()) || 0;
+                var $pkgOpt = $pkgSelect.find('option:selected');
+                var factor = parseFloat($pkgOpt.data('qty')) || 1;
+                var prevFactor = parseFloat($pkgSelect.data('prev-factor')) || 1;
+
+                // Scale cost if factor changed
+                if (window.event && window.event.type === 'change' && $(window.event.target).hasClass('rec-packaging-select')) {
+                    if (cost > 0) {
+                        cost = (cost / prevFactor) * factor;
+                        $costInput.val(parseFloat(cost.toFixed(4)));
+                    }
+                }
+                $pkgSelect.data('prev-factor', factor);
+                
+                var baseQty = qty * factor;
+                var baseCost = factor > 0 ? (cost / factor) : cost;
+
+                $row.find('.rec-base-qty-hidden').val(baseQty);
+                $row.find('.rec-base-cost-hidden').val(baseCost);
+                
+                if (baseQty > remaining) {
+                    $row.find('.rec-base-qty-hint').html(`<span class="text-danger">Exceeds remaining (${remaining})</span>`);
+                    $('#btn-submit-receive').prop('disabled', true);
+                } else {
+                    $row.find('.rec-base-qty-hint').text(factor > 1 ? `= ${baseQty} pieces` : '');
+                    $('#btn-submit-receive').prop('disabled', false);
+                }
             }
 
             // ─── CSRF for all AJAX ────────────────────────────────────────────────────
@@ -2308,6 +2498,17 @@
                 $('#adj-notes').val('');
                 $('#btn-apply-adjustment').prop('disabled', true);
 
+                // Load packaging for this product
+                var $pkgSelect = $('#adj-packaging').html('<option value="">Base Unit</option>');
+                $.get('{{ url("products") }}/' + batchData.product_id + '/packaging')
+                    .done(function(res) {
+                        if (res.success && res.packaging) {
+                            $.each(res.packaging, function(_, p) {
+                                $pkgSelect.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
+                            });
+                        }
+                    });
+
                 // Set hidden batch id
                 $('#adj-batch-id').val(batchData.id);
 
@@ -2355,7 +2556,7 @@
                 } else {
                     $('#adj-qty').attr('max', 99999);
                 }
-                checkAdjFormReady();
+                calculateAdjBaseQty();
             };
 
             // Enable submit when reason is filled
@@ -2366,7 +2567,16 @@
                 var typeOk = !!adjSelectedType;
                 var qtyOk  = parseInt($('#adj-qty').val()) > 0;
                 var reasonOk = !!$('#adj-reason').val();
-                $('#btn-apply-adjustment').prop('disabled', !(typeOk && qtyOk && reasonOk));
+                
+                // Also check if subtract exceeds stock (already handled in calculateAdjBaseQty but good to be sure)
+                var factor = parseFloat($('#adj-packaging option:selected').data('qty')) || 1;
+                var baseQty = (parseInt($('#adj-qty').val()) || 0) * factor;
+                var stockOk = true;
+                if (adjSelectedType === 'subtract' && adjSelectedBatch && baseQty > adjSelectedBatch.current_qty) {
+                    stockOk = false;
+                }
+
+                $('#btn-apply-adjustment').prop('disabled', !(typeOk && qtyOk && reasonOk && stockOk));
             }
 
             // Submit adjustment
@@ -2380,7 +2590,7 @@
                     data: {
                         _token: $('meta[name="csrf-token"]').attr('content'),
                         adjustment_type: adjSelectedType,
-                        qty: $('#adj-qty').val(),
+                        qty: $('#adj-base-qty-hidden').val(),
                         reason: $('#adj-reason').val(),
                         notes: $('#adj-notes').val(),
                     },

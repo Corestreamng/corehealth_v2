@@ -103,7 +103,7 @@ $(function(){
                 if (res.stats) {
                     html += '<p class="mb-0" style="font-size:0.88rem;">Created: <strong>' + res.stats.created + '</strong> | Updated: <strong>' + res.stats.updated + '</strong> | Skipped: <strong>' + res.stats.skipped + '</strong></p>';
                 }
-                if (res.errors_detail && res.errors_detail.length > 0) {
+                if (res.errors_detail && res.errors_detail.length> 0) {
                     html += '<hr class="my-2"><p class="mb-1 font-weight-bold" style="font-size:0.85rem;">Warnings:</p><ul class="mb-0 pl-3" style="font-size:0.82rem;">';
                     res.errors_detail.forEach(function(err){ html += '<li>' + $('<span>').text(err).html() + '</li>'; });
                     html += '</ul>';

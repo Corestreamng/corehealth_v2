@@ -526,9 +526,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-bed"></i> Assign Bed to Patient</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -638,7 +636,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="proceed-to-bed-selection" style="display: none;">
                     <i class="mdi mdi-arrow-right"></i> Proceed to Bed Selection
                 </button>
@@ -656,9 +654,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title"><i class="mdi mdi-logout"></i> Process Patient Discharge</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -773,7 +769,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-warning" id="confirm-discharge" disabled>
                     <i class="mdi mdi-check"></i> Complete Discharge & Release Bed
                 </button>
@@ -788,15 +784,13 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-bed"></i> <span id="bed-detail-name">Bed Details</span></h5>
-                <button type="button" class="close"  data-bs-dismiss="modal" data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="bed-details-content">
                 <!-- Bed details will be loaded here -->
             </div>
             <div class="modal-footer" id="bed-details-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -902,7 +896,7 @@ window.WardDashboard = (function() {
             }
 
             wards.forEach(function(ward) {
-                var occupancyRate = ward.capacity > 0 ?
+                var occupancyRate = ward.capacity> 0 ?
                     Math.round((ward.occupied_beds / ward.capacity) * 100) : 0;
                 var occupancyClass = occupancyRate < 50 ? 'occupancy-low' :
                                     occupancyRate < 80 ? 'occupancy-medium' : 'occupancy-high';
@@ -930,7 +924,7 @@ window.WardDashboard = (function() {
                 html += '</div>';
 
                 html += '<div class="bed-grid">';
-                if (ward.beds && ward.beds.length > 0) {
+                if (ward.beds && ward.beds.length> 0) {
                     ward.beds.forEach(function(bed) {
                         var statusClass = bed.status || 'available';
                         var patientName = bed.current_patient || '';
@@ -1167,7 +1161,7 @@ window.WardDashboard = (function() {
 
             // Active Medications
             var medsHtml = '';
-            if (data.active_medications && data.active_medications.length > 0) {
+            if (data.active_medications && data.active_medications.length> 0) {
                 data.active_medications.forEach(function(med) {
                     medsHtml += '<li>' + med.name + ' - ' + (med.dosage || '') + ' ' + (med.frequency || '') + '</li>';
                 });
@@ -1187,7 +1181,7 @@ window.WardDashboard = (function() {
             renderChecklist(checklist.items, 'admission');
             updateChecklistProgress(checklist.progress, 'admission');
 
-            if (checklist.progress >= 100 || checklist.all_complete) {
+            if (checklist.progress>= 100 || checklist.all_complete) {
                 $('#proceed-to-bed-selection').show();
             }
         }).fail(function() {
@@ -1231,11 +1225,11 @@ window.WardDashboard = (function() {
         $(barId).css('width', progress + '%');
         $(textId).text(progress + '%');
 
-        if (type === 'admission' && progress >= 100) {
+        if (type === 'admission' && progress>= 100) {
             $('#proceed-to-bed-selection').show();
         }
 
-        if (type === 'discharge' && progress >= 100) {
+        if (type === 'discharge' && progress>= 100) {
             $('#confirm-discharge').prop('disabled', false);
             $('#discharge-confirm-section').show();
         } else if (type === 'discharge') {
@@ -1375,7 +1369,7 @@ window.WardDashboard = (function() {
             renderChecklist(checklist.items, 'discharge');
             updateChecklistProgress(checklist.progress, 'discharge');
 
-            if (checklist.progress >= 100 || checklist.all_complete) {
+            if (checklist.progress>= 100 || checklist.all_complete) {
                 $('#confirm-discharge').prop('disabled', false);
                 $('#discharge-confirm-section').show();
             } else {
@@ -1431,7 +1425,7 @@ window.WardDashboard = (function() {
             $('#bed-details-content').html(html);
 
             // Add actions to footer
-            var footerHtml = '<button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" data-bs-dismiss="modal">Close</button>';
+            var footerHtml = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>';
             if (status === 'available') {
                 footerHtml += ' <button type="button" class="btn btn-warning btn-sm" onclick="WardDashboard.setBedMaintenance(' + bedId + ')"><i class="mdi mdi-wrench"></i> Set Maintenance</button>';
             } else if (status === 'maintenance') {
@@ -1505,11 +1499,11 @@ $(document).ready(function() {
                 $(barId).css('width', response.progress + '%');
                 $(textId).text(response.progress + '%');
 
-                if (checklistType === 'admission' && response.progress >= 100) {
+                if (checklistType === 'admission' && response.progress>= 100) {
                     $('#proceed-to-bed-selection').show();
                 }
 
-                if (checklistType === 'discharge' && response.progress >= 100) {
+                if (checklistType === 'discharge' && response.progress>= 100) {
                     $('#confirm-discharge').prop('disabled', false);
                     $('#discharge-confirm-section').show();
                 } else if (checklistType === 'discharge') {
@@ -1544,11 +1538,11 @@ $(document).ready(function() {
                 $(barId).css('width', response.progress + '%');
                 $(textId).text(response.progress + '%');
 
-                if (checklistType === 'admission' && response.progress >= 100) {
+                if (checklistType === 'admission' && response.progress>= 100) {
                     $('#proceed-to-bed-selection').show();
                 }
 
-                if (checklistType === 'discharge' && response.progress >= 100) {
+                if (checklistType === 'discharge' && response.progress>= 100) {
                     $('#confirm-discharge').prop('disabled', false);
                     $('#discharge-confirm-section').show();
                 }

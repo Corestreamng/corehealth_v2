@@ -79,7 +79,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="payModalLabel">Settle Bills</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-2" id="patient-meta"></div>

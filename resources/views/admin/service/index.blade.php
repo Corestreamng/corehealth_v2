@@ -67,15 +67,13 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="statusModalLabel">Confirm Status Change</h5>
-                    <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     Are you sure you want to <span id="status-action-text" class="font-weight-bold text-lowercase"></span> the service "<span id="status-item-name" class="font-weight-bold"></span>"?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="confirm-status-btn">Confirm</button>
                 </div>
             </div>

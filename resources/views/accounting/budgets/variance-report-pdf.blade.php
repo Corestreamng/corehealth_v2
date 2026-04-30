@@ -111,11 +111,11 @@
         <div class="summary-label">Total Budgeted</div>
         <div class="summary-value">₦{{ number_format($summary['total_budgeted'], 2) }}</div>
     </div>
-    <div class="summary-cell {{ $summary['total_actual'] > $summary['total_budgeted'] ? 'danger' : 'success' }}">
+    <div class="summary-cell {{ $summary['total_actual']> $summary['total_budgeted'] ? 'danger' : 'success' }}">
         <div class="summary-label">Total Actual</div>
         <div class="summary-value">₦{{ number_format($summary['total_actual'], 2) }}</div>
     </div>
-    <div class="summary-cell {{ $summary['total_variance'] >= 0 ? 'success' : 'danger' }}">
+    <div class="summary-cell {{ $summary['total_variance']>= 0 ? 'success' : 'danger' }}">
         <div class="summary-label">Total Variance</div>
         <div class="summary-value">₦{{ number_format($summary['total_variance'], 2) }}</div>
     </div>
@@ -154,20 +154,20 @@
                         <td>{{ $item['account_name'] }}</td>
                         <td class="text-right">₦{{ number_format($item['budgeted'], 2) }}</td>
                         <td class="text-right">₦{{ number_format($item['actual'], 2) }}</td>
-                        <td class="text-right {{ $item['variance'] >= 0 ? 'variance-positive' : 'variance-negative' }}">
-                            {{ $item['variance'] >= 0 ? '+' : '' }}₦{{ number_format(abs($item['variance']), 2) }}
+                        <td class="text-right {{ $item['variance']>= 0 ? 'variance-positive' : 'variance-negative' }}">
+                            {{ $item['variance']>= 0 ? '+' : '' }}₦{{ number_format(abs($item['variance']), 2) }}
                         </td>
                         <td class="text-right">
                             @php
-                                $badgeClass = abs($item['variance_percent']) > 20 ? 'badge-danger' : (abs($item['variance_percent']) > 10 ? 'badge-warning' : 'badge-success');
+                                $badgeClass = abs($item['variance_percent'])> 20 ? 'badge-danger' : (abs($item['variance_percent'])> 10 ? 'badge-warning' : 'badge-success');
                             @endphp
                             <span class="badge {{ $badgeClass }}">
-                                {{ $item['variance_percent'] >= 0 ? '+' : '' }}{{ number_format($item['variance_percent'], 1) }}%
+                                {{ $item['variance_percent']>= 0 ? '+' : '' }}{{ number_format($item['variance_percent'], 1) }}%
                             </span>
                         </td>
                         <td class="text-right">
                             @php
-                                $utilization = $item['budgeted'] > 0 ? ($item['actual'] / $item['budgeted']) * 100 : 0;
+                                $utilization = $item['budgeted']> 0 ? ($item['actual'] / $item['budgeted']) * 100 : 0;
                             @endphp
                             {{ number_format($utilization, 1) }}%
                         </td>
@@ -177,20 +177,20 @@
                     <td colspan="2"><strong>BUDGET TOTAL</strong></td>
                     <td class="text-right"><strong>₦{{ number_format($budget['total_budgeted'], 2) }}</strong></td>
                     <td class="text-right"><strong>₦{{ number_format($budget['total_actual'], 2) }}</strong></td>
-                    <td class="text-right {{ $budget['total_variance'] >= 0 ? 'variance-positive' : 'variance-negative' }}">
-                        <strong>{{ $budget['total_variance'] >= 0 ? '+' : '' }}₦{{ number_format(abs($budget['total_variance']), 2) }}</strong>
+                    <td class="text-right {{ $budget['total_variance']>= 0 ? 'variance-positive' : 'variance-negative' }}">
+                        <strong>{{ $budget['total_variance']>= 0 ? '+' : '' }}₦{{ number_format(abs($budget['total_variance']), 2) }}</strong>
                     </td>
                     <td class="text-right">
                         @php
-                            $badgeClass = abs($budget['variance_percent']) > 20 ? 'badge-danger' : (abs($budget['variance_percent']) > 10 ? 'badge-warning' : 'badge-success');
+                            $badgeClass = abs($budget['variance_percent'])> 20 ? 'badge-danger' : (abs($budget['variance_percent'])> 10 ? 'badge-warning' : 'badge-success');
                         @endphp
                         <span class="badge {{ $badgeClass }}">
-                            <strong>{{ $budget['variance_percent'] >= 0 ? '+' : '' }}{{ number_format($budget['variance_percent'], 1) }}%</strong>
+                            <strong>{{ $budget['variance_percent']>= 0 ? '+' : '' }}{{ number_format($budget['variance_percent'], 1) }}%</strong>
                         </span>
                     </td>
                     <td class="text-right">
                         @php
-                            $utilization = $budget['total_budgeted'] > 0 ? ($budget['total_actual'] / $budget['total_budgeted']) * 100 : 0;
+                            $utilization = $budget['total_budgeted']> 0 ? ($budget['total_actual'] / $budget['total_budgeted']) * 100 : 0;
                         @endphp
                         <strong>{{ number_format($utilization, 1) }}%</strong>
                     </td>

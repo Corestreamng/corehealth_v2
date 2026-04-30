@@ -336,8 +336,8 @@
 @endif
 
 <!-- Payment Schedule (First 12) -->
-@if(isset($schedule) && $schedule->count() > 0)
-<div class="section-title">PAYMENT SCHEDULE @if($schedule->count() >= 12)(Showing First 12)@endif</div>
+@if(isset($schedule) && $schedule->count()> 0)
+<div class="section-title">PAYMENT SCHEDULE @if($schedule->count()>= 12)(Showing First 12)@endif</div>
 <table class="schedule-table">
     <thead>
         <tr>
@@ -384,7 +384,7 @@
 @endif
 
 <!-- Journal Entries -->
-@if(isset($journalEntries) && $journalEntries->count() > 0)
+@if(isset($journalEntries) && $journalEntries->count()> 0)
 <div class="section-title">RELATED JOURNAL ENTRIES</div>
 <table class="je-table">
     <thead>

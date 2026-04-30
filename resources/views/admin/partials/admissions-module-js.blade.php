@@ -97,7 +97,7 @@ window.AdmissionModule = (function() {
                 <tr data-adm-mod-id="${adm.id}" class="${_selectedAdmissionId == adm.id ? 'selected' : ''}">
                     <td>${adm.admitted_date}</td>
                     <td>${adm.discharge_date || '<span class="text-success">In Progress</span>'}</td>
-                    <td>${adm.los} day${adm.los > 1 ? 's' : ''}</td>
+                    <td>${adm.los} day${adm.los> 1 ? 's' : ''}</td>
                     <td>${adm.ward}<br><small class="text-muted">${adm.bed}</small></td>
                     <td>${adm.doctor}</td>
                     <td><span class="admission-status-pill ${statusClass}">${statusText}</span></td>
@@ -160,7 +160,7 @@ window.AdmissionModule = (function() {
         _container.find('.adm-mod-reason').text(adm.reason);
 
         // HMO claims section
-        if (hmoClaims && hmoClaims.total_items > 0) {
+        if (hmoClaims && hmoClaims.total_items> 0) {
             _container.find('.adm-mod-hmo-section').show();
             _container.find('.adm-mod-hmo-name').text(hmoClaims.hmo_name || 'N/A');
             _container.find('.adm-mod-hmo-no').text(hmoClaims.hmo_no || 'N/A');
@@ -208,7 +208,7 @@ window.AdmissionModule = (function() {
                         <span class="category-icon">${icon}</span>
                         <div>
                             <span class="category-name">${cat.name}</span>
-                            <span class="category-count">${cat.count} item${cat.count > 1 ? 's' : ''}</span>
+                            <span class="category-count">${cat.count} item${cat.count> 1 ? 's' : ''}</span>
                         </div>
                     </div>
                     <span class="category-amount">${fmt(cat.total)}</span>
@@ -216,7 +216,7 @@ window.AdmissionModule = (function() {
                 <div class="category-items" data-adm-cat-items="${index}">
                     ${cat.items.map(function(item) {
                         return '<div class="category-item-row">' +
-                            '<span>' + item.name + (item.qty > 1 ? ' (x' + item.qty + ')' : '') + '</span>' +
+                            '<span>' + item.name + (item.qty> 1 ? ' (x' + item.qty + ')' : '') + '</span>' +
                             '<span>' + fmt(item.amount) + '</span>' +
                         '</div>';
                     }).join('')}
@@ -281,7 +281,7 @@ window.AdmissionModule = (function() {
         tbody.empty();
         items.forEach(function(item, i) {
             const vsClass = item.validation_status || '';
-            const vsBadge = item.claims > 0 && item.validation_status
+            const vsBadge = item.claims> 0 && item.validation_status
                 ? '<span class="validation-badge ' + item.validation_status + '">' + (item.validation_status || '').replace('_', ' ') + '</span>'
                 : '-';
             const paidIcon = item.paid ? '<i class="mdi mdi-check-circle text-success"></i>' : '<i class="mdi mdi-close-circle text-danger"></i>';
@@ -306,7 +306,7 @@ window.AdmissionModule = (function() {
         });
 
         // HMO section in modal
-        if (hmoClaims && hmoClaims.total_items > 0) {
+        if (hmoClaims && hmoClaims.total_items> 0) {
             modal.find('.adm-mod-fd-hmo-section').show();
             modal.find('.adm-mod-fd-hmo-content').html(`
                 <div class="mb-1"><strong>${hmoClaims.hmo_name || 'HMO'}</strong> (${hmoClaims.hmo_no || 'N/A'})</div>

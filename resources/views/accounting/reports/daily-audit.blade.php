@@ -218,8 +218,8 @@
                                     <br><small class="text-muted">{{ $line->narration }}</small>
                                     @endif
                                 </td>
-                                <td class="text-right">{{ $line->debit > 0 ? number_format($line->debit, 2) : '' }}</td>
-                                <td class="text-right">{{ $line->credit > 0 ? number_format($line->credit, 2) : '' }}</td>
+                                <td class="text-right">{{ $line->debit> 0 ? number_format($line->debit, 2) : '' }}</td>
+                                <td class="text-right">{{ $line->credit> 0 ? number_format($line->credit, 2) : '' }}</td>
                             </tr>
                             @endforeach
                         </tbody>

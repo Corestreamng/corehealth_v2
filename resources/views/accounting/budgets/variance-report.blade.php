@@ -138,13 +138,13 @@
         </form>
     </div>
 
-    @if(count($reportData) > 0)
+    @if(count($reportData)> 0)
         <!-- Summary Stats -->
         @php
             $grandTotalBudget = $reportData->sum('total_budgeted');
             $grandTotalActual = $reportData->sum('total_actual');
             $grandTotalVariance = $grandTotalBudget - $grandTotalActual;
-            $overallUtilization = $grandTotalBudget > 0 ? ($grandTotalActual / $grandTotalBudget) * 100 : 0;
+            $overallUtilization = $grandTotalBudget> 0 ? ($grandTotalActual / $grandTotalBudget) * 100 : 0;
         @endphp
         <div class="row">
             <div class="col-md-3 mb-3">
@@ -160,16 +160,16 @@
                 </div>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stat-box" style="background: linear-gradient(135deg, {{ $grandTotalVariance >= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $grandTotalVariance >= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
-                    <div class="amount {{ $grandTotalVariance >= 0 ? 'text-success' : 'text-danger' }}">
-                        {{ $grandTotalVariance >= 0 ? '+' : '' }}₦{{ number_format($grandTotalVariance, 2) }}
+                <div class="stat-box" style="background: linear-gradient(135deg, {{ $grandTotalVariance>= 0 ? '#d4edda' : '#f8d7da' }} 0%, {{ $grandTotalVariance>= 0 ? '#c3e6cb' : '#f5c6cb' }} 100%);">
+                    <div class="amount {{ $grandTotalVariance>= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ $grandTotalVariance>= 0 ? '+' : '' }}₦{{ number_format($grandTotalVariance, 2) }}
                     </div>
                     <div class="label">Total Variance</div>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 @php
-                    $utilizationColor = $overallUtilization > 90 ? '#dc3545' : ($overallUtilization > 75 ? '#ffc107' : '#28a745');
+                    $utilizationColor = $overallUtilization> 90 ? '#dc3545' : ($overallUtilization> 75 ? '#ffc107' : '#28a745');
                 @endphp
                 <div class="stat-box">
                     <div class="amount" style="color: {{ $utilizationColor }}">{{ number_format($overallUtilization, 1) }}%</div>
@@ -184,10 +184,10 @@
 
             @foreach($reportData as $budget)
                 @php
-                    $budgetUtilization = $budget['total_budgeted'] > 0
+                    $budgetUtilization = $budget['total_budgeted']> 0
                         ? ($budget['total_actual'] / $budget['total_budgeted']) * 100
                         : 0;
-                    $headerColor = $budget['total_variance'] >= 0 ? 'success' : 'danger';
+                    $headerColor = $budget['total_variance']>= 0 ? 'success' : 'danger';
                 @endphp
                 <div class="budget-section">
                     <div class="budget-section-header">
@@ -206,14 +206,14 @@
                             </div>
                             <div class="col-md-2 text-right">
                                 <small class="text-muted">Variance</small><br>
-                                <strong class="{{ $budget['total_variance'] >= 0 ? 'text-success' : 'text-danger' }}">
-                                    {{ $budget['total_variance'] >= 0 ? '+' : '' }}₦{{ number_format($budget['total_variance'], 2) }}
+                                <strong class="{{ $budget['total_variance']>= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $budget['total_variance']>= 0 ? '+' : '' }}₦{{ number_format($budget['total_variance'], 2) }}
                                 </strong>
                             </div>
                             <div class="col-md-2 text-right">
                                 <small class="text-muted">Utilization</small><br>
                                 @php
-                                    $itemColor = $budgetUtilization > 90 ? 'danger' : ($budgetUtilization > 75 ? 'warning' : 'success');
+                                    $itemColor = $budgetUtilization> 90 ? 'danger' : ($budgetUtilization> 75 ? 'warning' : 'success');
                                 @endphp
                                 <span class="badge badge-{{ $itemColor }}">{{ number_format($budgetUtilization, 1) }}%</span>
                             </div>
@@ -233,16 +233,16 @@
                                         ₦{{ number_format($item['actual'], 2) }}
                                     </div>
                                     <div class="col-md-2 text-right">
-                                        <span class="{{ $item['variance'] >= 0 ? 'variance-positive' : 'variance-negative' }}">
-                                            {{ $item['variance'] >= 0 ? '+' : '' }}₦{{ number_format($item['variance'], 2) }}
+                                        <span class="{{ $item['variance']>= 0 ? 'variance-positive' : 'variance-negative' }}">
+                                            {{ $item['variance']>= 0 ? '+' : '' }}₦{{ number_format($item['variance'], 2) }}
                                         </span>
                                     </div>
                                     <div class="col-md-2 text-right">
                                         @php
-                                            $lineColor = abs($item['variance_percent']) > 20 ? 'danger' : (abs($item['variance_percent']) > 10 ? 'warning' : 'success');
+                                            $lineColor = abs($item['variance_percent'])> 20 ? 'danger' : (abs($item['variance_percent'])> 10 ? 'warning' : 'success');
                                         @endphp
                                         <span class="badge badge-{{ $lineColor }}">
-                                            {{ $item['variance_percent'] >= 0 ? '+' : '' }}{{ number_format($item['variance_percent'], 1) }}%
+                                            {{ $item['variance_percent']>= 0 ? '+' : '' }}{{ number_format($item['variance_percent'], 1) }}%
                                         </span>
                                     </div>
                                 </div>

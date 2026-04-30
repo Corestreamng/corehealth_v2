@@ -29,7 +29,7 @@
         @php
             $activeYear = $fiscalYears->where('is_active', true)->first();
             $currentPeriod = $activeYear ? $activeYear->periods->first(function($p) {
-                return $p->start_date <= now() && $p->end_date >= now() && !$p->is_closed;
+                return $p->start_date <= now() && $p->end_date>= now() && !$p->is_closed;
             }) : null;
             $totalYears = $fiscalYears->count();
             $openPeriods = $fiscalYears->flatMap->periods->where('is_closed', false)->count();
@@ -118,15 +118,13 @@
                 </div>
                 <div class="btn-group">
                     @if(!$year->is_active && !$year->is_closed)
-                        <button type="button" class="btn btn-sm btn-outline-success btn-set-active"
-                                data-id="{{ $year->id }}" data-name="{{ $year->name }}">
+                        <button type="button" class="btn btn-sm btn-outline-success btn-set-active" data-id="{{ $year->id }}" data-name="{{ $year->name }}">
                             <i class="mdi mdi-check mr-1"></i> Set Active
                         </button>
                     @endif
                     @can('periods.close')
                     @if(!$year->is_closed)
-                        <button type="button" class="btn btn-sm btn-outline-warning btn-close-year"
-                                data-id="{{ $year->id }}" data-name="{{ $year->name }}">
+                        <button type="button" class="btn btn-sm btn-outline-warning btn-close-year" data-id="{{ $year->id }}" data-name="{{ $year->name }}">
                             <i class="mdi mdi-lock mr-1"></i> Close Year
                         </button>
                     @endif
@@ -149,9 +147,9 @@
                         <tbody>
                             @foreach($year->periods->sortBy('start_date') as $period)
                                 @php
-                                    $isCurrent = $period->start_date <= now() && $period->end_date >= now() && !$period->is_closed;
+                                    $isCurrent = $period->start_date <= now() && $period->end_date>= now() && !$period->is_closed;
                                     $isPast = $period->end_date < now();
-                                    $isFuture = $period->start_date > now();
+                                    $isFuture = $period->start_date> now();
                                 @endphp
                                 <tr class="{{ $isCurrent ? 'table-success' : '' }}">
                                     <td>
@@ -193,8 +191,7 @@
                                     <td>
                                         @can('periods.close')
                                         @if(!$period->is_closed && !$year->is_closed)
-                                            <button type="button" class="btn btn-sm btn-outline-warning btn-close-period"
-                                                    data-id="{{ $period->id }}" data-name="{{ $period->name }}">
+                                            <button type="button" class="btn btn-sm btn-outline-warning btn-close-period" data-id="{{ $period->id }}" data-name="{{ $period->name }}">
                                                 <i class="mdi mdi-lock"></i>
                                             </button>
                                         @else
@@ -232,9 +229,7 @@
             <form id="newFiscalYearForm">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title"><i class="mdi mdi-calendar-plus mr-2"></i>Create New Fiscal Year</h5>
-                    <button type="button" class="close text-white" data-bs-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">

@@ -143,7 +143,7 @@
                         <h5 class="modal-title" id="fluidRecordModalLabel">
                             <i class="mdi mdi-water me-1"></i> Add Fluid Intake/Output
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="period_id" id="fluid_period_id">

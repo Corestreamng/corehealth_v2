@@ -258,7 +258,7 @@
 </div>
 
 <!-- Depreciation History -->
-@if($depreciationHistory->count() > 0)
+@if($depreciationHistory->count()> 0)
 <h4 class="section-title">Depreciation History (Last 24 Months)</h4>
 <table class="depreciation-table">
     <thead>

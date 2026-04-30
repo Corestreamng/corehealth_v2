@@ -184,7 +184,7 @@
                 <h5 class="modal-title" id="imagingResViewModalLabel">
                     <i class="mdi mdi-image-multiple"></i> Imaging Results
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
 
             <div class="modal-body p-0">

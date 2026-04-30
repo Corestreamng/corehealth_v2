@@ -14,7 +14,7 @@
                 <!-- /.card-header -->
                 <div class="card-body">
                     <div class="pull-right">
-                        <!-- <a href="{{ route('roles.create') }}" class="btn btn-primary" >New Role</a> -->
+                        <!-- <a href="{{ route('roles.create') }}" class="btn btn-primary">New Role</a> -->
                     </div>
                     <div class="table-responsive">
                         <table id="ghaji" class="table table-sm  table-bordered table-striped display">
@@ -45,7 +45,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title"></h4>
-                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <h4 class="text-center">Are you sure you want to delete the following user?</h4>
@@ -59,10 +59,10 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger delete"  data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-danger delete" data-bs-dismiss="modal">
                         <span id="" class='glyphicon glyphicon-trash'></span> Delete
                     </button>
-                    <button type="button" class="btn btn-warning"  data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-warning" data-bs-dismiss="modal">
                         <span class='glyphicon glyphicon-remove'></span> Close
                     </button>
                 </div>

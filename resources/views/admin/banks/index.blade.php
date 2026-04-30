@@ -57,9 +57,7 @@
                     <i class="mdi mdi-bank mr-2" style="color: var(--primary-color);"></i>
                     <span id="modalTitleText">Add New Bank</span>
                 </h5>
-                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="bankForm">
                 @csrf
@@ -115,7 +113,7 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid #e9ecef; padding: 1rem 1.5rem;">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="saveBankBtn" style="border-radius: 8px;">
                         <i class="mdi mdi-check mr-1"></i> Save Bank
                     </button>
@@ -134,9 +132,7 @@
                     <i class="mdi mdi-toggle-switch mr-2"></i>
                     Toggle Bank Status
                 </h5>
-                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center" style="padding: 1.5rem;">
                 <p class="mb-0">Toggle active status for <strong id="deleteBankName"></strong>?</p>
@@ -144,7 +140,7 @@
                 <input type="hidden" id="deleteBankId">
             </div>
             <div class="modal-footer justify-content-center" style="border-top: 1px solid #e9ecef;">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
                 <button type="button" class="btn btn-warning" id="confirmDeleteBtn" style="border-radius: 8px;">
                     <i class="mdi mdi-toggle-switch mr-1"></i> Toggle Status
                 </button>

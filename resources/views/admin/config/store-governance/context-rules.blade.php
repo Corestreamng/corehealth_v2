@@ -110,8 +110,7 @@
                             <small class="text-muted">(Step 5)</small>
                         </h6>
                         @can('store-governance.manage')
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#roleRuleModal"
-                                data-mode="add">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#roleRuleModal" data-mode="add">
                             <i class="fas fa-plus me-1"></i> Add
                         </button>
                         @endcan
@@ -141,8 +140,7 @@
                                     @can('store-governance.manage')
                                     <td>
                                         <div class="d-flex flex-column gap-1 align-items-center">
-                                            <button class="btn btn-xs btn-outline-primary rule-edit-btn"
-                                                    data-id="{{ $rule->id }}"
+                                            <button class="btn btn-xs btn-outline-primary rule-edit-btn" data-id="{{ $rule->id }}"
                                                     data-type="role_default"
                                                     data-role="{{ $rule->user_role }}"
                                                     data-store="{{ $rule->store_id }}"
@@ -150,8 +148,7 @@
                                                 <i class="fas fa-pencil-alt d-block mx-auto mb-1"></i>
                                                 <span class="d-block" style="font-size:0.7rem">Edit</span>
                                             </button>
-                                            <button class="btn btn-xs btn-outline-danger rule-delete-btn"
-                                                    data-id="{{ $rule->id }}">
+                                            <button class="btn btn-xs btn-outline-danger rule-delete-btn" data-id="{{ $rule->id }}">
                                                 <i class="fas fa-trash d-block mx-auto mb-1"></i>
                                                 <span class="d-block" style="font-size:0.7rem">Delete</span>
                                             </button>
@@ -176,8 +173,7 @@
                             <small class="text-muted">(Step 3)</small>
                         </h6>
                         @can('store-governance.manage')
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#deptRuleModal"
-                                data-mode="add">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#deptRuleModal" data-mode="add">
                             <i class="fas fa-plus me-1"></i> Add
                         </button>
                         @endcan
@@ -207,8 +203,7 @@
                                     @can('store-governance.manage')
                                     <td>
                                         <div class="d-flex flex-column gap-1 align-items-center">
-                                            <button class="btn btn-xs btn-outline-primary rule-edit-btn"
-                                                    data-id="{{ $rule->id }}"
+                                            <button class="btn btn-xs btn-outline-primary rule-edit-btn" data-id="{{ $rule->id }}"
                                                     data-type="department_override"
                                                     data-dept="{{ $rule->department_id }}"
                                                     data-store="{{ $rule->store_id }}"
@@ -216,8 +211,7 @@
                                                 <i class="fas fa-pencil-alt d-block mx-auto mb-1"></i>
                                                 <span class="d-block" style="font-size:0.7rem">Edit</span>
                                             </button>
-                                            <button class="btn btn-xs btn-outline-danger rule-delete-btn"
-                                                    data-id="{{ $rule->id }}">
+                                            <button class="btn btn-xs btn-outline-danger rule-delete-btn" data-id="{{ $rule->id }}">
                                                 <i class="fas fa-trash d-block mx-auto mb-1"></i>
                                                 <span class="d-block" style="font-size:0.7rem">Delete</span>
                                             </button>
@@ -242,8 +236,7 @@
                             <small class="text-muted">(Candidate set expansion)</small>
                         </h6>
                         @can('store-governance.manage')
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#bucketRuleModal"
-                                data-mode="add">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#bucketRuleModal" data-mode="add">
                             <i class="fas fa-plus me-1"></i> Add
                         </button>
                         @endcan
@@ -286,8 +279,7 @@
                                     @can('store-governance.manage')
                                     <td>
                                         <div class="d-flex flex-column gap-1 align-items-center">
-                                            <button class="btn btn-xs btn-outline-primary rule-edit-btn"
-                                                    data-id="{{ $rule->id }}"
+                                            <button class="btn btn-xs btn-outline-primary rule-edit-btn" data-id="{{ $rule->id }}"
                                                     data-type="type_bucket"
                                                     data-role="{{ $rule->user_role }}"
                                                     data-filter="{{ $rule->type_filter }}"
@@ -295,8 +287,7 @@
                                                 <i class="fas fa-pencil-alt d-block mx-auto mb-1"></i>
                                                 <span class="d-block" style="font-size:0.7rem">Edit</span>
                                             </button>
-                                            <button class="btn btn-xs btn-outline-danger rule-delete-btn"
-                                                    data-id="{{ $rule->id }}">
+                                            <button class="btn btn-xs btn-outline-danger rule-delete-btn" data-id="{{ $rule->id }}">
                                                 <i class="fas fa-trash d-block mx-auto mb-1"></i>
                                                 <span class="d-block" style="font-size:0.7rem">Delete</span>
                                             </button>
@@ -428,7 +419,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="roleRuleModalTitle">Add Role Default</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -477,7 +468,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="deptRuleModalTitle">Add Department Override</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -526,7 +517,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="bucketRuleModalTitle">Add Type Bucket Rule</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted">

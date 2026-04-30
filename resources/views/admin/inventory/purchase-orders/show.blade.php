@@ -487,7 +487,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        <span class="{{ $item->received_qty >= $item->ordered_qty ? 'text-success font-weight-bold' : '' }}">
+                                        <span class="{{ $item->received_qty>= $item->ordered_qty ? 'text-success font-weight-bold' : '' }}">
                                             {{ $item->received_qty ?? 0 }}
                                         </span>
                                         @if($item->receivedPackaging)
@@ -498,12 +498,12 @@
                                     <td class="text-right">₦{{ number_format($item->line_total, 2) }}</td>
                                     <td style="width: 100px;">
                                         @php
-                                            $progress = $item->ordered_qty > 0
+                                            $progress = $item->ordered_qty> 0
                                                 ? round((($item->received_qty ?? 0) / $item->ordered_qty) * 100)
                                                 : 0;
                                         @endphp
                                         <div class="progress receiving-progress">
-                                            <div class="progress-bar {{ $progress >= 100 ? 'bg-success' : 'bg-info' }}"
+                                            <div class="progress-bar {{ $progress>= 100 ? 'bg-success' : 'bg-info' }}"
                                                  style="width: {{ min($progress, 100) }}%"></div>
                                         </div>
                                         <small class="text-muted">{{ $progress }}%</small>
@@ -518,14 +518,14 @@
                                     <td class="text-right">₦{{ number_format($purchaseOrder->items->sum('line_total'), 2) }}</td>
                                     <td></td>
                                 </tr>
-                                @if($purchaseOrder->tax_amount > 0)
+                                @if($purchaseOrder->tax_amount> 0)
                                 <tr>
                                     <th colspan="5" class="text-right">Tax:</th>
                                     <td class="text-right">₦{{ number_format($purchaseOrder->tax_amount, 2) }}</td>
                                     <td></td>
                                 </tr>
                                 @endif
-                                @if($purchaseOrder->shipping_cost > 0)
+                                @if($purchaseOrder->shipping_cost> 0)
                                 <tr>
                                     <th colspan="5" class="text-right">Shipping:</th>
                                     <td class="text-right">₦{{ number_format($purchaseOrder->shipping_cost, 2) }}</td>
@@ -590,7 +590,7 @@
                 @php
                     $receivedItems = $purchaseOrder->items->where('received_qty', '>', 0);
                 @endphp
-                @if($receivedItems->count() > 0)
+                @if($receivedItems->count()> 0)
                 <div class="detail-card">
                     <h5><i class="mdi mdi-package"></i> Received Items</h5>
                     @foreach($receivedItems as $item)
@@ -660,7 +660,7 @@
                 @endif
 
                 <!-- Payment History -->
-                @if(isset($purchaseOrder->payments) && $purchaseOrder->payments->count() > 0)
+                @if(isset($purchaseOrder->payments) && $purchaseOrder->payments->count()> 0)
                 <div class="detail-card">
                     <h5><i class="mdi mdi-history"></i> Payment History</h5>
                     @foreach($purchaseOrder->payments->sortByDesc('payment_date') as $payment)

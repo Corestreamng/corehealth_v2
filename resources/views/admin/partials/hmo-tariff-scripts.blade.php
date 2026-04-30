@@ -14,9 +14,9 @@
             const total = p + c;
             const diff = total - SALE_PRICE;
             const $indicator = $row.find('.divergence-indicator');
-            if (Math.abs(diff) > 0.01) {
+            if (Math.abs(diff)> 0.01) {
                 $row.addClass('diverged');
-                const sign = diff > 0 ? '+' : '';
+                const sign = diff> 0 ? '+' : '';
                 $indicator.html(`<span class="badge badge-warning" title="Total: &#8358;${total.toFixed(2)}"><i class="mdi mdi-alert-circle-outline mr-1"></i>${sign}${diff.toFixed(2)}</span>`);
             } else {
                 $row.removeClass('diverged'); $indicator.empty();
@@ -42,7 +42,7 @@
             if (isBulkOpen) {
                 $('.scheme-modern-group').each(function() {
                     const $g = $(this);
-                    const isInScope = (scope === 'all') || (scope === 'visible' && $g.hasClass('open')) || (scope === 'empty' && $g.find('.hmo-row-refined').filter((i, el) => parseFloat($(el).data('orig-payable')) == 0 && parseFloat($(el).data('orig-claims')) == 0).length > 0);
+                    const isInScope = (scope === 'all') || (scope === 'visible' && $g.hasClass('open')) || (scope === 'empty' && $g.find('.hmo-row-refined').filter((i, el) => parseFloat($(el).data('orig-payable')) == 0 && parseFloat($(el).data('orig-claims')) == 0).length> 0);
                     $g.find('.bulk-active-indicator').toggleClass('d-none', !isInScope);
                 });
             } else {
@@ -82,7 +82,7 @@
                 $(this).toggle(match);
             });
             $('.scheme-modern-group').each(function() {
-                const hasVisible = $(this).find('.hmo-row-refined:visible').length > 0;
+                const hasVisible = $(this).find('.hmo-row-refined:visible').length> 0;
                 $(this).toggle(hasVisible);
                 if (hasVisible) $(this).addClass('open');
             });
@@ -94,7 +94,7 @@
             const val = parseFloat($(this).val()) || 0;
             if ($('#globalSyncToggle').is(':checked')) {
                 const remainder = SALE_PRICE - val;
-                if (remainder >= 0) $row.find('.claims-input-refined').val(remainder.toFixed(2));
+                if (remainder>= 0) $row.find('.claims-input-refined').val(remainder.toFixed(2));
             }
             updateDivergence($row); checkDirty($row);
             syncCrossTab($row, 'payable', $(this).val());
@@ -105,7 +105,7 @@
             const val = parseFloat($(this).val()) || 0;
             if ($('#globalSyncToggle').is(':checked')) {
                 const remainder = SALE_PRICE - val;
-                if (remainder >= 0) $row.find('.payable-input-refined').val(remainder.toFixed(2));
+                if (remainder>= 0) $row.find('.payable-input-refined').val(remainder.toFixed(2));
             }
             updateDivergence($row); checkDirty($row);
             syncCrossTab($row, 'claims', $(this).val());
@@ -119,7 +119,7 @@
                 $r.find('.' + field + '-input-refined').val(val);
                 if ($('#globalSyncToggle').is(':checked')) {
                     const remainder = SALE_PRICE - (parseFloat(val) || 0);
-                    if (remainder >= 0) {
+                    if (remainder>= 0) {
                         const otherField = field === 'payable' ? 'claims' : 'payable';
                         $r.find('.' + otherField + '-input-refined').val(remainder.toFixed(2));
                     }
@@ -152,7 +152,7 @@
             $row.toggleClass('dirty', dirty);
             const $group = $row.closest('.scheme-modern-group');
             if ($group.length) {
-                const hasDirty = $group.find('.hmo-row-refined.dirty').length > 0;
+                const hasDirty = $group.find('.hmo-row-refined.dirty').length> 0;
                 $group.find('.scheme-stats-pill').toggleClass('d-none', !hasDirty);
             }
             updateBulkCount();
@@ -163,7 +163,7 @@
             $('.hmo-row-refined.dirty').each(function() { uniqueHmoIds.add($(this).data('hmo-id')); });
             const count = uniqueHmoIds.size;
             $('#changeCount').text(count);
-            $('#impactSummary').text(`${count} HMO Entity${count > 1 ? 'ies' : ''} modified`);
+            $('#impactSummary').text(`${count} HMO Entity${count> 1 ? 'ies' : ''} modified`);
             $('#saveAllContainer').toggleClass('d-none', count === 0);
         }
 

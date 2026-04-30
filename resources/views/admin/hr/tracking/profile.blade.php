@@ -171,7 +171,7 @@
         <div class="col-lg-2 col-md-4 col-6 mb-2">
             <div class="summary-card">
                 @php $openFu = $staff->followUps->where('status', '!=', 'resolved')->count(); @endphp
-                <div class="sc-value {{ $openFu > 0 ? 'text-danger' : 'text-muted' }}">{{ $openFu }}</div>
+                <div class="sc-value {{ $openFu> 0 ? 'text-danger' : 'text-muted' }}">{{ $openFu }}</div>
                 <div class="sc-label">Open Follow-ups</div>
             </div>
         </div>
@@ -451,7 +451,7 @@
                         <span class="badge badge-warning" style="font-size:0.82rem;padding:0.4rem 0.8rem;">Identified: {{ $identified->count() }}</span>
                         <span class="badge badge-info" style="font-size:0.82rem;padding:0.4rem 0.8rem;">Career Plan: {{ $careerPlan->count() }}</span>
                         <span class="badge badge-secondary" style="font-size:0.82rem;padding:0.4rem 0.8rem;">Completed: {{ $completedCount }}/{{ $staff->trainings->count() }}</span>
-                        @if($pendingCount > 0)
+                        @if($pendingCount> 0)
                         <span class="badge badge-danger" style="font-size:0.82rem;padding:0.4rem 0.8rem;">{{ $pendingCount }} Pending</span>
                         @endif
                     </div>
@@ -599,7 +599,7 @@
                         </div>
                     </div>
 
-                    @if($staff->salaryProfiles->count() > 1)
+                    @if($staff->salaryProfiles->count()> 1)
                     <div class="mt-4">
                         <h6 class="font-weight-bold mb-2" style="color:var(--primary-color);"><i class="mdi mdi-history mr-1"></i> Salary History</h6>
                         <div class="table-responsive">
@@ -675,7 +675,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            @if($staff->leaveRequests->count() > 10)
+                            @if($staff->leaveRequests->count()> 10)
                             <small class="text-muted">Showing latest 10 of {{ $staff->leaveRequests->count() }}. <a href="{{ route('hr.leave-requests.index', ['staff_id' => $staff->id]) }}">View all</a></small>
                             @endif
                             @else

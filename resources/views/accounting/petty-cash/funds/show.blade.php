@@ -149,7 +149,7 @@
                         @php
                             // Calculate based on actual disbursed transactions vs fund limit
                             $totalDisbursed = $stats['total_disbursements'] ?? 0;
-                            $utilizationPct = $fund->fund_limit > 0 ? ($totalDisbursed / $fund->fund_limit) * 100 : 0;
+                            $utilizationPct = $fund->fund_limit> 0 ? ($totalDisbursed / $fund->fund_limit) * 100 : 0;
                             $availablePct = 100 - $utilizationPct;
                         @endphp
                         <div class="mb-3">
@@ -194,7 +194,7 @@
                         </a>
                     </div>
                     <div class="card-body">
-                        @if($recentTransactions->count() > 0)
+                        @if($recentTransactions->count()> 0)
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
@@ -290,7 +290,7 @@
                         @php
                             $reconciliations = $fund->reconciliations()->with(['reconciledBy', 'adjustmentEntry'])->latest()->take(5)->get();
                         @endphp
-                        @if($reconciliations->count() > 0)
+                        @if($reconciliations->count()> 0)
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
@@ -315,7 +315,7 @@
                                                 <td class="text-right">
                                                     @if($recon->variance == 0)
                                                         <span class="text-success">₦0.00</span>
-                                                    @elseif($recon->variance > 0)
+                                                    @elseif($recon->variance> 0)
                                                         <span class="text-danger">-₦{{ number_format($recon->variance, 2) }}</span>
                                                     @else
                                                         <span class="text-warning">+₦{{ number_format(abs($recon->variance), 2) }}</span>
@@ -383,7 +383,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Reject Transaction</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="rejectForm">
                 <div class="modal-body">
@@ -394,7 +394,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Reject</button>
                 </div>
             </form>
@@ -408,7 +408,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Reject Reconciliation</h5>
-                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="reconRejectForm">
                 <div class="modal-body">

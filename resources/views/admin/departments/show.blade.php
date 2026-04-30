@@ -151,7 +151,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($staff->user && $staff->user->roles->count() > 0)
+                                                @if($staff->user && $staff->user->roles->count()> 0)
                                                     @foreach($staff->user->roles as $role)
                                                         <span class="badge badge-outline-primary">{{ $role->name }}</span>
                                                     @endforeach

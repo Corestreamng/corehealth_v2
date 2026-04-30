@@ -62,7 +62,7 @@ window.PatientSearch = (function () {
         results.forEach(function (patient, idx) {
             var photoUrl = patient.photo || DEFAULT_AVA;
             var badge    = '';
-            if (patient.pending_count > 0) {
+            if (patient.pending_count> 0) {
                 badge = '<span class="pending-badge">' + patient.pending_count + '</span>';
             } else if (CONTEXT === 'reception' && patient.hmo && patient.hmo !== 'Private') {
                 badge = '<span class="badge badge-info">' + patient.hmo + '</span>';
@@ -99,10 +99,10 @@ window.PatientSearch = (function () {
             var currentTime = Date.now();
 
             // Barcode scanner sends characters < 50 ms apart
-            if (currentTime - lastInputTime < 50 && inputBuffer.length > 0) {
+            if (currentTime - lastInputTime < 50 && inputBuffer.length> 0) {
                 inputBuffer = query;
                 searchTimeout = setTimeout(function () {
-                    if (inputBuffer.length >= 3) doSearch(inputBuffer, true);
+                    if (inputBuffer.length>= 3) doSearch(inputBuffer, true);
                     inputBuffer = '';
                 }, 100);
             } else {
@@ -122,7 +122,7 @@ window.PatientSearch = (function () {
             if (e.which === 13) {
                 e.preventDefault();
                 var q = $(this).val().trim();
-                if (q.length >= 2) doSearch(q, true);
+                if (q.length>= 2) doSearch(q, true);
             }
         });
 

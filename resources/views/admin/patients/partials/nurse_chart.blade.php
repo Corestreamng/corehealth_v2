@@ -4,16 +4,13 @@
 <div class="nurse-chart-tabs">
     <ul class="nav nav-tabs" id="nurseChartTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="medication-tab" data-bs-toggle="tab" data-bs-target="#medicationChart"
-                type="button" role="tab">Medication Chart</button>
+            <button class="nav-link active" id="medication-tab" data-bs-toggle="tab" data-bs-target="#medicationChart" type="button" role="tab">Medication Chart</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="intake-output-tab" data-bs-toggle="tab" data-bs-target="#intakeOutputChart"
-                type="button" role="tab">Intake & Output Chart</button>
+            <button class="nav-link" id="intake-output-tab" data-bs-toggle="tab" data-bs-target="#intakeOutputChart" type="button" role="tab">Intake & Output Chart</button>
         </li>
         <li class="nav-item">
-        <button class="nav-link" id="others-tab" data-bs-toggle="tab" data-bs-target="#others" type="button" role="tab"
-            aria-controls="others" aria-selected="false">My Notes</button>
+        <button class="nav-link" id="others-tab" data-bs-toggle="tab" data-bs-target="#others" type="button" role="tab" aria-controls="others" aria-selected="false">My Notes</button>
 </li>
             <li class="nav-item">
         <button class="nav-link" id="closed-others-tab" data-bs-toggle="tab" data-bs-target="#closed-others" type="button" role="tab" aria-controls="closed-others" aria-selected="false">Notes History</button>
@@ -43,16 +40,13 @@
                 <?php echo $others_record->note ?? $others_record_template->template; ?>
         </textarea>
             </div>
-            <button type="submit" class="btn btn-primary"
-                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
         </form>
         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
             {{ csrf_field() }}
             <input type="hidden" name="note_type" value="5">
             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-            <button type="submit" class="btn btn-success"
-                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                style="float: right; margin-top:-40px">Save &
+            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')" style="float: right; margin-top:-40px">Save &
                 New</button>
         </form>
     </div>

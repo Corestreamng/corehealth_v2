@@ -253,7 +253,7 @@
             </div>
 
             <!-- Fee Information -->
-            @if($transfer->transfer_fee > 0)
+            @if($transfer->transfer_fee> 0)
             <div class="card-modern">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="mdi mdi-cash mr-2"></i>Fee Information</h5>
@@ -313,8 +313,8 @@
                             <tr>
                                 <td>{{ $line->account?->account_number }} - {{ $line->account?->account_name }}</td>
                                 <td>{{ $line->description }}</td>
-                                <td class="text-right">{{ $line->debit > 0 ? '₦'.number_format($line->debit, 2) : '-' }}</td>
-                                <td class="text-right">{{ $line->credit > 0 ? '₦'.number_format($line->credit, 2) : '-' }}</td>
+                                <td class="text-right">{{ $line->debit> 0 ? '₦'.number_format($line->debit, 2) : '-' }}</td>
+                                <td class="text-right">{{ $line->credit> 0 ? '₦'.number_format($line->credit, 2) : '-' }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -353,16 +353,16 @@
                         <button class="btn btn-success btn-block mb-2" id="approve-btn">
                             <i class="mdi mdi-check mr-1"></i> Approve Transfer
                         </button>
-                        <button class="btn btn-danger btn-block mb-2" data-toggle="modal" data-target="#rejectModal">
+                        <button class="btn btn-danger btn-block mb-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
                             <i class="mdi mdi-close mr-1"></i> Reject Transfer
                         </button>
                     @endif
 
                     @if(in_array($transfer->status, ['approved', 'initiated', 'in_transit']))
-                        <button class="btn btn-success btn-block mb-2" data-toggle="modal" data-target="#clearanceModal">
+                        <button class="btn btn-success btn-block mb-2" data-bs-toggle="modal" data-bs-target="#clearanceModal">
                             <i class="mdi mdi-bank-check mr-1"></i> Confirm Clearance
                         </button>
-                        <button class="btn btn-warning btn-block mb-2" data-toggle="modal" data-target="#failModal">
+                        <button class="btn btn-warning btn-block mb-2" data-bs-toggle="modal" data-bs-target="#failModal">
                             <i class="mdi mdi-alert mr-1"></i> Mark as Failed
                         </button>
                     @endif
@@ -472,7 +472,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle text-danger mr-2"></i>Reject Transfer</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -481,7 +481,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirm-reject">Reject Transfer</button>
             </div>
         </div>
@@ -494,7 +494,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-bank-check text-success mr-2"></i>Confirm Clearance</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -507,7 +507,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" id="confirm-clearance">Confirm Clearance</button>
             </div>
         </div>
@@ -520,7 +520,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-alert text-warning mr-2"></i>Mark as Failed</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -529,7 +529,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-warning" id="confirm-fail">Mark as Failed</button>
             </div>
         </div>

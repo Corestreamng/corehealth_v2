@@ -606,7 +606,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-light">
                     <h5 class="modal-title"><i class="mdi mdi-account-switch text-primary me-2"></i>Referral Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="refDetailModalBody">
                     <div class="text-center py-4"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
@@ -643,7 +643,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark">
                     <h5 class="modal-title"><i class="mdi mdi-calendar-edit"></i> Reschedule Appointment</h5>
-                    <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>
                 <form id="doc-reschedule-form">
                     <div class="modal-body">
@@ -698,7 +698,7 @@
             <div class="modal-content">
                 <div class="modal-header" style="background:#6f42c1; color:#fff;">
                     <h5 class="modal-title"><i class="mdi mdi-account-switch"></i> Reassign Doctor</h5>
-                    <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
                 </div>
                 <form id="doc-reassign-form">
                     <div class="modal-body">
@@ -740,7 +740,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-success text-white py-2">
                     <h6 class="modal-title mb-0"><i class="mdi mdi-login me-1"></i> Check In Patient</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-1">Are you sure you want to check in this appointment?</p>
@@ -762,7 +762,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white py-2">
                     <h6 class="modal-title mb-0"><i class="mdi mdi-calendar-remove me-1"></i> Cancel Appointment</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-2">Are you sure you want to cancel this appointment?</p>
@@ -788,7 +788,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark py-2">
                     <h6 class="modal-title mb-0"><i class="mdi mdi-account-off me-1"></i> Mark No-Show</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-1">Mark this appointment as a <strong>No-Show</strong>?</p>
@@ -810,7 +810,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-success text-white py-2">
                     <h6 class="modal-title mb-0"><i class="mdi mdi-check-circle me-1"></i> Accept Referral</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-1">Accept this referral?</p>
@@ -832,7 +832,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white py-2">
                     <h6 class="modal-title mb-0"><i class="mdi mdi-close-circle me-1"></i> Decline Referral</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-2">Please provide a reason for declining this referral.</p>
@@ -1233,8 +1233,8 @@
             // Position near click
             var x = jsEvent.pageX, y = jsEvent.pageY;
             var menuW = 260, menuH = 300;
-            if (x + menuW > $(window).width()) x = $(window).width() - menuW - 10;
-            if (y + menuH > $(window).scrollTop() + $(window).height()) y = y - menuH;
+            if (x + menuW> $(window).width()) x = $(window).width() - menuW - 10;
+            if (y + menuH> $(window).scrollTop() + $(window).height()) y = y - menuH;
 
             $menu.css({ left: x, top: y }).show();
         }
@@ -1397,8 +1397,8 @@
                     $('#stat-scheduled').text(sched);
                     // Scheduled breakdown subtitle
                     var schedDetail = '';
-                    if (schedToday > 0) schedDetail += schedToday + ' today';
-                    if (schedFuture > 0) schedDetail += (schedDetail ? ', ' : '') + schedFuture + ' upcoming';
+                    if (schedToday> 0) schedDetail += schedToday + ' today';
+                    if (schedFuture> 0) schedDetail += (schedDetail ? ', ' : '') + schedFuture + ' upcoming';
                     $('#stat-scheduled-detail').text(schedDetail);
 
                     $('#stat-completed').text(compl);

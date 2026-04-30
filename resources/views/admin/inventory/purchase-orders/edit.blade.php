@@ -13,31 +13,37 @@
         border-radius: 4px;
         border: 1px solid #dee2e6;
     }
+
     .item-row:hover {
         background: #e9ecef;
     }
+
     .remove-item-btn {
         color: #dc3545;
         cursor: pointer;
     }
+
     .total-section {
         background: #fff;
         padding: 1rem;
         border-radius: 4px;
         border: 1px solid #dee2e6;
     }
+
     .form-section {
         background: #fff;
         padding: 1.5rem;
         border-radius: 8px;
         margin-bottom: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
+
     .form-section h5 {
         border-bottom: 2px solid #007bff;
         padding-bottom: 0.5rem;
         margin-bottom: 1rem;
     }
+
     .po-header {
         background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
         color: white;
@@ -108,8 +114,8 @@
                         <div class="form-group">
                             <label for="expected_date">Expected Delivery Date</label>
                             <input type="date" name="expected_date" id="expected_date"
-                                   class="form-control"
-                                   value="{{ old('expected_date', $purchaseOrder->expected_date?->format('Y-m-d')) }}">
+                                class="form-control"
+                                value="{{ old('expected_date', $purchaseOrder->expected_date?->format('Y-m-d')) }}">
                         </div>
                     </div>
                 </div>
@@ -153,15 +159,15 @@
                                 <div class="form-group mb-0">
                                     <label>Packaging</label>
                                     <select name="items[{{ $index }}][packaging_id]" class="form-control packaging-select"
-                                            data-product-id="{{ $item->product_id }}" data-selected="{{ $item->packaging_id }}">
+                                        data-product-id="{{ $item->product_id }}" data-selected="{{ $item->packaging_id }}">
                                         <option value="">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
                                         @if($item->product->packagings)
-                                            @foreach($item->product->packagings->sortBy('level') as $pkg)
-                                            <option value="{{ $pkg->id }}" data-base-qty="{{ $pkg->base_unit_qty }}"
-                                                {{ $item->packaging_id == $pkg->id ? 'selected' : '' }}>
-                                                {{ $pkg->name }} ({{ $pkg->base_unit_qty == intval($pkg->base_unit_qty) ? intval($pkg->base_unit_qty) : $pkg->base_unit_qty }} {{ $item->product->base_unit_name ?? 'pcs' }})
-                                            </option>
-                                            @endforeach
+                                        @foreach($item->product->packagings->sortBy('level') as $pkg)
+                                        <option value="{{ $pkg->id }}" data-base-qty="{{ $pkg->base_unit_qty }}"
+                                            {{ $item->packaging_id == $pkg->id ? 'selected' : '' }}>
+                                            {{ $pkg->name }} ({{ $pkg->base_unit_qty == intval($pkg->base_unit_qty) ? intval($pkg->base_unit_qty) : $pkg->base_unit_qty }} {{ $item->product->base_unit_name ?? 'pcs' }})
+                                        </option>
+                                        @endforeach
                                         @endif
                                     </select>
                                     <input type="hidden" name="items[{{ $index }}][packaging_qty]" class="packaging-qty-hidden" value="{{ $item->packaging_qty }}">
@@ -171,7 +177,7 @@
                                 <div class="form-group mb-0">
                                     <label>Quantity <span class="text-danger">*</span></label>
                                     <input type="number" name="items[{{ $index }}][ordered_qty]" class="form-control qty-input"
-                                           min="1" value="{{ $item->ordered_qty }}" required>
+                                        min="1" value="{{ $item->ordered_qty }}" required>
                                     <small class="text-muted base-equiv-label"></small>
                                 </div>
                             </div>
@@ -179,14 +185,14 @@
                                 <div class="form-group mb-0">
                                     <label>Unit Cost <span class="text-danger">*</span></label>
                                     <input type="number" name="items[{{ $index }}][unit_cost]" class="form-control cost-input"
-                                           step="0.01" min="0" value="{{ $item->unit_cost }}" required>
+                                        step="0.01" min="0" value="{{ $item->unit_cost }}" required>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="form-group mb-0">
                                     <label>Line Total</label>
                                     <input type="text" class="form-control line-total" readonly
-                                           value="₦{{ number_format($item->ordered_qty * $item->unit_cost, 2) }}">
+                                        value="₦{{ number_format($item->ordered_qty * $item->unit_cost, 2) }}">
                                 </div>
                             </div>
                             <div class="col-md-1 text-center">
@@ -236,61 +242,104 @@
 @section('scripts')
 <script src="{{ asset('assets/js/select2.min.js') }}"></script>
 <script>
-let itemIndex = {{ count($purchaseOrder->items) }};
-
-$(function() {
-    initSelect2();
-    calculateTotals();
-    loadExistingPackagings();
-
-    $('#add-item-btn').on('click', addItem);
-    $(document).on('change keyup', '.qty-input, .cost-input', function() {
-        calculateTotals();
-        updateBaseEquiv($(this).closest('.item-row'));
-    });
-    $(document).on('change', '.packaging-select', function() {
-        updateBaseEquiv($(this).closest('.item-row'));
-    });
-    $(document).on('change', '.product-select', function() {
-        var row = $(this).closest('.item-row');
-        var productId = $(this).val();
-        if (productId) {
-            $.get('/products/' + productId + '/packagings', function(data) {
-                var pkgSelect = row.find('.packaging-select');
-                pkgSelect.empty().append('<option value="">' + (data.base_unit_name || 'Base Unit') + '</option>');
-                row.data('base-unit-name', data.base_unit_name);
-                (data.packagings || []).forEach(function(pkg) {
-                    var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
-                    var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
-                    if (pkg.is_default_purchase) opt.attr('selected', true);
-                    pkgSelect.append(opt);
-                });
-                updateBaseEquiv(row);
-            });
+    let itemIndex = {
+        {
+            count($purchaseOrder - > items)
         }
-    });
-    $('#save-btn').on('click', submitForm);
-});
+    };
 
-function loadExistingPackagings() {
-    $('.packaging-select[data-product-id]').each(function() {
-        var row = $(this).closest('.item-row');
-        var selected = $(this).data('selected');
-        var baseQty = $(this).find('option:selected').data('base-qty') || 1;
-        row.data('base-unit-name', $(this).find('option:first').text().replace(' (base)', ''));
-        updateBaseEquiv(row);
-    });
-}
+    $(function() {
+        initSelect2();
+        calculateTotals();
+        loadExistingPackagings();
 
-function initSelect2() {
-    $('.product-select').select2({
-        placeholder: 'Select Product',
-        allowClear: true
-    });
-}
+        $('#add-item-btn').on('click', addItem);
+        $(document).on('change keyup', '.qty-input, .cost-input', function() {
+            calculateTotals();
+            updateBaseEquiv($(this).closest('.item-row'));
+        });
+        $(document).on('change', '.packaging-select', function() {
+            var row = $(this).closest('.item-row');
+            var select = $(this);
+            
+            // Price scaling logic
+            var prevFactor = parseFloat(select.data('prev-factor')) || 1;
+            var newFactor = parseFloat(select.find('option:selected').data('base-qty')) || 1;
+            var costInput = row.find('.cost-input');
+            var currentCost = parseFloat(costInput.val()) || 0;
+            
+            if (currentCost > 0) {
+                var newCost = (currentCost / prevFactor) * newFactor;
+                costInput.val(parseFloat(newCost.toFixed(4)));
+            }
+            
+            select.data('prev-factor', newFactor);
+            
+            updateBaseEquiv(row);
+            calculateTotals();
+        });
+        $(document).on('change', '.product-select', function() {
+            var row = $(this).closest('.item-row');
+            var productId = $(this).val();
+            if (productId) {
+                $.get('/products/' + productId + '/packagings', function(data) {
+                    var pkgSelect = row.find('.packaging-select');
+                    pkgSelect.empty().append('<option value="">' + (data.base_unit_name || 'Base Unit') + '</option>');
+                    row.data('base-unit-name', data.base_unit_name);
+                    (data.packagings || []).forEach(function(pkg) {
+                        var label = pkg.name + ' (' + parseFloat(pkg.base_unit_qty) + ' ' + data.base_unit_name + ')';
+                        var opt = $('<option>').val(pkg.id).text(label).data('base-qty', pkg.base_unit_qty);
+                        if (pkg.is_default_purchase) opt.attr('selected', true);
+                        pkgSelect.append(opt);
+                    });
+                    
+                    // Initialize factor
+                    var factor = parseFloat(pkgSelect.find('option:selected').data('base-qty')) || 1;
+                    pkgSelect.data('prev-factor', factor);
+                    
+                    // Scale initial cost if default packaging is selected (only if cost was 0 or just loaded)
+                    var costInput = row.find('.cost-input');
+                    if (parseFloat(costInput.val()) > 0 && factor > 1) {
+                        costInput.val(parseFloat((parseFloat(costInput.val()) * factor).toFixed(4)));
+                    }
 
-function addItem() {
-    const template = `
+                    updateBaseEquiv(row);
+                });
+            }
+        });
+        $('#save-btn').on('click', submitForm);
+    });
+
+    function loadExistingPackagings() {
+        $('.packaging-select[data-product-id]').each(function() {
+            var row = $(this).closest('.item-row');
+            var select = $(this);
+            var baseQty = parseFloat(select.find('option:selected').data('base-qty')) || 1;
+            
+            select.data('prev-factor', baseQty);
+            
+            // For existing items, the unit_cost in DB is base unit price.
+            // We should scale it to the selected packaging unit price for display.
+            var costInput = row.find('.cost-input');
+            var baseCost = parseFloat(costInput.val()) || 0;
+            if (baseCost > 0 && baseQty > 1) {
+                costInput.val(parseFloat((baseCost * baseQty).toFixed(4)));
+            }
+
+            row.data('base-unit-name', select.find('option:first').text().replace(' (base)', ''));
+            updateBaseEquiv(row);
+        });
+    }
+
+    function initSelect2() {
+        $('.product-select').select2({
+            placeholder: 'Select Product',
+            allowClear: true
+        });
+    }
+
+    function addItem() {
+        const template = `
         <div class="item-row" data-index="${itemIndex}">
             <div class="row align-items-end">
                 <div class="col-md-3">
@@ -341,145 +390,154 @@ function addItem() {
         </div>
     `;
 
-    $('#items-container').append(template);
-    // Only initialize Select2 on the newly added select element
-    $('#items-container .item-row:last .product-select').select2({
-        placeholder: 'Select Product',
-        allowClear: true
-    });
-    itemIndex++;
-}
-
-function removeItem(btn) {
-    $(btn).closest('.item-row').remove();
-    calculateTotals();
-}
-
-function calculateTotals() {
-    let subtotal = 0;
-
-    $('.item-row').each(function() {
-        const qty = parseFloat($(this).find('.qty-input').val()) || 0;
-        const cost = parseFloat($(this).find('.cost-input').val()) || 0;
-        const lineTotal = qty * cost;
-
-        $(this).find('.line-total').val('₦' + lineTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-        subtotal += lineTotal;
-    });
-
-    $('#subtotal').text('₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-    $('#grand-total').text('₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-}
-
-function updateBaseEquiv(row) {
-    var pkgSelect = row.find('.packaging-select');
-    var selected = pkgSelect.find('option:selected');
-    var qty = parseFloat(row.find('.qty-input').val()) || 0;
-    var baseQty = parseFloat(selected.data('base-qty')) || 1;
-    var baseName = row.data('base-unit-name') || 'units';
-    var label = row.find('.base-equiv-label');
-    if (baseQty > 1 && qty > 0) {
-        label.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' ' + baseName);
-    } else {
-        label.text('');
-    }
-    row.find('.packaging-qty-hidden').val(pkgSelect.val() ? qty : '');
-}
-
-function submitForm() {
-    var form = $('#po-form');
-    var items = [];
-    var hasErrors = false;
-
-    // Validate required fields
-    if (!$('#target_store_id').val()) {
-        alert('Please select a destination store');
-        return;
+        $('#items-container').append(template);
+        // Only initialize Select2 on the newly added select element
+        $('#items-container .item-row:last .product-select').select2({
+            placeholder: 'Select Product',
+            allowClear: true
+        });
+        itemIndex++;
     }
 
-    if (!$('#supplier_id').val()) {
-        alert('Please select a supplier');
-        return;
+    function removeItem(btn) {
+        $(btn).closest('.item-row').remove();
+        calculateTotals();
     }
 
-    // Collect items
-    $('.item-row').each(function() {
-        var row = $(this);
-        var productId = row.find('.product-select').val();
-        var quantity = row.find('.qty-input').val();
-        var unitCost = row.find('.cost-input').val();
+    function calculateTotals() {
+        let subtotal = 0;
 
-        if (!productId || !quantity || !unitCost) {
-            hasErrors = true;
-            return false;
+        $('.item-row').each(function() {
+            const qty = parseFloat($(this).find('.qty-input').val()) || 0;
+            const cost = parseFloat($(this).find('.cost-input').val()) || 0;
+            const lineTotal = qty * cost;
+
+            $(this).find('.line-total').val('₦' + lineTotal.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }));
+            subtotal += lineTotal;
+        });
+
+        $('#subtotal').text('₦' + subtotal.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }));
+        $('#grand-total').text('₦' + subtotal.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }));
+    }
+
+    function updateBaseEquiv(row) {
+        var pkgSelect = row.find('.packaging-select');
+        var selected = pkgSelect.find('option:selected');
+        var qty = parseFloat(row.find('.qty-input').val()) || 0;
+        var baseQty = parseFloat(selected.data('base-qty')) || 1;
+        var baseName = row.data('base-unit-name') || 'units';
+        var label = row.find('.base-equiv-label');
+        if (baseQty > 1 && qty > 0) {
+            label.text('= ' + parseFloat((qty * baseQty).toFixed(4)) + ' ' + baseName);
+        } else {
+            label.text('');
+        }
+        row.find('.packaging-qty-hidden').val(pkgSelect.val() ? qty : '');
+    }
+
+    function submitForm() {
+        var form = $('#po-form');
+        var items = [];
+        var hasErrors = false;
+
+        // Validate required fields
+        if (!$('#target_store_id').val()) {
+            alert('Please select a destination store');
+            return;
         }
 
-        items.push({
-            product_id: productId,
-            ordered_qty: parseInt(quantity),
-            unit_cost: parseFloat(unitCost),
-            packaging_id: row.find('.packaging-select').val() || null,
-            packaging_qty: row.find('.packaging-select').val() ? parseFloat(quantity) : null
+        if (!$('#supplier_id').val()) {
+            alert('Please select a supplier');
+            return;
+        }
+
+        // Collect items
+        $('.item-row').each(function() {
+            var row = $(this);
+            var productId = row.find('.product-select').val();
+            var quantity = row.find('.qty-input').val();
+            var unitCost = row.find('.cost-input').val();
+
+            if (!productId || !quantity || !unitCost) {
+                hasErrors = true;
+                return false;
+            }
+
+            items.push({
+                product_id: productId,
+                ordered_qty: parseInt(quantity),
+                unit_cost: parseFloat(unitCost),
+                packaging_id: row.find('.packaging-select').val() || null,
+                packaging_qty: row.find('.packaging-select').val() ? parseFloat(quantity) : null
+            });
         });
-    });
 
-    if (hasErrors) {
-        alert('Please fill in all item fields');
-        return;
-    }
+        if (hasErrors) {
+            alert('Please fill in all item fields');
+            return;
+        }
 
-    if (items.length === 0) {
-        alert('Please add at least one item');
-        return;
-    }
+        if (items.length === 0) {
+            alert('Please add at least one item');
+            return;
+        }
 
-    // Prepare form data
-    var formData = {
-        supplier_id: $('#supplier_id').val(),
-        target_store_id: $('#target_store_id').val(),
-        expected_date: $('#expected_date').val(),
-        notes: $('#notes').val(),
-        items: items,
-        _token: $('input[name="_token"]').val(),
-        _method: 'PUT'
-    };
+        // Prepare form data
+        var formData = {
+            supplier_id: $('#supplier_id').val(),
+            target_store_id: $('#target_store_id').val(),
+            expected_date: $('#expected_date').val(),
+            notes: $('#notes').val(),
+            items: items,
+            _token: $('input[name="_token"]').val(),
+            _method: 'PUT'
+        };
 
-    // Disable button during submission
-    var button = $('#save-btn');
-    button.prop('disabled', true);
+        // Disable button during submission
+        var button = $('#save-btn');
+        button.prop('disabled', true);
 
-    // Submit via AJAX
-    $.ajax({
-        url: form.attr('action'),
-        method: 'POST',
-        data: JSON.stringify(formData),
-        contentType: 'application/json',
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert(response.message || 'Purchase order updated successfully');
-                if (response.redirect) {
-                    window.location.href = response.redirect;
+        // Submit via AJAX
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message || 'Purchase order updated successfully');
+                    if (response.redirect) {
+                        window.location.href = response.redirect;
+                    } else {
+                        window.location.href = '{{ route("inventory.purchase-orders.show", $purchaseOrder) }}';
+                    }
                 } else {
-                    window.location.href = '{{ route("inventory.purchase-orders.show", $purchaseOrder) }}';
+                    alert(response.message || 'Failed to update purchase order');
+                    button.prop('disabled', false);
                 }
-            } else {
-                alert(response.message || 'Failed to update purchase order');
+            },
+            error: function(xhr) {
+                var message = 'Error updating purchase order';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    var errors = xhr.responseJSON.errors;
+                    message = Object.values(errors).flat().join('\n');
+                }
+                alert(message);
                 button.prop('disabled', false);
             }
-        },
-        error: function(xhr) {
-            var message = 'Error updating purchase order';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                message = xhr.responseJSON.message;
-            } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                var errors = xhr.responseJSON.errors;
-                message = Object.values(errors).flat().join('\n');
-            }
-            alert(message);
-            button.prop('disabled', false);
-        }
-    });
-}
+        });
+    }
 </script>
 @endsection

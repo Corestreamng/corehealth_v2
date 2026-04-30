@@ -114,7 +114,7 @@
             </tr>
             @endforelse
         </tbody>
-        @if(count($liabilities) > 0)
+        @if(count($liabilities)> 0)
         <tfoot>
             <tr class="total-row">
                 <th colspan="3">Totals</th>

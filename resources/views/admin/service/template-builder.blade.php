@@ -415,7 +415,7 @@ function updateParameterOrders() {
 }
 
 function updateEmptyState() {
-    const hasParameters = $('#parameters-container .parameter-item').length > 0;
+    const hasParameters = $('#parameters-container .parameter-item').length> 0;
     $('#empty-state').toggle(!hasParameters);
 }
 
@@ -569,15 +569,13 @@ function previewTemplate() {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Template Preview: ${templateData.template_name}</h5>
-                        <button type="button" class="close"  data-bs-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
+                        <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <pre style="max-height: 500px; overflow-y: auto;">${JSON.stringify(templateData, null, 2)}</pre>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>

@@ -516,7 +516,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-plus-circle mr-2"></i>Add Statement Item</h5>
-                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <form id="addItemForm">
                 <div class="modal-body">
@@ -551,7 +551,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Add Item</button>
                 </div>
             </form>
@@ -565,7 +565,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-pencil mr-2"></i>Edit Reconciliation Details</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="editReconciliationForm">
                 <div class="modal-body">
@@ -635,7 +635,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save mr-1"></i> Save Changes
                     </button>
@@ -800,7 +800,7 @@ $(document).ready(function() {
             });
         });
 
-        if (capturedRows.length > 0) {
+        if (capturedRows.length> 0) {
             $('#capturedItemsPanel').show();
             $('#btnAddCaptured').prop('disabled', false);
 
@@ -853,7 +853,7 @@ $(document).ready(function() {
         for (let val of data) {
             if (val && !isNaN(parseFloat(val.toString().replace(/[,\s]/g, '')))) {
                 const amount = parseFloat(val.toString().replace(/[,\s]/g, ''));
-                if (Math.abs(amount) > 0.01) {
+                if (Math.abs(amount)> 0.01) {
                     modal.find('[name="amount"]').val(Math.abs(amount));
                     modal.find('[name="amount_type"]').val(amount < 0 ? 'debit' : 'credit');
                     break;
@@ -886,7 +886,7 @@ $(document).ready(function() {
             amount: $(this).find('[name="amount"]').val(),
             amount_type: $(this).find('[name="amount_type"]').val(),
             reference: $(this).find('[name="reference"]').val(),
-            row_data: capturedRows.length > 0 ? capturedRows[0].data : null
+            row_data: capturedRows.length> 0 ? capturedRows[0].data : null
         };
 
         $.ajax({
@@ -914,7 +914,7 @@ $(document).ready(function() {
                     $('#statement-items').append(html);
 
                     // Mark row as captured
-                    if (capturedRows.length > 0) {
+                    if (capturedRows.length> 0) {
                         const rowNum = capturedRows[0].row;
                         $('.selectable-row[data-row="' + rowNum + '"]').removeClass('selected').addClass('captured');
                         capturedRows.shift();
@@ -990,7 +990,7 @@ $(document).ready(function() {
 
     // Update statement tabs
     function updateStatementTabs() {
-        if (uploadedStatements.length > 0) {
+        if (uploadedStatements.length> 0) {
             $('#statementTabs').show();
             let html = '';
             uploadedStatements.forEach(stmt => {
@@ -1040,7 +1040,7 @@ $(document).ready(function() {
             success: function(res) {
                 uploadedStatements = uploadedStatements.filter(s => s.id !== id);
                 if (activeStatementId === id) {
-                    if (uploadedStatements.length > 0) {
+                    if (uploadedStatements.length> 0) {
                         activeStatementId = uploadedStatements[0].id;
                         loadStatementContent(uploadedStatements[0]);
                     } else {
@@ -1136,7 +1136,7 @@ $(document).ready(function() {
 
     // Load existing statements on page load
     $.get('{{ route('accounting.bank-reconciliation.statements', $reconciliation) }}', function(res) {
-        if (res.success && res.statements.length > 0) {
+        if (res.success && res.statements.length> 0) {
             uploadedStatements = res.statements;
             activeStatementId = uploadedStatements[0].id;
             loadStatementContent(uploadedStatements[0]);
@@ -1237,7 +1237,7 @@ $(document).ready(function() {
 
     // PDF navigation controls
     $(document).on('click', '#pdfPrevPage', function() {
-        if (pdfDoc && currentPage > 1) {
+        if (pdfDoc && currentPage> 1) {
             renderPdfPage(currentPage - 1);
         }
     });
@@ -1256,7 +1256,7 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '#pdfZoomOut', function() {
-        if (pdfDoc && pdfScale > 0.4) {
+        if (pdfDoc && pdfScale> 0.4) {
             pdfScale -= 0.2;
             renderPdfPage(currentPage);
         }

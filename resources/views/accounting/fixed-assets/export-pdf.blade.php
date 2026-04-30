@@ -108,7 +108,7 @@
             </tr>
             @endforelse
         </tbody>
-        @if($assets->count() > 0)
+        @if($assets->count()> 0)
         <tfoot>
             <tr class="total-row">
                 <th colspan="5">Total ({{ $assets->where('status', 'active')->count() }} active)</th>

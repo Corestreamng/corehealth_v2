@@ -122,7 +122,7 @@
             <div class="col-md-6">
                 <div class="report-card">
                     <h5><i class="mdi mdi-tag-multiple"></i> Expenses by Category</h5>
-                    @if($stats['by_category']->count() > 0)
+                    @if($stats['by_category']->count()> 0)
                         @foreach($stats['by_category'] as $category => $data)
                         <div class="category-item">
                             <div>
@@ -142,7 +142,7 @@
             <div class="col-md-6">
                 <div class="report-card">
                     <h5><i class="mdi mdi-calendar-month"></i> Monthly Breakdown</h5>
-                    @if($stats['by_month']->count() > 0)
+                    @if($stats['by_month']->count()> 0)
                         @foreach($stats['by_month'] as $month => $total)
                         <div class="category-item">
                             <div class="name">{{ \Carbon\Carbon::parse($month . '-01')->format('F Y') }}</div>

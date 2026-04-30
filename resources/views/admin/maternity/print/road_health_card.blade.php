@@ -49,9 +49,9 @@
 
         /* ── Layout ── */
         .cols-2 { display: flex; gap: 8px; }
-        .cols-2 > div { flex: 1; }
+        .cols-2> div { flex: 1; }
         .cols-3 { display: flex; gap: 6px; }
-        .cols-3 > div { flex: 1; }
+        .cols-3> div { flex: 1; }
 
         /* ── Panels ── */
         .section {
@@ -254,7 +254,7 @@
     <div style="text-align:center; margin-bottom:4px;">
         <span class="card-title" style="font-size:13px;">Weight-for-Age Growth Chart ({{ $sexLabel }}) — Birth to 3 Years</span>
         <span style="font-size:9px; color:#888; margin-left:8px;">WHO Child Growth Standards</span>
-        @if($babies->count() > 1)
+        @if($babies->count()> 1)
             <br><span style="font-size:10px; font-weight:700; color:#006400;">{{ $babyName }} (Baby {{ $babyIndex + 1 }} of {{ $babies->count() }})</span>
         @endif
     </div>
@@ -302,7 +302,7 @@
 
                 // Filter WHO data for this panel range
                 $panelWho = array_filter($whoData, function($d) use ($mMin, $mMax) {
-                    return $d['month'] >= $mMin && $d['month'] <= $mMax;
+                    return $d['month']>= $mMin && $d['month'] <= $mMax;
                 });
                 $panelWho = array_values($panelWho);
 
@@ -325,12 +325,12 @@
 
                 // Child data points in this range
                 $childPts = $fullGrowth->filter(function($g) use ($mMin, $mMax) {
-                    return ($g->age_months >= $mMin && $g->age_months <= $mMax && !empty($g->weight_kg));
+                    return ($g->age_months>= $mMin && $g->age_months <= $mMax && !empty($g->weight_kg));
                 });
             @endphp
             <svg viewBox="0 0 {{ $chartW }} {{ $chartH }}" width="100%" height="auto" style="display:block;">
                 {{-- Background zones --}}
-                @if(count($panelWho) >= 2)
+                @if(count($panelWho)>= 2)
                     {{-- Severe underweight zone (below -3) --}}
                     <polygon points="{{ $polylines['sd_neg3'] }} {{ svgX($panelWho[count($panelWho)-1]['month'], $mMin, $mMax, $chartW) }},{{ $chartH - 20 }} {{ svgX($panelWho[0]['month'], $mMin, $mMax, $chartW) }},{{ $chartH - 20 }}" fill="#f8d7da" opacity="0.3" />
                     {{-- Normal zone (-2 to +2) --}}
@@ -372,7 +372,7 @@
                 @endforeach
 
                 {{-- SD labels on the right edge --}}
-                @if(count($panelWho) > 0)
+                @if(count($panelWho)> 0)
                     @php $lastD = end($panelWho); @endphp
                     @foreach(['sd_neg3' => '-3', 'sd_neg2' => '-2', 'median' => 'M', 'sd_pos2' => '+2', 'sd_pos3' => '+3'] as $sdKey => $sdLbl)
                         <text x="{{ $chartW - 2 }}" y="{{ svgY($lastD[$sdKey], $wMin, $wMax, $chartH) + 3 }}" font-size="6" fill="{{ $sdLbl === 'M' ? '#28a745' : '#888' }}" font-weight="{{ $sdLbl === 'M' ? '700' : '400' }}">{{ $sdLbl }}</text>
@@ -391,7 +391,7 @@
                 @endforeach
 
                 {{-- Connect child data points with line --}}
-                @if($childPts->count() > 1)
+                @if($childPts->count()> 1)
                     @php
                         $childLine = '';
                         foreach ($childPts as $g) {
@@ -433,7 +433,7 @@
         <div class="hospital-name">{{ appsettings('hos_name', 'O.L.A Hospital — Jos') }}</div>
         <div class="hospital-sub">{{ appsettings('hos_address', '') }}</div>
         <div class="card-title">Road to Health Card</div>
-        @if($babies->count() > 1)
+        @if($babies->count()> 1)
             <div style="font-size:10px; font-weight:700; color:#006400;">{{ $babyName }} (Baby {{ $babyIndex + 1 }} of {{ $babies->count() }})</div>
         @endif
     </div>

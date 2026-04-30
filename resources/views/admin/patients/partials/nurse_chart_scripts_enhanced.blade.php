@@ -6,10 +6,10 @@
             .period-card { transition: all 0.2s ease-in-out; }
             .period-card:hover { box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15) !important; }
             .badge.rounded-pill { display: inline-flex; align-items: center; }
-            .table-sm > :not(caption) > * > * { padding: 0.3rem 0.5rem; vertical-align: middle; }
+            .table-sm> :not(caption)> *> * { padding: 0.3rem 0.5rem; vertical-align: middle; }
             @media (max-width: 768px) {
                 .period-card .card-header { flex-direction: column; align-items: start !important; }
-                .period-card .card-header > div:last-child { margin-top: 0.5rem; width: 100%; }
+                .period-card .card-header> div:last-child { margin-top: 0.5rem; width: 100%; }
             }
 
             // Add custom styles for medication chart responsiveness
@@ -260,7 +260,7 @@
 
                     // §6.1: Merge direct administration entries (ward stock + patient's own)
                     const directEntries = data.direct_entries || [];
-                    if (directEntries.length > 0) {
+                    if (directEntries.length> 0) {
                         // Add separator
                         const separator = new Option('── Direct Administrations ──', '', false, false);
                         separator.disabled = true;
@@ -576,7 +576,7 @@
         const startDate = new Date(startDateStr);
         const endDate = new Date(endDateStr);
 
-        if (startDate > endDate) {
+        if (startDate> endDate) {
             toastr.warning('Start date cannot be after end date.');
             return;
         }
@@ -787,7 +787,7 @@
             const isToday = currentDate.toDateString() === today.toDateString();
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
             const isPast = currentDate < today;
-            const isInRange = currentDate >= startDate && currentDate <= endDate;
+            const isInRange = currentDate>= startDate && currentDate <= endDate;
 
             let cellClass = 'calendar-day-cell';
             if (!isInRange) cellClass += ' empty-day';
@@ -1462,7 +1462,7 @@
                     // Check for discontinuation
                     const isDiscontinued = medication.discontinued_at &&
                         new Date(medication.discontinued_at) < scheduleTime &&
-                        (!medication.resumed_at || new Date(medication.resumed_at) > scheduleTime);
+                        (!medication.resumed_at || new Date(medication.resumed_at)> scheduleTime);
 
                     if (isDiscontinued) {
                         badgeClass = 'bg-secondary';
@@ -1692,7 +1692,7 @@
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="medication-logs-title">Activity Logs</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+                                        <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body" id="medication-logs-content">
                                         <!-- Logs content will be populated dynamically -->
@@ -2616,7 +2616,7 @@
                 let totalIntake = 0;
                 let totalOutput = 0;
 
-                if (p.records && p.records.length > 0) {
+                if (p.records && p.records.length> 0) {
                     p.records.forEach(function(r) {
                         if (r.type === 'intake') {
                             totalIntake += parseFloat(r.amount);
@@ -2628,7 +2628,7 @@
 
                 // Calculate balance
                 const balance = totalIntake - totalOutput;
-                const balanceClass = balance >= 0 ? 'text-success' : 'text-danger';
+                const balanceClass = balance>= 0 ? 'text-success' : 'text-danger';
                 const periodStatus = p.ended_at ? 'secondary' : 'info';
                 const periodIcon = type === 'fluid' ? 'mdi-water' :
                     'mdi-food-apple';
@@ -2648,14 +2648,12 @@
                             <div class="d-flex gap-1">`;
 
                 // Add View Logs button for all periods
-                html += `<button class='btn btn-sm btn-outline-secondary view-io-logs-btn' data-period-id='${p.id}'
-                                data-type='${type}' data-bs-toggle="tooltip" title="View activity logs">
+                html += `<button class='btn btn-sm btn-outline-secondary view-io-logs-btn' data-period-id='${p.id}' data-type='${type}' data-bs-toggle="tooltip" title="View activity logs">
                                 <i class="mdi mdi-history"></i> <span class="d-none d-sm-inline">Logs</span></button>`;
 
                 if (!p.ended_at) {
                     html +=
-                        `<button class='btn btn-sm btn-outline-danger end-period-btn' data-period-id='${p.id}'
-                                data-type='${type}' data-bs-toggle="tooltip" title="End this period">
+                        `<button class='btn btn-sm btn-outline-danger end-period-btn' data-period-id='${p.id}' data-type='${type}' data-bs-toggle="tooltip" title="End this period">
                                 <i class="mdi mdi-clock-end"></i> <span class="d-none d-sm-inline">End Period</span></button>`;
                 }
 
@@ -2681,7 +2679,7 @@
                                         <td width="33%" class="text-center p-2">
                                             <div class="fs-6 fw-bold">Balance</div>
                                             <div class="fs-5 ${balanceClass}">
-                                                <i class="mdi ${balance >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down'}"></i>
+                                                <i class="mdi ${balance>= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down'}"></i>
                                                 ${Math.abs(balance)} ${type === 'fluid' ? 'ml' : 'g'}
                                             </div>
                                         </td>
@@ -2702,7 +2700,7 @@
                                     </thead>
                                     <tbody>`;
 
-                if (p.records && p.records.length > 0) {
+                if (p.records && p.records.length> 0) {
                     // Sort records by recorded_at date (newest first)
                     const sortedRecords = [...p.records].sort((a, b) =>
                         new Date(b.recorded_at) - new Date(a.recorded_at)
@@ -2798,7 +2796,7 @@
 
                     // Process and display logs
                     let logsHtml = '';
-                    if (response.history && response.history.length > 0) {
+                    if (response.history && response.history.length> 0) {
                         logsHtml =
                             '<div class="table-responsive"><table class="table table-sm table-striped">';
                         logsHtml +=
@@ -3035,7 +3033,7 @@
         const endDate = $('#fluid_end_date').val();
 
         // Validate date range
-        if (new Date(startDate) > new Date(endDate)) {
+        if (new Date(startDate)> new Date(endDate)) {
             toastr.warning('Start date cannot be after end date.');
             return;
         }
@@ -3048,7 +3046,7 @@
         const endDate = $('#solid_end_date').val();
 
         // Validate date range
-        if (new Date(startDate) > new Date(endDate)) {
+        if (new Date(startDate)> new Date(endDate)) {
             toastr.warning('Start date cannot be after end date.');
             return;
         }
@@ -3062,7 +3060,7 @@
         const endDate = $('#fluid_end_date').val();
 
         // Validate date range
-        if (new Date(startDate) > new Date(endDate)) {
+        if (new Date(startDate)> new Date(endDate)) {
             toastr.warning('Start date cannot be after end date.');
             return;
         }
@@ -3116,7 +3114,7 @@
 
         // Don't allow dates in the future beyond today
         const today = new Date();
-        if (endDate > today) {
+        if (endDate> today) {
             endDate.setTime(today.getTime());
             startDate.setTime(today.getTime());
             startDate.setDate(startDate.getDate() - 30);
@@ -3137,7 +3135,7 @@
         const endDate = $('#solid_end_date').val();
 
         // Validate date range
-        if (new Date(startDate) > new Date(endDate)) {
+        if (new Date(startDate)> new Date(endDate)) {
             toastr.warning('Start date cannot be after end date.');
             return;
         }
@@ -3191,7 +3189,7 @@
 
         // Don't allow dates in the future beyond today
         const today = new Date();
-        if (endDate > today) {
+        if (endDate> today) {
             endDate.setTime(today.getTime());
             startDate.setTime(today.getTime());
             startDate.setDate(startDate.getDate() - 30);
@@ -3248,7 +3246,7 @@
                 <h5 class="modal-title" id="medication-logs-title">
                     <i class="mdi mdi-history text-primary me-1"></i> Activity Logs
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0" id="medication-logs-content">
                 <!-- Logs content will be populated dynamically -->
@@ -3271,7 +3269,7 @@
                 <h5 class="modal-title" id="io-logs-title">
                     <i class="mdi mdi-history me-1"></i> Intake/Output Period Logs
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="io-logs-content">
                 <!-- Logs content will be populated dynamically -->
@@ -3364,7 +3362,7 @@
 
         // Badge on tab
         var badge = $('#rx-tab-badge');
-        if (_rxData.length > 0) {
+        if (_rxData.length> 0) {
             badge.text(_rxData.length).show();
         } else {
             badge.hide();
@@ -3525,7 +3523,7 @@
                 success: function(resp) {
                     _rxData = resp.data || resp || [];
                     var badge = $('#rx-tab-badge');
-                    if (_rxData.length > 0) {
+                    if (_rxData.length> 0) {
                         badge.text(_rxData.length).show();
                     }
                 }
@@ -3677,7 +3675,7 @@
                         var code = item.product_code || '';
                         var qty = (item.stock && item.stock.current_quantity !== undefined) ? item.stock.current_quantity : 0;
                         var price = (item.price && item.price.current_sale_price !== undefined) ? item.price.current_sale_price : 0;
-                        var qtyClass = qty > 0 ? 'text-success' : 'text-danger';
+                        var qtyClass = qty> 0 ? 'text-success' : 'text-danger';
 
                         var li = '<li class="list-group-item list-group-item-action" style="cursor:pointer;" ' +
                             'data-id="' + item.id + '" ' +
@@ -3744,7 +3742,7 @@
                 var available = storeStock ? storeStock.quantity : 0;
                 var badge = $('#ws_available_stock');
                 badge.text(available + ' in store');
-                if (available > 0) {
+                if (available> 0) {
                     badge.removeClass('bg-danger bg-info').addClass('bg-success');
                 } else {
                     badge.removeClass('bg-success bg-info').addClass('bg-danger');

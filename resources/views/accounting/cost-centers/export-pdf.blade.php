@@ -88,7 +88,7 @@
                 <td class="text-right">
                     @php
                         $variance = ($cc->budget_amount ?? 0) - ($cc->actual_amount ?? 0);
-                        $varianceClass = $variance >= 0 ? 'positive' : 'negative';
+                        $varianceClass = $variance>= 0 ? 'positive' : 'negative';
                     @endphp
                     <span class="{{ $varianceClass }}">₦{{ number_format(abs($variance), 2) }}</span>
                 </td>
@@ -107,7 +107,7 @@
             </tr>
             @endforelse
         </tbody>
-        @if($costCenters->count() > 0)
+        @if($costCenters->count()> 0)
         <tfoot>
             <tr class="total-row">
                 <th colspan="5">Totals ({{ $costCenters->where('is_active', true)->count() }} active)</th>
@@ -117,7 +117,7 @@
                     @php
                         $totalVariance = $costCenters->sum('budget_amount') - $costCenters->sum('actual_amount');
                     @endphp
-                    <span class="{{ $totalVariance >= 0 ? 'positive' : 'negative' }}">₦{{ number_format(abs($totalVariance), 2) }}</span>
+                    <span class="{{ $totalVariance>= 0 ? 'positive' : 'negative' }}">₦{{ number_format(abs($totalVariance), 2) }}</span>
                 </th>
                 <th></th>
             </tr>
