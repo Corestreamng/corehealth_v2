@@ -31,6 +31,9 @@
                     <a href="{{ route('import-export.template.products') }}" class="btn btn-outline-secondary btn-sm">
                         <i class="mdi mdi-file-download-outline"></i> Template
                     </a>
+                    <button type="button" class="btn btn-outline-info btn-sm" id="btn-stock-template" data-toggle="modal" data-target="#storeSelectModal">
+                        <i class="mdi mdi-database-export-outline"></i> Stock Template
+                    </button>
                 </div>
             </div>
 
@@ -95,6 +98,38 @@
             </div>
         </div>
     </div>
+
+    <!-- Store Selection Modal for Stock Template Download -->
+    <div class="modal fade" id="storeSelectModal" tabindex="-1" role="dialog" aria-labelledby="storeSelectModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="storeSelectModalLabel"><i class="mdi mdi-database-export-outline mr-1"></i> Select Store</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Download a pre-filled product template with current stock levels for the selected store.</p>
+                    <div class="form-group mb-0">
+                        <label class="form-label font-weight-bold">Store</label>
+                        <select id="stock-template-store" class="form-control form-control-modern">
+                            <option value="">-- Select a store --</option>
+                            @foreach($stores as $store)
+                                <option value="{{ $store->id }}">{{ $store->store_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <a href="#" id="btn-download-stock-template" class="btn btn-info btn-sm disabled">
+                        <i class="mdi mdi-download"></i> Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
@@ -144,9 +179,9 @@
 
             $('#confirm-status-btn').click(function() {
                 if (!currentProductId) return;
-                
+
                 $(this).prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
-                
+
                 $.ajax({
                     url: `/products/${currentProductId}/toggle-status`,
                     type: 'POST',
@@ -170,6 +205,25 @@
                         $('#confirm-status-btn').prop('disabled', false).text('Confirm');
                     }
                 });
+            });
+
+            // Stock Template store selection
+            var stockTemplateBaseUrl = '{{ route("import-export.template.products-stock", "__STORE__") }}';
+
+            $('#stock-template-store').on('change', function() {
+                var storeId = $(this).val();
+                var $btn = $('#btn-download-stock-template');
+                if (storeId) {
+                    $btn.attr('href', stockTemplateBaseUrl.replace('__STORE__', storeId))
+                        .removeClass('disabled');
+                } else {
+                    $btn.attr('href', '#').addClass('disabled');
+                }
+            });
+
+            $('#storeSelectModal').on('hidden.bs.modal', function() {
+                $('#stock-template-store').val('');
+                $('#btn-download-stock-template').attr('href', '#').addClass('disabled');
             });
         });
     </script>

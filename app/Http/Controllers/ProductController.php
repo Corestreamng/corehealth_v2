@@ -264,7 +264,8 @@ class ProductController extends Controller
     public function index()
     {
         $categories = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
-        return view('admin.product.index', compact('categories'));
+        $stores = \App\Models\Store::where('status', 1)->orderBy('store_name')->get(['id', 'store_name']);
+        return view('admin.product.index', compact('categories', 'stores'));
     }
 
     /**
