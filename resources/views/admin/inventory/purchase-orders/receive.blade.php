@@ -86,10 +86,19 @@
             </a>
         </div>
 
+        @if($purchaseOrder->status === 'partial')
+        <div class="receiving-info" style="background:#fff3cd; border-left:4px solid #ffc107;">
+            <i class="mdi mdi-truck-delivery"></i>
+            <strong>Partial Receipt — Remaining Items</strong><br>
+            Some items were previously received. Only items with outstanding quantities are shown below.
+            Receiving into <strong>{{ $purchaseOrder->targetStore->store_name }}</strong>.
+        </div>
+        @else
         <div class="receiving-info">
             <i class="mdi mdi-information"></i>
             This purchase order has been approved and is ready to receive items into <strong>{{ $purchaseOrder->targetStore->store_name }}</strong>.
         </div>
+        @endif
 
         <div class="po-card">
             <div class="po-header">
