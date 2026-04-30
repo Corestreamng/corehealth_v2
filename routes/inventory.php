@@ -92,12 +92,17 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/manual-batch', [StoreWorkbenchController::class, 'manualBatchForm'])->name('manual-batch-form');
         Route::post('/manual-batch', [StoreWorkbenchController::class, 'createManualBatch'])->name('create-manual-batch');
 
+        // Tally Card
+        Route::get('/tally-card', [StoreWorkbenchController::class, 'tallyCard'])->name('tally-card');
+        Route::get('/tally-card/data', [StoreWorkbenchController::class, 'tallyCardData'])->name('tally-card.data');
+
         // Reports
         Route::get('/reports/expiry', [StoreWorkbenchController::class, 'expiryReport'])->name('expiry-report');
         Route::get('/reports/stock-value', [StoreWorkbenchController::class, 'stockValueReport'])->name('stock-value-report');
 
         // AJAX
         Route::get('/ajax/batch-availability', [StoreWorkbenchController::class, 'getBatchAvailability'])->name('batch-availability');
+        Route::get('/ajax/store-batches', [StoreWorkbenchController::class, 'getStoreBatches'])->name('store-batches');
     });
 
     // ===== STORE GOVERNANCE CONFIG (Plan §9.1, §9.3) =====
