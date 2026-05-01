@@ -709,23 +709,22 @@ class MaternityWorkbenchController extends Controller
         }
 
         try {
-            // Clear existing and re-save
-            MaternityMedicalHistory::where('enrollment_id', $id)->delete();
-
+            $newEntries = [];
             foreach ($request->items as $item) {
-                MaternityMedicalHistory::create([
+                $newEntries[] = MaternityMedicalHistory::create([
                     'enrollment_id' => $id,
                     'category'      => $item['category'],
                     'description'   => $item['description'],
                     'year'          => $item['year'] ?? null,
                     'notes'         => $item['notes'] ?? null,
+                    'created_by'    => Auth::id(),
                 ]);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Medical history saved successfully.',
-                'history' => MaternityMedicalHistory::where('enrollment_id', $id)->get(),
+                'message' => 'Medical history record added.',
+                'history' => $newEntries,
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -784,6 +783,17 @@ class MaternityWorkbenchController extends Controller
         return response()->json(['success' => true, 'message' => 'Record deleted.']);
     }
 
+    public function deleteAncVisit($id)
+    {
+        $visit = AncVisit::findOrFail($id);
+        // Authorization check: only the person who recorded it or admin
+        if ($visit->seen_by && $visit->seen_by !== Auth::id() && !Auth::user()->hasRole('SUPERADMIN|ADMIN')) {
+            return response()->json(['success' => false, 'message' => 'You are not authorized to delete this visit as you are not the one who recorded it.'], 403);
+        }
+        $visit->delete();
+        return response()->json(['success' => true, 'message' => 'ANC visit deleted.']);
+    }
+
     public function updatePreviousPregnancy(Request $request, $id)
     {
         $pp = MaternityPreviousPregnancy::findOrFail($id);
@@ -833,6 +843,11 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
+        // Authorization check: only the creator or admin can update
+        if ($history->created_by && $history->created_by !== Auth::id() && !Auth::user()->hasRole('SUPERADMIN|ADMIN')) {
+            return response()->json(['success' => false, 'message' => 'You are not authorized to update this record as you are not the creator.'], 403);
+        }
+
         $history->update([
             'category'    => $request->category,
             'description' => $request->description,
@@ -846,6 +861,12 @@ class MaternityWorkbenchController extends Controller
     public function deleteMedicalHistory($id)
     {
         $history = MaternityMedicalHistory::findOrFail($id);
+
+        // Authorization check: only the creator or admin can delete
+        if ($history->created_by && $history->created_by !== Auth::id() && !Auth::user()->hasRole('SUPERADMIN|ADMIN')) {
+            return response()->json(['success' => false, 'message' => 'You are not authorized to delete this record as you are not the creator.'], 403);
+        }
+
         $history->delete();
         return response()->json(['success' => true, 'message' => 'Medical history entry deleted.']);
     }
@@ -1571,6 +1592,36 @@ class MaternityWorkbenchController extends Controller
         return response()->json(['success' => true, 'delivery' => $delivery]);
     }
 
+    public function deleteDeliveryRecord($id)
+    {
+        $delivery = DeliveryRecord::findOrFail($id);
+
+        // Authorization check
+        if ($delivery->delivered_by && $delivery->delivered_by !== Auth::id() && !Auth::user()->hasRole('SUPERADMIN|ADMIN')) {
+            return response()->json(['success' => false, 'message' => 'You are not authorized to delete this delivery record.'], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Reset enrollment status to 'active' (or previous state)
+            $enrollment = MaternityEnrollment::find($delivery->enrollment_id);
+            if ($enrollment) {
+                $enrollment->update(['status' => 'active']);
+            }
+
+            // Note: Cascade delete should handle babies and partograph entries if defined in migration,
+            // but we'll do it explicitly if needed or rely on constrained deletes.
+            $delivery->delete();
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Delivery record and associated data removed.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
     /* ── Partograph ──────────────────────────────────────────────── */
 
     public function savePartographEntry(Request $request, $id)
@@ -2003,6 +2054,16 @@ class MaternityWorkbenchController extends Controller
         ]);
     }
 
+    public function deleteBaby($id)
+    {
+        $baby = MaternityBaby::findOrFail($id);
+        if (!Auth::user()->hasRole('SUPERADMIN|ADMIN|MATERNITY_STAFF')) {
+             return response()->json(['success' => false, 'message' => 'Unauthorized deletion.'], 403);
+        }
+        $baby->delete();
+        return response()->json(['success' => true, 'message' => 'Baby record removed.']);
+    }
+
     public function updateBaby(Request $request, $id)
     {
         $baby = MaternityBaby::findOrFail($id);
@@ -2219,6 +2280,16 @@ class MaternityWorkbenchController extends Controller
             });
 
         return response()->json(['success' => true, 'visits' => $visits]);
+    }
+
+    public function deletePostnatalVisit($id)
+    {
+        $visit = PostnatalVisit::findOrFail($id);
+        if ($visit->seen_by && $visit->seen_by !== Auth::id() && !Auth::user()->hasRole('SUPERADMIN|ADMIN')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized deletion.'], 403);
+        }
+        $visit->delete();
+        return response()->json(['success' => true, 'message' => 'Postnatal visit deleted.']);
     }
 
     public function savePostnatalVisit(Request $request, $id)

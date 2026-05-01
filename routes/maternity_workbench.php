@@ -48,6 +48,7 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::post('/enrollment/{id}/anc-visit', [MaternityWorkbenchController::class, 'saveAncVisit'])->name('enrollment.anc-visit.store');
         Route::put('/anc-visit/{id}', [MaternityWorkbenchController::class, 'updateAncVisit'])->name('anc-visit.update');
         Route::get('/anc-visit/{id}', [MaternityWorkbenchController::class, 'getAncVisitDetail'])->name('anc-visit.show');
+        Route::delete('/anc-visit/{id}', [MaternityWorkbenchController::class, 'deleteAncVisit'])->name('anc-visit.delete');
 
         // ── Investigations (Lab & Imaging) ──────────────────────────
         Route::get('/enrollment/{id}/investigations', [MaternityWorkbenchController::class, 'getInvestigations'])->name('enrollment.investigations');
@@ -80,6 +81,7 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::post('/enrollment/{id}/delivery', [MaternityWorkbenchController::class, 'saveDeliveryRecord'])->name('enrollment.delivery.store');
         Route::put('/delivery/{id}', [MaternityWorkbenchController::class, 'updateDeliveryRecord'])->name('delivery.update');
         Route::get('/delivery/{id}', [MaternityWorkbenchController::class, 'getDeliveryRecord'])->name('delivery.show');
+        Route::delete('/delivery/{id}', [MaternityWorkbenchController::class, 'deleteDeliveryRecord'])->name('delivery.delete');
         Route::post('/delivery/{id}/partograph', [MaternityWorkbenchController::class, 'savePartographEntry'])->name('delivery.partograph.store');
         Route::get('/delivery/{id}/partograph', [MaternityWorkbenchController::class, 'getPartographEntries'])->name('delivery.partograph.index');
         Route::put('/partograph/{id}', [MaternityWorkbenchController::class, 'updatePartographEntry'])->name('partograph.update');
@@ -89,6 +91,7 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::post('/enrollment/{id}/baby', [MaternityWorkbenchController::class, 'registerBaby'])->name('enrollment.baby.store');
         Route::get('/baby/{id}', [MaternityWorkbenchController::class, 'getBabyDetails'])->name('baby.show');
         Route::put('/baby/{id}', [MaternityWorkbenchController::class, 'updateBaby'])->name('baby.update');
+        Route::delete('/baby/{id}', [MaternityWorkbenchController::class, 'deleteBaby'])->name('baby.delete');
         Route::post('/baby/{id}/mark-deceased', [MaternityWorkbenchController::class, 'markBabyDeceased'])->name('baby.mark-deceased');
         Route::post('/baby/{id}/growth', [MaternityWorkbenchController::class, 'saveGrowthRecord'])->name('baby.growth.store');
         Route::get('/baby/{id}/growth-chart', [MaternityWorkbenchController::class, 'getGrowthChartData'])->name('baby.growth-chart');
@@ -97,6 +100,7 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::get('/enrollment/{id}/postnatal', [MaternityWorkbenchController::class, 'getPostnatalVisits'])->name('enrollment.postnatal.index');
         Route::post('/enrollment/{id}/postnatal', [MaternityWorkbenchController::class, 'savePostnatalVisit'])->name('enrollment.postnatal.store');
         Route::put('/postnatal/{id}', [MaternityWorkbenchController::class, 'updatePostnatalVisit'])->name('postnatal.update');
+        Route::delete('/postnatal/{id}', [MaternityWorkbenchController::class, 'deletePostnatalVisit'])->name('postnatal.delete');
 
         // ── Immunization (unified with nursing schedule system) ─────
         Route::get('/patient/{patientId}/schedule', [MaternityWorkbenchController::class, 'getPatientScheduleMaternity'])->name('schedule.get');

@@ -15,11 +15,16 @@ class MaternityMedicalHistory extends Model implements Auditable
     protected $table = 'maternity_medical_history';
 
     protected $fillable = [
-        'enrollment_id', 'category', 'description', 'year', 'notes',
+        'enrollment_id', 'category', 'description', 'year', 'notes', 'created_by',
     ];
 
     public function enrollment()
     {
         return $this->belongsTo(MaternityEnrollment::class, 'enrollment_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
