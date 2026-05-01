@@ -1915,6 +1915,25 @@ $sett = appsettings();
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="mdi mdi-alert"></i> Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this record? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- 2. Add Previous Pregnancy Modal --}}
 <div class="modal fade" id="addPregnancyModal" tabindex="-1" aria-labelledby="addPregnancyModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -2031,7 +2050,10 @@ $sett = appsettings();
                             <div class="col-md-3 mb-3"><label class="form-label">Duration (sec) <span class="mat-tooltip-icon" title="Duration of each contraction in seconds. <20s = mild, 20-40s = moderate,>40s = strong"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contraction_duration_sec" class="form-control" min="0" max="180">
                                 <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> &lt;20s mild, 20–40s moderate, &gt;40s strong</div>
                             </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm. <110 = bradycardia,>160 = tachycardia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fetal_heart_rate" class="form-control" min="60" max="220">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm. Can also record Nil, +, ++"><i class="mdi mdi-help-circle"></i></span></label>
+                                <input type="text" name="fetal_heart_rate" class="form-control" placeholder="e.g. 140, Nil, +, ++" list="fhr-options">
+                            </div>
                                 <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 110–160 bpm</div>
                             </div>
                             <div class="col-md-3 mb-3"><label class="form-label">Amniotic Fluid <span class="mat-tooltip-icon" title="C = Clear (normal), I = Intact membranes, M = Meconium-stained (fetal distress risk), B = Bloody, A = Absent"><i class="mdi mdi-help-circle"></i></span></label><select name="amniotic_fluid" class="form-select">
@@ -2264,13 +2286,22 @@ $sett = appsettings();
                         <div class="mat-form-section-title"><i class="mdi mdi-human-pregnant"></i> Obstetric Examination</div>
                         <div class="row">
                             <div class="col-md-3 mb-3"><label class="form-label">Fundal Height (cm) <span class="mat-tooltip-icon" title="Symphysis-fundal height — roughly equals gestational age in weeks (±2cm)"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fundal_height_cm" class="form-control" step="0.1" placeholder="e.g. 28"></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="fetal_heart_rate" class="form-control" min="60" max="200" placeholder="e.g. 140"></div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm. Can also record Nil, +, ++"><i class="mdi mdi-help-circle"></i></span></label>
+                                <input type="text" name="fetal_heart_rate" class="form-control" placeholder="e.g. 140, Nil, +, ++" list="fhr-options">
+                                <datalist id="fhr-options">
+                                    <option value="Nil">Nil</option>
+                                    <option value="+">+</option>
+                                    <option value="++">++</option>
+                                </datalist>
+                            </div>
                             <div class="col-md-3 mb-3"><label class="form-label">Presentation <span class="mat-tooltip-icon" title="Cephalic: head-first (normal). Breech: buttocks/feet first. Transverse: sideways"><i class="mdi mdi-help-circle"></i></span></label><select name="presentation" class="form-select">
                                     <option value="">-- Select --</option>
                                     <option>Cephalic</option>
                                     <option>Breech</option>
                                     <option>Transverse</option>
                                     <option>Oblique</option>
+                                    <option>Palpable</option>
                                 </select></div>
                             <div class="col-md-3 mb-3"><label class="form-label">Oedema <span class="mat-tooltip-icon" title="+: pedal only. ++: lower legs. +++: generalized/facial (pre-eclampsia warning)"><i class="mdi mdi-help-circle"></i></span></label><select name="oedema" class="form-select">
                                     <option value="">-- Select --</option>
@@ -2286,6 +2317,7 @@ $sett = appsettings();
                                     <option value="present">Present</option>
                                     <option value="absent">Absent</option>
                                     <option value="reduced">Reduced</option>
+                                    <option value="not perceptible">Not perceptible</option>
                                 </select></div>
                             <div class="col-md-3 mb-3"><label class="form-label">Urine Protein <span class="mat-tooltip-icon" title="≥++ with raised BP may indicate pre-eclampsia"><i class="mdi mdi-help-circle"></i></span></label><select name="urine_protein" class="form-select">
                                     <option value="">-- Select --</option>
@@ -3843,11 +3875,12 @@ $sett = appsettings();
 
             // Medical History
             html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-clipboard-text"></i> Medical / Surgical History</h6></div><div class="card-body">';
-            if (enrollment.medical_history && enrollment.medical_history.length> 0) {
-                html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Category</th><th>Description</th><th>Year</th><th>Notes</th><th style="width:80px">Actions</th></tr></thead><tbody>';
+            if (enrollment.medical_history && enrollment.medical_history.length > 0) {
+                html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Category</th><th>Description</th><th>Year</th><th>Notes</th><th>Added By</th><th style="width:80px">Actions</th></tr></thead><tbody>';
                 enrollment.medical_history.forEach(h => {
-                    html += `<tr><td><span class="badge bg-secondary">${h.category}</span></td><td>${h.description}</td><td>${h.year || '-'}</td><td>${h.notes || '-'}</td>
-                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editMedicalHistory(${h.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteMedicalHistory(${h.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td></tr>`;
+                    const creatorName = h.creator ? h.creator.name : '-';
+                    html += `<tr><td><span class="badge bg-secondary">${h.category}</span></td><td>${h.description}</td><td>${h.year || '-'}</td><td>${h.notes || '-'}</td><td><small>${creatorName}</small></td>
+                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editMedicalHistory(${h.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteMedicalHistory(${h.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td></tr>`;
                 });
                 html += '</tbody></table></div>';
             } else {
@@ -3862,7 +3895,7 @@ $sett = appsettings();
                 enrollment.previous_pregnancies.forEach(p => {
                     const outcome = p.baby_alive ? '✅ Alive' : (p.baby_dead ? '❌ Dead' : (p.baby_stillbirth ? '💔 Stillbirth' : '-'));
                     html += `<tr><td>${p.year || '-'}</td><td>${p.duration_weeks ? p.duration_weeks + 'w' : '-'}</td><td>${p.place_of_delivery || '-'}</td><td>${outcome}</td><td>${p.baby_sex || '-'}</td><td>${p.birth_weight_kg ? p.birth_weight_kg + 'kg' : '-'}</td><td>${p.notes || '-'}</td>
-                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editPreviousPregnancy(${p.id})" title="Edit"><i class="mdi mdi-pencil"></i></button></td></tr>`;
+                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editPreviousPregnancy(${p.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeletePreviousPregnancy(${p.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td></tr>`;
                 });
                 html += '</tbody></table></div>';
             } else {
@@ -3904,25 +3937,102 @@ $sett = appsettings();
         $('#addHistoryModal').modal('show');
     }
 
-    function deleteMedicalHistory(id) {
-        if (!confirm('Delete this medical history entry?')) return;
+    let _itemToDeleteId = null;
+    let _itemToDeleteType = null;
+
+    function confirmDeleteMedicalHistory(id) {
+        _itemToDeleteId = id;
+        _itemToDeleteType = 'history';
+        $('#deleteConfirmModal .modal-body').text('Are you sure you want to delete this medical history entry?');
+        $('#deleteConfirmModal').modal('show');
+    }
+
+    function confirmDeletePreviousPregnancy(id) {
+        _itemToDeleteId = id;
+        _itemToDeleteType = 'pregnancy';
+        $('#deleteConfirmModal .modal-body').text('Are you sure you want to delete this pregnancy record?');
+        $('#deleteConfirmModal').modal('show');
+    }
+
+    function confirmDeleteAncVisit(id) {
+        _itemToDeleteId = id;
+        _itemToDeleteType = 'anc';
+        $('#deleteConfirmModal .modal-body').text('Are you sure you want to delete this ANC visit? This will also remove any trend data associated with it.');
+        $('#deleteConfirmModal').modal('show');
+    }
+
+    function confirmDeleteDeliveryRecord(id) {
+        _itemToDeleteId = id;
+        _itemToDeleteType = 'delivery';
+        $('#deleteConfirmModal .modal-body').html('<div class="alert alert-warning"><i class="mdi mdi-alert"></i> <strong>CRITICAL ACTION:</strong> Deleting a delivery record will also remove all associated <strong>Partograph entries</strong> and <strong>Baby records</strong> for this delivery. This cannot be undone.</div><p>Are you absolutely sure you want to proceed?</p>');
+        $('#deleteConfirmModal').modal('show');
+    }
+
+    function confirmDeletePostnatalVisit(id) {
+        _itemToDeleteId = id;
+        _itemToDeleteType = 'postnatal';
+        $('#deleteConfirmModal .modal-body').text('Are you sure you want to delete this postnatal visit?');
+        $('#deleteConfirmModal').modal('show');
+    }
+
+    function confirmDeleteBaby(id) {
+        _itemToDeleteId = id;
+        _itemToDeleteType = 'baby';
+        $('#deleteConfirmModal .modal-body').text('Are you sure you want to remove this baby record?');
+        $('#deleteConfirmModal').modal('show');
+    }
+
+    $(document).on('click', '#btn-confirm-delete', function() {
+        if (!_itemToDeleteId) return;
+        const btn = $(this);
+        const originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Deleting...');
+
+        let url = '';
+        let reloadFn = loadHistoryTab;
+
+        if (_itemToDeleteType === 'history') {
+            url = `/maternity-workbench/medical-history/${_itemToDeleteId}`;
+        } else if (_itemToDeleteType === 'pregnancy') {
+            url = `/maternity-workbench/prev-pregnancy/${_itemToDeleteId}`;
+        } else if (_itemToDeleteType === 'anc') {
+            url = `/maternity-workbench/anc-visit/${_itemToDeleteId}`;
+            reloadFn = loadAncTab;
+        } else if (_itemToDeleteType === 'delivery') {
+            url = `/maternity-workbench/delivery/${_itemToDeleteId}`;
+            reloadFn = loadDeliveryTab;
+        } else if (_itemToDeleteType === 'postnatal') {
+            url = `/maternity-workbench/postnatal/${_itemToDeleteId}`;
+            reloadFn = loadPostnatalTab;
+        } else if (_itemToDeleteType === 'baby') {
+            url = `/maternity-workbench/baby/${_itemToDeleteId}`;
+            reloadFn = loadBabyTab;
+        }
+
         $.ajax({
-            url: `/maternity-workbench/medical-history/${id}`,
+            url: url,
             method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': CSRF_TOKEN
-            },
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
             success: function(r) {
+                btn.prop('disabled', false).html(originalHtml);
+                $('#deleteConfirmModal').modal('hide');
                 if (r.success) {
-                    toastr.success(r.message || 'Deleted');
-                    loadHistoryTab();
+                    toastr.success(r.message);
+                    reloadFn();
+                    if (_itemToDeleteType === 'delivery') {
+                         // Full reload context if delivery deleted
+                         loadPatient(currentPatient);
+                    }
                 } else toastr.error(r.message);
+                _itemToDeleteId = null;
             },
-            error: function() {
-                toastr.error('Failed to delete');
+            error: function(xhr) {
+                btn.prop('disabled', false).html(originalHtml);
+                toastr.error(xhr.responseJSON?.message || 'Failed to delete');
+                _itemToDeleteId = null;
             }
         });
-    }
+    });
 
     // Medical History modal save handler
     $(document).on('click', '#btn-save-history', function() {
@@ -4111,6 +4221,7 @@ $sett = appsettings();
                         <div class="d-flex align-items-center gap-2">
                             <span class="visit-date">${v.visit_date || ''}</span>
                             <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editAncVisit(${v.id})" title="Edit visit"><i class="mdi mdi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteAncVisit(${v.id})" title="Delete visit"><i class="mdi mdi-delete"></i></button>
                         </div>
                     </div>
                     <div class="visit-details">
@@ -4265,7 +4376,11 @@ $sett = appsettings();
             return da.localeCompare(db);
         });
         const labels = sorted.map(v => v.visit_date || `V#${v.visit_number}`);
-        const toNum = v => (v === null || v === undefined || v === '') ? null : Number(v);
+        const toNum = v => {
+            if (v === null || v === undefined || v === '') return null;
+            const n = Number(v);
+            return isNaN(n) ? null : n;
+        };
 
         // ── 1. Blood Pressure Chart ──
         const bpCanvas = document.getElementById('anc-chart-bp');
@@ -5734,7 +5849,7 @@ $sett = appsettings();
     }
 
     function renderDeliveryDetails(d) {
-        const html = `<div class="card-modern"><div class="card-header text-white d-flex justify-content-between" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Delivery Record</h6><div><button class="btn btn-sm btn-outline-light me-1" onclick="editDeliveryRecord(${d.id})" title="Edit"><i class="mdi mdi-pencil"></i> Edit</button><span class="badge bg-light text-dark">${(d.type_of_delivery || '').toUpperCase()}</span></div></div><div class="card-body">
+        const html = `<div class="card-modern"><div class="card-header text-white d-flex justify-content-between" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Delivery Record</h6><div><button class="btn btn-sm btn-outline-light me-1" onclick="editDeliveryRecord(${d.id})" title="Edit"><i class="mdi mdi-pencil"></i> Edit</button><button class="btn btn-sm btn-outline-light me-1" onclick="confirmDeleteDeliveryRecord(${d.id})" title="Delete Delivery"><i class="mdi mdi-delete"></i> Delete</button><span class="badge bg-light text-dark">${(d.type_of_delivery || '').toUpperCase()}</span></div></div><div class="card-body">
         <div class="row"><div class="col-md-6"><table class="table table-sm">
             <tr><td class="text-muted">Date</td><td>${d.delivery_date || 'N/A'}</td></tr>
             <tr><td class="text-muted">Time</td><td>${d.delivery_time || 'N/A'}</td></tr>
@@ -6269,6 +6384,7 @@ $sett = appsettings();
                         <div class="baby-name">${patientName} ${isStillBirth}</div>
                         <div class="d-flex align-items-center gap-2">
                             <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editBaby(${b.id})" title="Edit baby record"><i class="mdi mdi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteBaby(${b.id})" title="Delete baby record"><i class="mdi mdi-delete"></i></button>
                             <span class="baby-sex ${b.sex}">${b.sex === 'male' ? '♂ Male' : (b.sex === 'female' ? '♀ Female' : '? Ambiguous')}</span>
                         </div>
                     </div>
@@ -6715,6 +6831,7 @@ $sett = appsettings();
                         <div class="d-flex align-items-center gap-2">
                             <span class="visit-date">${v.visit_date} (${v.days_postpartum || '?'}d postpartum)</span>
                             <button class="btn btn-sm btn-outline-info py-0 px-1" onclick="editPostnatalVisit(${v.id})" title="Edit visit"><i class="mdi mdi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeletePostnatalVisit(${v.id})" title="Delete visit"><i class="mdi mdi-delete"></i></button>
                         </div>
                     </div>
                     <div class="visit-details">

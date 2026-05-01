@@ -303,11 +303,7 @@
 <script src="{{ asset('assets/js/select2.min.js') }}"></script>
 <script>
     $(function() {
-        var itemIndex = {
-            {
-                isset($purchaseOrder) ? $purchaseOrder - > items - > count() : 0
-            }
-        };
+        var itemIndex = {{ isset($purchaseOrder) ? $purchaseOrder->items->count() : 0 }};
 
         // Initialize Supplier Select2
         var supplierSelect = $('#supplier_id').select2({

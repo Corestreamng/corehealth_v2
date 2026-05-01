@@ -109,11 +109,12 @@ class StoreWorkbenchController extends Controller
             $stats = $this->getStoreStats($storeId);
 
             // Pending actions
-            $pendingPOs = $this->purchaseOrderService->getReadyToReceive()
-                ->where('target_store_id', $storeId);
+            $pendingPOs = \App\Models\PurchaseOrder::where('target_store_id', $storeId)
+                ->whereIn('status', ['approved', 'partial', 'partial_received', 'partially_received'])
+                ->get();
             $pendingRequisitions = $this->requisitionService->getPendingFulfillment($storeId);
             $incomingRequisitions = $this->requisitionService->getMyRequisitions($storeId)
-                ->whereIn('status', ['approved', 'partial']);
+                ->whereIn('status', ['pending', 'approved', 'partial']);
 
             // Alerts
             $expiringBatches = $this->stockService->getExpiringBatches($storeId, 30);
@@ -761,23 +762,30 @@ class StoreWorkbenchController extends Controller
         $pendingPOs          = collect();
 
         if ($selectedStore) {
-            $pendingIncomingReqs = \App\Models\StoreRequisition::where('to_store_id', $storeId)
-                ->whereIn('status', ['approved', 'partial'])
+            $pendingIncomingReqs = \App\Models\StoreRequisition::where('from_store_id', $storeId)
+                ->whereIn('status', ['pending', 'approved', 'partial'])
                 ->with(['items.product', 'fromStore'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            $pendingOutgoingReqs = \App\Models\StoreRequisition::where('from_store_id', $storeId)
+            $pendingOutgoingReqs = \App\Models\StoreRequisition::where('to_store_id', $storeId)
                 ->whereIn('status', ['pending', 'approved', 'partial'])
                 ->with(['items.product', 'toStore'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
             $pendingPOs = \App\Models\PurchaseOrder::where('target_store_id', $storeId)
-                ->whereIn('status', ['approved', 'partial_received'])
-                ->with(['supplier', 'items.product'])
+                ->whereIn('status', ['approved', 'partial', 'partially_received', 'partial_received'])
+                ->with(['supplier', 'items.product', 'targetStore'])
                 ->orderBy('created_at', 'desc')
                 ->get();
+            
+            \Illuminate\Support\Facades\Log::info('Tally Card Debug', [
+                'store_id' => $storeId,
+                'incoming_count' => $pendingIncomingReqs->count(),
+                'outgoing_count' => $pendingOutgoingReqs->count(),
+                'po_count' => $pendingPOs->count(),
+            ]);
         }
 
         return view('admin.inventory.store-workbench.tally-card', compact(
@@ -829,7 +837,7 @@ class StoreWorkbenchController extends Controller
                 $q->where('product_id', (int) $request->product_id);
             }
         })
-        ->with(['stockBatch.product.packaging', 'stockBatch.store', 'performer'])
+        ->with(['stockBatch.product.packagings', 'stockBatch.store', 'performer'])
         ->when($dateFrom, fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
         ->when($dateTo,   fn($q) => $q->whereDate('created_at', '<=', $dateTo))
         ->orderBy('created_at')
@@ -988,7 +996,7 @@ class StoreWorkbenchController extends Controller
                 'ref_url'         => $refUrl,
                 'performer'       => $tx->performer->name ?? 'System',
                 'notes'           => $tx->notes,
-                'packaging'       => $tx->stockBatch->product->packaging->map(function($p) {
+                'packaging'       => $tx->stockBatch->product->packagings->map(function($p) {
                     return [
                         'id' => $p->id,
                         'name' => $p->name,
