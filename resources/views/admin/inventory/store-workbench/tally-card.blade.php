@@ -407,7 +407,9 @@
             color: #065f46;
         }
 
-        .status-badge.partial {
+        .status-badge.partial,
+        .status-badge.partially_received,
+        .status-badge.partial_received {
             background: #dbeafe;
             color: #1e40af;
         }
@@ -742,7 +744,7 @@
                                     <div class="req-row">
                                         <div>
                                             <div class="req-ref">{{ $req->requisition_number }}</div>
-                                            <div class="req-meta">From: {{ $req->fromStore->store_name ?? '—' }}</div>
+                                            <div class="req-meta">To: {{ $req->toStore->store_name ?? '—' }}</div>
                                             <div class="req-meta">
                                                 @foreach ($req->items->take(2) as $item)
                                                     {{ $item->product->product_name ?? '—' }}
@@ -793,7 +795,7 @@
                                     <div class="req-row">
                                         <div>
                                             <div class="req-ref">{{ $req->requisition_number }}</div>
-                                            <div class="req-meta">To: {{ $req->toStore->store_name ?? '—' }}</div>
+                                            <div class="req-meta">From: {{ $req->fromStore->store_name ?? '—' }}</div>
                                             <div class="req-meta">
                                                 @foreach ($req->items->take(2) as $item)
                                                     {{ $item->product->product_name ?? '—' }}
@@ -857,7 +859,7 @@
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             <span
-                                                class="status-badge approved">{{ ucwords(str_replace('_', ' ', $po->status)) }}</span>
+                                                class="status-badge {{ $po->status }}">{{ ucwords(str_replace('_', ' ', $po->status)) }}</span>
                                             <button class="btn btn-sm btn-receive-po" data-po-id="{{ $po->id }}"
                                                 data-po-number="{{ $po->po_number }}"
                                                 style="background:#8b5cf6; color:#fff; border:none; border-radius:6px; font-size:0.75rem; padding:4px 10px;">
