@@ -2011,11 +2011,11 @@ class EncounterController extends Controller
         try {
             $doctor = Staff::where('user_id', Auth::id())->first();
             $patient = Patient::with('user')->find(request()->get('patient_id'));
-            $clinic = Clinic::find($doctor->clinic_id);
+            $queue_id = $request->get('queue_id');
+            $doctorQueue = $queue_id ? DoctorQueue::with('clinic')->find($queue_id) : null;
+            $clinic = ($doctorQueue && $doctorQueue->clinic) ? $doctorQueue->clinic : Clinic::find($doctor->clinic_id);
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
             $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
-            $queue_id = $request->get('queue_id');
-            $doctorQueue = $queue_id ? DoctorQueue::find($queue_id) : null;
 
             // Single query — derive categories/subcategories in memory
             $reasons_for_encounter_list = ReasonForEncounter::all();
@@ -2140,6 +2140,8 @@ class EncounterController extends Controller
                         'allClinics' => $allClinics,
                         'doctorStaffList' => $doctorStaffList,
                         'patientWeight' => $patientWeight,
+                        'vitals_template' => $clinic ? $clinic->vitals_template : null,
+                        'clinic_name' => $clinic ? $clinic->name : null,
                     ]);
                 } else {
                     return view('admin.doctors.new_encounter')->with([
@@ -2156,6 +2158,8 @@ class EncounterController extends Controller
                         'allClinics' => $allClinics,
                         'doctorStaffList' => $doctorStaffList,
                         'patientWeight' => $patientWeight,
+                        'vitals_template' => $clinic ? $clinic->vitals_template : null,
+                        'clinic_name' => $clinic ? $clinic->name : null,
                     ]);
                 }
             }

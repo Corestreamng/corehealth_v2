@@ -2873,7 +2873,7 @@ $sett = appsettings();
 
                 // Initialize shared vitals partial
                 if (typeof window.initUnifiedVitals === 'function') {
-                    window.initUnifiedVitals(patientId);
+                    window.initUnifiedVitals(patientId, null, data.clinic_name, data.vitals_template);
                 }
 
                 // Load enrollment tab content
@@ -3107,7 +3107,7 @@ $sett = appsettings();
                 break;
             case 'vitals':
                 if (typeof window.initUnifiedVitals === 'function') {
-                    window.initUnifiedVitals(currentPatient);
+                    window.initUnifiedVitals(currentPatient, null, data.clinic_name, data.vitals_template);
                 }
                 break;
         }
