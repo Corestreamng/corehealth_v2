@@ -16,6 +16,7 @@ use App\Models\StoreContextRule;
 use App\Helpers\BatchHelper;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -178,7 +179,7 @@ class StoreWorkbenchController extends Controller
                 $search = $request->search;
                 $query->whereHas('product', function ($q) use ($search) {
                     $q->where('product_name', 'like', "%{$search}%")
-                      ->orWhere('product_code', 'like', "%{$search}%");
+                        ->orWhere('product_code', 'like', "%{$search}%");
                 });
             }
 
@@ -232,7 +233,7 @@ class StoreWorkbenchController extends Controller
             $search = $request->search;
             $productsQuery->where(function ($q) use ($search) {
                 $q->where('product_name', 'like', "%{$search}%")
-                  ->orWhere('product_code', 'like', "%{$search}%");
+                    ->orWhere('product_code', 'like', "%{$search}%");
             });
         }
 
@@ -494,6 +495,8 @@ class StoreWorkbenchController extends Controller
             'batch_name' => 'nullable|string|max:100',
             'batch_number' => 'required|string|max:100|unique:stock_batches,batch_number',
             'notes' => 'nullable|string|max:500',
+            'packaging_id' => 'nullable|exists:product_packagings,id',
+            'packaging_qty' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -508,6 +511,8 @@ class StoreWorkbenchController extends Controller
                 'batch_number' => $request->batch_number,
                 'source' => StockBatch::SOURCE_MANUAL,
                 'notes' => $request->notes ?? 'Manual entry',
+                'packaging_id' => $request->packaging_id,
+                'packaging_qty' => $request->packaging_qty,
             ]);
 
             // Handle AJAX vs regular form submission
@@ -522,9 +527,8 @@ class StoreWorkbenchController extends Controller
             return redirect()
                 ->route('inventory.store-workbench.product-batches', ['product' => $request->product_id, 'store_id' => $request->store_id])
                 ->with('success', "Batch {$batch->batch_number} created successfully with {$request->quantity} units");
-
         } catch (\Exception $e) {
-            \Log::error('Manual batch creation failed: ' . $e->getMessage(), [
+            Log::error('Manual batch creation failed: ' . $e->getMessage(), [
                 'request' => $request->all(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -764,22 +768,22 @@ class StoreWorkbenchController extends Controller
         if ($selectedStore) {
             $pendingIncomingReqs = \App\Models\StoreRequisition::where('from_store_id', $storeId)
                 ->whereIn('status', ['pending', 'approved', 'partial'])
-                ->with(['items.product', 'fromStore'])
+                ->with(['items.product.packagings', 'fromStore'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
             $pendingOutgoingReqs = \App\Models\StoreRequisition::where('to_store_id', $storeId)
                 ->whereIn('status', ['pending', 'approved', 'partial'])
-                ->with(['items.product', 'toStore'])
+                ->with(['items.product.packagings', 'toStore'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
             $pendingPOs = \App\Models\PurchaseOrder::where('target_store_id', $storeId)
                 ->whereIn('status', ['approved', 'partial', 'partially_received', 'partial_received'])
-                ->with(['supplier', 'items.product', 'targetStore'])
+                ->with(['supplier', 'items.product.packagings', 'targetStore'])
                 ->orderBy('created_at', 'desc')
                 ->get();
-            
+
             \Illuminate\Support\Facades\Log::info('Tally Card Debug', [
                 'store_id' => $storeId,
                 'incoming_count' => $pendingIncomingReqs->count(),
@@ -837,11 +841,11 @@ class StoreWorkbenchController extends Controller
                 $q->where('product_id', (int) $request->product_id);
             }
         })
-        ->with(['stockBatch.product.packagings', 'stockBatch.store', 'performer'])
-        ->when($dateFrom, fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
-        ->when($dateTo,   fn($q) => $q->whereDate('created_at', '<=', $dateTo))
-        ->orderBy('created_at')
-        ->orderBy('id');
+            ->with(['stockBatch.product.packagings', 'stockBatch.store', 'performer'])
+            ->when($dateFrom, fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo,   fn($q) => $q->whereDate('created_at', '<=', $dateTo))
+            ->orderBy('created_at')
+            ->orderBy('id');
 
         $transactions = $query->get();
 
@@ -852,11 +856,11 @@ class StoreWorkbenchController extends Controller
         // Human-readable labels and optional deep-link URLs per reference_type
         $refLabelMap = [
             'PurchaseOrder'           => ['prefix' => 'PO #',        'url_route' => 'inventory.purchase-orders.show'],
-            'StoreRequisition'        => ['prefix' => 'Requisition #','url_route' => 'inventory.requisitions.show'],
+            'StoreRequisition'        => ['prefix' => 'Requisition #', 'url_route' => 'inventory.requisitions.show'],
             'ProductRequest'          => ['prefix' => 'Pharmacy Dispense #', 'url_route' => null],
             'ProductOrServiceRequest' => ['prefix' => 'Clinical Bill #',     'url_route' => null],
             'InjectionAdministration' => ['prefix' => 'Injection #',         'url_route' => null],
-            'MedicationAdministration'=> ['prefix' => 'Med Admin',           'url_route' => null],
+            'MedicationAdministration' => ['prefix' => 'Med Admin',           'url_route' => null],
             'PharmacyReturn'          => ['prefix' => 'Drug Return #',       'url_route' => null],
             'PharmacyDamage'          => ['prefix' => 'Damage #',            'url_route' => null],
             // Legacy migration rows created during initial data import
@@ -881,8 +885,13 @@ class StoreWorkbenchController extends Controller
         $totalOut = 0;
 
         $rows = $transactions->map(function ($tx) use (
-            $inboundTypes, $outboundTypes, $refLabelMap, $typeLabelMap,
-            &$balances, &$totalIn, &$totalOut
+            $inboundTypes,
+            $outboundTypes,
+            $refLabelMap,
+            $typeLabelMap,
+            &$balances,
+            &$totalIn,
+            &$totalOut
         ) {
             $productId   = $tx->stockBatch->product_id;
             $productName = $tx->stockBatch->product->product_name ?? '—';
@@ -996,7 +1005,7 @@ class StoreWorkbenchController extends Controller
                 'ref_url'         => $refUrl,
                 'performer'       => $tx->performer->name ?? 'System',
                 'notes'           => $tx->notes,
-                'packaging'       => $tx->stockBatch->product->packagings->map(function($p) {
+                'packaging'       => $tx->stockBatch->product->packagings->map(function ($p) {
                     return [
                         'id' => $p->id,
                         'name' => $p->name,
@@ -1055,6 +1064,56 @@ class StoreWorkbenchController extends Controller
                 'products_touched'  => count($balances),
                 'by_product'        => $byProduct,
             ],
+        ]);
+    }
+
+    /**
+     * Tally Card — Pending Actions (AJAX)
+     *
+     * Returns JSON for the pending requisitions and PO panels.
+     */
+    public function pendingActions(Request $request)
+    {
+        $request->validate([
+            'store_id' => 'required|exists:stores,id',
+        ]);
+
+        $storeId = (int) $request->store_id;
+
+        // Governance: user must have access to the requested store
+        $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
+        if (! $accessibleStoreIds->contains($storeId)) {
+            return response()->json(['success' => false, 'message' => 'Access denied to this store.'], 403);
+        }
+
+        $pendingIncomingReqs = StoreRequisition::where('from_store_id', $storeId)
+            ->whereIn('status', ['pending', 'approved', 'partial'])
+            ->with(['items.product.packagings', 'toStore'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $pendingOutgoingReqs = StoreRequisition::where('to_store_id', $storeId)
+            ->whereIn('status', ['pending', 'approved', 'partial'])
+            ->with(['items.product.packagings', 'fromStore'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $pendingPOs = PurchaseOrder::where('target_store_id', $storeId)
+            ->whereIn('status', ['approved', 'partial', 'partially_received', 'partial_received'])
+            ->with(['supplier', 'items.product.packagings', 'targetStore'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'counts' => [
+                'incoming' => $pendingIncomingReqs->count(),
+                'outgoing' => $pendingOutgoingReqs->count(),
+                'pos' => $pendingPOs->count(),
+            ],
+            'incoming' => $pendingIncomingReqs,
+            'outgoing' => $pendingOutgoingReqs,
+            'pos' => $pendingPOs,
         ]);
     }
 
