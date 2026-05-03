@@ -748,7 +748,11 @@
                                             <div class="req-meta">
                                                 @foreach ($req->items->take(2) as $item)
                                                     {{ $item->product->product_name ?? '—' }}
-                                                    ×{{ $item->requested_qty }}{{ !$loop->last ? ', ' : '' }}
+                                                    ×{{ $item->requested_qty }}
+                                                    @if($item->product && $item->product->packagings->count() > 0 && ($pkg = $item->product->packagings->first()) && $pkg->base_unit_qty > 1)
+                                                        <small class="text-muted">({{ round($item->requested_qty / $pkg->base_unit_qty, 2) }} {{ $pkg->name }})</small>
+                                                    @endif
+                                                    {{ !$loop->last ? ', ' : '' }}
                                                 @endforeach
                                                 @if ($req->items->count()> 2)
                                                     +{{ $req->items->count() - 2 }} more
@@ -758,11 +762,12 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <span
                                                 class="status-badge {{ $req->status }}">{{ ucfirst($req->status) }}</span>
-                                            <button class="btn btn-sm btn-primary btn-fulfill-req" data-req-id="{{ $req->id }}"
-                                                data-req-number="{{ $req->requisition_number }}"
+                                            <a href="{{ route('inventory.requisitions.show', $req->id) }}#fulfill-panel"
+                                                target="_blank"
+                                                class="btn btn-sm btn-primary"
                                                 style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
                                                 <i class="mdi mdi-check"></i> Fulfil
-                                            </button>
+                                            </a>
                                         </div>
                                     </div>
                                 @empty
@@ -799,7 +804,11 @@
                                             <div class="req-meta">
                                                 @foreach ($req->items->take(2) as $item)
                                                     {{ $item->product->product_name ?? '—' }}
-                                                    ×{{ $item->requested_qty }}{{ !$loop->last ? ', ' : '' }}
+                                                    ×{{ $item->requested_qty }}
+                                                    @if($item->product && $item->product->packagings->count() > 0 && ($pkg = $item->product->packagings->first()) && $pkg->base_unit_qty > 1)
+                                                        <small class="text-muted">({{ round($item->requested_qty / $pkg->base_unit_qty, 2) }} {{ $pkg->name }})</small>
+                                                    @endif
+                                                    {{ !$loop->last ? ', ' : '' }}
                                                 @endforeach
                                                 @if ($req->items->count()> 2)
                                                     +{{ $req->items->count() - 2 }} more
@@ -810,6 +819,7 @@
                                             <span
                                                 class="status-badge {{ $req->status }}">{{ ucfirst($req->status) }}</span>
                                             <a href="{{ route('inventory.requisitions.show', $req->id) }}"
+                                                target="_blank"
                                                 class="btn btn-sm btn-outline-secondary ml-1"
                                                 style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
                                                 <i class="mdi mdi-eye"></i>
@@ -850,7 +860,11 @@
                                             <div class="req-meta">
                                                 @foreach ($po->items->take(2) as $item)
                                                     {{ $item->product->product_name ?? '—' }}
-                                                    ×{{ $item->ordered_qty }}{{ !$loop->last ? ', ' : '' }}
+                                                    ×{{ $item->ordered_qty }}
+                                                    @if($item->product && $item->product->packagings->count() > 0 && ($pkg = $item->product->packagings->first()) && $pkg->base_unit_qty > 1)
+                                                        <small class="text-muted">({{ round($item->ordered_qty / $pkg->base_unit_qty, 2) }} {{ $pkg->name }})</small>
+                                                    @endif
+                                                    {{ !$loop->last ? ', ' : '' }}
                                                 @endforeach
                                                 @if ($po->items->count()> 2)
                                                     +{{ $po->items->count() - 2 }} more
@@ -860,11 +874,12 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <span
                                                 class="status-badge {{ $po->status }}">{{ ucwords(str_replace('_', ' ', $po->status)) }}</span>
-                                            <button class="btn btn-sm btn-receive-po" data-po-id="{{ $po->id }}"
-                                                data-po-number="{{ $po->po_number }}"
+                                            <a href="{{ route('inventory.purchase-orders.receive', $po->id) }}"
+                                                target="_blank"
+                                                class="btn btn-sm btn-receive-po"
                                                 style="background:#8b5cf6; color:#fff; border:none; border-radius:6px; font-size:0.75rem; padding:4px 10px;">
                                                 <i class="mdi mdi-download"></i> Receive
-                                            </button>
+                                            </a>
                                         </div>
                                     </div>
                                 @empty
@@ -956,21 +971,29 @@
                         <div id="req-items-container">
                             <div class="req-item-row" data-index="0">
                                 <div class="row align-items-end mb-2">
-                                    <div class="col-md-7">
+                                    <div class="col-md-5">
                                         <select name="items[0][product_id]" class="form-control req-product-select"
-                                            required>
+                                            required onchange="loadProductPackaging(this, 0, 'req')">
                                             <option value="">— Select Product —</option>
                                             @foreach ($products as $p)
                                                 <option value="{{ $p->id }}"
+                                                    data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}"
                                                     {{ $selectedProduct && $selectedProduct->id == $p->id ? 'selected' : '' }}>
                                                     {{ $p->product_name }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     </div>
+                                    <div class="col-md-2">
+                                        <select name="items[0][packaging_id]" class="form-control req-packaging-select" onchange="calculateReqBaseQty(0)">
+                                            <option value="">Base Unit</option>
+                                        </select>
+                                    </div>
                                     <div class="col-md-3">
-                                        <input type="number" name="items[0][requested_qty]" class="form-control"
-                                            placeholder="Qty" min="1" required>
+                                        <input type="number" name="items[0][packaging_qty]" class="form-control req-qty-input"
+                                            placeholder="Qty" min="1" required oninput="calculateReqBaseQty(0)">
+                                        <small class="text-muted req-base-qty-hint" id="req-base-qty-hint-0"></small>
+                                        <input type="hidden" name="items[0][requested_qty]" class="req-base-qty-hidden">
                                     </div>
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-req-item w-100" style="border-radius:6px;" disabled>
@@ -998,20 +1021,23 @@
 ═══════════════════════════════════════════════════════════ --}}
     <div class="modal fade" id="modal-add-batch" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="mdi mdi-package-variant-plus mr-2" style="color:#10b981;"></i>Add
-                        Stock Batch</h5>
-                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
+            <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+                <div class="modal-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; border-radius:12px 12px 0 0;">
+                    <h5 class="modal-title" style="color:#1e293b; font-weight:700;">
+                        <i class="mdi mdi-package-variant-plus mr-2" style="color:#10b981;"></i>Add Stock Batch
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <form id="form-add-batch">
                     @csrf
-                    <div class="modal-body">
+                    <div class="modal-body" style="padding:1.5rem;">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Store <span class="text-danger">*</span></label>
-                                    <select name="store_id" id="batch-store" class="form-control" required>
+                                    <label class="small font-weight-bold">Store <span class="text-danger">*</span></label>
+                                    <select name="store_id" id="batch-store" class="form-control" required style="border-radius:8px;">
                                         <option value="">— Select Store —</option>
                                         @foreach ($stores as $s)
                                             <option value="{{ $s->id }}"
@@ -1024,11 +1050,12 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>Product <span class="text-danger">*</span></label>
-                                    <select name="product_id" id="batch-product" class="form-control" required>
+                                    <label class="small font-weight-bold">Product <span class="text-danger">*</span></label>
+                                    <select name="product_id" id="batch-product" class="form-control" required onchange="loadProductPackaging(this, null, 'batch')" style="border-radius:8px;">
                                         <option value="">— Select Product —</option>
                                         @foreach ($products as $p)
                                             <option value="{{ $p->id }}"
+                                                data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}"
                                                 {{ $selectedProduct && $selectedProduct->id == $p->id ? 'selected' : '' }}>
                                                 {{ $p->product_name }}
                                             </option>
@@ -1037,45 +1064,58 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
+
+                        <div class="row mt-2">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Quantity <span class="text-danger">*</span></label>
-                                    <input type="number" name="quantity" class="form-control" min="1" required>
+                                    <label class="small font-weight-bold">Batch Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="batch_number" class="form-control" maxlength="100" required style="border-radius:8px;" placeholder="e.g. BTN-001">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Batch Number <span class="text-danger">*</span></label>
-                                    <input type="text" name="batch_number" class="form-control" maxlength="100"
-                                        required>
+                                    <label class="small font-weight-bold">Packaging Unit</label>
+                                    <select name="packaging_id" id="batch-packaging" class="form-control" onchange="calculateBatchBaseQty()" style="border-radius:8px;">
+                                        <option value="">Base Unit</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Batch Name</label>
-                                    <input type="text" name="batch_name" class="form-control" maxlength="100">
+                                    <label class="small font-weight-bold">Quantity <span class="text-danger">*</span></label>
+                                    <input type="number" name="packaging_qty" id="batch-qty" class="form-control" min="1" required oninput="calculateBatchBaseQty()" style="border-radius:8px;" placeholder="0">
+                                    <small class="text-muted" id="batch-qty-hint" style="display:block; height:15px;"></small>
+                                    <input type="hidden" name="quantity" id="batch-base-qty-hidden">
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
+
+                        <div class="row mt-2">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Cost Price</label>
-                                    <input type="number" name="cost_price" class="form-control" step="0.01"
-                                        min="0" placeholder="0.00">
+                                    <label class="small font-weight-bold">Batch Name</label>
+                                    <input type="text" name="batch_name" class="form-control" maxlength="100" style="border-radius:8px;" placeholder="e.g. Initial Stock">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Expiry Date</label>
-                                    <input type="date" name="expiry_date" class="form-control">
+                                    <label class="small font-weight-bold">Cost Price</label>
+                                    <input type="number" name="cost_price" class="form-control" step="0.01" min="0" style="border-radius:8px;" placeholder="0.00">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Supplier</label>
-                                    <select name="supplier_id" class="form-control">
+                                    <label class="small font-weight-bold">Expiry Date</label>
+                                    <input type="date" name="expiry_date" class="form-control" style="border-radius:8px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label class="small font-weight-bold">Supplier</label>
+                                    <select name="supplier_id" class="form-control" style="border-radius:8px;">
                                         <option value="">— None —</option>
                                         @foreach ($suppliers as $sup)
                                             <option value="{{ $sup->id }}">{{ $sup->company_name }}</option>
@@ -1083,15 +1123,17 @@
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Notes</label>
-                            <textarea name="notes" class="form-control" rows="2" maxlength="500" placeholder="Optional notes…"></textarea>
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <label class="small font-weight-bold">Notes</label>
+                                    <textarea name="notes" class="form-control" rows="1" maxlength="500" placeholder="Optional notes…" style="border-radius:8px;"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn" style="background:#10b981; color:#fff;" id="btn-submit-batch">
+                    <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 12px 12px; padding:1rem 1.5rem;">
+                        <button type="button" class="btn btn-light" data-dismiss="modal" style="border-radius:8px; font-weight:600; color:#64748b;">Cancel</button>
+                        <button type="submit" class="btn" id="btn-submit-batch" style="background:#10b981; color:#fff; border-radius:8px; font-weight:600; padding:0.5rem 1.5rem;">
                             <i class="mdi mdi-check mr-1"></i>Create Batch
                         </button>
                     </div>
@@ -1216,10 +1258,10 @@
                                         </select>
                                     </div>
                                     <div class="col-md-2">
-                                        <input type="number" name="items[0][ordered_qty]" class="form-control po-qty-input"
+                                        <input type="number" name="items[0][packaging_qty]" class="form-control po-qty-input"
                                             placeholder="Qty" min="1" required oninput="calculatePoBaseQty(0)">
                                         <small class="text-muted po-base-qty-hint" id="po-base-qty-hint-0"></small>
-                                        <input type="hidden" name="items[0][base_ordered_qty]" class="po-base-qty-hidden">
+                                        <input type="hidden" name="items[0][ordered_qty]" class="po-base-qty-hidden">
                                     </div>
                                     <div class="col-md-2">
                                         <input type="number" name="items[0][unit_cost]" class="form-control po-cost-input"
@@ -1419,8 +1461,8 @@
             'use strict';
 
             // ─── State ───────────────────────────────────────────────────────────────
-            var currentAxis = '{{ $axis ?? 'product' }}';
-            var currentStoreId = '{{ $selectedStore?->id ?? '' }}';
+            var currentAxis = $('#axis-store').hasClass('active') ? 'store' : 'product';
+            var currentStoreId = $('#filter-store').val();
             var reqItemIndex = 0;
             var poItemIndex = 0;
             var productRegistry = {}; // id → name map (built from rendered rows)
@@ -1476,6 +1518,140 @@
                 }
             });
 
+            function formatPackaging(qty, baseUnitName, packagings) {
+                if (!packagings || packagings.length === 0 || qty === 0) return '';
+                
+                // For now, use the first packaging level as the reference
+                var p = packagings[0];
+                var factor = parseFloat(p.base_unit_qty) || 1;
+                if (factor <= 1) return ''; // Skip if factor is 1 (redundant with base unit)
+                
+                var equiv = (Math.abs(qty) / factor).toFixed(2);
+                // Clean up trailing zeros
+                equiv = equiv.replace(/\.?0+$/, "");
+                
+                return ` <small class="text-muted" title="${equiv} ${p.name}">(${equiv} ${p.name})</small>`;
+            }
+
+            // ─── Load Pending Actions (AJAX) ──────────────────────────────────────────
+            function loadPendingActions(storeId) {
+                if (!storeId) return;
+
+                $('.btn-refresh-panel').addClass('mdi-spin');
+
+                $.get('{{ route('inventory.store-workbench.tally-card.pending-actions') }}', { store_id: storeId })
+                    .done(function(res) {
+                        if (!res.success) return;
+
+                        // Update Counts
+                        $('#panel-incoming-reqs h6 .badge').text(res.counts.incoming);
+                        $('#panel-outgoing-reqs h6 .badge').text(res.counts.outgoing);
+                        $('#panel-pos h6 .badge').text(res.counts.pos);
+
+                        // Render Incoming
+                        var incomingHtml = '';
+                        if (res.incoming.length === 0) {
+                            incomingHtml = '<div class="text-center text-muted py-4" style="font-size:0.84rem;"><i class="mdi mdi-check-circle-outline d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>No incoming requisitions to fulfil</div>';
+                        } else {
+                            $.each(res.incoming, function(_, req) {
+                                var itemsHtml = '';
+                                if (req.items) {
+                                    $.each(req.items.slice(0, 2), function(i, item) {
+                                        var pkgHint = formatPackaging(item.requested_qty, '', item.product ? item.product.packagings : []);
+                                        itemsHtml += (item.product ? item.product.product_name : '—') + ' ×' + item.requested_qty + pkgHint + (i === 0 && req.items.length > 1 ? ', ' : '');
+                                    });
+                                    if (req.items.length > 2) itemsHtml += ' +' + (req.items.length - 2) + ' more';
+                                }
+                                incomingHtml += `
+                                    <div class="req-row">
+                                        <div>
+                                            <div class="req-ref">${req.requisition_number}</div>
+                                            <div class="req-meta">To: ${req.to_store ? req.to_store.store_name : '—'}</div>
+                                            <div class="req-meta">${itemsHtml}</div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="status-badge ${req.status}">${req.status.charAt(0).toUpperCase() + req.status.slice(1)}</span>
+                                            <a href="{{ url('inventory/requisitions') }}/${req.id}#fulfill-panel" target="_blank" class="btn btn-sm btn-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
+                                                <i class="mdi mdi-check"></i> Fulfil
+                                            </a>
+                                        </div>
+                                    </div>`;
+                            });
+                        }
+                        $('#incoming-list').html(incomingHtml);
+
+                        // Render Outgoing
+                        var outgoingHtml = '';
+                        if (res.outgoing.length === 0) {
+                            outgoingHtml = '<div class="text-center text-muted py-4" style="font-size:0.84rem;"><i class="mdi mdi-check-circle-outline d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>No pending outgoing requisitions</div>';
+                        } else {
+                            $.each(res.outgoing, function(_, req) {
+                                var itemsHtml = '';
+                                if (req.items) {
+                                    $.each(req.items.slice(0, 2), function(i, item) {
+                                        itemsHtml += (item.product ? item.product.product_name : '—') + ' ×' + item.requested_qty + (i === 0 && req.items.length > 1 ? ', ' : '');
+                                    });
+                                    if (req.items.length > 2) itemsHtml += ' +' + (req.items.length - 2) + ' more';
+                                }
+                                outgoingHtml += `
+                                    <div class="req-row">
+                                        <div>
+                                            <div class="req-ref">${req.requisition_number}</div>
+                                            <div class="req-meta">From: ${req.from_store ? req.from_store.store_name : '—'}</div>
+                                            <div class="req-meta">${itemsHtml}</div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="status-badge ${req.status}">${req.status.charAt(0).toUpperCase() + req.status.slice(1)}</span>
+                                            <a href="{{ url('inventory/requisitions') }}/${req.id}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
+                                                <i class="mdi mdi-eye"></i> View
+                                            </a>
+                                        </div>
+                                    </div>`;
+                            });
+                        }
+                        $('#outgoing-list').html(outgoingHtml);
+
+                        // Render POs
+                        var poHtml = '';
+                        if (res.pos.length === 0) {
+                            poHtml = '<div class="text-center text-muted py-4" style="font-size:0.84rem;"><i class="mdi mdi-cart-off d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>No purchase orders pending reception</div>';
+                        } else {
+                            $.each(res.pos, function(_, po) {
+                                var itemsHtml = '';
+                                if (po.items) {
+                                    $.each(po.items.slice(0, 2), function(i, item) {
+                                        var pkgHint = formatPackaging(item.ordered_qty, '', item.product ? item.product.packagings : []);
+                                        itemsHtml += (item.product ? item.product.product_name : '—') + ' ×' + item.ordered_qty + pkgHint + (i === 0 && po.items.length > 1 ? ', ' : '');
+                                    });
+                                    if (po.items.length > 2) itemsHtml += ' +' + (po.items.length - 2) + ' more';
+                                }
+                                poHtml += `
+                                    <div class="po-row">
+                                        <div>
+                                            <div class="req-ref">${po.po_number}</div>
+                                            <div class="req-meta">Supplier: ${po.supplier ? po.supplier.company_name : '—'}</div>
+                                            <div class="req-meta">${itemsHtml}</div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="status-badge ${po.status}">${po.status.replace(/_/g, ' ')}</span>
+                                            <a href="{{ url('inventory/purchase-orders') }}/${po.id}/receive" target="_blank" class="btn btn-sm btn-receive-po" style="background:#8b5cf6; color:#fff; border:none; border-radius:6px; font-size:0.75rem; padding:4px 10px;">
+                                                <i class="mdi mdi-download"></i> Receive
+                                            </a>
+                                        </div>
+                                    </div>`;
+                            });
+                        }
+                        $('#po-list').html(poHtml);
+                    })
+                    .always(function() {
+                        $('.btn-refresh-panel').removeClass('mdi-spin');
+                    });
+            }
+
+            $('.btn-refresh-panel').on('click', function() {
+                loadPendingActions(currentStoreId);
+            });
+
             // ─── Load tally data ─────────────────────────────────────────────────────
             function loadTally() {
                 var storeId = $('#filter-store').val();
@@ -1493,6 +1669,7 @@
                 }
 
                 currentStoreId = storeId;
+                loadPendingActions(storeId);
 
                 $('#tally-loading').addClass('show');
                 $('#tally-body').html(
@@ -1500,6 +1677,16 @@
                 );
                 $('#summary-strip .chip-value').text('—');
                 $('#product-chips-bar').empty().hide();
+
+                // Update URL params without reloading
+                var params = new URLSearchParams(window.location.search);
+                params.set('axis', currentAxis);
+                params.set('store_id', storeId);
+                if (productId) params.set('product_id', productId); else params.delete('product_id');
+                params.set('date_from', dateFrom);
+                params.set('date_to', dateTo);
+                var newUrl = window.location.pathname + '?' + params.toString();
+                window.history.pushState({path: newUrl}, '', newUrl);
 
                 $.get('{{ route('inventory.store-workbench.tally-card.data') }}', {
                         axis: currentAxis,
@@ -1535,14 +1722,19 @@
                 var axis = res.axis;
 
                 // Summary strip
-                $('#sum-in').text(sum.total_in);
-                $('#sum-out').text(sum.total_out);
-                $('#sum-net').text((sum.net_movement>= 0 ? '+' : '') + sum.net_movement);
                 if (axis === 'product') {
-                    $('#sum-balance').text(sum.closing_balance !== null ? sum.closing_balance : '—');
+                    var inPkg = (rows.length > 0) ? formatPackaging(sum.total_in, rows[0].base_unit, rows[0].packaging) : '';
+                    var outPkg = (rows.length > 0) ? formatPackaging(sum.total_out, rows[0].base_unit, rows[0].packaging) : '';
+                    var pkgHint = (rows.length > 0) ? formatPackaging(sum.closing_balance, rows[0].base_unit, rows[0].packaging) : '';
+                    
+                    $('#sum-in').html(sum.total_in + inPkg);
+                    $('#sum-out').html(sum.total_out + outPkg);
+                    $('#sum-balance').html((sum.closing_balance !== null ? sum.closing_balance : '—') + pkgHint);
                     $('#sum-balance-chip').show();
                     $('#sum-products-chip').hide();
                 } else {
+                    $('#sum-in').text(sum.total_in);
+                    $('#sum-out').text(sum.total_out);
                     $('#sum-products').text(sum.products_touched);
                     $('#sum-balance-chip').hide();
                     $('#sum-products-chip').show();
@@ -1568,22 +1760,11 @@
                 $.each(rows, function(_, r) {
                     var dirClass = 'dir-' + r.direction;
                     var typeClass = 'type-badge ' + (r.badge_type || r.type);
-                    var inCell = r.in_qty > 0 ? '<span class="qty-in">' + r.in_qty + '</span>' :
+                    var inCell = r.in_qty > 0 ? '<span class="qty-in">' + r.in_qty + '</span>' + formatPackaging(r.in_qty, r.base_unit, r.packaging) :
                         '<span style="color:#ccc;">—</span>';
-                    var outCell = r.out_qty > 0 ? '<span class="qty-out">' + r.out_qty + '</span>' :
+                    var outCell = r.out_qty > 0 ? '<span class="qty-out">' + r.out_qty + '</span>' + formatPackaging(r.out_qty, r.base_unit, r.packaging) :
                         '<span style="color:#ccc;">—</span>';
-                    
-                    // Add packaging hint if available
-                    if (r.packaging && r.packaging.length > 0) {
-                        var pkg = r.packaging[0]; // Just use the first one as a hint
-                        var qty = r.in_qty || r.out_qty;
-                        if (qty >= pkg.base_unit_qty) {
-                            var packs = (qty / pkg.base_unit_qty).toFixed(1);
-                            var hint = '<div style="font-size:0.65rem; color:#6b7280; margin-top:1px;">≈ ' + packs + ' ' + pkg.name + '</div>';
-                            if (r.in_qty > 0) inCell += hint;
-                            else if (r.out_qty > 0) outCell += hint;
-                        }
-                    }
+                    var balanceCell = r.product_balance + formatPackaging(r.product_balance, r.base_unit, r.packaging);
                     var refCell = r.ref_url ?
                         '<a href="' + escHtml(r.ref_url) + '" target="_blank" rel="noopener">' + escHtml(r
                             .ref_label) + '</a>' :
@@ -1601,7 +1782,7 @@
                             '<td><code style="font-size:0.78rem;">' + escHtml(r.batch_number) + '</code></td>' +
                             '<td class="text-center">' + inCell + '</td>' +
                             '<td class="text-center">' + outCell + '</td>' +
-                            '<td class="text-right balance-col">' + r.product_balance + '</td>' +
+                            '<td class="text-right balance-col">' + balanceCell + '</td>' +
                             '<td><small>' + escHtml(r.performer) + '</small></td>' +
                             '<td>' + notes + '</td>' +
                             '</tr>';
@@ -1620,7 +1801,7 @@
                             '<td><code style="font-size:0.78rem;">' + escHtml(r.batch_number) + '</code></td>' +
                             '<td class="text-center">' + inCell + '</td>' +
                             '<td class="text-center">' + outCell + '</td>' +
-                            '<td class="text-right balance-col">' + r.product_balance + '</td>' +
+                            '<td class="text-right balance-col">' + balanceCell + '</td>' +
                             '<td><small>' + escHtml(r.performer) + '</small></td>' +
                             '</tr>';
                     }
@@ -1660,12 +1841,18 @@
                 if (e.key === 'Enter') loadTally();
             });
 
-            // Auto-load if store + context are pre-filled
-            @if ($selectedStore && ($axis === 'store' || $selectedProduct))
-                $(function() {
-                    loadTally();
-                });
-            @endif
+            // Auto-load if store is pre-filled
+            $(function() {
+                if (currentStoreId) {
+                    // Only load data if we have enough context for the axis
+                    if (currentAxis === 'store' || (currentAxis === 'product' && $('#filter-product').val())) {
+                        loadTally();
+                    } else {
+                        // Still load pending actions if store is selected
+                        loadPendingActions(currentStoreId);
+                    }
+                }
+            });
 
             // ─── Floating toolbar → open modals ──────────────────────────────────────
             $('#tb-new-req').on('click', function() {
@@ -1700,7 +1887,7 @@
                     <select name="items[${reqItemIndex}][product_id]" class="form-control req-product-select" required onchange="loadProductPackaging(this, ${reqItemIndex}, 'req')">
                         <option value="">— Select Product —</option>
                         @foreach ($products as $p)
-                            <option value="{{ $p->id }}">{{ $p->product_name }}</option>
+                            <option value="{{ $p->id }}" data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}">{{ $p->product_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -1710,9 +1897,9 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <input type="number" name="items[${reqItemIndex}][requested_qty]" class="form-control req-qty-input" placeholder="Qty" min="1" required oninput="calculateReqBaseQty(${reqItemIndex})">
+                    <input type="number" name="items[${reqItemIndex}][packaging_qty]" class="form-control req-qty-input" placeholder="Qty" min="1" required oninput="calculateReqBaseQty(${reqItemIndex})">
                     <small class="text-muted req-base-qty-hint" id="req-base-qty-hint-${reqItemIndex}"></small>
-                    <input type="hidden" name="items[${reqItemIndex}][base_requested_qty]" class="req-base-qty-hidden">
+                    <input type="hidden" name="items[${reqItemIndex}][requested_qty]" class="req-base-qty-hidden">
                 </div>
                 <div class="col-md-2">
                     <button type="button" class="btn btn-sm btn-outline-danger btn-remove-req-item w-100" style="border-radius:6px;">
@@ -1950,9 +2137,9 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <input type="number" name="items[${poItemIndex}][ordered_qty]" class="form-control po-qty-input" placeholder="Qty" min="1" required oninput="calculatePoBaseQty(${poItemIndex})">
+                    <input type="number" name="items[${poItemIndex}][packaging_qty]" class="form-control po-qty-input" placeholder="Qty" min="1" required oninput="calculatePoBaseQty(${poItemIndex})">
                     <small class="text-muted po-base-qty-hint" id="po-base-qty-hint-${poItemIndex}"></small>
-                    <input type="hidden" name="items[${poItemIndex}][base_ordered_qty]" class="po-base-qty-hidden">
+                    <input type="hidden" name="items[${poItemIndex}][ordered_qty]" class="po-base-qty-hidden">
                 </div>
                 <div class="col-md-2">
                     <input type="number" name="items[${poItemIndex}][unit_cost]" class="form-control po-cost-input" placeholder="Unit Cost" step="0.01" min="0" required oninput="calculatePoBaseQty(${poItemIndex})">
@@ -2153,12 +2340,12 @@
             </div>`;
                     
                     // Fetch packaging for this product
-                    $.get('{{ url("products") }}/' + productId + '/packaging')
+                    $.get('{{ route("products.packagings", ":id") }}'.replace(':id', productId))
                         .done(function(res) {
-                            if (res.success && res.packaging) {
+                            if (res.packagings) {
                                 var $sel = $(`.receive-item-row[data-index="${i}"] .rec-packaging-select`);
                                 $sel.data('prev-factor', 1);
-                                $.each(res.packaging, function(_, p) {
+                                $.each(res.packagings, function(_, p) {
                                     $sel.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
                                 });
                             }
@@ -2227,19 +2414,56 @@
             }
 
             // ─── Packaging Helpers ───────────────────────────────────────────────────
+            window.calculateReqBaseQty = function(index) {
+                var row = $(`.req-item-row[data-index="${index}"]`);
+                var qty = parseInt(row.find('.req-qty-input').val()) || 0;
+                var $pkg = row.find('.req-packaging-select option:selected');
+                var factor = parseFloat($pkg.data('qty')) || 1;
+                var baseQty = qty * factor;
+                row.find('.req-base-qty-hidden').val(baseQty);
+                
+                var baseUnit = row.find('.req-product-select option:selected').data('base-unit') || 'units';
+                if (factor > 1 && qty > 0) {
+                    row.find('.req-base-qty-hint').text(`= ${baseQty} ${baseUnit}`);
+                } else {
+                    row.find('.req-base-qty-hint').text('');
+                }
+            };
+
+            window.calculateBatchBaseQty = function() {
+                var qty = parseInt($('#batch-qty').val()) || 0;
+                var $pkg = $('#batch-packaging option:selected');
+                var factor = parseFloat($pkg.data('qty')) || 1;
+                var baseQty = qty * factor;
+                $('#batch-base-qty-hidden').val(baseQty);
+                
+                var baseUnit = $('#batch-product option:selected').data('base-unit') || 'units';
+                if (factor > 1 && qty > 0) {
+                    $('#batch-qty-hint').text(`= ${baseQty} ${baseUnit}`);
+                } else {
+                    $('#batch-qty-hint').text('');
+                }
+            };
+
             window.loadProductPackaging = function(select, index, type) {
                 var productId = $(select).val();
-                var $row = $(select).closest('.' + type + '-item-row');
-                var $pkgSelect = $row.find('.' + type + '-packaging-select');
+                var $pkgSelect;
+                
+                if (type === 'batch') {
+                    $pkgSelect = $('#batch-packaging');
+                } else {
+                    var $row = $(select).closest('.' + type + '-item-row');
+                    $pkgSelect = $row.find('.' + type + '-packaging-select');
+                }
                 
                 $pkgSelect.html('<option value="" data-qty="1">Base Unit</option>');
                 $pkgSelect.data('prev-factor', 1);
                 if (!productId) return;
 
-                $.get('{{ url("products") }}/' + productId + '/packaging')
+                $.get('{{ route("products.packagings", ":id") }}'.replace(':id', productId))
                     .done(function(res) {
-                        if (res.success && res.packaging) {
-                            $.each(res.packaging, function(_, p) {
+                        if (res.packagings) {
+                            $.each(res.packagings, function(_, p) {
                                 $pkgSelect.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
                             });
                         }
@@ -2502,10 +2726,10 @@
 
                 // Load packaging for this product
                 var $pkgSelect = $('#adj-packaging').html('<option value="">Base Unit</option>');
-                $.get('{{ url("products") }}/' + batchData.product_id + '/packaging')
+                $.get('{{ route("products.packagings", ":id") }}'.replace(':id', batchData.product_id))
                     .done(function(res) {
-                        if (res.success && res.packaging) {
-                            $.each(res.packaging, function(_, p) {
+                        if (res.packagings) {
+                            $.each(res.packagings, function(_, p) {
                                 $pkgSelect.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
                             });
                         }
@@ -2619,6 +2843,22 @@
             $('#modal-adjust-stock').on('hidden.bs.modal', function() {
                 $('#btn-apply-adjustment').html('<i class="mdi mdi-check mr-1"></i>Apply Adjustment');
             });
+
+            window.calculateAdjBaseQty = function() {
+                var qty = parseInt($('#adj-qty').val()) || 0;
+                var $pkg = $('#adj-packaging option:selected');
+                var factor = parseFloat($pkg.data('qty')) || 1;
+                var baseQty = qty * factor;
+                $('#adj-base-qty-hidden').val(baseQty);
+                
+                var baseUnit = adjSelectedBatch ? adjSelectedBatch.base_unit_name : 'units';
+                if (factor > 1 && qty > 0) {
+                    $('#adj-qty-hint').text(`= ${baseQty} ${baseUnit}`);
+                } else {
+                    $('#adj-qty-hint').text('');
+                }
+                checkAdjFormReady();
+            };
 
         })();
     </script>
