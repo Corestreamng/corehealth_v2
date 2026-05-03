@@ -100,238 +100,166 @@
        PRINT STYLES - Professional Document Output
        ============================================ */
     @media print {
-        /* Hide interactive UI elements */
-        #left-sidebar,
-        .navbar,
-        .action-btn,
-        button,
-        .btn,
-        form,
-        .modal,
-        .alert,
-        .breadcrumb,
-        #footer,
-        .page-footer,
-        .dropdown-menu,
-        .pagination,
-        .no-print {
-            display: none !important;
-        }
+        @page { size: A4; margin: 10mm; }
+        body { background: #fff !important; color: #000 !important; font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important; }
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
 
-        /* Show print-only elements */
-        .print-only {
-            display: block !important;
-        }
+        .po-print-sheet { padding: 0; background: #fff; }
+        .brand-bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; }
+        .brand-logo { width: 80px; height: auto; }
+        .brand-info { flex: 1; margin-left: 20px; }
+        .brand-name { font-size: 22pt; font-weight: 800; color: #1e293b; margin-bottom: 4px; }
+        .brand-meta { font-size: 9pt; color: #64748b; line-height: 1.4; }
+        .doc-title { text-align: right; }
+        .doc-title h1 { font-size: 20pt; font-weight: 800; color: #1e293b; margin: 0; letter-spacing: 1px; }
+        .doc-title p { font-size: 11pt; color: #64748b; margin: 4px 0 0; font-weight: 600; }
 
-        /* Page layout */
-        body {
-            background: white !important;
-            font-size: 11pt !important;
-        }
-        #content-wrapper,
-        .container-fluid {
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .info-item { border-left: 3px solid #e2e8f0; padding-left: 12px; }
+        .info-label { font-size: 8pt; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .info-value { font-size: 10pt; font-weight: 600; color: #1e293b; }
 
-        /* Print header styling */
-        .print-header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #333;
-        }
-        .company-logo {
-            margin-bottom: 10px;
-        }
-        .company-name {
-            font-size: 18pt;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .company-address {
-            font-size: 9pt;
-            color: #666;
-            margin-bottom: 3px;
-        }
-        .company-contact {
-            font-size: 9pt;
-            color: #666;
-            margin-bottom: 10px;
-        }
-        .document-title {
-            font-size: 14pt;
-            font-weight: bold;
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        .items-table th { background: #f8fafc; border-bottom: 2px solid #e2e8f0; padding: 12px 10px; text-align: left; font-size: 9pt; font-weight: 700; color: #475569; text-transform: uppercase; }
+        .items-table td { border-bottom: 1px solid #f1f5f9; padding: 10px; font-size: 10pt; vertical-align: top; }
+        .items-table tr:last-child td { border-bottom: 2px solid #e2e8f0; }
 
-        /* PO header for print */
-        .po-header {
-            background: #f8f9fa !important;
-            color: #333 !important;
-            border: 1px solid #333 !important;
-            padding: 15px !important;
-            margin-bottom: 15px !important;
-            page-break-inside: avoid;
-        }
-        .po-header h2 {
-            color: #333 !important;
-            font-size: 14pt !important;
-        }
-        .po-header .po-number {
-            font-size: 12pt !important;
-        }
+        .totals-section { display: flex; justify-content: flex-end; margin-bottom: 40px; }
+        .totals-box { width: 250px; }
+        .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 10pt; }
+        .total-row.grand { border-top: 2px solid #1e293b; margin-top: 5px; padding-top: 10px; font-weight: 800; font-size: 12pt; color: #1e293b; }
 
-        /* Cards and sections */
-        .detail-card {
-            border: 1px solid #333 !important;
-            box-shadow: none !important;
-            padding: 12px !important;
-            margin-bottom: 15px !important;
-            page-break-inside: avoid;
-        }
-        .detail-card h5 {
-            border-bottom: 1px solid #333 !important;
-            font-size: 11pt !important;
-            padding-bottom: 5px !important;
-            margin-bottom: 10px !important;
-        }
-        .detail-label {
-            font-size: 9pt !important;
-        }
-        .detail-value {
-            font-size: 10pt !important;
-        }
+        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 60px; }
+        .sig-line { border-top: 1px solid #94a3b8; text-align: center; padding-top: 8px; font-size: 9pt; color: #64748b; }
 
-        /* Tables */
-        .table {
-            width: 100% !important;
-            border-collapse: collapse !important;
-        }
-        table th, table td {
-            border: 1px solid #333 !important;
-            padding: 6px 8px !important;
-            font-size: 10pt !important;
-        }
-        table th {
-            background: #f0f0f0 !important;
-            font-weight: bold !important;
-        }
-        .items-table th {
-            background: #f0f0f0 !important;
-        }
-
-        /* Progress bars - convert to text */
-        .receiving-progress {
-            display: none !important;
-        }
-
-        /* Status badges */
-        .status-badge {
-            border: 1px solid #333 !important;
-            padding: 2px 8px !important;
-            border-radius: 3px !important;
-        }
-        .badge {
-            border: 1px solid #333 !important;
-            padding: 2px 6px !important;
-        }
-
-        /* Timeline */
-        .timeline::before {
-            background: #333 !important;
-        }
-        .timeline-item::before {
-            background: #666 !important;
-            border-color: white !important;
-        }
-
-        /* Layout adjustments - make full width on print */
-        .col-md-8, .col-md-4 {
-            width: 100% !important;
-            max-width: 100% !important;
-            flex: 0 0 100% !important;
-        }
-        .row {
-            display: block !important;
-            page-break-inside: avoid;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            page-break-after: avoid;
-        }
-
-        /* Force table visibility */
-        .table-responsive {
-            overflow: visible !important;
-        }
-        .items-table {
-            display: table !important;
-            width: 100% !important;
-        }
-        .items-table thead {
-            display: table-header-group !important;
-        }
-        .items-table tbody {
-            display: table-row-group !important;
-        }
-        .items-table tfoot {
-            display: table-footer-group !important;
-        }
-        .items-table tr {
-            display: table-row !important;
-        }
-        .items-table th,
-        .items-table td {
-            display: table-cell !important;
-        }
-
-        /* Payment summary styling */
-        .payment-status-badge {
-            border: 1px solid #333 !important;
-        }
-
-        /* Page settings */
-        @page {
-            size: A4;
-            margin: 15mm 10mm 20mm 10mm;
-        }
-
-        /* Print footer */
-        .print-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 8pt;
-            color: #666;
-            padding: 10px;
-            border-top: 1px solid #ddd;
-        }
+        .print-footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 8pt; color: #94a3b8; padding: 10px; border-top: 1px solid #f1f5f9; }
     }
 </style>
 
-<!-- Print Header (hidden on screen) -->
-<div class="print-only print-header" style="display: none;">
-    @if(appsettings('logo'))
-    <div class="company-logo">
-        <img src="data:image/png;base64,{{ appsettings('logo') }}" alt="Logo" style="max-height: 60px; max-width: 200px;">
+<div class="print-only po-print-sheet" style="display: none;">
+    <div class="brand-bar">
+        <div style="display: flex; align-items: center;">
+            @if(appsettings('logo'))
+                <img src="data:image/png;base64,{{ appsettings('logo') }}" alt="Logo" class="brand-logo">
+            @endif
+            <div class="brand-info">
+                <div class="brand-name">{{ appsettings('site_name') ?: config('app.name', 'CoreHealth') }}</div>
+                <div class="brand-meta">
+                    {{ appsettings('contact_address') ?: 'Healthcare Management System' }}<br>
+                    Tel: {{ appsettings('contact_phones') ?: 'N/A' }} | Email: {{ appsettings('contact_emails') ?: 'N/A' }}
+                </div>
+            </div>
+        </div>
+        <div class="doc-title">
+            <h1>PURCHASE ORDER</h1>
+            <p>{{ $purchaseOrder->po_number }}</p>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-item">
+            <div class="info-label">Vendor / Supplier</div>
+            <div class="info-value">{{ $purchaseOrder->supplier->company_name }}</div>
+            <div class="small text-muted">{{ $purchaseOrder->supplier->phone }}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Deliver To</div>
+            <div class="info-value">{{ $purchaseOrder->targetStore->store_name }}</div>
+            <div class="small text-muted">{{ $purchaseOrder->targetStore->location }}</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Order Context</div>
+            <div class="small">Date: <strong>{{ $purchaseOrder->created_at->format('d/m/Y') }}</strong></div>
+            <div class="small">Expected: <strong>{{ $purchaseOrder->expected_date ? \Carbon\Carbon::parse($purchaseOrder->expected_date)->format('d/m/Y') : 'N/A' }}</strong></div>
+            <div class="small">Status: <strong>{{ strtoupper($purchaseOrder->status) }}</strong></div>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th>Item Description</th>
+                <th style="text-align: center; width: 100px;">Qty Ordered</th>
+                <th style="text-align: center; width: 100px;">Qty Received</th>
+                <th style="text-align: right; width: 120px;">Unit Cost</th>
+                <th style="text-align: right; width: 130px;">Total (₦)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($purchaseOrder->items as $index => $item)
+            <tr>
+                <td>{{ $index + 1 }}</td>
+                <td>
+                    <div style="font-weight: 700;">{{ $item->product->product_name }}</div>
+                    <div style="font-size: 8pt; color: #64748b;">{{ $item->product->product_code }} | {{ ucfirst($item->product->product_type) }}</div>
+                </td>
+                <td style="text-align: center;">
+                    {{ $item->ordered_qty }} {{ $item->product->base_unit_name ?? 'units' }}
+                    @if($item->packaging)
+                        <div style="font-size: 8pt; color: #0891b2;">({{ (float)$item->packaging_qty }} {{ $item->packaging->name }})</div>
+                    @endif
+                </td>
+                <td style="text-align: center;">
+                    {{ $item->received_qty ?? 0 }}
+                </td>
+                <td style="text-align: right;">{{ number_format($item->unit_cost, 2) }}</td>
+                <td style="text-align: right; font-weight: 700;">{{ number_format($item->line_total, 2) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <div class="totals-section">
+        <div class="totals-box">
+            <div class="total-row">
+                <span>Subtotal</span>
+                <span>₦{{ number_format($purchaseOrder->items->sum('line_total'), 2) }}</span>
+            </div>
+            @if($purchaseOrder->tax_amount > 0)
+            <div class="total-row">
+                <span>Tax (VAT)</span>
+                <span>₦{{ number_format($purchaseOrder->tax_amount, 2) }}</span>
+            </div>
+            @endif
+            @if($purchaseOrder->shipping_cost > 0)
+            <div class="total-row">
+                <span>Shipping / Freight</span>
+                <span>₦{{ number_format($purchaseOrder->shipping_cost, 2) }}</span>
+            </div>
+            @endif
+            <div class="total-row grand">
+                <span>ORDER TOTAL</span>
+                <span>₦{{ number_format($purchaseOrder->total_amount, 2) }}</span>
+            </div>
+        </div>
+    </div>
+
+    @if($purchaseOrder->notes)
+    <div style="margin-top: 20px; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+        <div class="info-label">Special Notes / Instructions</div>
+        <div style="font-size: 10pt; color: #1e293b;">{{ $purchaseOrder->notes }}</div>
     </div>
     @endif
-    <div class="company-name">{{ appsettings('site_name') ?: config('app.name', 'CoreHealth') }}</div>
-    <div class="company-address">{{ appsettings('contact_address') ?: 'Healthcare Management System' }}</div>
-    @if(appsettings('contact_phones'))
-    <div class="company-contact">Tel: {{ appsettings('contact_phones') }}</div>
-    @endif
-    <div class="document-title">PURCHASE ORDER</div>
-    <div style="font-size: 10pt; margin-top: 5px;">{{ $purchaseOrder->po_number }}</div>
+
+    <div class="signatures">
+        <div class="sig-box">
+            <div class="sig-line">Authorized Signatory / Warehouse Manager</div>
+            <div style="text-align: center; margin-top: 5px; font-size: 8pt;">{{ auth()->user()->name }} | {{ now()->format('d/m/Y H:i') }}</div>
+        </div>
+        <div class="sig-box">
+            <div class="sig-line">Supplier Acceptance (Stamp & Sign)</div>
+            <div style="text-align: center; margin-top: 5px; font-size: 8pt;">Name: ______________________</div>
+        </div>
+    </div>
+
+    <div class="print-footer">
+        Generated by CoreHealth v2.0 | {{ config('app.name') }} Inventory Module | Page 1 of 1
+    </div>
 </div>
 
-<div id="content-wrapper">
+<div id="content-wrapper" class="no-print">
     <div class="container-fluid">
         <!-- Header -->
         <div class="po-header">
@@ -480,18 +408,18 @@
                                     <td class="text-center">
                                         {{ $item->ordered_qty }}
                                         @if($item->packaging)
-                                        <br><small class="text-primary">{{ $item->packaging_qty }} {{ $item->packaging->name }}</small>
+                                        <br><small class="text-primary">{{ (float)$item->packaging_qty }} {{ $item->packaging->name }}</small>
                                         @endif
                                         @if($item->product)
                                         <br><small class="text-muted">{{ $item->product->base_unit_name ?? 'pcs' }}</small>
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        <span class="{{ $item->received_qty>= $item->ordered_qty ? 'text-success font-weight-bold' : '' }}">
+                                        <span class="{{ $item->received_qty >= $item->ordered_qty ? 'text-success font-weight-bold' : '' }}">
                                             {{ $item->received_qty ?? 0 }}
                                         </span>
                                         @if($item->receivedPackaging)
-                                        <br><small class="text-info">{{ $item->received_packaging_qty }} {{ $item->receivedPackaging->name }}</small>
+                                        <br><small class="text-info">{{ (float)$item->received_packaging_qty }} {{ $item->receivedPackaging->name }}</small>
                                         @endif
                                     </td>
                                     <td class="text-right">₦{{ number_format($item->unit_cost, 2) }}</td>
