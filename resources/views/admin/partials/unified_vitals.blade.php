@@ -159,24 +159,24 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-4 col-6">
                             <label class="form-label small text-muted mb-1">
-                                <i class="mdi mdi-heart-pulse text-danger"></i> Blood Pressure <span class="text-danger">*</span>
+                                <i class="mdi mdi-heart-pulse text-danger"></i> Blood Pressure
                             </label>
                             <div class="input-group input-group-sm vital-input-group" data-vital="bp">
                                 <span class="input-group-text bg-light"><i class="mdi mdi-speedometer"></i></span>
                                 <input type="text" class="form-control vital-bp-input" name="bloodPressure"
-                                       placeholder="120/80" pattern="\d{2,3}/\d{2,3}" required
+                                       placeholder="120/80" pattern="\d{2,3}/\d{2,3}"
                                        title="Format: systolic/diastolic (e.g., 120/80)">
                             </div>
                             <div class="vital-hint">Normal: 90-140 / 60-90 mmHg</div>
                         </div>
                         <div class="col-md-4 col-6">
                             <label class="form-label small text-muted mb-1">
-                                <i class="mdi mdi-thermometer text-warning"></i> Temperature <span class="text-danger">*</span>
+                                <i class="mdi mdi-thermometer text-warning"></i> Temperature
                             </label>
                             <div class="input-group input-group-sm vital-input-group" data-vital="temp">
                                 <span class="input-group-text bg-light"><i class="mdi mdi-thermometer"></i></span>
                                 <input type="number" class="form-control vital-temp-input" name="bodyTemperature"
-                                       step="0.1" min="34" max="42" required placeholder="36.5">
+                                       step="0.1" min="34" max="42" placeholder="36.5">
                                 <span class="input-group-text bg-light">°C</span>
                             </div>
                             <div class="vital-hint">Normal: 36.1-37.2°C</div>
@@ -281,6 +281,9 @@
                             <div class="vital-hint">Fasting: 70-100, Random: &lt;140</div>
                         </div>
                     </div>
+
+                    <!-- Dynamic Fields Container -->
+                    <div class="dynamic-vitals-fields row g-3 mb-3"></div>
 
                     <!-- Row 4: Time & Notes -->
                     <div class="row g-3 mb-3">
@@ -389,7 +392,7 @@
  * - Comprehensive history display
  */
 
-window.initUnifiedVitals = function(patientId, containerId) {
+window.initUnifiedVitals = function(patientId, containerId, clinicName, vitalsTemplate) {
     if (!patientId) {
         console.error("initUnifiedVitals called without patientId");
         return;
@@ -403,6 +406,9 @@ window.initUnifiedVitals = function(patientId, containerId) {
 
     // Set form patient ID
     $container.find('.unified-vitals-patient-id').val(patientId);
+
+    // Render dynamic fields if template provided
+    renderDynamicVitalsFields($container, clinicName, vitalsTemplate);
 
     // Initialize DataTable for history
     initVitalsHistoryTable($container, patientId);
@@ -418,6 +424,61 @@ window.initUnifiedVitals = function(patientId, containerId) {
         loadVitalsCharts($container, patientId);
     });
 };
+
+function renderDynamicVitalsFields($container, clinicName, template) {
+    const $dynamicContainer = $container.find('.dynamic-vitals-fields');
+    $dynamicContainer.empty();
+
+    if (!template || !Array.isArray(template)) return;
+
+    // Filter out standard fields if they are in the template (to avoid duplicates)
+    // Actually, the user said "seed a template for each... with what i currently have as the default"
+    // So the template ALREADY contains standard fields.
+    // I should probably hide the hardcoded standard fields if a template is provided, 
+    // OR only render fields that are NOT standard.
+    
+    // Let's check which fields are in the template but NOT hardcoded.
+    const hardcodedFields = ['bloodPressure', 'bodyTemperature', 'heartRate', 'respiratoryRate', 'spo2', 'bodyWeight', 'height', 'bloodSugar', 'painScore'];
+    
+    const customFields = template.filter(field => !hardcodedFields.includes(field.name));
+
+    if (customFields.length > 0) {
+        let html = `<div class="col-12"><h6 class="border-bottom pb-1 mb-2 text-primary small fw-bold"><i class="mdi mdi-plus-box"></i> ${clinicName || 'Clinic'} Specific Vitals</h6></div>`;
+        
+        customFields.forEach(field => {
+            let fieldHtml = '';
+            if (field.type === 'select') {
+                fieldHtml = `
+                    <div class="col-md-3 col-6 mb-2">
+                        <label class="form-label small text-muted mb-1">${field.label} ${field.required ? '<span class="text-danger">*</span>' : ''}</label>
+                        <select class="form-select form-select-sm" name="${field.name}" ${field.required ? 'required' : ''}>
+                            <option value="">--</option>
+                            ${(field.options || []).map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                        </select>
+                        ${field.hint ? `<div class="vital-hint">${field.hint}</div>` : ''}
+                    </div>`;
+            } else {
+                fieldHtml = `
+                    <div class="col-md-3 col-6 mb-2">
+                        <label class="form-label small text-muted mb-1">${field.label} ${field.required ? '<span class="text-danger">*</span>' : ''}</label>
+                        <div class="input-group input-group-sm">
+                            <input type="${field.type || 'text'}" class="form-control" name="${field.name}" 
+                                   placeholder="${field.placeholder || ''}" 
+                                   ${field.required ? 'required' : ''}
+                                   ${field.step ? `step="${field.step}"` : ''}
+                                   ${field.min !== undefined ? `min="${field.min}"` : ''}
+                                   ${field.max !== undefined ? `max="${field.max}"` : ''}
+                                   ${field.pattern ? `pattern="${field.pattern}"` : ''}>
+                            ${field.unit ? `<span class="input-group-text bg-light">${field.unit}</span>` : ''}
+                        </div>
+                        ${field.hint ? `<div class="vital-hint">${field.hint}</div>` : ''}
+                    </div>`;
+            }
+            html += fieldHtml;
+        });
+        $dynamicContainer.html(html);
+    }
+}
 
 function initVitalsHistoryTable($container, patientId) {
     var $historyTable = $container.find('.unified-vitals-history-table');

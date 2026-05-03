@@ -4,44 +4,69 @@
 @section('subpage_name', 'List Clinics')
 
 @section('content')
-    <section class="container">
-        <div class="card-modern border-info mb-3">
-            <div class="card-header">
-                <h4>Clinics</h4>
-                <a href="{{ route('clinics.create') }}" class="btn btn-primary float-end">Create New</a>
+    <div class="container-fluid">
+        <div class="card-modern shadow-sm border-0">
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1 fw-bold text-dark">
+                        <i class="mdi mdi-hospital-building text-primary"></i> Clinics & Departments
+                    </h4>
+                    <p class="text-muted mb-0 small">Manage hospital clinics and their specialized vitals configurations.</p>
+                </div>
+                <a href="{{ route('clinics.create') }}" class="btn btn-primary btn-sm shadow-sm">
+                    <i class="mdi mdi-plus"></i> Create New Clinic
+                </a>
             </div>
             <div class="card-body">
-                @if($clinics->isEmpty())
-                    <p class="text-center">No clinics found.</p>
-                @else
-                    <table class="table table-bordered">
-                        <thead>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover table-bordered" id="clinics-table" style="width: 100%">
+                        <thead class="bg-light text-dark">
                             <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Actions</th>
+                                <th width="50">#</th>
+                                <th>Clinic Name</th>
+                                <th>Vitals Metrics</th>
+                                <th width="150" class="text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach($clinics as $clinic)
-                                <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $clinic->name }}</td>
-                                    <td>
-                                        <a href="{{ route('clinics.show', $clinic->id) }}" class="btn btn-info btn-sm">View</a>
-                                        <a href="{{ route('clinics.edit', $clinic->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                        <form action="{{ route('clinics.destroy', $clinic->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            {{-- <button class="btn btn-danger btn-sm">Delete</button> --}}
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
                     </table>
-                @endif
+                </div>
             </div>
         </div>
-    </section>
+    </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#clinics-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('clinics.index') }}",
+                columns: [
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { 
+                        data: 'name', 
+                        name: 'name',
+                        render: function(data, type, row) {
+                            return `<div class="fw-bold text-primary">${data}</div>`;
+                        }
+                    },
+                    { 
+                        data: 'vitals_count', 
+                        name: 'vitals_count',
+                        render: function(data, type, row) {
+                            return `<span class="badge bg-soft-info text-info border border-info px-2">${data} Fields Configured</span>`;
+                        }
+                    },
+                    { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-center' }
+                ],
+                language: {
+                    searchPlaceholder: "Search clinics...",
+                    search: ""
+                },
+                dom: '<"d-flex justify-content-between align-items-center mb-3"fB>rtip',
+                buttons: ['copy', 'excel', 'pdf', 'print']
+            });
+        });
+    </script>
+@endpush
