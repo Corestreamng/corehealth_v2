@@ -40,6 +40,7 @@ class StoreRequisitionItem extends Model implements Auditable
         'requested_qty' => 'integer',
         'approved_qty' => 'integer',
         'fulfilled_qty' => 'integer',
+        'packaging_qty' => 'float',
     ];
 
     /**
