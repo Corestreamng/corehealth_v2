@@ -69,7 +69,14 @@
             $('#allergies-panel-body').html('<div class="alert alert-danger"><i class="mdi mdi-alert-circle"></i> Failed to load allergy information</div>');
         });
 
-        // Encounter notes, Injection/Immunization, and Procedures are loaded
+        // Eager-load procedures
+        $.get(config.baseUrl + '/' + patientId + '/procedures', function(procedures) {
+            ClinicalContext.displayProcedures(procedures);
+        }).fail(function() {
+            $('#clinical-procedures-container').html('<div class="alert alert-danger"><i class="mdi mdi-alert-circle"></i> Failed to load procedures</div>');
+        });
+
+        // Encounter notes and Injection/Immunization are loaded
         // by the shared clinical_context_modal IIFE handlers when their tabs are clicked.
     };
 
@@ -127,151 +134,92 @@
     // ─── Vitals Rendering ────────────────────────────────────────────────
 
     /**
-     * Render vitals into the modal's vitals tab using DataTable card layout.
-     * Shows all 10 supported vital parameters with color classification.
+     * Render vitals into the modal's vitals tab using card layout.
      *
-     * @param {Array} vitals - Array of vital sign objects from the API
+     * @param {Array} vitals - Array of vital objects from the API
      * @param {number|string} patientId
      */
     ClinicalContext.displayVitals = function(vitals, patientId) {
-        if (typeof $.fn.DataTable === 'undefined') {
-            $('#vitals-panel-body').html('<p class="text-danger">Error: DataTables library not loaded</p>');
+        const container = $('#clinical-vitals-container');
+
+        if (!vitals || vitals.length === 0) {
+            container.html(
+                '<div class="text-center py-4">' +
+                    '<i class="mdi mdi-heart-pulse mdi-48px text-muted"></i>' +
+                    '<p class="text-muted mt-2">No recent vitals recorded</p>' +
+                '</div>'
+            );
+            $('#clinical-vitals-show-all').html('');
             return;
         }
 
-        // Restore the table structure if previously overwritten
-        $('#vitals-panel-body').html(
-            '<div class="table-responsive">' +
-            '<table class="table" id="vitals-table" style="width: 100%">' +
-            '<thead><tr><th>Vital Signs History</th></tr></thead>' +
-            '</table></div>'
-        );
+        var html = '';
+        vitals.forEach(function(row) {
+            var date = row.time_taken || row.created_at || 'N/A';
+            var nurse = row.taken_by || 'N/A';
+            var bp = row.blood_pressure || 'N/A';
+            var temp = row.temp ? row.temp + '°C' : 'N/A';
+            var hr = row.heart_rate ? row.heart_rate + ' bpm' : 'N/A';
+            var rr = row.resp_rate ? row.resp_rate + ' bpm' : 'N/A';
+            var weight = row.weight ? row.weight + ' kg' : 'N/A';
+            var height = row.height ? row.height + ' cm' : 'N/A';
+            var bmi = row.bmi || 'N/A';
+            var spo2 = row.spo2 ? row.spo2 + '%' : 'N/A';
+            var bs = row.blood_sugar ? row.blood_sugar + ' mg/dL' : 'N/A';
+            var pain = row.pain_score != null ? row.pain_score + '/10' : 'N/A';
+            var notes = row.other_notes || '';
 
-        if ($.fn.DataTable.isDataTable('#vitals-table')) {
-            $('#vitals-table').DataTable().destroy();
-        }
+            html += '<div class="vital-entry">';
+            html += '<div class="vital-entry-header">';
+            html += '<span class="vital-date"><i class="mdi mdi-clock-outline"></i> ' + date + '</span>';
+            html += '<span><span class="badge bg-light text-dark"><i class="mdi mdi-account"></i> ' + nurse + '</span></span>';
+            html += '</div>';
 
-        $('#vitals-table').DataTable({
-            data: vitals,
-            paging: false,
-            searching: false,
-            info: false,
-            ordering: false,
-            dom: 't',
-            language: {
-                emptyTable: '<p class="text-muted">No recent vitals recorded</p>'
-            },
-            columns: [{
-                data: null,
-                render: function(data, type, row) {
-                    var vitalDate = formatDateTime(row.time_taken || row.created_at);
-                    var temp = row.temp || 'N/A';
-                    var heartRate = row.heart_rate || 'N/A';
-                    var bp = row.blood_pressure || 'N/A';
-                    var respRate = row.resp_rate || 'N/A';
-                    var weight = row.weight || 'N/A';
-                    var height = row.height || 'N/A';
-                    var spo2 = row.spo2 || 'N/A';
-                    var bloodSugar = row.blood_sugar || 'N/A';
-                    var painScore = row.pain_score;
-                    var bmi = row.bmi || 'N/A';
-                    var takenBy = row.taken_by || '';
-                    var source = row.source || '';
-                    var notes = row.other_notes || '';
+            html += '<div class="vital-entry-grid">';
+            html += '<div class="vital-item"><i class="mdi mdi-thermometer"></i><span class="vital-value">' + temp + '</span><span class="vital-label">Temp</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-heart-pulse"></i><span class="vital-value">' + hr + '</span><span class="vital-label">HR</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-water"></i><span class="vital-value">' + bp + '</span><span class="vital-label">BP</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-lungs"></i><span class="vital-value">' + rr + '</span><span class="vital-label">RR</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-pulse"></i><span class="vital-value">' + spo2 + '</span><span class="vital-label">SpO2</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-water-opacity"></i><span class="vital-value">' + bs + '</span><span class="vital-label">Sugar</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-weight-kilogram"></i><span class="vital-value">' + weight + '</span><span class="vital-label">Weight</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-human-male-height"></i><span class="vital-value">' + height + '</span><span class="vital-label">Height</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-calculator"></i><span class="vital-value">' + bmi + '</span><span class="vital-label">BMI</span></div>';
+            html += '<div class="vital-item"><i class="mdi mdi-emoticon-sad-outline"></i><span class="vital-value">' + pain + '</span><span class="vital-label">Pain</span></div>';
+            html += '</div>';
 
-                    // Calculate BMI if not stored but weight/height available
-                    if (bmi === 'N/A' && weight !== 'N/A' && height !== 'N/A') {
-                        var w = parseFloat(weight), h = parseFloat(height);
-                        if (w > 0 && h > 0) bmi = (w / ((h / 100) ** 2)).toFixed(1);
+            // Clinic-specific vitals (form_data)
+            if (row.form_data && typeof row.form_data === 'object' && Object.keys(row.form_data).length > 0) {
+                html += '<div class="mt-2 pt-2 border-top bg-light rounded p-2" style="font-size: 0.8rem;">';
+                html += '<div class="fw-bold text-primary mb-1"><i class="mdi mdi-information-outline"></i> Clinic Specific:</div>';
+                html += '<div class="d-flex flex-wrap gap-3">';
+                Object.keys(row.form_data).forEach(function(key) {
+                    var val = row.form_data[key];
+                    if (val) {
+                        var label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        html += '<div><span class="text-muted">' + label + ':</span> <strong>' + val + '</strong></div>';
                     }
-
-                    var headerExtra = '';
-                    if (takenBy) headerExtra += '<span class="badge bg-light text-dark"><i class="mdi mdi-account"></i> ' + takenBy + '</span> ';
-                    if (source) headerExtra += '<span class="badge bg-secondary">' + source + '</span>';
-
-                    var html =
-                        '<div class="vital-entry">' +
-                            '<div class="vital-entry-header">' +
-                                '<span class="vital-date"><i class="mdi mdi-clock-outline"></i> ' + vitalDate + '</span>' +
-                                '<span>' + headerExtra + '</span>' +
-                            '</div>' +
-                            '<div class="vital-entry-grid">' +
-                                '<div class="vital-item ' + getTempClass(temp) + '">' +
-                                    '<i class="mdi mdi-thermometer"></i>' +
-                                    '<span class="vital-value">' + (temp !== 'N/A' ? temp + '\u00b0C' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">Temperature</span>' +
-                                '</div>' +
-                                '<div class="vital-item ' + getHeartRateClass(heartRate) + '">' +
-                                    '<i class="mdi mdi-heart-pulse"></i>' +
-                                    '<span class="vital-value">' + (heartRate !== 'N/A' ? heartRate + ' bpm' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">Heart Rate</span>' +
-                                '</div>' +
-                                '<div class="vital-item ' + getBPClass(bp) + '">' +
-                                    '<i class="mdi mdi-water"></i>' +
-                                    '<span class="vital-value">' + (bp !== 'N/A' ? bp + ' mmHg' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">Blood Pressure</span>' +
-                                '</div>' +
-                                '<div class="vital-item ' + getRespRateClass(respRate) + '">' +
-                                    '<i class="mdi mdi-lungs"></i>' +
-                                    '<span class="vital-value">' + (respRate !== 'N/A' ? respRate + ' bpm' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">Respiratory Rate</span>' +
-                                '</div>' +
-                                '<div class="vital-item ' + getSpO2Class(spo2) + '">' +
-                                    '<i class="mdi mdi-pulse"></i>' +
-                                    '<span class="vital-value">' + (spo2 !== 'N/A' ? spo2 + '%' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">SpO2</span>' +
-                                '</div>' +
-                                '<div class="vital-item ' + getBloodSugarClass(bloodSugar) + '">' +
-                                    '<i class="mdi mdi-water-opacity"></i>' +
-                                    '<span class="vital-value">' + (bloodSugar !== 'N/A' ? bloodSugar + ' mg/dL' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">Blood Sugar</span>' +
-                                '</div>' +
-                                '<div class="vital-item">' +
-                                    '<i class="mdi mdi-weight-kilogram"></i>' +
-                                    '<span class="vital-value">' + (weight !== 'N/A' ? weight + ' kg' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">Weight</span>' +
-                                '</div>' +
-                                '<div class="vital-item">' +
-                                    '<i class="mdi mdi-human-male-height"></i>' +
-                                    '<span class="vital-value">' + (height !== 'N/A' ? height + ' cm' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">Height</span>' +
-                                '</div>' +
-                                '<div class="vital-item ' + getBMIClass(bmi) + '">' +
-                                    '<i class="mdi mdi-calculator"></i>' +
-                                    '<span class="vital-value">' + bmi + '</span>' +
-                                    '<span class="vital-label">BMI</span>' +
-                                '</div>' +
-                                '<div class="vital-item ' + getPainClass(painScore) + '">' +
-                                    '<i class="mdi mdi-emoticon-sad-outline"></i>' +
-                                    '<span class="vital-value">' + (painScore != null && painScore !== '' ? painScore + '/10' : 'N/A') + '</span>' +
-                                    '<span class="vital-label">Pain Score</span>' +
-                                '</div>' +
-                            '</div>';
-
-                    // Show notes if present
-                    if (notes) {
-                        html +=
-                            '<div class="mt-2 p-2 bg-light rounded" style="border-left: 3px solid #6c757d;">' +
-                                '<small class="text-muted"><i class="mdi mdi-note-text"></i> <strong>Notes:</strong> ' + notes + '</small>' +
-                            '</div>';
-                    }
-
-                    html += '</div>';
-                    return html;
-                }
-            }],
-            drawCallback: function() {
-                var pid = window.currentPatient || window.currentClinicalPatientId;
-                var $wrapper = $('#vitals-table_wrapper');
-                $wrapper.find('.show-all-link').remove();
-                $wrapper.append(
-                    '<a href="/patient/' + pid + '?section=vitalsCardBody" target="_blank" class="show-all-link">' +
-                        'Show All Vitals \u2192' +
-                    '</a>'
-                );
+                });
+                html += '</div></div>';
             }
+
+            if (notes) {
+                html += '<div class="mt-2 p-2 bg-light rounded border-start border-3 border-secondary">';
+                html += '<small class="text-muted"><i class="mdi mdi-note-text"></i> <strong>Notes:</strong> ' + notes + '</small>';
+                html += '</div>';
+            }
+
+            html += '</div>';
         });
+
+        container.html(html);
+
+        $('#clinical-vitals-show-all').html(
+            '<a href="/patient/' + patientId + '?section=vitalsCardBody" target="_blank" class="show-all-link">Show All Vitals &rarr;</a>'
+        );
     };
+
+
 
 
     // ─── Medications Rendering ───────────────────────────────────────────
@@ -340,6 +288,81 @@
                 '<i class="mdi mdi-open-in-new"></i> See More Prescriptions' +
             '</a>'
         );
+    };
+
+
+    // ─── Procedures Rendering ────────────────────────────────────────────
+
+    /**
+     * Render procedures into the modal's procedures tab using card layout.
+     *
+     * @param {Array} procedures - Array of procedure objects from the API
+     */
+    ClinicalContext.displayProcedures = function(procedures) {
+        const container = $('#clinical-procedures-container');
+
+        if (!procedures || procedures.length === 0) {
+            container.html(
+                '<div class="text-center py-4">' +
+                    '<i class="mdi mdi-clipboard-text-outline mdi-48px text-muted"></i>' +
+                    '<p class="text-muted mt-2">No procedures found for this patient</p>' +
+                '</div>'
+            );
+            return;
+        }
+
+        var html = '';
+        procedures.forEach(function(proc) {
+            var name = proc.service_name || 'N/A';
+            var status = (proc.status || 'requested').toLowerCase();
+            var priority = (proc.priority || 'routine').toLowerCase();
+            var date = proc.requested_date || 'N/A';
+            var doctor = proc.doctor || 'N/A';
+            var location = proc.location || 'N/A';
+            var scheduled = proc.scheduled_time;
+
+            var statusClass = 'status-' + status;
+            var priorityBadge = priority === 'emergency' ? '<span class="badge bg-danger ms-1">Emergency</span>' :
+                               (priority === 'urgent' ? '<span class="badge bg-warning ms-1">Urgent</span>' : '');
+
+            html += '<div class="card procedure-card mb-2 ' + statusClass + '">';
+            html += '<div class="card-body p-3">';
+            html += '<div class="d-flex justify-content-between align-items-start mb-2">';
+            html += '<div>';
+            html += '<div class="procedure-name fw-bold text-dark">' + name + '</div>';
+            html += '<small class="text-muted">' + (proc.category || 'Clinical Procedure') + '</small>';
+            html += '</div>';
+            html += '<div>';
+            html += '<span class="badge badge-outline-' + status + ' text-capitalize">' + status.replace('_', ' ') + '</span>';
+            html += priorityBadge;
+            html += '</div>';
+            html += '</div>';
+
+            html += '<div class="procedure-meta d-flex flex-wrap gap-3 mb-2 small">';
+            html += '<div><i class="mdi mdi-calendar text-muted"></i> ' + date + '</div>';
+            if (scheduled) {
+                html += '<div><i class="mdi mdi-clock-outline text-primary"></i> <b>Scheduled:</b> ' + scheduled + '</div>';
+            }
+            html += '<div><i class="mdi mdi-account-star text-muted"></i> ' + doctor + '</div>';
+            if (location && location !== 'N/A') {
+                html += '<div><i class="mdi mdi-map-marker text-muted"></i> ' + location + '</div>';
+            }
+            html += '</div>';
+
+            html += '<div class="procedure-actions mt-2">';
+            html += '<a href="/patient-procedures/' + proc.id + '" target="_blank" class="btn btn-sm btn-outline-primary">';
+            html += '<i class="mdi mdi-eye"></i> View Details';
+            html += '</a>';
+            html += '</div>';
+
+            html += '</div>';
+            html += '</div>';
+        });
+
+        container.html(html);
+
+        // Mark as loaded for legacy IIFE handlers
+        window.clinicalProceduresLoaded = true;
     };
 
 
@@ -542,12 +565,28 @@
         if (!patientId) return;
 
         if (panel === 'vitals') {
-            $('#vitals-panel-body').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i></div>');
+            $('#clinical-vitals-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i></div>');
             $.get(config.baseUrl + '/' + patientId + '/vitals', function(vitals) {
                 ClinicalContext.displayVitals(vitals, patientId);
             }).fail(function() {
-                $('#vitals-panel-body').html('<div class="alert alert-danger">Failed to load vitals</div>');
+                $('#clinical-vitals-container').html('<div class="alert alert-danger">Failed to load vitals</div>');
             });
+        } else if (panel === 'medications') {
+            $('#clinical-meds-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i></div>');
+            $.get(config.baseUrl + '/' + patientId + '/medications', function(meds) {
+                ClinicalContext.displayMedications(meds, patientId);
+            });
+        } else if (panel === 'procedures') {
+            $('#clinical-procedures-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i></div>');
+            $.get(config.baseUrl + '/' + patientId + '/procedures', function(procs) {
+                ClinicalContext.displayProcedures(procs);
+            });
+        } else if (panel === 'enc-notes') {
+            $('#clinical-enc-notes-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i></div>');
+            // Encounter notes are usually handled by the modal's own IIFE, but we can trigger it if available
+            if (typeof loadClinicalEncounterNotes === 'function') {
+                loadClinicalEncounterNotes();
+            }
         }
         // enc-notes, inj-imm, and procedures refresh are handled by the shared modal IIFEs
     });

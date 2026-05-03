@@ -645,6 +645,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('clinical-context/patient/{patientId}/allergies', [ClinicalContextController::class, 'getAllergies'])->name('clinical-context.allergies');
         Route::get('clinical-context/patient/{patientId}/labs', [ClinicalContextController::class, 'getLabs'])->name('clinical-context.labs');
         Route::get('clinical-context/patient/{patientId}/imaging', [ClinicalContextController::class, 'getImaging'])->name('clinical-context.imaging');
+        Route::get('clinical-context/patient/{patientId}/procedures', [ClinicalContextController::class, 'getProcedures'])->name('clinical-context.procedures');
 
         // Creating and Listing Permissions
         Route::resource('services', ServiceController::class);
