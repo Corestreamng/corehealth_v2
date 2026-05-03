@@ -13,6 +13,11 @@ class Clinic extends Model implements Auditable
 
     protected $fillable = [
         'name',
+        'vitals_template',
+    ];
+
+    protected $casts = [
+        'vitals_template' => 'array',
     ];
 
     // ──────────────────────────────────────

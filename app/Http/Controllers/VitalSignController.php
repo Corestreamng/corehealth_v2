@@ -58,8 +58,8 @@ class VitalSignController extends Controller
             $request->validate([
                 'patient_id' => 'required',
                 'bloodPressure' => 'nullable|regex:/^\d{2,3}\/\d{2,3}$/',
-                'bodyTemperature' => 'required|numeric|min:34|max:42',
-                'datetimeField' => 'required',
+                'bodyTemperature' => 'nullable|numeric|min:34|max:42',
+                'datetimeField' => 'nullable',
                 'heartRate' => 'nullable|numeric|min:30|max:250',
                 'respiratoryRate' => 'nullable|numeric|min:5|max:60',
                 'bodyWeight' => 'nullable|numeric|min:0.5|max:500',
@@ -70,13 +70,42 @@ class VitalSignController extends Controller
                 'bmi' => 'nullable|numeric',
             ]);
 
+            // Check if at least one vital metric is provided
+            $metrics = ['bloodPressure', 'bodyTemperature', 'heartRate', 'respiratoryRate', 'bodyWeight', 'height', 'spo2', 'bloodSugar', 'painScore'];
+            $hasMetric = false;
+            foreach ($metrics as $metric) {
+                if ($request->filled($metric)) {
+                    $hasMetric = true;
+                    break;
+                }
+            }
+
+            // Also check dynamic fields
+            if (!$hasMetric) {
+                $standardFields = ['patient_id', 'datetimeField', 'otherNotes', '_token', '_method', 'bmi'];
+                $formData = array_diff_key($request->all(), array_flip($standardFields));
+                foreach ($formData as $val) {
+                    if (!is_null($val) && $val !== '') {
+                        $hasMetric = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$hasMetric) {
+                throw new \Exception("At least one vital sign or custom metric must be provided.");
+            }
+
             DB::beginTransaction();
             $vitalSign = new VitalSign;
+            
+            // Default time to now if not provided
+            $timeTaken = $request->datetimeField ?? now()->toDateTimeString();
 
             $vitalSign->taken_by = Auth::id();
             $vitalSign->patient_id = $request->patient_id;
             $vitalSign->temp = $request->bodyTemperature;
-            $vitalSign->blood_pressure = $request->bloodPressure ?? '0/0';
+            $vitalSign->blood_pressure = $request->bloodPressure;
             $vitalSign->heart_rate = $request->heartRate;
             $vitalSign->resp_rate = $request->respiratoryRate;
             $vitalSign->weight = $request->bodyWeight;
@@ -85,7 +114,7 @@ class VitalSignController extends Controller
             $vitalSign->blood_sugar = $request->bloodSugar;
             $vitalSign->pain_score = $request->painScore;
             $vitalSign->other_notes = $request->otherNotes;
-            $vitalSign->time_taken = $request->datetimeField;
+            $vitalSign->time_taken = $timeTaken;
 
             // Auto-calculate BMI if weight and height provided
             if ($request->bmi) {
@@ -96,6 +125,18 @@ class VitalSignController extends Controller
             }
 
             $vitalSign->save();
+
+            // Capture dynamic fields into form_data
+            $standardFields = [
+                'patient_id', 'bloodPressure', 'bodyTemperature', 'datetimeField', 
+                'heartRate', 'respiratoryRate', 'bodyWeight', 'height', 'spo2', 
+                'bloodSugar', 'painScore', 'bmi', 'otherNotes', '_token', '_method'
+            ];
+            $formData = array_diff_key($request->all(), array_flip($standardFields));
+            
+            if (!empty($formData)) {
+                $vitalSign->update(['form_data' => $formData]);
+            }
 
             //update today's doc queues for the patient, so that they no longer show on the vitals queue
             $queues = DoctorQueue::where('patient_id', $request->patient_id)
@@ -157,12 +198,22 @@ class VitalSignController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
-                $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
-                $str .= "<b > Body Weight (Kg): </b>" . $his->weight . "<br>";
-                $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
-                $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
-                $str .= $his->other_notes ?? 'N/A';
+                $str = "<b > Blood Pressure (mmHg): </b>" . ($his->blood_pressure ?? 'N/A') . "<br>";
+                $str .= "<b > Body Temperature (°C): </b>" . ($his->temp ?? 'N/A') . "<br>";
+                $str .= "<b > Body Weight (Kg): </b>" . ($his->weight ?? 'N/A') . "<br>";
+                $str .= "<b > Respiratory Rate (BPM) :</b>" . ($his->resp_rate ?? 'N/A') . "<br>";
+                $str .= "<b > Heart Rate (BPM): </b>" . ($his->heart_rate ?? 'N/A') . "<br>";
+                
+                if (!empty($his->form_data)) {
+                    foreach ($his->form_data as $key => $value) {
+                        if (!empty($value)) {
+                            $label = ucwords(str_replace(['_', '-'], ' ', $key));
+                            $str .= "<b > $label: </b>" . htmlspecialchars($value) . "<br>";
+                        }
+                    }
+                }
+                
+                $str .= "<hr>" . ($his->other_notes ?? 'N/A');
                 return $str;
             })
             ->rawColumns(['created_at', 'result'])
@@ -269,12 +320,22 @@ class VitalSignController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
-                $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
-                $str .= "<b > Body Weight (Kg): </b>" . $his->weight . "<br>";
-                $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
-                $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
-                $str .= $his->other_notes ?? 'N/A';
+                $str = "<b > Blood Pressure (mmHg): </b>" . ($his->blood_pressure ?? 'N/A') . "<br>";
+                $str .= "<b > Body Temperature (°C): </b>" . ($his->temp ?? 'N/A') . "<br>";
+                $str .= "<b > Body Weight (Kg): </b>" . ($his->weight ?? 'N/A') . "<br>";
+                $str .= "<b > Respiratory Rate (BPM) :</b>" . ($his->resp_rate ?? 'N/A') . "<br>";
+                $str .= "<b > Heart Rate (BPM): </b>" . ($his->heart_rate ?? 'N/A') . "<br>";
+                
+                if (!empty($his->form_data)) {
+                    foreach ($his->form_data as $key => $value) {
+                        if (!empty($value)) {
+                            $label = ucwords(str_replace(['_', '-'], ' ', $key));
+                            $str .= "<b > $label: </b>" . htmlspecialchars($value) . "<br>";
+                        }
+                    }
+                }
+                
+                $str .= "<hr>" . ($his->other_notes ?? 'N/A');
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
