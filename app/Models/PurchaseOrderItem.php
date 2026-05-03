@@ -43,6 +43,8 @@ class PurchaseOrderItem extends Model implements Auditable
         'unit_cost' => 'decimal:2',
         'actual_unit_cost' => 'decimal:2',
         'received_at' => 'datetime',
+        'packaging_qty' => 'float',
+        'received_packaging_qty' => 'float',
     ];
 
     /**
