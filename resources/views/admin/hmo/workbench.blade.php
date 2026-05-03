@@ -2655,7 +2655,7 @@ $(function() {
                     var respRate = row.resp_rate || 'N/A';
                     var weight = row.weight || 'N/A';
 
-                    return `
+                    var html = `
                         <div class="vital-entry">
                             <div class="vital-entry-header">
                                 <span class="vital-date">${vitalDate}</span>
@@ -2686,9 +2686,24 @@ $(function() {
                                     <span class="vital-value">${weight}</span>
                                     <span class="vital-label">Weight (Kg)</span>
                                 </div>
-                            </div>
-                        </div>
-                    `;
+                            </div>`;
+
+                    if (row.form_data) {
+                        html += '<div class="mt-2 pt-2 border-top bg-light rounded p-2" style="font-size: 0.8rem; background-color: #f8f9fa;">';
+                        html += '<div class="fw-bold text-primary mb-1"><i class="mdi mdi-information-outline"></i> Clinic Specific Vitals:</div>';
+                        html += '<div class="d-flex flex-wrap gap-3">';
+                        Object.keys(row.form_data).forEach(function(key) {
+                            var val = row.form_data[key];
+                            if (val) {
+                                var label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                html += '<div><span class="text-muted">' + label + ':</span> <strong>' + val + '</strong></div>';
+                            }
+                        });
+                        html += '</div></div>';
+                    }
+
+                    html += '</div>';
+                    return html;
                 }
             }],
             drawCallback: function() {

@@ -3,6 +3,53 @@
 @section('title', 'Nursing Workbench')
 
 @push('styles')
+    <style>
+        .vitals-dashboard-header .bh-stat-card {
+            display: flex;
+            align-items: center;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            background: #fff;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        .vitals-dashboard-header .bh-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        .vitals-dashboard-header .bh-stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        .vitals-dashboard-header .bh-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+        .vitals-dashboard-header .bh-stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            color: #6c757d;
+            font-weight: 600;
+        }
+        .vitals-dashboard-header .bh-stat-blue { border-top: 4px solid #3b82f6; }
+        .vitals-dashboard-header .bh-stat-blue .bh-stat-icon { background: #eff6ff; color: #3b82f6; }
+        .vitals-dashboard-header .bh-stat-pink { border-top: 4px solid #ec4899; }
+        .vitals-dashboard-header .bh-stat-pink .bh-stat-icon { background: #fdf2f8; color: #ec4899; }
+        .vitals-dashboard-header .bh-stat-purple { border-top: 4px solid #8b5cf6; }
+        .vitals-dashboard-header .bh-stat-purple .bh-stat-icon { background: #f5f3ff; color: #8b5cf6; }
+        .vitals-dashboard-header .bh-stat-green { border-top: 4px solid #10b981; }
+        .vitals-dashboard-header .bh-stat-green .bh-stat-icon { background: #ecfdf5; color: #10b981; }
+    </style>
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
 <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
@@ -7239,22 +7286,72 @@ function displayVitalsQueue(patients) {
         const criticalWaits = patients.filter(p => p.wait_level === 'critical').length;
         const warningWaits = patients.filter(p => p.wait_level === 'warning').length;
         const emergencies = patients.filter(p => p.priority === 'emergency').length;
+        
+        // Calculate average wait time
+        let avgWait = 0;
+        if (patients.length > 0) {
+            avgWait = Math.round(patients.reduce((acc, p) => acc + (p.wait_minutes || 0), 0) / patients.length);
+        }
 
-        let filterHtml = `<div class="d-flex flex-wrap gap-2 mb-3 p-2 bg-light rounded align-items-center">
-            <div class="d-flex align-items-center gap-2">
-                <label class="mb-0 fw-bold small"><i class="mdi mdi-hospital-building"></i> Clinic:</label>
-                <select class="form-select form-select-sm" id="vitals-clinic-filter" style="width: auto; min-width: 170px;">
-                    <option value="all">All Clinics (${patients.length})</option>
-                    ${vitalsClinicsCache.map(c => `<option value="${c.id}" ${vitalsClinicFilter == c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-                </select>
-            </div>
-            <div class="ms-auto d-flex gap-2 small">
-                ${emergencies> 0 ? `<span class="badge bg-danger"><i class="mdi mdi-alert"></i> ${emergencies} emergency</span>` : ''}
-                ${criticalWaits> 0 ? `<span class="badge bg-danger"><i class="mdi mdi-clock-alert"></i> ${criticalWaits} long wait</span>` : ''}
-                ${warningWaits> 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-clock"></i> ${warningWaits} moderate wait</span>` : ''}
-                <span class="badge bg-secondary">${patients.length} total in queue</span>
-            </div>
-        </div>`;
+        let filterHtml = `
+            <div class="vitals-dashboard-header mb-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="bh-stat-card bh-stat-blue">
+                            <div class="bh-stat-icon"><i class="mdi mdi-account-group"></i></div>
+                            <div>
+                                <div class="bh-stat-value">${patients.length}</div>
+                                <div class="bh-stat-label">Total Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bh-stat-card bh-stat-pink">
+                            <div class="bh-stat-icon"><i class="mdi mdi-alert-circle"></i></div>
+                            <div>
+                                <div class="bh-stat-value">${emergencies}</div>
+                                <div class="bh-stat-label">Emergencies</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bh-stat-card bh-stat-purple">
+                            <div class="bh-stat-icon"><i class="mdi mdi-clock-alert"></i></div>
+                            <div>
+                                <div class="bh-stat-value">${criticalWaits}</div>
+                                <div class="bh-stat-label">Long Waits (>45m)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bh-stat-card bh-stat-green">
+                            <div class="bh-stat-icon"><i class="mdi mdi-timer-outline"></i></div>
+                            <div>
+                                <div class="bh-stat-value">${avgWait}m</div>
+                                <div class="bh-stat-label">Avg Wait Time</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center p-3 bg-white rounded shadow-sm border">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="input-group input-group-sm" style="width: 300px;">
+                            <span class="input-group-text bg-light border-end-0"><i class="mdi mdi-hospital-building text-primary"></i></span>
+                            <select class="form-select border-start-0" id="vitals-clinic-filter">
+                                <option value="all">All Clinics (${patients.length})</option>
+                                ${vitalsClinicsCache.map(c => `<option value="${c.id}" ${vitalsClinicFilter == c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="refreshVitalsQueue()"><i class="mdi mdi-refresh"></i></button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge rounded-pill bg-light text-dark border"><i class="mdi mdi-circle text-success small me-1"></i> Normal: ${patients.length - criticalWaits - warningWaits}</span>
+                        <span class="badge rounded-pill bg-light text-dark border"><i class="mdi mdi-circle text-warning small me-1"></i> Warning: ${warningWaits}</span>
+                        <span class="badge rounded-pill bg-light text-dark border"><i class="mdi mdi-circle text-danger small me-1"></i> Critical: ${criticalWaits}</span>
+                    </div>
+                </div>
+            </div>`;
 
         $container.html(filterHtml + '<div id="vitals-cards-container">' + renderVitalsCards(patients) + '</div>' +
             '<div id="consulting-section" class="mt-3"></div>');
@@ -7264,10 +7361,13 @@ function displayVitalsQueue(patients) {
 
         $('#vitals-clinic-filter').on('change', function() {
             vitalsClinicFilter = $(this).val();
-            // Reload from server with clinic filter
+            // Show loading state
+            $('#vitals-cards-container').html('<div class="text-center p-5"><i class="mdi mdi-loading mdi-spin mdi-48px text-primary"></i><br>Filtering queue...</div>');
+            
             $.get('{{ route("nursing-workbench.vitals-queue") }}', { clinic_id: vitalsClinicFilter }, function(data) {
                 vitalsQueueData = data;
-                $('#vitals-cards-container').html(renderVitalsCards(data));
+                // Re-render the whole thing to update stats as well
+                renderVitalsQueueFull();
             });
         });
     }
@@ -7326,6 +7426,14 @@ function renderVitalsCards(patients) {
     });
     html += '</div>';
     return html;
+}
+
+function refreshVitalsQueue() {
+    $.get('{{ route("nursing-workbench.vitals-queue") }}', { clinic_id: vitalsClinicFilter }, function(data) {
+        vitalsQueueData = data;
+        renderVitalsQueueFull();
+        toastr.success('Queue refreshed');
+    });
 }
 
 /**
@@ -7986,7 +8094,7 @@ function loadPatient(patientId) {
 
             // Initialize Unified Vitals
             if(typeof window.initUnifiedVitals === 'function') {
-                window.initUnifiedVitals(patientId);
+                window.initUnifiedVitals(patientId, null, data.clinic_name, data.vitals_template);
             }
 
             // Load other tab data

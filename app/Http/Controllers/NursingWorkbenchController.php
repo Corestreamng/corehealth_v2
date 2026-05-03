@@ -603,6 +603,43 @@ class NursingWorkbenchController extends Controller{
             $ageText = !empty($ageParts) ? implode(' ', $ageParts) : '0d';
         }
 
+        // Get active clinic queue if any (to load vitals template)
+        $currentQueue = DoctorQueue::where('patient_id', $patientId)
+            ->whereDate('created_at', Carbon::today())
+            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION])
+            ->with('clinic')
+            ->latest()
+            ->first();
+
+        // Fallback 1: Check for any appointment today if no queue
+        $clinic = $currentQueue ? $currentQueue->clinic : null;
+        if (!$clinic) {
+            $appointment = \App\Models\DoctorAppointment::where('patient_id', $patientId)
+                ->whereDate('appointment_date', Carbon::today())
+                ->where('status', '!=', QueueStatus::CANCELLED)
+                ->with('clinic')
+                ->latest()
+                ->first();
+            if ($appointment && $appointment->clinic) {
+                $clinic = $appointment->clinic;
+            }
+        }
+
+        // Fallback 2: Check for active enrollment clinic (e.g. Maternity)
+        if (!$clinic) {
+            $enrollment = \App\Models\MaternityEnrollment::where('patient_id', $patientId)
+                ->where('status', 'active')
+                ->first();
+            if ($enrollment) {
+                $clinic = Clinic::where('name', 'Gynecology/Obstetrics')->first();
+            }
+        }
+
+        // Fallback 3: Use the doctor's/nurse's current clinic if applicable
+        if (!$clinic && Auth::user()->staff && Auth::user()->staff->clinic_id) {
+            $clinic = Clinic::find(Auth::user()->staff->clinic_id);
+        }
+
         // Check admission status
         $admission = AdmissionRequest::with('bed')
             ->where('patient_id', $patientId)
@@ -671,6 +708,7 @@ class NursingWorkbenchController extends Controller{
                 'weight' => $lastVitals->weight ? (float) $lastVitals->weight : null,
                 'spo2' => $lastVitals->spo2 ? (float) $lastVitals->spo2 : null,
                 'time' => Carbon::parse($lastVitals->created_at)->format('h:i a, d M'),
+                'form_data' => $lastVitals->form_data,
             ] : null,
             'latest_nurse_note' => $lastNursingNote ? [
                 'note' => \Illuminate\Support\Str::limit(strip_tags($lastNursingNote->note), 150),
@@ -685,6 +723,8 @@ class NursingWorkbenchController extends Controller{
                 'created_at' => Carbon::parse($lastDoctorNote->created_at)->format('h:i a, d M Y'),
                 'time_ago' => Carbon::parse($lastDoctorNote->created_at)->diffForHumans(),
             ] : null,
+            'clinic_name' => $clinic ? $clinic->name : null,
+            'vitals_template' => $clinic ? $clinic->vitals_template : null,
         ]);
     }
 
@@ -711,6 +751,7 @@ class NursingWorkbenchController extends Controller{
                 'time_taken' => $v->time_taken ? Carbon::parse($v->time_taken)->format('h:i a, d M Y') : null,
                 'taken_by' => $v->taken_by ? userfullname($v->taken_by) : 'N/A',
                 'created_at' => Carbon::parse($v->created_at)->format('h:i a, d M Y'),
+                'form_data' => $v->form_data,
             ];
         });
 
@@ -3624,6 +3665,24 @@ class NursingWorkbenchController extends Controller{
 
                 $html .= '</div>'; // End Row 2
 
+                // Dynamic Vitals (Clinic Specific)
+                if (!empty($vital->form_data)) {
+                    $html .= '<div class="mt-3 pt-2 border-top">';
+                    $html .= '<small class="text-primary fw-bold mb-1 d-block"><i class="mdi mdi-information-outline"></i> Clinic Specific Metrics:</small>';
+                    $html .= '<div class="row">';
+                    foreach ($vital->form_data as $key => $value) {
+                        if (!empty($value)) {
+                            $label = ucwords(str_replace(['_', '-'], ' ', $key));
+                            $html .= '<div class="col-md-4 mb-2">';
+                            $html .= '<small class="text-muted d-block">' . htmlspecialchars($label) . '</small>';
+                            $html .= '<strong>' . htmlspecialchars($value) . '</strong>';
+                            $html .= '</div>';
+                        }
+                    }
+                    $html .= '</div>';
+                    $html .= '</div>';
+                }
+
                 if(!empty($vital->other_notes)){
                     $html .= '<div class="mt-2 pt-2 border-top">';
                     $html .= '<small class="text-muted">Notes:</small>';
@@ -3785,7 +3844,7 @@ class NursingWorkbenchController extends Controller{
     public function getVitalsQueue(Request $request)
     {
         $query = DoctorQueue::with(['patient.user', 'patient.hmo', 'doctor.user', 'clinic'])
-            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])
+            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION])
             ->whereDate('created_at', Carbon::today())
             ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
             ->orderBy('created_at', 'asc');

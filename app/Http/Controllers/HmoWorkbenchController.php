@@ -691,6 +691,7 @@ class HmoWorkbenchController extends Controller
                     'time_taken' => $v->time_taken,
                     'taken_by' => $v->taken_by ? userfullname($v->taken_by) : null,
                     'source' => $v->source,
+                    'form_data' => $v->form_data,
                 ];
             });
 
