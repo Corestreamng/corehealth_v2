@@ -47,6 +47,7 @@ class ClinicalContextController extends Controller
                     'time_taken' => $v->time_taken,
                     'taken_by' => $v->taken_by ? userfullname($v->taken_by) : null,
                     'source' => $v->source,
+                    'form_data' => $v->form_data,
                 ];
             });
 
@@ -241,5 +242,33 @@ class ClinicalContextController extends Controller
         });
 
         return response()->json($result);
+    }
+
+    /**
+     * Get patient procedures for clinical context modal.
+     */
+    public function getProcedures($patientId)
+    {
+        $patient = Patient::findOrFail($patientId);
+
+        $procedures = \App\Models\Procedure::with(['service', 'requestedByUser', 'encounter', 'procedureDefinition'])
+            ->where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json($procedures->map(function ($p) {
+            $status = $p->procedure_status ?? 'requested';
+            return [
+                'id' => $p->id,
+                'service_name' => $p->service ? $p->service->service_name : ($p->procedureDefinition ? $p->procedureDefinition->name : 'N/A'),
+                'status' => $status,
+                'priority' => $p->priority ?? 'routine',
+                'requested_date' => $p->created_at->format('h:i a D M j, Y'),
+                'doctor' => $p->requestedByUser ? $p->requestedByUser->firstname . ' ' . $p->requestedByUser->surname : 'N/A',
+                'location' => $p->location ?? 'N/A',
+                'scheduled_time' => $p->scheduled_time ? \Carbon\Carbon::parse($p->scheduled_time)->format('h:i a D M j, Y') : null,
+            ];
+        }));
     }
 }
