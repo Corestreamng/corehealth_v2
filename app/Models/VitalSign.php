@@ -44,6 +44,7 @@ class VitalSign extends Model implements Auditable
         'bmi',
         'pain_score',
         'other_notes',
+        'form_data',
         'time_taken',
         'status',
         'source'
@@ -61,6 +62,7 @@ class VitalSign extends Model implements Auditable
         'blood_sugar' => 'decimal:1',
         'bmi' => 'decimal:1',
         'pain_score' => 'integer',
+        'form_data' => 'array',
     ];
 
     /**
