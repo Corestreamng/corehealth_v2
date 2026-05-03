@@ -740,7 +740,7 @@
                                     <i class="mdi mdi-cart"></i> Requested: <strong>{{ $item->requested_qty }}</strong>
                                     {{ $item->product->base_unit_name ?? '' }}
                                     @if($item->packaging)
-                                        <span class="text-info">({{ $item->packaging_qty }} {{ $item->packaging->name }})</span>
+                                        <span class="text-info">({{ (float)$item->packaging_qty }} {{ $item->packaging->name }})</span>
                                     @endif
                                 </span>
                             </div>
@@ -852,7 +852,7 @@
                             <strong>{{ $item->product->product_name }}</strong><br>
                             <small style="color: #666;">{{ $item->product->product_code }}</small>
                             @if($item->packaging)
-                                <br><small style="color: #17a2b8;">({{ $item->packaging_qty }} {{ $item->packaging->name }})</small>
+                                <br><small style="color: #17a2b8;">({{ (float)$item->packaging_qty }} {{ $item->packaging->name }})</small>
                             @endif
                         </td>
                         <td style="border: 1px solid #333; padding: 8px; text-align: center;">{{ $item->product->base_unit_name ?? $item->product->unit_of_measure ?? 'Unit' }}</td>
@@ -930,7 +930,7 @@
                                     <div class="qty-label">Requested</div>
                                     <div class="qty-value">{{ $item->requested_qty }}</div>
                                     @if($item->packaging)
-                                        <div class="text-muted" style="font-size:0.7rem;">({{ $item->packaging_qty }} {{ $item->packaging->name }})</div>
+                                        <div class="text-muted" style="font-size:0.7rem;">({{ (float)$item->packaging_qty }} {{ $item->packaging->name }})</div>
                                     @elseif($item->product && $item->product->base_unit_name)
                                         <div class="text-muted" style="font-size:0.7rem;">{{ $item->product->base_unit_name }}</div>
                                     @endif
@@ -1134,7 +1134,7 @@
                         <div class="h6 mb-1">{{ $item->product->product_name }}</div>
                         <small class="text-muted">{{ $item->product->product_code }}</small>
                         @if($item->packaging)
-                            <br><small class="text-info"><i class="mdi mdi-package-variant"></i> Requested: <strong>{{ $item->packaging_qty }} {{ $item->packaging->name }}</strong></small>
+                            <br><small class="text-info"><i class="mdi mdi-package-variant"></i> Requested: <strong>{{ (float)$item->packaging_qty }} {{ $item->packaging->name }}</strong></small>
                             <br><small class="text-muted"><i class="mdi mdi-calculator"></i> 1 {{ $item->packaging->name }} = {{ $item->packaging->base_unit_qty }} {{ $item->product->base_unit_name ?? 'pcs' }}</small>
                         @endif
                     </div>
