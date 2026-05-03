@@ -596,7 +596,7 @@ class StoreRequisitionController extends Controller
                     'current_qty' => $b['current_qty'],
                     'expiry_date' => $b['expiry_date'],
                 ]),
-                'packaging' => $i['product']->packaging->map(fn($p) => [
+                'packaging' => $i['product']->packagings->map(fn($p) => [
                     'id' => $p->id,
                     'name' => $p->name,
                     'base_unit_qty' => $p->base_unit_qty,

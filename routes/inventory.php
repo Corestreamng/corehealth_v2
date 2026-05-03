@@ -95,6 +95,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         // Tally Card
         Route::get('/tally-card', [StoreWorkbenchController::class, 'tallyCard'])->name('tally-card');
         Route::get('/tally-card/data', [StoreWorkbenchController::class, 'tallyCardData'])->name('tally-card.data');
+        Route::get('/tally-card/pending-actions', [StoreWorkbenchController::class, 'pendingActions'])->name('tally-card.pending-actions');
 
         // Reports
         Route::get('/reports/expiry', [StoreWorkbenchController::class, 'expiryReport'])->name('expiry-report');
