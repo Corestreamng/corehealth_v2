@@ -833,7 +833,7 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     // HMO Tariff Management
-    Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
+    Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN|PHARMACIST|STORE']], function () {
         Route::get('admin/hmo-tariffs', [TariffManagementController::class, 'index'])->name('hmo-tariffs.index');
         Route::get('admin/hmo-tariffs/data', [TariffManagementController::class, 'getTariffs'])->name('hmo-tariffs.data');
         Route::get('admin/hmo-tariffs/load-view', [TariffManagementController::class, 'loadView'])->name('hmo-tariffs.load-view');
