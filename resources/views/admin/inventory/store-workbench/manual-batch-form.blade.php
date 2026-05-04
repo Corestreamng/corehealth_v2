@@ -331,11 +331,7 @@
         // Pre-select product if provided
         @if(isset($selectedProduct) && $selectedProduct)
         var preselectedProduct = {
-            id: {
-                {
-                    $selectedProduct - > id
-                }
-            },
+            id: {{ $selectedProduct->id }},
             text: '{{ $selectedProduct->product_name }} ({{ $selectedProduct->product_code }})'
         };
         var newOption = new Option(preselectedProduct.text, preselectedProduct.id, true, true);
