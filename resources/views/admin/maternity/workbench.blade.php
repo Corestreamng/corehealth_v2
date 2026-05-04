@@ -1353,6 +1353,7 @@ $sett = appsettings();
         font-size: 0.9rem;
         margin-top: 0.5rem;
     }
+
 </style>
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -2110,11 +2111,13 @@ $sett = appsettings();
                             <div class="col-md-12 mb-3"><label class="form-label">Medications / Notes</label><textarea name="medications" class="form-control" rows="2" placeholder="Additional medications, observations, or clinical notes"></textarea></div>
                         </div>
                     </div>
+
+                    <br>
+                    <hr>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="mdi mdi-close"></i> Cancel</button>
+<br>
+                    <button type="button" class="btn btn-success" id="btn-save-partograph"><i class="mdi mdi-check"></i> Save Entry</button>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="mdi mdi-close"></i> Cancel</button>
-                <button type="button" class="btn btn-success" id="btn-save-partograph"><i class="mdi mdi-check"></i> Save Entry</button>
             </div>
         </div>
     </div>

@@ -32,6 +32,8 @@ use App\Models\Store;
 use App\Models\PatientImmunizationSchedule;
 use App\Models\VaccineScheduleTemplate;
 use App\Models\VaccineScheduleItem;
+use App\Models\DoctorQueue;
+use App\Enums\QueueStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
