@@ -90,28 +90,41 @@ echo "Loaded " . $products->count() . " products from DB.\n";
 // Categorize HMOs
 $allHmos = Hmo::with('scheme')->where('status', 1)->get();
 $hmoGroups = [
-    'private'  => collect(),
-    'cbn'      => collect(),
-    'nhis'     => collect(),
-    'shis'     => collect(),
-    'generic'  => collect(),
+    'self_pay'    => collect(), // GOPD column, 100% Patient
+    'private_hmo' => collect(), // HMO column, 100% Claims, Express
+    'corporate'   => collect(), // CBN column, 100% Claims, Express
+    'nhis'        => collect(), // NHIS column, 90% Claims, 10% Patient, Primary
+    'shis'        => collect(), // PLASCHEMA column, 90% Claims, 10% Patient, Primary
 ];
 
 foreach ($allHmos as $h) {
-    $nameUpper   = mb_strtoupper($h->name);
-    $schemeCode  = $h->scheme ? mb_strtoupper($h->scheme->code) : '';
-    $schemeName  = $h->scheme ? mb_strtoupper($h->scheme->name) : '';
+    $schemeCode = $h->scheme ? mb_strtoupper($h->scheme->code) : '';
+    $schemeName = $h->scheme ? mb_strtoupper($h->scheme->name) : '';
+    $hmoName    = mb_strtoupper($h->name);
 
-    if (stripos($h->name, 'Private') !== false || $schemeCode === 'SELF') {
-        $hmoGroups['private']->push($h);
-    } elseif (stripos($h->name, 'CBN') !== false) {
-        $hmoGroups['cbn']->push($h);
-    } elseif (in_array($schemeCode, ['NHIS', 'NHIA']) || str_contains($schemeName, 'NHIS') || str_contains($schemeName, 'NHIA')) {
+    // 1. SELF PAY / GOPD (ID 1, SELF scheme, or generic Private/Cash names)
+    if ($schemeCode === 'SELF' || str_contains($schemeName, 'SELF/PRIVATE') || $hmoName === 'PRIVATE' || $hmoName === 'CASH' || $hmoName === 'SELF PAY' || $hmoName === 'PRIVATE') {
+        $hmoGroups['self_pay']->push($h);
+    } 
+    // 2. NHIS / NHIA (National schemes)
+    elseif ($schemeCode === 'NHIS' || $schemeCode === 'NHIA' || str_contains($schemeName, 'NHIS') || str_contains($schemeName, 'NHIA') || str_contains($hmoName, 'NHIS') || str_contains($hmoName, 'NHIA') || str_contains($hmoName, 'NATIONAL HEALTH')) {
         $hmoGroups['nhis']->push($h);
-    } elseif ($schemeCode === 'SHIS' || str_contains($schemeName, 'PLASCHEMA') || str_contains($schemeName, 'SHIS')) {
+    } 
+    // 3. PLASCHEMA / SHIS (State schemes)
+    elseif ($schemeCode === 'SHIS' || str_contains($schemeName, 'PLASCHEMA') || str_contains($schemeName, 'SHIS') || str_contains($hmoName, 'PLASCHEMA') || str_contains($hmoName, 'SHIS') || str_contains($hmoName, 'PLATEAU STATE')) {
         $hmoGroups['shis']->push($h);
-    } else {
-        $hmoGroups['generic']->push($h);
+    } 
+    // 4. CORPORATE (e.g. CBN, NNPC, Zenith, Axamansard)
+    elseif ($schemeCode === 'CORPORATE' || str_contains($schemeName, 'CORPORATE') || str_contains($hmoName, 'CORPORATE') || str_contains($hmoName, 'CBN') || str_contains($hmoName, 'AXAMANSARD') || str_contains($hmoName, 'BASTION') || str_contains($hmoName, 'ZENITH') || str_contains($hmoName, 'NNPC') || str_contains($hmoName, 'PEF') || str_contains($hmoName, 'CENTRAL BANK') || str_contains($hmoName, 'PETROLEUM') || str_contains($hmoName, 'NIGERIAN NAVY')) {
+        $hmoGroups['corporate']->push($h);
+    } 
+    // 5. PRIVATE HMOs (PHIS / Private providers)
+    elseif ($schemeCode === 'PHIS' || $schemeCode === 'PRIVATE' || str_contains($schemeName, 'PRIVATE') || str_contains($hmoName, 'HYGEIA') || str_contains($hmoName, 'LEADWAY') || str_contains($hmoName, 'TRUST') || str_contains($hmoName, 'RELIANCE') || str_contains($hmoName, 'AIICO') || str_contains($hmoName, 'AVON') || str_contains($hmoName, 'PREPAID') || str_contains($hmoName, 'PRECIOUS') || str_contains($hmoName, 'METRO') || str_contains($hmoName, 'EMIR OF WASE') || str_contains($hmoName, 'EMIR OF KANAM') || str_contains($hmoName, 'TOTAL HEALTH')) {
+        $hmoGroups['private_hmo']->push($h);
+    } 
+    // Default fallback to self_pay
+    else {
+        $hmoGroups['self_pay']->push($h);
     }
 }
 
@@ -202,7 +215,7 @@ function calculateTariff(array $parsed, string $group, float $gopdPrice, array $
     // Numeric
     $amount = $parsed['amount'];
 
-    if ($group === 'private') {
+    if ($group === 'self_pay') {
         return ['payable' => $amount, 'claims' => 0, 'mode' => 'primary'];
     }
 
@@ -214,8 +227,8 @@ function calculateTariff(array $parsed, string $group, float $gopdPrice, array $
         ];
     }
 
-    // generic / cbn — HMO covers full amount
-    return ['payable' => 0, 'claims' => $amount, 'mode' => 'primary'];
+    // private_hmo / corporate — HMO covers full amount in Express mode
+    return ['payable' => 0, 'claims' => $amount, 'mode' => 'express'];
 }
 
 function normalizeForMatch(string $name): string
@@ -231,12 +244,12 @@ function normalizeForMatch(string $name): string
 // ─── 4. PROCESS ROWS ────────────────────────────────────
 
 $stats = [
-    'matched'         => 0,
-    'unmatched'       => 0,
-    'gopd_updated'    => 0,
-    'tariff_created'  => 0,
-    'tariff_updated'  => 0,
-    'tariff_skipped'  => 0,
+    'matched'          => 0,
+    'products_created' => 0,
+    'gopd_updated'     => 0,
+    'tariff_created'   => 0,
+    'tariff_updated'   => 0,
+    'tariff_skipped'   => 0,
 ];
 $unmatched = [];
 
@@ -264,12 +277,44 @@ try {
         }
 
         if (!$product) {
-            $unmatched[] = $csvName;
-            $stats['unmatched']++;
-            continue;
-        }
+            $gopdParsed = parseValue($row['gopd']);
+            $gopdPrice = $gopdParsed['type'] === 'numeric' ? $gopdParsed['amount'] : 0;
 
-        $stats['matched']++;
+            if ($apply) {
+                // Create product without events/observers
+                $product = Product::withoutEvents(function() use ($csvName) {
+                    return Product::create([
+                        'product_name' => $csvName,
+                        'category_id'  => 2, // Default to Tablets
+                        'status'       => 1,
+                        'product_type' => 'drug',
+                        'user_id'      => 1,
+                    ]);
+                });
+
+                // Create price without events/observers
+                Price::withoutEvents(function() use ($product, $gopdPrice) {
+                    return Price::create([
+                        'product_id'         => $product->id,
+                        'current_sale_price' => $gopdPrice,
+                        'initial_sale_price' => $gopdPrice,
+                        'pr_buy_price'       => 0,
+                        'status'             => 1,
+                    ]);
+                });
+
+                // Add to products collection to avoid double creation if name repeats in CSV
+                $products->put(mb_strtolower(trim($csvName)), $product);
+            } else {
+                // Mock product for dry run reporting
+                $product = new Product(['product_name' => $csvName]);
+            }
+            
+            $stats['products_created']++;
+            $stats['matched']++; // Count as matched now since it exists
+        } else {
+            $stats['matched']++;
+        }
 
         $gopdParsed     = parseValue($row['gopd']);
         $hmoParsed      = parseValue($row['hmo']);
@@ -311,11 +356,11 @@ try {
         if ($skipTariff) continue;
 
         $groupColumns = [
-            'private'  => ['type' => 'numeric', 'amount' => $gopdPrice], // always GOPD
-            'cbn'      => $cbnParsed,
-            'nhis'     => $nhisParsed,
-            'shis'     => $plaschemaParsed,
-            'generic'  => $hmoParsed,
+            'self_pay'    => ['type' => 'numeric', 'amount' => $gopdPrice],
+            'private_hmo' => $hmoParsed,
+            'corporate'   => $cbnParsed,
+            'nhis'        => $nhisParsed,
+            'shis'        => $plaschemaParsed,
         ];
 
         foreach ($groupColumns as $group => $parsedVal) {
@@ -333,8 +378,8 @@ try {
 
                 if ($existing) {
                     $changed = abs((float)$existing->claims_amount - $tariff['claims']) > 0.01
-                            || abs((float)$existing->payable_amount - $tariff['payable']) > 0.01
-                            || $existing->coverage_mode !== $tariff['mode'];
+                        || abs((float)$existing->payable_amount - $tariff['payable']) > 0.01
+                        || $existing->coverage_mode !== $tariff['mode'];
 
                     if ($changed) {
                         if ($apply) {
@@ -369,7 +414,6 @@ try {
         DB::commit();
         echo "*** CHANGES COMMITTED ***\n\n";
     }
-
 } catch (\Exception $e) {
     if ($apply) {
         DB::rollBack();
@@ -384,7 +428,7 @@ echo "════════════════════════�
 echo "  Pharmacy Price Import Summary\n";
 echo "═══════════════════════════════════════════\n";
 echo "  Products matched:     {$stats['matched']}\n";
-echo "  Products unmatched:   {$stats['unmatched']}\n";
+echo "  Products created:     {$stats['products_created']}\n";
 echo "  GOPD prices updated:  {$stats['gopd_updated']}\n";
 echo "  Tariffs created:      {$stats['tariff_created']}\n";
 echo "  Tariffs updated:      {$stats['tariff_updated']}\n";
