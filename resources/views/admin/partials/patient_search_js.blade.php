@@ -16,7 +16,7 @@
 window.PatientSearch = (function () {
     'use strict';
 
-    const SEARCH_URL  = @json(route('patient-search'));
+    const SEARCH_URL  = @json($search_url ?? route('patient-search'));
     const CONTEXT     = @json($search_context ?? 'reception');
     const DEFAULT_AVA = @json(asset('assets/images/default-avatar.png'));
 
@@ -66,6 +66,8 @@ window.PatientSearch = (function () {
                 badge = '<span class="pending-badge">' + patient.pending_count + '</span>';
             } else if (CONTEXT === 'reception' && patient.hmo && patient.hmo !== 'Private') {
                 badge = '<span class="badge badge-info">' + patient.hmo + '</span>';
+            } else if (CONTEXT === 'maternity' && patient.is_baby) {
+                badge = '<span class="badge bg-info text-white" style="font-size:0.65rem;">BABY</span>';
             }
 
             var html =
