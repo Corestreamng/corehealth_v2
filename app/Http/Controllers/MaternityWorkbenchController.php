@@ -129,7 +129,7 @@ class MaternityWorkbenchController extends Controller
 
     public function searchPatients(Request $request)
     {
-        $term = $request->get('term', '');
+        $term = $request->get('q', $request->get('term', ''));
         if (strlen($term) < 2) return response()->json([]);
 
         $patients = Patient::with(['user', 'hmo'])
@@ -142,14 +142,20 @@ class MaternityWorkbenchController extends Controller
                     ->orWhere('file_no', 'like', "%{$term}%")
                     ->orWhere('phone_no', 'like', "%{$term}%");
             })
-            ->where('gender', 'female')
             ->limit(15)
             ->get();
 
         $results = $patients->map(function ($p) {
-            $enrollment = MaternityEnrollment::where('patient_id', $p->id)
-                ->whereIn('status', ['active', 'postnatal'])
-                ->first();
+            // Check if patient is a baby in maternity
+            $babyRecord = MaternityBaby::where('patient_id', $p->id)->first();
+            
+            if ($babyRecord) {
+                $enrollment = MaternityEnrollment::find($babyRecord->enrollment_id);
+            } else {
+                $enrollment = MaternityEnrollment::where('patient_id', $p->id)
+                    ->whereIn('status', ['active', 'postnatal'])
+                    ->first();
+            }
 
             return [
                 'id'            => $p->id,
@@ -165,6 +171,7 @@ class MaternityWorkbenchController extends Controller
                 'enrollment_id' => $enrollment ? $enrollment->id : null,
                 'enrollment_status' => $enrollment ? $enrollment->status : null,
                 'edd'           => $enrollment && $enrollment->edd ? $enrollment->edd->format('d M Y') : null,
+                'is_baby'       => $babyRecord ? true : false,
             ];
         });
 
@@ -175,10 +182,40 @@ class MaternityWorkbenchController extends Controller
     {
         $patient = Patient::with(['user', 'hmo'])->findOrFail($id);
 
-        $enrollment = MaternityEnrollment::where('patient_id', $id)
-            ->whereIn('status', ['active', 'postnatal'])
-            ->with(['ancVisits', 'deliveryRecord', 'babies', 'postnatalVisits'])
-            ->first();
+        // Check if patient is a baby in maternity
+        $babyRecord = MaternityBaby::where('patient_id', $id)->first();
+        $isBaby = $babyRecord ? true : false;
+        $mother = null;
+        $babies = [];
+
+        if ($isBaby) {
+            $enrollment = MaternityEnrollment::where('id', $babyRecord->enrollment_id)
+                ->with(['ancVisits', 'deliveryRecord', 'babies.patient.user', 'postnatalVisits', 'patient.user'])
+                ->first();
+            
+            if ($enrollment && $enrollment->patient) {
+                $mother = [
+                    'id'      => $enrollment->patient->id,
+                    'name'    => userfullname($enrollment->patient->user_id),
+                    'file_no' => $enrollment->patient->file_no,
+                ];
+            }
+        } else {
+            $enrollment = MaternityEnrollment::where('patient_id', $id)
+                ->whereIn('status', ['active', 'postnatal'])
+                ->with(['ancVisits', 'deliveryRecord', 'babies.patient.user', 'postnatalVisits'])
+                ->first();
+        }
+
+        if ($enrollment) {
+            $babies = $enrollment->babies->map(function($b) {
+                return [
+                    'id'      => $b->patient_id,
+                    'name'    => $b->patient && $b->patient->user ? userfullname($b->patient->user_id) : 'Baby',
+                    'file_no' => $b->patient ? $b->patient->file_no : 'N/A',
+                ];
+            })->values()->toArray();
+        }
 
         $lastVitals = VitalSign::where('patient_id', $id)
             ->orderBy('created_at', 'desc')->first();
@@ -217,6 +254,14 @@ class MaternityWorkbenchController extends Controller
             'hmo'          => $patient->hmo ? $patient->hmo->name : 'N/A',
             'hmo_no'       => $patient->hmo_no ?? 'N/A',
             'allergies'    => $patient->allergies ?? [],
+            'is_baby'      => $isBaby,
+            'mother'       => $mother,
+            'babies'       => $babies,
+            'birth_weight_kg' => $isBaby ? $babyRecord->birth_weight_kg : null,
+            'apgar_1_min'   => $isBaby ? $babyRecord->apgar_1_min : null,
+            'apgar_5_min'   => $isBaby ? $babyRecord->apgar_5_min : null,
+            'apgar_10_min'  => $isBaby ? $babyRecord->apgar_10_min : null,
+            'sex'           => $isBaby ? $babyRecord->sex : null,
             'enrollment'   => $enrollment ? [
                 'id'                => $enrollment->id,
                 'status'            => $enrollment->status,
@@ -2680,12 +2725,13 @@ class MaternityWorkbenchController extends Controller
        NURSING NOTES
        ══════════════════════════════════════════════════════════════ */
 
-    public function getNotes($id)
+    public function getNotes(Request $request, $id)
     {
         $enrollment = MaternityEnrollment::findOrFail($id);
+        $patientId = $request->query('patient_id', $enrollment->patient_id);
 
         $notes = NursingNote::with(['type', 'createdBy'])
-            ->where('patient_id', $enrollment->patient_id)
+            ->where('patient_id', $patientId)
             ->orderBy('created_at', 'desc')
             ->limit(50)
             ->get()
@@ -2712,6 +2758,7 @@ class MaternityWorkbenchController extends Controller
     public function saveNote(Request $request, $id)
     {
         $enrollment = MaternityEnrollment::findOrFail($id);
+        $patientId = $request->input('patient_id', $enrollment->patient_id);
 
         $validator = Validator::make($request->all(), [
             'note_type_id' => 'required|exists:nursing_note_types,id',
@@ -2727,7 +2774,7 @@ class MaternityWorkbenchController extends Controller
 
         try {
             // Upsert: if there's an open draft of this type, update it
-            $existing = NursingNote::where('patient_id', $enrollment->patient_id)
+            $existing = NursingNote::where('patient_id', $patientId)
                 ->where('nursing_note_type_id', $request->note_type_id)
                 ->where('completed', false)
                 ->first();
@@ -2741,7 +2788,7 @@ class MaternityWorkbenchController extends Controller
                 $note = $existing;
             } else {
                 $note = NursingNote::create([
-                    'patient_id'           => $enrollment->patient_id,
+                    'patient_id'           => $patientId,
                     'nursing_note_type_id' => $request->note_type_id,
                     'note'                 => $request->note,
                     'created_by'           => Auth::id(),

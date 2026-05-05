@@ -412,6 +412,66 @@ $sett = appsettings();
         gap: 0.25rem;
     }
 
+    /* ═══ Context Switch Buttons ═══ */
+    .context-switch-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .context-switch-btn {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        line-height: 1.25;
+        transition: all 0.2s ease;
+        text-align: left;
+        min-width: 140px;
+    }
+
+    .context-switch-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .context-switch-btn .linked-label {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        opacity: 0.8;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        margin-bottom: 1px;
+    }
+
+    .context-switch-btn .linked-name {
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+
+    .context-switch-btn .linked-file {
+        font-size: 0.7rem;
+        opacity: 0.9;
+    }
+
+    .header-action-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     /* ═══ SHARED: Empty State ═══ */
     .empty-state {
         flex: 1;
@@ -1529,20 +1589,30 @@ $sett = appsettings();
         <!-- Patient Header (SHARED PATTERN) -->
         <div class="patient-header" id="patient-header">
             <div class="patient-header-top">
-                <div style="flex: 1;">
+                <div style="flex: 1; min-width: 200px;">
                     <div class="patient-name" id="patient-name"></div>
                     <div class="patient-meta" id="patient-meta"></div>
                 </div>
-                <button class="btn btn-sm btn-info" id="btn-print-anc-card" title="Print ANC Card" style="display:none;">
-                    <i class="mdi mdi-card-account-details"></i> ANC Card
-                </button>
-                <button class="btn btn-sm btn-success" id="btn-print-road-card" title="Print Road to Health Card" style="display:none;">
-                    <i class="mdi mdi-baby-face-outline"></i> Road to Health
-                </button>
-                <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
-                    <span class="btn-expand-text">more biodata</span>
-                    <i class="mdi mdi-chevron-down"></i>
-                </button>
+
+                {{-- Context Switching Buttons --}}
+                <div id="context-switch-container" class="context-switch-container mx-3"></div>
+
+                {{-- Header Actions --}}
+                <div class="header-action-group">
+                    <button class="btn btn-sm btn-info" id="btn-print-anc-card" title="Print ANC Card" style="display:none;">
+                        <i class="mdi mdi-card-account-details"></i> ANC Card
+                    </button>
+                    <button class="btn btn-sm btn-success" id="btn-print-road-card" title="Print Road to Health Card" style="display:none;">
+                        <i class="mdi mdi-baby-face-outline"></i> Road to Health
+                    </button>
+                    <button class="btn btn-sm btn-danger" id="btn-discharge-patient" title="Discharge maternity enrollment" style="display:none;">
+                        <i class="mdi mdi-exit-to-app"></i> Discharge
+                    </button>
+                    <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
+                        <span class="btn-expand-text">more biodata</span>
+                        <i class="mdi mdi-chevron-down"></i>
+                    </button>
+                </div>
             </div>
             <div class="patient-details-expanded" id="patient-details-expanded">
                 <div class="patient-details-grid" id="patient-details-grid"></div>
@@ -2544,7 +2614,10 @@ $sett = appsettings();
 </script>
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 {{-- SHARED partial: patient search JS with maternity context --}}
-@include('admin.partials.patient_search_js', ['search_context' => 'maternity'])
+@include('admin.partials.patient_search_js', [
+    'search_context' => 'maternity',
+    'search_url' => route('maternity-workbench.search-patients')
+])
 @include('admin.partials.invest_res_js')
 
 <script>
@@ -2825,6 +2898,32 @@ $sett = appsettings();
     // ═══════════════════════════════════════════════════════════════
     // PATIENT LOADING (SHARED pattern with nursing workbench)
     // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
+    // CONTEXT HELPERS
+    // ═══════════════════════════════════════════════════════════════
+    function isBabyContext() {
+        return window.currentPatientIsBaby === true;
+    }
+
+    function updateTabLabels() {
+        const isBaby = isBabyContext();
+        
+        const labels = {
+            enrollment: isBaby ? "Mother's Enrollment" : "Enrollment",
+            history: "Mother's History",
+            anc: isBaby ? "Mother's ANC Visits" : "ANC Visits",
+            delivery: isBaby ? "Mother's Delivery" : "Delivery",
+            baby: isBaby ? "Growth & Birth Details" : "Baby Records",
+            postnatal: isBaby ? "Mother's Postnatal" : "Postnatal",
+            vitals: isBaby ? "Baby Vitals / Growth" : "Vitals",
+            notes: isBaby ? "Nursing/Clinical Notes" : "Notes"
+        };
+
+        Object.keys(labels).forEach(tab => {
+            $(`.workspace-tab[data-tab="${tab}"] span`).text(labels[tab]);
+        });
+    }
+
     function loadPatient(patientId) {
         currentPatient = patientId;
         hideAllViews();
@@ -2847,6 +2946,13 @@ $sett = appsettings();
             method: 'GET',
             success: function(data) {
                 currentPatientData = data;
+
+                // Detect baby/mother context
+                window.currentPatientIsBaby = data.is_baby || false;
+                window.linkedMother = data.mother || null;
+                window.linkedBabies = data.babies || [];
+
+                updateTabLabels();
 
                 // SHARED function: display patient header (same as nursing)
                 displayPatientInfo(data);
@@ -2922,6 +3028,27 @@ $sett = appsettings();
             metaHtml += `<div class="patient-meta-item"><i class="mdi mdi-human-pregnant"></i><span>G${e.gravida || '?'}P${e.parity || '?'}</span></div>`;
         }
         $('#patient-meta').html(metaHtml);
+
+        // Render Context Switch Buttons
+        let contextHtml = '';
+        if (window.currentPatientIsBaby && window.linkedMother) {
+            contextHtml = `
+            <a href="javascript:void(0)" class="context-switch-btn" onclick="loadPatient(${window.linkedMother.id})">
+                <span class="linked-label"><i class="mdi mdi-arrow-left-circle"></i> Mother</span>
+                <span class="linked-name">${window.linkedMother.name}</span>
+                <span class="linked-file">#${window.linkedMother.file_no}</span>
+            </a>`;
+        } else if (!window.currentPatientIsBaby && window.linkedBabies && window.linkedBabies.length > 0) {
+            window.linkedBabies.forEach(baby => {
+                contextHtml += `
+                <a href="javascript:void(0)" class="context-switch-btn" onclick="loadPatient(${baby.id})">
+                    <span class="linked-label"><i class="mdi mdi-baby-face-outline"></i> Baby</span>
+                    <span class="linked-name">${baby.name}</span>
+                    <span class="linked-file">#${baby.file_no}</span>
+                </a>`;
+            });
+        }
+        $('#context-switch-container').html(contextHtml);
 
         // Build expanded details grid (SHARED pattern)
         let detailsHtml = '';
@@ -3122,8 +3249,41 @@ $sett = appsettings();
     function populateOverviewTab(data) {
         const e = data.enrollment;
         const v = data.last_vitals;
+        const isBaby = data.is_baby || false;
 
         let html = '';
+
+        if (isBaby) {
+            // ── Baby Overview Section ──────────────────────────────
+            html += `
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <div class="card-modern" style="border-left: 4px solid var(--maternity-pink);">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3"><i class="mdi mdi-baby-face-outline"></i> Birth & Neonatal Details</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="small text-muted">Birth Weight</div>
+                                    <div class="fw-bold" style="font-size:1.1rem;">${currentPatientData.birth_weight_kg || 'N/A'} kg</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="small text-muted">APGAR (1/5/10 min)</div>
+                                    <div class="fw-bold" style="font-size:1.1rem;">${currentPatientData.apgar_1_min || '-'}/${currentPatientData.apgar_5_min || '-'}/${currentPatientData.apgar_10_min || '-'}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="small text-muted">Delivery Date</div>
+                                    <div class="fw-bold" style="font-size:1.1rem;">${e && e.delivery_date ? e.delivery_date : 'N/A'}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="small text-muted">Current Age</div>
+                                    <div class="fw-bold" style="font-size:1.1rem;">${currentPatientData.age}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
 
         // ── Stage-Aware Progress Section ──────────────────────────────
         if (e && e.status === 'completed') {
@@ -3472,6 +3632,23 @@ $sett = appsettings();
     // ENROLLMENT TAB
     // ═══════════════════════════════════════════════════════════════
     function loadEnrollmentTab() {
+        if (window.currentPatientIsBaby) {
+            if (currentEnrollment) {
+                renderEnrollmentDetails(true); // true = show notice
+            } else {
+                $('#enrollment-content').html(`
+                    <div class="alert alert-info d-flex align-items-center gap-3">
+                        <i class="mdi mdi-information" style="font-size:2rem;"></i>
+                        <div>
+                            <strong>Baby Patient:</strong> Enrollment is managed via the mother's record. 
+                            ${window.linkedMother ? `<br><a href="javascript:void(0)" onclick="loadPatient(${window.linkedMother.id})" class="btn btn-sm btn-info mt-2">Go to Mother: ${window.linkedMother.name}</a>` : ''}
+                        </div>
+                    </div>
+                `);
+            }
+            return;
+        }
+
         if (currentEnrollment) {
             renderEnrollmentDetails();
         } else {
@@ -3647,8 +3824,19 @@ $sett = appsettings();
         });
     }
 
-    function renderEnrollmentDetails() {
+    function renderEnrollmentDetails(isBabyNotice = false) {
         const e = currentEnrollment;
+
+        let babyNoticeHtml = '';
+        if (isBabyNotice) {
+            babyNoticeHtml = `
+            <div class="alert alert-info d-flex align-items-center gap-3 mb-3">
+                <i class="mdi mdi-information" style="font-size:1.5rem;"></i>
+                <div>
+                    <strong>Mother's Enrollment:</strong> You are viewing the maternity enrollment record of this baby's mother.
+                </div>
+            </div>`;
+        }
 
         // Status transition bar — 3-step: Active → Postnatal → Discharged
         const statuses = ['active', 'postnatal', 'completed'];
@@ -3689,12 +3877,15 @@ $sett = appsettings();
         <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: var(--maternity-pink);">
             <h6 class="mb-0"><i class="mdi mdi-clipboard-check"></i> Enrollment Details</h6>
             <div class="d-flex align-items-center" style="gap:6px;">
+                ${!isBabyNotice ? `
                 <button class="btn btn-sm btn-outline-light" onclick="editEnrollment()" title="Edit enrollment"><i class="mdi mdi-pencil"></i> Edit</button>
                 ${e.status !== 'completed' && e.status !== 'transferred' && e.status !== 'deceased' ? '<button class="btn btn-sm btn-outline-light" onclick="showDischargeModal()" title="Discharge patient"><i class="mdi mdi-exit-run"></i> Discharge</button>' : ''}
+                ` : ''}
                 <span class="enrollment-badge ${e.status}" style="background: rgba(255,255,255,0.2); color: white;">${e.status.toUpperCase()}</span>
             </div>
         </div>
         <div class="card-body">
+            ${babyNoticeHtml}
             ${statusBarHtml}
             <div class="row">
                 <div class="col-md-6">
@@ -3869,6 +4060,8 @@ $sett = appsettings();
             return;
         }
 
+        const isBaby = isBabyContext();
+
         $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
             if (!resp.success) return;
             const enrollment = resp.enrollment;
@@ -3876,35 +4069,57 @@ $sett = appsettings();
             window._prevPregnanciesCache = enrollment.previous_pregnancies || [];
             let html = '';
 
+            if (isBaby) {
+                html += `
+                <div class="alert alert-info d-flex align-items-center gap-3 mb-3">
+                    <i class="mdi mdi-information" style="font-size:1.5rem;"></i>
+                    <div>
+                        <strong>Mother's History:</strong> You are viewing the obstetric and medical history of this baby's mother. Changes are disabled in this view.
+                    </div>
+                </div>`;
+            }
+
             // Medical History
             html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-clipboard-text"></i> Medical / Surgical History</h6></div><div class="card-body">';
             if (enrollment.medical_history && enrollment.medical_history.length > 0) {
-                html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Category</th><th>Description</th><th>Year</th><th>Notes</th><th>Added By</th><th style="width:80px">Actions</th></tr></thead><tbody>';
+                html += `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Category</th><th>Description</th><th>Year</th><th>Notes</th><th>Added By</th>${!isBaby ? '<th style="width:80px">Actions</th>' : ''}</tr></thead><tbody>`;
                 enrollment.medical_history.forEach(h => {
                     const creatorName = h.creator ? h.creator.name : '-';
-                    html += `<tr><td><span class="badge bg-secondary">${h.category}</span></td><td>${h.description}</td><td>${h.year || '-'}</td><td>${h.notes || '-'}</td><td><small>${creatorName}</small></td>
-                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editMedicalHistory(${h.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteMedicalHistory(${h.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td></tr>`;
+                    let actions = '';
+                    if (!isBaby) {
+                        actions = `<td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editMedicalHistory(${h.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteMedicalHistory(${h.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td>`;
+                    }
+                    html += `<tr><td><span class="badge bg-secondary">${h.category}</span></td><td>${h.description}</td><td>${h.year || '-'}</td><td>${h.notes || '-'}</td><td><small>${creatorName}</small></td>${actions}</tr>`;
                 });
                 html += '</tbody></table></div>';
             } else {
                 html += '<p class="text-muted mb-0">No medical history recorded</p>';
             }
-            html += `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showAddHistoryForm()"><i class="mdi mdi-plus"></i> Add History</button></div></div>`;
+            if (!isBaby) {
+                html += `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showAddHistoryForm()"><i class="mdi mdi-plus"></i> Add History</button>`;
+            }
+            html += `</div></div>`;
 
             // Previous Pregnancies
             html += '<div class="card-modern mb-3"><div class="card-header" style="background: #f8f9fa;"><h6 class="mb-0"><i class="mdi mdi-human-pregnant"></i> Previous Pregnancies</h6></div><div class="card-body">';
-            if (enrollment.previous_pregnancies && enrollment.previous_pregnancies.length> 0) {
-                html += '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Year</th><th>Duration</th><th>Place</th><th>Outcome</th><th>Sex</th><th>Weight</th><th>Notes</th><th style="width:60px">Edit</th></tr></thead><tbody>';
+            if (enrollment.previous_pregnancies && enrollment.previous_pregnancies.length > 0) {
+                html += `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Year</th><th>Duration</th><th>Place</th><th>Outcome</th><th>Sex</th><th>Weight</th><th>Notes</th>${!isBaby ? '<th style="width:60px">Edit</th>' : ''}</tr></thead><tbody>`;
                 enrollment.previous_pregnancies.forEach(p => {
                     const outcome = p.baby_alive ? '✅ Alive' : (p.baby_dead ? '❌ Dead' : (p.baby_stillbirth ? '💔 Stillbirth' : '-'));
-                    html += `<tr><td>${p.year || '-'}</td><td>${p.duration_weeks ? p.duration_weeks + 'w' : '-'}</td><td>${p.place_of_delivery || '-'}</td><td>${outcome}</td><td>${p.baby_sex || '-'}</td><td>${p.birth_weight_kg ? p.birth_weight_kg + 'kg' : '-'}</td><td>${p.notes || '-'}</td>
-                <td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editPreviousPregnancy(${p.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeletePreviousPregnancy(${p.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td></tr>`;
+                    let actions = '';
+                    if (!isBaby) {
+                        actions = `<td><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editPreviousPregnancy(${p.id})" title="Edit"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeletePreviousPregnancy(${p.id})" title="Delete"><i class="mdi mdi-delete"></i></button></td>`;
+                    }
+                    html += `<tr><td>${p.year || '-'}</td><td>${p.duration_weeks ? p.duration_weeks + 'w' : '-'}</td><td>${p.place_of_delivery || '-'}</td><td>${outcome}</td><td>${p.baby_sex || '-'}</td><td>${p.birth_weight_kg ? p.birth_weight_kg + 'kg' : '-'}</td><td>${p.notes || '-'}</td>${actions}</tr>`;
                 });
                 html += '</tbody></table></div>';
             } else {
                 html += '<p class="text-muted mb-0">No previous pregnancies recorded</p>';
             }
-            html += `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showAddPregnancyForm()"><i class="mdi mdi-plus"></i> Add Previous Pregnancy</button></div></div>`;
+            if (!isBaby) {
+                html += `<button class="btn btn-sm btn-outline-primary mt-2" onclick="showAddPregnancyForm()"><i class="mdi mdi-plus"></i> Add Previous Pregnancy</button>`;
+            }
+            html += `</div></div>`;
 
             $('#history-content').html(html);
         });
@@ -4189,12 +4404,26 @@ $sett = appsettings();
             return;
         }
 
+        const isBaby = isBabyContext();
+
         $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/anc-visits`, function(resp) {
             if (!resp.success) return;
             _ancVisitsCache = resp.visits; // cache for edit pre-fill
-            let html = `<div class="d-flex justify-content-between align-items-center mb-3">
+            
+            let html = '';
+            if (isBaby) {
+                html += `
+                <div class="alert alert-info d-flex align-items-center gap-3 mb-3">
+                    <i class="mdi mdi-information" style="font-size:1.5rem;"></i>
+                    <div>
+                        <strong>Mother's ANC Visits:</strong> You are viewing the antenatal records of the pregnancy that resulted in this baby.
+                    </div>
+                </div>`;
+            }
+
+            html += `<div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="mdi mdi-stethoscope"></i> ANC Visits (${resp.visits.length})</h5>
-            <button class="btn text-white" style="background: var(--maternity-pink);" onclick="showAncVisitForm()"><i class="mdi mdi-plus"></i> New ANC Visit</button>
+            ${!isBaby ? `<button class="btn text-white" style="background: var(--maternity-pink);" onclick="showAncVisitForm()"><i class="mdi mdi-plus"></i> New ANC Visit</button>` : ''}
         </div>`;
 
             if (resp.visits.length === 0) {
@@ -4218,13 +4447,18 @@ $sett = appsettings();
             </div>`;
 
                 resp.visits.forEach(function(v) {
+                    let actions = '';
+                    if (!isBaby) {
+                        actions = `<button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editAncVisit(${v.id})" title="Edit visit"><i class="mdi mdi-pencil"></i></button>
+                                   <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteAncVisit(${v.id})" title="Delete visit"><i class="mdi mdi-delete"></i></button>`;
+                    }
+
                     html += `<div class="anc-visit-card">
                     <div class="d-flex justify-content-between align-items-center">
                         <div><span class="visit-number">Visit #${v.visit_number}</span> <span class="badge bg-secondary ms-1">${v.visit_type || ''}</span></div>
                         <div class="d-flex align-items-center gap-2">
                             <span class="visit-date">${v.visit_date || ''}</span>
-                            <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editAncVisit(${v.id})" title="Edit visit"><i class="mdi mdi-pencil"></i></button>
-                            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteAncVisit(${v.id})" title="Delete visit"><i class="mdi mdi-delete"></i></button>
+                            ${actions}
                         </div>
                     </div>
                     <div class="visit-details">
@@ -4737,7 +4971,10 @@ $sett = appsettings();
         <div class="mat-info-banner mb-3"><i class="mdi mdi-auto-fix"></i> <strong>Auto-save enabled:</strong> Items are saved automatically when selected from search results. Use the search boxes below to find and add prescriptions, lab tests, imaging, or procedures.</div>
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0"><i class="mdi mdi-clipboard-pulse"></i> Clinical Orders</h4>
-            <span class="badge bg-primary" id="mco-patient-badge">Patient #${currentPatient}</span>
+            <div class="d-flex gap-2">
+                ${isBabyContext() ? '<span class="badge bg-info"><i class="mdi mdi-baby-face"></i> BABY CONTEXT</span>' : '<span class="badge bg-secondary">MOTHER CONTEXT</span>'}
+                <span class="badge bg-primary" id="mco-patient-badge">${currentPatientData.name} (#${currentPatientData.file_no})</span>
+            </div>
         </div>
 
         <ul class="nav nav-tabs service-tabs mb-3" id="mco-sub-tabs" role="tablist">
@@ -5753,18 +5990,28 @@ $sett = appsettings();
             return;
         }
 
+        const isBaby = isBabyContext();
+
         // Check if delivery record exists
         if (currentEnrollment && currentEnrollment.has_delivery) {
             // Load existing delivery
             $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
                 if (!resp.success || !resp.enrollment.delivery_record) {
-                    renderDeliveryForm();
+                    if (isBaby) {
+                        $('#delivery-content').html('<p class="text-muted text-center py-4">Delivery record not found for this enrollment</p>');
+                    } else {
+                        renderDeliveryForm();
+                    }
                     return;
                 }
                 renderDeliveryDetails(resp.enrollment.delivery_record);
             });
         } else {
-            renderDeliveryForm();
+            if (isBaby) {
+                $('#delivery-content').html('<p class="text-muted text-center py-4">Delivery record has not been recorded yet for this enrollment.</p>');
+            } else {
+                renderDeliveryForm();
+            }
         }
     }
 
@@ -5852,7 +6099,21 @@ $sett = appsettings();
     }
 
     function renderDeliveryDetails(d) {
-        const html = `<div class="card-modern"><div class="card-header text-white d-flex justify-content-between" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Delivery Record</h6><div><button class="btn btn-sm btn-outline-light me-1" onclick="editDeliveryRecord(${d.id})" title="Edit"><i class="mdi mdi-pencil"></i> Edit</button><button class="btn btn-sm btn-outline-light me-1" onclick="confirmDeleteDeliveryRecord(${d.id})" title="Delete Delivery"><i class="mdi mdi-delete"></i> Delete</button><span class="badge bg-light text-dark">${(d.type_of_delivery || '').toUpperCase()}</span></div></div><div class="card-body">
+        const isBaby = isBabyContext();
+        const actionsHtml = isBaby ? '' : `<div><button class="btn btn-sm btn-outline-light me-1" onclick="editDeliveryRecord(${d.id})" title="Edit"><i class="mdi mdi-pencil"></i> Edit</button><button class="btn btn-sm btn-outline-light me-1" onclick="confirmDeleteDeliveryRecord(${d.id})" title="Delete Delivery"><i class="mdi mdi-delete"></i> Delete</button></div>`;
+        
+        let html = '';
+        if (isBaby) {
+            html += `
+            <div class="alert alert-info d-flex align-items-center gap-3 mb-3">
+                <i class="mdi mdi-information" style="font-size:1.5rem;"></i>
+                <div>
+                    <strong>Mother's Delivery Record:</strong> You are viewing the delivery record of this baby's mother.
+                </div>
+            </div>`;
+        }
+
+        html += `<div class="card-modern"><div class="card-header text-white d-flex justify-content-between" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Delivery Record</h6><div>${actionsHtml}<span class="badge bg-light text-dark">${(d.type_of_delivery || '').toUpperCase()}</span></div></div><div class="card-body">
         <div class="row"><div class="col-md-6"><table class="table table-sm">
             <tr><td class="text-muted">Date</td><td>${d.delivery_date || 'N/A'}</td></tr>
             <tr><td class="text-muted">Time</td><td>${d.delivery_time || 'N/A'}</td></tr>
@@ -5872,7 +6133,7 @@ $sett = appsettings();
     <div class="card-modern mt-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0"><i class="mdi mdi-chart-timeline-variant"></i> Partograph</h6>
-            <button type="button" class="btn btn-sm btn-success" onclick="showPartographForm(${d.id})"><i class="mdi mdi-plus"></i> Add Entry</button>
+            ${!isBaby ? `<button type="button" class="btn btn-sm btn-success" onclick="showPartographForm(${d.id})"><i class="mdi mdi-plus"></i> Add Entry</button>` : ''}
         </div>
         <div class="card-body" id="partograph-content">
             <div class="text-center text-muted py-2">Loading partograph entries...</div>
@@ -6365,19 +6626,25 @@ $sett = appsettings();
             return;
         }
 
+        const isBaby = isBabyContext();
+
         $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}`, function(resp) {
             if (!resp.success) return;
             const babies = resp.enrollment.babies || [];
             window._babiesCache = babies; // cache for edit
+            
             let html = `<div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><i class="mdi mdi-baby-face-outline"></i> Baby Records (${babies.length})</h5>
-            <button class="btn text-white" style="background: var(--maternity-pink);" onclick="showRegisterBabyForm()"><i class="mdi mdi-plus"></i> Register Baby</button>
+            <h5 class="mb-0"><i class="mdi mdi-baby-face-outline"></i> ${isBaby ? 'Growth & Birth Details' : 'Baby Records (' + babies.length + ')'}</h5>
+            ${!isBaby ? `<button class="btn text-white" style="background: var(--maternity-pink);" onclick="showRegisterBabyForm()"><i class="mdi mdi-plus"></i> Register Baby</button>` : ''}
         </div>`;
 
             if (babies.length === 0) {
                 html += '<p class="text-muted text-center py-4">No babies registered yet</p>';
             } else {
                 babies.forEach(function(b) {
+                    // In baby context, we only show THIS specific baby
+                    if (isBaby && b.patient_id != currentPatient) return;
+
                     const patientName = b.patient && b.patient.user ? (b.patient.user.surname + ' ' + b.patient.user.firstname) : 'Baby';
                     const isStillBirth = b.is_still_birth ? '<span class="badge bg-danger ms-2">Still Birth</span>' : '';
                     const deathBtn = b.status === 'alive' ? `<button class="btn btn-sm btn-outline-danger" onclick="showMarkDeceasedModal(${b.id})"><i class="mdi mdi-account-remove"></i> Mark Deceased</button>` : '';
@@ -6386,8 +6653,8 @@ $sett = appsettings();
                     <div class="baby-header">
                         <div class="baby-name">${patientName} ${isStillBirth}</div>
                         <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editBaby(${b.id})" title="Edit baby record"><i class="mdi mdi-pencil"></i></button>
-                            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteBaby(${b.id})" title="Delete baby record"><i class="mdi mdi-delete"></i></button>
+                            ${!isBaby ? `<button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editBaby(${b.id})" title="Edit baby record"><i class="mdi mdi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteBaby(${b.id})" title="Delete baby record"><i class="mdi mdi-delete"></i></button>` : ''}
                             <span class="baby-sex ${b.sex}">${b.sex === 'male' ? '♂ Male' : (b.sex === 'female' ? '♀ Female' : '? Ambiguous')}</span>
                         </div>
                     </div>
@@ -6400,13 +6667,21 @@ $sett = appsettings();
                     <div class="mt-2 d-flex gap-2">
                         <button class="btn btn-sm btn-outline-primary" onclick="loadGrowthChart(${b.id})"><i class="mdi mdi-chart-line"></i> Growth Chart</button>
                         <button class="btn btn-sm btn-outline-success" onclick="showGrowthRecordForm(${b.id})"><i class="mdi mdi-plus"></i> Add Growth</button>
-                        ${deathBtn}
+                        ${!isBaby ? deathBtn : ''}
                     </div>
-                    <div id="growth-chart-${b.id}" class="mt-2"></div>
+                    <div id="growth-chart-${b.id}" class="mt-2" ${isBaby ? 'style="display:block;"' : ''}></div>
                 </div>`;
                 });
             }
             $('#baby-content').html(html);
+
+            // Auto-load growth chart in baby context
+            if (isBaby) {
+                const currentBaby = babies.find(b => b.patient_id == currentPatient);
+                if (currentBaby) {
+                    setTimeout(() => loadGrowthChart(currentBaby.id), 100);
+                }
+            }
         });
     }
 
@@ -6816,25 +7091,44 @@ $sett = appsettings();
             return;
         }
 
+        const isBaby = isBabyContext();
+
         $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/postnatal`, function(resp) {
             if (!resp.success) return;
             _postnatalVisitsCache = resp.visits; // cache for edit
-            let html = `<div class="d-flex justify-content-between align-items-center mb-3">
+            
+            let html = '';
+            if (isBaby) {
+                html += `
+                <div class="alert alert-info d-flex align-items-center gap-3 mb-3">
+                    <i class="mdi mdi-information" style="font-size:1.5rem;"></i>
+                    <div>
+                        <strong>Mother's Postnatal Visits:</strong> You are viewing the postnatal records of this baby's mother.
+                    </div>
+                </div>`;
+            }
+
+            html += `<div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="mdi mdi-account-heart"></i> Postnatal Visits (${resp.visits.length})</h5>
-            <button class="btn text-white" style="background: var(--maternity-pink);" onclick="showPostnatalForm()"><i class="mdi mdi-plus"></i> New Visit</button>
+            ${!isBaby ? `<button class="btn text-white" style="background: var(--maternity-pink);" onclick="showPostnatalForm()"><i class="mdi mdi-plus"></i> New Visit</button>` : ''}
         </div>`;
 
             if (resp.visits.length === 0) {
                 html += '<p class="text-muted text-center py-4">No postnatal visits recorded</p>';
             } else {
                 resp.visits.forEach(function(v) {
+                    let actions = '';
+                    if (!isBaby) {
+                        actions = `<button class="btn btn-sm btn-outline-info py-0 px-1" onclick="editPostnatalVisit(${v.id})" title="Edit visit"><i class="mdi mdi-pencil"></i></button>
+                                   <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeletePostnatalVisit(${v.id})" title="Delete visit"><i class="mdi mdi-delete"></i></button>`;
+                    }
+
                     html += `<div class="anc-visit-card" style="border-left-color: var(--info);">
                     <div class="d-flex justify-content-between">
                         <div><span class="visit-number" style="color: var(--info);">${v.visit_type_label}</span></div>
                         <div class="d-flex align-items-center gap-2">
                             <span class="visit-date">${v.visit_date} (${v.days_postpartum || '?'}d postpartum)</span>
-                            <button class="btn btn-sm btn-outline-info py-0 px-1" onclick="editPostnatalVisit(${v.id})" title="Edit visit"><i class="mdi mdi-pencil"></i></button>
-                            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeletePostnatalVisit(${v.id})" title="Delete visit"><i class="mdi mdi-delete"></i></button>
+                            ${actions}
                         </div>
                     </div>
                     <div class="visit-details">
@@ -7006,8 +7300,19 @@ $sett = appsettings();
             let panesHtml = '<div class="tab-content" id="imm-person-content">';
 
             people.forEach(function(person, idx) {
-                const activeClass = idx === 0 ? 'active' : '';
-                const showClass = idx === 0 ? 'show active' : '';
+                let isActive = false;
+                if (isBabyContext()) {
+                    if (person.patientId == currentPatient) isActive = true;
+                } else {
+                    if (person.key === 'mother') isActive = true;
+                }
+                // Fallback for first person if no context match found
+                if (!isActive && idx === 0 && !people.some(p => isBabyContext() ? p.patientId == currentPatient : p.key === 'mother')) {
+                    isActive = true;
+                }
+
+                const activeClass = isActive ? 'active' : '';
+                const showClass = isActive ? 'show active' : '';
                 tabsHtml += `
                 <li class="nav-item">
                     <a class="nav-link ${activeClass}" data-toggle="tab" href="#imm-person-${person.key}" role="tab">
@@ -7170,7 +7475,7 @@ $sett = appsettings();
             return;
         }
 
-        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/notes`, function(resp) {
+        $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/notes`, { patient_id: currentPatient }, function(resp) {
             if (!resp.success) return;
             _notesCache = resp.notes; // cache for edit
             let html = `<div class="d-flex justify-content-between align-items-center mb-3">
@@ -7374,7 +7679,8 @@ $sett = appsettings();
         }
         const data = {
             note_type_id: noteTypeId,
-            note: noteContent
+            note: noteContent,
+            patient_id: currentPatient
         };
         const btn = $(this);
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
