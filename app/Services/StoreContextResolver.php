@@ -84,17 +84,17 @@ class StoreContextResolver
         // PHARMACIST → pharmacy hub (is_default + pharmacy type), then any pharmacy store
         if ($user->hasRole('PHARMACIST')) {
             $store = Store::active()
-                    ->where('distribution_role', Store::ROLE_PHARMACY_HUB)
-                    ->where('is_default', true)
-                    ->first()
+                ->where('distribution_role', Store::ROLE_PHARMACY_HUB)
+                ->where('is_default', true)
+                ->first()
                 ?? Store::active()
-                    ->where('distribution_role', Store::ROLE_PHARMACY_HUB)
-                    ->orderBy('id')
-                    ->first()
+                ->where('distribution_role', Store::ROLE_PHARMACY_HUB)
+                ->orderBy('id')
+                ->first()
                 ?? Store::active()
-                    ->whereIn('distribution_role', [Store::ROLE_PHARMACY_HUB, Store::ROLE_PHARMACY_SATELLITE])
-                    ->orderBy('id')
-                    ->first();
+                ->whereIn('distribution_role', [Store::ROLE_PHARMACY_HUB, Store::ROLE_PHARMACY_SATELLITE])
+                ->orderBy('id')
+                ->first();
             if ($store) {
                 $this->resolutionTrace[] = "Step 6 (pharmacist fallback): resolved to [{$store->store_name}] — pharmacy hub default.";
                 return $store;
@@ -104,9 +104,9 @@ class StoreContextResolver
         // STORE role → central store
         if ($user->hasRole('STORE')) {
             $store = Store::active()
-                    ->where('distribution_role', Store::ROLE_CENTRAL)
-                    ->orderBy('id')
-                    ->first();
+                ->where('distribution_role', Store::ROLE_CENTRAL)
+                ->orderBy('id')
+                ->first();
             if ($store) {
                 $this->resolutionTrace[] = "Step 6 (store-keeper fallback): resolved to [{$store->store_name}] — central store default.";
                 return $store;
@@ -116,13 +116,13 @@ class StoreContextResolver
         // NURSE / MATERNITY → default ward store
         if ($user->hasAnyRole(['NURSE', 'MATERNITY'])) {
             $store = Store::active()
-                    ->where('distribution_role', Store::ROLE_WARD)
-                    ->where('is_default', true)
-                    ->first()
+                ->where('distribution_role', Store::ROLE_WARD)
+                ->where('is_default', true)
+                ->first()
                 ?? Store::active()
-                    ->where('distribution_role', Store::ROLE_WARD)
-                    ->orderBy('id')
-                    ->first();
+                ->where('distribution_role', Store::ROLE_WARD)
+                ->orderBy('id')
+                ->first();
             if ($store) {
                 $this->resolutionTrace[] = "Step 6 (clinical fallback): resolved to [{$store->store_name}] — default ward store.";
                 return $store;
@@ -173,7 +173,6 @@ class StoreContextResolver
         // Step 5 — Role rule
         $store = $this->resolveFromRoleRule($user);
         if ($store) return $store;
-
         // Step 6 — Clinical Fallback (NURSE / MATERNITY) (Plan §B.5)
         if ($user->hasAnyRole(['NURSE', 'MATERNITY'])) {
             $store = Store::active()
@@ -191,7 +190,8 @@ class StoreContextResolver
             }
         }
 
-        $this->resolutionTrace[] = 'Step 6: no fallback matched → returning null.';
+        // Final fallback action (Plan §10 Step 5)
+        $this->resolutionTrace[] = 'Final: could not resolve any store context.';
         return null;
     }
 
