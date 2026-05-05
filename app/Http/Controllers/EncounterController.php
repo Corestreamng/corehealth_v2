@@ -2087,6 +2087,20 @@ class EncounterController extends Controller
                     ->whereNotNull('weight')->where('weight', '>', 0)
                     ->orderBy('created_at', 'desc')->value('weight');
 
+                // Dynamic ranges (Plan §B.1)
+                $ageDays = $patient->dob ? now()->diffInDays($patient->dob) : null;
+                $gender = $patient->gender;
+                $dynamicRanges = [];
+                if ($ageDays !== null) {
+                    $rangeKeys = ['temp', 'heart_rate', 'resp_rate', 'spo2', 'bp_sys', 'bp_dia', 'sugar'];
+                    foreach ($rangeKeys as $rk) {
+                        $range = \App\Models\VitalRange::resolve($rk, $ageDays, $gender);
+                        if ($range) {
+                            $dynamicRanges[$rk] = $range->toArray();
+                        }
+                    }
+                }
+
                 if ($request->get('admission_req_id') != '' || $admission_exists_ == 1) {
                     $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->where('discharged', 0)->first() ?? $admission_exists;
                     // for nursing notes
@@ -2142,6 +2156,7 @@ class EncounterController extends Controller
                         'patientWeight' => $patientWeight,
                         'vitals_template' => $clinic ? $clinic->vitals_template : null,
                         'clinic_name' => $clinic ? $clinic->name : null,
+                        'dynamic_ranges' => $dynamicRanges,
                     ]);
                 } else {
                     return view('admin.doctors.new_encounter')->with([
@@ -2160,6 +2175,7 @@ class EncounterController extends Controller
                         'patientWeight' => $patientWeight,
                         'vitals_template' => $clinic ? $clinic->vitals_template : null,
                         'clinic_name' => $clinic ? $clinic->name : null,
+                        'dynamic_ranges' => $dynamicRanges,
                     ]);
                 }
             }

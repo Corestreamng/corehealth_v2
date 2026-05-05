@@ -350,13 +350,13 @@
                      // Bootstrap 5
                     vitalsTab.addEventListener('shown.bs.tab', function (event) {
                         if(window.initUnifiedVitals) {
-                            window.initUnifiedVitals({{ $patient->id }}, null, @json($clinic_name ?? null), @json($vitals_template ?? null));
+                            window.initUnifiedVitals({{ $patient->id }}, null, @json($clinic_name ?? null), @json($vitals_template ?? null), @json($dynamic_ranges ?? []));
                         }
                     });
                     // Fallback/Others
                     $(vitalsTab).on('shown.bs.tab', function (e) {
                          if(window.initUnifiedVitals) {
-                            window.initUnifiedVitals({{ $patient->id }}, null, @json($clinic_name ?? null), @json($vitals_template ?? null));
+                            window.initUnifiedVitals({{ $patient->id }}, null, @json($clinic_name ?? null), @json($vitals_template ?? null), @json($dynamic_ranges ?? []));
                         }
                     });
                 }
