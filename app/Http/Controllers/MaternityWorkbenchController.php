@@ -238,6 +238,20 @@ class MaternityWorkbenchController extends Controller
             }
         }
 
+        // Dynamic ranges (Plan §B.1)
+        $ageDays = $patient->dob ? now()->diffInDays($patient->dob) : null;
+        $gender = $patient->gender;
+        $dynamicRanges = [];
+        if ($ageDays !== null) {
+            $rangeKeys = ['temp', 'heart_rate', 'resp_rate', 'spo2', 'bp_sys', 'bp_dia', 'sugar'];
+            foreach ($rangeKeys as $rk) {
+                $range = \App\Models\VitalRange::resolve($rk, $ageDays, $gender);
+                if ($range) {
+                    $dynamicRanges[$rk] = $range->toArray();
+                }
+            }
+        }
+
         return response()->json([
             'id'           => $patient->id,
             'user_id'      => $patient->user_id,
@@ -300,6 +314,7 @@ class MaternityWorkbenchController extends Controller
             ] : null,
             'clinic_name' => $clinicName,
             'vitals_template' => $vitalsTemplate,
+            'dynamic_ranges'  => $dynamicRanges,
         ]);
     }
 

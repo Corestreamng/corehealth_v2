@@ -743,6 +743,20 @@ class PatientController extends Controller
             $reasons_for_encounter_cat_list = ReasonForEncounter::select('category')->distinct()->get();
             $reasons_for_encounter_sub_cat_list = ReasonForEncounter::select('category', 'sub_category')->distinct()->get();
 
+            // Dynamic ranges (Plan §B.1)
+            $ageDays = $patient->dob ? now()->diffInDays($patient->dob) : null;
+            $gender = $patient->gender;
+            $dynamicRanges = [];
+            if ($ageDays !== null) {
+                $rangeKeys = ['temp', 'heart_rate', 'resp_rate', 'spo2', 'bp_sys', 'bp_dia', 'sugar'];
+                foreach ($rangeKeys as $rk) {
+                    $range = \App\Models\VitalRange::resolve($rk, $ageDays, $gender);
+                    if ($range) {
+                        $dynamicRanges[$rk] = $range->toArray();
+                    }
+                }
+            }
+
             return view('admin.patients.show1', compact(
                 'user',
                 'roles',
@@ -763,7 +777,8 @@ class PatientController extends Controller
                 'others_record_template',
                 'reasons_for_encounter_list',
                 'reasons_for_encounter_cat_list',
-                'reasons_for_encounter_sub_cat_list'
+                'reasons_for_encounter_sub_cat_list',
+                'dynamicRanges'
             ));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
