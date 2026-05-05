@@ -29,6 +29,25 @@
 
 @php
     $vitalsContainerId = 'unified-vitals-' . uniqid();
+    
+    // Resolve dynamic ranges based on patient age (Plan §B.1)
+    $ageDays = null;
+    $gender = null;
+    $dynamicRanges = [];
+    
+    if (isset($patient) && $patient) {
+        $ageDays = $patient->dob ? now()->diffInDays($patient->dob) : null;
+        $gender = $patient->gender;
+        if ($ageDays !== null) {
+            $rangeKeys = ['temp', 'heart_rate', 'resp_rate', 'spo2', 'bp_sys', 'bp_dia', 'sugar'];
+            foreach ($rangeKeys as $rk) {
+                $range = \App\Models\VitalRange::resolve($rk, $ageDays, $gender);
+                if ($range) {
+                    $dynamicRanges[$rk] = $range->toArray();
+                }
+            }
+        }
+    }
 @endphp
 
 <style>
@@ -167,7 +186,11 @@
                                        placeholder="120/80" pattern="\d{2,3}/\d{2,3}"
                                        title="Format: systolic/diastolic (e.g., 120/80)">
                             </div>
-                            <div class="vital-hint">Normal: 90-140 / 60-90 mmHg</div>
+                            <div class="vital-hint vital-hint-bp">
+                                Normal: 
+                                {{ isset($dynamicRanges['bp_sys']) ? (int)$dynamicRanges['bp_sys']['normal_min'] : 90 }}-{{ isset($dynamicRanges['bp_sys']) ? (int)$dynamicRanges['bp_sys']['normal_max'] : 140 }} / 
+                                {{ isset($dynamicRanges['bp_dia']) ? (int)$dynamicRanges['bp_dia']['normal_min'] : 60 }}-{{ isset($dynamicRanges['bp_dia']) ? (int)$dynamicRanges['bp_dia']['normal_max'] : 90 }} mmHg
+                            </div>
                         </div>
                         <div class="col-md-4 col-6">
                             <label class="form-label small text-muted mb-1">
@@ -179,7 +202,7 @@
                                        step="0.1" min="34" max="42" placeholder="36.5">
                                 <span class="input-group-text bg-light">°C</span>
                             </div>
-                            <div class="vital-hint">Normal: 36.1-37.2°C</div>
+                            <div class="vital-hint vital-hint-temp">Normal: {{ $dynamicRanges['temp']['normal_min'] ?? 36.1 }}-{{ $dynamicRanges['temp']['normal_max'] ?? 37.2 }}°C</div>
                         </div>
                         <div class="col-md-4 col-6">
                             <label class="form-label small text-muted mb-1">
@@ -191,7 +214,7 @@
                                        min="30" max="250" placeholder="72">
                                 <span class="input-group-text bg-light">bpm</span>
                             </div>
-                            <div class="vital-hint">Normal: 60-100 bpm</div>
+                            <div class="vital-hint vital-hint-hr">Normal: {{ (int)($dynamicRanges['heart_rate']['normal_min'] ?? 60) }}-{{ (int)($dynamicRanges['heart_rate']['normal_max'] ?? 100) }} bpm</div>
                         </div>
                     </div>
 
@@ -207,7 +230,7 @@
                                        min="5" max="60" placeholder="16">
                                 <span class="input-group-text bg-light">bpm</span>
                             </div>
-                            <div class="vital-hint">Normal: 12-20 bpm</div>
+                            <div class="vital-hint vital-hint-rr">Normal: {{ (int)($dynamicRanges['resp_rate']['normal_min'] ?? 12) }}-{{ (int)($dynamicRanges['resp_rate']['normal_max'] ?? 20) }} bpm</div>
                         </div>
                         <div class="col-md-4 col-6">
                             <label class="form-label small text-muted mb-1">
@@ -219,7 +242,7 @@
                                        min="50" max="100" step="0.1" placeholder="98">
                                 <span class="input-group-text bg-light">%</span>
                             </div>
-                            <div class="vital-hint">Normal: 95-100%, Critical: &lt;90%</div>
+                            <div class="vital-hint vital-hint-spo2">Normal: {{ (int)($dynamicRanges['spo2']['normal_min'] ?? 95) }}-100%</div>
                         </div>
                         <div class="col-md-4 col-12">
                             <label class="form-label small text-muted mb-1">
@@ -278,7 +301,7 @@
                                        step="0.1" min="20" max="600" placeholder="100">
                                 <span class="input-group-text bg-light">mg/dL</span>
                             </div>
-                            <div class="vital-hint">Fasting: 70-100, Random: &lt;140</div>
+                            <div class="vital-hint vital-hint-sugar">Normal: {{ $dynamicRanges['sugar']['normal_min'] ?? 70 }}-{{ $dynamicRanges['sugar']['normal_max'] ?? 100 }} mg/dL</div>
                         </div>
                     </div>
 
@@ -392,7 +415,7 @@
  * - Comprehensive history display
  */
 
-window.initUnifiedVitals = function(patientId, containerId, clinicName, vitalsTemplate) {
+window.initUnifiedVitals = function(patientId, containerId, clinicName, vitalsTemplate, dynamicRanges) {
     if (!patientId) {
         console.error("initUnifiedVitals called without patientId");
         return;
@@ -414,16 +437,57 @@ window.initUnifiedVitals = function(patientId, containerId, clinicName, vitalsTe
     initVitalsHistoryTable($container, patientId);
 
     // Initialize form interactions
-    initVitalsFormInteractions($container);
+    initVitalsFormInteractions($container, dynamicRanges);
 
     // Initialize timestamp
     setCurrentTimestamp($container);
+
+    // Update hint texts based on dynamic ranges
+    updateVitalHints($container, dynamicRanges);
 
     // Load charts when tab is shown
     $container.find('a[href$="-vitals-charts"]').on('shown.bs.tab show.bs.tab', function() {
         loadVitalsCharts($container, patientId);
     });
 };
+
+function updateVitalHints($container, dynamicRanges) {
+    if (!dynamicRanges) return;
+
+    // BP Hint
+    if (dynamicRanges.bp_sys || dynamicRanges.bp_dia) {
+        let sysMin = dynamicRanges.bp_sys ? parseInt(dynamicRanges.bp_sys.normal_min) : 90;
+        let sysMax = dynamicRanges.bp_sys ? parseInt(dynamicRanges.bp_sys.normal_max) : 140;
+        let diaMin = dynamicRanges.bp_dia ? parseInt(dynamicRanges.bp_dia.normal_min) : 60;
+        let diaMax = dynamicRanges.bp_dia ? parseInt(dynamicRanges.bp_dia.normal_max) : 90;
+        $container.find('.vital-hint-bp').text(`Normal: ${sysMin}-${sysMax} / ${diaMin}-${diaMax} mmHg`);
+    }
+
+    // Temp Hint
+    if (dynamicRanges.temp) {
+        $container.find('.vital-hint-temp').text(`Normal: ${dynamicRanges.temp.normal_min}-${dynamicRanges.temp.normal_max}°C`);
+    }
+
+    // Heart Rate Hint
+    if (dynamicRanges.heart_rate) {
+        $container.find('.vital-hint-hr').text(`Normal: ${parseInt(dynamicRanges.heart_rate.normal_min)}-${parseInt(dynamicRanges.heart_rate.normal_max)} bpm`);
+    }
+
+    // Resp Rate Hint
+    if (dynamicRanges.resp_rate) {
+        $container.find('.vital-hint-rr').text(`Normal: ${parseInt(dynamicRanges.resp_rate.normal_min)}-${parseInt(dynamicRanges.resp_rate.normal_max)} bpm`);
+    }
+
+    // SpO2 Hint
+    if (dynamicRanges.spo2) {
+        $container.find('.vital-hint-spo2').text(`Normal: ${parseInt(dynamicRanges.spo2.normal_min)}-100%`);
+    }
+
+    // Sugar Hint
+    if (dynamicRanges.sugar) {
+        $container.find('.vital-hint-sugar').text(`Normal: ${dynamicRanges.sugar.normal_min}-${dynamicRanges.sugar.normal_max} mg/dL`);
+    }
+}
 
 function renderDynamicVitalsFields($container, clinicName, template) {
     const $dynamicContainer = $container.find('.dynamic-vitals-fields');
@@ -519,7 +583,7 @@ function initVitalsHistoryTable($container, patientId) {
     });
 }
 
-function initVitalsFormInteractions($container) {
+function initVitalsFormInteractions($container, dynamicRanges) {
     // Pain scale buttons
     $container.find('.pain-btn').on('click', function() {
         $container.find('.pain-btn').removeClass('selected');
@@ -534,22 +598,22 @@ function initVitalsFormInteractions($container) {
 
     // Real-time validation coloring
     $container.find('.vital-bp-input').on('input', function() {
-        validateVitalInput($(this).closest('.vital-input-group'), 'bp', $(this).val());
+        validateVitalInput($(this).closest('.vital-input-group'), 'bp', $(this).val(), dynamicRanges);
     });
     $container.find('.vital-temp-input').on('input', function() {
-        validateVitalInput($(this).closest('.vital-input-group'), 'temp', $(this).val());
+        validateVitalInput($(this).closest('.vital-input-group'), 'temp', $(this).val(), dynamicRanges);
     });
     $container.find('.vital-hr-input').on('input', function() {
-        validateVitalInput($(this).closest('.vital-input-group'), 'hr', $(this).val());
+        validateVitalInput($(this).closest('.vital-input-group'), 'hr', $(this).val(), dynamicRanges);
     });
     $container.find('.vital-rr-input').on('input', function() {
-        validateVitalInput($(this).closest('.vital-input-group'), 'rr', $(this).val());
+        validateVitalInput($(this).closest('.vital-input-group'), 'rr', $(this).val(), dynamicRanges);
     });
     $container.find('.vital-spo2-input').on('input', function() {
-        validateVitalInput($(this).closest('.vital-input-group'), 'spo2', $(this).val());
+        validateVitalInput($(this).closest('.vital-input-group'), 'spo2', $(this).val(), dynamicRanges);
     });
     $container.find('.vital-sugar-input').on('input', function() {
-        validateVitalInput($(this).closest('.vital-input-group'), 'sugar', $(this).val());
+        validateVitalInput($(this).closest('.vital-input-group'), 'sugar', $(this).val(), dynamicRanges);
     });
 }
 
@@ -583,12 +647,24 @@ function calculateAndDisplayBMI($container) {
     }
 }
 
-function validateVitalInput($group, type, value) {
+function validateVitalInput($group, type, value, dynamicRanges) {
     $group.removeClass('vital-normal vital-warning vital-critical');
 
     if (!value || value === '') return;
 
     var status = '';
+    
+    // Evaluation helper
+    const evaluate = (val, rangeKey) => {
+        const r = dynamicRanges ? dynamicRanges[rangeKey] : null;
+        if (!r) return null;
+        
+        if (r.critical_min !== null && val < parseFloat(r.critical_min)) return 'vital-critical';
+        if (r.critical_max !== null && val > parseFloat(r.critical_max)) return 'vital-critical';
+        if (r.warning_min !== null && val < parseFloat(r.warning_min)) return 'vital-warning';
+        if (r.warning_max !== null && val > parseFloat(r.warning_max)) return 'vital-warning';
+        return 'vital-normal';
+    };
 
     switch(type) {
         case 'bp':
@@ -597,39 +673,65 @@ function validateVitalInput($group, type, value) {
             var sys = parseInt(parts[0]);
             var dia = parseInt(parts[1]);
             if (isNaN(sys) || isNaN(dia)) return;
-            if (sys> 180 || sys < 80 || dia> 110 || dia < 50) status = 'vital-critical';
-            else if (sys> 140 || sys < 90 || dia> 90 || dia < 60) status = 'vital-warning';
-            else status = 'vital-normal';
+            
+            var sysStatus = evaluate(sys, 'bp_sys');
+            var diaStatus = evaluate(dia, 'bp_dia');
+            
+            if (sysStatus && diaStatus) {
+                if (sysStatus === 'vital-critical' || diaStatus === 'vital-critical') status = 'vital-critical';
+                else if (sysStatus === 'vital-warning' || diaStatus === 'vital-warning') status = 'vital-warning';
+                else status = 'vital-normal';
+            } else {
+                // Legacy hardcoded fallback
+                if (sys > 180 || sys < 80 || dia > 110 || dia < 50) status = 'vital-critical';
+                else if (sys > 140 || sys < 90 || dia > 90 || dia < 60) status = 'vital-warning';
+                else status = 'vital-normal';
+            }
             break;
         case 'temp':
             var t = parseFloat(value);
-            if (t < 34 || t> 39) status = 'vital-critical';
-            else if (t < 36.1 || t> 38) status = 'vital-warning';
-            else status = 'vital-normal';
+            status = evaluate(t, 'temp');
+            if (!status) {
+                if (t < 34 || t > 39) status = 'vital-critical';
+                else if (t < 36.1 || t > 38) status = 'vital-warning';
+                else status = 'vital-normal';
+            }
             break;
         case 'hr':
             var hr = parseInt(value);
-            if (hr < 50 || hr> 150) status = 'vital-critical';
-            else if (hr < 60 || hr> 100) status = 'vital-warning';
-            else status = 'vital-normal';
+            status = evaluate(hr, 'heart_rate');
+            if (!status) {
+                if (hr < 50 || hr > 150) status = 'vital-critical';
+                else if (hr < 60 || hr > 100) status = 'vital-warning';
+                else status = 'vital-normal';
+            }
             break;
         case 'rr':
             var rr = parseInt(value);
-            if (rr < 8 || rr> 30) status = 'vital-critical';
-            else if (rr < 12 || rr> 20) status = 'vital-warning';
-            else status = 'vital-normal';
+            status = evaluate(rr, 'resp_rate');
+            if (!status) {
+                if (rr < 8 || rr > 30) status = 'vital-critical';
+                else if (rr < 12 || rr > 20) status = 'vital-warning';
+                else status = 'vital-normal';
+            }
             break;
         case 'spo2':
             var spo2 = parseFloat(value);
-            if (spo2 < 90) status = 'vital-critical';
-            else if (spo2 < 95) status = 'vital-warning';
-            else status = 'vital-normal';
+            status = evaluate(spo2, 'spo2');
+            if (!status) {
+                if (spo2 < 90) status = 'vital-critical';
+                else if (spo2 < 95) status = 'vital-warning';
+                else status = 'vital-normal';
+            }
             break;
         case 'sugar':
             var sugar = parseFloat(value);
-            if (sugar < 70 || sugar> 200) status = 'vital-critical';
-            else if (sugar < 80 || sugar> 140) status = 'vital-warning';
-            else status = 'vital-normal';
+            status = evaluate(sugar, 'sugar');
+            if (!status) {
+                if (sugar < 70 || sugar > 200) status = 'vital-critical';
+                else if (sugar < 80 || sugar > 140) status = 'vital-warning';
+                else status = 'vital-normal';
+            }
             break;
     }
 
