@@ -8094,7 +8094,7 @@ function loadPatient(patientId) {
 
             // Initialize Unified Vitals
             if(typeof window.initUnifiedVitals === 'function') {
-                window.initUnifiedVitals(patientId, null, data.clinic_name, data.vitals_template);
+                window.initUnifiedVitals(patientId, null, data.clinic_name, data.vitals_template, data.dynamic_ranges);
             }
 
             // Load other tab data
