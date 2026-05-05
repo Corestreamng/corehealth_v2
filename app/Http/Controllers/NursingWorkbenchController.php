@@ -673,6 +673,20 @@ class NursingWorkbenchController extends Controller{
             ->orderBy('created_at', 'desc')
             ->first();
 
+        // Dynamic ranges (Plan §B.1)
+        $ageDays = $patient->dob ? now()->diffInDays($patient->dob) : null;
+        $gender = $patient->gender;
+        $dynamicRanges = [];
+        if ($ageDays !== null) {
+            $rangeKeys = ['temp', 'heart_rate', 'resp_rate', 'spo2', 'bp_sys', 'bp_dia', 'sugar'];
+            foreach ($rangeKeys as $rk) {
+                $range = \App\Models\VitalRange::resolve($rk, $ageDays, $gender);
+                if ($range) {
+                    $dynamicRanges[$rk] = $range->toArray();
+                }
+            }
+        }
+
         return response()->json([
             'id' => $patient->id,
             'user_id' => $patient->user_id,
@@ -725,6 +739,7 @@ class NursingWorkbenchController extends Controller{
             ] : null,
             'clinic_name' => $clinic ? $clinic->name : null,
             'vitals_template' => $clinic ? $clinic->vitals_template : null,
+            'dynamic_ranges'  => $dynamicRanges,
         ]);
     }
 
