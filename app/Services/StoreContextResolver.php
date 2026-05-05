@@ -113,6 +113,22 @@ class StoreContextResolver
             }
         }
 
+        // NURSE / MATERNITY → default ward store
+        if ($user->hasAnyRole(['NURSE', 'MATERNITY'])) {
+            $store = Store::active()
+                    ->where('distribution_role', Store::ROLE_WARD)
+                    ->where('is_default', true)
+                    ->first()
+                ?? Store::active()
+                    ->where('distribution_role', Store::ROLE_WARD)
+                    ->orderBy('id')
+                    ->first();
+            if ($store) {
+                $this->resolutionTrace[] = "Step 6 (clinical fallback): resolved to [{$store->store_name}] — default ward store.";
+                return $store;
+            }
+        }
+
         // ADMIN / SUPERADMIN / super-admin → system default store (is_default = true), then first active
         if ($user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
             $store = Store::active()->where('is_default', true)->first()
@@ -158,7 +174,24 @@ class StoreContextResolver
         $store = $this->resolveFromRoleRule($user);
         if ($store) return $store;
 
-        $this->resolutionTrace[] = 'Step 5 (role rule): no match → null.';
+        // Step 6 — Clinical Fallback (NURSE / MATERNITY) (Plan §B.5)
+        if ($user->hasAnyRole(['NURSE', 'MATERNITY'])) {
+            $store = Store::active()
+                ->where('distribution_role', Store::ROLE_WARD)
+                ->where('is_default', true)
+                ->first()
+                ?? Store::active()
+                ->where('distribution_role', Store::ROLE_WARD)
+                ->orderBy('id')
+                ->first();
+
+            if ($store) {
+                $this->resolutionTrace[] = "Step 6 (clinical fallback): resolved to [{$store->store_name}] — default ward store.";
+                return $store;
+            }
+        }
+
+        $this->resolutionTrace[] = 'Step 6: no fallback matched → returning null.';
         return null;
     }
 
@@ -230,8 +263,13 @@ class StoreContextResolver
     /** Step 2 — Active NursingShift ward store (Plan §10 Step 2) */
     private function resolveFromShift(?NursingShift $shift): ?Store
     {
-        if (! $shift || $shift->status !== 'active' || ! $shift->ward_id) {
-            $this->resolutionTrace[] = 'Step 2 (shift): no active shift or no ward_id on shift.';
+        if (! $shift || $shift->status !== 'active') {
+            $this->resolutionTrace[] = 'Step 2 (shift): no active shift.';
+            return null;
+        }
+
+        if (! $shift->ward_id) {
+            $this->resolutionTrace[] = 'Step 2 (shift): active shift found but it is a FLOATING shift (no ward_id).';
             return null;
         }
 
@@ -370,19 +408,28 @@ class StoreContextResolver
         }
 
         $ids = collect();
-
-        // A) Shift ward store
         $activeShift = NursingShift::where('user_id', $user->id)
             ->where('status', 'active')
             ->latest('started_at')
             ->first();
 
+        // A) Ward store access (Plan §10.A/B)
         if ($activeShift?->ward_id) {
+            // Case 1: Active shift in a specific ward -> Restricted to that ward store
             $wardStore = Store::where('ward_id', $activeShift->ward_id)->active()->first();
             if ($wardStore) $ids->push($wardStore->id);
+        } else {
+            // Case 2: No active ward-specific shift (Floating or No Shift)
+            // Clinical roles (NURSE, MATERNITY) get access to ALL ward stores
+            if ($user->hasAnyRole(['NURSE', 'MATERNITY'])) {
+                $wardStoreIds = Store::active()
+                    ->where('distribution_role', Store::ROLE_WARD)
+                    ->pluck('id');
+                $ids = $ids->merge($wardStoreIds);
+            }
         }
 
-        // B) Department store (ROLE_DEPARTMENT)
+        // B) Department store (ROLE_DEPARTMENT) — Always available (Plan §B.4)
         $departmentId = $user->staff_profile?->department_id;
         if ($departmentId) {
             $deptStore = Store::where('department_id', $departmentId)
