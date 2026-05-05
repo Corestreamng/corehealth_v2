@@ -1128,7 +1128,7 @@
                 $totalAvailable = $availableBatches->sum('current_qty');
             @endphp
             @if($pendingQty> 0)
-            <div class="fulfill-item">
+            <div class="fulfill-item" data-allow-decimal="{{ $item->product->allow_decimal_qty ? '1' : '0' }}">
                 <div class="fulfill-item-header">
                     <div>
                         <div class="h6 mb-1">{{ $item->product->product_name }}</div>
@@ -1173,7 +1173,8 @@
                                     <th>Batch</th>
                                     <th class="text-center">Available</th>
                                     <th class="text-center">Expiry</th>
-                                    <th class="text-center">Transfer Qty</th>
+                                    <th class="text-center" style="width: 120px;">Unit</th>
+                                    <th class="text-center" style="width: 100px;">Transfer Qty</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1204,16 +1205,38 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
+                                        <select class="form-control form-control-sm batch-unit-select" 
+                                                data-batch-id="{{ $batch->id }}" 
+                                                data-item-id="{{ $item->id }}"
+                                                style="height: 31px; font-size: 0.8rem;">
+                                            <option value="" data-factor="1">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
+                                            @foreach($item->product->packagings as $pkg)
+                                                <option value="{{ $pkg->id }}" data-factor="{{ $pkg->base_unit_qty }}">
+                                                    {{ $pkg->name }} ({{ $pkg->base_unit_qty }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td class="text-center">
                                         <input type="number"
-                                               name="items[{{ $item->id }}][batches][{{ $batch->id }}]"
-                                               class="form-control form-control-sm batch-qty-input"
+                                               class="form-control form-control-sm batch-display-qty"
                                                value="0"
                                                min="0"
-                                               max="{{ min($batch->current_qty, $pendingQty) }}"
+                                               step="any"
+                                               data-batch-id="{{ $batch->id }}"
+                                               data-item-id="{{ $item->id }}"
+                                               style="height: 31px; font-weight: 600;">
+                                        
+                                        <input type="hidden"
+                                               name="items[{{ $item->id }}][batches][{{ $batch->id }}]"
+                                               class="batch-qty-input"
+                                               value="0"
                                                data-batch-id="{{ $batch->id }}"
                                                data-available="{{ $batch->current_qty }}"
                                                data-item-id="{{ $item->id }}"
                                                data-pending="{{ $pendingQty }}">
+                                        
+                                        <small class="text-muted batch-base-hint" style="display: none; font-size: 0.7rem;"></small>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -1299,43 +1322,69 @@
 @if(in_array($requisition->status, ['approved', 'partial']))
 $(function() {
     // Calculate totals when batch quantities change
-    $('.batch-qty-input').on('input', function() {
-        var $input = $(this);
-        var val = parseInt($input.val()) || 0;
-        var available = parseInt($input.data('available'));
-        var itemId = $input.data('item-id');
-        var pending = parseInt($input.data('pending'));
+    $('.batch-display-qty, .batch-unit-select').on('input change', function() {
+        var $row = $(this).closest('tr');
+        var $displayInput = $row.find('.batch-display-qty');
+        var $unitSelect = $row.find('.batch-unit-select');
+        var $hiddenInput = $row.find('.batch-qty-input');
+        var $hint = $row.find('.batch-base-hint');
+        var $itemContainer = $(this).closest('.fulfill-item');
+        var allowDecimal = $itemContainer.data('allow-decimal') == '1';
 
-        // Limit to available quantity
-        if (val> available) {
-            $input.val(available);
-            val = available;
-            toastr.warning('Limited to available stock (' + available + ')');
+        var displayVal = parseFloat($displayInput.val()) || 0;
+        var factor = parseFloat($unitSelect.find('option:selected').data('factor')) || 1;
+        var baseVal = displayVal * factor;
+        
+        if (!allowDecimal) {
+            baseVal = Math.round(baseVal);
+        }
+        
+        var available = parseFloat($hiddenInput.data('available'));
+        var itemId = $hiddenInput.data('item-id');
+        var pending = parseFloat($hiddenInput.data('pending'));
+
+        // Limit base quantity to available stock
+        if (baseVal > available) {
+            baseVal = available;
+            displayVal = baseVal / factor;
+            $displayInput.val(Number.isInteger(displayVal) ? displayVal : displayVal.toFixed(2));
+            toastr.warning('Limited to available stock (' + available + ' base units)');
         }
 
-        // Calculate total for this item across all batches
-        var itemTotal = 0;
-        $('input[data-item-id="' + itemId + '"]').each(function() {
-            itemTotal += parseInt($(this).val()) || 0;
+        // Calculate total for this item across other batches first
+        var otherBatchesTotal = 0;
+        $('.batch-qty-input[data-item-id="' + itemId + '"]').not($hiddenInput).each(function() {
+            otherBatchesTotal += parseInt($(this).val()) || 0;
         });
 
-        // Check if exceeding pending
-        if (itemTotal> pending) {
-            var excess = itemTotal - pending;
-            $input.val(Math.max(0, val - excess));
+        // Check if current batch baseVal + otherBatchesTotal exceeds pending
+        if (baseVal + otherBatchesTotal > pending) {
+            baseVal = pending - otherBatchesTotal;
+            displayVal = baseVal / factor;
+            $displayInput.val(Number.isInteger(displayVal) ? displayVal : displayVal.toFixed(2));
             toastr.warning('Total cannot exceed pending quantity (' + pending + ')');
-            itemTotal = pending;
+        }
+
+        // Update hidden input with the final base quantity
+        $hiddenInput.val(baseVal);
+
+        // Update hint if factor > 1
+        if (factor > 1 && baseVal > 0) {
+            $hint.text('= ' + baseVal + ' base units').show();
+        } else {
+            $hint.hide();
         }
 
         // Update item total display
+        var itemTotal = otherBatchesTotal + baseVal;
         $('.item-transfer-total[data-item-id="' + itemId + '"]').text(itemTotal);
 
         // ── Plan §7.3, §R11 — FIFO Override Warning ──────────────────────────
-        // If this input is for a non-first batch and val> 0,
+        // If this input is for a non-first batch and baseVal > 0,
         // check if an earlier batch for the same item still has untouched stock.
-        if (val> 0) {
-            var $allBatchInputs = $('input[data-item-id="' + itemId + '"]');
-            var thisIndex = $allBatchInputs.index($input);
+        if (baseVal > 0) {
+            var $allBatchInputs = $('.batch-qty-input[data-item-id="' + itemId + '"]');
+            var thisIndex = $allBatchInputs.index($hiddenInput);
             var fifoViolation = false;
             var firstBatchName = '';
             $allBatchInputs.each(function(idx) {
