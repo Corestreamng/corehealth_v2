@@ -172,13 +172,13 @@
                     if(vitalsTab){
                          vitalsTab.addEventListener('shown.bs.tab', function (event) {
                             if(window.initUnifiedVitals) {
-                                window.initUnifiedVitals({{ $patient->id }});
+                                window.initUnifiedVitals({{ $patient->id }}, null, null, null, @json($dynamicRanges ?? []));
                             }
                         });
                          // Handle initial load if tab is active
                         if (vitalsTab.classList.contains('active')) {
                             if(window.initUnifiedVitals) {
-                                window.initUnifiedVitals({{ $patient->id }});
+                                window.initUnifiedVitals({{ $patient->id }}, null, null, null, @json($dynamicRanges ?? []));
                             }
                         }
                     }
