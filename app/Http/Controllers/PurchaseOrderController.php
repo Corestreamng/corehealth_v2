@@ -155,9 +155,16 @@ class PurchaseOrderController extends Controller
             );
 
             // If action is 'submit', submit the PO for approval
-            if ($request->action === 'submit') {
-                $po->status = 'submitted';
-                $po->submitted_at = now();
+            if ($request->action === 'submit' || $request->boolean('auto_approve')) {
+                if ($request->boolean('auto_approve')) {
+                    $po->status = \App\Models\PurchaseOrder::STATUS_APPROVED;
+                    $po->approved_by = auth()->id();
+                    $po->approved_at = now();
+                    $po->submitted_at = now();
+                } else {
+                    $po->status = 'submitted';
+                    $po->submitted_at = now();
+                }
                 $po->save();
             }
 

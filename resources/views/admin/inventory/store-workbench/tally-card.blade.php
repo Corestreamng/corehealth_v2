@@ -926,6 +926,7 @@
                 </div>
                 <form id="form-new-req">
                     @csrf
+                    <input type="hidden" name="auto_approve" value="1">
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6">
@@ -1189,6 +1190,7 @@
                 </div>
                 <form id="form-new-po">
                     @csrf
+                    <input type="hidden" name="auto_approve" value="1">
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-4">
@@ -1909,6 +1911,20 @@
             </div>
         </div>`;
                 $('#req-items-container').append(row);
+                
+                // Initialize Select2 on all selects in the new row
+                if ($.fn.select2) {
+                    var $newRow = $(`.req-item-row[data-index="${reqItemIndex}"]`);
+                    $newRow.find('select').each(function() {
+                        var $sel = $(this);
+                        $sel.select2({
+                            dropdownParent: $('#modal-new-req'),
+                            width: '100%',
+                            placeholder: $sel.find('option:first').text() || 'Select…'
+                        });
+                    });
+                }
+
                 updateRemoveReqButtons();
             });
 
@@ -2153,6 +2169,20 @@
             </div>
         </div>`;
                 $('#po-items-container').append(row);
+
+                // Initialize Select2 on all selects in the new row
+                if ($.fn.select2) {
+                    var $newRow = $(`.po-item-row[data-index="${poItemIndex}"]`);
+                    $newRow.find('select').each(function() {
+                        var $sel = $(this);
+                        $sel.select2({
+                            dropdownParent: $('#modal-new-po'),
+                            width: '100%',
+                            placeholder: $sel.find('option:first').text() || 'Select…'
+                        });
+                    });
+                }
+
                 updateRemovePoButtons();
             });
 
@@ -2466,6 +2496,9 @@
                             $.each(res.packagings, function(_, p) {
                                 $pkgSelect.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
                             });
+                        }
+                        if ($pkgSelect.hasClass('select2-hidden-accessible')) {
+                            $pkgSelect.trigger('change.select2');
                         }
                     });
             }

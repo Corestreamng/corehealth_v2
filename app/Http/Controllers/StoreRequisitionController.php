@@ -289,6 +289,11 @@ class StoreRequisitionController extends Controller
                 $request->items
             );
 
+            // Auto-approve if requested (e.g. from Tally Card)
+            if ($request->boolean('auto_approve')) {
+                $this->requisitionService->approve($requisition, null, 'Auto-approved via Store Workbench');
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => "Requisition {$requisition->requisition_number} created successfully",
