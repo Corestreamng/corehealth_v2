@@ -316,16 +316,16 @@
 
     /* Stat Cards */
     .dash-stat-card {
-        border-radius: 18px;
+        border-radius: 24px;
         overflow: hidden;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
         height: 100%;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(255,255,255,0.1);
     }
-
     .dash-stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     }
 
     .dash-stat-body {
@@ -377,10 +377,10 @@
     /* Section Cards (shortcuts, tables) */
     .dash-section-card {
         background: #fff;
-        border-radius: 20px;
-        padding: 32px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        border: 1px solid #f0f0f0;
+        border-radius: 24px;
+        padding: 36px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        border: 1px solid #f1f5f9;
     }
 
     .dash-section-header {
@@ -414,22 +414,23 @@
 
     /* Shortcut Cards */
     .dash-shortcut {
-        padding: 22px 16px;
-        border-radius: 16px;
+        padding: 24px 16px;
+        border-radius: 20px;
         text-align: center;
         height: 100%;
-        border: 1px solid transparent;
-        transition: all 0.2s ease;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-height: 130px;
+        min-height: 140px;
+        background: #fff;
     }
-
     .dash-shortcut:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        transform: translateY(-6px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.07);
+        border-color: #e2e8f0;
     }
 
     .dash-shortcut-icon {
@@ -488,29 +489,50 @@
        ========================================= */
     .dash-queue-item {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 14px;
-        padding: 16px 20px;
-        border-radius: 14px;
-        background: #f9fafb;
-        border: 1px solid #f0f0f0;
-        transition: all 0.2s ease;
+        text-align: center;
+        padding: 24px 16px;
+        border-radius: 20px;
+        background: #fff;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        position: relative;
+        overflow: hidden;
         cursor: default;
     }
     .dash-queue-item:hover {
-        background: #f3f4f6;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+        border-color: #e2e8f0;
     }
     .dash-queue-icon {
-        width: 44px; height: 44px;
-        border-radius: 12px;
+        width: 52px; height: 52px;
+        border-radius: 16px;
         display: flex; align-items: center; justify-content: center;
+        margin-bottom: 14px;
+        transition: transform 0.3s ease;
         flex-shrink: 0;
     }
-    .dash-queue-icon i { font-size: 1.3rem; color: #fff; }
-    .dash-queue-name { font-weight: 600; font-size: 0.82rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-    .dash-queue-count { font-weight: 800; font-size: 1.6rem; color: #1f2937; line-height: 1; }
+    .dash-queue-item:hover .dash-queue-icon {
+        transform: scale(1.1);
+    }
+    .dash-queue-icon i { font-size: 1.5rem; color: #fff; }
+    .dash-queue-name { 
+        font-weight: 700; 
+        font-size: 0.72rem; 
+        color: #94a3b8; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+        margin-bottom: 8px; 
+    }
+    .dash-queue-count { 
+        font-weight: 800; 
+        font-size: 1.85rem; 
+        color: #1e293b; 
+        line-height: 1; 
+    }
 
     /* Clickable activity table rows */
     .hover-highlight:hover { background: #f0f4ff !important; }

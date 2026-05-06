@@ -83,7 +83,13 @@
 </div>
 
 {{-- Personal Stats --}}
-@include('admin.dashboards.components.queue-widget', ['containerId' => 'ess-queues'])
+@include('admin.dashboards.components.queue-widget', [
+    'containerId' => 'ess-queues',
+    'title' => 'My Request Summary',
+    'subtitle' => 'Personal HR pipeline',
+    'icon' => 'mdi-account-check',
+    'iconColor' => 'primary'
+])
 
 {{-- Quick Actions --}}
 <div class="row mb-4">
@@ -100,9 +106,9 @@
             </div>
 
             <div class="row g-3">
-                @if(Route::has('hr.leave-requests.create'))
+                @if(Route::has('hr.ess.my-leave.request'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('hr.leave-requests.create') }}" class="text-decoration-none">
+                    <a href="{{ route('hr.ess.my-leave.request') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f0fdfa, #ccfbf1); border-color: #99f6e4;">
                             <i class="mdi mdi-calendar-plus dash-shortcut-icon" style="color: #0d9488;"></i>
                             <h6 class="dash-shortcut-title" style="color: #0d9488;">Apply for Leave</h6>
@@ -112,9 +118,9 @@
                 </div>
                 @endif
 
-                @if(Route::has('hr.payslips.index'))
+                @if(Route::has('hr.ess.my-payslips'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('hr.payslips.index') }}" class="text-decoration-none">
+                    <a href="{{ route('hr.ess.my-payslips') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fefce8, #fef9c3); border-color: #fef08a;">
                             <i class="mdi mdi-cash-multiple dash-shortcut-icon" style="color: #a16207;"></i>
                             <h6 class="dash-shortcut-title" style="color: #a16207;">My Payslips</h6>
@@ -124,8 +130,9 @@
                 </div>
                 @endif
 
+                @if(Route::has('hr.ess.my-profile'))
                 <div class="col-6 col-md-3">
-                    <a href="#" class="text-decoration-none">
+                    <a href="{{ route('hr.ess.my-profile') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #eff6ff, #dbeafe); border-color: #bfdbfe;">
                             <i class="mdi mdi-file-document-edit-outline dash-shortcut-icon" style="color: #1e40af;"></i>
                             <h6 class="dash-shortcut-title" style="color: #1e40af;">Edit Profile</h6>
@@ -135,7 +142,7 @@
                 </div>
 
                 <div class="col-6 col-md-3">
-                    <a href="#" class="text-decoration-none">
+                    <a href="{{ route('hr.ess.my-profile') }}#password" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f5f3ff, #ede9fe); border-color: #ddd6fe;">
                             <i class="mdi mdi-lock-reset dash-shortcut-icon" style="color: #5b21b6;"></i>
                             <h6 class="dash-shortcut-title" style="color: #5b21b6;">Security</h6>
@@ -143,6 +150,7 @@
                         </div>
                     </a>
                 </div>
+                @endif
             </div>
         </div>
     </div>
