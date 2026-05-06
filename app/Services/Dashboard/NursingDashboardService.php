@@ -9,6 +9,20 @@ use Carbon\Carbon;
 class NursingDashboardService
 {
     /**
+     * Get nursing stats for dashboard cards
+     */
+    public function getStats(): array
+    {
+        $today = Carbon::today();
+        return [
+            'vitals_queue' => DB::table('vital_signs')->whereDate('created_at', $today)->where('status', 0)->count(),
+            'bed_requests' => DB::table('admission_requests')->where('discharged', 0)->whereNull('bed_id')->count(),
+            'medication_due' => 0, // Placeholder
+            'admitted' => DB::table('admission_requests')->where('discharged', 0)->whereNotNull('bed_id')->count(),
+        ];
+    }
+
+    /**
      * Get nursing queue counts mirroring nursing workbench
      */
     public function getQueueCounts(): array
