@@ -9,15 +9,34 @@ use Carbon\Carbon;
 class LabDashboardService
 {
     /**
-     * Get lab + imaging queue counts mirroring workbenches
+     * Get lab stats for dashboard cards
+     */
+    public function getStats(): array
+    {
+        $today = Carbon::today();
+        $labCategoryId = appsettings('investigation_category_id', 2);
+
+        return [
+            'queue' => DB::table('lab_service_requests')->whereIn('status', [0, 2, 3])->whereDate('created_at', $today)->count(),
+            'completed' => DB::table('lab_service_requests')->where('status', 4)->whereDate('updated_at', $today)->count(),
+            'tests_this_month' => DB::table('lab_service_requests')
+                ->where('status', 4)
+                ->whereMonth('updated_at', now()->month)
+                ->whereYear('updated_at', now()->year)
+                ->count(),
+            'services' => DB::table('services')->where('category_id', $labCategoryId)->count(),
+        ];
+    }
+
+    /**
+     * Get lab queue counts mirroring workbench
      */
     public function getQueueCounts(): array
     {
         $today = Carbon::today();
         $labCategoryId = appsettings('investigation_category_id', 2);
-        $imagingCategoryId = appsettings('imaging_category_id', 6);
 
-        return Cache::remember('dashboard.lab.queues', 30, function () use ($today, $labCategoryId, $imagingCategoryId) {
+        return Cache::remember('dashboard.lab.queues', 30, function () use ($today, $labCategoryId) {
             // Lab queues
             $labBilling = DB::table('lab_service_requests as lsr')
                 ->join('services as s', 'lsr.service_id', '=', 's.id')
@@ -47,30 +66,15 @@ class LabDashboardService
                 ->whereDate('lsr.updated_at', $today)
                 ->count();
 
-            // Imaging queues
-            $imgBilling = DB::table('imaging_service_requests')
-                ->where('status', 0)
-                ->whereDate('created_at', $today)
-                ->count();
-
-            $imgResults = DB::table('imaging_service_requests')
-                ->whereIn('status', [2, 3])
-                ->whereDate('created_at', $today)
-                ->count();
-
             return [
-                ['name' => 'Lab: Awaiting Billing', 'filter' => 'lab-billing', 'icon' => 'mdi-cash-clock', 'color' => 'warning',
+                ['name' => 'Awaiting Billing', 'filter' => 'billing', 'icon' => 'mdi-cash-clock', 'color' => 'warning',
                  'count' => $labBilling],
-                ['name' => 'Lab: Sample Collection', 'filter' => 'lab-sample', 'icon' => 'mdi-test-tube', 'color' => 'info',
+                ['name' => 'Sample Collection', 'filter' => 'sample', 'icon' => 'mdi-test-tube', 'color' => 'info',
                  'count' => $labSample],
-                ['name' => 'Lab: Result Entry', 'filter' => 'lab-results', 'icon' => 'mdi-clipboard-edit', 'color' => 'danger',
+                ['name' => 'Result Entry', 'filter' => 'results', 'icon' => 'mdi-clipboard-edit', 'color' => 'danger',
                  'count' => $labResults],
-                ['name' => 'Lab: Completed', 'filter' => 'lab-completed', 'icon' => 'mdi-check-circle', 'color' => 'success',
+                ['name' => 'Completed Today', 'filter' => 'completed', 'icon' => 'mdi-check-circle', 'color' => 'success',
                  'count' => $labCompleted],
-                ['name' => 'Imaging: Billing', 'filter' => 'img-billing', 'icon' => 'mdi-radiobox-marked', 'color' => 'warning',
-                 'count' => $imgBilling],
-                ['name' => 'Imaging: Results', 'filter' => 'img-results', 'icon' => 'mdi-image-search', 'color' => 'info',
-                 'count' => $imgResults],
             ];
         });
     }
@@ -80,54 +84,58 @@ class LabDashboardService
      */
     public function getServiceCategoryBreakdown(): array
     {
-        $today = Carbon::today();
+        $labCategoryId = appsettings('investigation_category_id', 2);
 
-        $labCount = DB::table('lab_service_requests')
-            ->whereDate('created_at', $today)
-            ->count();
-
-        $imagingCount = DB::table('imaging_service_requests')
-            ->whereDate('created_at', $today)
-            ->count();
-
-        return [
-            ['label' => 'Lab Tests', 'value' => $labCount, 'color' => '#0891b2'],
-            ['label' => 'Imaging', 'value' => $imagingCount, 'color' => '#6366f1'],
-        ];
+        return DB::table('lab_service_requests as lsr')
+            ->join('services as s', 'lsr.service_id', '=', 's.id')
+            ->where('s.category_id', $labCategoryId)
+            ->selectRaw('s.service_name as label, count(*) as value')
+            ->groupBy('s.service_name')
+            ->orderByDesc('value')
+            ->limit(5)
+            ->get()
+            ->map(function($row, $index) {
+                $colors = ['#0891b2', '#0e7490', '#155e75', '#164e63', '#06b6d4'];
+                $row->color = $colors[$index % count($colors)];
+                return (array)$row;
+            })
+            ->toArray();
     }
 
     /**
-     * Lab request volume trend (real data for this month)
+     * Lab request volume trend
      */
-    public function getRequestTrend(string $start = null, string $end = null): array
+    public function getRequestTrend(): array
     {
-        $start = $start ?: Carbon::now()->startOfMonth()->toDateString();
-        $end = $end ?: Carbon::today()->toDateString();
+        $start = Carbon::now()->startOfMonth()->toDateString();
+        $end = Carbon::today()->toDateString();
+        $labCategoryId = appsettings('investigation_category_id', 2);
 
-        return DB::table('lab_service_requests')
-            ->whereBetween(DB::raw('DATE(created_at)'), [$start, $end])
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as total')
-            ->groupByRaw('DATE(created_at)')
+        return DB::table('lab_service_requests as lsr')
+            ->join('services as s', 'lsr.service_id', '=', 's.id')
+            ->where('s.category_id', $labCategoryId)
+            ->whereBetween(DB::raw('DATE(lsr.created_at)'), [$start, $end])
+            ->selectRaw('DATE(lsr.created_at) as date, count(*) as total')
+            ->groupByRaw('DATE(lsr.created_at)')
             ->orderBy('date')
             ->get()
             ->toArray();
     }
 
     /**
-     * Recent completed tests
+     * Recent personal activity
      */
     public function getRecentActivity(): array
     {
-        $today = Carbon::today();
+        $labCategoryId = appsettings('investigation_category_id', 2);
 
         return DB::table('lab_service_requests as lsr')
             ->join('services as s', 'lsr.service_id', '=', 's.id')
             ->join('patients as p', 'lsr.patient_id', '=', 'p.id')
             ->join('users as u', 'p.user_id', '=', 'u.id')
-            ->whereDate('lsr.created_at', $today)
+            ->where('s.category_id', $labCategoryId)
             ->select(
                 'lsr.id',
-                'lsr.patient_id',
                 DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
                 's.service_name as test_name',
                 'lsr.status',
@@ -137,7 +145,7 @@ class LabDashboardService
             ->limit(10)
             ->get()
             ->map(function ($row) {
-                $statusMap = [0 => 'Billing', 1 => 'Billed', 2 => 'Sample', 3 => 'Result Entry', 4 => 'Completed'];
+                $statusMap = [0 => 'Billing', 1 => 'Billed', 2 => 'Sampling', 3 => 'Results', 4 => 'Completed'];
                 $colorMap = [0 => 'warning', 1 => 'info', 2 => 'primary', 3 => 'danger', 4 => 'success'];
                 $row->status_label = $statusMap[$row->status] ?? 'Unknown';
                 $row->status_color = $colorMap[$row->status] ?? 'secondary';
@@ -148,69 +156,39 @@ class LabDashboardService
     }
 
     /**
-     * Generate insights for lab/imaging
+     * Insights for lab
      */
     public function getInsights(): array
     {
         $today = Carbon::today();
+        $labCategoryId = appsettings('investigation_category_id', 2);
         $insights = [];
 
-        // Pending results
-        $pendingResults = DB::table('lab_service_requests')
-            ->where('status', 3)
+        $pending = DB::table('lab_service_requests as lsr')
+            ->join('services as s', 'lsr.service_id', '=', 's.id')
+            ->where('s.category_id', $labCategoryId)
+            ->where('lsr.status', 3)
             ->count();
 
-        if ($pendingResults > 0) {
+        if ($pending > 0) {
             $insights[] = [
                 'type' => 'alert', 'severity' => 'warning', 'icon' => 'mdi-clipboard-alert',
                 'title' => 'Pending Results',
-                'message' => "{$pendingResults} test(s) awaiting result entry",
+                'message' => "{$pending} lab test(s) awaiting result entry",
             ];
         }
 
-        // Completed today
-        $completedToday = DB::table('lab_service_requests')
-            ->whereDate('updated_at', $today)
-            ->where('status', 4)
-            ->count();
-
-        $completedImaging = DB::table('imaging_service_requests')
-            ->whereDate('updated_at', $today)
-            ->where('status', 4)
+        $completedToday = DB::table('lab_service_requests as lsr')
+            ->join('services as s', 'lsr.service_id', '=', 's.id')
+            ->where('s.category_id', $labCategoryId)
+            ->where('lsr.status', 4)
+            ->whereDate('lsr.updated_at', $today)
             ->count();
 
         $insights[] = [
             'type' => 'stat', 'severity' => 'success', 'icon' => 'mdi-check-circle',
-            'title' => 'Completed Today',
-            'message' => ($completedToday + $completedImaging) . " test(s) completed (Lab: {$completedToday}, Imaging: {$completedImaging})",
-        ];
-
-        // Top requested test today
-        $topTest = DB::table('lab_service_requests as lsr')
-            ->join('services as s', 'lsr.service_id', '=', 's.id')
-            ->whereDate('lsr.created_at', $today)
-            ->selectRaw('s.service_name as name, COUNT(*) as cnt')
-            ->groupBy('s.service_name')
-            ->orderByDesc('cnt')
-            ->first();
-
-        if ($topTest) {
-            $insights[] = [
-                'type' => 'info', 'severity' => 'info', 'icon' => 'mdi-star',
-                'title' => 'Most Requested',
-                'message' => "{$topTest->name} ({$topTest->cnt} requests)",
-            ];
-        }
-
-        // Total requests today
-        $totalToday = DB::table('lab_service_requests')
-            ->whereDate('created_at', $today)
-            ->count();
-
-        $insights[] = [
-            'type' => 'stat', 'severity' => 'info', 'icon' => 'mdi-flask',
-            'title' => "Today's Volume",
-            'message' => "{$totalToday} lab request(s) today",
+            'title' => 'Tests Completed',
+            'message' => "{$completedToday} lab test(s) finalized today",
         ];
 
         return $insights;

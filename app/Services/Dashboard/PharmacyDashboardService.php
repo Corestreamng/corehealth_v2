@@ -9,6 +9,28 @@ use Carbon\Carbon;
 class PharmacyDashboardService
 {
     /**
+     * Get pharmacy stats for dashboard cards
+     */
+    public function getStats(): array
+    {
+        $today = Carbon::today();
+        return [
+            'queue' => DB::table('product_requests')
+                ->whereDate('created_at', $today)
+                ->where('status', 'pending')
+                ->count(),
+            'dispensed' => DB::table('product_requests')
+                ->whereDate('created_at', $today)
+                ->where('status', 'dispensed')
+                ->count(),
+            'products' => DB::table('products')->where('status', 1)->count(),
+            'low_stock' => DB::table('store_stocks')
+                ->where('current_quantity', '<=', DB::raw('reorder_level'))
+                ->count(),
+        ];
+    }
+
+    /**
      * Get pharmacy queue counts mirroring pharmacy workbench
      */
     public function getQueueCounts(): array
