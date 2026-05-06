@@ -3,12 +3,12 @@
 
 <div class="dash-section-card mb-4">
     <div class="dash-section-header">
-        <div class="dash-section-icon bg-warning bg-opacity-10">
-            <i class="mdi mdi-view-list text-warning"></i>
+        <div class="dash-section-icon bg-{{ $iconColor ?? 'warning' }} bg-opacity-10">
+            <i class="mdi {{ $icon ?? 'mdi-view-list' }} text-{{ $iconColor ?? 'warning' }}"></i>
         </div>
         <div>
-            <h5 class="dash-section-title">Live Queues</h5>
-            <small class="text-muted">Real-time patient pipeline</small>
+            <h5 class="dash-section-title">{{ $title ?? 'Live Queues' }}</h5>
+            <small class="text-muted">{{ $subtitle ?? 'Real-time patient pipeline' }}</small>
         </div>
     </div>
     <div class="row g-3" id="{{ $containerId }}">
