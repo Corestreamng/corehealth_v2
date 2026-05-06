@@ -325,7 +325,7 @@ class PharmacyWorkbenchController extends Controller
             ->addColumn('select', function ($item) {
                 $posr = $item->productOrServiceRequest;
                 $isPaid = optional(optional($posr)->payment)->payment_status === 'paid';
-                $isValidated = optional($posr)->validation_status === 'validated';
+                $isValidated = in_array(optional($posr)->validation_status, ['validated', 'approved', 'awaiting_code']);
 
                 // Check if bundled with procedure
                 $procedureItem = $item->procedureItem;
@@ -335,7 +335,7 @@ class PharmacyWorkbenchController extends Controller
                 if ($isBundled) {
                     $procedurePosr = optional(optional($procedureItem->procedure)->productOrServiceRequest);
                     $procedurePaid = optional($procedurePosr->payment)->payment_status === 'paid';
-                    $procedureValidated = $procedurePosr->validation_status === 'validated';
+                    $procedureValidated = in_array(optional($procedurePosr)->validation_status, ['validated', 'approved', 'awaiting_code']);
                     $canDispense = $procedurePaid || $procedureValidated;
                 } else {
                     $canDispense = $isPaid || $isValidated;
@@ -366,7 +366,7 @@ class PharmacyWorkbenchController extends Controller
                 // Show HMO/payment status
                 if ($posr) {
                     $isPaid = optional($posr->payment)->payment_status === 'paid';
-                    $isValidated = $posr->validation_status === 'validated';
+                    $isValidated = in_array(optional($posr)->validation_status, ['validated', 'approved', 'awaiting_code']);
                     $coverageMode = $posr->coverage_mode ?? 'none';
 
                     if ($coverageMode !== 'none' && $posr->claims_amount > 0) {
@@ -729,8 +729,7 @@ class PharmacyWorkbenchController extends Controller
                       ->where(function($q) {
                           $q->whereDoesntHave('productOrServiceRequest.payment')
                             ->orWhereHas('productOrServiceRequest', function($sq) {
-                                $sq->whereNull('validation_status')
-                                   ->orWhere('validation_status', '!=', 'validated');
+                                $sq->whereNotIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                             });
                       });
             } elseif ($statusFilter === 'ready') {
@@ -741,7 +740,7 @@ class PharmacyWorkbenchController extends Controller
                                 $sq->whereNotNull('payment_id');
                             })
                             ->orWhereHas('productOrServiceRequest', function($sq) {
-                                $sq->where('validation_status', 'validated');
+                                $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                             });
                       });
             }
@@ -756,7 +755,7 @@ class PharmacyWorkbenchController extends Controller
 
                 // Determine ready status
                 $isPaid = optional($payment)->payment_status === 'paid';
-                $isValidated = optional($posr)->validation_status === 'validated';
+                $isValidated = in_array(optional($posr)->validation_status, ['validated', 'approved', 'awaiting_code']);
                 $isReady = $isPaid || $isValidated;
 
                 // Status label logic
@@ -827,8 +826,7 @@ class PharmacyWorkbenchController extends Controller
             ->where(function($q) {
                 $q->whereDoesntHave('productOrServiceRequest.payment')
                   ->orWhereHas('productOrServiceRequest', function($sq) {
-                      $sq->whereNull('validation_status')
-                         ->orWhere('validation_status', '!=', 'validated');
+                      $sq->whereNotIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                   });
             })
             ->count();
@@ -841,7 +839,7 @@ class PharmacyWorkbenchController extends Controller
                       $sq->whereNotNull('payment_id');
                   })
                   ->orWhereHas('productOrServiceRequest', function($sq) {
-                      $sq->where('validation_status', 'validated');
+                      $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                   });
             })
             ->count();
