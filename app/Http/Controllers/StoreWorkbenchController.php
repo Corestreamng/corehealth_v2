@@ -192,9 +192,9 @@ class StoreWorkbenchController extends Controller
             }
 
             return DataTables::of($query)
-                ->addColumn('product_name', fn($ss) => $ss->product->product_name ?? '-')
-                ->addColumn('product_code', fn($ss) => $ss->product->product_code ?? '-')
-                ->addColumn('category', fn($ss) => $ss->product->category->category_name ?? '-')
+                ->addColumn('product_name', fn($ss) => $ss->product?->product_name ?? '-')
+                ->addColumn('product_code', fn($ss) => $ss->product?->product_code ?? '-')
+                ->addColumn('category', fn($ss) => $ss->product?->category?->category_name ?? '-')
                 ->addColumn('store_name', fn($ss) => $ss->store->store_name ?? '-')
                 ->addColumn('qty_display', fn($ss) => $this->formatQuantityDisplay($ss))
                 ->addColumn('batches_count', fn($ss) => StockBatch::where('product_id', $ss->product_id)
@@ -734,6 +734,7 @@ class StoreWorkbenchController extends Controller
     {
         $user    = auth()->user();
         $stores  = Store::active()->forUser($user)->orderBy('store_name')->get();
+        $allStores = Store::active()->orderBy('store_name')->get();
 
         // Resolve store
         $storeId = $request->get('store_id');
@@ -794,6 +795,7 @@ class StoreWorkbenchController extends Controller
 
         return view('admin.inventory.store-workbench.tally-card', compact(
             'stores',
+            'allStores',
             'selectedStore',
             'products',
             'selectedProduct',
@@ -894,8 +896,8 @@ class StoreWorkbenchController extends Controller
             &$totalOut
         ) {
             $productId   = $tx->stockBatch->product_id;
-            $productName = $tx->stockBatch->product->product_name ?? '—';
-            $productCode = $tx->stockBatch->product->product_code ?? '';
+            $productName = $tx->stockBatch->product?->product_name ?? '—';
+            $productCode = $tx->stockBatch->product?->product_code ?? '';
             $batchNumber = $tx->stockBatch->batch_number ?? '—';
             $type        = $tx->type;
             $qty         = abs((int) $tx->qty);
@@ -1005,14 +1007,14 @@ class StoreWorkbenchController extends Controller
                 'ref_url'         => $refUrl,
                 'performer'       => $tx->performer->name ?? 'System',
                 'notes'           => $tx->notes,
-                'packaging'       => $tx->stockBatch->product->packagings->map(function ($p) {
+                'packaging'       => (optional($tx->stockBatch->product)->packagings ?? collect())->map(function ($p) {
                     return [
                         'id' => $p->id,
                         'name' => $p->name,
                         'base_unit_qty' => $p->base_unit_qty,
                     ];
                 }),
-                'base_unit'       => $tx->stockBatch->product->base_unit_name ?? 'Piece',
+                'base_unit'       => optional($tx->stockBatch->product)->base_unit_name ?? 'Piece',
             ];
         });
 
@@ -1168,8 +1170,8 @@ class StoreWorkbenchController extends Controller
                 'id'           => $batch->id,
                 'batch_number' => $batch->batch_number ?? 'N/A',
                 'product_id'   => $batch->product_id,
-                'product_name' => $batch->product->product_name ?? 'Unknown',
-                'product_code' => $batch->product->product_code ?? null,
+                'product_name' => $batch->product?->product_name ?? 'Unknown',
+                'product_code' => $batch->product?->product_code ?? null,
                 'current_qty'  => $batch->current_qty,
                 'expiry_date'  => $batch->expiry_date?->format('Y-m-d'),
                 'expiry_label' => $batch->expiry_date?->format('M d, Y') ?? 'No expiry',

@@ -12,6 +12,12 @@ class MaternityEnrollment extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
+    const STATUS_ACTIVE = 'active';
+    const STATUS_POSTNATAL = 'postnatal';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_TRANSFERRED = 'transferred';
+    const STATUS_DECEASED = 'deceased';
+
     protected $fillable = [
         'patient_id', 'enrolled_by', 'entry_point', 'status',
         'enrollment_date', 'booking_date', 'lmp', 'edd', 'gestational_age_at_booking',
@@ -91,7 +97,7 @@ class MaternityEnrollment extends Model implements Auditable
 
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', self::STATUS_ACTIVE);
     }
 
     public function scopeByStatus($query, $status)
