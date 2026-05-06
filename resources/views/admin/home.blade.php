@@ -34,14 +34,48 @@
                 'color' => 'dark',
                 'partial' => 'admin.dashboards.tabs.admin-tab'
             ];
+            
+            $roleTabs['hr'] = [
+                'name' => 'HR Ops',
+                'icon' => 'mdi-account-group',
+                'color' => 'primary',
+                'partial' => 'admin.dashboards.tabs.hr-tab'
+            ];
         }
 
-        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'STORE', 'PHARMACIST'])) {
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'PHARMACIST'])) {
             $roleTabs['pharmacy'] = [
-                'name' => 'Pharmacy/Store',
+                'name' => 'Pharmacy',
                 'icon' => 'mdi-pill',
-                'color' => 'warning',
+                'color' => 'success',
                 'partial' => 'admin.dashboards.tabs.pharmacy-tab'
+            ];
+        }
+
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'STORE'])) {
+            $roleTabs['store'] = [
+                'name' => 'Store/Inventory',
+                'icon' => 'mdi-store-warehouse',
+                'color' => 'warning',
+                'partial' => 'admin.dashboards.tabs.store-tab'
+            ];
+        }
+
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'MATERNITY'])) {
+            $roleTabs['maternity'] = [
+                'name' => 'Maternity',
+                'icon' => 'mdi-mother-nurse',
+                'color' => 'danger',
+                'partial' => 'admin.dashboards.tabs.maternity-tab'
+            ];
+        }
+
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'MORGUE'])) {
+            $roleTabs['morgue'] = [
+                'name' => 'Morgue',
+                'icon' => 'mdi-emoticon-dead',
+                'color' => 'dark',
+                'partial' => 'admin.dashboards.tabs.morgue-tab'
             ];
         }
 
@@ -54,12 +88,39 @@
             ];
         }
 
-        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'LAB SCIENTIST', 'RADIOLOGIST'])) {
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'NURSE', 'PED-NURSE'])) {
+            $roleTabs['child_health'] = [
+                'name' => 'Child Health',
+                'icon' => 'mdi-baby-face-outline',
+                'color' => 'success',
+                'partial' => 'admin.dashboards.tabs.child-health-tab'
+            ];
+        }
+
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'LAB SCIENTIST'])) {
             $roleTabs['lab'] = [
-                'name' => 'Lab/Imaging',
+                'name' => 'Laboratory',
                 'icon' => 'mdi-flask',
                 'color' => 'info',
                 'partial' => 'admin.dashboards.tabs.lab-tab'
+            ];
+        }
+
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'RADIOLOGIST'])) {
+            $roleTabs['imaging'] = [
+                'name' => 'Radiology',
+                'icon' => 'mdi-radiobox-marked',
+                'color' => 'primary',
+                'partial' => 'admin.dashboards.tabs.imaging-tab'
+            ];
+        }
+
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'SURGEON', 'THEATRE-NURSE'])) {
+            $roleTabs['theatre'] = [
+                'name' => 'Theatre',
+                'icon' => 'mdi-pulse',
+                'color' => 'danger',
+                'partial' => 'admin.dashboards.tabs.theatre-tab'
             ];
         }
 
@@ -89,6 +150,13 @@
                 'partial' => 'admin.dashboards.tabs.accounts-tab'
             ];
         }
+
+        $roleTabs['ess'] = [
+            'name' => 'My Portal',
+            'icon' => 'mdi-account-circle',
+            'color' => 'info',
+            'partial' => 'admin.dashboards.tabs.ess-tab'
+        ];
 
         // Get first tab as default
         $firstTabKey = array_key_first($roleTabs);
@@ -575,23 +643,29 @@ $(document).ready(function () {
 
     // Queue container → workbench URL mapping
     var queueWorkbenchMap = {
-        'recep-queues':  { url: '{{ route("reception.workbench") }}', filterMap: null },
-        'biller-queues': { url: '{{ route("billing.workbench") }}', filterMap: null },
-        'pharm-queues':  { url: '{{ route("pharmacy.workbench") }}', filterMap: null },
-        'nurs-queues':   { url: '{{ route("nursing-workbench.index") }}', filterMap: null },
-        'lab-queues':    {
-            url: null, // Lab tab has mixed lab + imaging queues
+        'recep-queues':  { url: '{{ Route::has("reception.workbench") ? route("reception.workbench") : "#" }}', filterMap: null },
+        'biller-queues': { url: '{{ Route::has("billing.workbench") ? route("billing.workbench") : "#" }}', filterMap: null },
+        'pharm-queues':  { url: '{{ Route::has("pharmacy.workbench") ? route("pharmacy.workbench") : "#" }}', filterMap: null },
+        'nurs-queues':   { url: '{{ Route::has("nursing-workbench.index") ? route("nursing-workbench.index") : "#" }}', filterMap: null },
+        'lab-queues':    { url: '{{ Route::has("lab.workbench") ? route("lab.workbench") : "#" }}', filterMap: null },
+        'imaging-queues': { url: '{{ Route::has("imaging.workbench") ? route("imaging.workbench") : "#" }}', filterMap: null },
+        'hmo-queues':    { url: '{{ Route::has("hmo.workbench") ? route("hmo.workbench") : "#" }}', filterMap: null },
+        'doc-queues':    { url: null, filterMap: null },
+        'hr-queues':     { url: '{{ Route::has("hr.workbench.index") ? route("hr.workbench.index") : "#" }}', filterMap: null },
+        'theatre-queues': { url: '{{ Route::has("patient-procedures.index") ? route("patient-procedures.index") : "#" }}', filterMap: null },
+        'child-queues':  { url: '{{ Route::has("patient.index") ? route("patient.index") : "#" }}', filterMap: null },
+        'ess-queues':    { url: '{{ Route::has("hr.ess.index") ? route("hr.ess.index") : "#" }}', filterMap: null },
+        'store-queues':  {
+            url: null,
             filterMap: {
-                'lab-billing':   { url: '{{ route("lab.workbench") }}',     filter: 'billing' },
-                'lab-sample':    { url: '{{ route("lab.workbench") }}',     filter: 'sample' },
-                'lab-results':   { url: '{{ route("lab.workbench") }}',     filter: 'results' },
-                'lab-completed': { url: '{{ route("lab.workbench") }}',     filter: 'completed' },
-                'img-billing':   { url: '{{ route("imaging.workbench") }}', filter: 'billing' },
-                'img-results':   { url: '{{ route("imaging.workbench") }}', filter: 'results' }
+                'requisitions': { url: '{{ Route::has("inventory.requisitions.index") ? route("inventory.requisitions.index") : "#" }}', filter: 'pending' },
+                'pos': { url: '{{ Route::has("inventory.purchase-orders.index") ? route("inventory.purchase-orders.index") : "#" }}', filter: 'submitted' },
+                'approved-pos': { url: '{{ Route::has("inventory.purchase-orders.index") ? route("inventory.purchase-orders.index") : "#" }}', filter: 'approved' },
+                'fulfillment': { url: '{{ Route::has("inventory.requisitions.pending-fulfillment") ? route("inventory.requisitions.pending-fulfillment") : "#" }}', filter: 'all' }
             }
         },
-        'hmo-queues':    { url: '{{ route("hmo.workbench") }}', filterMap: null },
-        'doc-queues':    { url: null, filterMap: null } // No doctor workbench
+        'mat-queues':    { url: '{{ Route::has("maternity-workbench.index") ? route("maternity-workbench.index") : "#" }}', filterMap: null },
+        'morgue-queues': { url: '{{ Route::has("morgue.workbench") ? route("morgue.workbench") : "#" }}', filterMap: null }
     };
 
     function renderQueues(containerId, queues) {
@@ -643,7 +717,13 @@ $(document).ready(function () {
         'nurs-activity':   '{{ route("nursing-workbench.index") }}',
         'lab-activity':    '{{ route("lab.workbench") }}',
         'doc-activity':    null, // No doctor workbench
-        'hmo-activity':    '{{ route("hmo.workbench") }}'
+        'hmo-activity':    '{{ route("hmo.workbench") }}',
+        'store-activity':  '{{ route("inventory.store-workbench.index") }}',
+        'mat-activity':    '{{ route("maternity-workbench.index") }}',
+        'morgue-activity': '{{ route("morgue.workbench") }}',
+        'theatre-activity': '{{ route("encounters.index") }}',
+        'hr-activity':     '{{ route("hr.workbench.index") }}',
+        'child-activity':  '{{ route("maternity-workbench.index") }}'
     };
 
     function renderActivityTable(containerId, rows, columns) {
@@ -854,6 +934,12 @@ $(document).ready(function () {
         $.get("{{ route('dashboard.data.pharmacy') }}", function(d) {
             renderQueues('pharm-queues', d.queues);
             renderInsights('pharm-insights', d.insights);
+            if (d.stats) {
+                $('#pharm-stat-queue').text(d.stats.queue || '0');
+                $('#pharm-stat-dispensed').text(d.stats.dispensed || '0');
+                $('#pharm-stat-products').text(d.stats.products || '0');
+                $('#pharm-stat-low-stock').text(d.stats.low_stock || '0');
+            }
             if (d.dispensingTrend && d.dispensingTrend.length) renderLineChart('pharmacyDispensingChart', d.dispensingTrend, 'Dispensed', '#16a34a');
             if (d.stockHealth && d.stockHealth.length) renderDoughnutChart('pharmacyStockChart', d.stockHealth, d.stockHealth.map(function(x){return x.color;}));
             renderActivityTable('pharm-activity', d.activity, [
@@ -865,10 +951,168 @@ $(document).ready(function () {
         }).fail(function() {});
     }
 
+    function loadEnhancedStore() {
+        $.get("{{ route('dashboard.data.store') }}", function(d) {
+            renderQueues('store-queues', d.queues);
+            renderInsights('store-insights', d.insights);
+            if (d.stats) {
+                $('#store-stat-pending-reqs').text(d.stats.pending_reqs || '0');
+                $('#store-stat-pending-pos').text(d.stats.pending_pos || '0');
+                $('#store-stat-approved-pos').text(d.stats.approved_pos || '0');
+                $('#store-stat-fulfill').text(d.stats.fulfill || '0');
+            }
+            if (d.requisitionTrend && d.requisitionTrend.length) renderLineChart('storeRequisitionChart', d.requisitionTrend, 'Requisitions', '#f59e0b');
+            if (d.stockHealth && d.stockHealth.length) renderDoughnutChart('storeStockChart', d.stockHealth, d.stockHealth.map(function(x){return x.color;}));
+            renderActivityTable('store-activity', d.activity, [
+                { label: 'Time', key: 'time' },
+                { label: 'Type', key: 'type' },
+                { label: 'Ref', key: 'ref' },
+                { label: 'Detail', key: 'detail' },
+                { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
+            ]);
+        }).fail(function() {});
+    }
+
+    function loadEnhancedMaternity() {
+        $.get("{{ route('dashboard.data.maternity') }}", function(d) {
+            renderQueues('mat-queues', d.queues);
+            renderInsights('mat-insights', d.insights);
+            if (d.stats) {
+                $('#mat-stat-active').text(d.stats.active || '0');
+                $('#mat-stat-anc').text(d.stats.anc || '0');
+                $('#mat-stat-deliveries').text(d.stats.deliveries || '0');
+                $('#mat-stat-pnc').text(d.stats.pnc || '0');
+            }
+            if (d.enrollmentTrend && d.enrollmentTrend.length) renderLineChart('maternityEnrollmentChart', d.enrollmentTrend, 'Enrollments', '#ef4444');
+            if (d.riskBreakdown && d.riskBreakdown.length) renderDoughnutChart('maternityRiskChart', d.riskBreakdown, d.riskBreakdown.map(function(x){return x.color;}));
+            renderActivityTable('mat-activity', d.activity, [
+                { label: 'Time', key: 'time' },
+                { label: 'Type', key: 'type' },
+                { label: 'Ref', key: 'ref' },
+                { label: 'Detail', key: 'detail' },
+                { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
+            ]);
+        }).fail(function() {});
+    }
+
+    function loadEnhancedMorgue() {
+        $.get("{{ route('dashboard.data.morgue') }}", function(d) {
+            renderQueues('morgue-queues', d.queues);
+            renderInsights('morgue-insights', d.insights);
+            if (d.stats) {
+                $('#morgue-stat-occupants').text(d.stats.occupants || '0');
+                $('#morgue-stat-admissions').text(d.stats.admissions || '0');
+                $('#morgue-stat-releases').text(d.stats.releases || '0');
+                $('#morgue-stat-pending').text(d.stats.pending || '0');
+            }
+            if (d.admissionTrend && d.admissionTrend.length) renderLineChart('morgueAdmissionChart', d.admissionTrend, 'Admissions', '#64748b');
+            if (d.statusBreakdown && d.statusBreakdown.length) renderDoughnutChart('morgueStatusChart', d.statusBreakdown, d.statusBreakdown.map(function(x){return x.color;}));
+            renderActivityTable('morgue-activity', d.activity, [
+                { label: 'Time', key: 'time' },
+                { label: 'Type', key: 'type' },
+                { label: 'Ref', key: 'ref' },
+                { label: 'Detail', key: 'detail' },
+                { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
+            ]);
+        }).fail(function() {});
+    }
+
+    function loadEnhancedEss() {
+        $.get("{{ route('dashboard.data.ess') }}", function(d) {
+            renderQueues('ess-queues', d.queues);
+            renderInsights('ess-insights', d.insights);
+            if (d.stats) {
+                $('#ess-stat-balance').text(d.stats.balance || '0');
+                $('#ess-stat-pending').text(d.stats.pending || '0');
+                $('#ess-stat-upcoming').text(d.stats.upcoming || '0');
+                $('#ess-stat-payslip').text(d.stats.payslip || '—');
+            }
+            if (d.leaveBreakdown && d.leaveBreakdown.length) renderDoughnutChart('essLeaveChart', d.leaveBreakdown, ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']);
+            renderActivityTable('ess-activity', d.activity, [
+                { label: 'Date', key: 'time' },
+                { label: 'Type', key: 'type' },
+                { label: 'Category', key: 'ref' },
+                { label: 'Detail', key: 'detail' },
+                { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
+            ]);
+        }).fail(function() {});
+    }
+
+    function loadEnhancedChildHealth() {
+        $.get("{{ route('dashboard.data.child_health') }}", function(d) {
+            renderQueues('child-queues', d.queues);
+            renderInsights('child-insights', d.insights);
+            if (d.stats) {
+                $('#child-stat-today').text(d.stats.today || '0');
+                $('#child-stat-overdue').text(d.stats.overdue || '0');
+                $('#child-stat-growth').text(d.stats.growth || '0');
+                $('#child-stat-new').text(d.stats.new || '0');
+            }
+            if (d.statusBreakdown && d.statusBreakdown.length) renderDoughnutChart('childStatusChart', d.statusBreakdown, d.statusBreakdown.map(function(x){return x.color;}));
+            renderActivityTable('child-activity', d.activity, [
+                { label: 'Time', key: 'time' },
+                { label: 'Type', key: 'type' },
+                { label: 'Patient', key: 'ref' },
+                { label: 'Detail', key: 'detail' },
+                { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
+            ]);
+        }).fail(function() {});
+    }
+
+    function loadEnhancedHR() {
+        $.get("{{ route('dashboard.data.hr') }}", function(d) {
+            renderQueues('hr-queues', d.queues);
+            renderInsights('hr-insights', d.insights);
+            if (d.stats) {
+                $('#hr-stat-total').text(d.stats.total || '0');
+                $('#hr-stat-leave').text(d.stats.leave || '0');
+                $('#hr-stat-pending').text(d.stats.pending || '0');
+                $('#hr-stat-new').text(d.stats.new || '0');
+            }
+            if (d.deptBreakdown && d.deptBreakdown.length) renderDoughnutChart('hrDeptChart', d.deptBreakdown, ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#ec4899']);
+            renderActivityTable('hr-activity', d.activity, [
+                { label: 'Date', key: 'time' },
+                { label: 'Type', key: 'type' },
+                { label: 'Staff', key: 'ref' },
+                { label: 'Detail', key: 'detail' },
+                { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
+            ]);
+        }).fail(function(err) {
+            console.error("HR Dashboard load failed:", err);
+        });
+    }
+
+    function loadEnhancedTheatre() {
+        $.get("{{ route('dashboard.data.theatre') }}", function(d) {
+            renderQueues('theatre-queues', d.queues);
+            renderInsights('theatre-insights', d.insights);
+            if (d.stats) {
+                $('#theatre-stat-scheduled').text(d.stats.scheduled || '0');
+                $('#theatre-stat-ongoing').text(d.stats.ongoing || '0');
+                $('#theatre-stat-completed').text(d.stats.completed || '0');
+                $('#theatre-stat-pending').text(d.stats.pending || '0');
+            }
+            if (d.categoryBreakdown && d.categoryBreakdown.length) renderDoughnutChart('theatreDeptChart', d.categoryBreakdown, ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#ec4899']);
+            renderActivityTable('theatre-activity', d.activity, [
+                { label: 'Time', key: 'time' },
+                { label: 'Type', key: 'type' },
+                { label: 'Patient', key: 'ref' },
+                { label: 'Detail', key: 'detail' },
+                { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
+            ]);
+        }).fail(function() {});
+    }
+
     function loadEnhancedNursing() {
         $.get("{{ route('dashboard.data.nursing') }}", function(d) {
             renderQueues('nurs-queues', d.queues);
             renderInsights('nurs-insights', d.insights);
+            if (d.stats) {
+                $('#nurs-stat-vitals-queue').text(d.stats.vitals_queue || '0');
+                $('#nurs-stat-bed-requests').text(d.stats.bed_requests || '0');
+                $('#nurs-stat-medication-due').text(d.stats.medication_due || '0');
+                $('#nurs-stat-admitted').text(d.stats.admitted || '0');
+            }
             if (d.vitalsTrend && d.vitalsTrend.length) renderLineChart('nursingVitalsChart', d.vitalsTrend, 'Vitals', '#ef4444');
             if (d.bedOccupancy && d.bedOccupancy.length) renderDoughnutChart('nursingBedChart', d.bedOccupancy, d.bedOccupancy.map(function(x){return x.color;}));
             renderActivityTable('nurs-activity', d.activity, [
@@ -883,15 +1127,42 @@ $(document).ready(function () {
         $.get("{{ route('dashboard.data.lab') }}", function(d) {
             renderQueues('lab-queues', d.queues);
             renderInsights('lab-insights', d.insights);
-            if (d.requestTrend && d.requestTrend.length) renderLineChart('labRequestsChart', d.requestTrend, 'Requests', '#0891b2');
-            if (d.categoryBreakdown && d.categoryBreakdown.length) renderDoughnutChart('labCategoriesChart', d.categoryBreakdown, d.categoryBreakdown.map(function(x){return x.color;}));
+            if (d.stats) {
+                $('#lab-stat-queue').text(d.stats.queue || '0');
+                $('#lab-stat-completed').text(d.stats.completed || '0');
+                $('#lab-stat-month').text(d.stats.tests_this_month || '0');
+                $('#lab-stat-services').text(d.stats.services || '0');
+            }
+            if (d.categoryBreakdown && d.categoryBreakdown.length) renderDoughnutChart('labCategoriesChart', d.categoryBreakdown, ['#0891b2', '#0e7490', '#155e75', '#164e63', '#06b6d4']);
+            if (d.requestTrend && d.requestTrend.length) renderLineChart('labRequestsChart', d.requestTrend, 'Test Requests', '#0891b2');
             renderActivityTable('lab-activity', d.activity, [
                 { label: 'Time', key: 'time' },
                 { label: 'Patient', key: 'patient_name' },
                 { label: 'Test', key: 'test_name' },
                 { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
             ]);
-        }).fail(function() {});
+        });
+    }
+
+    function loadEnhancedImaging() {
+        $.get("{{ route('dashboard.data.imaging') }}", function(d) {
+            renderQueues('imaging-queues', d.queues);
+            renderInsights('imaging-insights', d.insights);
+            if (d.stats) {
+                $('#imaging-stat-pending').text(d.stats.pending || '0');
+                $('#imaging-stat-completed').text(d.stats.completed || '0');
+                $('#imaging-stat-month').text(d.stats.scans_this_month || '0');
+                $('#imaging-stat-services').text(d.stats.services || '0');
+            }
+            if (d.categoryBreakdown && d.categoryBreakdown.length) renderDoughnutChart('imagingCategoriesChart', d.categoryBreakdown, ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899']);
+            if (d.requestTrend && d.requestTrend.length) renderLineChart('imagingRequestsChart', d.requestTrend, 'Scan Requests', '#4f46e5');
+            renderActivityTable('imaging-activity', d.activity, [
+                { label: 'Time', key: 'time' },
+                { label: 'Patient', key: 'patient_name' },
+                { label: 'Scan', key: 'test_name' },
+                { label: 'Status', render: function(r) { return badgeHtml(r.status_label, r.status_color); } }
+            ]);
+        });
     }
 
     function loadEnhancedDoctor() {
@@ -911,6 +1182,12 @@ $(document).ready(function () {
         $.get("{{ route('dashboard.data.hmo') }}", function(d) {
             renderQueues('hmo-queues', d.queues);
             renderInsights('hmo-insights', d.insights);
+            if (d.stats) {
+                $('#hmo-stat-patients').text(d.stats.patients || '0');
+                $('#hmo-stat-pending-claims').text(d.stats.pending_claims || '0');
+                $('#hmo-stat-approved-claims').text(d.stats.approved_claims || '0');
+                $('#hmo-stat-total-hmos').text(d.stats.total_hmos || '0');
+            }
             if (d.claimsTrend && d.claimsTrend.length) renderLineChart('hmoClaimsChart', d.claimsTrend, 'Claims (\u20A6)', '#7c3aed');
             if (d.providerDistribution && d.providerDistribution.length) renderDoughnutChart('hmoDistributionChart', d.providerDistribution, d.providerDistribution.map(function(x){return x.color;}));
             renderActivityTable('hmo-activity', d.activity, [
@@ -1013,6 +1290,7 @@ $(document).ready(function () {
     // Tab Loader
     // ========================================
     function loadTabData(tabName) {
+        console.log("Loading dashboard data for tab:", tabName);
         switch(tabName) {
             case 'receptionist':
                 fetchReceptionistStats();
@@ -1029,8 +1307,28 @@ $(document).ready(function () {
                 renderRegistrationsChart();
                 break;
             case 'pharmacy':
-                fetchPharmacyStats();
                 loadEnhancedPharmacy();
+                break;
+            case 'store':
+                loadEnhancedStore();
+                break;
+            case 'maternity':
+                loadEnhancedMaternity();
+                break;
+            case 'morgue':
+                loadEnhancedMorgue();
+                break;
+            case 'ess':
+                loadEnhancedEss();
+                break;
+            case 'child_health':
+                loadEnhancedChildHealth();
+                break;
+            case 'hr':
+                loadEnhancedHR();
+                break;
+            case 'theatre':
+                loadEnhancedTheatre();
                 break;
             case 'nursing':
                 fetchNursingStats();
@@ -1039,6 +1337,9 @@ $(document).ready(function () {
             case 'lab':
                 fetchLabStats();
                 loadEnhancedLab();
+                break;
+            case 'imaging':
+                loadEnhancedImaging();
                 break;
             case 'doctor':
                 fetchDoctorStats();
@@ -1059,29 +1360,34 @@ $(document).ready(function () {
     // Initialize & Tab Switching
     // ========================================
     function initializeAllStats() {
-        var activeTab = $('#dashboardTabs .nav-link.active').attr('id');
-        if (activeTab) {
-            loadTabData(activeTab.replace('-tab', ''));
+        var $activeBtn = $('#dashboardTabs .nav-link.active');
+        if ($activeBtn.length) {
+            var tab = $activeBtn.attr('id').replace('-tab', '');
+            console.log("Initializing with active tab:", tab);
+            loadTabData(tab);
         } else {
             var firstKey = '{{ $firstTabKey ?? "" }}';
-            if (firstKey) loadTabData(firstKey);
+            if (firstKey) {
+                console.log("No active tab found, falling back to:", firstKey);
+                loadTabData(firstKey);
+            }
         }
     }
 
     initializeAllStats();
 
-    $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+    // Event delegation for tab clicks (more robust)
+    $(document).on('shown.bs.tab', 'button[data-bs-toggle="pill"]', function (e) {
         var targetTab = $(e.target).attr('id').replace('-tab', '');
+        console.log("Tab switched to:", targetTab);
         loadTabData(targetTab);
     });
 
     // Auto-refresh every 60 seconds
     setInterval(function() {
-        var activeTab = $('#dashboardTabs .nav-link.active').attr('id');
-        if (activeTab) {
-            loadTabData(activeTab.replace('-tab', ''));
-        } else {
-            initializeAllStats();
+        var $activeBtn = $('#dashboardTabs .nav-link.active');
+        if ($activeBtn.length) {
+            loadTabData($activeBtn.attr('id').replace('-tab', ''));
         }
     }, 60000);
 });
