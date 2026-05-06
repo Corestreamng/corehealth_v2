@@ -1,17 +1,17 @@
-{{-- Lab Dashboard Tab --}}
+{{-- Imaging / Radiology Dashboard Tab --}}
 
 {{-- Welcome Card --}}
 <div class="row mb-4">
     <div class="col-12">
-        <div class="dash-welcome" style="background: linear-gradient(135deg, #164e63 0%, #0e7490 50%, #06b6d4 100%);">
+        <div class="dash-welcome" style="background: linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%);">
             <div class="dash-welcome-body">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
                     <div class="d-flex align-items-center mb-3 mb-md-0">
                         <div class="dash-welcome-avatar">
-                            <i class="mdi mdi-flask"></i>
+                            <i class="mdi mdi-radiobox-marked"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'Lab Scientist' }}</h3>
+                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'Radiologist' }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-flask me-1"></i> Medical Laboratory
+                        <i class="mdi mdi-radiobox-marked me-1"></i> Radiology
                     </div>
                 </div>
             </div>
@@ -30,14 +30,14 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #164e63, #0e7490);">
+        <div class="dash-stat-card" style="background: linear-gradient(145deg, #3730a3, #4f46e5);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Pending Tests</p>
-                    <h2 class="dash-stat-value" id="lab-stat-queue">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-flask me-1"></i>Current queue</span>
+                    <p class="dash-stat-label">Pending Scans</p>
+                    <h2 class="dash-stat-value" id="imaging-stat-pending">—</h2>
+                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>Today's queue</span>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-flask"></i></div>
+                <div class="dash-stat-icon"><i class="mdi mdi-radiobox-marked"></i></div>
             </div>
         </div>
     </div>
@@ -47,8 +47,8 @@
             <div class="dash-stat-body">
                 <div>
                     <p class="dash-stat-label">Completed Today</p>
-                    <h2 class="dash-stat-value" id="lab-stat-completed">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>Finalized tests</span>
+                    <h2 class="dash-stat-value" id="imaging-stat-completed">—</h2>
+                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>Finalized scans</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-check-circle"></i></div>
             </div>
@@ -59,11 +59,11 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e3a8a, #1d4ed8);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Monthly Tests</p>
-                    <h2 class="dash-stat-value" id="lab-stat-month">—</h2>
+                    <p class="dash-stat-label">Monthly Volume</p>
+                    <h2 class="dash-stat-value" id="imaging-stat-month">—</h2>
                     <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>Current month</span>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-clipboard-text"></i></div>
+                <div class="dash-stat-icon"><i class="mdi mdi-image-multiple"></i></div>
             </div>
         </div>
     </div>
@@ -72,8 +72,8 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #86198f, #a21caf);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Available Tests</p>
-                    <h2 class="dash-stat-value" id="lab-stat-services">—</h2>
+                    <p class="dash-stat-label">Available Scans</p>
+                    <h2 class="dash-stat-value" id="imaging-stat-services">—</h2>
                     <span class="dash-stat-hint"><i class="mdi mdi-format-list-bulleted me-1"></i>Catalog size</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-format-list-bulleted"></i></div>
@@ -83,45 +83,45 @@
 </div>
 
 {{-- Live Insights Strip --}}
-@include('admin.dashboards.components.insights-strip', ['containerId' => 'lab-insights'])
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'imaging-insights'])
 
 {{-- Live Queues --}}
-@include('admin.dashboards.components.queue-widget', ['containerId' => 'lab-queues'])
+@include('admin.dashboards.components.queue-widget', ['containerId' => 'imaging-queues'])
 
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">
         <div class="dash-section-card">
             <div class="dash-section-header">
-                <div class="dash-section-icon bg-info bg-opacity-10">
-                    <i class="mdi mdi-flash-circle text-info"></i>
+                <div class="dash-section-icon bg-primary bg-opacity-10">
+                    <i class="mdi mdi-flash-circle text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Laboratory Quick Actions</h5>
-                    <small class="text-muted">Investigation & diagnostic tools</small>
+                    <h5 class="dash-section-title">Radiology Quick Actions</h5>
+                    <small class="text-muted">Imaging & scanning tools</small>
                 </div>
             </div>
 
             <div class="row g-3">
-                @if(Route::has('lab.workbench'))
+                @if(Route::has('imaging.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('lab.workbench') }}" class="text-decoration-none">
-                        <div class="dash-shortcut" style="background: linear-gradient(145deg, #cffafe, #a5f3fc); border-color: #67e8f9;">
-                            <i class="mdi mdi-flask dash-shortcut-icon" style="color: #0e7490;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0e7490;">Workbench</h6>
-                            <small style="color: #0e7490;">Lab Queue</small>
+                    <a href="{{ route('imaging.workbench') }}" class="text-decoration-none">
+                        <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0e7ff, #c7d2fe); border-color: #a5b4fc;">
+                            <i class="mdi mdi-radiobox-marked dash-shortcut-icon" style="color: #3730a3;"></i>
+                            <h6 class="dash-shortcut-title" style="color: #3730a3;">Workbench</h6>
+                            <small style="color: #3730a3;">Imaging Queue</small>
                         </div>
                     </a>
                 </div>
                 @endif
 
-                @if(Route::has('lab.results'))
+                @if(Route::has('imaging.results'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('lab.results') }}" class="text-decoration-none">
+                    <a href="{{ route('imaging.results') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dcfce7, #bbf7d0); border-color: #86efac;">
-                            <i class="mdi mdi-clipboard-check dash-shortcut-icon" style="color: #166534;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #166534;">Results</h6>
-                            <small style="color: #166534;">Completed</small>
+                            <i class="mdi mdi-image-search dash-shortcut-icon" style="color: #166534;"></i>
+                            <h6 class="dash-shortcut-title" style="color: #166534;">Scans</h6>
+                            <small style="color: #166534;">View Results</small>
                         </div>
                     </a>
                 </div>
@@ -148,32 +148,32 @@
     <div class="col-xl-8">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
-                <div class="dash-section-icon bg-info bg-opacity-10">
-                    <i class="mdi mdi-chart-line text-info"></i>
+                <div class="dash-section-icon bg-primary bg-opacity-10">
+                    <i class="mdi mdi-chart-line text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Lab Requests Trend</h5>
-                    <small class="text-muted">Daily test volume</small>
+                    <h5 class="dash-section-title">Imaging Request Trend</h5>
+                    <small class="text-muted">Daily scan volume</small>
                 </div>
             </div>
             <div class="dash-chart-body">
-                <canvas id="labRequestsChart"></canvas>
+                <canvas id="imagingRequestsChart"></canvas>
             </div>
         </div>
     </div>
     <div class="col-xl-4">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
-                <div class="dash-section-icon bg-primary bg-opacity-10">
-                    <i class="mdi mdi-chart-pie text-primary"></i>
+                <div class="dash-section-icon bg-info bg-opacity-10">
+                    <i class="mdi mdi-chart-pie text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Test Categories</h5>
+                    <h5 class="dash-section-title">Scan Distribution</h5>
                     <small class="text-muted">By service type</small>
                 </div>
             </div>
             <div class="dash-chart-body">
-                <canvas id="labCategoriesChart"></canvas>
+                <canvas id="imagingCategoriesChart"></canvas>
             </div>
         </div>
     </div>
@@ -181,9 +181,9 @@
 
 {{-- Recent Activity --}}
 @include('admin.dashboards.components.mini-table', [
-    'containerId' => 'lab-activity',
-    'title' => 'Recent Lab Activity',
-    'subtitle' => 'Latest test requests',
-    'icon' => 'mdi-flask',
-    'iconBg' => 'info'
+    'containerId' => 'imaging-activity',
+    'title' => 'Recent Imaging Activity',
+    'subtitle' => 'Latest scan requests',
+    'icon' => 'mdi-radiobox-marked',
+    'iconBg' => 'primary'
 ])
