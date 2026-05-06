@@ -9,6 +9,28 @@ use Carbon\Carbon;
 class HmoDashboardService
 {
     /**
+     * Get HMO stats for dashboard cards
+     */
+    public function getStats(): array
+    {
+        return [
+            'patients' => DB::table('patients')->whereNotNull('hmo_id')->count(),
+            'pending_claims' => DB::table('product_or_service_requests as posr')
+                ->join('patients as p', 'posr.user_id', '=', 'p.id')
+                ->whereNotNull('p.hmo_id')
+                ->whereNull('posr.validation_status')
+                ->count(),
+            'approved_claims' => DB::table('product_or_service_requests as posr')
+                ->join('patients as p', 'posr.user_id', '=', 'p.id')
+                ->whereNotNull('p.hmo_id')
+                ->where('posr.validation_status', 'approved')
+                ->whereMonth('posr.validated_at', now()->month)
+                ->count(),
+            'total_hmos' => DB::table('hmos')->count(),
+        ];
+    }
+
+    /**
      * Get HMO pipeline queue counts
      */
     public function getQueueCounts(): array
