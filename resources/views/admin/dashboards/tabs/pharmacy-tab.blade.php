@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-store me-1"></i> Pharmacy & Store
+                        <i class="mdi mdi-pill me-1"></i> Pharmacy Operations
                     </div>
                 </div>
             </div>
@@ -97,8 +97,8 @@
                     <i class="mdi mdi-flash-circle text-warning"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Quick Actions</h5>
-                    <small class="text-muted">Pharmacy & store tools</small>
+                    <h5 class="dash-section-title">Pharmacy Quick Actions</h5>
+                    <small class="text-muted">Dispensing & clinical tools</small>
                 </div>
             </div>
 
@@ -165,37 +165,37 @@
                 </div>
                 @endif
 
-                @if(Route::has('stock.index') || Route::has('inventory.index'))
+                @if(Route::has('pharmacy.reports.index'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ Route::has('stock.index') ? route('stock.index') : route('inventory.index') }}" class="text-decoration-none">
+                    <a href="{{ route('pharmacy.reports.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #ccfbf1, #99f6e4); border-color: #5eead4;">
-                            <i class="mdi mdi-archive dash-shortcut-icon" style="color: #0f766e;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0f766e;">Stock</h6>
-                            <small style="color: #0f766e;">Management</small>
+                            <i class="mdi mdi-chart-box-outline dash-shortcut-icon" style="color: #0f766e;"></i>
+                            <h6 class="dash-shortcut-title" style="color: #0f766e;">Reports</h6>
+                            <small style="color: #0f766e;">Analytics</small>
                         </div>
                     </a>
                 </div>
                 @endif
 
-                @if(Route::has('suppliers.index'))
+                @if(Route::has('pharmacy.returns.index'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('suppliers.index') }}" class="text-decoration-none">
+                    <a href="{{ route('pharmacy.returns.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fef3c7, #fde68a); border-color: #fcd34d;">
-                            <i class="mdi mdi-truck dash-shortcut-icon" style="color: #b45309;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #b45309;">Suppliers</h6>
-                            <small style="color: #b45309;">Vendors</small>
+                            <i class="mdi mdi-keyboard-return dash-shortcut-icon" style="color: #b45309;"></i>
+                            <h6 class="dash-shortcut-title" style="color: #b45309;">Returns</h6>
+                            <small style="color: #b45309;">Patient Returns</small>
                         </div>
                     </a>
                 </div>
                 @endif
 
-                @if(Route::has('purchase-orders.index'))
+                @if(Route::has('pharmacy.damages.index'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('purchase-orders.index') }}" class="text-decoration-none">
-                        <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0e7ff, #c7d2fe); border-color: #a5b4fc;">
-                            <i class="mdi mdi-clipboard-text dash-shortcut-icon" style="color: #3730a3;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #3730a3;">Purchase</h6>
-                            <small style="color: #3730a3;">Orders</small>
+                    <a href="{{ route('pharmacy.damages.index') }}" class="text-decoration-none">
+                        <div class="dash-shortcut" style="background: linear-gradient(145deg, #fee2e2, #fecaca); border-color: #fca5a5;">
+                            <i class="mdi mdi-package-variant-remove dash-shortcut-icon" style="color: #b91c1c;"></i>
+                            <h6 class="dash-shortcut-title" style="color: #b91c1c;">Damages</h6>
+                            <small style="color: #b91c1c;">Loss Mgt</small>
                         </div>
                     </a>
                 </div>
