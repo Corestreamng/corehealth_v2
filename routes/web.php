@@ -929,8 +929,16 @@ Route::prefix('dashboard/data')->group(function () {
     Route::get('/reception', [App\Http\Controllers\DashboardDataController::class, 'receptionData'])->name('dashboard.data.reception');
     Route::get('/billing', [App\Http\Controllers\DashboardDataController::class, 'billingData'])->name('dashboard.data.billing');
     Route::get('/pharmacy', [App\Http\Controllers\DashboardDataController::class, 'pharmacyData'])->name('dashboard.data.pharmacy');
+    Route::get('/store', [App\Http\Controllers\DashboardDataController::class, 'storeData'])->name('dashboard.data.store');
+    Route::get('/maternity', [App\Http\Controllers\DashboardDataController::class, 'maternityData'])->name('dashboard.data.maternity');
+    Route::get('/morgue', [App\Http\Controllers\DashboardDataController::class, 'morgueData'])->name('dashboard.data.morgue');
+    Route::get('/ess', [App\Http\Controllers\DashboardDataController::class, 'essData'])->name('dashboard.data.ess');
+    Route::get('/child-health', [App\Http\Controllers\DashboardDataController::class, 'childHealthData'])->name('dashboard.data.child_health');
+    Route::get('/hr', [App\Http\Controllers\DashboardDataController::class, 'hrData'])->name('dashboard.data.hr');
+    Route::get('/theatre', [App\Http\Controllers\DashboardDataController::class, 'theatreData'])->name('dashboard.data.theatre');
     Route::get('/nursing', [App\Http\Controllers\DashboardDataController::class, 'nursingData'])->name('dashboard.data.nursing');
     Route::get('/lab', [App\Http\Controllers\DashboardDataController::class, 'labData'])->name('dashboard.data.lab');
+    Route::get('/imaging', [App\Http\Controllers\DashboardDataController::class, 'imagingData'])->name('dashboard.data.imaging');
     Route::get('/doctor', [App\Http\Controllers\DashboardDataController::class, 'doctorData'])->name('dashboard.data.doctor');
     Route::get('/hmo', [App\Http\Controllers\DashboardDataController::class, 'hmoData'])->name('dashboard.data.hmo');
     Route::get('/accounts', [App\Http\Controllers\DashboardDataController::class, 'accountsData'])->name('dashboard.data.accounts');
