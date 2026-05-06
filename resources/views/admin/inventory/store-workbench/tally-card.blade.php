@@ -934,7 +934,7 @@
                                     <label>Requesting From Store <span class="text-danger">*</span></label>
                                     <select name="from_store_id" id="req-from-store" class="form-control" required>
                                         <option value="">— Select Source Store —</option>
-                                        @foreach ($stores as $s)
+                                        @foreach ($allStores as $s)
                                             <option value="{{ $s->id }}">{{ $s->store_name }}</option>
                                         @endforeach
                                     </select>
@@ -946,7 +946,7 @@
                                     <label>Destination Store <span class="text-danger">*</span></label>
                                     <select name="to_store_id" id="req-to-store" class="form-control" required>
                                         <option value="">— Select Destination —</option>
-                                        @foreach ($stores as $s)
+                                        @foreach ($allStores as $s)
                                             <option value="{{ $s->id }}"
                                                 {{ $selectedStore && $selectedStore->id == $s->id ? 'selected' : '' }}>
                                                 {{ $s->store_name }}

@@ -64,7 +64,7 @@ class StoreRequisitionController extends Controller
             if (! $isAdmin && $candidateIds !== null) {
                 $query->where(function ($q) use ($candidateIds) {
                     $q->whereIn('to_store_id', $candidateIds)   // requests made for my store(s)
-                      ->orWhereIn('from_store_id', $candidateIds); // requests my store(s) must fulfill
+                        ->orWhereIn('from_store_id', $candidateIds); // requests my store(s) must fulfill
                 });
             }
 
@@ -93,7 +93,7 @@ class StoreRequisitionController extends Controller
                 ->addColumn('from_store', fn($r) => $r->fromStore->store_name ?? '-')
                 ->addColumn('to_store', fn($r) => $r->toStore->store_name ?? '-')
                 ->addColumn('requested_by', fn($r) => $r->requester->name ?? '-')
-                ->addColumn('status', function($r) {
+                ->addColumn('status', function ($r) {
                     $badge = sprintf(
                         '<span class="badge %s">%s</span>',
                         $r->getStatusBadgeClass(),
@@ -110,7 +110,7 @@ class StoreRequisitionController extends Controller
                     }
                     return $badge;
                 })
-                ->addColumn('items_count', function($r) {
+                ->addColumn('items_count', function ($r) {
                     $total = $r->items->count();
                     $fulfilled = $r->items->where('status', 'fulfilled')->count();
                     if ($fulfilled > 0 && $fulfilled < $total) {
@@ -137,7 +137,7 @@ class StoreRequisitionController extends Controller
         if (! $isAdmin && $candidateIds !== null) {
             $baseQuery->where(function ($q) use ($candidateIds) {
                 $q->whereIn('to_store_id', $candidateIds)
-                  ->orWhereIn('from_store_id', $candidateIds);
+                    ->orWhereIn('from_store_id', $candidateIds);
             });
         }
 
@@ -189,7 +189,11 @@ class StoreRequisitionController extends Controller
         }
 
         return view('admin.inventory.requisitions.create', compact(
-            'stores', 'products', 'storeStats', 'resolvedStore', 'myStores'
+            'stores',
+            'products',
+            'storeStats',
+            'resolvedStore',
+            'myStores'
         ));
     }
 
@@ -214,7 +218,7 @@ class StoreRequisitionController extends Controller
 
         // ── Store Governance: verify to_store is accessible to this user ────────
         // Admins (ADMIN, SUPERADMIN, super-admin) bypass this check.
-        if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+        if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store', 'STORE'])) {
             $accessibleStoreIds = \App\Models\Store::active()->forUser(auth()->user())->pluck('id');
             if (! $accessibleStoreIds->contains((int) $request->to_store_id)) {
                 return response()->json([
@@ -667,7 +671,9 @@ class StoreRequisitionController extends Controller
         $store        = Store::find($storeId);
 
         return view('admin.inventory.requisitions.pending-fulfillment', compact(
-            'requisitions', 'store', 'myStores'
+            'requisitions',
+            'store',
+            'myStores'
         ));
     }
 

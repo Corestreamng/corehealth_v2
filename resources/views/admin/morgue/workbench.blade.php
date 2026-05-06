@@ -608,6 +608,20 @@
                 loadData();
             }
         });
+        // Handle queue filter deep-linking from dashboard
+        const urlParams = new URLSearchParams(window.location.search);
+        const queueFilter = urlParams.get('queue_filter');
+        if (queueFilter === 'pending') {
+            // Pending is already the first thing on the page, but we can highlight it
+            $('#tab-workbench').tab('show');
+        } else if (queueFilter === 'admitted') {
+            $('#tab-workbench').tab('show');
+            // Scroll to active residents table
+            $('html, body').animate({
+                scrollTop: $("#active-table").offset().top - 100
+            }, 500);
+        }
+
         loadData();
 
         $('#refresh-btn').click(function() {
