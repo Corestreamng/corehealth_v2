@@ -8020,6 +8020,17 @@ $sett = appsettings();
         // Load queue counts on page load
         loadQueueCounts();
 
+        // Handle queue filter deep-linking from dashboard
+        const urlParams = new URLSearchParams(window.location.search);
+        const queueFilter = urlParams.get('queue_filter');
+        if (queueFilter) {
+             // For maternity, 'anc', 'edd', 'postnatal', 'overdue', 'high-risk', 'due-visit'
+             // are handled by showQueue(filter)
+             setTimeout(() => {
+                 showQueue(queueFilter);
+             }, 500);
+        }
+
         // Queue item clicks (SHARED)
         $('.queue-item').on('click', function() {
             const filter = $(this).data('filter');

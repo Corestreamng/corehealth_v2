@@ -629,6 +629,19 @@
 @push('scripts')
 <script>
 $(function() {
+    // Handle queue filter deep-linking from dashboard
+    const urlParams = new URLSearchParams(window.location.search);
+    const queueFilter = urlParams.get('queue_filter');
+    if (queueFilter) {
+        if (queueFilter === 'requisitions') {
+            window.location.href = '{{ route("inventory.requisitions.index") }}';
+        } else if (queueFilter === 'pos' || queueFilter === 'approved-pos') {
+            window.location.href = '{{ route("inventory.purchase-orders.index") }}';
+        } else if (queueFilter === 'fulfillment') {
+            window.location.href = '{{ route("inventory.requisitions.pending-fulfillment") }}';
+        }
+    }
+
     // Store selector change
     $('#store-selector').on('change', function() {
         window.location.href = '{{ route("inventory.store-workbench.index") }}?store_id=' + $(this).val();
