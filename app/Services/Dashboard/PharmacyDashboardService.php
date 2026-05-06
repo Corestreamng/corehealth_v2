@@ -17,11 +17,11 @@ class PharmacyDashboardService
         return [
             'queue' => DB::table('product_requests')
                 ->whereDate('created_at', $today)
-                ->where('status', 'pending')
+                ->where('status', 1) // Requested
                 ->count(),
             'dispensed' => DB::table('product_requests')
                 ->whereDate('created_at', $today)
-                ->where('status', 'dispensed')
+                ->where('status', 3) // Dispensed
                 ->count(),
             'products' => DB::table('products')->where('status', 1)->count(),
             'low_stock' => DB::table('store_stocks')
@@ -40,31 +40,30 @@ class PharmacyDashboardService
         return Cache::remember('dashboard.pharmacy.queues', 30, function () use ($today) {
             $allPending = DB::table('product_requests')
                 ->whereDate('created_at', $today)
-                ->where('status', '!=', 2)
+                ->whereIn('status', [1, 2])
                 ->count();
 
-            $unbilled = DB::table('product_requests as pr')
-                ->join('product_or_service_requests as posr', function ($j) {
-                    $j->on('pr.product_request_id', '=', 'posr.id');
-                })
-                ->whereDate('pr.created_at', $today)
-                ->whereNull('posr.payment_id')
+            $unbilled = DB::table('product_requests')
+                ->whereDate('created_at', $today)
+                ->where('status', 1)
                 ->count();
 
-            $billed = DB::table('product_requests as pr')
-                ->join('product_or_service_requests as posr', function ($j) {
-                    $j->on('pr.product_request_id', '=', 'posr.id');
-                })
+            // Ready to dispense: Billed (status 2) AND (Paid OR HMO Validated)
+            $ready = DB::table('product_requests as pr')
+                ->leftJoin('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
                 ->whereDate('pr.created_at', $today)
-                ->whereNotNull('posr.payment_id')
-                ->where('pr.status', '!=', 2)
+                ->where('pr.status', 2)
+                ->where(function($q) {
+                    $q->whereNotNull('posr.payment_id')
+                      ->orWhereIn('posr.validation_status', ['validated', 'approved', 'awaiting_code']);
+                })
                 ->count();
 
             $hmo = DB::table('product_requests as pr')
                 ->join('patients as p', 'pr.patient_id', '=', 'p.id')
                 ->whereDate('pr.created_at', $today)
                 ->whereNotNull('p.hmo_id')
-                ->where('pr.status', '!=', 2)
+                ->whereIn('pr.status', [1, 2])
                 ->count();
 
             return [
@@ -72,9 +71,9 @@ class PharmacyDashboardService
                  'count' => $allPending],
                 ['name' => 'Unbilled', 'filter' => 'unbilled', 'icon' => 'mdi-cash-remove', 'color' => 'danger',
                  'count' => $unbilled],
-                ['name' => 'Billed (Pending)', 'filter' => 'billed', 'icon' => 'mdi-cash-check', 'color' => 'info',
-                 'count' => $billed],
-                ['name' => 'HMO', 'filter' => 'hmo', 'icon' => 'mdi-shield-check', 'color' => 'success',
+                ['name' => 'Ready to Dispense', 'filter' => 'ready', 'icon' => 'mdi-cash-check', 'color' => 'success',
+                 'count' => $ready],
+                ['name' => 'HMO Patients', 'filter' => 'hmo', 'icon' => 'mdi-shield-check', 'color' => 'info',
                  'count' => $hmo],
             ];
         });
@@ -119,7 +118,7 @@ class PharmacyDashboardService
         $end = $end ?: Carbon::today()->toDateString();
 
         return DB::table('product_requests')
-            ->where('status', 2)
+            ->where('status', 3)
             ->whereBetween(DB::raw('DATE(created_at)'), [$start, $end])
             ->selectRaw('DATE(created_at) as date, COUNT(*) as total')
             ->groupByRaw('DATE(created_at)')
@@ -153,8 +152,8 @@ class PharmacyDashboardService
             ->limit(10)
             ->get()
             ->map(function ($row) {
-                $statusMap = [0 => 'Pending', 1 => 'Billed', 2 => 'Dispensed'];
-                $colorMap = [0 => 'warning', 1 => 'info', 2 => 'success'];
+                $statusMap = [1 => 'Pending', 2 => 'Billed', 3 => 'Dispensed'];
+                $colorMap = [1 => 'warning', 2 => 'info', 3 => 'success'];
                 $row->status_label = $statusMap[$row->status] ?? 'Unknown';
                 $row->status_color = $colorMap[$row->status] ?? 'secondary';
                 $row->time = Carbon::parse($row->created_at)->format('h:i A');
@@ -199,7 +198,7 @@ class PharmacyDashboardService
         // Dispensed today
         $dispensedToday = DB::table('product_requests')
             ->whereDate('created_at', $today)
-            ->where('status', 2)
+            ->where('status', 3)
             ->count();
 
         $insights[] = [
