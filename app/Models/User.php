@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Staff;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -13,6 +14,18 @@ use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable;
 class User extends Authenticatable implements Auditable
 {
+    protected static function booted()
+    {
+        static::saved(function ($user) {
+            // is_admin 19 is Patient. Any other category is considered staff.
+            if ($user->is_admin && $user->is_admin != 19 && !$user->staff_profile()->exists()) {
+                $user->staff_profile()->create([
+                    'employment_status' => 'active',
+                ]);
+            }
+        });
+    }
+
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
