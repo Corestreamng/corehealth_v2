@@ -36,6 +36,9 @@ use App\Models\Accounting\LiabilitySchedule;
 use App\Models\Accounting\LiabilityPaymentSchedule;
 use App\Models\PharmacyReturn;
 use App\Models\PharmacyDamage;
+use App\Models\StoreDamage;
+use App\Models\StoreRequisitionReturn;
+use App\Models\PurchaseOrderReturn;
 use App\Models\Bed;
 use App\Models\StockBatch;
 use App\Models\CapexProjectExpense;
@@ -71,6 +74,9 @@ use App\Observers\Accounting\LiabilityScheduleObserver;
 use App\Observers\Accounting\LiabilityPaymentObserver;
 use App\Observers\Accounting\PharmacyReturnObserver;
 use App\Observers\Accounting\PharmacyDamageObserver;
+use App\Observers\Accounting\StoreDamageObserver;
+use App\Observers\Accounting\StoreRequisitionReturnObserver;
+use App\Observers\Accounting\PurchaseOrderReturnObserver;
 use App\Models\DoctorAppointment;
 use App\Observers\DoctorAppointmentObserver;
 use App\Helpers\HmoHelper;
@@ -160,6 +166,11 @@ class AppServiceProvider extends ServiceProvider
         // NEW: Pharmacy Returns and Damages observers
         PharmacyReturn::observe(PharmacyReturnObserver::class);
         PharmacyDamage::observe(PharmacyDamageObserver::class);
+
+        // NEW: Store Returns and Damages observers
+        StoreDamage::observe(StoreDamageObserver::class);
+        StoreRequisitionReturn::observe(StoreRequisitionReturnObserver::class);
+        PurchaseOrderReturn::observe(PurchaseOrderReturnObserver::class);
 
         // NEW: StockBatch observer — auto-syncs store_stocks and global stocks
         StockBatch::observe(StockBatchObserver::class);

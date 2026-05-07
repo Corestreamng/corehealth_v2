@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\StoreDamage;
 use App\Models\StockBatch;
 use App\Models\StockBatchTransaction;
 use App\Models\StoreStock;
@@ -412,6 +413,46 @@ class StockService
             );
 
             $this->syncStoreStock($batch->product_id, $batch->store_id);
+
+            return $transaction;
+        });
+    }
+
+    /**
+     * Write off store damage
+     *
+     * @param StoreDamage $damage
+     * @return StockBatchTransaction
+     */
+    public function writeOffStoreDamage(StoreDamage $damage): StockBatchTransaction
+    {
+        return DB::transaction(function () use ($damage) {
+            if ($damage->batch_id) {
+                $batch = StockBatch::findOrFail($damage->batch_id);
+                $transaction = $batch->deductStock(
+                    $damage->qty_damaged,
+                    StockBatchTransaction::TYPE_DAMAGED,
+                    StoreDamage::class,
+                    $damage->id,
+                    "Store Damage #{$damage->id} — {$damage->damage_type}"
+                );
+            } else {
+                // FIFO fallback
+                $this->dispenseStock(
+                    $damage->product_id,
+                    $damage->store_id,
+                    $damage->qty_damaged,
+                    StoreDamage::class,
+                    $damage->id,
+                    "Store Damage #{$damage->id} — {$damage->damage_type} (FIFO)"
+                );
+
+                $transaction = StockBatchTransaction::where('reference_type', StoreDamage::class)
+                    ->where('reference_id', $damage->id)
+                    ->first();
+            }
+
+            $this->syncStoreStock($damage->product_id, $damage->store_id);
 
             return $transaction;
         });
