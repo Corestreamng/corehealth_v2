@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\PurchaseOrderReturn;
 use App\Models\StockBatch;
+use App\Models\StockBatchTransaction;
 use App\Models\Expense;
 use App\Models\StoreStock;
 use Illuminate\Support\Facades\DB;
@@ -536,6 +538,54 @@ class PurchaseOrderService
             $po->updatePaymentStatus();
 
             return $expense->fresh(['voidedBy', 'purchaseOrderPayment']);
+        });
+    }
+
+    /**
+     * Return items from a received purchase order
+     *
+     * @param PurchaseOrderReturn $return
+     * @return void
+     */
+    public function returnItems(PurchaseOrderReturn $return): void
+    {
+        DB::transaction(function () use ($return) {
+            $qty = $return->qty_returned;
+
+            // 1. Deduct stock from the store
+            if ($return->batch_id) {
+                $batch = StockBatch::find($return->batch_id);
+                if ($batch && $batch->current_qty >= $qty) {
+                    $batch->deductStock(
+                        $qty,
+                        StockBatchTransaction::TYPE_PO_RETURN,
+                        PurchaseOrderReturn::class,
+                        $return->id,
+                        "PO Return #{$return->return_number} — deducted from store"
+                    );
+                }
+            } else {
+                // FIFO deduction from the target store
+                $this->stockService->dispenseStock(
+                    $return->product_id,
+                    $return->store_id,
+                    $qty,
+                    PurchaseOrderReturn::class,
+                    $return->id,
+                    "PO Return #{$return->return_number} — FIFO deduction"
+                );
+            }
+
+            // 2. Increment returned_qty on the original PO item
+            if ($return->purchase_order_item_id) {
+                $item = PurchaseOrderItem::find($return->purchase_order_item_id);
+                if ($item) {
+                    $item->increment('returned_qty', $qty);
+                }
+            }
+
+            // Sync store stock
+            $this->stockService->syncStoreStock($return->product_id, $return->store_id);
         });
     }
 }

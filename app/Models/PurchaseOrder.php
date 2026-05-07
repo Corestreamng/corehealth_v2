@@ -189,6 +189,11 @@ class PurchaseOrder extends Model implements Auditable
         return $this->hasMany(PurchaseOrderPayment::class);
     }
 
+    public function returns()
+    {
+        return $this->hasMany(\App\Models\PurchaseOrderReturn::class);
+    }
+
     /**
      * Get all stock batches created from this PO
      */

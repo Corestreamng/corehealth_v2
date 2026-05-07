@@ -324,6 +324,14 @@
                 @endhasanyrole
             @endif
 
+            @if(in_array($purchaseOrder->status, ['partial', 'received']))
+                @can('purchase-orders.receive')
+                <button type="button" class="btn btn-warning btn-sm action-btn" id="btn-show-return-modal">
+                    <i class="mdi mdi-undo-variant"></i> Return Items
+                </button>
+                @endcan
+            @endif
+
             @if(in_array($purchaseOrder->status, ['draft', 'submitted']))
                 @can('purchase-orders.edit')
                 <button type="button" class="btn btn-danger btn-sm action-btn" onclick="cancelPO()">
@@ -391,7 +399,9 @@
                                     <th class="text-center">Received</th>
                                     <th class="text-right">Unit Price</th>
                                     <th class="text-right">Line Total</th>
+                                    <th class="text-center">Returned</th>
                                     <th>Progress</th>
+                                    @if(in_array($purchaseOrder->status, ['partial','received'])) <th class="no-print"></th> @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -424,6 +434,13 @@
                                     </td>
                                     <td class="text-right">₦{{ number_format($item->unit_cost, 2) }}</td>
                                     <td class="text-right">₦{{ number_format($item->line_total, 2) }}</td>
+                                    <td class="text-center">
+                                        @if(($item->returned_qty ?? 0) > 0)
+                                            <span class="text-danger font-weight-bold">{{ $item->returned_qty }}</span>
+                                        @else
+                                            <span class="text-muted">0</span>
+                                        @endif
+                                    </td>
                                     <td style="width: 100px;">
                                         @php
                                             $progress = $item->ordered_qty> 0
@@ -437,6 +454,26 @@
                                         <small class="text-muted">{{ $progress }}%</small>
                                         <span class="print-only" style="display: none;">{{ $progress }}%</span>
                                     </td>
+                                    @if(in_array($purchaseOrder->status, ['partial','received']))
+                                    <td class="no-print">
+                                        @php $returnable = ($item->received_qty ?? 0) - ($item->returned_qty ?? 0); @endphp
+                                        @if($returnable > 0)
+                                        <button type="button" class="btn btn-xs btn-warning btn-return-item"
+                                            data-item-id="{{ $item->id }}"
+                                            data-product-name="{{ $item->product->product_name ?? '' }}"
+                                            data-ordered="{{ $item->ordered_qty }}"
+                                            data-received="{{ $item->received_qty ?? 0 }}"
+                                            data-returned="{{ $item->returned_qty ?? 0 }}"
+                                            data-unit-cost="{{ $item->unit_cost }}"
+                                            data-max="{{ $returnable }}"
+                                            style="font-size:0.72rem;">
+                                            <i class="mdi mdi-undo-variant"></i> Return
+                                        </button>
+                                        @else
+                                        <span class="text-muted" style="font-size:0.72rem;">—</span>
+                                        @endif
+                                    </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -444,26 +481,26 @@
                                 <tr>
                                     <th colspan="5" class="text-right">Subtotal:</th>
                                     <td class="text-right">₦{{ number_format($purchaseOrder->items->sum('line_total'), 2) }}</td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 @if($purchaseOrder->tax_amount> 0)
                                 <tr>
                                     <th colspan="5" class="text-right">Tax:</th>
                                     <td class="text-right">₦{{ number_format($purchaseOrder->tax_amount, 2) }}</td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 @endif
                                 @if($purchaseOrder->shipping_cost> 0)
                                 <tr>
                                     <th colspan="5" class="text-right">Shipping:</th>
                                     <td class="text-right">₦{{ number_format($purchaseOrder->shipping_cost, 2) }}</td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                                 @endif
                                 <tr class="table-primary">
                                     <th colspan="5" class="text-right">Total:</th>
                                     <td class="text-right"><strong>₦{{ number_format($purchaseOrder->total_amount, 2) }}</strong></td>
-                                    <td></td>
+                                    <td colspan="2"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -551,6 +588,29 @@
                 </div>
                 @endif
 
+                <!-- Return History -->
+                @php $returns = $purchaseOrder->returns ?? collect(); @endphp
+                @if($returns->count() > 0)
+                <div class="detail-card no-print">
+                    <h5 style="border-bottom-color:#dc2626;"><i class="mdi mdi-undo-variant mr-1" style="color:#dc2626;"></i> Return History</h5>
+                    @foreach($returns as $ret)
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ $ret->return_number }}</strong>
+                            <span class="badge badge-{{ $ret->status === 'approved' ? 'success' : ($ret->status === 'rejected' ? 'danger' : 'warning') }}">
+                                {{ ucfirst($ret->status) }}
+                            </span>
+                        </div>
+                        <small class="text-muted">
+                            Qty: {{ $ret->qty_returned }} |
+                            ₦{{ number_format($ret->total_value, 2) }} |
+                            {{ $ret->created_at->format('M d, Y') }}
+                        </small>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+
                 <!-- Payment Summary (for received POs) -->
                 @if(in_array($purchaseOrder->status, ['partial', 'received']))
                 <div class="detail-card">
@@ -619,6 +679,67 @@
 <div class="print-only print-footer" style="display: none;">
     <p style="margin: 0;">{{ appsettings('site_name') ?: config('app.name', 'CoreHealth') }} - Printed on {{ now()->format('M d, Y H:i') }}</p>
 </div>
+
+{{-- Return Items Modal --}}
+<div class="modal fade" id="modal-po-return" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="mdi mdi-undo-variant mr-2" style="color:#f59e0b;"></i>Return PO Item</h5>
+                <button type="button" data-bs-dismiss="modal" class="btn btn-close" aria-label="Close"></button>
+            </div>
+            <form id="form-po-return">
+                @csrf
+                <input type="hidden" name="purchase_order_id" value="{{ $purchaseOrder->id }}">
+                <input type="hidden" name="purchase_order_item_id" id="por-item-id">
+                <input type="hidden" name="unit_cost" id="por-unit-cost">
+                <div class="modal-body">
+                    <div class="alert alert-info py-2" id="por-item-summary" style="font-size:0.9rem;"></div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Qty to Return <span class="text-danger">*</span></label>
+                                <input type="number" name="qty_returned" id="por-qty" class="form-control" min="1" required>
+                                <small id="por-max-hint" class="form-text text-muted"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Return Reason <span class="text-danger">*</span></label>
+                                <select name="return_reason" class="form-control" required>
+                                    <option value="">— Select —</option>
+                                    <option value="wrong_item">Wrong Item</option>
+                                    <option value="damaged">Damaged on Arrival</option>
+                                    <option value="excess">Excess Quantity</option>
+                                    <option value="quality_issue">Quality Issue</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Batch</label>
+                                <select name="batch_id" id="por-batch-select" class="form-control">
+                                    <option value="">— Auto / FIFO —</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="return_notes" class="form-control" rows="2" placeholder="Optional return notes…"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning" id="btn-submit-po-return">
+                        <i class="mdi mdi-check mr-1"></i>Submit Return
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -665,5 +786,67 @@ function cancelPO() {
             });
     }
 }
+
+// ─── PO Return Logic ──────────────────────────────────────────────────────────
+var poTargetStoreId = {{ $purchaseOrder->target_store_id ?? 'null' }};
+$(document).on('click', '.btn-return-item', function() {
+    var $btn = $(this);
+    $('#por-item-id').val($btn.data('item-id'));
+    $('#por-unit-cost').val($btn.data('unit-cost'));
+    var max = $btn.data('max');
+    $('#por-qty').attr('max', max).val('');
+    $('#por-max-hint').text('Max returnable: ' + max);
+    $('#por-item-summary').html(
+        '<strong>' + $btn.data('product-name') + '</strong> — ' +
+        'Ordered: ' + $btn.data('ordered') +
+        ' | Received: ' + $btn.data('received') +
+        ' | Already Returned: ' + $btn.data('returned')
+    );
+    loadPorBatches($btn.data('item-id'));
+    $('#modal-po-return').modal('show');
+});
+
+$('#btn-show-return-modal').on('click', function() {
+    // Just highlight the return buttons in the table
+    $('html, body').animate({ scrollTop: $('.items-table').offset().top - 100 }, 400);
+    $('.btn-return-item').first().trigger('focus');
+    toastr.info('Click the Return button on any row to return that item.', '', { timeOut: 4000 });
+});
+
+function loadPorBatches(itemId) {
+    $('#por-batch-select').html('<option value="">Loading…</option>');
+    $.getJSON('{{ route("inventory.po-returns.batches-for-item") }}', { item_id: itemId, store_id: poTargetStoreId }, function(r) {
+        var $sel = $('#por-batch-select').empty().append('<option value="">— Auto / FIFO —</option>');
+        (r.batches || []).forEach(function(b) {
+            $sel.append('<option value="' + b.id + '">' + (b.batch_number||'No#') + ' — Qty: ' + b.current_qty + (b.expiry_date ? ' | Exp: '+b.expiry_date : '') + '</option>');
+        });
+    });
+}
+
+$('#form-po-return').on('submit', function(e) {
+    e.preventDefault();
+    var $btn = $('#btn-submit-po-return').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving…');
+    $.ajax({
+        url: '{{ route("inventory.po-returns.store") }}',
+        method: 'POST',
+        data: $(this).serialize(),
+        dataType: 'json',
+    })
+    .done(function(r) {
+        if (r.success) {
+            toastr.success(r.message || 'Return submitted successfully');
+            $('#modal-po-return').modal('hide');
+            setTimeout(function() { location.reload(); }, 1200);
+        } else {
+            toastr.error(r.message || 'Failed to submit return');
+        }
+    })
+    .fail(function(xhr) {
+        toastr.error(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Server error');
+    })
+    .always(function() {
+        $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Submit Return');
+    });
+});
 </script>
 @endsection

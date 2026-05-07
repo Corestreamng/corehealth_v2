@@ -35,11 +35,13 @@ class PurchaseOrderItem extends Model implements Auditable
         'packaging_qty',
         'received_packaging_id',
         'received_packaging_qty',
+        'returned_qty',
     ];
 
     protected $casts = [
         'ordered_qty' => 'integer',
         'received_qty' => 'integer',
+        'returned_qty' => 'integer',
         'unit_cost' => 'decimal:2',
         'actual_unit_cost' => 'decimal:2',
         'received_at' => 'datetime',
