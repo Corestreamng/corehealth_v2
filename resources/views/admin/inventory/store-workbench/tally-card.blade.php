@@ -558,6 +558,30 @@
         .adjustment-type-btn.add.selected { background: #d4edda; border-color: #28a745 !important; }
         .adjustment-type-btn.subtract.selected { background: #f8d7da; border-color: #dc3545 !important; }
         .font-weight-600 { font-weight: 600; }
+        .modal-filter-pills {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .filter-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            color: #6b7280;
+            transition: all .15s;
+        }
+        .filter-pill:hover { background: #f3f4f6; }
+        .filter-pill.active {
+            background: {{ $hosColor }};
+            color: #fff;
+            border-color: {{ $hosColor }};
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 
     <div class="tally-page">
@@ -649,6 +673,10 @@
 
         {{-- ═══════════════ SUMMARY STRIP ═══════════════ --}}
         <div class="summary-strip" id="summary-strip">
+            <div class="summary-chip count" id="sum-opening-chip" style="display:none;">
+                <span class="chip-label">Opening (B/F)</span>
+                <span class="chip-value" id="sum-opening">—</span>
+            </div>
             <div class="summary-chip in">
                 <span class="chip-label">Total In</span>
                 <span class="chip-value" id="sum-in">—</span>
@@ -683,31 +711,31 @@
                 <table class="tally-table" id="tally-table">
                     <thead>
                         <tr id="tally-head-product">
-                            <th>Date / Time</th>
-                            <th>Type</th>
-                            <th>Reference</th>
-                            <th>Batch</th>
-                            <th class="text-center" style="color:#dc3545;">IN</th>
-                            <th class="text-center" style="color:#0d6efd;">OUT</th>
-                            <th class="text-right">Balance</th>
-                            <th>By</th>
+                            <th style="width:100px;">Date / Time</th>
+                            <th style="width:120px;">Action</th>
+                            <th style="width:140px;">Batch Details</th>
+                            <th class="text-right" style="width:120px; background:#f8f9fa;">Bal B/F</th>
+                            <th class="text-center" style="width:120px;">Change (+/-)</th>
+                            <th class="text-right" style="width:120px; background:#f1f5f9;">Bal A/F</th>
+                            <th style="width:120px;">By</th>
                             <th>Notes</th>
+                            <th class="text-right" style="width:80px;">Actions</th>
                         </tr>
                         <tr id="tally-head-store" style="display:none;">
-                            <th>Date / Time</th>
+                            <th style="width:100px;">Date / Time</th>
                             <th>Product</th>
-                            <th>Type</th>
-                            <th>Reference</th>
-                            <th>Batch</th>
-                            <th class="text-center" style="color:#dc3545;">IN</th>
-                            <th class="text-center" style="color:#0d6efd;">OUT</th>
-                            <th class="text-right">Prod. Balance</th>
-                            <th>By</th>
+                            <th style="width:120px;">Action</th>
+                            <th style="width:140px;">Batch Details</th>
+                            <th class="text-right" style="width:110px; background:#f8f9fa;">Bal B/F</th>
+                            <th class="text-center" style="width:100px;">Change</th>
+                            <th class="text-right" style="width:110px; background:#f1f5f9;">Bal A/F</th>
+                            <th style="width:100px;">By</th>
+                            <th class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="tally-body">
                         <tr>
-                            <td colspan="9" class="tally-empty">
+                            <td colspan="10" class="tally-empty">
                                 <i class="mdi mdi-table-large"></i>
                                 Select a store and apply filters to view the tally card
                             </td>
@@ -892,6 +920,75 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Panel D: Pending Damages --}}
+                    <div class="col-lg-4 mt-3">
+                        <div class="pending-panel" id="panel-damages">
+                            <div class="pending-panel-header">
+                                <h6>
+                                    <i class="mdi mdi-alert-circle-outline" style="color:#dc2626;"></i>
+                                    Pending Damages
+                                    <span class="badge badge-pill" id="badge-damages"
+                                        style="background:#dc2626;color:#fff;">0</span>
+                                </h6>
+                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="damages" style="border-radius:6px; font-size:0.75rem;">
+                                    <i class="mdi mdi-refresh"></i>
+                                </button>
+                            </div>
+                            <div class="pending-panel-body" id="damages-list">
+                                <div class="text-center text-muted py-4" style="font-size:0.84rem;">
+                                    <i class="mdi mdi-loading mdi-spin d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>
+                                    Loading...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Panel E: Pending Requisition Returns --}}
+                    <div class="col-lg-4 mt-3">
+                        <div class="pending-panel" id="panel-req-returns">
+                            <div class="pending-panel-header">
+                                <h6>
+                                    <i class="mdi mdi-undo-variant" style="color:#0d9488;"></i>
+                                    Req Returns
+                                    <span class="badge badge-pill" id="badge-req-returns"
+                                        style="background:#0d9488;color:#fff;">0</span>
+                                </h6>
+                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="req_returns" style="border-radius:6px; font-size:0.75rem;">
+                                    <i class="mdi mdi-refresh"></i>
+                                </button>
+                            </div>
+                            <div class="pending-panel-body" id="req-returns-list">
+                                <div class="text-center text-muted py-4" style="font-size:0.84rem;">
+                                    <i class="mdi mdi-loading mdi-spin d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>
+                                    Loading...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Panel F: Pending PO Returns --}}
+                    <div class="col-lg-4 mt-3">
+                        <div class="pending-panel" id="panel-po-returns">
+                            <div class="pending-panel-header">
+                                <h6>
+                                    <i class="mdi mdi-receipt" style="color:#6366f1;"></i>
+                                    PO Returns
+                                    <span class="badge badge-pill" id="badge-po-returns"
+                                        style="background:#6366f1;color:#fff;">0</span>
+                                </h6>
+                                <button class="btn btn-sm btn-outline-secondary btn-refresh-panel" data-panel="po_returns" style="border-radius:6px; font-size:0.75rem;">
+                                    <i class="mdi mdi-refresh"></i>
+                                </button>
+                            </div>
+                            <div class="pending-panel-body" id="po-returns-list">
+                                <div class="text-center text-muted py-4" style="font-size:0.84rem;">
+                                    <i class="mdi mdi-loading mdi-spin d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>
+                                    Loading...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         @endif
@@ -909,6 +1006,15 @@
             </button>
             <button class="toolbar-btn" id="tb-adjust-stock" style="background:#f59e0b; color:#fff;">
                 <i class="mdi mdi-tune-vertical"></i> Adjust Stock
+            </button>
+            <button class="toolbar-btn" id="tb-record-damage" style="background:#dc2626; color:#fff;">
+                <i class="mdi mdi-alert-circle-outline"></i> Record Damage
+            </button>
+            <button class="toolbar-btn" id="tb-return-req" style="background:#0d9488; color:#fff;">
+                <i class="mdi mdi-undo-variant"></i> Return Req Items
+            </button>
+            <button class="toolbar-btn" id="tb-return-po" style="background:#6366f1; color:#fff;">
+                <i class="mdi mdi-truck-delivery-outline"></i> Return PO Items
             </button>
         </div>
     </div>
@@ -974,7 +1080,7 @@
                                 <div class="row align-items-end mb-2">
                                     <div class="col-md-5">
                                         <select name="items[0][product_id]" class="form-control req-product-select"
-                                            required onchange="loadProductPackaging(this, 0, 'req')">
+                                            required onchange="loadProductPackaging($(this).val(), $(this).find('option:selected').data('base-unit'), $(this).closest('.req-item-row').find('.req-packaging-select'))">
                                             <option value="">— Select Product —</option>
                                             @foreach ($products as $p)
                                                 <option value="{{ $p->id }}"
@@ -1027,9 +1133,7 @@
                     <h5 class="modal-title" style="color:#1e293b; font-weight:700;">
                         <i class="mdi mdi-package-variant-plus mr-2" style="color:#10b981;"></i>Add Stock Batch
                     </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="form-add-batch">
                     @csrf
@@ -1052,7 +1156,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="small font-weight-bold">Product <span class="text-danger">*</span></label>
-                                    <select name="product_id" id="batch-product" class="form-control" required onchange="loadProductPackaging(this, null, 'batch')" style="border-radius:8px;">
+                                    <select name="product_id" id="batch-product" class="form-control" required onchange="loadProductPackaging($(this).val(), $(this).find('option:selected').data('base-unit'), $('#batch-packaging'))" style="border-radius:8px;">
                                         <option value="">— Select Product —</option>
                                         @foreach ($products as $p)
                                             <option value="{{ $p->id }}"
@@ -1100,8 +1204,9 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label class="small font-weight-bold">Cost Price</label>
-                                    <input type="number" name="cost_price" class="form-control" step="0.01" min="0" style="border-radius:8px;" placeholder="0.00">
+                                    <label class="small font-weight-bold">Cost Price (₦) <span class="text-danger">*</span></label>
+                                    <input type="number" name="cost_price" id="batch-cost-price" class="form-control" step="0.01" min="0" required style="border-radius:8px;" placeholder="0.00 — enter 0 for donations">
+                                    <small class="text-muted" style="display:block;">₦ per base unit. Defaults to product buy price.</small>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -1133,7 +1238,7 @@
                         </div>
                     </div>
                     <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 12px 12px; padding:1rem 1.5rem;">
-                        <button type="button" class="btn btn-light" data-dismiss="modal" style="border-radius:8px; font-weight:600; color:#64748b;">Cancel</button>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px; font-weight:600; color:#64748b;">Cancel</button>
                         <button type="submit" class="btn" id="btn-submit-batch" style="background:#10b981; color:#fff; border-radius:8px; font-weight:600; padding:0.5rem 1.5rem;">
                             <i class="mdi mdi-check mr-1"></i>Create Batch
                         </button>
@@ -1243,7 +1348,7 @@
                                 <div class="row align-items-end mb-2">
                                     <div class="col-md-4">
                                         <select name="items[0][product_id]" class="form-control po-product-select"
-                                            required onchange="loadProductPackaging(this, 0, 'po')">
+                                            required onchange="loadProductPackaging($(this).val(), $(this).find('option:selected').data('base-unit'), $(this).closest('.po-item-row').find('.po-packaging-select'))">
                                             <option value="">— Select Product —</option>
                                             @foreach ($products as $p)
                                                 <option value="{{ $p->id }}"
@@ -1346,7 +1451,7 @@
                                 <select id="adj-product-filter" class="form-control">
                                     <option value="">— All Products —</option>
                                     @foreach ($products as $p)
-                                        <option value="{{ $p->id }}">{{ $p->product_name }}{{ $p->product_code ? ' (' . $p->product_code . ')' : '' }}</option>
+                                        <option value="{{ $p->id }}" data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}">{{ $p->product_name }}{{ $p->product_code ? ' (' . $p->product_code . ')' : '' }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -1405,9 +1510,9 @@
                                 </div>
                                 <div class="col-md-7">
                                     <label for="adj-qty" class="font-weight-600 mb-1">Quantity <span class="text-danger">*</span></label>
-                                    <input type="number" name="qty" id="adj-qty" class="form-control" min="1" value="1" required oninput="calculateAdjBaseQty()">
+                                    <input type="number" id="adj-qty" class="form-control" min="1" value="1" required oninput="calculateAdjBaseQty()">
                                     <small class="text-muted" id="adj-qty-hint"></small>
-                                    <input type="hidden" name="base_qty" id="adj-base-qty-hidden">
+                                    <input type="hidden" name="qty" id="adj-base-qty-hidden">
                                 </div>
                             </div>
 
@@ -1455,6 +1560,368 @@
             </div>
         </div>
     </div>
+
+    {{-- ═══════════════════════════════════════════════════════════
+     MODAL 7 — Record Store Damage
+═══════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="modal-record-damage" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="mdi mdi-alert-circle-outline mr-2" style="color:#dc2626;"></i>Record Store Damage</h5>
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-close" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{-- Step 1: Batch selector --}}
+                    <div id="dmg-step-1">
+                        <div class="mb-3">
+                            <label class="font-weight-600 mb-1" style="font-size:0.75rem; color:#6b7280; text-transform:uppercase;">Batch Filter</label>
+                            <div class="modal-filter-pills" id="dmg-filter-status">
+                                <div class="filter-pill active" data-value="recent">Recently Received</div>
+                                <div class="filter-pill" data-value="near-expiry">Near Expiry</div>
+                                <div class="filter-pill" data-value="low-stock">Low Stock</div>
+                                <div class="filter-pill" data-value="all">All Batches</div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="font-weight-600 mb-1">Filter by Product</label>
+                                <select id="dmg-product-filter" class="form-control">
+                                    <option value="">— Search product —</option>
+                                    @foreach ($products as $p)
+                                        <option value="{{ $p->id }}" data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}">{{ $p->product_name }}{{ $p->product_code ? ' (' . $p->product_code . ')' : '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <button id="dmg-load-batches" class="btn btn-secondary btn-sm" style="border-radius:8px;">
+                                    <i class="mdi mdi-refresh mr-1"></i>Load Batches
+                                </button>
+                            </div>
+                        </div>
+                        <div id="dmg-batch-list">
+                            <div class="text-center text-muted py-4" style="font-size:0.85rem;">
+                                <i class="mdi mdi-package-variant d-block mb-1" style="font-size:2rem; opacity:.35;"></i>
+                                Select a product and click "Load Batches"
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Step 2: Damage form --}}
+                    <div id="dmg-step-2" style="display:none;">
+                        <div class="adj-batch-info mb-3" id="dmg-batch-info-panel"></div>
+
+                        <form id="form-record-damage">
+                            @csrf
+                            <input type="hidden" name="store_id" id="damage-store-id">
+                            <input type="hidden" name="batch_id" id="damage-batch-id">
+                            <input type="hidden" name="product_id" id="damage-product-id">
+
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Damage Type <span class="text-danger">*</span></label>
+                                        <select name="damage_type" id="damage-type" class="form-control" required>
+                                            <option value="">— Select —</option>
+                                            <option value="expired">Expired</option>
+                                            <option value="broken">Broken</option>
+                                            <option value="contaminated">Contaminated</option>
+                                            <option value="spoiled">Spoiled</option>
+                                            <option value="theft">Theft</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Packaging</label>
+                                        <select id="dmg-packaging" name="packaging_id" class="form-control" onchange="calculateDmgBaseQty()">
+                                            <option value="">Base Unit</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Qty Damaged <span class="text-danger">*</span></label>
+                                        <input type="number" id="damage-qty" class="form-control" min="1" required oninput="calculateDmgBaseQty()">
+                                        <small class="text-muted" id="dmg-qty-hint"></small>
+                                        <input type="hidden" name="qty_damaged" id="dmg-base-qty-hidden">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Unit Cost <span class="text-danger">*</span></label>
+                                        <input type="number" name="unit_cost" id="damage-unit-cost" class="form-control" step="0.01" min="0" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Date Discovered <span class="text-danger">*</span></label>
+                                        <input type="date" name="discovered_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Damage Reason <span class="text-danger">*</span></label>
+                                        <input type="text" name="damage_reason" class="form-control" placeholder="Describe the damage…" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <button id="dmg-back-btn" class="btn btn-link btn-sm text-muted px-0 mb-2">
+                            <i class="mdi mdi-arrow-left mr-1"></i>Back to batch list
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn" id="btn-submit-damage" style="background:#dc2626; color:#fff; display:none;" disabled>
+                        <i class="mdi mdi-check mr-1"></i>Record Damage
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ═══════════════════════════════════════════════════════════
+     MODAL 8 — Return Requisition Items
+═══════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="modal-return-req" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="mdi mdi-undo-variant mr-2" style="color:#0d9488;"></i>Return Requisition Items</h5>
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-close" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{-- Step 1: Requisition Selector --}}
+                    <div id="ret-step-1">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="mb-2">
+                                    <label class="font-weight-600 mb-1" style="font-size:0.75rem; color:#6b7280; text-transform:uppercase;">Involvement</label>
+                                    <div class="modal-filter-pills" id="ret-filter-involvement">
+                                        <div class="filter-pill active" data-value="received">Received</div>
+                                        <div class="filter-pill" data-value="sent">Sent</div>
+                                        <div class="filter-pill" data-value="all">All Requisitions</div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="font-weight-600 mb-1" style="font-size:0.75rem; color:#6b7280; text-transform:uppercase;">Timeframe</label>
+                                    <div class="modal-filter-pills" id="ret-filter-date">
+                                        <div class="filter-pill" data-value="7">Last 7 Days</div>
+                                        <div class="filter-pill active" data-value="30">Last 30 Days</div>
+                                        <div class="filter-pill" data-value="all">All Time</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="font-weight-600 mb-1">Search Requisition</label>
+                                <div class="input-group">
+                                    <input type="text" id="ret-search-input" class="form-control" placeholder="REQ-0001 or ID">
+                                    <button id="ret-btn-search" class="btn btn-secondary" type="button">
+                                        <i class="mdi mdi-magnify mr-1"></i>Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="ret-requisition-results">
+                             <div class="text-center text-muted py-4" style="font-size:0.85rem;">
+                                <i class="mdi mdi-file-search-outline d-block mb-1" style="font-size:2rem; opacity:.35;"></i>
+                                Search for a fulfilled requisition to return items
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Step 2: Item Selection --}}
+                    <div id="ret-step-2" style="display:none;">
+                         <div class="adj-batch-info mb-3" id="ret-req-info-panel"></div>
+                         <label class="font-weight-600 mb-2">Select Item to Return</label>
+                         <div id="ret-item-list"></div>
+                         <button id="ret-back-to-search" class="btn btn-link btn-sm text-muted px-0 mt-2">
+                            <i class="mdi mdi-arrow-left mr-1"></i>Back to search
+                        </button>
+                    </div>
+
+                    {{-- Step 3: Return Form --}}
+                    <div id="ret-step-3" style="display:none;">
+                        <div class="adj-batch-info mb-3" id="ret-item-info-panel"></div>
+                        <form id="form-return-req">
+                            @csrf
+                            <input type="hidden" name="store_requisition_id" id="ret-requisition-id-hidden">
+                            <input type="hidden" name="store_requisition_item_id" id="ret-item-id-hidden">
+                            <input type="hidden" name="product_id" id="ret-product-id-hidden">
+                            <input type="hidden" name="source_store_id" id="ret-source-store-id">
+                            <input type="hidden" name="destination_store_id" id="ret-dest-store-id">
+                            <div id="ret-direction-hint" class="alert alert-soft-info py-2 mb-3" style="font-size:0.8rem; border-radius:8px;"></div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Batch <small class="text-muted">(Optional)</small></label>
+                                        <select name="batch_id" id="ret-batch-select" class="form-control">
+                                            <option value="">— Auto / FIFO —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Qty to Return <span class="text-danger">*</span></label>
+                                        <input type="number" name="qty_returned" id="ret-qty" class="form-control" min="1" required>
+                                        <small id="ret-max-qty-hint" class="form-text text-muted"></small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Return Condition <span class="text-danger">*</span></label>
+                                        <select name="return_condition" class="form-control" required>
+                                            <option value="good">Good Condition</option>
+                                            <option value="damaged">Damaged</option>
+                                            <option value="expired">Expired</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes / Reason <span class="text-danger">*</span></label>
+                                <textarea name="return_reason" class="form-control" rows="2" required placeholder="Why are these items being returned?"></textarea>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="restock" value="1" id="ret-restock" checked>
+                                <label class="form-check-label" for="ret-restock">
+                                    Restock items at origin store
+                                </label>
+                            </div>
+                        </form>
+                        <button id="ret-back-to-items" class="btn btn-link btn-sm text-muted px-0 mb-2">
+                            <i class="mdi mdi-arrow-left mr-1"></i>Back to item list
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn" id="btn-submit-ret-req" style="background:#0d9488; color:#fff; display:none;" disabled>
+                        <i class="mdi mdi-check mr-1"></i>Submit Return
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ═══════════════════════════════════════════════════════════
+     MODAL 9 — Return PO Items
+═══════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="modal-return-po" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="mdi mdi-truck-delivery-outline mr-2" style="color:#6366f1;"></i>Return PO Items</h5>
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-close" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{-- Step 1: PO Selector --}}
+                    <div id="ret-po-step-1">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="font-weight-600 mb-1" style="font-size:0.75rem; color:#6b7280; text-transform:uppercase;">Timeframe</label>
+                                    <div class="modal-filter-pills" id="ret-po-filter-date">
+                                        <div class="filter-pill" data-value="7">Last 7 Days</div>
+                                        <div class="filter-pill active" data-value="30">Last 30 Days</div>
+                                        <div class="filter-pill" data-value="all">All Time</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="font-weight-600 mb-1">Search Purchase Order</label>
+                                <div class="input-group">
+                                    <input type="text" id="ret-po-search-input" class="form-control" placeholder="PO-0001 or ID">
+                                    <button id="ret-po-btn-search" class="btn btn-secondary" type="button">
+                                        <i class="mdi mdi-magnify mr-1"></i>Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="ret-po-results">
+                             <div class="text-center text-muted py-4" style="font-size:0.85rem;">
+                                <i class="mdi mdi-file-search-outline d-block mb-1" style="font-size:2rem; opacity:.35;"></i>
+                                Search for a received PO to return items
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Step 2: Item Selection --}}
+                    <div id="ret-po-step-2" style="display:none;">
+                         <div class="adj-batch-info mb-3" id="ret-po-info-panel"></div>
+                         <label class="font-weight-600 mb-2">Select Item to Return</label>
+                         <div id="ret-po-item-list"></div>
+                         <button id="ret-po-back-to-search" class="btn btn-link btn-sm text-muted px-0 mt-2">
+                            <i class="mdi mdi-arrow-left mr-1"></i>Back to search
+                        </button>
+                    </div>
+
+                    {{-- Step 3: Return Form --}}
+                    <div id="ret-po-step-3" style="display:none;">
+                        <div class="adj-batch-info mb-3" id="ret-po-item-info-panel"></div>
+                        <form id="form-return-po">
+                            @csrf
+                            <input type="hidden" name="purchase_order_id" id="ret-po-id-hidden">
+                            <input type="hidden" name="purchase_order_item_id" id="ret-po-item-id-hidden">
+                            <input type="hidden" name="product_id" id="ret-po-product-id-hidden">
+                            <input type="hidden" name="unit_cost" id="ret-po-unit-cost-hidden">
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Batch <small class="text-muted">(Optional)</small></label>
+                                        <select name="batch_id" id="ret-po-batch-select" class="form-control">
+                                            <option value="">— Auto / FIFO —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Qty to Return <span class="text-danger">*</span></label>
+                                        <input type="number" name="qty_returned" id="ret-po-qty" class="form-control" min="1" required>
+                                        <small id="ret-po-max-qty-hint" class="form-text text-muted"></small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Return Reason <span class="text-danger">*</span></label>
+                                        <select name="return_reason" class="form-control" required>
+                                            <option value="wrong_item">Wrong Item</option>
+                                            <option value="damaged">Damaged</option>
+                                            <option value="excess">Excess Quantity</option>
+                                            <option value="quality_issue">Quality Issue</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <textarea name="return_notes" class="form-control" rows="2" placeholder="Reason for return…"></textarea>
+                            </div>
+                        </form>
+                        <button id="ret-po-back-to-items" class="btn btn-link btn-sm text-muted px-0 mb-2">
+                            <i class="mdi mdi-arrow-left mr-1"></i>Back to item list
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn" id="btn-submit-ret-po" style="background:#6366f1; color:#fff; display:none;" disabled>
+                        <i class="mdi mdi-check mr-1"></i>Submit Return
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
@@ -1470,7 +1937,7 @@
             var productRegistry = {}; // id → name map (built from rendered rows)
 
             // ─── Helper: show toast ───────────────────────────────────────────────────
-            function toast(msg, type) {
+            window.toast = function(msg, type) {
                 type = type || 'success';
                 var bg = type === 'success' ? '#10b981' : (type === 'warning' ? '#f59e0b' : '#ef4444');
                 var $t = $('<div>')
@@ -1505,6 +1972,7 @@
                 $(this).addClass('active');
 
                 if (axis === 'store') {
+                    $('#filter-product').val('').trigger('change');
                     $('#product-filter-group').hide();
                     $('#tally-head-product').hide();
                     $('#tally-head-store').show();
@@ -1522,16 +1990,16 @@
 
             function formatPackaging(qty, baseUnitName, packagings) {
                 if (!packagings || packagings.length === 0 || qty === 0) return '';
-                
+
                 // For now, use the first packaging level as the reference
                 var p = packagings[0];
                 var factor = parseFloat(p.base_unit_qty) || 1;
                 if (factor <= 1) return ''; // Skip if factor is 1 (redundant with base unit)
-                
+
                 var equiv = (Math.abs(qty) / factor).toFixed(2);
                 // Clean up trailing zeros
                 equiv = equiv.replace(/\.?0+$/, "");
-                
+
                 return ` <small class="text-muted" title="${equiv} ${p.name}">(${equiv} ${p.name})</small>`;
             }
 
@@ -1573,9 +2041,9 @@
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="status-badge ${req.status}">${req.status.charAt(0).toUpperCase() + req.status.slice(1)}</span>
-                                            <a href="{{ url('inventory/requisitions') }}/${req.id}#fulfill-panel" target="_blank" class="btn btn-sm btn-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
+                                            <button type="button" class="btn btn-sm btn-primary btn-fulfill-req" data-req-id="${req.id}" data-req-number="${req.requisition_number}" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
                                                 <i class="mdi mdi-check"></i> Fulfil
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>`;
                             });
@@ -1636,14 +2104,17 @@
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="status-badge ${po.status}">${po.status.replace(/_/g, ' ')}</span>
-                                            <a href="{{ url('inventory/purchase-orders') }}/${po.id}/receive" target="_blank" class="btn btn-sm btn-receive-po" style="background:#8b5cf6; color:#fff; border:none; border-radius:6px; font-size:0.75rem; padding:4px 10px;">
+                                            <button type="button" class="btn btn-sm btn-receive-po" data-po-id="${po.id}" data-po-number="${po.po_number}" style="background:#8b5cf6; color:#fff; border:none; border-radius:6px; font-size:0.75rem; padding:4px 10px;">
                                                 <i class="mdi mdi-download"></i> Receive
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>`;
                             });
                         }
                         $('#po-list').html(poHtml);
+
+                        // Fire event so new panels (D & E) can update
+                        $(document).trigger('pendingActionsLoaded', [res]);
                     })
                     .always(function() {
                         $('.btn-refresh-panel').removeClass('mdi-spin');
@@ -1678,6 +2149,7 @@
                     '<tr><td colspan="9" class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary"></span></td></tr>'
                 );
                 $('#summary-strip .chip-value').text('—');
+                $('#sum-opening-chip').hide();
                 $('#product-chips-bar').empty().hide();
 
                 // Update URL params without reloading
@@ -1728,13 +2200,20 @@
                     var inPkg = (rows.length > 0) ? formatPackaging(sum.total_in, rows[0].base_unit, rows[0].packaging) : '';
                     var outPkg = (rows.length > 0) ? formatPackaging(sum.total_out, rows[0].base_unit, rows[0].packaging) : '';
                     var pkgHint = (rows.length > 0) ? formatPackaging(sum.closing_balance, rows[0].base_unit, rows[0].packaging) : '';
-                    
+
+                    // Opening balance chip (product axis only)
+                    var openingBal = (sum.opening_balance !== null && sum.opening_balance !== undefined) ? sum.opening_balance : 0;
+                    var openingPkg = (rows.length > 0) ? formatPackaging(openingBal, rows[0].base_unit, rows[0].packaging) : '';
+                    $('#sum-opening').html(openingBal + openingPkg);
+                    $('#sum-opening-chip').show();
+
                     $('#sum-in').html(sum.total_in + inPkg);
                     $('#sum-out').html(sum.total_out + outPkg);
                     $('#sum-balance').html((sum.closing_balance !== null ? sum.closing_balance : '—') + pkgHint);
                     $('#sum-balance-chip').show();
                     $('#sum-products-chip').hide();
                 } else {
+                    $('#sum-opening-chip').hide();
                     $('#sum-in').text(sum.total_in);
                     $('#sum-out').text(sum.total_out);
                     $('#sum-products').text(sum.products_touched);
@@ -1743,7 +2222,7 @@
                 }
 
                 if (rows.length === 0) {
-                    var colSpan = axis === 'store' ? 9 : 9;
+                    var colSpan = 10;
                     $('#tally-body').html('<tr><td colspan="' + colSpan +
                         '" class="tally-empty"><i class="mdi mdi-table-search"></i>No transactions found for the selected filters</td></tr>'
                     );
@@ -1759,52 +2238,104 @@
                 });
 
                 var html = '';
-                $.each(rows, function(_, r) {
+
+                // Opening balances map from backend (per product_id)
+                var openingBalances = (res.summary && res.summary.opening_balances) ? res.summary.opening_balances : {};
+
+                // Add Opening Balance row if in product axis (single product)
+                if (axis === 'product' && rows.length > 0) {
+                    var first = rows[0];
+                    var openingBal = (res.summary.opening_balance !== null && res.summary.opening_balance !== undefined)
+                        ? res.summary.opening_balance
+                        : first.bal_before;
+                    html += '<tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">' +
+                        '<td colspan="3" class="text-right" style="font-weight:700; color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.025em;">Opening Balance (B/F)</td>' +
+                        '<td class="text-right" style="background:#f1f5f9;">' +
+                            '<div style="font-weight:700; color:#475569;">' + openingBal + '</div>' +
+                            '<div style="font-size:0.7rem; color:#64748b;">' + formatPackaging(openingBal, first.base_unit, first.packaging) + '</div>' +
+                        '</td>' +
+                        '<td colspan="5"></td>' +
+                        '</tr>';
+                }
+
+                // Track first occurrence of each product (for store axis B/F rows)
+                var seenProducts = {};
+
+                $.each(rows, function(idx, r) {
                     var dirClass = 'dir-' + r.direction;
                     var typeClass = 'type-badge ' + (r.badge_type || r.type);
-                    var inCell = r.in_qty > 0 ? '<span class="qty-in">' + r.in_qty + '</span>' + formatPackaging(r.in_qty, r.base_unit, r.packaging) :
-                        '<span style="color:#ccc;">—</span>';
-                    var outCell = r.out_qty > 0 ? '<span class="qty-out">' + r.out_qty + '</span>' + formatPackaging(r.out_qty, r.base_unit, r.packaging) :
-                        '<span style="color:#ccc;">—</span>';
-                    var balanceCell = r.product_balance + formatPackaging(r.product_balance, r.base_unit, r.packaging);
-                    var refCell = r.ref_url ?
-                        '<a href="' + escHtml(r.ref_url) + '" target="_blank" rel="noopener">' + escHtml(r
-                            .ref_label) + '</a>' :
-                        escHtml(r.ref_label);
+
+                    var changeQty = r.in_qty > 0 ? r.in_qty : -r.out_qty;
+                    var changeClass = changeQty > 0 ? 'qty-in' : 'qty-out';
+                    var changeSign = changeQty > 0 ? '+' : '';
+
+                    var changeCell = '<div class="' + changeClass + '" style="font-weight:700;">' + changeSign + changeQty + '</div>' +
+                                     '<div style="font-size:0.7rem; opacity:0.8;">' + formatPackaging(changeQty, r.base_unit, r.packaging) + '</div>';
+
+                    var balBeforeCell = '<div style="font-weight:600; color:#64748b;">' + r.bal_before + '</div>' +
+                                        '<div style="font-size:0.7rem; color:#94a3b8;">' + formatPackaging(r.bal_before, r.base_unit, r.packaging) + '</div>';
+
+                    var balAfterCell = '<div style="font-weight:700; color:#1e293b;">' + r.bal_after + '</div>' +
+                                       '<div style="font-size:0.7rem; color:#475569;">' + formatPackaging(r.bal_after, r.base_unit, r.packaging) + '</div>';
+
+                    var batchCell = '<div><code style="font-size:0.82rem; color:#0f172a;">' + escHtml(r.batch_number) + '</code></div>' +
+                                    '<div style="font-size:0.72rem; color:#64748b;">Exp: ' + escHtml(r.expiry_date) + '</div>' +
+                                    '<div style="font-size:0.72rem; color:#059669; font-weight:600;">Cost: ₦' + parseFloat(r.cost_price).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div>';
+
+                    var actionCell = '<span class="' + typeClass + '">' + escHtml(r.type_label) + '</span>' +
+                                     (r.ref_url ? '<div style="margin-top:2px;"><a href="' + escHtml(r.ref_url) + '" target="_blank" style="font-size:0.72rem; text-decoration:underline;">' + escHtml(r.ref_label) + '</a></div>' :
+                                     '<div style="font-size:0.72rem; color:#94a3b8;">' + escHtml(r.ref_label) + '</div>');
+
                     var notes = r.notes ? '<small class="text-muted" title="' + escHtml(r.notes) + '">' +
-                        escHtml(r.notes.substring(0, 30)) + (r.notes.length> 30 ? '…' : '') + '</small>' : '—';
+                        escHtml(r.notes.substring(0, 40)) + (r.notes.length > 40 ? '…' : '') + '</small>' : '—';
+
+                    var actions = `<div class="text-right btn-group">
+                        <button class="btn btn-link btn-xs p-0 text-danger btn-row-damage" title="Record Damage" data-pid="${r.product_id || ''}" data-pname="${escHtml(r.product_name) || ''}" data-bid="${r.batch_id || ''}" data-bnum="${escHtml(r.batch_number) || ''}">
+                            <i class="mdi mdi-alert-octagon" style="font-size:1.1rem;"></i>
+                        </button></div>`;
 
                     if (axis === 'product') {
                         html += '<tr class="' + dirClass + '">' +
-                            '<td><div style="font-weight:600; font-size:0.82rem;">' + escHtml(r.date) +
-                            '</div><div style="color:#9ca3af; font-size:0.72rem;">' + escHtml(r.time) +
-                            '</div></td>' +
-                            '<td><span class="' + typeClass + '">' + escHtml(r.type_label) + '</span></td>' +
-                            '<td>' + refCell + '</td>' +
-                            '<td><code style="font-size:0.78rem;">' + escHtml(r.batch_number) + '</code></td>' +
-                            '<td class="text-center">' + inCell + '</td>' +
-                            '<td class="text-center">' + outCell + '</td>' +
-                            '<td class="text-right balance-col">' + balanceCell + '</td>' +
+                            '<td style="font-size:0.78rem;"><div>' + escHtml(r.datetime.split(' ')[0] + ' ' + r.datetime.split(' ')[1]) + '</div>' +
+                            '<div style="color:#94a3b8; font-size:0.7rem;">' + escHtml(r.datetime.split(' ')[2]) + '</div></td>' +
+                            '<td>' + actionCell + '</td>' +
+                            '<td>' + batchCell + '</td>' +
+                            '<td class="text-right">' + balBeforeCell + '</td>' +
+                            '<td class="text-center">' + changeCell + '</td>' +
+                            '<td class="text-right">' + balAfterCell + '</td>' +
                             '<td><small>' + escHtml(r.performer) + '</small></td>' +
                             '<td>' + notes + '</td>' +
+                            '<td class="text-right">' + actions + '</td>' +
                             '</tr>';
                     } else {
+                        // Store axis: inject per-product Opening Balance (B/F) row on first occurrence
+                        if (!seenProducts[r.product_id]) {
+                            seenProducts[r.product_id] = true;
+                            var openingQty = openingBalances[r.product_id] !== undefined ? openingBalances[r.product_id] : 0;
+                            var openingPkgHint = formatPackaging(openingQty, r.base_unit, r.packaging);
+                            html += '<tr class="tally-bf-row" data-product-id="' + r.product_id + '" style="background:#f0f9ff; border-top:2px solid #bae6fd; border-bottom:1px solid #e0f2fe;">' +
+                                '<td colspan="4" style="font-weight:700; color:#0369a1; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.02em; padding:6px 10px;">' +
+                                    '<i class="mdi mdi-package-variant-closed mr-1"></i>' + escHtml(r.product_name) + ' — Opening Balance (B/F)' +
+                                '</td>' +
+                                '<td class="text-right" style="background:#e0f2fe; padding:6px 10px;">' +
+                                    '<div style="font-weight:700; color:#0369a1;">' + openingQty + '</div>' +
+                                    (openingPkgHint ? '<div style="font-size:0.7rem; color:#0284c7;">' + openingPkgHint + '</div>' : '') +
+                                '</td>' +
+                                '<td colspan="4"></td>' +
+                                '</tr>';
+                        }
+
                         html += '<tr class="' + dirClass + '" data-product-id="' + r.product_id + '">' +
-                            '<td><div style="font-weight:600; font-size:0.82rem;">' + escHtml(r.date) +
-                            '</div><div style="color:#9ca3af; font-size:0.72rem;">' + escHtml(r.time) +
-                            '</div></td>' +
-                            '<td><div style="font-weight:600; font-size:0.82rem;">' + escHtml(r.product_name) +
-                            '</div>' +
-                            (r.product_code ? '<div style="color:#9ca3af; font-size:0.72rem;">' + escHtml(r
-                                .product_code) + '</div>' : '') +
-                            '</td>' +
-                            '<td><span class="' + typeClass + '">' + escHtml(r.type_label) + '</span></td>' +
-                            '<td>' + refCell + '</td>' +
-                            '<td><code style="font-size:0.78rem;">' + escHtml(r.batch_number) + '</code></td>' +
-                            '<td class="text-center">' + inCell + '</td>' +
-                            '<td class="text-center">' + outCell + '</td>' +
-                            '<td class="text-right balance-col">' + balanceCell + '</td>' +
+                            '<td style="font-size:0.78rem;"><div>' + escHtml(r.datetime.split(' ')[0] + ' ' + r.datetime.split(' ')[1]) + '</div>' +
+                            '<div style="color:#94a3b8; font-size:0.7rem;">' + escHtml(r.datetime.split(' ')[2]) + '</div></td>' +
+                            '<td><div style="font-weight:600; font-size:0.82rem;">' + escHtml(r.product_name) + '</div></td>' +
+                            '<td>' + actionCell + '</td>' +
+                            '<td>' + batchCell + '</td>' +
+                            '<td class="text-right">' + balBeforeCell + '</td>' +
+                            '<td class="text-center">' + changeCell + '</td>' +
+                            '<td class="text-right">' + balAfterCell + '</td>' +
                             '<td><small>' + escHtml(r.performer) + '</small></td>' +
+                            '<td class="text-right">' + actions + '</td>' +
                             '</tr>';
                     }
                 });
@@ -1886,7 +2417,7 @@
                 var row = `<div class="req-item-row" data-index="${reqItemIndex}">
             <div class="row align-items-end mb-2">
                 <div class="col-md-5">
-                    <select name="items[${reqItemIndex}][product_id]" class="form-control req-product-select" required onchange="loadProductPackaging(this, ${reqItemIndex}, 'req')">
+                    <select name="items[${reqItemIndex}][product_id]" class="form-control req-product-select" required onchange="loadProductPackaging($(this).val(), $(this).find('option:selected').data('base-unit'), $(this).closest('.req-item-row').find('.req-packaging-select'))">
                         <option value="">— Select Product —</option>
                         @foreach ($products as $p)
                             <option value="{{ $p->id }}" data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}">{{ $p->product_name }}</option>
@@ -1911,11 +2442,11 @@
             </div>
         </div>`;
                 $('#req-items-container').append(row);
-                
+
                 // Initialize Select2 on all selects in the new row
                 if ($.fn.select2) {
                     var $newRow = $(`.req-item-row[data-index="${reqItemIndex}"]`);
-                    $newRow.find('select').each(function() {
+                    $newRow.find('select').not('.req-packaging-select').each(function() {
                         var $sel = $(this);
                         $sel.select2({
                             dropdownParent: $('#modal-new-req'),
@@ -2070,7 +2601,7 @@
 
                     if (item.available_batches && item.available_batches.length > 0) {
                         html += `<div class="table-responsive"><table class="table table-sm mb-0">
-                    <thead><tr><th>Batch</th><th>Available</th><th>Expiry</th><th>Fulfil Qty</th></tr></thead><tbody>`;
+                    <thead><tr><th>Batch</th><th>Available</th><th>Expiry</th><th>Cost (₦)</th><th>Fulfil Qty</th></tr></thead><tbody>`;
                         $.each(item.available_batches, function(_, batch) {
                             var batchPkgHint = '';
                             if (item.packaging && item.packaging.length > 0) {
@@ -2081,10 +2612,16 @@
                                 }
                             }
 
+                            var costFmt = parseFloat(batch.cost_price || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            var costCell = (parseFloat(batch.cost_price || 0) === 0)
+                                ? `<span class="text-muted small">Donation</span>`
+                                : `<span style="color:#059669; font-weight:600;">₦${costFmt}</span>`;
+
                             html += `<tr>
                         <td><code>${escHtml(batch.batch_number)}</code></td>
                         <td>${batch.current_qty}${batchPkgHint}</td>
                         <td>${batch.expiry_date || '—'}</td>
+                        <td>${costCell}</td>
                         <td><input type="number" name="items[${i}][batches][${batch.id}]" class="form-control form-control-sm" min="0" max="${batch.current_qty}" value="0" style="width:80px;"></td>
                     </tr>`;
                         });
@@ -2140,7 +2677,7 @@
                 var row = `<div class="po-item-row" data-index="${poItemIndex}">
             <div class="row align-items-end mb-2">
                 <div class="col-md-4">
-                    <select name="items[${poItemIndex}][product_id]" class="form-control po-product-select" required onchange="loadProductPackaging(this, ${poItemIndex}, 'po')">
+                    <select name="items[${poItemIndex}][product_id]" class="form-control po-product-select" required onchange="loadProductPackaging($(this).val(), $(this).find('option:selected').data('base-unit'), $(this).closest('.po-item-row').find('.po-packaging-select'))">
                         <option value="">— Select Product —</option>
                         @foreach ($products as $p)
                             <option value="{{ $p->id }}" data-base-unit="{{ $p->base_unit_name ?? 'Piece' }}">{{ $p->product_name }}</option>
@@ -2173,7 +2710,7 @@
                 // Initialize Select2 on all selects in the new row
                 if ($.fn.select2) {
                     var $newRow = $(`.po-item-row[data-index="${poItemIndex}"]`);
-                    $newRow.find('select').each(function() {
+                    $newRow.find('select').not('.po-packaging-select').each(function() {
                         var $sel = $(this);
                         $sel.select2({
                             dropdownParent: $('#modal-new-po'),
@@ -2361,25 +2898,27 @@
                             <input type="date" name="items[${i}][expiry_date]" class="form-control form-control-sm">
                         </div>
                         <div class="col-md-3">
-                            <label class="small font-weight-bold">Cost (per Unit)</label>
-                            <input type="number" name="items[${i}][actual_cost]" class="form-control form-control-sm rec-cost-input" step="0.01" min="0" value="${item.unit_cost || ''}" oninput="updateRecBaseQty(${i}, ${remaining})">
+                            <label class="small font-weight-bold">Cost (per Unit) <span class="text-danger">*</span></label>
+                            <input type="number" name="items[${i}][actual_cost]" class="form-control form-control-sm rec-cost-input" step="0.01" min="0" value="${item.unit_cost || ''}" required oninput="updateRecBaseQty(${i}, ${remaining})">
                             <input type="hidden" name="items[${i}][base_actual_cost]" class="rec-base-cost-hidden" value="${item.unit_cost || ''}">
                         </div>
                     </div>
                 </div>
             </div>`;
-                    
+
                     // Fetch packaging for this product
-                    $.get('{{ route("products.packagings", ":id") }}'.replace(':id', productId))
-                        .done(function(res) {
-                            if (res.packagings) {
-                                var $sel = $(`.receive-item-row[data-index="${i}"] .rec-packaging-select`);
-                                $sel.data('prev-factor', 1);
-                                $.each(res.packagings, function(_, p) {
-                                    $sel.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
-                                });
-                            }
-                        });
+                    if (productId) {
+                        $.get('{{ route("products.packagings", ":id") }}'.replace(':id', productId))
+                            .done(function(res) {
+                                if (res.packagings) {
+                                    var $sel = $(`.receive-item-row[data-index="${i}"] .rec-packaging-select`);
+                                    $sel.data('prev-factor', 1);
+                                    $.each(res.packagings, function(_, p) {
+                                        $sel.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
+                                    });
+                                }
+                            });
+                    }
                 });
 
                 html += `<div class="row mt-2">
@@ -2433,7 +2972,7 @@
             });
 
             // ─── Security helper: HTML escaping ──────────────────────────────────────
-            function escHtml(str) {
+            window.escHtml = function(str) {
                 if (str === null || str === undefined) return '';
                 return String(str)
                     .replace(/&/g, '&amp;')
@@ -2451,7 +2990,7 @@
                 var factor = parseFloat($pkg.data('qty')) || 1;
                 var baseQty = qty * factor;
                 row.find('.req-base-qty-hidden').val(baseQty);
-                
+
                 var baseUnit = row.find('.req-product-select option:selected').data('base-unit') || 'units';
                 if (factor > 1 && qty > 0) {
                     row.find('.req-base-qty-hint').text(`= ${baseQty} ${baseUnit}`);
@@ -2466,7 +3005,7 @@
                 var factor = parseFloat($pkg.data('qty')) || 1;
                 var baseQty = qty * factor;
                 $('#batch-base-qty-hidden').val(baseQty);
-                
+
                 var baseUnit = $('#batch-product option:selected').data('base-unit') || 'units';
                 if (factor > 1 && qty > 0) {
                     $('#batch-qty-hint').text(`= ${baseQty} ${baseUnit}`);
@@ -2475,33 +3014,73 @@
                 }
             };
 
-            window.loadProductPackaging = function(select, index, type) {
-                var productId = $(select).val();
-                var $pkgSelect;
-                
-                if (type === 'batch') {
-                    $pkgSelect = $('#batch-packaging');
-                } else {
-                    var $row = $(select).closest('.' + type + '-item-row');
-                    $pkgSelect = $row.find('.' + type + '-packaging-select');
-                }
-                
-                $pkgSelect.html('<option value="" data-qty="1">Base Unit</option>');
-                $pkgSelect.data('prev-factor', 1);
-                if (!productId) return;
+            window.loadProductPackaging = function(productId, baseUnit, $pkgSelect) {
+                if (!$pkgSelect || $pkgSelect.length === 0) return;
+
+                $pkgSelect.empty();
+
+                // Add the Base Unit option first
+                var baseLabel = `Base Unit (${baseUnit || 'Piece'})`;
+                var $baseOpt = $('<option>', {
+                    value: '',
+                    text: baseLabel
+                }).attr('data-qty', 1).prop('selected', true);
+
+                $pkgSelect.append($baseOpt);
+                $pkgSelect.trigger('change');
+
+                if (!productId || productId === 'undefined' || productId === 'null' || isNaN(productId)) return;
 
                 $.get('{{ route("products.packagings", ":id") }}'.replace(':id', productId))
                     .done(function(res) {
-                        if (res.packagings) {
+                        if (res.packagings && res.packagings.length) {
                             $.each(res.packagings, function(_, p) {
-                                $pkgSelect.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
+                                var $opt = $('<option>', {
+                                    value: p.id,
+                                    text: `${p.name} (${p.base_unit_qty})`
+                                }).attr('data-qty', p.base_unit_qty);
+                                $pkgSelect.append($opt);
                             });
+                            $pkgSelect.trigger('change');
                         }
-                        if ($pkgSelect.hasClass('select2-hidden-accessible')) {
-                            $pkgSelect.trigger('change.select2');
+
+                        // Populate Cost Price default if field exists
+                        if (res.price) {
+                            // Prefer pr_buy_price (purchase cost) → fall back to current_sale_price
+                            var defaultPrice = parseFloat(res.price.pr_buy_price || res.price.current_sale_price || 0);
+
+                            // Check if we are in Manual Batch modal
+                            var $manualCost = $('#batch-cost-price');
+                            if ($manualCost.length && $pkgSelect.closest('#form-add-batch').length) {
+                                $manualCost.val(defaultPrice.toFixed(2));
+                            }
+
+                            // Check if we are in PO row
+                            var $poRow = $pkgSelect.closest('.po-item-row');
+                            if ($poRow.length) {
+                                var $costInput = $poRow.find('.po-cost-input');
+                                if ($costInput.length && !$costInput.val()) {
+                                    $costInput.val(defaultPrice.toFixed(2));
+                                }
+                            }
                         }
                     });
-            }
+            };
+
+            window.calculateDmgBaseQty = function() {
+                var qty = parseInt($('#damage-qty').val()) || 0;
+                var $pkg = $('#dmg-packaging option:selected');
+                var factor = parseFloat($pkg.data('qty')) || 1;
+                var baseQty = qty * factor;
+                $('#dmg-base-qty-hidden').val(baseQty);
+
+                var baseUnit = dmgSelectedBatch ? dmgSelectedBatch.base_unit_name : 'Piece';
+                if (factor > 1 && qty > 0) {
+                    $('#dmg-qty-hint').text(`= ${baseQty} ${baseUnit}`);
+                } else {
+                    $('#dmg-qty-hint').text('');
+                }
+            };
 
             window.calculatePoBaseQty = function(index) {
                 var $row = $(`.po-item-row[data-index="${index}"]`);
@@ -2528,7 +3107,7 @@
 
                 $row.find('.po-base-qty-hidden').val(baseQty);
                 $row.find('.po-base-cost-hidden').val(baseCost);
-                
+
                 if (factor > 1) {
                     $row.find('.po-base-qty-hint').text(`= ${baseQty} ${baseUnit}`);
                 } else {
@@ -2541,10 +3120,10 @@
                 var qty = parseFloat($row.find('.req-qty-input').val()) || 0;
                 var $pkgOpt = $row.find('.req-packaging-select option:selected');
                 var factor = parseFloat($pkgOpt.data('qty')) || 1;
-                
+
                 var baseQty = qty * factor;
                 $row.find('.req-base-qty-hidden').val(baseQty);
-                
+
                 if (factor > 1) {
                     $row.find('.req-base-qty-hint').text(`= ${baseQty} base units`);
                 } else {
@@ -2557,22 +3136,24 @@
                 var $pkgOpt = $('#adj-packaging option:selected');
                 var factor = parseFloat($pkgOpt.data('qty')) || 1;
                 var currentStock = adjSelectedBatch ? adjSelectedBatch.current_qty : 0;
-                
+                var baseUnit = adjSelectedBatch ? adjSelectedBatch.base_unit_name : 'units';
+
                 var baseQty = qty * factor;
                 $('#adj-base-qty-hidden').val(baseQty);
-                
+
                 if (adjSelectedType === 'subtract' && baseQty > currentStock) {
-                    $('#adj-qty-hint').html(`<span class="text-danger">Exceeds available stock (${currentStock} pieces)</span>`);
+                    $('#adj-qty-hint').html(`<span class="text-danger">Exceeds available stock (${currentStock} ${baseUnit})</span>`);
                     $('#btn-apply-adjustment').prop('disabled', true);
                 } else {
-                    if (factor > 1) {
-                        $('#adj-qty-hint').text(`= ${baseQty} pieces`);
+                    if (factor > 1 && qty > 0) {
+                        $('#adj-qty-hint').text(`= ${baseQty} ${baseUnit}`);
                     } else {
                         $('#adj-qty-hint').text('');
                     }
                     if (adjSelectedType && qty > 0) $('#btn-apply-adjustment').prop('disabled', false);
                 }
-            }
+                if (typeof checkAdjFormReady === 'function') checkAdjFormReady();
+            };
 
             window.updateRecBaseQty = function(index, remaining) {
                 var $row = $(`.receive-item-row[data-index="${index}"]`);
@@ -2592,13 +3173,13 @@
                     }
                 }
                 $pkgSelect.data('prev-factor', factor);
-                
+
                 var baseQty = qty * factor;
                 var baseCost = factor > 0 ? (cost / factor) : cost;
 
                 $row.find('.rec-base-qty-hidden').val(baseQty);
                 $row.find('.rec-base-cost-hidden').val(baseCost);
-                
+
                 if (baseQty > remaining) {
                     $row.find('.rec-base-qty-hint').html(`<span class="text-danger">Exceeds remaining (${remaining})</span>`);
                     $('#btn-submit-receive').prop('disabled', true);
@@ -2618,7 +3199,7 @@
             // ─── Select2 initialization ───────────────────────────────────────────────
             function initSelect2InModal(modalId) {
                 var $modal = $('#' + modalId);
-                $modal.find('select').each(function() {
+                $modal.find('select').not('.req-packaging-select, .po-packaging-select, .rec-packaging-select, #batch-packaging, #adj-packaging, #dmg-packaging').each(function() {
                     var $sel = $(this);
                     if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
                     $sel.select2({
@@ -2741,6 +3322,8 @@
             // Batch card click → go to step 2
             $(document).on('click', '.adj-batch-card', function() {
                 var batchData = $(this).data('batch');
+                if (!batchData) return; // Ignore if not a real batch card (e.g. return item cards)
+
                 if (typeof batchData === 'string') {
                     try { batchData = JSON.parse(batchData); } catch(e) { return; }
                 }
@@ -2758,15 +3341,9 @@
                 $('#btn-apply-adjustment').prop('disabled', true);
 
                 // Load packaging for this product
-                var $pkgSelect = $('#adj-packaging').html('<option value="">Base Unit</option>');
-                $.get('{{ route("products.packagings", ":id") }}'.replace(':id', batchData.product_id))
-                    .done(function(res) {
-                        if (res.packagings) {
-                            $.each(res.packagings, function(_, p) {
-                                $pkgSelect.append(`<option value="${p.id}" data-qty="${p.base_unit_qty}">${p.name} (${p.base_unit_qty})</option>`);
-                            });
-                        }
-                    });
+                if (batchData && batchData.product_id) {
+                    loadProductPackaging(batchData.product_id, batchData.base_unit_name, $('#adj-packaging'));
+                }
 
                 // Set hidden batch id
                 $('#adj-batch-id').val(batchData.id);
@@ -2826,7 +3403,7 @@
                 var typeOk = !!adjSelectedType;
                 var qtyOk  = parseInt($('#adj-qty').val()) > 0;
                 var reasonOk = !!$('#adj-reason').val();
-                
+
                 // Also check if subtract exceeds stock (already handled in calculateAdjBaseQty but good to be sure)
                 var factor = parseFloat($('#adj-packaging option:selected').data('qty')) || 1;
                 var baseQty = (parseInt($('#adj-qty').val()) || 0) * factor;
@@ -2877,22 +3454,788 @@
                 $('#btn-apply-adjustment').html('<i class="mdi mdi-check mr-1"></i>Apply Adjustment');
             });
 
-            window.calculateAdjBaseQty = function() {
-                var qty = parseInt($('#adj-qty').val()) || 0;
-                var $pkg = $('#adj-packaging option:selected');
-                var factor = parseFloat($pkg.data('qty')) || 1;
-                var baseQty = qty * factor;
-                $('#adj-base-qty-hidden').val(baseQty);
-                
-                var baseUnit = adjSelectedBatch ? adjSelectedBatch.base_unit_name : 'units';
-                if (factor > 1 && qty > 0) {
-                    $('#adj-qty-hint').text(`= ${baseQty} ${baseUnit}`);
-                } else {
-                    $('#adj-qty-hint').text('');
-                }
-                checkAdjFormReady();
-            };
 
-        })();
+
+
+
+        // Keep in sync when the store filter changes
+        $('#filter-store').on('change', function() {
+            currentStoreId = parseInt($(this).val(), 10) || null;
+        });
+
+        // ─── Toolbar triggers ────────────────────────────────────────────────────
+        $('#tb-record-damage').on('click', function() {
+            $('#damage-store-id').val(currentStoreId);
+            $('#form-record-damage')[0].reset();
+            $('#dmg-step-1').show();
+            $('#dmg-step-2').hide();
+            $('#btn-submit-damage').hide();
+            $('#modal-record-damage').modal('show');
+        });
+
+        $('#tb-return-req').on('click', function() {
+            $('#form-return-req')[0].reset();
+            $('#ret-step-1').show();
+            $('#ret-step-2, #ret-step-3').hide();
+            $('#btn-submit-ret-req').hide();
+            $('#modal-return-req').modal('show');
+        });
+
+        $('#tb-return-po').on('click', function() {
+            $('#form-return-po')[0].reset();
+            $('#ret-po-step-1').show();
+            $('#ret-po-step-2, #ret-po-step-3').hide();
+            $('#btn-submit-ret-po').hide();
+            $('#modal-return-po').modal('show');
+        });
+
+        // ─── Tally row action triggers ──────────────────────────────────────────
+        $(document).on('click', '.btn-row-damage', function(e) {
+            e.preventDefault();
+            var pid = $(this).data('pid');
+            var pname = $(this).data('pname');
+            var bid = $(this).data('bid');
+            var bnum = $(this).data('bnum');
+
+            $('#damage-store-id').val(currentStoreId);
+            $('#form-record-damage')[0].reset();
+
+            // Set step 1 search value
+            if ($('#dmg-product-filter').hasClass('select2-hidden-accessible')) {
+                $('#dmg-product-filter').val(pid).trigger('change');
+            } else {
+                $('#dmg-product-filter').val(pid);
+            }
+
+            $('#dmg-step-1').show();
+            $('#dmg-step-2').hide();
+            $('#btn-submit-damage').hide();
+            $('#modal-record-damage').modal('show');
+
+            // Auto-load batches and try to find the specific one
+            if (pid) {
+                $('#dmg-load-batches').trigger('click');
+                // We'll need a delay or a callback to select the specific batch card
+                var checkInterval = setInterval(function() {
+                    var $card = $('.dmg-batch-card').filter(function() {
+                        var b = $(this).data('batch');
+                        return b && b.id == bid;
+                    });
+                    if ($card.length > 0) {
+                        $card.trigger('click');
+                        clearInterval(checkInterval);
+                    }
+                }, 100);
+                setTimeout(function(){ clearInterval(checkInterval); }, 2000);
+            }
+        });
+
+        $(document).on('click', '.btn-row-return', function(e) {
+            e.preventDefault();
+            var reqId = $(this).data('req-id');
+            var reqNum = $(this).data('req-num');
+            var pid = $(this).data('pid');
+            var bid = $(this).data('bid');
+
+            $('#form-return-req')[0].reset();
+            $('#ret-step-1').show();
+            $('#ret-step-2, #ret-step-3').hide();
+            $('#btn-submit-ret-req').hide();
+            $('#modal-return-req').modal('show');
+
+            // Search for the specific requisition
+            var q = reqNum ? reqNum.replace('Requisition #', '').trim() : '';
+            $('#ret-search-input').val(q);
+            $('#ret-btn-search').trigger('click');
+
+            // Auto-select logic...
+            var checkInterval = setInterval(function() {
+                var $row = $('.ret-req-choice').filter(function() {
+                    var r = $(this).data('req');
+                    return r && r.id == reqId;
+                });
+                if ($row.length > 0) {
+                    $row.trigger('click');
+                    clearInterval(checkInterval);
+
+                    var itemInterval = setInterval(function() {
+                        var $item = $('.ret-item-card').filter(function() {
+                            var it = $(this).data('item');
+                            return it && it.product_id == pid;
+                        });
+                        if ($item.length > 0) {
+                            $item.trigger('click');
+                            clearInterval(itemInterval);
+
+                            var batchInterval = setInterval(function() {
+                                if ($('#ret-batch-select option[value="' + bid + '"]').length > 0) {
+                                    $('#ret-batch-select').val(bid).trigger('change');
+                                    clearInterval(batchInterval);
+                                }
+                            }, 100);
+                            setTimeout(function(){ clearInterval(batchInterval); }, 2000);
+                        }
+                    }, 100);
+                    setTimeout(function(){ clearInterval(itemInterval); }, 2000);
+                }
+            }, 100);
+            setTimeout(function(){ clearInterval(checkInterval); }, 2000);
+        });
+
+        $(document).on('click', '.btn-row-po-return', function(e) {
+            e.preventDefault();
+            var poId = $(this).data('po-id');
+            var poNum = $(this).data('po-num');
+            var pid = $(this).data('pid');
+            var bid = $(this).data('bid');
+
+            $('#form-return-po')[0].reset();
+            $('#ret-po-step-1').show();
+            $('#ret-po-step-2, #ret-po-step-3').hide();
+            $('#btn-submit-ret-po').hide();
+            $('#modal-return-po').modal('show');
+
+            $('#ret-po-search-input').val(poNum || '');
+            $('#ret-po-btn-search').trigger('click');
+
+            var checkInterval = setInterval(function() {
+                var $row = $('.ret-po-choice').filter(function() {
+                    var r = $(this).data('po');
+                    return r && r.id == poId;
+                });
+                if ($row.length > 0) {
+                    $row.trigger('click');
+                    clearInterval(checkInterval);
+
+                    var itemInterval = setInterval(function() {
+                        var $item = $('.ret-po-item-card').filter(function() {
+                            var it = $(this).data('item');
+                            return it && it.product_id == pid;
+                        });
+                        if ($item.length > 0) {
+                            $item.trigger('click');
+                            clearInterval(itemInterval);
+
+                            var batchInterval = setInterval(function() {
+                                if ($('#ret-po-batch-select option[value="' + bid + '"]').length > 0) {
+                                    $('#ret-po-batch-select').val(bid).trigger('change');
+                                    clearInterval(batchInterval);
+                                }
+                            }, 100);
+                            setTimeout(function(){ clearInterval(batchInterval); }, 2000);
+                        }
+                    }, 100);
+                    setTimeout(function(){ clearInterval(itemInterval); }, 2000);
+                }
+            }, 100);
+            setTimeout(function(){ clearInterval(checkInterval); }, 2000);
+        });
+
+        // ─── Modal Filters ──────────────────────────────────────────────────────
+        $(document).on('click', '.filter-pill', function() {
+            var $p = $(this);
+            $p.siblings().removeClass('active');
+            $p.addClass('active');
+
+            // Find parent and trigger related search
+            var parentId = $p.parent().attr('id');
+            if (parentId && parentId.indexOf('ret-filter') === 0) {
+                $('#ret-btn-search').trigger('click');
+            } else if (parentId && parentId.indexOf('ret-po-filter') === 0) {
+                $('#ret-po-btn-search').trigger('click');
+            } else if (parentId && parentId.indexOf('dmg-filter') === 0) {
+                $('#dmg-load-batches').trigger('click');
+            }
+        });
+
+        // ─── Modal 7: Record Store Damage ────────────────────────────────────────
+
+        var dmgSelectedBatch = null;
+
+        // Step 1: Search & Load Batches
+        if ($.fn.select2) {
+            $('#dmg-product-filter').select2({
+                dropdownParent: $('#modal-record-damage'),
+                width: '100%',
+                placeholder: '— Search product —'
+            });
+        }
+
+        function renderDmgBatches(batches, showProductName = false) {
+            var $container = $('#dmg-batch-list');
+            if (!batches || !batches.length) {
+                $container.html('<div class="alert alert-info py-2" style="font-size:0.8rem;"><i class="mdi mdi-information-outline mr-1"></i>No active batches found.</div>');
+                return;
+            }
+
+            var html = '<div class="row g-2">';
+            batches.forEach(function(b) {
+                var expiry = b.expiry_date ? b.expiry_date : 'No Expiry';
+                html += `
+                    <div class="col-md-6">
+                        <div class="adj-batch-card dmg-batch-card" data-batch='${JSON.stringify(b)}'>
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="batch-num">#${escHtml(b.batch_number || 'N/A')}</span>
+                                <span class="badge ${b.current_qty > 0 ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger'}">
+                                    ${b.current_qty} in stock
+                                </span>
+                            </div>
+                            ${showProductName ? `<div class="font-weight-600 small mb-1 text-truncate" title="${escHtml(b.product_name)}">${escHtml(b.product_name)}</div>` : ''}
+                            <div class="batch-meta">Exp: ${escHtml(expiry)}</div>
+                            <div class="batch-meta">Cost: ₦${parseFloat(b.unit_cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        </div>
+                    </div>`;
+            });
+            html += '</div>';
+            $container.html(html);
+        }
+
+        function loadRecentDmgBatches() {
+            var status = $('#dmg-filter-status .filter-pill.active').data('value') || 'recent';
+            $('#dmg-batch-list').html('<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading recent activity…</div>');
+            $.getJSON('{{ route("inventory.store-damages.get-recent-batches") }}', {
+                store_id: currentStoreId,
+                status: status
+            }, function(res) {
+                renderDmgBatches(res.batches, true);
+            });
+        }
+
+        $('#dmg-load-batches').on('click', function() {
+            var pid = $('#dmg-product-filter').val();
+            if (!pid) return loadRecentDmgBatches();
+
+            $('#dmg-batch-list').html('<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading…</div>');
+            $.getJSON('{{ route("inventory.store-damages.get-batches") }}', {
+                product_id: pid,
+                store_id: currentStoreId,
+            }, function(r) {
+                renderDmgBatches(r.batches, false);
+            });
+        });
+
+        $('#modal-record-damage').on('shown.bs.modal', function() {
+            $('#dmg-product-filter').select2('open');
+            var currentProductId = (currentAxis === 'product') ? $('#filter-product').val() : null;
+            var $dmgProductFilter = $('#dmg-product-filter');
+
+            if (currentProductId && !$dmgProductFilter.val()) {
+                $dmgProductFilter.val(currentProductId).trigger('change');
+                setTimeout(function() {
+                    $('#dmg-load-batches').trigger('click');
+                }, 100);
+            } else if (!$dmgProductFilter.val()) {
+                loadRecentDmgBatches();
+            }
+        });
+
+        $(document).on('click', '.dmg-batch-card', function() {
+            var b = $(this).data('batch');
+            if (typeof b === 'string') b = JSON.parse(b);
+            dmgSelectedBatch = b;
+
+            $('#damage-batch-id').val(b.id);
+            $('#damage-product-id').val(b.product_id);
+            $('#damage-unit-cost').val(b.unit_cost || 0);
+            $('#damage-qty').attr('max', b.current_qty).val(1);
+
+            loadProductPackaging(b.product_id, b.base_unit_name, $('#dmg-packaging'));
+            setTimeout(calculateDmgBaseQty, 200);
+
+            $('#dmg-batch-info-panel').html(`
+                <div class="info-row"><span class="info-label">Product</span><span class="info-value">${escHtml(b.product_name)}</span></div>
+                <div class="info-row"><span class="info-label">Batch</span><span class="info-value">#${escHtml(b.batch_number)}</span></div>
+                <div class="info-row"><span class="info-label">Available</span><span class="info-value text-success">${b.current_qty}</span></div>
+            `);
+
+            $('#dmg-step-1').hide();
+            $('#dmg-step-2').fadeIn();
+            $('#btn-submit-damage').show().prop('disabled', false);
+        });
+
+        $('#dmg-back-btn').on('click', function() {
+            $('#dmg-step-2').hide();
+            $('#dmg-step-1').fadeIn();
+            $('#btn-submit-damage').hide();
+        });
+
+        $('#btn-submit-damage').on('click', function() {
+            $('#form-record-damage').submit();
+        });
+
+        $('#form-record-damage').on('submit', function(e) {
+            e.preventDefault();
+            var $btn = $('#btn-submit-damage').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving…');
+
+            var data = $(this).serializeArray();
+            // Replace qty_damaged with the base quantity (the system expects base units)
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].name === 'qty_damaged') {
+                    data[i].value = $('#dmg-base-qty-hidden').val();
+                }
+            }
+
+            $.ajax({
+                url: '{{ route("inventory.store-damages.store") }}',
+                method: 'POST',
+                data: data,
+                dataType: 'json',
+            })
+            .done(function(r) {
+                if (r.success) {
+                    toastSuccess(r.message || 'Damage recorded');
+                    $('#modal-record-damage').modal('hide');
+                    loadTally();
+                } else {
+                    toastError(r.message || 'Failed to record damage');
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Record Damage');
+                }
+            })
+            .fail(function(xhr) {
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Request failed';
+                toastError(msg);
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Record Damage');
+            });
+        });
+
+        // ─── Modal 8: Return Requisition Items ───────────────────────────────────
+
+        var retSelectedReq = null;
+        var retSelectedItem = null;
+        var retSearchTimer;
+
+        $('#ret-search-input').on('input', function() {
+            clearTimeout(retSearchTimer);
+            var q = $(this).val();
+            if (q.length >= 2) {
+                retSearchTimer = setTimeout(function() {
+                    $('#ret-btn-search').trigger('click');
+                }, 400);
+            }
+        });
+
+        $('#ret-btn-search').on('click', function() {
+            var q = $('#ret-search-input').val();
+            var involvement = $('#ret-filter-involvement .filter-pill.active').data('value') || 'received';
+            var days = $('#ret-filter-date .filter-pill.active').data('value') || 30;
+            var currentPid = (currentAxis === 'product') ? $('#filter-product').val() : null;
+
+            var $res = $('#ret-requisition-results').html('<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading…</div>');
+
+            $.getJSON('{{ route("inventory.requisition-returns.search-requisitions") }}', {
+                q: q,
+                store_id: currentStoreId,
+                product_id: currentPid,
+                involvement: involvement,
+                days: days
+            }, function(r) {
+                var html = '';
+                if (r.is_fallback) {
+                    html += '<div class="alert alert-info py-2" style="font-size:0.75rem;"><i class="mdi mdi-information-outline mr-1"></i>No requisitions found for this product. Showing all recent activity:</div>';
+                }
+
+                if (!r.requisitions || r.requisitions.length === 0) {
+                    $res.html('<div class="alert alert-warning py-2" style="font-size:0.8rem;">No requisitions found matching those filters.</div>');
+                    return;
+                }
+
+                html += '<div class="list-group list-group-flush border rounded">';
+                r.requisitions.forEach(function(req) {
+                    html += `
+                        <a href="javascript:void(0)" class="list-group-item list-group-item-action ret-req-choice" data-req='${JSON.stringify(req)}'>
+                            <div class="d-flex justify-content-between">
+                                <span class="font-weight-600">${escHtml(req.requisition_number)}</span>
+                                <small class="text-muted">${req.fulfilled_at_label}</small>
+                            </div>
+                            <div class="small text-muted">From: ${escHtml(req.from_store_name)} &rarr; To: ${escHtml(req.to_store_name)} | ${req.items_count} items</div>
+                        </a>`;
+                });
+                html += '</div>';
+                $res.html(html);
+            });
+        });
+
+        $('#modal-return-req').on('shown.bs.modal', function() {
+            $('#ret-search-input').focus();
+            if (!$('#ret-search-input').val()) {
+                $('#ret-btn-search').trigger('click');
+            }
+        });
+
+        $(document).on('click', '.ret-req-choice', function() {
+            var req = $(this).data('req');
+            if (typeof req === 'string') req = JSON.parse(req);
+            retSelectedReq = req;
+
+            $('#ret-requisition-id-hidden').val(req.id);
+            $('#ret-source-store-id').val(req.to_store_id);
+            $('#ret-dest-store-id').val(req.from_store_id);
+
+            var hint = `Source: <strong>${escHtml(req.to_store_name)}</strong> (Returning) &rarr; Dest: <strong>${escHtml(req.from_store_name)}</strong> (Receiving)`;
+            $('#ret-direction-hint').html(hint);
+
+            // Load items
+            var $list = $('#ret-item-list').html('<div class="spinner-border spinner-border-sm"></div>');
+            $.getJSON('{{ route("inventory.requisition-returns.req-items") }}', { requisition_id: req.id }, function(res) {
+                var html = '<div class="row g-2">';
+                (res.items || []).forEach(function(it) {
+                    html += `
+                        <div class="col-md-6">
+                            <div class="adj-batch-card ret-item-card" data-item='${JSON.stringify(it)}'>
+                                <div class="font-weight-600 mb-1">${escHtml(it.product_name)}</div>
+                                <div class="d-flex justify-content-between small">
+                                    <span>Fulfilled: ${it.fulfilled_qty}</span>
+                                    <span class="text-info">Returnable: ${it.returnable_qty}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                html += '</div>';
+                $list.html(html);
+            });
+
+            $('#ret-step-1').hide();
+            $('#ret-step-2').fadeIn();
+        });
+
+        $(document).on('click', '.ret-item-card', function() {
+            var it = $(this).data('item');
+            if (typeof it === 'string') it = JSON.parse(it);
+            retSelectedItem = it;
+
+            $('#ret-item-id-hidden').val(it.id);
+            $('#ret-product-id-hidden').val(it.product_id);
+            $('#ret-qty').attr('max', it.returnable_qty).val(1);
+            $('#ret-max-qty-hint').text(`Max returnable: ${it.returnable_qty}`);
+
+            $('#ret-item-info-panel').html(`
+                <div class="info-row"><span class="info-label">Product</span><span class="info-value">${escHtml(it.product_name)}</span></div>
+                <div class="info-row"><span class="info-label">Returnable</span><span class="info-value text-info">${it.returnable_qty}</span></div>
+            `);
+
+            // Load batches for this product in the returning store
+            var $b = $('#ret-batch-select').html('<option value="">— Auto / FIFO —</option>');
+            $.getJSON('{{ route("inventory.requisition-returns.batches-for-product") }}', {
+                product_id: it.product_id,
+                store_id: retSelectedReq.to_store_id, // The store returning the items
+            }, function(r) {
+                (r.batches || []).forEach(function(batch) {
+                    var costFmt = parseFloat(batch.unit_cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    var costTxt = parseFloat(batch.unit_cost || 0) === 0 ? 'Donation' : '₦' + costFmt;
+                    var expTxt  = batch.expiry_date || 'No Expiry';
+                    $b.append(`<option value="${batch.id}">${escHtml(batch.batch_number)} | Qty: ${batch.current_qty} | Cost: ${costTxt} | Exp: ${expTxt}</option>`);
+                });
+            });
+
+            $('#ret-step-2').hide();
+            $('#ret-step-3').fadeIn();
+            $('#btn-submit-ret-req').show().prop('disabled', false);
+        });
+
+        $('#ret-back-to-search').on('click', function() {
+            $('#ret-step-2').hide();
+            $('#ret-step-1').fadeIn();
+        });
+
+        $('#ret-back-to-items').on('click', function() {
+            $('#ret-step-3').hide();
+            $('#ret-step-2').fadeIn();
+            $('#btn-submit-ret-req').hide();
+        });
+
+        $('#btn-submit-ret-req').on('click', function() {
+            var $form = $('#form-return-req');
+            if (!$form[0].checkValidity()) return $form[0].reportValidity();
+
+            var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing…');
+
+            $.ajax({
+                url: '{{ route("inventory.requisition-returns.store") }}',
+                method: 'POST',
+                data: $form.serialize(),
+                dataType: 'json',
+            })
+            .done(function(r) {
+                if (r.success) {
+                    toastSuccess(r.message || 'Return submitted');
+                    $('#modal-return-req').modal('hide');
+                    loadTally();
+                } else {
+                    toastError(r.message || 'Failed to submit return');
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Submit Return');
+                }
+            });
+        });
+
+        // ─── Modal 9: Return PO Items ────────────────────────────────────────────
+
+        var retSelectedPo = null;
+        var retSelectedPoItem = null;
+        var retPoSearchTimer;
+
+        $('#ret-po-search-input').on('input', function() {
+            clearTimeout(retPoSearchTimer);
+            var q = $(this).val();
+            if (q.length >= 2) {
+                retPoSearchTimer = setTimeout(function() {
+                    $('#ret-po-btn-search').trigger('click');
+                }, 400);
+            }
+        });
+
+        $('#ret-po-btn-search').on('click', function() {
+            var q = $('#ret-po-search-input').val();
+            var days = $('#ret-po-filter-date .filter-pill.active').data('value') || 30;
+            var currentPid = (currentAxis === 'product') ? $('#filter-product').val() : null;
+
+            var $res = $('#ret-po-results').html('<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading…</div>');
+
+            $.getJSON('{{ route("inventory.po-returns.search-pos") }}', {
+                q: q,
+                store_id: currentStoreId,
+                product_id: currentPid,
+                days: days
+            }, function(r) {
+                var html = '';
+                if (r.is_fallback) {
+                    html += '<div class="alert alert-info py-2" style="font-size:0.75rem;"><i class="mdi mdi-information-outline mr-1"></i>No POs found for this product. Showing all recent receipts:</div>';
+                }
+
+                if (!r.pos || r.pos.length === 0) {
+                    $res.html('<div class="alert alert-warning py-2" style="font-size:0.8rem;">No received purchase orders found.</div>');
+                    return;
+                }
+
+                html += '<div class="list-group list-group-flush border rounded">';
+                r.pos.forEach(function(po) {
+                    html += `
+                        <a href="javascript:void(0)" class="list-group-item list-group-item-action ret-po-choice" data-po='${JSON.stringify(po)}'>
+                            <div class="d-flex justify-content-between">
+                                <span class="font-weight-600">${escHtml(po.po_number)}</span>
+                                <small class="text-muted">${po.received_at_label}</small>
+                            </div>
+                            <div class="small text-muted">Supplier: ${escHtml(po.supplier_name)} | ${po.items_count} items</div>
+                        </a>`;
+                });
+                html += '</div>';
+                $res.html(html);
+            });
+        });
+
+        $('#modal-return-po').on('shown.bs.modal', function() {
+            $('#ret-po-search-input').focus();
+            if (!$('#ret-po-search-input').val()) {
+                $('#ret-po-btn-search').trigger('click');
+            }
+        });
+
+        $(document).on('click', '.ret-po-choice', function() {
+            var po = $(this).data('po');
+            if (typeof po === 'string') po = JSON.parse(po);
+            retSelectedPo = po;
+
+            $('#ret-po-id-hidden').val(po.id);
+            $('#ret-po-info-panel').html(`
+                <div class="info-row"><span class="info-label">PO Number</span><span class="info-value">${escHtml(po.po_number)}</span></div>
+                <div class="info-row"><span class="info-label">Supplier</span><span class="info-value">${escHtml(po.supplier_name)}</span></div>
+            `);
+
+            // Load items
+            var $list = $('#ret-po-item-list').html('<div class="spinner-border spinner-border-sm"></div>');
+            $.getJSON('{{ route("inventory.po-returns.po-items") }}', { purchase_order_id: po.id }, function(res) {
+                var html = '<div class="row g-2">';
+                (res.items || []).forEach(function(it) {
+                    html += `
+                        <div class="col-md-6">
+                            <div class="adj-batch-card ret-po-item-card" data-item='${JSON.stringify(it)}'>
+                                <div class="font-weight-600 mb-1">${escHtml(it.product_name)}</div>
+                                <div class="d-flex justify-content-between small">
+                                    <span>Received: ${it.received_qty}</span>
+                                    <span class="text-danger">Returnable: ${it.returnable_qty}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                html += '</div>';
+                $list.html(html);
+            });
+
+            $('#ret-po-step-1').hide();
+            $('#ret-po-step-2').fadeIn();
+        });
+
+        $(document).on('click', '.ret-po-item-card', function() {
+            var it = $(this).data('item');
+            if (typeof it === 'string') it = JSON.parse(it);
+            retSelectedPoItem = it;
+
+            $('#ret-po-item-id-hidden').val(it.id);
+            $('#ret-po-product-id-hidden').val(it.product_id);
+            $('#ret-po-unit-cost-hidden').val(it.unit_cost);
+            $('#ret-po-qty').attr('max', it.returnable_qty).val(1);
+            $('#ret-po-max-qty-hint').text(`Max returnable: ${it.returnable_qty}`);
+
+            $('#ret-po-item-info-panel').html(`
+                <div class="info-row"><span class="info-label">Product</span><span class="info-value">${escHtml(it.product_name)}</span></div>
+                <div class="info-row"><span class="info-label">Received Qty</span><span class="info-value">${it.received_qty}</span></div>
+            `);
+
+            // Load batches for this product
+            var $b = $('#ret-po-batch-select').html('<option value="">— Auto / FIFO —</option>');
+            $.getJSON('{{ route("inventory.requisition-returns.batches-for-product") }}', {
+                product_id: it.product_id,
+                store_id: currentStoreId,
+            }, function(r) {
+                (r.batches || []).forEach(function(batch) {
+                    var costFmt = parseFloat(batch.unit_cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    var costTxt = parseFloat(batch.unit_cost || 0) === 0 ? 'Donation' : '₦' + costFmt;
+                    var expTxt  = batch.expiry_date || 'No Expiry';
+                    $b.append(`<option value="${batch.id}">${escHtml(batch.batch_number)} | Qty: ${batch.current_qty} | Cost: ${costTxt} | Exp: ${expTxt}</option>`);
+                });
+            });
+
+            $('#ret-po-step-2').hide();
+            $('#ret-po-step-3').fadeIn();
+            $('#btn-submit-ret-po').show().prop('disabled', false);
+        });
+
+        $('#ret-po-back-to-search').on('click', function() {
+            $('#ret-po-step-2').hide();
+            $('#ret-po-step-1').fadeIn();
+        });
+
+        $('#ret-po-back-to-items').on('click', function() {
+            $('#ret-po-step-3').hide();
+            $('#ret-po-step-2').fadeIn();
+            $('#btn-submit-ret-po').hide();
+        });
+
+        $('#btn-submit-ret-po').on('click', function() {
+            var $form = $('#form-return-po');
+            if (!$form[0].checkValidity()) return $form[0].reportValidity();
+
+            var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing…');
+
+            $.ajax({
+                url: '{{ route("inventory.po-returns.store") }}',
+                method: 'POST',
+                data: $form.serialize(),
+                dataType: 'json',
+            })
+            .done(function(r) {
+                if (r.success) {
+                    toastSuccess(r.message || 'PO Return submitted');
+                    $('#modal-return-po').modal('hide');
+                    loadTally();
+                } else {
+                    toastError(r.message || 'Failed to submit PO return');
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Submit Return');
+                }
+            })
+            .fail(function(xhr) {
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Request failed';
+                toastError(msg);
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Submit Return');
+            });
+        });
+
+        // ─── Pending Panels D & E (damages / req-returns) ───────────────────────
+
+        function renderDamagesPanel(items) {
+            var $list = $('#damages-list').empty();
+            if (!items || !items.length) {
+                $list.html('<div class="text-center text-muted py-4" style="font-size:0.84rem;"><i class="mdi mdi-check-circle-outline d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>No pending damages</div>');
+                return;
+            }
+            items.forEach(function(d) {
+                $list.append(
+                    '<div class="po-row">' +
+                      '<div>' +
+                        '<div class="req-ref">' + (d.product ? d.product.product_name : 'Product #'+d.product_id) + '</div>' +
+                        '<div class="req-meta">Type: ' + d.damage_type + ' | Qty: ' + d.qty_damaged + '</div>' +
+                      '</div>' +
+                      '<div class="d-flex align-items-center gap-2">' +
+                        '<span class="status-badge pending">Pending</span>' +
+                        '<a href="{{ url('inventory/store-damages') }}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">' +
+                          '<i class="mdi mdi-check"></i>' +
+                        '</a>' +
+                      '</div>' +
+                    '</div>'
+                );
+            });
+        }
+
+        function renderReqReturnsPanel(items) {
+            var $list = $('#req-returns-list').empty();
+            if (!items || !items.length) {
+                $list.html('<div class="text-center text-muted py-4" style="font-size:0.84rem;"><i class="mdi mdi-check-circle-outline d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>No pending req returns</div>');
+                return;
+            }
+            items.forEach(function(r) {
+                $list.append(
+                    '<div class="po-row">' +
+                      '<div>' +
+                        '<div class="req-ref">Return #' + r.id + '</div>' +
+                        '<div class="req-meta">Qty: ' + r.qty_returned + ' | ' + (r.return_condition||'') + '</div>' +
+                      '</div>' +
+                      '<div class="d-flex align-items-center gap-2">' +
+                        '<span class="status-badge pending">Pending</span>' +
+                        '<a href="{{ url('inventory/requisition-returns') }}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">' +
+                          '<i class="mdi mdi-check"></i>' +
+                        '</a>' +
+                      '</div>' +
+                    '</div>'
+                );
+            });
+        }
+
+        // Extend the existing loadPendingActions to also populate panels D & E
+        var _origPendingCb = window.__pendingActionsCb;
+        $(document).on('pendingActionsLoaded', function(e, data) {
+            if (data && data.counts) {
+                $('#badge-damages').text(data.counts.damages || 0);
+                $('#badge-req-returns').text(data.counts.req_returns || 0);
+                $('#badge-po-returns').text(data.counts.po_returns || 0);
+            }
+            renderDamagesPanel(data.damages || []);
+            renderReqReturnsPanel(data.req_returns || []);
+            renderPoReturnsPanel(data.po_returns || []);
+        });
+
+        function renderPoReturnsPanel(items) {
+            var html = '';
+            if (!items || items.length === 0) {
+                html = '<div class="text-center text-muted py-4" style="font-size:0.84rem;"><i class="mdi mdi-check-circle-outline d-block mb-1" style="font-size:1.8rem; opacity:.4;"></i>No pending PO returns</div>';
+            } else {
+                items.forEach(function(it) {
+                    html += `
+                        <div class="req-row">
+                            <div>
+                                <div class="req-ref">${escHtml(it.purchase_order ? it.purchase_order.po_number : 'PO#'+it.purchase_order_id)}</div>
+                                <div class="req-meta">${escHtml(it.product ? it.product.product_name : 'Item')} ×${it.quantity}</div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="status-badge ${it.status}">${it.status}</span>
+                                <a href="{{ url('inventory/purchase-order-returns') }}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
+                                    <i class="mdi mdi-check"></i>
+                                </a>
+                            </div>
+                        </div>`;
+                });
+            }
+            $('#po-returns-list').html(html);
+        }
+
+        // Helper toast aliases (in case named differently in outer scope)
+        function toastSuccess(msg) {
+            if (typeof toast === 'function') toast(msg, 'success');
+            else alert(msg);
+        }
+        function toastError(msg) {
+            if (typeof toast === 'function') toast(msg, 'error');
+            else alert('Error: ' + msg);
+        }
+
+    })();
     </script>
 @endsection

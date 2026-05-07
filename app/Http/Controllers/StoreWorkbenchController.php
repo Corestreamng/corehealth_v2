@@ -490,7 +490,7 @@ class StoreWorkbenchController extends Controller
         $request->validate([
             'supplier_id' => 'nullable|exists:suppliers,id',
             'quantity' => 'required|integer|min:1',
-            'cost_price' => 'nullable|numeric|min:0',
+            'cost_price' => 'required|numeric|min:0', // Required per user request
             'expiry_date' => 'nullable|date|after:today',
             'batch_name' => 'nullable|string|max:100',
             'batch_number' => 'required|string|max:100|unique:stock_batches,batch_number',
@@ -852,8 +852,8 @@ class StoreWorkbenchController extends Controller
         $transactions = $query->get();
 
         // Type classification helpers
-        $inboundTypes  = ['in', 'transfer_in', 'return'];
-        $outboundTypes = ['out', 'transfer_out', 'expired', 'damaged'];
+        $inboundTypes  = ['in', 'transfer_in', 'return', 'req_return'];
+        $outboundTypes = ['out', 'transfer_out', 'expired', 'damaged', 'po_return'];
 
         // Human-readable labels and optional deep-link URLs per reference_type
         $refLabelMap = [
@@ -865,6 +865,9 @@ class StoreWorkbenchController extends Controller
             'MedicationAdministration' => ['prefix' => 'Med Admin',           'url_route' => null],
             'PharmacyReturn'          => ['prefix' => 'Drug Return #',       'url_route' => null],
             'PharmacyDamage'          => ['prefix' => 'Damage #',            'url_route' => null],
+            'StoreDamage'             => ['prefix' => 'Store Damage #',      'url_route' => null],
+            'StoreRequisitionReturn'  => ['prefix' => 'Req Return #',        'url_route' => null],
+            'PurchaseOrderReturn'     => ['prefix' => 'PO Return #',         'url_route' => null],
             // Legacy migration rows created during initial data import
             'Migration'               => ['prefix' => 'Legacy Import',       'url_route' => null],
         ];
@@ -879,10 +882,49 @@ class StoreWorkbenchController extends Controller
             'expired'      => 'Expired',
             'damaged'      => 'Damaged',
             'adjustment'   => 'Adjustment',
+            'po_return'    => 'PO Return',
+            'req_return'   => 'Req Return',
         ];
 
         // Per-product running balance accumulator (used in both axes)
         $balances = []; // keyed by product_id
+
+        // --- 1. Calculate Opening Balances (Historical sum before date_from) ---
+        if ($dateFrom) {
+            $openingQuery = \App\Models\StockBatchTransaction::whereHas('stockBatch', function ($q) use ($storeId, $axis, $request) {
+                $q->where('store_id', $storeId);
+                if ($axis === 'product') {
+                    $q->where('product_id', (int) $request->product_id);
+                }
+            })->where('created_at', '<', $dateFrom);
+
+            // Fetch all historical transactions before the start date and group by product
+            $history = $openingQuery->get();
+            foreach ($history as $tx) {
+                $pid = $tx->stockBatch->product_id;
+                $txQty = (int) $tx->qty;
+
+                $isIn  = in_array($tx->type, $inboundTypes);
+                $isOut = in_array($tx->type, $outboundTypes);
+
+                if ($isIn) {
+                    $balances[$pid] = ($balances[$pid] ?? 0) + $txQty;
+                } elseif ($isOut) {
+                    $balances[$pid] = ($balances[$pid] ?? 0) - $txQty;
+                } elseif ($tx->type === 'adjustment') {
+                    if (str_starts_with($tx->notes ?? '', 'Positive adjustment')) {
+                        $balances[$pid] = ($balances[$pid] ?? 0) + $txQty;
+                    } else {
+                        $balances[$pid] = ($balances[$pid] ?? 0) - $txQty;
+                    }
+                }
+            }
+        }
+
+        // Snapshot opening balances per-product BEFORE processing the period's transactions.
+        // For product axis: single entry; for store axis: one per product seen in history.
+        $openingBalances = $balances; // keyed by product_id → qty at period start
+
         $totalIn  = 0;
         $totalOut = 0;
 
@@ -896,46 +938,53 @@ class StoreWorkbenchController extends Controller
             &$totalOut
         ) {
             $productId   = $tx->stockBatch->product_id;
-            $productName = $tx->stockBatch->product?->product_name ?? '—';
-            $productCode = $tx->stockBatch->product?->product_code ?? '';
+            $product     = $tx->stockBatch->product;
+            $productName = $product?->product_name ?? '—';
+            $productCode = $product?->product_code ?? '';
             $batchNumber = $tx->stockBatch->batch_number ?? '—';
-            $type        = $tx->type;
-            $qty         = abs((int) $tx->qty);
+            $expiryDate  = $tx->stockBatch->expiry_date ? $tx->stockBatch->expiry_date->format('Y-m-d') : '—';
+
+            // Cost price fallback: batch cost -> product sale price -> 0
+            $costPrice = (float) ($tx->stockBatch->cost_price ?? 0);
+            if ($costPrice <= 0 && $product && $product->price) {
+                $costPrice = (float) ($product->price->cur_sale_price ?? 0);
+            }
+
+            $type  = $tx->type;
+            $txQty = abs((int) $tx->qty);
 
             $isIn  = in_array($type, $inboundTypes);
             $isOut = in_array($type, $outboundTypes);
 
+            $balBefore = $balances[$productId] ?? 0;
+
             if ($isIn) {
-                $balances[$productId] = ($balances[$productId] ?? 0) + $qty;
-                $totalIn += $qty;
-                $inQty  = $qty;
+                $balances[$productId] = $balBefore + $txQty;
+                $totalIn += $txQty;
+                $inQty  = $txQty;
                 $outQty = 0;
             } elseif ($isOut) {
-                $balances[$productId] = ($balances[$productId] ?? 0) - $qty;
-                $totalOut += $qty;
+                $balances[$productId] = $balBefore - $txQty;
+                $totalOut += $txQty;
                 $inQty  = 0;
-                $outQty = $qty;
+                $outQty = $txQty;
             } else {
-                // TYPE_ADJUSTMENT — qty is always stored as unsigned absolute value (see StockBatch::recordTransaction)
-                // Direction is determined via the notes prefix set by StockService::adjustStock().
-                // We cannot use balance_after here because balance_after is per-batch, while $balances[$productId]
-                // is an aggregate across all batches for the product — comparing them would be incorrect.
-                $notes = $tx->notes ?? '';
-                $isPositiveAdj = str_starts_with($notes, 'Positive adjustment');
-                $currentBalance = $balances[$productId] ?? 0;
-
+                // Adjustment
+                $isPositiveAdj = str_starts_with($tx->notes ?? '', 'Positive adjustment');
                 if ($isPositiveAdj) {
-                    $balances[$productId] = $currentBalance + $qty;
-                    $totalIn += $qty;
-                    $inQty  = $qty;
+                    $balances[$productId] = $balBefore + $txQty;
+                    $totalIn += $txQty;
+                    $inQty  = $txQty;
                     $outQty = 0;
                 } else {
-                    $balances[$productId] = $currentBalance - $qty;
-                    $totalOut += $qty;
+                    $balances[$productId] = $balBefore - $txQty;
+                    $totalOut += $txQty;
                     $inQty  = 0;
-                    $outQty = $qty;
+                    $outQty = $txQty;
                 }
             }
+
+            $balAfter = $balances[$productId];
 
             // Resolve reference label and optional URL
             $refType  = $tx->reference_type;
@@ -948,73 +997,63 @@ class StoreWorkbenchController extends Controller
                 $map       = $refLabelMap[$shortType] ?? null;
 
                 if ($map) {
-                    // MedicationAdministration may have a null reference_id
                     $refLabel = $refId ? ($map['prefix'] . $refId) : rtrim($map['prefix'], ' #');
                     if ($map['url_route'] && $refId) {
                         try {
                             $refUrl = route($map['url_route'], $refId);
-                        } catch (\Exception $e) {
-                            $refUrl = null;
-                        }
+                        } catch (\Exception $e) { $refUrl = null; }
                     }
                 } else {
                     $refLabel = $refId ? ($shortType . ' #' . $refId) : $shortType;
                 }
             }
 
-            // Determine logical direction and visual badge type
-            // TYPE_IN with StoreRequisition ref is conceptually a transfer in
+            // Determine direction and labels
             if ($type === 'in' && class_basename($refType ?? '') === 'StoreRequisition') {
-                $direction  = 'transfer_in';
-                $typeLabel  = 'Transfer In';
-                $badgeType  = 'transfer_in';
+                $direction = 'transfer_in';
+                $typeLabel = 'Transfer In';
+                $badgeType = 'transfer_in';
             } elseif ($type === 'in' && class_basename($refType ?? '') === 'PurchaseOrder') {
-                $direction  = 'in';
-                $typeLabel  = 'PO Receipt';
-                $badgeType  = 'po_receipt';
+                $direction = 'in';
+                $typeLabel = 'PO Receipt';
+                $badgeType = 'po_receipt';
             } elseif ($type === 'in') {
-                $direction  = 'in';
-                $typeLabel  = $typeLabelMap[$type] ?? 'Stock In';
-                $badgeType  = 'in';
+                $direction = 'in';
+                $typeLabel = $typeLabelMap[$type] ?? 'Stock In';
+                $badgeType = 'in';
             } elseif ($type === 'adjustment') {
-                $direction  = 'adjustment';
-                $typeLabel  = $inQty > 0 ? 'Adj (+)' : 'Adj (-)';
-                $badgeType  = $inQty > 0 ? 'adjustment_in' : 'adjustment_out';
+                $direction = 'adjustment';
+                $typeLabel = $inQty > 0 ? 'Adj (+)' : 'Adj (-)';
+                $badgeType = $inQty > 0 ? 'adjustment_in' : 'adjustment_out';
             } else {
-                // For out, transfer_out, return, expired, damaged — use type as direction for granular styling
-                $direction  = $type;
-                $typeLabel  = $typeLabelMap[$type] ?? ucwords(str_replace('_', ' ', $type));
-                $badgeType  = $type;
+                $direction = $type;
+                $typeLabel = $typeLabelMap[$type] ?? ucwords(str_replace('_', ' ', $type));
+                $badgeType = $type;
             }
 
             return [
                 'id'              => $tx->id,
-                'date'            => $tx->created_at->format('Y-m-d'),
-                'time'            => $tx->created_at->format('H:i'),
                 'datetime'        => $tx->created_at->format('d M Y H:i'),
                 'product_id'      => $productId,
                 'product_name'    => $productName,
-                'product_code'    => $productCode,
-                'type'            => $type,
                 'type_label'      => $typeLabel,
                 'badge_type'      => $badgeType,
                 'direction'       => $direction,
                 'batch_number'    => $batchNumber,
+                'expiry_date'     => $expiryDate,
+                'cost_price'      => $costPrice,
+                'bal_before'      => $balBefore,
                 'in_qty'          => $inQty,
                 'out_qty'         => $outQty,
-                'product_balance' => $balances[$productId],
+                'bal_after'       => $balAfter,
                 'ref_label'       => $refLabel,
                 'ref_url'         => $refUrl,
                 'performer'       => $tx->performer->name ?? 'System',
                 'notes'           => $tx->notes,
-                'packaging'       => (optional($tx->stockBatch->product)->packagings ?? collect())->map(function ($p) {
-                    return [
-                        'id' => $p->id,
-                        'name' => $p->name,
-                        'base_unit_qty' => $p->base_unit_qty,
-                    ];
-                }),
-                'base_unit'       => optional($tx->stockBatch->product)->base_unit_name ?? 'Piece',
+                'packaging'       => ($product->packagings ?? collect())->map(fn($p) => [
+                    'id' => $p->id, 'name' => $p->name, 'base_unit_qty' => $p->base_unit_qty
+                ]),
+                'base_unit'       => $product->base_unit_name ?? 'Piece',
             ];
         });
 
@@ -1061,6 +1100,8 @@ class StoreWorkbenchController extends Controller
                 'total_in'          => $totalIn,
                 'total_out'         => $totalOut,
                 'net_movement'      => $totalIn - $totalOut,
+                'opening_balance'   => $axis === 'product' ? ($openingBalances[(int)$request->product_id] ?? 0) : null,
+                'opening_balances'  => $openingBalances, // keyed by product_id → qty at period start
                 'closing_balance'   => $singleBalance,
                 'current_store_stock' => $currentStoreStock,
                 'products_touched'  => count($balances),
@@ -1106,16 +1147,43 @@ class StoreWorkbenchController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $pendingDamages = \App\Models\StoreDamage::where('store_id', $storeId)
+            ->where('status', 'pending')
+            ->with(['product'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $pendingReqReturns = \App\Models\StoreRequisitionReturn::where(function ($q) use ($storeId) {
+                $q->where('source_store_id', $storeId)
+                  ->orWhere('destination_store_id', $storeId);
+            })
+            ->where('status', 'pending')
+            ->with(['product', 'sourceStore', 'destinationStore'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $pendingPoReturns = \App\Models\PurchaseOrderReturn::where('store_id', $storeId)
+            ->where('status', 'pending')
+            ->with(['purchaseOrder', 'product'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return response()->json([
             'success' => true,
             'counts' => [
-                'incoming' => $pendingIncomingReqs->count(),
-                'outgoing' => $pendingOutgoingReqs->count(),
-                'pos' => $pendingPOs->count(),
+                'incoming'    => $pendingIncomingReqs->count(),
+                'outgoing'    => $pendingOutgoingReqs->count(),
+                'pos'         => $pendingPOs->count(),
+                'damages'     => $pendingDamages->count(),
+                'req_returns' => $pendingReqReturns->count(),
+                'po_returns'  => $pendingPoReturns->count(),
             ],
-            'incoming' => $pendingIncomingReqs,
-            'outgoing' => $pendingOutgoingReqs,
-            'pos' => $pendingPOs,
+            'incoming'    => $pendingIncomingReqs,
+            'outgoing'    => $pendingOutgoingReqs,
+            'pos'         => $pendingPOs,
+            'damages'     => $pendingDamages,
+            'req_returns' => $pendingReqReturns,
+            'po_returns'  => $pendingPoReturns,
         ]);
     }
 
@@ -1172,9 +1240,11 @@ class StoreWorkbenchController extends Controller
                 'product_id'   => $batch->product_id,
                 'product_name' => $batch->product?->product_name ?? 'Unknown',
                 'product_code' => $batch->product?->product_code ?? null,
+                'base_unit_name' => $batch->product?->base_unit_name ?? 'Piece',
                 'current_qty'  => $batch->current_qty,
                 'expiry_date'  => $batch->expiry_date?->format('Y-m-d'),
                 'expiry_label' => $batch->expiry_date?->format('M d, Y') ?? 'No expiry',
+                'cost_price'   => (float) ($batch->cost_price ?? 0),
                 'is_expired'   => $batch->is_expired ?? false,
                 'is_expiring_soon' => $batch->expiry_date && $batch->expiry_date->diffInDays(now()) <= 30,
             ];
