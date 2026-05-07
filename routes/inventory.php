@@ -2,7 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\PurchaseOrderReturnController;
 use App\Http\Controllers\StoreRequisitionController;
+use App\Http\Controllers\StoreRequisitionReturnController;
+use App\Http\Controllers\StoreDamagesController;
 use App\Http\Controllers\StoreWorkbenchController;
 use App\Http\Controllers\StoreGovernanceController;
 use App\Http\Controllers\ExpenseController;
@@ -96,6 +99,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/tally-card', [StoreWorkbenchController::class, 'tallyCard'])->name('tally-card');
         Route::get('/tally-card/data', [StoreWorkbenchController::class, 'tallyCardData'])->name('tally-card.data');
         Route::get('/tally-card/pending-actions', [StoreWorkbenchController::class, 'pendingActions'])->name('tally-card.pending-actions');
+        Route::post('/tally-card/verify-action', [StoreWorkbenchController::class, 'verifyAction'])->name('tally-card.verify-action');
 
         // Reports
         Route::get('/reports/expiry', [StoreWorkbenchController::class, 'expiryReport'])->name('expiry-report');
@@ -128,6 +132,45 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/kpi/pharmacy', [StoreGovernanceController::class, 'kpiPharmacy'])->name('kpi.pharmacy');
         Route::get('/kpi/ward', [StoreGovernanceController::class, 'kpiWard'])->name('kpi.ward');
         Route::get('/kpi/store', [StoreGovernanceController::class, 'kpiStore'])->name('kpi.store');
+    });
+
+    // ===== STORE DAMAGES =====
+    Route::prefix('store-damages')->name('store-damages.')->group(function () {
+        Route::get('/', [StoreDamagesController::class, 'index'])->name('index');
+        Route::get('/datatables/list', [StoreDamagesController::class, 'datatables'])->name('datatables');
+        Route::get('/ajax/search-products', [StoreDamagesController::class, 'searchProducts'])->name('search-products');
+        Route::get('/ajax/get-batches', [StoreDamagesController::class, 'getBatches'])->name('get-batches');
+        Route::get('/ajax/get-recent-batches', [StoreDamagesController::class, 'getRecentBatches'])->name('get-recent-batches');
+        Route::post('/', [StoreDamagesController::class, 'store'])->name('store');
+        Route::get('/{id}', [StoreDamagesController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [StoreDamagesController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [StoreDamagesController::class, 'reject'])->name('reject');
+    });
+
+    // ===== REQUISITION RETURNS =====
+    Route::prefix('requisition-returns')->name('requisition-returns.')->group(function () {
+        Route::get('/', [StoreRequisitionReturnController::class, 'index'])->name('index');
+        Route::get('/datatables/list', [StoreRequisitionReturnController::class, 'datatables'])->name('datatables');
+        Route::get('/ajax/requisition-items', [StoreRequisitionReturnController::class, 'getRequisitionItems'])->name('req-items');
+        Route::get('/ajax/search-requisitions', [StoreRequisitionReturnController::class, 'searchRequisitions'])->name('search-requisitions');
+        Route::get('/ajax/batches-for-product', [StoreRequisitionReturnController::class, 'getBatchesForProduct'])->name('batches-for-product');
+        Route::post('/', [StoreRequisitionReturnController::class, 'store'])->name('store');
+        Route::get('/{id}', [StoreRequisitionReturnController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [StoreRequisitionReturnController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [StoreRequisitionReturnController::class, 'reject'])->name('reject');
+    });
+
+    // ===== PURCHASE ORDER RETURNS =====
+    Route::prefix('purchase-order-returns')->name('po-returns.')->group(function () {
+        Route::get('/', [PurchaseOrderReturnController::class, 'index'])->name('index');
+        Route::get('/datatables/list', [PurchaseOrderReturnController::class, 'datatables'])->name('datatables');
+        Route::get('/ajax/search-pos', [PurchaseOrderReturnController::class, 'searchPOs'])->name('search-pos');
+        Route::get('/ajax/po-items', [PurchaseOrderReturnController::class, 'getPOItems'])->name('po-items');
+        Route::get('/ajax/batches-for-item', [PurchaseOrderReturnController::class, 'getBatchesForItem'])->name('batches-for-item');
+        Route::post('/', [PurchaseOrderReturnController::class, 'store'])->name('store');
+        Route::get('/{id}', [PurchaseOrderReturnController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [PurchaseOrderReturnController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [PurchaseOrderReturnController::class, 'reject'])->name('reject');
     });
 
     // ===== EXPENSES =====

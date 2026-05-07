@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\StoreRequisition;
 use App\Models\StoreRequisitionItem;
+use App\Models\StoreRequisitionReturn;
 use App\Models\StockBatch;
+use App\Models\StockBatchTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
@@ -319,6 +321,85 @@ class RequisitionService
             $requisition->save();
 
             return $createdBatches;
+        });
+    }
+
+    /**
+     * Return items from a fulfilled requisition
+     *
+     * @param StoreRequisitionReturn $return
+     * @return void
+     */
+    public function returnItems(StoreRequisitionReturn $return): void
+    {
+        DB::transaction(function () use ($return) {
+            $qty = $return->qty_returned;
+
+            // 1. Deduct from source (returning) store
+            if ($return->batch_id) {
+                $batch = StockBatch::find($return->batch_id);
+                if ($batch && $batch->current_qty >= $qty) {
+                    $batch->deductStock(
+                        $qty,
+                        StockBatchTransaction::TYPE_REQ_RETURN,
+                        StoreRequisitionReturn::class,
+                        $return->id,
+                        "Req Return #{$return->id} — deducted from returning store"
+                    );
+                }
+            } else {
+                // FIFO from source store
+                $this->stockService->dispenseStock(
+                    $return->product_id,
+                    $return->source_store_id,
+                    $qty,
+                    StoreRequisitionReturn::class,
+                    $return->id,
+                    "Req Return #{$return->id} — FIFO deduction"
+                );
+            }
+
+            // 2. Re-stock at destination (origin) store if restock = true
+            if ($return->restock) {
+                // Find the original batch at destination store to add back to
+                $destBatch = StockBatch::where('product_id', $return->product_id)
+                    ->where('store_id', $return->destination_store_id)
+                    ->where('is_active', true)
+                    ->orderBy('received_date', 'asc')
+                    ->first();
+
+                if ($destBatch) {
+                    $destBatch->addStock(
+                        $qty,
+                        StockBatchTransaction::TYPE_REQ_RETURN,
+                        StoreRequisitionReturn::class,
+                        $return->id,
+                        "Req Return #{$return->id} — restocked at origin store"
+                    );
+                } else {
+                    // No existing batch — create a new one
+                    $sourceBatch = $return->batch_id
+                        ? StockBatch::find($return->batch_id)
+                        : null;
+
+                    $this->stockService->createBatch([
+                        'product_id'    => $return->product_id,
+                        'store_id'      => $return->destination_store_id,
+                        'batch_number'  => ($sourceBatch->batch_number ?? 'RET') . '-R' . $return->id,
+                        'qty'           => $qty,
+                        'cost_price'    => $sourceBatch->cost_price ?? 0,
+                        'received_date' => now()->toDateString(),
+                        'source'        => StockBatch::SOURCE_MANUAL,
+                        'reference_type' => StoreRequisitionReturn::class,
+                        'reference_id'   => $return->id,
+                        'notes'         => "Req Return #{$return->id} — new batch at origin store",
+                    ]);
+                }
+            }
+
+            // Sync both stores
+            $this->stockService->syncStoreStock($return->product_id, $return->source_store_id);
+            $this->stockService->syncStoreStock($return->product_id, $return->destination_store_id);
         });
     }
 
