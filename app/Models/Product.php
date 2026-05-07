@@ -20,7 +20,7 @@ class Product extends Model implements Auditable
     protected static function booted()
     {
         static::addGlobalScope('active', function ($builder) {
-            $builder->where('status', 1);
+            $builder->where('products.status', 1);
         });
     }
 
