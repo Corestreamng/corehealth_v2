@@ -80,6 +80,22 @@ class StaffController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
+            ->filterColumn('staff_info', function($query, $keyword) {
+                $query->where(function($q) use ($keyword) {
+                    $q->where('surname', 'like', "%{$keyword}%")
+                      ->orWhere('firstname', 'like', "%{$keyword}%")
+                      ->orWhere('othername', 'like', "%{$keyword}%")
+                      ->orWhere('email', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('contact', function($query, $keyword) {
+                $query->where(function($q) use ($keyword) {
+                    $q->where('email', 'like', "%{$keyword}%")
+                      ->orWhereHas('staff_profile', function($sq) use ($keyword) {
+                          $sq->where('phone_number', 'like', "%{$keyword}%");
+                      });
+                });
+            })
             ->addColumn('staff_info', function ($user) {
                 $avatar = view('components.user-avatar', [
                     'user' => $user,
@@ -416,7 +432,7 @@ class StaffController extends Controller
         if ($request->is_admin == 21) {
             //  Making sure specialization being validated for doctors
             $rules += [
-                'specialization' => 'required',
+                'specialization' => 'nullable',
             ];
         }
         if ($request->is_admin == 21) {
@@ -428,7 +444,7 @@ class StaffController extends Controller
         if ($request->is_admin == 21) {
             // Making sure consultation_fee being validated for doctors
             $rules += [
-                'consultation_fee' => 'required',
+                'consultation_fee' => 'nullable',
             ];
         }
 

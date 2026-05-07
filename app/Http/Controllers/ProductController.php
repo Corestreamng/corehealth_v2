@@ -571,11 +571,12 @@ class ProductController extends Controller
     {
         $product = Product::with(['packagings' => function($q) {
             $q->orderBy('level');
-        }])->findOrFail($productId);
+        }, 'price'])->findOrFail($productId);
 
         return response()->json([
             'base_unit_name' => $product->base_unit_name ?? 'Piece',
             'allow_decimal_qty' => (bool) $product->allow_decimal_qty,
+            'price' => $product->price,
             'packagings' => $product->packagings->map(fn($p) => [
                 'id' => $p->id,
                 'name' => $p->name,

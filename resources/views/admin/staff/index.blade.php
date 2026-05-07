@@ -111,7 +111,7 @@
                 },
                 "columns": [
                     { "data": "DT_RowIndex", "orderable": false, "searchable": false },
-                    { "data": "staff_info", "name": "surname" },
+                    { "data": "staff_info" },
                     { "data": "dept_info", "orderable": false },
                     { "data": "contact" },
                     { "data": "category_roles", "orderable": false },
