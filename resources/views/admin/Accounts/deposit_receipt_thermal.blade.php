@@ -10,7 +10,8 @@
             --border: #ccc;
             --success: #28a745;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; }
         .receipt-thermal { font-family: 'Segoe UI', Arial, sans-serif; font-size: 19px; width: 78mm; margin: 0; padding: 0; color: var(--ink); }
         .receipt-thermal .wrap { padding: 7px 7px 10px; }
         .receipt-thermal .receipt-header { text-align: center; margin-bottom: 8px; }
@@ -31,6 +32,8 @@
         .receipt-thermal .footer { margin-top: 8px; text-align: center; font-size: 15px; color: var(--muted); line-height: 1.7; }
         .receipt-thermal .footer .barcode { font-family: 'Libre Barcode 39', monospace; font-size: 36px; letter-spacing: -2px; }
         @media print {
+            @page { size: 78mm auto; margin: 0; }
+            body { margin: 0; }
             .receipt-thermal { width: 78mm; margin: 0; padding: 0; }
             .receipt-thermal .wrap { padding: 5px 5px 8px; }
         }
