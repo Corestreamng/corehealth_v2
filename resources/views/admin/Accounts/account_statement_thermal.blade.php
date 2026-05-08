@@ -39,6 +39,11 @@
         .statement-thermal-wrapper .amount { font-family: 'Consolas', monospace; }
 
         .statement-thermal-wrapper .footer { font-size: 14px; text-align: center; color: var(--muted); border-top: 1px dashed #000; padding-top: 6px; margin-top: 8px; line-height: 1.7; }
+        @media print {
+            @page { size: 78mm auto; margin: 0; }
+            body { margin: 0; }
+            .statement-thermal-wrapper { width: 78mm; margin: 0; padding: 5px; }
+        }
     </style>
 
     <div class="header">
