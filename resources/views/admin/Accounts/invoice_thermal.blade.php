@@ -6,38 +6,45 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         .invoice-thermal {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 19px;
             color: #000;
             background: #fff;
-            width: 80mm;
-            padding: 8px;
+            width: 78mm;
+            padding: 7px;
             line-height: 1.4;
         }
-        .invoice-thermal .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
-        .invoice-thermal .header img { width: 48px; height: auto; margin-bottom: 4px; }
-        .invoice-thermal .header .name { font-weight: bold; font-size: 14px; }
-        .invoice-thermal .header .address { font-size: 10px; color: #333; }
-        .invoice-thermal .title { text-align: center; font-weight: bold; font-size: 16px; margin: 8px 0; letter-spacing: 2px; }
-        .invoice-thermal .proforma-badge { text-align: center; background: #f59e0b; color: #fff; padding: 4px; font-size: 10px; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; }
-        .invoice-thermal .info { font-size: 11px; margin-bottom: 8px; }
+        .invoice-thermal .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
+        .invoice-thermal .header img { width: 96px; height: auto; margin-bottom: 5px; }
+        .invoice-thermal .header .name { font-weight: bold; font-size: 22px; }
+        .invoice-thermal .header .address { font-size: 16px; color: #333; line-height: 1.5; }
+        .invoice-thermal .title { text-align: center; font-weight: bold; font-size: 22px; margin: 8px 0; letter-spacing: 2px; }
+        .invoice-thermal .proforma-badge { text-align: center; background: #f59e0b; color: #fff; padding: 5px; font-size: 15px; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; }
+        .invoice-thermal .info { font-size: 16px; margin-bottom: 8px; line-height: 1.7; }
         .invoice-thermal .info div { display: flex; justify-content: space-between; }
         .invoice-thermal .info .label { color: #555; }
         .invoice-thermal .divider { border-top: 1px dashed #000; margin: 8px 0; }
-        .invoice-thermal table { width: 100%; border-collapse: collapse; font-size: 10px; }
-        .invoice-thermal th, .invoice-thermal td { padding: 4px 2px; text-align: left; }
-        .invoice-thermal th { border-bottom: 1px solid #000; font-weight: bold; }
-        .invoice-thermal .amount { text-align: right; }
-        .invoice-thermal .total-section { margin-top: 8px; font-size: 11px; }
-        .invoice-thermal .total-section div { display: flex; justify-content: space-between; padding: 2px 0; }
-        .invoice-thermal .grand-total { font-weight: bold; font-size: 14px; border-top: 1px double #000; padding-top: 4px; margin-top: 4px; }
+        .invoice-thermal .divider-solid { border-top: 2px solid #000; margin: 8px 0; }
+        /* Stacked item cards — same pattern as receipt_thermal */
+        .invoice-thermal .item-list { width: 100%; margin: 5px 0; }
+        .invoice-thermal .item-row { border-top: 1px dashed #bbb; padding: 7px 0 5px; }
+        .invoice-thermal .item-row:last-child { border-bottom: 1px dashed #bbb; }
+        .invoice-thermal .item-name { font-size: 18px; font-weight: 700; }
+        .invoice-thermal .item-type { font-size: 15px; color: #555; font-style: italic; margin-bottom: 3px; }
+        .invoice-thermal .item-line { display: flex; justify-content: space-between; font-size: 16px; line-height: 1.6; }
+        .invoice-thermal .item-line .label { color: #555; }
+        .invoice-thermal .item-line .val { font-weight: 600; }
+        .invoice-thermal .item-line .hmo { color: #059669; font-weight: 600; }
+        .invoice-thermal .total-section { margin-top: 8px; font-size: 18px; }
+        .invoice-thermal .total-section div { display: flex; justify-content: space-between; padding: 3px 0; border-top: 1px dashed #bbb; }
+        .invoice-thermal .grand-total { font-weight: bold; font-size: 21px; border-top: 2px solid #000 !important; padding-top: 5px !important; margin-top: 2px; }
         .invoice-thermal .hmo-coverage { color: #059669; }
-        .invoice-thermal .footer { text-align: center; font-size: 10px; color: #555; margin-top: 12px; border-top: 1px dashed #000; padding-top: 8px; }
-        .invoice-thermal .warning-note { background: #fef3c7; padding: 6px; font-size: 10px; text-align: center; margin-top: 8px; border: 1px solid #f59e0b; }
+        .invoice-thermal .footer { text-align: center; font-size: 15px; color: #555; margin-top: 12px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
+        .invoice-thermal .warning-note { background: #fef3c7; padding: 8px; font-size: 15px; text-align: center; margin-top: 8px; border: 1px solid #f59e0b; line-height: 1.5; }
         @media print {
-            @page { size: 80mm auto; margin: 0; }
+            @page { size: 78mm auto; margin: 0; }
             body { margin: 0; }
-            .invoice-thermal { width: 80mm; }
+            .invoice-thermal { width: 78mm; padding: 5px; }
         }
     </style>
 </head>
@@ -65,28 +72,29 @@
 
     <div class="divider"></div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Item</th>
-                <th class="amount">Qty</th>
-                <th class="amount">HMO</th>
-                <th class="amount">Amt</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach($invoiceDetails as $row)
-            <tr>
-                <td>{{ Str::limit($row['name'], 18) }}</td>
-                <td class="amount">{{ $row['qty'] }}</td>
-                <td class="amount hmo-coverage">{{ $row['hmo_coverage']> 0 ? number_format($row['hmo_coverage'], 0) : '-' }}</td>
-                <td class="amount">{{ number_format($row['amount'], 0) }}</td>
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
+    <div class="item-list">
+    @foreach($invoiceDetails as $row)
+        <div class="item-row">
+            <div class="item-name">{{ $row['name'] }}</div>
+            <div class="item-line">
+                <span class="label">Qty × Unit Price</span>
+                <span class="val">{{ $row['qty'] }} × ₦{{ number_format($row['price'] ?? ($row['amount'] / max($row['qty'],1)), 2) }}</span>
+            </div>
+            @if((float)($row['hmo_coverage'] ?? 0) > 0)
+            <div class="item-line">
+                <span class="label">HMO Coverage</span>
+                <span class="hmo">-₦{{ number_format($row['hmo_coverage'], 2) }}</span>
+            </div>
+            @endif
+            <div class="item-line">
+                <span class="label">Amount</span>
+                <span class="val">₦{{ number_format($row['amount'], 2) }}</span>
+            </div>
+        </div>
+    @endforeach
+    </div>
 
-    <div class="divider"></div>
+    <div class="divider-solid"></div>
 
     <div class="total-section">
         <div><span>Subtotal:</span><span>₦{{ number_format($totalAmount + $totalDiscount, 2) }}</span></div>

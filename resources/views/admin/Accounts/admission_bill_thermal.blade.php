@@ -6,41 +6,42 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         .admission-bill-thermal {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 19px;
             color: #000;
             background: #fff;
-            width: 80mm;
-            padding: 8px;
+            width: 78mm;
+            padding: 7px;
             line-height: 1.4;
         }
-        .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
-        .header img { width: 48px; height: auto; margin-bottom: 4px; }
-        .header .name { font-weight: bold; font-size: 13px; }
-        .header .address { font-size: 9px; color: #333; }
-        .title { text-align: center; font-weight: bold; font-size: 14px; margin: 8px 0; letter-spacing: 1px; border-bottom: 1px double #000; padding-bottom: 6px; }
-        .bill-no { text-align: center; font-size: 10px; color: #555; margin-bottom: 8px; }
-        .patient-info { margin-bottom: 8px; font-size: 11px; }
-        .patient-info .patient-name { font-weight: bold; font-size: 12px; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
+        .header img { width: 96px; height: auto; margin-bottom: 5px; }
+        .header .name { font-weight: bold; font-size: 22px; }
+        .header .address { font-size: 16px; color: #333; line-height: 1.5; }
+        .title { text-align: center; font-weight: bold; font-size: 22px; margin: 8px 0; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 6px; }
+        .bill-no { text-align: center; font-size: 16px; color: #555; margin-bottom: 8px; }
+        .patient-info { margin-bottom: 8px; font-size: 16px; line-height: 1.7; }
+        .patient-info .patient-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; }
         .info-row { display: flex; justify-content: space-between; }
-        .status-badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: bold; border: 1px solid #000; }
+        .status-badge { display: inline-block; padding: 3px 8px; font-size: 14px; font-weight: bold; border: 1px solid #000; margin-top: 4px; }
         .divider { border-top: 1px dashed #000; margin: 8px 0; }
 
         .category-section { margin-bottom: 8px; }
-        .category-header { font-weight: bold; background: #eee; padding: 4px; margin-bottom: 4px; display: flex; justify-content: space-between; }
-        .category-items { font-size: 10px; padding-left: 8px; }
-        .category-item { display: flex; justify-content: space-between; padding: 2px 0; }
+        .category-header { font-weight: bold; background: #eee; padding: 5px; margin-bottom: 4px; display: flex; justify-content: space-between; font-size: 17px; }
+        .category-items { font-size: 16px; padding-left: 10px; }
+        .category-item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dotted #ccc; }
+        .category-item:last-child { border-bottom: none; }
 
         .totals { margin-top: 8px; border-top: 1px solid #000; padding-top: 6px; }
-        .total-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
-        .total-row.grand { font-weight: bold; font-size: 14px; border-top: 1px double #000; margin-top: 4px; padding-top: 6px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 18px; padding: 3px 0; border-top: 1px dashed #bbb; }
+        .total-row.grand { font-weight: bold; font-size: 21px; border-top: 2px solid #000; margin-top: 4px; padding-top: 6px; }
 
-        .footer { text-align: center; font-size: 9px; color: #555; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; }
+        .footer { text-align: center; font-size: 15px; color: #555; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
 
         @media print {
-            @page { size: 80mm auto; margin: 0; }
+            @page { size: 78mm auto; margin: 0; }
             body { margin: 0; }
-            .admission-bill-thermal { width: 80mm; }
+            .admission-bill-thermal { width: 78mm; padding: 5px; }
         }
     </style>
 </head>

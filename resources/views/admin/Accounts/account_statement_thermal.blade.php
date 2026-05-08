@@ -5,48 +5,47 @@
             --brand: {{ $site->hos_color ?? '#0a6cf2' }};
             --ink: #000;
             --muted: #555;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 11px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 19px;
             color: var(--ink);
             background: #fff;
-            width: 72mm;
+            width: 78mm;
             margin: 0 auto;
-            padding: 8px;
+            padding: 7px;
             box-sizing: border-box;
         }
         .statement-thermal-wrapper * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .statement-thermal-wrapper .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
-        .statement-thermal-wrapper .hospital-name { font-size: 14px; font-weight: bold; }
-        .statement-thermal-wrapper .hospital-meta { font-size: 9px; color: var(--muted); }
-        .statement-thermal-wrapper .doc-title { font-size: 12px; font-weight: bold; margin-top: 6px; letter-spacing: 1px; }
+        .statement-thermal-wrapper .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
+        .statement-thermal-wrapper .hospital-name { font-size: 22px; font-weight: bold; }
+        .statement-thermal-wrapper .hospital-meta { font-size: 16px; color: var(--muted); line-height: 1.5; }
+        .statement-thermal-wrapper .doc-title { font-size: 22px; font-weight: bold; margin-top: 6px; letter-spacing: 1px; }
+        .statement-thermal-wrapper .date-range { font-size: 15px; margin-top: 3px; }
 
-        .statement-thermal-wrapper .patient-info { font-size: 10px; margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
+        .statement-thermal-wrapper .patient-info { font-size: 16px; margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 8px; line-height: 1.7; }
         .statement-thermal-wrapper .patient-info div { display: flex; justify-content: space-between; margin: 2px 0; }
         .statement-thermal-wrapper .patient-info .label { color: var(--muted); }
         .statement-thermal-wrapper .patient-info .value { font-weight: bold; text-align: right; }
 
-        .statement-thermal-wrapper .summary-box { background: #f5f5f5; padding: 6px; margin-bottom: 8px; font-size: 10px; }
-        .statement-thermal-wrapper .summary-row { display: flex; justify-content: space-between; margin: 2px 0; }
-        .statement-thermal-wrapper .summary-row.balance { border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; font-weight: bold; font-size: 12px; }
+        .statement-thermal-wrapper .summary-box { background: #f5f5f5; padding: 8px; margin-bottom: 8px; font-size: 16px; }
+        .statement-thermal-wrapper .summary-row { display: flex; justify-content: space-between; margin: 3px 0; }
+        .statement-thermal-wrapper .summary-row.balance { border-top: 2px solid #000; padding-top: 5px; margin-top: 5px; font-weight: bold; font-size: 21px; }
 
-        .statement-thermal-wrapper table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 8px; }
-        .statement-thermal-wrapper th { background: #333; color: #fff; padding: 4px 2px; text-align: left; font-size: 8px; }
-        .statement-thermal-wrapper td { padding: 3px 2px; border-bottom: 1px dotted #ccc; }
+        /* Table kept for ledger readability but fonts bumped up */
+        .statement-thermal-wrapper table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 8px; }
+        .statement-thermal-wrapper th { background: #333; color: #fff; padding: 5px 3px; text-align: left; font-size: 13px; }
+        .statement-thermal-wrapper td { padding: 4px 3px; border-bottom: 1px dotted #ccc; }
         .statement-thermal-wrapper .text-right { text-align: right; }
-
         .statement-thermal-wrapper .amount { font-family: 'Consolas', monospace; }
-        .statement-thermal-wrapper .credit { }
-        .statement-thermal-wrapper .debit { }
 
-        .statement-thermal-wrapper .footer { font-size: 8px; text-align: center; color: var(--muted); border-top: 1px dashed #000; padding-top: 6px; margin-top: 8px; }
+        .statement-thermal-wrapper .footer { font-size: 14px; text-align: center; color: var(--muted); border-top: 1px dashed #000; padding-top: 6px; margin-top: 8px; line-height: 1.7; }
     </style>
 
     <div class="header">
         <div class="hospital-name">{{ $site->site_name }}</div>
         <div class="hospital-meta">{{ $site->contact_phones }}</div>
         <div class="doc-title">ACCOUNT STATEMENT</div>
-        <div style="font-size: 9px;">{{ $dateFrom }} - {{ $dateTo }}</div>
+        <div class="date-range">{{ $dateFrom }} - {{ $dateTo }}</div>
     </div>
 
     <div class="patient-info">
