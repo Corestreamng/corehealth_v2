@@ -155,4 +155,10 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
 
         // ── Search Services (for billing at enrollment) ─────────────
         Route::get('/search-services', [MaternityWorkbenchController::class, 'searchServices'])->name('search-services');
+
+        // ── Partograph Tab (enrollment-level, pre & post delivery) ──
+        Route::get('/enrollment/{id}/maternity-partograph', [MaternityWorkbenchController::class, 'getMaternityPartographEntries'])->name('enrollment.maternity-partograph.index');
+        Route::post('/enrollment/{id}/maternity-partograph', [MaternityWorkbenchController::class, 'saveMaternityPartographEntry'])->name('enrollment.maternity-partograph.store');
+        Route::put('/enrollment/{id}/maternity-partograph/{entryId}', [MaternityWorkbenchController::class, 'updateMaternityPartographEntry'])->name('enrollment.maternity-partograph.update');
+        Route::delete('/enrollment/{id}/maternity-partograph/{entryId}', [MaternityWorkbenchController::class, 'deleteMaternityPartographEntry'])->name('enrollment.maternity-partograph.destroy');
     });
