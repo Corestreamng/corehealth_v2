@@ -9,7 +9,8 @@
             --muted: #111;
             --border: #bbb;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; }
         .receipt-thermal { font-family: 'Segoe UI', Arial, sans-serif; font-size: 19px; width: 78mm; margin: 0; padding: 0; color: var(--ink); }
         .receipt-thermal .wrap { padding: 7px 7px 10px; }
         .receipt-thermal .receipt-header { text-align: center; margin-bottom: 8px; }
@@ -37,6 +38,8 @@
         .receipt-thermal .receipt-notes { margin-top: 7px; font-size: 16px; color: var(--muted); line-height: 1.5; }
         .receipt-thermal .receipt-footer { margin-top: 8px; font-size: 16px; color: var(--muted); line-height: 1.6; }
         @media print {
+            @page { size: 78mm auto; margin: 0; }
+            body { margin: 0; }
             .receipt-thermal { width: 78mm; margin: 0; padding: 0; }
             .receipt-thermal .wrap { padding: 5px 5px 8px; }
         }
