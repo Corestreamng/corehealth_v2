@@ -6,7 +6,7 @@
     <style>
         :root {
             --ink: #111;
-            --muted: #444;
+            --muted: #222;
             --border: #ccc;
             --success: #28a745;
         }
@@ -22,9 +22,9 @@
         .receipt-thermal .details { font-size: 16px; line-height: 1.7; margin-bottom: 7px; }
         .receipt-thermal .details b { display: inline-block; width: 90px; }
         .receipt-thermal .amount-box { background: #111; color: #fff; padding: 12px 8px; text-align: center; margin: 8px 0; }
-        .receipt-thermal .amount-box .label { font-size: 15px; opacity: 0.8; }
-        .receipt-thermal .amount-box .value { font-size: 26px; font-weight: 700; margin: 3px 0; }
-        .receipt-thermal .amount-box .sub { font-size: 13px; opacity: 0.7; }
+        .receipt-thermal .amount-box .label { font-size: 15px; color: #ccc; }
+        .receipt-thermal .amount-box .value { font-size: 26px; font-weight: 700; margin: 3px 0; color: #fff; }
+        .receipt-thermal .amount-box .sub { font-size: 13px; color: #bbb; }
         .receipt-thermal .balance-row { display: flex; justify-content: space-between; font-size: 16px; padding: 4px 0; border-bottom: 1px dotted var(--border); }
         .receipt-thermal .balance-row:last-child { border-bottom: none; font-weight: 700; font-size: 18px; }
         .receipt-thermal .notes { margin-top: 7px; font-size: 15px; color: var(--muted); font-style: italic; }

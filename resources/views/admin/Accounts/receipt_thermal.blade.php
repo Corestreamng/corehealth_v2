@@ -6,7 +6,7 @@
     <style>
         :root {
             --ink: #111;
-            --muted: #555;
+            --muted: #222;
             --border: #bbb;
         }
         * { box-sizing: border-box; }
