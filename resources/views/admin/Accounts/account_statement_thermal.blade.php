@@ -4,7 +4,7 @@
         .statement-thermal-wrapper {
             --brand: {{ $site->hos_color ?? '#0a6cf2' }};
             --ink: #000;
-            --muted: #555;
+            --muted: #222;
             font-family: 'Segoe UI', Arial, sans-serif;
             font-size: 19px;
             color: var(--ink);
