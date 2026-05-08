@@ -22,7 +22,7 @@
         .invoice-thermal .proforma-badge { text-align: center; background: #f59e0b; color: #fff; padding: 5px; font-size: 15px; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; }
         .invoice-thermal .info { font-size: 16px; margin-bottom: 8px; line-height: 1.7; }
         .invoice-thermal .info div { display: flex; justify-content: space-between; }
-        .invoice-thermal .info .label { color: #222; }
+        .invoice-thermal .info .label { color: #111; }
         .invoice-thermal .divider { border-top: 1px dashed #000; margin: 8px 0; }
         .invoice-thermal .divider-solid { border-top: 2px solid #000; margin: 8px 0; }
         /* Stacked item cards — same pattern as receipt_thermal */
@@ -30,16 +30,16 @@
         .invoice-thermal .item-row { border-top: 1px dashed #bbb; padding: 7px 0 5px; }
         .invoice-thermal .item-row:last-child { border-bottom: 1px dashed #bbb; }
         .invoice-thermal .item-name { font-size: 18px; font-weight: 700; }
-        .invoice-thermal .item-type { font-size: 15px; color: #222; font-style: italic; margin-bottom: 3px; }
+        .invoice-thermal .item-type { font-size: 15px; color: #111; font-style: italic; margin-bottom: 3px; }
         .invoice-thermal .item-line { display: flex; justify-content: space-between; font-size: 16px; line-height: 1.6; }
-        .invoice-thermal .item-line .label { color: #222; }
+        .invoice-thermal .item-line .label { color: #111; }
         .invoice-thermal .item-line .val { font-weight: 600; }
         .invoice-thermal .item-line .hmo { color: #059669; font-weight: 600; }
         .invoice-thermal .total-section { margin-top: 8px; font-size: 18px; }
         .invoice-thermal .total-section div { display: flex; justify-content: space-between; padding: 3px 0; border-top: 1px dashed #bbb; }
         .invoice-thermal .grand-total { font-weight: bold; font-size: 21px; border-top: 2px solid #000 !important; padding-top: 5px !important; margin-top: 2px; }
         .invoice-thermal .hmo-coverage { color: #059669; }
-        .invoice-thermal .footer { text-align: center; font-size: 15px; color: #222; margin-top: 12px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
+        .invoice-thermal .footer { text-align: center; font-size: 15px; color: #111; margin-top: 12px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
         .invoice-thermal .warning-note { background: #fef3c7; padding: 8px; font-size: 15px; text-align: center; margin-top: 8px; border: 1px solid #f59e0b; line-height: 1.5; }
         @media print {
             @page { size: 78mm auto; margin: 0; }
