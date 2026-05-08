@@ -19,7 +19,7 @@
         .header .name { font-weight: bold; font-size: 22px; }
         .header .address { font-size: 16px; color: #333; line-height: 1.5; }
         .title { text-align: center; font-weight: bold; font-size: 22px; margin: 8px 0; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 6px; }
-        .bill-no { text-align: center; font-size: 16px; color: #555; margin-bottom: 8px; }
+        .bill-no { text-align: center; font-size: 16px; color: #222; margin-bottom: 8px; }
         .patient-info { margin-bottom: 8px; font-size: 16px; line-height: 1.7; }
         .patient-info .patient-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; }
         .info-row { display: flex; justify-content: space-between; }
@@ -36,7 +36,7 @@
         .total-row { display: flex; justify-content: space-between; font-size: 18px; padding: 3px 0; border-top: 1px dashed #bbb; }
         .total-row.grand { font-weight: bold; font-size: 21px; border-top: 2px solid #000; margin-top: 4px; padding-top: 6px; }
 
-        .footer { text-align: center; font-size: 15px; color: #555; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
+        .footer { text-align: center; font-size: 15px; color: #222; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
 
         @media print {
             @page { size: 78mm auto; margin: 0; }
