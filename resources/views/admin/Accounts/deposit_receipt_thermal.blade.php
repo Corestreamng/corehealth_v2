@@ -11,28 +11,28 @@
             --success: #28a745;
         }
         * { box-sizing: border-box; }
-        .receipt-thermal { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; width: 55mm; margin: 0; padding: 0; color: var(--ink); }
-        .receipt-thermal .wrap { padding: 8px; }
-        .receipt-thermal .receipt-header { text-align: center; margin-bottom: 6px; }
-        .receipt-thermal .receipt-header img { width: 46px; height: auto; }
-        .receipt-thermal .receipt-header .name { font-size: 11px; font-weight: 700; margin-top: 3px; }
-        .receipt-thermal .receipt-header .meta { font-size: 9px; color: var(--muted); line-height: 1.3; }
-        .receipt-thermal .hr { border: 0; border-top: 1px dashed var(--border); margin: 6px 0; }
-        .receipt-thermal .title { font-size: 12px; font-weight: 700; letter-spacing: 0.3px; text-align: center; margin: 3px 0; background: #f5f5f5; padding: 4px; }
-        .receipt-thermal .details { font-size: 9px; line-height: 1.4; margin-bottom: 6px; }
-        .receipt-thermal .details b { display: inline-block; width: 60px; }
-        .receipt-thermal .amount-box { background: #111; color: #fff; padding: 10px 6px; text-align: center; margin: 8px 0; }
-        .receipt-thermal .amount-box .label { font-size: 9px; opacity: 0.8; }
-        .receipt-thermal .amount-box .value { font-size: 16px; font-weight: 700; margin: 2px 0; }
-        .receipt-thermal .amount-box .sub { font-size: 8px; opacity: 0.7; }
-        .receipt-thermal .balance-row { display: flex; justify-content: space-between; font-size: 9px; padding: 3px 0; border-bottom: 1px dotted var(--border); }
-        .receipt-thermal .balance-row:last-child { border-bottom: none; font-weight: 700; }
-        .receipt-thermal .notes { margin-top: 6px; font-size: 8px; color: var(--muted); font-style: italic; }
-        .receipt-thermal .footer { margin-top: 8px; text-align: center; font-size: 8px; color: var(--muted); }
-        .receipt-thermal .footer .barcode { font-family: 'Libre Barcode 39', monospace; font-size: 24px; letter-spacing: -2px; }
+        .receipt-thermal { font-family: 'Segoe UI', Arial, sans-serif; font-size: 19px; width: 78mm; margin: 0; padding: 0; color: var(--ink); }
+        .receipt-thermal .wrap { padding: 7px 7px 10px; }
+        .receipt-thermal .receipt-header { text-align: center; margin-bottom: 8px; }
+        .receipt-thermal .receipt-header img { width: 96px; height: auto; }
+        .receipt-thermal .receipt-header .name { font-size: 22px; font-weight: 700; margin-top: 5px; letter-spacing: 0.3px; }
+        .receipt-thermal .receipt-header .meta { font-size: 16px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
+        .receipt-thermal .hr { border: 0; border-top: 1px dashed var(--border); margin: 7px 0; }
+        .receipt-thermal .title { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; text-align: center; margin: 5px 0; background: #f5f5f5; padding: 5px; }
+        .receipt-thermal .details { font-size: 16px; line-height: 1.7; margin-bottom: 7px; }
+        .receipt-thermal .details b { display: inline-block; width: 90px; }
+        .receipt-thermal .amount-box { background: #111; color: #fff; padding: 12px 8px; text-align: center; margin: 8px 0; }
+        .receipt-thermal .amount-box .label { font-size: 15px; opacity: 0.8; }
+        .receipt-thermal .amount-box .value { font-size: 26px; font-weight: 700; margin: 3px 0; }
+        .receipt-thermal .amount-box .sub { font-size: 13px; opacity: 0.7; }
+        .receipt-thermal .balance-row { display: flex; justify-content: space-between; font-size: 16px; padding: 4px 0; border-bottom: 1px dotted var(--border); }
+        .receipt-thermal .balance-row:last-child { border-bottom: none; font-weight: 700; font-size: 18px; }
+        .receipt-thermal .notes { margin-top: 7px; font-size: 15px; color: var(--muted); font-style: italic; }
+        .receipt-thermal .footer { margin-top: 8px; text-align: center; font-size: 15px; color: var(--muted); line-height: 1.7; }
+        .receipt-thermal .footer .barcode { font-family: 'Libre Barcode 39', monospace; font-size: 36px; letter-spacing: -2px; }
         @media print {
-            .receipt-thermal { width: 55mm; margin: 0; padding: 0; }
-            .receipt-thermal .wrap { padding: 6px; }
+            .receipt-thermal { width: 78mm; margin: 0; padding: 0; }
+            .receipt-thermal .wrap { padding: 5px 5px 8px; }
         }
     </style>
 </head>
