@@ -1646,6 +1646,10 @@ $sett = appsettings();
                     <i class="mdi mdi-baby-carriage"></i>
                     <span>Delivery</span>
                 </button>
+                <button class="workspace-tab" data-tab="partograph">
+                    <i class="mdi mdi-chart-timeline-variant"></i>
+                    <span>Partograph</span>
+                </button>
                 <button class="workspace-tab" data-tab="baby">
                     <i class="mdi mdi-baby-face-outline"></i>
                     <span>Baby Records</span>
@@ -1725,6 +1729,15 @@ $sett = appsettings();
                 <div class="p-3">
                     <div id="delivery-content">
                         <p class="text-muted text-center py-3">Enroll patient to record delivery</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ PARTOGRAPH TAB ═══ -->
+            <div class="workspace-tab-content" id="partograph-tab">
+                <div class="p-3">
+                    <div id="partograph-tab-content">
+                        <p class="text-muted text-center py-3">Select a patient to view partograph</p>
                     </div>
                 </div>
             </div>
@@ -2083,86 +2096,118 @@ $sett = appsettings();
     </div>
 </div>
 
-{{-- 3b. Add/Edit Partograph Entry Modal --}}
-<div class="modal fade" id="addPartographModal" tabindex="-1" aria-labelledby="addPartographModalLabel" aria-hidden="true">
+{{-- 3c. Maternity Partograph Tab Modal (enrollment-level, pre & post delivery) --}}
+<div class="modal fade" id="matPartographModal" tabindex="-1" aria-labelledby="matPartographModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="addPartographModalLabel"><i class="mdi mdi-chart-timeline-variant"></i> Add Partograph Entry</h5>
+                <h5 class="modal-title" id="matPartographModalLabel"><i class="mdi mdi-chart-timeline-variant"></i> Add Partograph Entry</h5>
                 <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mat-info-banner mb-3"><i class="mdi mdi-information"></i>
-                    <div>Record labour progress and maternal/fetal observations at this time point. Use clinically measured values only.</div>
+                    <div>Record labour progress and maternal/fetal observations. Entries recorded before delivery are labelled <strong>Labour Monitoring</strong>; those after delivery are labelled <strong>Post-Delivery</strong>.</div>
                 </div>
-                <form id="partograph-form">
-                    <input type="hidden" id="partograph-delivery-id">
-                    <input type="hidden" id="partograph-entry-id">
+                <form id="mat-partograph-form">
+                    <input type="hidden" id="mat-partograph-enrollment-id">
+                    <input type="hidden" id="mat-partograph-entry-id">
                     <div class="mat-form-section">
-                        <div class="mat-form-section-title"><i class="mdi mdi-clock-outline"></i> Timing & Progress</div>
+                        <div class="mat-form-section-title"><i class="mdi mdi-clock-outline"></i> Timing &amp; Phase</div>
                         <div class="row">
-                            <div class="col-md-4 mb-3"><label class="form-label">Recorded At <span class="text-danger">*</span></label><input type="datetime-local" name="recorded_at" class="form-control" required>
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Exact time of this observation</div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Phase <span class="text-danger">*</span></label>
+                                <select name="phase" class="form-select" id="mat-partograph-phase">
+                                    <option value="pre_delivery">Labour Monitoring (Pre-Delivery)</option>
+                                    <option value="post_delivery">Post-Delivery</option>
+                                </select>
                             </div>
-                            <div class="col-md-4 mb-3"><label class="form-label">Cervical Dilation (cm) <span class="text-danger">*</span></label><input type="number" name="cervical_dilation_cm" class="form-control" min="0" max="10" step="0.1" required>
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> 0 = closed, 10 = fully dilated. Active labour ≥ 4 cm</div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Recorded At <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="recorded_at" class="form-control" required>
                             </div>
-                            <div class="col-md-4 mb-3"><label class="form-label">Descent of Head <span class="mat-tooltip-icon" title="Fifths palpable above pelvic brim. 5/5 = free, 0/5 = fully engaged"><i class="mdi mdi-help-circle"></i></span></label><input type="text" name="descent" class="form-control" placeholder="e.g. 5/5, 3/5, 0/5">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Fifths of head palpable above brim (5/5 = free, 0/5 = fully engaged)</div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Cervical Dilation (cm)</label>
+                                <input type="number" name="cervical_dilation_cm" class="form-control" min="0" max="10" step="0.1">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> 0 = closed, 10 = fully dilated</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Descent of Head</label>
+                                <input type="text" name="descent_of_head" class="form-control" placeholder="e.g. 5/5, 3/5, 0/5">
+                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Fifths palpable above brim</div>
                             </div>
                         </div>
                     </div>
                     <div class="mat-form-section">
-                        <div class="mat-form-section-title"><i class="mdi mdi-heart-pulse"></i> Fetal & Contractions</div>
+                        <div class="mat-form-section-title"><i class="mdi mdi-heart-pulse"></i> Fetal &amp; Contractions</div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Contractions /10 min <span class="mat-tooltip-icon" title="Count contractions felt in 10 minutes. Active labour: ≥3 per 10 min"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contractions_per_10min" class="form-control" min="0" max="20">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Active labour: ≥ 3 contractions in 10 min</div>
-                            </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Duration (sec) <span class="mat-tooltip-icon" title="Duration of each contraction in seconds. <20s = mild, 20-40s = moderate,>40s = strong"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="contraction_duration_sec" class="form-control" min="0" max="180">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> &lt;20s mild, 20–40s moderate, &gt;40s strong</div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Contractions /10 min</label>
+                                <input type="number" name="contractions_per_10_min" class="form-control" min="0" max="20">
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Fetal Heart Rate (bpm) <span class="mat-tooltip-icon" title="Normal FHR: 110–160 bpm. Can also record Nil, +, ++"><i class="mdi mdi-help-circle"></i></span></label>
-                                <input type="text" name="fetal_heart_rate" class="form-control" placeholder="e.g. 140, Nil, +, ++" list="fhr-options">
+                                <label class="form-label">Duration (sec)</label>
+                                <input type="number" name="contraction_duration_sec" class="form-control" min="0" max="180">
                             </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Fetal Heart Rate (bpm)</label>
+                                <input type="text" name="foetal_heart_rate" class="form-control" placeholder="e.g. 140, Nil">
                                 <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 110–160 bpm</div>
                             </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Amniotic Fluid <span class="mat-tooltip-icon" title="C = Clear (normal), I = Intact membranes, M = Meconium-stained (fetal distress risk), B = Bloody, A = Absent"><i class="mdi mdi-help-circle"></i></span></label><select name="amniotic_fluid" class="form-select">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Amniotic Fluid</label>
+                                <select name="amniotic_fluid" class="form-select">
                                     <option value="">-- Select --</option>
                                     <option value="intact">I — Intact</option>
                                     <option value="clear">C — Clear</option>
                                     <option value="meconium_stained">M — Meconium stained</option>
                                     <option value="bloody">B — Bloody</option>
                                     <option value="absent">A — Absent</option>
-                                </select></div>
+                                </select>
+                            </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Moulding <span class="mat-tooltip-icon" title="Overlap of fetal skull bones. None = no overlap, += reducible, ++/+++ = irreducible (higher risk of obstruction)"><i class="mdi mdi-help-circle"></i></span></label><select name="moulding" class="form-select">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Moulding</label>
+                                <select name="moulding" class="form-select">
                                     <option value="">-- Select --</option>
                                     <option value="none">None (0)</option>
-                                    <option value="+">+ (bones touching)</option>
+                                    <option value="+">+ (touching)</option>
                                     <option value="++">++ (overlapping, reducible)</option>
                                     <option value="+++">+++ (overlapping, irreducible)</option>
-                                </select></div>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-account-heart"></i> Maternal Monitoring</div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Pulse (bpm) <span class="mat-tooltip-icon" title="Normal maternal pulse: 60–100 bpm. Tachycardia may indicate dehydration, infection, or haemorrhage"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_pulse" class="form-control" min="20" max="220">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 60–100 bpm</div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Pulse (bpm)</label>
+                                <input type="number" name="maternal_pulse" class="form-control" min="20" max="220">
                             </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">BP Systolic <span class="mat-tooltip-icon" title="Normal: 90–139 mmHg. ≥140 may indicate pre-eclampsia/eclampsia"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_bp_systolic" class="form-control" min="40" max="300"></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">BP Diastolic <span class="mat-tooltip-icon" title="Normal: 60–89 mmHg. ≥90 is significant hypertension in labour"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_bp_diastolic" class="form-control" min="20" max="220"></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Temp (°C) <span class="mat-tooltip-icon" title="Normal: 36.5–37.5°C. ≥38°C may indicate chorioamnionitis or infection"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="maternal_temp_c" class="form-control" step="0.1" min="30" max="45">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Normal: 36.5–37.5°C</div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">BP Systolic</label>
+                                <input type="number" name="maternal_bp_systolic" class="form-control" min="40" max="300">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">BP Diastolic</label>
+                                <input type="number" name="maternal_bp_diastolic" class="form-control" min="20" max="220">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Temp (°C)</label>
+                                <input type="number" name="maternal_temp" class="form-control" step="0.1" min="30" max="45">
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-3 mb-3"><label class="form-label">Urine Output (ml)</label><input type="number" name="urine_output_ml" class="form-control" min="0">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Adequate: ≥ 30 ml/hr</div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Urine Output (ml)</label>
+                                <input type="number" name="urine_output_ml" class="form-control" min="0">
                             </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Urine Protein</label><select name="urine_protein" class="form-select">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Urine Protein</label>
+                                <select name="urine_protein" class="form-select">
                                     <option value="">-- Select --</option>
                                     <option value="nil">Nil</option>
                                     <option value="trace">Trace</option>
@@ -2170,23 +2215,26 @@ $sett = appsettings();
                                     <option value="++">++</option>
                                     <option value="+++">+++</option>
                                 </select>
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> ≥++ with high BP → pre-eclampsia</div>
                             </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Oxytocin Dose</label><input type="text" name="oxytocin_dose" class="form-control" placeholder="e.g. 10 IU in 500ml"></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">IV Fluids</label><input type="text" name="iv_fluids" class="form-control" placeholder="e.g. Ringer's Lactate 1L">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Document type and volume of IV fluids</div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Oxytocin Dose</label>
+                                <input type="text" name="oxytocin_dose" class="form-control" placeholder="e.g. 10 IU in 500ml">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">IV Fluids</label>
+                                <input type="text" name="iv_fluids" class="form-control" placeholder="e.g. Ringer's Lactate 1L">
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-12 mb-3"><label class="form-label">Medications / Notes</label><textarea name="medications" class="form-control" rows="2" placeholder="Additional medications, observations, or clinical notes"></textarea></div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Medications / Notes</label>
+                                <textarea name="medications" class="form-control" rows="2" placeholder="Additional medications, observations, or notes"></textarea>
+                            </div>
                         </div>
                     </div>
-
-                    <br>
                     <hr>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="mdi mdi-close"></i> Cancel</button>
-<br>
-                    <button type="button" class="btn btn-success" id="btn-save-partograph"><i class="mdi mdi-check"></i> Save Entry</button>
+                    <button type="button" class="btn btn-success" id="btn-save-mat-partograph"><i class="mdi mdi-check"></i> Save Entry</button>
                 </form>
             </div>
         </div>
@@ -2907,7 +2955,7 @@ $sett = appsettings();
 
     function updateTabLabels() {
         const isBaby = isBabyContext();
-        
+
         const labels = {
             enrollment: isBaby ? "Mother's Enrollment" : "Enrollment",
             history: "Mother's History",
@@ -3216,6 +3264,9 @@ $sett = appsettings();
                 break;
             case 'delivery':
                 loadDeliveryTab();
+                break;
+            case 'partograph':
+                loadMatPartographTab();
                 break;
             case 'baby':
                 loadBabyTab();
@@ -3640,7 +3691,7 @@ $sett = appsettings();
                     <div class="alert alert-info d-flex align-items-center gap-3">
                         <i class="mdi mdi-information" style="font-size:2rem;"></i>
                         <div>
-                            <strong>Baby Patient:</strong> Enrollment is managed via the mother's record. 
+                            <strong>Baby Patient:</strong> Enrollment is managed via the mother's record.
                             ${window.linkedMother ? `<br><a href="javascript:void(0)" onclick="loadPatient(${window.linkedMother.id})" class="btn btn-sm btn-info mt-2">Go to Mother: ${window.linkedMother.name}</a>` : ''}
                         </div>
                     </div>
@@ -4409,7 +4460,7 @@ $sett = appsettings();
         $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/anc-visits`, function(resp) {
             if (!resp.success) return;
             _ancVisitsCache = resp.visits; // cache for edit pre-fill
-            
+
             let html = '';
             if (isBaby) {
                 html += `
@@ -6101,7 +6152,7 @@ $sett = appsettings();
     function renderDeliveryDetails(d) {
         const isBaby = isBabyContext();
         const actionsHtml = isBaby ? '' : `<div><button class="btn btn-sm btn-outline-light me-1" onclick="editDeliveryRecord(${d.id})" title="Edit"><i class="mdi mdi-pencil"></i> Edit</button><button class="btn btn-sm btn-outline-light me-1" onclick="confirmDeleteDeliveryRecord(${d.id})" title="Delete Delivery"><i class="mdi mdi-delete"></i> Delete</button></div>`;
-        
+
         let html = '';
         if (isBaby) {
             html += `
@@ -6131,425 +6182,16 @@ $sett = appsettings();
         ${d.notes ? '<div class="alert alert-info mt-2 mb-0"><strong>Notes:</strong> ' + d.notes + '</div>' : ''}
     </div></div>
     <div class="card-modern mt-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="mdi mdi-chart-timeline-variant"></i> Partograph</h6>
-            ${!isBaby ? `<button type="button" class="btn btn-sm btn-success" onclick="showPartographForm(${d.id})"><i class="mdi mdi-plus"></i> Add Entry</button>` : ''}
-        </div>
-        <div class="card-body" id="partograph-content">
-            <div class="text-center text-muted py-2">Loading partograph entries...</div>
+        <div class="card-body py-2 d-flex align-items-center gap-2">
+            <i class="mdi mdi-chart-timeline-variant text-success fs-5"></i>
+            <span class="text-muted small">Partograph entries are recorded in the</span>
+            <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="switchWorkspaceTab('partograph')">
+                <i class="mdi mdi-chart-timeline-variant"></i> Partograph Tab
+            </button>
         </div>
     </div>`;
-        window._deliveryRecordCache = d; // cache for edit
+        window._deliveryRecordCache = d;
         $('#delivery-content').html(html);
-        loadPartographEntries(d.id);
-    }
-
-    function showPartographForm(deliveryId) {
-        const form = $('#partograph-form')[0];
-        if (form) form.reset();
-        $('#partograph-delivery-id').val(deliveryId);
-        $('#partograph-entry-id').val('');
-        window._partographEditMode = false;
-        $('#addPartographModalLabel').html('<i class="mdi mdi-chart-timeline-variant"></i> Add Partograph Entry');
-        $('#btn-save-partograph').html('<i class="mdi mdi-check"></i> Save Entry');
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        $('#partograph-form input[name="recorded_at"]').val(now.toISOString().slice(0, 16));
-        $('#addPartographModal').modal('show');
-    }
-
-    function editPartographEntry(entryId) {
-        const entry = (window._partographEntriesCache || []).find(e => e.id === entryId);
-        if (!entry) {
-            toastr.error('Entry data not found');
-            return;
-        }
-        const form = $('#partograph-form')[0];
-        if (form) form.reset();
-        window._partographEditMode = true;
-        $('#partograph-entry-id').val(entryId);
-        $('#partograph-delivery-id').val(entry.delivery_record_id);
-        $('#addPartographModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Partograph Entry');
-        $('#btn-save-partograph').html('<i class="mdi mdi-check"></i> Update Entry');
-        // Pre-fill fields
-        if (entry.recorded_at) {
-            const dt = new Date(entry.recorded_at);
-            dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
-            $('#partograph-form input[name="recorded_at"]').val(dt.toISOString().slice(0, 16));
-        }
-        $('#partograph-form input[name="cervical_dilation_cm"]').val(entry.cervical_dilation_cm ?? '');
-        $('#partograph-form input[name="descent"]').val(entry.descent ?? '');
-        $('#partograph-form input[name="contractions_per_10min"]').val(entry.contractions_per_10min ?? '');
-        $('#partograph-form input[name="contraction_duration_sec"]').val(entry.contraction_duration_sec ?? '');
-        $('#partograph-form input[name="fetal_heart_rate"]').val(entry.fetal_heart_rate ?? '');
-        $('#partograph-form select[name="amniotic_fluid"]').val(entry.amniotic_fluid || '');
-        $('#partograph-form select[name="moulding"]').val(entry.moulding || '');
-        $('#partograph-form input[name="maternal_pulse"]').val(entry.maternal_pulse ?? '');
-        $('#partograph-form input[name="maternal_bp_systolic"]').val(entry.maternal_bp_systolic ?? '');
-        $('#partograph-form input[name="maternal_bp_diastolic"]').val(entry.maternal_bp_diastolic ?? '');
-        $('#partograph-form input[name="maternal_temp_c"]').val(entry.maternal_temp_c ?? '');
-        $('#partograph-form input[name="urine_output_ml"]').val(entry.urine_output_ml ?? '');
-        $('#partograph-form select[name="urine_protein"]').val(entry.urine_protein || '');
-        $('#partograph-form input[name="oxytocin_dose"]').val(entry.oxytocin_dose ?? '');
-        $('#partograph-form input[name="iv_fluids"]').val(entry.iv_fluids ?? '');
-        $('#partograph-form textarea[name="medications"]').val(entry.medications ?? '');
-        $('#addPartographModal').modal('show');
-    }
-
-    function deletePartographEntry(entryId, deliveryId) {
-        if (!confirm('Delete this partograph entry? This action cannot be undone.')) return;
-        $.ajax({
-            url: `/maternity-workbench/partograph/${entryId}`,
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': CSRF_TOKEN
-            },
-            success: function(r) {
-                if (r.success) {
-                    toastr.success(r.message || 'Entry deleted');
-                    loadPartographEntries(deliveryId);
-                } else {
-                    toastr.error(r.message || 'Failed to delete entry');
-                }
-            },
-            error: function(xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Failed to delete entry');
-            }
-        });
-    }
-
-    $(document).on('click', '#btn-save-partograph', function() {
-        const form = $('#partograph-form');
-        if (!form[0].checkValidity()) {
-            form[0].reportValidity();
-            return;
-        }
-
-        const deliveryId = $('#partograph-delivery-id').val();
-        const entryId = $('#partograph-entry-id').val();
-        const isEdit = window._partographEditMode && entryId;
-
-        if (!deliveryId && !isEdit) {
-            toastr.error('Delivery record not found for partograph entry');
-            return;
-        }
-
-        const data = {};
-        form.serializeArray().forEach(function(f) {
-            data[f.name] = f.value;
-        });
-
-        const btn = $(this);
-        const originalHtml = btn.html();
-        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-
-        const url = isEdit ?
-            `/maternity-workbench/partograph/${entryId}` :
-            `/maternity-workbench/delivery/${deliveryId}/partograph`;
-        const method = isEdit ? 'PUT' : 'POST';
-
-        $.ajax({
-            url: url,
-            method: method,
-            data: data,
-            headers: {
-                'X-CSRF-TOKEN': CSRF_TOKEN
-            },
-            success: function(r) {
-                btn.prop('disabled', false).html(originalHtml);
-                if (r.success) {
-                    $('#addPartographModal').modal('hide');
-                    toastr.success(r.message || 'Partograph entry saved');
-                    loadPartographEntries(deliveryId || r.entry?.delivery_record_id);
-                } else {
-                    toastr.error(r.message || 'Failed to save partograph entry');
-                }
-            },
-            error: function(xhr) {
-                btn.prop('disabled', false).html(originalHtml);
-                if (xhr.status === 422 && xhr.responseJSON?.errors) {
-                    const errs = xhr.responseJSON.errors;
-                    const msgs = Object.values(errs).flat().join('<br>');
-                    toastr.error(msgs, 'Validation Error');
-                } else {
-                    toastr.error(xhr.responseJSON?.message || 'Failed to save partograph entry');
-                }
-            }
-        });
-    });
-
-    function loadPartographEntries(deliveryId) {
-        if (!deliveryId) return;
-
-        $('#partograph-content').html('<div class="text-center text-muted py-2"><i class="mdi mdi-loading mdi-spin"></i> Loading partograph entries...</div>');
-
-        $.get(`/maternity-workbench/delivery/${deliveryId}/partograph`, function(resp) {
-            if (!resp.success) {
-                $('#partograph-content').html('<div class="alert alert-danger mb-0">Failed to load partograph entries.</div>');
-                return;
-            }
-
-            const entries = resp.entries || [];
-            window._partographEntriesCache = entries; // cache for edit
-
-            if (!entries.length) {
-                $('#partograph-content').html('<div class="alert alert-info mb-0"><i class="mdi mdi-information"></i> No partograph entries yet. Click <strong>Add Entry</strong> to begin labour monitoring.</div>');
-                return;
-            }
-
-            let rows = '';
-            entries.forEach(function(e) {
-                const bp = e.maternal_bp || ((e.maternal_bp_systolic || e.maternal_bp_diastolic) ? `${e.maternal_bp_systolic || ''}/${e.maternal_bp_diastolic || ''}` : '—');
-                const fhrVal = e.fetal_heart_rate ?? '—';
-                const fhrClass = fhrVal !== '—' && (fhrVal < 110 || fhrVal> 160) ? 'text-danger fw-bold' : '';
-                rows += `<tr>
-                <td class="small">${e.recorded_at || '—'}</td>
-                <td>${e.cervical_dilation_cm ?? '—'}</td>
-                <td>${e.descent || '—'}</td>
-                <td class="${fhrClass}">${fhrVal}</td>
-                <td>${e.contractions_per_10min ?? '—'}${e.contraction_duration_sec ? ' <small class="text-muted">(' + e.contraction_duration_sec + 's)</small>' : ''}</td>
-                <td>${e.amniotic_fluid || '—'}</td>
-                <td>${e.moulding || '—'}</td>
-                <td>${bp}</td>
-                <td>${e.maternal_pulse ?? '—'}</td>
-                <td>${e.maternal_temp_c ?? '—'}</td>
-                <td>${e.urine_protein || '—'}</td>
-                <td>${e.oxytocin_dose || '—'}</td>
-                <td>${e.iv_fluids || '—'}</td>
-                <td class="small">${e.recorded_by_name || '—'}</td>
-                <td class="text-nowrap">
-                    <button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editPartographEntry(${e.id})" title="Edit"><i class="mdi mdi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deletePartographEntry(${e.id}, ${e.delivery_record_id})" title="Delete"><i class="mdi mdi-delete"></i></button>
-                </td>
-            </tr>`;
-            });
-
-            $('#partograph-content').html(`
-            <div class="mb-3">
-                <div class="small text-muted mb-2"><i class="mdi mdi-information"></i> Chart shows cervical dilation progression with WHO-style alert/action guide lines (anchored at first dilation ≥ 4 cm), plus fetal heart rate trend.</div>
-                <div style="position:relative; height:350px;"><canvas id="partograph-chart-canvas"></canvas></div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover table-bordered mb-0" style="font-size: 0.82rem;">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Time</th>
-                            <th>Dilation</th>
-                            <th>Descent</th>
-                            <th>FHR</th>
-                            <th>Contractions</th>
-                            <th>Liquor</th>
-                            <th>Moulding</th>
-                            <th>BP</th>
-                            <th>Pulse</th>
-                            <th>Temp</th>
-                            <th>Protein</th>
-                            <th>Oxytocin</th>
-                            <th>IV Fluids</th>
-                            <th>By</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-        `);
-
-            renderPartographChart(entries);
-        }).fail(function() {
-            $('#partograph-content').html('<div class="alert alert-danger mb-0">Unable to load partograph entries.</div>');
-        });
-    }
-
-    function renderPartographChart(entries) {
-        if (typeof Chart === 'undefined') return;
-
-        const canvas = document.getElementById('partograph-chart-canvas');
-        if (!canvas || !entries || !entries.length) return;
-
-        if (window._partographChartInstance) {
-            window._partographChartInstance.destroy();
-        }
-
-        const sorted = [...entries].sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
-        const startTime = new Date(sorted[0].recorded_at);
-
-        const toNum = (v) => {
-            if (v === null || v === undefined || v === '') return null;
-            const n = Number(v);
-            return Number.isNaN(n) ? null : n;
-        };
-
-        const toHours = (dateStr) => {
-            const d = new Date(dateStr);
-            return Math.max(0, (d - startTime) / 3600000);
-        };
-
-        const dilation = [];
-        const fhr = [];
-
-        sorted.forEach((e) => {
-            const x = toHours(e.recorded_at);
-            const d = toNum(e.cervical_dilation_cm);
-            const hr = toNum(e.fetal_heart_rate);
-
-            if (d !== null) dilation.push({
-                x,
-                y: d
-            });
-            if (hr !== null) fhr.push({
-                x,
-                y: hr
-            });
-        });
-
-        // WHO partograph: alert line starts at the first entry with dilation>= 4 cm
-        // and rises at 1 cm/hour. Action line is 4 hours to the right of alert line.
-        const alertLine = [];
-        const actionLine = [];
-        const maxHour = Math.max(...sorted.map(e => toHours(e.recorded_at)), 12);
-
-        // Find the first time dilation>= 4 cm (active labour onset)
-        let alertStartHour = null;
-        for (const pt of dilation) {
-            if (pt.y>= 4) {
-                alertStartHour = pt.x;
-                break;
-            }
-        }
-
-        if (alertStartHour !== null) {
-            // Alert line: starts at (alertStartHour, 4) and rises 1cm per hour
-            for (let h = 0; h <= maxHour + 2; h += 0.5) {
-                const alertY = 4 + (h - alertStartHour);
-                if (h>= alertStartHour && alertY <= 10) {
-                    alertLine.push({
-                        x: h,
-                        y: alertY
-                    });
-                }
-                // Action line: 4 hours to the right of alert line
-                const actionH = h - 4;
-                const actionY = 4 + (actionH - alertStartHour);
-                if (actionH>= alertStartHour && actionY>= 4 && actionY <= 10) {
-                    actionLine.push({
-                        x: h,
-                        y: actionY
-                    });
-                }
-            }
-        }
-
-        const ctx = canvas.getContext('2d');
-        window._partographChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [{
-                        label: 'Cervical Dilation (cm)',
-                        data: dilation,
-                        borderColor: '#d63384',
-                        backgroundColor: 'rgba(214, 51, 132, 0.15)',
-                        tension: 0.2,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#d63384',
-                        borderWidth: 2.5,
-                        yAxisID: 'y',
-                        spanGaps: true
-                    },
-                    {
-                        label: 'FHR (bpm)',
-                        data: fhr,
-                        borderColor: '#198754',
-                        backgroundColor: 'rgba(25, 135, 84, 0.12)',
-                        tension: 0.2,
-                        pointRadius: 3,
-                        borderWidth: 1.5,
-                        yAxisID: 'y1',
-                        spanGaps: true
-                    },
-                    {
-                        label: 'Alert Line (1 cm/hr from 4 cm)',
-                        data: alertLine,
-                        borderColor: '#fd7e14',
-                        borderDash: [6, 4],
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        yAxisID: 'y',
-                        fill: false
-                    },
-                    {
-                        label: 'Action Line (+4 hrs)',
-                        data: actionLine,
-                        borderColor: '#dc3545',
-                        borderDash: [6, 4],
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        yAxisID: 'y',
-                        fill: false,
-                        spanGaps: true
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 15
-                        }
-                    },
-                    tooltip: {
-                        mode: 'nearest',
-                        intersect: false
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'linear',
-                        title: {
-                            display: true,
-                            text: 'Hours since first entry'
-                        },
-                        min: 0,
-                        ticks: {
-                            callback: function(value) {
-                                return value + 'h';
-                            },
-                            stepSize: 1
-                        }
-                    },
-                    y: {
-                        min: 0,
-                        max: 10,
-                        title: {
-                            display: true,
-                            text: 'Cervical Dilation (cm)'
-                        },
-                        ticks: {
-                            stepSize: 1
-                        }
-                    },
-                    y1: {
-                        position: 'right',
-                        min: 60,
-                        max: 220,
-                        title: {
-                            display: true,
-                            text: 'FHR (bpm)'
-                        },
-                        grid: {
-                            drawOnChartArea: false
-                        },
-                        ticks: {
-                            stepSize: 20
-                        }
-                    }
-                }
-            }
-        });
     }
 
     function editDeliveryRecord(id) {
@@ -6632,7 +6274,7 @@ $sett = appsettings();
             if (!resp.success) return;
             const babies = resp.enrollment.babies || [];
             window._babiesCache = babies; // cache for edit
-            
+
             let html = `<div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="mdi mdi-baby-face-outline"></i> ${isBaby ? 'Growth & Birth Details' : 'Baby Records (' + babies.length + ')'}</h5>
             ${!isBaby ? `<button class="btn text-white" style="background: var(--maternity-pink);" onclick="showRegisterBabyForm()"><i class="mdi mdi-plus"></i> Register Baby</button>` : ''}
@@ -6648,7 +6290,7 @@ $sett = appsettings();
                     const patientName = b.patient && b.patient.user ? (b.patient.user.surname + ' ' + b.patient.user.firstname) : 'Baby';
                     const isStillBirth = b.is_still_birth ? '<span class="badge bg-danger ms-2">Still Birth</span>' : '';
                     const deathBtn = b.status === 'alive' ? `<button class="btn btn-sm btn-outline-danger" onclick="showMarkDeceasedModal(${b.id})"><i class="mdi mdi-account-remove"></i> Mark Deceased</button>` : '';
-                    
+
                     html += `<div class="baby-card ${b.status === 'deceased' ? 'bg-light' : ''}">
                     <div class="baby-header">
                         <div class="baby-name">${patientName} ${isStillBirth}</div>
@@ -7096,7 +6738,7 @@ $sett = appsettings();
         $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/postnatal`, function(resp) {
             if (!resp.success) return;
             _postnatalVisitsCache = resp.visits; // cache for edit
-            
+
             let html = '';
             if (isBaby) {
                 html += `
@@ -8367,6 +8009,392 @@ $sett = appsettings();
             }
         });
     }
+
+    /* ══════════════════════════════════════════════════════════════
+       PARTOGRAPH TAB — enrollment-level (pre & post delivery)
+       ══════════════════════════════════════════════════════════════ */
+
+    let matPartographEntries = [];     // cached entries for edit pre-fill
+    let matPartographChartInstance = null;
+
+    function loadMatPartographTab() {
+        if (!currentEnrollment) {
+            $('#partograph-tab-content').html('<p class="text-muted text-center py-3">Select an enrolled patient to view partograph.</p>');
+            return;
+        }
+        const enrollmentId = currentEnrollment.id;
+        $('#partograph-tab-content').html('<div class="text-center py-4"><div class="spinner-border text-success"></div></div>');
+
+        $.get(`/maternity-workbench/enrollment/${enrollmentId}/maternity-partograph`)
+            .done(function(res) {
+                if (!res.success) {
+                    $('#partograph-tab-content').html('<div class="alert alert-danger">Failed to load partograph data.</div>');
+                    return;
+                }
+                matPartographEntries = res.entries || [];
+                renderMatPartographTab(enrollmentId, res);
+            })
+            .fail(function() {
+                $('#partograph-tab-content').html('<div class="alert alert-danger">Server error loading partograph.</div>');
+            });
+    }
+
+    function renderMatPartographTab(enrollmentId, res) {
+        const entries       = res.entries || [];
+        const legacyEntries = res.legacy_entries || [];
+        const preEntries    = entries.filter(e => e.phase === 'pre_delivery');
+        const postEntries   = entries.filter(e => e.phase === 'post_delivery');
+        // All entries combined for the chart (chronological)
+        const allForChart   = [...entries, ...legacyEntries].sort((a, b) =>
+            new Date(a.recorded_at) - new Date(b.recorded_at));
+
+        const legacyTab = legacyEntries.length
+            ? `<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#mparto-legacy-pane">
+                Delivery Record <span class="badge bg-warning text-dark ms-1">${legacyEntries.length}</span>
+               </a></li>`
+            : '';
+
+        let html = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0"><i class="mdi mdi-chart-timeline-variant text-success me-1"></i> Partograph</h6>
+            <div>
+                <button class="btn btn-sm btn-success me-1" onclick="showMatPartographForm('pre_delivery')">
+                    <i class="mdi mdi-plus"></i> Labour Entry
+                </button>
+                ${res.has_delivery ? `<button class="btn btn-sm btn-outline-success" onclick="showMatPartographForm('post_delivery')"><i class="mdi mdi-plus"></i> Post-Delivery Entry</button>` : ''}
+            </div>
+        </div>
+        <ul class="nav nav-tabs mb-3" id="matParto-subtabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#mparto-labour-pane">
+                Labour Monitoring <span class="badge bg-success ms-1">${preEntries.length}</span>
+            </a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#mparto-post-pane">
+                Post-Delivery <span class="badge bg-secondary ms-1">${postEntries.length}</span>
+            </a></li>
+            ${legacyTab}
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#mparto-chart-pane">
+                <i class="mdi mdi-chart-line"></i> Chart
+            </a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="mparto-labour-pane">
+                ${buildMatPartoTable(preEntries, enrollmentId, 'Labour Monitoring', true)}
+            </div>
+            <div class="tab-pane fade" id="mparto-post-pane">
+                ${buildMatPartoTable(postEntries, enrollmentId, 'Post-Delivery', true)}
+            </div>
+            ${legacyEntries.length ? `<div class="tab-pane fade" id="mparto-legacy-pane">
+                <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-2">
+                    <i class="mdi mdi-lock-outline"></i>
+                    <span>These entries were recorded via the Delivery tab. They are shown here for reference and cannot be edited from this view.</span>
+                </div>
+                ${buildMatPartoTable(legacyEntries, enrollmentId, 'Delivery Record', false)}
+            </div>` : ''}
+            <div class="tab-pane fade" id="mparto-chart-pane">
+                <div style="position:relative;height:400px;max-width:960px;margin:auto">
+                    <canvas id="mat-partograph-chart"></canvas>
+                </div>
+                <p class="text-muted text-center small mt-2">
+                    <span class="badge bg-success me-1">●</span> Labour Monitoring &nbsp;
+                    <span class="badge bg-secondary me-1">●</span> Post-Delivery &nbsp;
+                    ${legacyEntries.length ? '<span class="badge bg-warning text-dark me-1">●</span> Delivery Record &nbsp;' : ''}
+                    Alert line = 4 h after active phase onset; Action line = 4 h after alert line
+                </p>
+            </div>
+        </div>`;
+
+        $('#partograph-tab-content').html(html);
+
+        $('#matParto-subtabs .nav-link').on('shown.bs.tab', function(e) {
+            if ($(e.target).attr('href') === '#mparto-chart-pane') {
+                renderMatPartographChart(allForChart);
+            }
+        });
+    }
+
+    /**
+     * Build a partograph data table.
+     * @param {Array}   entries      - normalized entry objects
+     * @param {number}  enrollmentId
+     * @param {string}  label        - used for empty-state text
+     * @param {boolean} editable     - show edit/delete buttons when true
+     */
+    function buildMatPartoTable(entries, enrollmentId, label, editable) {
+        if (!entries.length) {
+            return `<p class="text-muted text-center py-3">No ${label} entries yet.</p>`;
+        }
+        let rows = entries.map(e => {
+            const fhrNum = parseFloat(e.fetal_heart_rate);
+            const fhrClass = !isNaN(fhrNum) && (fhrNum < 110 || fhrNum > 160) ? 'text-danger fw-bold' : '';
+            const bp = e.maternal_bp
+                || ((e.maternal_bp_systolic || e.maternal_bp_diastolic)
+                    ? `${e.maternal_bp_systolic || ''}/${e.maternal_bp_diastolic || ''}` : '—');
+            const actions = editable
+                ? `<button class="btn btn-xs btn-outline-primary me-1" onclick="editMatPartographEntry(${e.id})" title="Edit"><i class="mdi mdi-pencil"></i></button>
+                   <button class="btn btn-xs btn-outline-danger" onclick="deleteMatPartographEntry(${enrollmentId}, ${e.id})" title="Delete"><i class="mdi mdi-delete"></i></button>`
+                : `<span class="badge bg-warning text-dark">Read-only</span>`;
+            return `<tr>
+                <td class="small text-nowrap">${e.recorded_at ?? ''}</td>
+                <td>${e.cervical_dilation_cm != null ? e.cervical_dilation_cm + ' cm' : '—'}</td>
+                <td>${e.descent ?? '—'}</td>
+                <td>${e.contractions_per_10min ?? '—'}${e.contraction_duration_sec ? ` <small class="text-muted">(${e.contraction_duration_sec}s)</small>` : ''}</td>
+                <td class="${fhrClass}">${e.fetal_heart_rate ?? '—'}</td>
+                <td>${e.amniotic_fluid || '—'}</td>
+                <td>${e.moulding || '—'}</td>
+                <td>${bp}</td>
+                <td>${e.maternal_pulse ?? '—'}</td>
+                <td>${e.maternal_temp_c ?? '—'}</td>
+                <td>${e.urine_protein || '—'}</td>
+                <td>${e.oxytocin_dose || '—'}</td>
+                <td>${e.iv_fluids || '—'}</td>
+                <td class="small">${e.recorded_by_name ?? '—'}</td>
+                <td class="text-nowrap">${actions}</td>
+            </tr>`;
+        }).join('');
+        return `
+        <div class="table-responsive">
+            <table class="table table-sm table-hover table-bordered partograph-table" style="font-size:0.82rem">
+                <thead class="table-light">
+                    <tr>
+                        <th>Time</th><th>Dilation</th><th>Descent</th><th>Contractions</th>
+                        <th>FHR</th><th>Liquor</th><th>Moulding</th><th>BP</th>
+                        <th>Pulse</th><th>Temp °C</th><th>Protein</th><th>Oxytocin</th>
+                        <th>IV Fluids</th><th>By</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+    }
+
+    function renderMatPartographChart(entries) {
+        const ctx = document.getElementById('mat-partograph-chart');
+        if (!ctx || typeof Chart === 'undefined') return;
+        if (matPartographChartInstance) { matPartographChartInstance.destroy(); matPartographChartInstance = null; }
+
+        if (!entries || !entries.length) return;
+
+        const sorted = [...entries].sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+        const startTime = new Date(sorted[0].recorded_at);
+        const toHours = d => Math.max(0, (new Date(d) - startTime) / 3600000);
+        const toNum   = v => { const n = Number(v); return Number.isNaN(n) ? null : n; };
+
+        // Colour by phase
+        const phaseColour = { pre_delivery: '#d63384', post_delivery: '#6f42c1', delivery_record: '#fd7e14' };
+
+        const dilationPoints = sorted.map(e => ({
+            x: toHours(e.recorded_at),
+            y: toNum(e.cervical_dilation_cm),
+            phase: e.phase,
+        })).filter(p => p.y !== null);
+
+        const fhrPoints = sorted.map(e => ({
+            x: toHours(e.recorded_at),
+            y: toNum(e.fetal_heart_rate),
+        })).filter(p => p.y !== null);
+
+        // WHO alert/action lines anchored at first dilation >= 4 cm
+        const alertLine = [], actionLine = [];
+        const maxHour = Math.max(...sorted.map(e => toHours(e.recorded_at)), 12);
+        let alertStartHour = null;
+        for (const pt of dilationPoints) {
+            if (pt.y >= 4) { alertStartHour = pt.x; break; }
+        }
+        if (alertStartHour !== null) {
+            for (let h = alertStartHour; h <= maxHour + 2; h += 0.5) {
+                const y = Math.min(10, 4 + (h - alertStartHour));
+                alertLine.push({ x: h, y });
+                const ay = Math.min(10, 4 + Math.max(0, h - alertStartHour - 4));
+                if (h >= alertStartHour + 4) actionLine.push({ x: h, y: ay });
+            }
+        }
+
+        matPartographChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Cervical Dilation (cm)',
+                        data: dilationPoints,
+                        borderColor: '#d63384',
+                        backgroundColor: 'rgba(214,51,132,0.12)',
+                        tension: 0.2, pointRadius: 5, borderWidth: 2.5,
+                        yAxisID: 'y', spanGaps: true,
+                        pointBackgroundColor: ctx => {
+                            const raw = ctx.raw;
+                            return phaseColour[raw?.phase] || '#d63384';
+                        },
+                    },
+                    {
+                        label: 'FHR (bpm)',
+                        data: fhrPoints,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25,135,84,0.08)',
+                        tension: 0.2, pointRadius: 3, borderWidth: 1.5,
+                        yAxisID: 'y1', spanGaps: true,
+                    },
+                    {
+                        label: 'Alert Line',
+                        data: alertLine,
+                        borderColor: '#fd7e14', borderDash: [6, 4],
+                        pointRadius: 0, borderWidth: 2, yAxisID: 'y',
+                    },
+                    {
+                        label: 'Action Line',
+                        data: actionLine,
+                        borderColor: '#dc3545', borderDash: [6, 4],
+                        pointRadius: 0, borderWidth: 2, yAxisID: 'y', spanGaps: true,
+                    },
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'nearest', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, padding: 14 } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const raw = ctx.raw;
+                                const phase = raw?.phase ? ` [${raw.phase.replace('_', ' ')}]` : '';
+                                return `${ctx.dataset.label}: ${ctx.parsed.y}${phase}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { type: 'linear', title: { display: true, text: 'Hours since first entry' },
+                         ticks: { callback: v => v + 'h' }, min: 0 },
+                    y:  { min: 0, max: 10, title: { display: true, text: 'Dilation (cm)' } },
+                    y1: { position: 'right', min: 60, max: 200,
+                          title: { display: true, text: 'FHR (bpm)' },
+                          grid: { drawOnChartArea: false } },
+                }
+            }
+        });
+    }
+
+    function showMatPartographForm(phase) {
+        const form = document.getElementById('mat-partograph-form');
+        form.reset();
+        $('#mat-partograph-entry-id').val('');
+        $('#mat-partograph-enrollment-id').val(currentEnrollment ? currentEnrollment.id : '');
+        $('#mat-partograph-phase').val(phase || 'pre_delivery');
+        // Default recorded_at to now
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        form.querySelector('[name=recorded_at]').value =
+            `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+        $('#matPartographModalLabel').html('<i class="mdi mdi-chart-timeline-variant"></i> Add Partograph Entry');
+        $('#matPartographModal').modal('show');
+    }
+
+    function editMatPartographEntry(entryId) {
+        const entry = matPartographEntries.find(e => e.id == entryId);
+        if (!entry) return;
+        const form = document.getElementById('mat-partograph-form');
+        form.reset();
+        $('#mat-partograph-entry-id').val(entry.id);
+        $('#mat-partograph-enrollment-id').val(entry.enrollment_id);
+        $('#mat-partograph-phase').val(entry.phase || 'pre_delivery');
+        const setVal = (name, val) => { const el = form.querySelector(`[name=${name}]`); if (el && val != null) el.value = val; };
+        setVal('recorded_at', entry.recorded_at ? entry.recorded_at.replace(' ', 'T').substring(0, 16) : '');
+        setVal('cervical_dilation_cm', entry.cervical_dilation_cm);
+        setVal('descent_of_head', entry.descent);
+        setVal('contractions_per_10_min', entry.contractions_per_10min);
+        setVal('contraction_duration_sec', entry.contraction_duration_sec);
+        setVal('foetal_heart_rate', entry.fetal_heart_rate);
+        setVal('amniotic_fluid', entry.amniotic_fluid);
+        setVal('moulding', entry.moulding);
+        setVal('maternal_bp_systolic', entry.maternal_bp_systolic);
+        setVal('maternal_bp_diastolic', entry.maternal_bp_diastolic);
+        setVal('maternal_pulse', entry.maternal_pulse);
+        setVal('maternal_temp', entry.maternal_temp_c);
+        setVal('urine_output_ml', entry.urine_output_ml);
+        setVal('urine_protein', entry.urine_protein);
+        setVal('oxytocin_dose', entry.oxytocin_dose);
+        setVal('iv_fluids', entry.iv_fluids);
+        setVal('medications', entry.medications);
+
+        $('#matPartographModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Partograph Entry');
+        $('#matPartographModal').modal('show');
+    }
+
+    function deleteMatPartographEntry(enrollmentId, entryId) {
+        if (!confirm('Delete this partograph entry?')) return;
+        $.ajax({
+            url: `/maternity-workbench/enrollment/${enrollmentId}/maternity-partograph/${entryId}`,
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': $('meta[name=csrf-token]').attr('content') },
+            success: function(res) {
+                if (res.success) {
+                    toastr.success('Entry deleted.');
+                    loadMatPartographTab();
+                } else {
+                    toastr.error(res.message || 'Failed to delete.');
+                }
+            },
+            error: function() { toastr.error('Server error deleting entry.'); }
+        });
+    }
+
+    // Save mat partograph entry (create or update)
+    $(document).on('click', '#btn-save-mat-partograph', function() {
+        const enrollmentId = $('#mat-partograph-enrollment-id').val();
+        const entryId      = $('#mat-partograph-entry-id').val();
+        if (!enrollmentId) { toastr.warning('No enrollment selected.'); return; }
+
+        const form = document.getElementById('mat-partograph-form');
+        const sys  = form.querySelector('[name=maternal_bp_systolic]').value;
+        const dia  = form.querySelector('[name=maternal_bp_diastolic]').value;
+
+        const data = {
+            phase:                    form.querySelector('[name=phase]').value,
+            recorded_at:              form.querySelector('[name=recorded_at]').value,
+            cervical_dilation_cm:     form.querySelector('[name=cervical_dilation_cm]').value || null,
+            descent_of_head:          form.querySelector('[name=descent_of_head]').value || null,
+            contractions_per_10_min:  form.querySelector('[name=contractions_per_10_min]').value || null,
+            contraction_duration_sec: form.querySelector('[name=contraction_duration_sec]').value || null,
+            foetal_heart_rate:        form.querySelector('[name=foetal_heart_rate]').value || null,
+            amniotic_fluid:           form.querySelector('[name=amniotic_fluid]').value || null,
+            moulding:                 form.querySelector('[name=moulding]').value || null,
+            maternal_bp:              sys && dia ? `${sys}/${dia}` : (sys || dia || null),
+            maternal_pulse:           form.querySelector('[name=maternal_pulse]').value || null,
+            maternal_temp:            form.querySelector('[name=maternal_temp]').value || null,
+            urine_output_ml:          form.querySelector('[name=urine_output_ml]').value || null,
+            urine_protein:            form.querySelector('[name=urine_protein]').value || null,
+            oxytocin_dose:            form.querySelector('[name=oxytocin_dose]').value || null,
+            iv_fluids:                form.querySelector('[name=iv_fluids]').value || null,
+            medications:              form.querySelector('[name=medications]').value || null,
+            _token:                   $('meta[name=csrf-token]').attr('content'),
+        };
+
+        const url    = entryId
+            ? `/maternity-workbench/enrollment/${enrollmentId}/maternity-partograph/${entryId}`
+            : `/maternity-workbench/enrollment/${enrollmentId}/maternity-partograph`;
+        const method = entryId ? 'PUT' : 'POST';
+
+        $('#btn-save-mat-partograph').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving…');
+
+        $.ajax({ url, method, data, headers: { 'X-CSRF-TOKEN': data._token } })
+            .done(function(res) {
+                $('#btn-save-mat-partograph').prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Entry');
+                if (res.success) {
+                    $('#matPartographModal').modal('hide');
+                    toastr.success(res.message || 'Entry saved.');
+                    loadMatPartographTab();
+                } else {
+                    const errs = res.errors ? Object.values(res.errors).flat().join(' ') : (res.message || 'Failed to save.');
+                    toastr.error(errs);
+                }
+            })
+            .fail(function(xhr) {
+                $('#btn-save-mat-partograph').prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Entry');
+                const errs = xhr.responseJSON?.errors ? Object.values(xhr.responseJSON.errors).flat().join(' ') : 'Server error.';
+                toastr.error(errs);
+            });
+    });
 </script>
 
 @endsection

@@ -18,6 +18,7 @@ use App\Models\AncVisit;
 use App\Models\AncInvestigation;
 use App\Models\DeliveryRecord;
 use App\Models\DeliveryPartograph;
+use App\Models\MaternityPartograph;
 use App\Models\MaternityBaby;
 use App\Models\ChildGrowthRecord;
 use App\Models\PostnatalVisit;
@@ -148,7 +149,7 @@ class MaternityWorkbenchController extends Controller
         $results = $patients->map(function ($p) {
             // Check if patient is a baby in maternity
             $babyRecord = MaternityBaby::where('patient_id', $p->id)->first();
-            
+
             if ($babyRecord) {
                 $enrollment = MaternityEnrollment::find($babyRecord->enrollment_id);
             } else {
@@ -192,7 +193,7 @@ class MaternityWorkbenchController extends Controller
             $enrollment = MaternityEnrollment::where('id', $babyRecord->enrollment_id)
                 ->with(['ancVisits', 'deliveryRecord', 'babies.patient.user', 'postnatalVisits', 'patient.user'])
                 ->first();
-            
+
             if ($enrollment && $enrollment->patient) {
                 $mother = [
                     'id'      => $enrollment->patient->id,
@@ -1953,6 +1954,237 @@ class MaternityWorkbenchController extends Controller
         }
 
         return $payload;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       PARTOGRAPH TAB — enrollment-level (pre & post delivery)
+       ══════════════════════════════════════════════════════════════ */
+
+    public function getMaternityPartographEntries($enrollmentId)
+    {
+        $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
+
+        // New enrollment-level entries (pre_delivery / post_delivery)
+        $entries = MaternityPartograph::where('enrollment_id', $enrollmentId)
+            ->with('recordedBy')
+            ->orderBy('recorded_at', 'asc')
+            ->get()
+            ->map(fn ($e) => $this->normalizeMaternityPartographEntry($e))
+            ->values();
+
+        // Load delivery record once to avoid N+1
+        $deliveryRecord = $enrollment->deliveryRecord;
+        $hasDelivery    = $deliveryRecord !== null;
+
+        // Legacy entries from the old delivery_partograph table — shown read-only
+        $legacyEntries = collect();
+        if ($hasDelivery) {
+            $legacyEntries = DeliveryPartograph::where('delivery_record_id', $deliveryRecord->id)
+                ->with('recordedBy')
+                ->orderBy('recorded_at', 'asc')
+                ->get()
+                ->map(function ($e) use ($deliveryRecord) {
+                    $normalized = $this->normalizePartographEntry($e);
+                    $normalized['phase']             = 'delivery_record';
+                    $normalized['source']            = 'legacy';
+                    $normalized['delivery_record_id'] = $deliveryRecord->id;
+                    return $normalized;
+                })
+                ->values();
+        }
+
+        return response()->json([
+            'success'            => true,
+            'entries'            => $entries,
+            'legacy_entries'     => $legacyEntries,
+            'has_delivery'       => $hasDelivery,
+            'delivery_record_id' => $hasDelivery ? $deliveryRecord->id : null,
+        ]);
+    }
+
+    public function saveMaternityPartographEntry(Request $request, $enrollmentId)
+    {
+        $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
+
+        $validator = Validator::make($request->all(), [
+            'recorded_at'              => 'required|date',
+            'phase'                    => 'required|in:pre_delivery,post_delivery',
+            'cervical_dilation_cm'     => 'nullable|numeric|min:0|max:10',
+            'descent_of_head'          => 'nullable|string|max:50',
+            'contractions_per_10_min'  => 'nullable|integer|min:0|max:20',
+            'contraction_duration_sec' => 'nullable|integer|min:0|max:180',
+            'foetal_heart_rate'        => 'nullable|string|max:50',
+            'amniotic_fluid'           => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
+            'moulding'                 => 'nullable|in:none,+,++,+++',
+            'maternal_bp'              => 'nullable|string|max:20',
+            'maternal_pulse'           => 'nullable|integer|min:20|max:220',
+            'maternal_temp'            => 'nullable|numeric|min:30|max:45',
+            'urine_output_ml'          => 'nullable|integer|min:0',
+            'urine_protein'            => 'nullable|in:nil,trace,+,++,+++',
+            'oxytocin_dose'            => 'nullable|string|max:100',
+            'iv_fluids'                => 'nullable|string|max:255',
+            'medications'              => 'nullable|string|max:2000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $deliveryRecordId = null;
+            if ($request->phase === 'post_delivery') {
+                $dr = $enrollment->deliveryRecord()->first();
+                $deliveryRecordId = $dr ? $dr->id : null;
+            }
+
+            $entry = MaternityPartograph::create([
+                'enrollment_id'            => $enrollmentId,
+                'delivery_record_id'       => $deliveryRecordId,
+                'phase'                    => $request->phase,
+                'recorded_at'              => Carbon::parse($request->recorded_at),
+                'cervical_dilation_cm'     => $request->cervical_dilation_cm,
+                'descent_of_head'          => $request->descent_of_head,
+                'contractions_per_10_min'  => $request->contractions_per_10_min,
+                'contraction_duration_sec' => $request->contraction_duration_sec,
+                'foetal_heart_rate'        => $request->foetal_heart_rate,
+                'amniotic_fluid'           => $request->amniotic_fluid,
+                'moulding'                 => $request->moulding,
+                'maternal_bp'              => $request->maternal_bp,
+                'maternal_pulse'           => $request->maternal_pulse,
+                'maternal_temp'            => $request->maternal_temp,
+                'urine_output_ml'          => $request->urine_output_ml,
+                'urine_protein'            => $request->urine_protein,
+                'oxytocin_dose'            => $request->oxytocin_dose,
+                'iv_fluids'                => $request->iv_fluids,
+                'medications'              => $request->medications,
+                'recorded_by'              => Auth::id(),
+            ]);
+
+            $entry->load('recordedBy');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Partograph entry recorded.',
+                'entry'   => $this->normalizeMaternityPartographEntry($entry),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function updateMaternityPartographEntry(Request $request, $enrollmentId, $entryId)
+    {
+        $entry = MaternityPartograph::where('enrollment_id', $enrollmentId)->findOrFail($entryId);
+
+        $validator = Validator::make($request->all(), [
+            'recorded_at'              => 'required|date',
+            'phase'                    => 'required|in:pre_delivery,post_delivery',
+            'cervical_dilation_cm'     => 'nullable|numeric|min:0|max:10',
+            'descent_of_head'          => 'nullable|string|max:50',
+            'contractions_per_10_min'  => 'nullable|integer|min:0|max:20',
+            'contraction_duration_sec' => 'nullable|integer|min:0|max:180',
+            'foetal_heart_rate'        => 'nullable|string|max:50',
+            'amniotic_fluid'           => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
+            'moulding'                 => 'nullable|in:none,+,++,+++',
+            'maternal_bp'              => 'nullable|string|max:20',
+            'maternal_pulse'           => 'nullable|integer|min:20|max:220',
+            'maternal_temp'            => 'nullable|numeric|min:30|max:45',
+            'urine_output_ml'          => 'nullable|integer|min:0',
+            'urine_protein'            => 'nullable|in:nil,trace,+,++,+++',
+            'oxytocin_dose'            => 'nullable|string|max:100',
+            'iv_fluids'                => 'nullable|string|max:255',
+            'medications'              => 'nullable|string|max:2000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $deliveryRecordId = $entry->delivery_record_id;
+            if ($request->phase === 'post_delivery' && !$deliveryRecordId) {
+                $enrollment = MaternityEnrollment::find($enrollmentId);
+                $dr = $enrollment ? $enrollment->deliveryRecord()->first() : null;
+                $deliveryRecordId = $dr ? $dr->id : null;
+            } elseif ($request->phase === 'pre_delivery') {
+                $deliveryRecordId = null;
+            }
+
+            $entry->update([
+                'phase'                    => $request->phase,
+                'delivery_record_id'       => $deliveryRecordId,
+                'recorded_at'              => Carbon::parse($request->recorded_at),
+                'cervical_dilation_cm'     => $request->cervical_dilation_cm,
+                'descent_of_head'          => $request->descent_of_head,
+                'contractions_per_10_min'  => $request->contractions_per_10_min,
+                'contraction_duration_sec' => $request->contraction_duration_sec,
+                'foetal_heart_rate'        => $request->foetal_heart_rate,
+                'amniotic_fluid'           => $request->amniotic_fluid,
+                'moulding'                 => $request->moulding,
+                'maternal_bp'              => $request->maternal_bp,
+                'maternal_pulse'           => $request->maternal_pulse,
+                'maternal_temp'            => $request->maternal_temp,
+                'urine_output_ml'          => $request->urine_output_ml,
+                'urine_protein'            => $request->urine_protein,
+                'oxytocin_dose'            => $request->oxytocin_dose,
+                'iv_fluids'                => $request->iv_fluids,
+                'medications'              => $request->medications,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Partograph entry updated.',
+                'entry'   => $this->normalizeMaternityPartographEntry($entry->fresh(['recordedBy'])),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteMaternityPartographEntry($enrollmentId, $entryId)
+    {
+        $entry = MaternityPartograph::where('enrollment_id', $enrollmentId)->findOrFail($entryId);
+
+        try {
+            $entry->delete();
+            return response()->json(['success' => true, 'message' => 'Partograph entry deleted.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function normalizeMaternityPartographEntry(MaternityPartograph $entry): array
+    {
+        $bp = $entry->maternal_bp ?? '';
+        $parts = $bp && str_contains((string) $bp, '/') ? explode('/', (string) $bp, 2) : [null, null];
+
+        return [
+            'id'                       => $entry->id,
+            'enrollment_id'            => $entry->enrollment_id,
+            'delivery_record_id'       => $entry->delivery_record_id,
+            'phase'                    => $entry->phase,
+            'recorded_at'              => optional($entry->recorded_at)->toDateTimeString(),
+            'cervical_dilation_cm'     => $entry->cervical_dilation_cm,
+            'descent'                  => $entry->descent_of_head,
+            'contractions_per_10min'   => $entry->contractions_per_10_min,
+            'contraction_duration_sec' => $entry->contraction_duration_sec,
+            'fetal_heart_rate'         => $entry->foetal_heart_rate,
+            'amniotic_fluid'           => $entry->amniotic_fluid,
+            'moulding'                 => $entry->moulding,
+            'maternal_bp'              => $entry->maternal_bp,
+            'maternal_bp_systolic'     => $parts[0] ? trim($parts[0]) : null,
+            'maternal_bp_diastolic'    => $parts[1] ? trim($parts[1]) : null,
+            'maternal_pulse'           => $entry->maternal_pulse,
+            'maternal_temp_c'          => $entry->maternal_temp,
+            'urine_output_ml'          => $entry->urine_output_ml,
+            'urine_protein'            => $entry->urine_protein,
+            'oxytocin_dose'            => $entry->oxytocin_dose,
+            'iv_fluids'                => $entry->iv_fluids,
+            'medications'              => $entry->medications,
+            'recorded_by'              => $entry->recorded_by,
+            'recorded_by_name'         => optional($entry->recordedBy)->name
+                                          ?? userfullname($entry->recorded_by),
+        ];
     }
 
     private function normalizePartographEntry(DeliveryPartograph $entry): array
