@@ -6,7 +6,7 @@
     <style>
         :root {
             --ink: #111;
-            --muted: #222;
+            --muted: #111;
             --border: #ccc;
             --success: #28a745;
         }
