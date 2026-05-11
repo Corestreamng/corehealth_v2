@@ -467,6 +467,9 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
+                if ($his->billed_by && $his->billed_by == $his->doctor_id) {
+                    $str .= " <span class='badge bg-info ms-1'><i class='mdi mdi-account-check'></i> Self-Performed</span>";
+                }
 
                 // HMO Coverage Badge
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->coverage_mode) {
@@ -539,7 +542,7 @@ class EncounterController extends Controller
                 if ($his->productOrServiceRequest) {
                     $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($his->productOrServiceRequest);
                     $canDeliver = $deliveryCheck['can_deliver'];
-                    if (!$canDeliver) {
+                    if (!$canDeliver && $his->billed_by != Auth::id()) {
                         $str .= "<div class='alert alert-warning py-2 mb-2 mt-2'><small>";
                         $str .= "<i class='fa fa-exclamation-triangle'></i> <b>" . $deliveryCheck['reason'] . "</b><br>";
                         $str .= $deliveryCheck['hint'];
@@ -581,7 +584,7 @@ class EncounterController extends Controller
 
                 // Enter Result button for doctors/nurses who requested the investigation
                 $canEnterResult = false;
-                if (empty($his->result) && $canDeliver && $his->status >= 2 && Auth::id() == $his->doctor_id) {
+                if (empty($his->result) && ($canDeliver || $his->billed_by == Auth::id()) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
                         || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))
@@ -593,6 +596,47 @@ class EncounterController extends Controller
                     $str .= "
                         <button type='button' class='btn btn-success btn-sm' onclick='enterLabResult({$his->id})'>
                             <i class='mdi mdi-flask-outline'></i> Enter Result
+                        </button>";
+                }
+
+                // "Perform Investigation" button — status == 1 (unbilled), requester only
+                $canPerformInvestigation = false;
+                if (empty($his->result) && $his->status == 1 && Auth::id() == $his->doctor_id) {
+                    $user = Auth::user();
+                    if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
+                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))
+                    ) {
+                        $canPerformInvestigation = true;
+                    }
+                }
+                if ($canPerformInvestigation) {
+                    $piServiceName = htmlspecialchars(optional($his->service)->service_name ?? 'N/A', ENT_QUOTES);
+                    $piPrice       = optional(optional($his->service)->price)->sale_price ?? 0;
+                    $piCovMode     = '';
+                    $piPayable     = $piPrice;
+                    $piClaims      = 0;
+                    try {
+                        $hmoEst = \App\Helpers\HmoHelper::applyHmoTariff($his->patient_id, null, $his->service_id);
+                        if ($hmoEst) {
+                            $piCovMode = $hmoEst['coverage_mode'] ?? '';
+                            $piPayable = $hmoEst['payable_amount'] ?? $piPrice;
+                            $piClaims  = $hmoEst['claims_amount'] ?? 0;
+                        }
+                    } catch (\Exception $e) {
+                        // Silently fall back to full price
+                    }
+                    $str .= "
+                        <button type='button' class='btn btn-warning btn-sm'
+                            onclick='performInvestigation(this)'
+                            data-type='lab'
+                            data-request-id='{$his->id}'
+                            data-patient-id='{$his->patient_id}'
+                            data-service-name='{$piServiceName}'
+                            data-price='{$piPrice}'
+                            data-coverage-mode='{$piCovMode}'
+                            data-payable='{$piPayable}'
+                            data-claims='{$piClaims}'>
+                            <i class='mdi mdi-flask-outline'></i> Perform Investigation
                         </button>";
                 }
 
@@ -730,6 +774,9 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
+                if ($his->billed_by && $his->billed_by == $his->doctor_id) {
+                    $str .= " <span class='badge bg-info ms-1'><i class='mdi mdi-account-check'></i> Self-Performed</span>";
+                }
 
                 // HMO Coverage Badge
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->coverage_mode) {
@@ -792,7 +839,7 @@ class EncounterController extends Controller
                 if ($his->productOrServiceRequest) {
                     $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($his->productOrServiceRequest);
                     $canDeliver = $deliveryCheck['can_deliver'];
-                    if (!$canDeliver) {
+                    if (!$canDeliver && $his->billed_by != Auth::id()) {
                         $str .= "<div class='alert alert-warning py-2 mb-2 mt-2'><small>";
                         $str .= "<i class='fa fa-exclamation-triangle'></i> <b>" . $deliveryCheck['reason'] . "</b><br>";
                         $str .= $deliveryCheck['hint'];
@@ -834,7 +881,7 @@ class EncounterController extends Controller
 
                 // Enter Result button for doctors/nurses who requested the imaging
                 $canEnterImagingResult = false;
-                if (empty($his->result) && $canDeliver && $his->status >= 2 && Auth::id() == $his->doctor_id) {
+                if (empty($his->result) && ($canDeliver || $his->billed_by == Auth::id()) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
                         || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))
@@ -846,6 +893,47 @@ class EncounterController extends Controller
                     $str .= "
                         <button type='button' class='btn btn-success btn-sm' onclick='enterImagingResult({$his->id})'>
                             <i class='mdi mdi-radiology-box-outline'></i> Enter Result
+                        </button>";
+                }
+
+                // "Perform Investigation" button — status == 1 (unbilled), requester only
+                $canPerformImagingInvestigation = false;
+                if (empty($his->result) && $his->status == 1 && Auth::id() == $his->doctor_id) {
+                    $user = Auth::user();
+                    if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
+                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))
+                    ) {
+                        $canPerformImagingInvestigation = true;
+                    }
+                }
+                if ($canPerformImagingInvestigation) {
+                    $piServiceName = htmlspecialchars(optional($his->service)->service_name ?? 'N/A', ENT_QUOTES);
+                    $piPrice       = optional(optional($his->service)->price)->sale_price ?? 0;
+                    $piCovMode     = '';
+                    $piPayable     = $piPrice;
+                    $piClaims      = 0;
+                    try {
+                        $hmoEst = \App\Helpers\HmoHelper::applyHmoTariff($his->patient_id, null, $his->service_id);
+                        if ($hmoEst) {
+                            $piCovMode = $hmoEst['coverage_mode'] ?? '';
+                            $piPayable = $hmoEst['payable_amount'] ?? $piPrice;
+                            $piClaims  = $hmoEst['claims_amount'] ?? 0;
+                        }
+                    } catch (\Exception $e) {
+                        // Silently fall back to full price
+                    }
+                    $str .= "
+                        <button type='button' class='btn btn-warning btn-sm'
+                            onclick='performInvestigation(this)'
+                            data-type='imaging'
+                            data-request-id='{$his->id}'
+                            data-patient-id='{$his->patient_id}'
+                            data-service-name='{$piServiceName}'
+                            data-price='{$piPrice}'
+                            data-coverage-mode='{$piCovMode}'
+                            data-payable='{$piPayable}'
+                            data-claims='{$piClaims}'>
+                            <i class='mdi mdi-radiology-box-outline'></i> Perform Investigation
                         </button>";
                 }
 
