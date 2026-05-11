@@ -54,8 +54,8 @@ class LabWorkbenchController extends Controller
                         ->orWhere('firstname', 'like', "%{$term}%")
                         ->orWhere('othername', 'like', "%{$term}%");
                 })
-                ->orWhere('file_no', 'like', "%{$term}%")
-                ->orWhere('phone_no', 'like', "%{$term}%");
+                    ->orWhere('file_no', 'like', "%{$term}%")
+                    ->orWhere('phone_no', 'like', "%{$term}%");
             })
             ->limit(10)
             ->get();
@@ -309,12 +309,12 @@ class LabWorkbenchController extends Controller
                 // Special approval queue: pending (5), rejected (6), and recently approved by current user
                 $query->where(function ($q) {
                     $q->whereIn('status', [5, 6])
-                      ->orWhere(function ($q2) {
-                          $q2->where('status', 4)
-                             ->whereNotNull('approved_by')
-                             ->where('approved_by', Auth::id())
-                             ->where('approved_at', '>=', now()->subHours(72));
-                      });
+                        ->orWhere(function ($q2) {
+                            $q2->where('status', 4)
+                                ->whereNotNull('approved_by')
+                                ->where('approved_by', Auth::id())
+                                ->where('approved_at', '>=', now()->subHours(72));
+                        });
                 });
             } elseif ($request->has('status') && $request->status !== 'all') {
                 $statuses = explode(',', $request->status);
@@ -762,7 +762,7 @@ class LabWorkbenchController extends Controller
     {
         try {
             $request->validate([
-                'invest_res_template_submited' => 'required|string',
+                'invest_res_template_submited' => 'nullable|string',
                 'invest_res_entry_id' => 'required',
                 'invest_res_template_version' => 'required|in:1,2',
                 'invest_res_template_data' => 'nullable|string',
@@ -777,8 +777,10 @@ class LabWorkbenchController extends Controller
             if (!$isLabStaff) {
                 $isRequestingDoctor = $user->hasRole('DOCTOR') && $user->id == $labRequest->doctor_id;
                 $isRequestingNurse  = $user->hasRole('NURSE') && $user->id == $labRequest->doctor_id;
-                if (!($isRequestingDoctor && appsettings('doctor_can_enter_lab_result'))
-                    && !($isRequestingNurse && appsettings('nurse_can_enter_lab_result'))) {
+                if (
+                    !($isRequestingDoctor && appsettings('doctor_can_enter_lab_result'))
+                    && !($isRequestingNurse && appsettings('nurse_can_enter_lab_result'))
+                ) {
                     return response()->json([
                         'success' => false,
                         'message' => 'You do not have permission to enter lab results.'
@@ -789,7 +791,7 @@ class LabWorkbenchController extends Controller
             // Check if service can be delivered (payment + HMO validation)
             if ($labRequest->productOrServiceRequest) {
                 $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($labRequest->productOrServiceRequest);
-                if (!$deliveryCheck['can_deliver']) {
+                if (!$deliveryCheck['can_deliver'] && $labRequest->billed_by != Auth::id()) {
                     return response()->json([
                         'success' => false,
                         'message' => $deliveryCheck['reason'],
@@ -923,7 +925,17 @@ class LabWorkbenchController extends Controller
 
             $requiresApproval = appsettings('lab_results_require_approval');
 
-            if ($requiresApproval && !$isEdit) {
+            // Check if current user can self-approve their own request
+            $canSelfApprove = false;
+            $currentUser = Auth::user();
+            if ($currentUser->hasRole('DOCTOR') && appsettings('doctor_self_approve_lab_result') && Auth::id() == $labRequest->doctor_id) {
+                $canSelfApprove = true;
+            }
+            if ($currentUser->hasRole('NURSE') && appsettings('nurse_self_approve_lab_result') && Auth::id() == $labRequest->doctor_id) {
+                $canSelfApprove = true;
+            }
+
+            if ($requiresApproval && !$canSelfApprove && !$isEdit) {
                 // Save to pending columns — result not visible until approved
                 $updateData = [
                     'pending_result' => $resultHtml,
@@ -1536,7 +1548,7 @@ class LabWorkbenchController extends Controller
                 ->get()
                 ->pluck('doctor')
                 ->filter()
-                ->map(function($doctor) {
+                ->map(function ($doctor) {
                     return [
                         'id' => $doctor->id,
                         'name' => $doctor->surname . ' ' . $doctor->firstname
@@ -1564,11 +1576,11 @@ class LabWorkbenchController extends Controller
                 ->where('status', 1)
                 ->orderBy('name')
                 ->get()
-                ->groupBy(function($hmo) {
+                ->groupBy(function ($hmo) {
                     return $hmo->scheme ? $hmo->scheme->name : 'Uncategorized';
                 })
-                ->map(function($group) {
-                    return $group->map(function($hmo) {
+                ->map(function ($group) {
+                    return $group->map(function ($hmo) {
                         return [
                             'id' => $hmo->id,
                             'name' => $hmo->name
@@ -1602,7 +1614,7 @@ class LabWorkbenchController extends Controller
             }
 
             $services = $query->get()
-                ->map(function($service) {
+                ->map(function ($service) {
                     return [
                         'id' => $service->id,
                         'name' => $service->service_name
@@ -1657,7 +1669,7 @@ class LabWorkbenchController extends Controller
             $pending = (clone $query)->whereIn('status', [1, 2, 3])->count();
 
             // Average TAT
-             $avgTAT = (clone $query)->where('status', 4)
+            $avgTAT = (clone $query)->where('status', 4)
                 ->whereNotNull('result_date')
                 ->whereNotNull('created_at')
                 ->get()
@@ -1670,18 +1682,18 @@ class LabWorkbenchController extends Controller
 
             // Revenue calculation disabled
             $estimatedRevenue = 0;
-                // Let's look at `topServices` logic again.
+            // Let's look at `topServices` logic again.
 
             // Requests by status (Format for JS: [{status: 1, count: 10}, ...])
             $byStatus = (clone $query)
                 ->select('status', DB::raw('count(*) as count'))
                 ->groupBy('status')
                 ->get()
-                ->map(function($item) {
-                     return [
-                         'status' => $item->status,
-                         'count' => $item->count
-                     ];
+                ->map(function ($item) {
+                    return [
+                        'status' => $item->status,
+                        'count' => $item->count
+                    ];
                 });
 
             // Monthly trends (last 6 months)
@@ -1917,6 +1929,66 @@ class LabWorkbenchController extends Controller
             ]);
 
             $this->logAudit($id, 'result_approved', 'Result approved by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Self-approve a pending lab result (for the requesting clinician).
+     * Bypasses the unit/dept head restriction but verifies the caller is the original requester
+     * and has the self-approve setting enabled for their role.
+     */
+    public function selfApproveResult($id)
+    {
+        try {
+            $labRequest = LabServiceRequest::findOrFail($id);
+
+            if (Auth::id() !== (int) $labRequest->doctor_id) {
+                return response()->json(['success' => false, 'message' => 'You can only self-approve your own requests.'], 403);
+            }
+
+            $user = Auth::user();
+            $canSelfApprove = false;
+            if ($user->hasRole('DOCTOR') && appsettings('doctor_self_approve_lab_result')) {
+                $canSelfApprove = true;
+            }
+            if ($user->hasRole('NURSE') && appsettings('nurse_self_approve_lab_result')) {
+                $canSelfApprove = true;
+            }
+
+            if (!$canSelfApprove) {
+                return response()->json(['success' => false, 'message' => 'Self-approval is not enabled for your role.'], 403);
+            }
+
+            if ($labRequest->status == 4) {
+                return response()->json(['success' => true, 'message' => 'Result is already approved.']);
+            }
+
+            if ($labRequest->status != 5) {
+                return response()->json(['success' => false, 'message' => 'Result is not pending approval.'], 422);
+            }
+
+            DB::beginTransaction();
+
+            $labRequest->update([
+                'result'               => $labRequest->pending_result,
+                'result_data'          => $labRequest->pending_result_data,
+                'attachments'          => $labRequest->pending_attachments,
+                'pending_result'       => null,
+                'pending_result_data'  => null,
+                'pending_attachments'  => null,
+                'approved_by'          => Auth::id(),
+                'approved_at'          => now(),
+                'status'               => 4,
+            ]);
+
+            $this->logAudit($id, 'result_self_approved', 'Result self-approved by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
 
             DB::commit();
 
