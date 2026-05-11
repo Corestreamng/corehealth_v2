@@ -6,8 +6,8 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         .admission-bill-thermal {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 19px;
+            font-family: 'Consolas', 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+            font-size: 10px;
             color: #000;
             background: #fff;
             width: 78mm;
@@ -16,27 +16,27 @@
         }
         .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
         .header img { width: 96px; height: auto; margin-bottom: 5px; }
-        .header .name { font-weight: bold; font-size: 22px; }
-        .header .address { font-size: 16px; color: #333; line-height: 1.5; }
-        .title { text-align: center; font-weight: bold; font-size: 22px; margin: 8px 0; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 6px; }
-        .bill-no { text-align: center; font-size: 16px; color: #111; margin-bottom: 8px; }
-        .patient-info { margin-bottom: 8px; font-size: 16px; line-height: 1.7; }
-        .patient-info .patient-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; }
+        .header .name { font-weight: bold; font-size: 11px; }
+        .header .address { font-size: 8px; color: #000; line-height: 1.5; }
+        .title { text-align: center; font-weight: bold; font-size: 11px; margin: 8px 0; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 6px; }
+        .bill-no { text-align: center; font-size: 8px; color: #000; margin-bottom: 8px; }
+        .patient-info { margin-bottom: 8px; font-size: 8px; line-height: 1.7; }
+        .patient-info .patient-name { font-weight: bold; font-size: 9px; margin-bottom: 4px; }
         .info-row { display: flex; justify-content: space-between; }
-        .status-badge { display: inline-block; padding: 3px 8px; font-size: 14px; font-weight: bold; border: 1px solid #000; margin-top: 4px; }
+        .status-badge { display: inline-block; padding: 3px 8px; font-size: 7px; font-weight: bold; border: 1px solid #000; margin-top: 4px; }
         .divider { border-top: 1px dashed #000; margin: 8px 0; }
 
         .category-section { margin-bottom: 8px; }
-        .category-header { font-weight: bold; background: #eee; padding: 5px; margin-bottom: 4px; display: flex; justify-content: space-between; font-size: 17px; }
-        .category-items { font-size: 16px; padding-left: 10px; }
-        .category-item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dotted #ccc; }
+        .category-header { font-weight: bold; background: #eee; padding: 5px; margin-bottom: 4px; display: flex; justify-content: space-between; font-size: 9px; }
+        .category-items { font-size: 8px; padding-left: 10px; }
+        .category-item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dotted #000; }
         .category-item:last-child { border-bottom: none; }
 
         .totals { margin-top: 8px; border-top: 1px solid #000; padding-top: 6px; }
-        .total-row { display: flex; justify-content: space-between; font-size: 18px; padding: 3px 0; border-top: 1px dashed #bbb; }
-        .total-row.grand { font-weight: bold; font-size: 21px; border-top: 2px solid #000; margin-top: 4px; padding-top: 6px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 9px; padding: 3px 0; border-top: 1px dashed #000; }
+        .total-row.grand { font-weight: bold; font-size: 11px; border-top: 2px solid #000; margin-top: 4px; padding-top: 6px; }
 
-        .footer { text-align: center; font-size: 15px; color: #111; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
+        .footer { text-align: center; font-size: 8px; color: #000; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
 
         @media print {
             @page { size: 78mm auto; margin: 0; }
