@@ -113,6 +113,10 @@ class HospitalConfigController extends Controller
             'nurse_can_enter_lab_result' => 'boolean',
             'doctor_can_enter_imaging_result' => 'boolean',
             'nurse_can_enter_imaging_result' => 'boolean',
+            'doctor_self_approve_lab_result' => 'boolean',
+            'nurse_self_approve_lab_result' => 'boolean',
+            'doctor_self_approve_imaging_result' => 'boolean',
+            'nurse_self_approve_imaging_result' => 'boolean',
         ]);
 
         $config = ApplicationStatu::first();
@@ -132,6 +136,10 @@ class HospitalConfigController extends Controller
         $validated['nurse_can_enter_lab_result'] = $request->has('nurse_can_enter_lab_result');
         $validated['doctor_can_enter_imaging_result'] = $request->has('doctor_can_enter_imaging_result');
         $validated['nurse_can_enter_imaging_result'] = $request->has('nurse_can_enter_imaging_result');
+        $validated['doctor_self_approve_lab_result'] = $request->has('doctor_self_approve_lab_result');
+        $validated['nurse_self_approve_lab_result'] = $request->has('nurse_self_approve_lab_result');
+        $validated['doctor_self_approve_imaging_result'] = $request->has('doctor_self_approve_imaging_result');
+        $validated['nurse_self_approve_imaging_result'] = $request->has('nurse_self_approve_imaging_result');
         $validated['send_appointment_email_to_doctors'] = $request->has('send_appointment_email_to_doctors');
         $validated['send_appointment_email_to_patients'] = $request->has('send_appointment_email_to_patients');
         $validated['backup_compression'] = $request->has('backup_compression');

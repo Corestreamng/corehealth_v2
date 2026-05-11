@@ -797,6 +797,74 @@
                                         </label>
                                     </div>
                                 </div>
+
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3" style="font-weight: 600;">
+                                    <i class="mdi mdi-shield-check-outline mr-1"></i> Self-Approval Permissions
+                                    <small class="text-muted d-block fw-normal" style="font-size: .8rem; font-weight: 400 !important;">
+                                        Only applies when Results Require Approval is enabled. Allows the requesting clinician to bypass the approval queue for their own results.
+                                    </small>
+                                </h6>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="doctor_self_approve_lab_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-doctor text-primary mr-1"></i>Doctor Can Self-Approve Lab Results
+                                            </label>
+                                            <small class="text-muted d-block">Doctor can approve their own lab results without going to the approval queue</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="doctor_self_approve_lab_result" value="1" {{ $config->doctor_self_approve_lab_result ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="nurse_self_approve_lab_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-nurse text-success mr-1"></i>Nurse Can Self-Approve Lab Results
+                                            </label>
+                                            <small class="text-muted d-block">Nurse can approve their own lab results without going to the approval queue</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="nurse_self_approve_lab_result" value="1" {{ $config->nurse_self_approve_lab_result ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="doctor_self_approve_imaging_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-doctor text-primary mr-1"></i>Doctor Can Self-Approve Imaging Results
+                                            </label>
+                                            <small class="text-muted d-block">Doctor can approve their own imaging results without going to the approval queue</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="doctor_self_approve_imaging_result" value="1" {{ $config->doctor_self_approve_imaging_result ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="nurse_self_approve_imaging_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-nurse text-success mr-1"></i>Nurse Can Self-Approve Imaging Results
+                                            </label>
+                                            <small class="text-muted d-block">Nurse can approve their own imaging results without going to the approval queue</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="nurse_self_approve_imaging_result" value="1" {{ $config->nurse_self_approve_imaging_result ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
