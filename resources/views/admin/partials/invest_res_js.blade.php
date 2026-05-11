@@ -528,8 +528,20 @@ window.InvestResultEntry = (function() {
                     }
                 },
                 error: function(xhr) {
-                    const errorMsg = xhr.responseJSON?.message || 'Unknown error';
-                    toastr.error('Error saving result: ' + errorMsg);
+                    var errorMsg = 'Unknown error';
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            // Laravel 422 validation: show first error per field
+                            var msgs = [];
+                            $.each(xhr.responseJSON.errors, function(field, errs) {
+                                msgs.push(errs[0]);
+                            });
+                            errorMsg = msgs.join(' | ');
+                        } else if (xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                    }
+                    toastr.error(errorMsg);
                 },
                 complete: function() {
                     $submitBtn.prop('disabled', false).html(originalBtnHtml);

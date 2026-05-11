@@ -588,6 +588,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/lab-workbench/approval/{id}/approve', [\App\Http\Controllers\LabWorkbenchController::class, 'approveResult'])->name('lab.approveResult');
         Route::post('/lab-workbench/approval/{id}/reject', [\App\Http\Controllers\LabWorkbenchController::class, 'rejectResult'])->name('lab.rejectResult');
         Route::post('/lab-workbench/approval/{id}/reverse', [\App\Http\Controllers\LabWorkbenchController::class, 'reverseApproval'])->name('lab.reverseApproval');
+        Route::post('/lab-workbench/self-approve/{id}', [\App\Http\Controllers\LabWorkbenchController::class, 'selfApproveResult'])->name('lab.selfApproveResult');
 
         // Imaging Workbench Routes
         Route::get('/imaging-workbench', [\App\Http\Controllers\ImagingWorkbenchController::class, 'index'])->name('imaging.workbench');
@@ -622,6 +623,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/imaging-workbench/approval/{id}/approve', [\App\Http\Controllers\ImagingWorkbenchController::class, 'approveResult'])->name('imaging.approveResult');
         Route::post('/imaging-workbench/approval/{id}/reject', [\App\Http\Controllers\ImagingWorkbenchController::class, 'rejectResult'])->name('imaging.rejectResult');
         Route::post('/imaging-workbench/approval/{id}/reverse', [\App\Http\Controllers\ImagingWorkbenchController::class, 'reverseApproval'])->name('imaging.reverseApproval');
+        Route::post('/imaging-workbench/self-approve/{id}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'selfApproveResult'])->name('imaging.selfApproveResult');
 
         // Imaging Service Request Routes (Legacy)
         Route::resource('imaging-requests', ImagingServiceRequestController::class);

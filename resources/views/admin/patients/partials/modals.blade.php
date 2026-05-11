@@ -1,3 +1,4 @@
+@if(empty($skipOldInvestResModal))
 <div class="modal fade" id="investResModal" tabindex="-1" role="dialog" aria-labelledby="investResModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -51,6 +52,7 @@
         </div>
     </div>
 </div>
+@endif
 
 @include('admin.partials.invest_res_view_modal')
 @include('admin.partials.invest_res_view_js')
