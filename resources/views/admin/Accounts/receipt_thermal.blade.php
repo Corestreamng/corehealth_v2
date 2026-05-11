@@ -5,38 +5,38 @@
     <title>Receipt (Thermal)</title>
     <style>
         :root {
-            --ink: #111;
-            --muted: #111;
-            --border: #bbb;
+            --ink: #000;
+            --muted: #000;
+            --border: #000;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { margin: 0; padding: 0; }
-        .receipt-thermal { font-family: 'Segoe UI', Arial, sans-serif; font-size: 19px; width: 78mm; margin: 0; padding: 0; color: var(--ink); }
+        .receipt-thermal { font-family: 'Consolas', 'Liberation Mono', 'DejaVu Sans Mono', monospace; font-size: 10px; width: 78mm; margin: 0; padding: 0; color: var(--ink); }
         .receipt-thermal .wrap { padding: 7px 7px 10px; }
         .receipt-thermal .receipt-header { text-align: center; margin-bottom: 8px; }
         .receipt-thermal .receipt-header img { width: 96px; height: auto; }
-        .receipt-thermal .receipt-header .name { font-size: 22px; font-weight: 700; margin-top: 5px; letter-spacing: 0.3px; }
-        .receipt-thermal .receipt-header .meta { font-size: 16px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
+        .receipt-thermal .receipt-header .name { font-size: 11px; font-weight: 700; margin-top: 5px; letter-spacing: 0.3px; }
+        .receipt-thermal .receipt-header .meta { font-size: 8px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
         .receipt-thermal .hr { border: 0; border-top: 1px dashed var(--border); margin: 7px 0; }
         .receipt-thermal .hr-solid { border: 0; border-top: 2px solid var(--ink); margin: 7px 0; }
-        .receipt-thermal .title { font-size: 22px; font-weight: 700; letter-spacing: 1.5px; text-align: center; margin: 5px 0 7px; }
-        .receipt-thermal .details { font-size: 16px; line-height: 1.7; margin-bottom: 7px; }
+        .receipt-thermal .title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-align: center; margin: 5px 0 7px; }
+        .receipt-thermal .details { font-size: 8px; line-height: 1.7; margin-bottom: 7px; }
         .receipt-thermal .details b { display: inline-block; width: 90px; }
         /* Line-item list — uses more vertical space and is much clearer */
         .receipt-thermal .item-list { width: 100%; margin: 5px 0; }
         .receipt-thermal .item-row { border-top: 1px dashed var(--border); padding: 7px 0 5px; }
         .receipt-thermal .item-row:last-child { border-bottom: 1px dashed var(--border); }
-        .receipt-thermal .item-name { font-size: 18px; font-weight: 700; }
-        .receipt-thermal .item-type { font-size: 15px; color: var(--muted); font-style: italic; margin-bottom: 3px; }
-        .receipt-thermal .item-line { display: flex; justify-content: space-between; font-size: 16px; line-height: 1.6; }
+        .receipt-thermal .item-name { font-size: 9px; font-weight: 700; }
+        .receipt-thermal .item-type { font-size: 8px; color: var(--muted); font-style: italic; margin-bottom: 3px; }
+        .receipt-thermal .item-line { display: flex; justify-content: space-between; font-size: 8px; line-height: 1.6; }
         .receipt-thermal .item-line .label { color: var(--muted); }
         .receipt-thermal .item-line .val { font-weight: 600; }
         .receipt-thermal .totals-block { margin-top: 7px; }
-        .receipt-thermal .total-row { display: flex; justify-content: space-between; font-size: 18px; padding: 3px 0; border-top: 1px dashed var(--border); }
-        .receipt-thermal .total-row.grand { font-size: 21px; font-weight: 700; border-top: 2px solid var(--ink); padding-top: 5px; margin-top: 2px; }
-        .receipt-thermal .in-words { margin-top: 5px; font-size: 16px; line-height: 1.5; }
-        .receipt-thermal .receipt-notes { margin-top: 7px; font-size: 16px; color: var(--muted); line-height: 1.5; }
-        .receipt-thermal .receipt-footer { margin-top: 8px; font-size: 16px; color: var(--muted); line-height: 1.6; }
+        .receipt-thermal .total-row { display: flex; justify-content: space-between; font-size: 9px; padding: 3px 0; border-top: 1px dashed var(--border); }
+        .receipt-thermal .total-row.grand { font-size: 11px; font-weight: 700; border-top: 2px solid var(--ink); padding-top: 5px; margin-top: 2px; }
+        .receipt-thermal .in-words { margin-top: 5px; font-size: 8px; line-height: 1.5; }
+        .receipt-thermal .receipt-notes { margin-top: 7px; font-size: 8px; color: var(--muted); line-height: 1.5; }
+        .receipt-thermal .receipt-footer { margin-top: 8px; font-size: 8px; color: var(--muted); line-height: 1.6; }
         @media print {
             @page { size: 78mm auto; margin: 0; }
             body { margin: 0; }

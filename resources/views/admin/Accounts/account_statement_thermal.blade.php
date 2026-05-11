@@ -4,9 +4,9 @@
         .statement-thermal-wrapper {
             --brand: {{ $site->hos_color ?? '#0a6cf2' }};
             --ink: #000;
-            --muted: #111;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 19px;
+            --muted: #000;
+            font-family: 'Consolas', 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+            font-size: 10px;
             color: var(--ink);
             background: #fff;
             width: 78mm;
@@ -14,35 +14,141 @@
             padding: 7px;
             box-sizing: border-box;
         }
-        .statement-thermal-wrapper * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .statement-thermal-wrapper .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
-        .statement-thermal-wrapper .hospital-name { font-size: 22px; font-weight: bold; }
-        .statement-thermal-wrapper .hospital-meta { font-size: 16px; color: var(--muted); line-height: 1.5; }
-        .statement-thermal-wrapper .doc-title { font-size: 22px; font-weight: bold; margin-top: 6px; letter-spacing: 1px; }
-        .statement-thermal-wrapper .date-range { font-size: 15px; margin-top: 3px; }
+        .statement-thermal-wrapper * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        .statement-thermal-wrapper .patient-info { font-size: 16px; margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 8px; line-height: 1.7; }
-        .statement-thermal-wrapper .patient-info div { display: flex; justify-content: space-between; margin: 2px 0; }
-        .statement-thermal-wrapper .patient-info .label { color: var(--muted); }
-        .statement-thermal-wrapper .patient-info .value { font-weight: bold; text-align: right; }
+        .statement-thermal-wrapper .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
 
-        .statement-thermal-wrapper .summary-box { background: #f5f5f5; padding: 8px; margin-bottom: 8px; font-size: 16px; }
-        .statement-thermal-wrapper .summary-row { display: flex; justify-content: space-between; margin: 3px 0; }
-        .statement-thermal-wrapper .summary-row.balance { border-top: 2px solid #000; padding-top: 5px; margin-top: 5px; font-weight: bold; font-size: 21px; }
+        .statement-thermal-wrapper .hospital-name {
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .statement-thermal-wrapper .hospital-meta {
+            font-size: 8px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .statement-thermal-wrapper .doc-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        .statement-thermal-wrapper .date-range {
+            font-size: 8px;
+            margin-top: 3px;
+        }
+
+        .statement-thermal-wrapper .patient-info {
+            font-size: 8px;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 8px;
+            line-height: 1.7;
+        }
+
+        .statement-thermal-wrapper .patient-info div {
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+        }
+
+        .statement-thermal-wrapper .patient-info .label {
+            color: var(--muted);
+        }
+
+        .statement-thermal-wrapper .patient-info .value {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .statement-thermal-wrapper .summary-box {
+            background: #f5f5f5;
+            padding: 8px;
+            margin-bottom: 8px;
+            font-size: 8px;
+        }
+
+        .statement-thermal-wrapper .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+
+        .statement-thermal-wrapper .summary-row.balance {
+            border-top: 2px solid #000;
+            padding-top: 5px;
+            margin-top: 5px;
+            font-weight: bold;
+            font-size: 11px;
+        }
 
         /* Table kept for ledger readability but fonts bumped up */
-        .statement-thermal-wrapper table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 8px; }
-        .statement-thermal-wrapper th { background: #333; color: #fff; padding: 5px 3px; text-align: left; font-size: 13px; }
-        .statement-thermal-wrapper td { padding: 4px 3px; border-bottom: 1px dotted #ccc; }
-        .statement-thermal-wrapper .text-right { text-align: right; }
-        .statement-thermal-wrapper .amount { font-family: 'Consolas', monospace; }
+        .statement-thermal-wrapper table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7px;
+            margin-bottom: 8px;
+        }
 
-        .statement-thermal-wrapper .footer { font-size: 14px; text-align: center; color: var(--muted); border-top: 1px dashed #000; padding-top: 6px; margin-top: 8px; line-height: 1.7; }
+        .statement-thermal-wrapper th {
+            background: #000;
+            color: #fff;
+            padding: 5px 3px;
+            text-align: left;
+            font-size: 7px;
+        }
+
+        .statement-thermal-wrapper td {
+            padding: 4px 3px;
+            border-bottom: 1px dotted #000;
+        }
+
+        .statement-thermal-wrapper .text-right {
+            text-align: right;
+        }
+
+        .statement-thermal-wrapper .amount {
+            font-family: 'Consolas', monospace;
+        }
+
+        .statement-thermal-wrapper .footer {
+            font-size: 7px;
+            text-align: center;
+            color: var(--muted);
+            border-top: 1px dashed #000;
+            padding-top: 6px;
+            margin-top: 8px;
+            line-height: 1.7;
+        }
+
         @media print {
-            @page { size: 78mm auto; margin: 0; }
-            body { margin: 0; }
-            .statement-thermal-wrapper { width: 78mm; margin: 0; padding: 5px; }
+            @page {
+                size: 78mm auto;
+                margin: 0;
+            }
+
+            body {
+                margin: 0;
+            }
+
+            .statement-thermal-wrapper {
+                width: 78mm;
+                margin: 0;
+                padding: 5px;
+            }
         }
     </style>
 
@@ -90,21 +196,25 @@
         </thead>
         <tbody>
             @forelse($transactions as $tx)
-            <tr>
-                <td>{{ $tx['short_date'] }}</td>
-                <td>{{ $tx['short_type'] }}</td>
-                <td class="text-right amount debit">
-                    @if($tx['debit']> 0){{ number_format($tx['debit'], 0) }}@endif
-                </td>
-                <td class="text-right amount credit">
-                    @if($tx['credit']> 0){{ number_format($tx['credit'], 0) }}@endif
-                </td>
-                <td class="text-right amount">{{ number_format($tx['running_balance'], 0) }}</td>
-            </tr>
+                <tr>
+                    <td>{{ $tx['short_date'] }}</td>
+                    <td>{{ $tx['short_type'] }}</td>
+                    <td class="text-right amount debit">
+                        @if ($tx['debit'] > 0)
+                            {{ number_format($tx['debit'], 0) }}
+                        @endif
+                    </td>
+                    <td class="text-right amount credit">
+                        @if ($tx['credit'] > 0)
+                            {{ number_format($tx['credit'], 0) }}
+                        @endif
+                    </td>
+                    <td class="text-right amount">{{ number_format($tx['running_balance'], 0) }}</td>
+                </tr>
             @empty
-            <tr>
-                <td colspan="5" style="text-align: center;">No transactions</td>
-            </tr>
+                <tr>
+                    <td colspan="5" style="text-align: center;">No transactions</td>
+                </tr>
             @endforelse
         </tbody>
     </table>
