@@ -1639,7 +1639,7 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'delivery_date'    => 'required|date',
-            'type_of_delivery' => 'required|in:svd,cs,vacuum,forceps,breech',
+            'type_of_delivery' => 'required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
             'number_of_babies' => 'required|integer|min:1|max:8',
         ]);
 
@@ -1694,6 +1694,16 @@ class MaternityWorkbenchController extends Controller
     public function updateDeliveryRecord(Request $request, $id)
     {
         $delivery = DeliveryRecord::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'delivery_date'    => 'sometimes|required|date',
+            'type_of_delivery' => 'sometimes|required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
+            'number_of_babies' => 'sometimes|required|integer|min:1|max:8',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
 
         $delivery->update($request->only([
             'delivery_date',
