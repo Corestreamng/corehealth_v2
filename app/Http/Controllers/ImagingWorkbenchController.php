@@ -691,7 +691,7 @@ class ImagingWorkbenchController extends Controller
     {
         try {
             $request->validate([
-                'invest_res_template_submited' => 'required|string',
+                'invest_res_template_submited' => 'nullable|string',
                 'invest_res_entry_id' => 'required',
                 'invest_res_template_version' => 'required|in:1,2',
                 'invest_res_template_data' => 'nullable|string',
@@ -718,7 +718,7 @@ class ImagingWorkbenchController extends Controller
             // Check if service can be delivered (payment + HMO validation)
             if ($imagingRequest->productOrServiceRequest) {
                 $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($imagingRequest->productOrServiceRequest);
-                if (!$deliveryCheck['can_deliver']) {
+                if (!$deliveryCheck['can_deliver'] && $imagingRequest->billed_by != Auth::id()) {
                     return response()->json([
                         'success' => false,
                         'message' => $deliveryCheck['reason'],
@@ -838,8 +838,18 @@ class ImagingWorkbenchController extends Controller
             DB::beginTransaction();
 
             $requiresApproval = appsettings('imaging_results_require_approval');
+            
+            // Check if current user can self-approve their own request
+            $canSelfApprove = false;
+            $currentUser = Auth::user();
+            if ($currentUser->hasRole('DOCTOR') && appsettings('doctor_self_approve_imaging_result') && Auth::id() == $imagingRequest->doctor_id) {
+                $canSelfApprove = true;
+            }
+            if ($currentUser->hasRole('NURSE') && appsettings('nurse_self_approve_imaging_result') && Auth::id() == $imagingRequest->doctor_id) {
+                $canSelfApprove = true;
+            }
 
-            if ($requiresApproval && !$isEdit) {
+            if ($requiresApproval && !$canSelfApprove && !$isEdit) {
                 // Save to pending columns — result not visible until approved
                 $updateData = [
                     'pending_result' => $resultHtml,
@@ -1515,6 +1525,66 @@ class ImagingWorkbenchController extends Controller
             ]);
 
             $this->logAudit($id, 'result_approved', 'Result approved by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Self-approve a pending imaging result (for the requesting clinician).
+     * Bypasses the unit/dept head restriction but verifies the caller is the original requester
+     * and has the self-approve setting enabled for their role.
+     */
+    public function selfApproveResult($id)
+    {
+        try {
+            $imagingRequest = ImagingServiceRequest::findOrFail($id);
+
+            if (Auth::id() !== (int) $imagingRequest->doctor_id) {
+                return response()->json(['success' => false, 'message' => 'You can only self-approve your own requests.'], 403);
+            }
+
+            $user = Auth::user();
+            $canSelfApprove = false;
+            if ($user->hasRole('DOCTOR') && appsettings('doctor_self_approve_imaging_result')) {
+                $canSelfApprove = true;
+            }
+            if ($user->hasRole('NURSE') && appsettings('nurse_self_approve_imaging_result')) {
+                $canSelfApprove = true;
+            }
+
+            if (!$canSelfApprove) {
+                return response()->json(['success' => false, 'message' => 'Self-approval is not enabled for your role.'], 403);
+            }
+
+            if ($imagingRequest->status == 4) {
+                return response()->json(['success' => true, 'message' => 'Result is already approved.']);
+            }
+
+            if ($imagingRequest->status != 5) {
+                return response()->json(['success' => false, 'message' => 'Result is not pending approval.'], 422);
+            }
+
+            DB::beginTransaction();
+
+            $imagingRequest->update([
+                'result'               => $imagingRequest->pending_result,
+                'result_data'          => $imagingRequest->pending_result_data,
+                'attachments'          => $imagingRequest->pending_attachments,
+                'pending_result'       => null,
+                'pending_result_data'  => null,
+                'pending_attachments'  => null,
+                'approved_by'          => Auth::id(),
+                'approved_at'          => now(),
+                'status'               => 4,
+            ]);
+
+            $this->logAudit($id, 'result_self_approved', 'Result self-approved by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
 
             DB::commit();
 

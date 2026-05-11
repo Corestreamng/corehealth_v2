@@ -3819,6 +3819,7 @@
 @include('admin.partials.patient_search_js', ['search_context' => 'imaging'])
 @include('admin.partials.invest_res_js')
 @include('admin.partials.bulk_result_entry_js')
+@include('admin.partials.perform_investigation_modal')
 <script>
 // Global state
 let currentPatient = null;
@@ -3829,11 +3830,29 @@ const isApprover = @json($isApprover ?? false);
 const requiresApproval = @json($requiresApproval ?? false);
 let currentApprovalId = null;
 
+var _PI_IMG_REQ_APPROVAL = {{ appsettings('imaging_results_require_approval') ? 'true' : 'false' }};
+var _PI_DR_SELF_IMG      = {{ appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }};
+var _PI_NR_SELF_IMG      = {{ appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }};
+
+function _autoApproveIfEnabled(requestId, type) {
+    if ($('#invest_res_is_edit').val() == '1') { return; }
+    if (!_PI_IMG_REQ_APPROVAL) { return; }
+    if (!_PI_DR_SELF_IMG && !_PI_NR_SELF_IMG) { return; }
+    $.post('/imaging-workbench/self-approve/' + requestId, { _token: $('meta[name="csrf-token"]').attr('content') })
+        .done(function (res) {
+            if (res && res.success) { toastr.success('Result approved automatically.'); }
+            else { toastr.warning('Result saved. Auto-approval failed: ' + ((res && res.message) || '')); }
+        })
+        .fail(function () { toastr.warning('Result saved but auto-approval could not be completed.'); });
+}
+
 $(document).ready(function() {
     // Initialize shared result entry module
     InvestResultEntry.bindFormSubmit(function() {
         if (currentPatient) loadPatient(currentPatient);
         getQueueCounts();
+        var ctx = window._investResultContext;
+        if (ctx) { _autoApproveIfEnabled(ctx.id, ctx.type); window._investResultContext = null; }
     });
 
     // Initialize
@@ -5208,6 +5227,7 @@ function dismissRequests(requestIds, section) {
 }
 
 function enterResult(requestId) {
+    window._investResultContext = { type: 'imaging', id: requestId };
     InvestResultEntry.enterResult(
         requestId,
         `/imaging-workbench/imaging-service-requests/${requestId}`,
