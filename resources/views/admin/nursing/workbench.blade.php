@@ -6950,6 +6950,7 @@ window.BILLING_KIT_CONFIG = {
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'nursing'])
 @include('admin.partials.invest_res_js')
+@include('admin.partials.perform_investigation_modal')
 <script>
 // Global state
 let currentPatient = null;
@@ -7286,7 +7287,7 @@ function displayVitalsQueue(patients) {
         const criticalWaits = patients.filter(p => p.wait_level === 'critical').length;
         const warningWaits = patients.filter(p => p.wait_level === 'warning').length;
         const emergencies = patients.filter(p => p.priority === 'emergency').length;
-        
+
         // Calculate average wait time
         let avgWait = 0;
         if (patients.length > 0) {
@@ -7363,7 +7364,7 @@ function displayVitalsQueue(patients) {
             vitalsClinicFilter = $(this).val();
             // Show loading state
             $('#vitals-cards-container').html('<div class="text-center p-5"><i class="mdi mdi-loading mdi-spin mdi-48px text-primary"></i><br>Filtering queue...</div>');
-            
+
             $.get('{{ route("nursing-workbench.vitals-queue") }}', { clinic_id: vitalsClinicFilter }, function(data) {
                 vitalsQueueData = data;
                 // Re-render the whole thing to update stats as well
@@ -9640,6 +9641,7 @@ function loadUserPreferences() {
 
 // Lab result entry (called from investigation history DataTable "Enter Result" button)
 function enterLabResult(requestId) {
+    window._investResultContext = { type: 'lab', id: requestId };
     InvestResultEntry.enterResult(
         requestId,
         `/lab-workbench/lab-service-requests/${requestId}`,
@@ -9661,6 +9663,7 @@ function editLabResult(obj) {
 
 // Imaging result entry (called from imaging history DataTable "Enter Result" button)
 function enterImagingResult(requestId) {
+    window._investResultContext = { type: 'imaging', id: requestId };
     InvestResultEntry.enterResult(
         requestId,
         `/imaging-workbench/imaging-service-requests/${requestId}`,
@@ -9680,6 +9683,28 @@ function editImagingResult(obj) {
     );
 }
 
+var _PI_LAB_REQ_APPROVAL = {{ appsettings('lab_results_require_approval') ? 'true' : 'false' }};
+var _PI_IMG_REQ_APPROVAL = {{ appsettings('imaging_results_require_approval') ? 'true' : 'false' }};
+var _PI_DR_SELF_LAB      = {{ appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }};
+var _PI_NR_SELF_LAB      = {{ appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }};
+var _PI_DR_SELF_IMG      = {{ appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }};
+var _PI_NR_SELF_IMG      = {{ appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }};
+
+function _autoApproveIfEnabled(requestId, type) {
+    if ($('#invest_res_is_edit').val() == '1') { return; }
+    var reqApproval = (type === 'lab') ? _PI_LAB_REQ_APPROVAL : _PI_IMG_REQ_APPROVAL;
+    if (!reqApproval) { return; }
+    var canSelf = (type === 'lab') ? (_PI_DR_SELF_LAB || _PI_NR_SELF_LAB) : (_PI_DR_SELF_IMG || _PI_NR_SELF_IMG);
+    if (!canSelf) { return; }
+    var url = (type === 'lab') ? '/lab-workbench/self-approve/' + requestId : '/imaging-workbench/self-approve/' + requestId;
+    $.post(url, { _token: $('meta[name="csrf-token"]').attr('content') })
+        .done(function (res) {
+            if (res && res.success) { toastr.success('Result approved automatically.'); }
+            else { toastr.warning('Result saved. Auto-approval failed: ' + ((res && res.message) || '')); }
+        })
+        .fail(function () { toastr.warning('Result saved but auto-approval could not be completed.'); });
+}
+
 // Initialize shared result entry module
 InvestResultEntry.bindFormSubmit(function() {
     // Refresh main history DataTables
@@ -9692,6 +9717,8 @@ InvestResultEntry.bindFormSubmit(function() {
     if ($.fn.DataTable.isDataTable('#cr_imaging_history_list')) {
         $('#cr_imaging_history_list').DataTable().ajax.reload(null, false);
     }
+    var ctx = window._investResultContext;
+    if (ctx) { _autoApproveIfEnabled(ctx.id, ctx.type); window._investResultContext = null; }
 });
 
 // setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial

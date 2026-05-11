@@ -2667,7 +2667,7 @@ $sett = appsettings();
     'search_url' => route('maternity-workbench.search-patients')
 ])
 @include('admin.partials.invest_res_js')
-
+@include('admin.partials.perform_investigation_modal')
 <script>
     // ═══════════════════════════════════════════════════════════════
     // GLOBAL STATE (mirrors nursing workbench pattern)
@@ -6077,7 +6077,7 @@ $sett = appsettings();
                 <div class="row">
                     <div class="col-md-3 mb-2"><label class="form-label">Delivery Date <span class="text-danger">*</span></label><input type="date" name="delivery_date" class="form-control" value="${new Date().toISOString().split('T')[0]}" required></div>
                     <div class="col-md-3 mb-2"><label class="form-label">Delivery Time</label><input type="time" name="delivery_time" class="form-control"></div>
-                    <div class="col-md-3 mb-2"><label class="form-label">Type of Delivery <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="SVD: Spontaneous Vaginal Delivery. CS: Caesarean Section. Vacuum/Forceps: Assisted vaginal delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="type_of_delivery" class="form-select" required><option value="svd">SVD (Spontaneous Vaginal)</option><option value="cs">CS (Caesarean Section)</option><option value="vacuum">Vacuum Extraction</option><option value="forceps">Forceps Delivery</option><option value="breech">Breech Delivery</option></select></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Type of Delivery <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="SVD: Spontaneous Vaginal Delivery. CS: Caesarean Section. Vacuum/Forceps: Assisted vaginal delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="type_of_delivery" class="form-select" required><option value="svd">SVD (Spontaneous Vaginal)</option><option value="assisted_vaginal">Assisted Vaginal</option><option value="elective_cs">Elective CS</option><option value="emergency_cs">Emergency CS</option><option value="vacuum">Vacuum Extraction</option><option value="forceps">Forceps Delivery</option></select></div>
                     <div class="col-md-3 mb-2"><label class="form-label">Number of Babies <span class="text-danger">*</span></label><input type="number" name="number_of_babies" class="form-control" value="1" min="1" max="8" placeholder="1" required></div>
                 </div>
             </div>
@@ -7895,6 +7895,7 @@ $sett = appsettings();
 
     // Lab result entry (called from investigation history DataTable "Enter Result" button)
     function enterLabResult(requestId) {
+        window._investResultContext = { type: 'lab', id: requestId };
         InvestResultEntry.enterResult(
             requestId,
             `/lab-workbench/lab-service-requests/${requestId}`,
@@ -7916,6 +7917,7 @@ $sett = appsettings();
 
     // Imaging result entry (called from imaging history DataTable "Enter Result" button)
     function enterImagingResult(requestId) {
+        window._investResultContext = { type: 'imaging', id: requestId };
         InvestResultEntry.enterResult(
             requestId,
             `/imaging-workbench/imaging-service-requests/${requestId}`,
@@ -7935,6 +7937,28 @@ $sett = appsettings();
         );
     }
 
+    var _PI_LAB_REQ_APPROVAL = {{ appsettings('lab_results_require_approval') ? 'true' : 'false' }};
+    var _PI_IMG_REQ_APPROVAL = {{ appsettings('imaging_results_require_approval') ? 'true' : 'false' }};
+    var _PI_DR_SELF_LAB      = {{ appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }};
+    var _PI_NR_SELF_LAB      = {{ appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }};
+    var _PI_DR_SELF_IMG      = {{ appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }};
+    var _PI_NR_SELF_IMG      = {{ appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }};
+
+    function _autoApproveIfEnabled(requestId, type) {
+        if ($('#invest_res_is_edit').val() == '1') { return; }
+        var reqApproval = (type === 'lab') ? _PI_LAB_REQ_APPROVAL : _PI_IMG_REQ_APPROVAL;
+        if (!reqApproval) { return; }
+        var canSelf = (type === 'lab') ? (_PI_DR_SELF_LAB || _PI_NR_SELF_LAB) : (_PI_DR_SELF_IMG || _PI_NR_SELF_IMG);
+        if (!canSelf) { return; }
+        var url = (type === 'lab') ? '/lab-workbench/self-approve/' + requestId : '/imaging-workbench/self-approve/' + requestId;
+        $.post(url, { _token: $('meta[name="csrf-token"]').attr('content') })
+            .done(function (res) {
+                if (res && res.success) { toastr.success('Result approved automatically.'); }
+                else { toastr.warning('Result saved. Auto-approval failed: ' + ((res && res.message) || '')); }
+            })
+            .fail(function () { toastr.warning('Result saved but auto-approval could not be completed.'); });
+    }
+
     // Initialize shared result entry module — refresh maternity DataTables on save
     InvestResultEntry.bindFormSubmit(function() {
         if ($.fn.DataTable.isDataTable('#mco_lab_history_list')) {
@@ -7943,6 +7967,8 @@ $sett = appsettings();
         if ($.fn.DataTable.isDataTable('#mco_imaging_history_list')) {
             $('#mco_imaging_history_list').DataTable().ajax.reload(null, false);
         }
+        var ctx = window._investResultContext;
+        if (ctx) { _autoApproveIfEnabled(ctx.id, ctx.type); window._investResultContext = null; }
     });
 
     // setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
