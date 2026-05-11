@@ -47,7 +47,7 @@ class LabServiceRequestController extends Controller
         // dd($request->all());
         try {
             $request->validate([
-                'invest_res_template_submited' => 'required|string',
+                'invest_res_template_submited' => 'nullable|string',
                 'invest_res_entry_id' => 'required',
                 'invest_res_template_version' => 'required|in:1,2',
                 'invest_res_template_data' => 'nullable|string',
