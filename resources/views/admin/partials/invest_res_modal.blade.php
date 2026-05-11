@@ -10,7 +10,7 @@
     aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <form action="{{ route(!empty($save_route) ? $save_route : 'service-save-result') }}" method="post" enctype="multipart/form-data" id="investResForm" onsubmit="copyResTemplateToField()">
+            <form action="{{ route(!empty($save_route) ? $save_route : 'service-save-result') }}" method="post" enctype="multipart/form-data" id="investResForm">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="investResModalLabel">Enter Result (<span

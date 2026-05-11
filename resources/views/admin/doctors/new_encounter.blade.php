@@ -2082,11 +2082,12 @@
     </script>
     @include('admin.partials.vitals-scripts')
     @include('admin.partials.nursing-note-save-scripts')
-    @include('admin.patients.partials.modals')
+    @include('admin.patients.partials.modals', ['skipOldInvestResModal' => true])
     @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
     @include('admin.partials.invest_res_js')
     @include('admin.partials.invest_res_view_imaging_modal')
     @include('admin.partials.invest_res_view_imaging_js')
+    @include('admin.partials.perform_investigation_modal')
 
     <script>
         // setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
@@ -2098,6 +2099,7 @@
 
         // Lab result entry (called from investigation history DataTable "Enter Result" button)
         function enterLabResult(requestId) {
+            window._investResultContext = { type: 'lab', id: requestId };
             InvestResultEntry.enterResult(
                 requestId,
                 `/lab-workbench/lab-service-requests/${requestId}`,
@@ -2119,6 +2121,7 @@
 
         // Imaging result entry (called from imaging history DataTable "Enter Result" button)
         function enterImagingResult(requestId) {
+            window._investResultContext = { type: 'imaging', id: requestId };
             InvestResultEntry.enterResult(
                 requestId,
                 `/imaging-workbench/imaging-service-requests/${requestId}`,
@@ -2138,6 +2141,43 @@
             );
         }
 
+        // Self-approve config (server-baked JS constants)
+        var _PI_LAB_REQ_APPROVAL     = {{ appsettings('lab_results_require_approval') ? 'true' : 'false' }};
+        var _PI_IMG_REQ_APPROVAL     = {{ appsettings('imaging_results_require_approval') ? 'true' : 'false' }};
+        var _PI_DR_SELF_LAB          = {{ appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }};
+        var _PI_NR_SELF_LAB          = {{ appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }};
+        var _PI_DR_SELF_IMG          = {{ appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }};
+        var _PI_NR_SELF_IMG          = {{ appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }};
+
+        function _autoApproveIfEnabled(requestId, type) {
+            // Never auto-approve edits
+            if ($('#invest_res_is_edit').val() == '1') { return; }
+
+            var requiresApproval = (type === 'lab') ? _PI_LAB_REQ_APPROVAL : _PI_IMG_REQ_APPROVAL;
+            if (!requiresApproval) { return; }
+
+            var canSelf = (type === 'lab')
+                ? (_PI_DR_SELF_LAB || _PI_NR_SELF_LAB)
+                : (_PI_DR_SELF_IMG || _PI_NR_SELF_IMG);
+            if (!canSelf) { return; }
+
+            var approveUrl = (type === 'lab')
+                ? '/lab-workbench/self-approve/' + requestId
+                : '/imaging-workbench/self-approve/' + requestId;
+
+            $.post(approveUrl, { _token: $('meta[name="csrf-token"]').attr('content') })
+                .done(function (res) {
+                    if (res && res.success) {
+                        toastr.success('Result approved automatically.');
+                    } else {
+                        toastr.warning('Result saved. Auto-approval failed: ' + ((res && res.message) || ''));
+                    }
+                })
+                .fail(function () {
+                    toastr.warning('Result saved but auto-approval could not be completed.');
+                });
+        }
+
         // Initialize shared result entry module
         InvestResultEntry.bindFormSubmit(function() {
             if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
@@ -2145,6 +2185,11 @@
             }
             if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
                 $('#imaging_history_list').DataTable().ajax.reload(null, false);
+            }
+            var ctx = window._investResultContext;
+            if (ctx) {
+                _autoApproveIfEnabled(ctx.id, ctx.type);
+                window._investResultContext = null;
             }
         });
     </script>
