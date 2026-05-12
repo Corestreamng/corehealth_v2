@@ -6,6 +6,7 @@ use App\Models\Procedure;
 use App\Models\ProcedureItem;
 use App\Models\ProcedureTeamMember;
 use App\Models\ProcedureNote;
+use App\Models\ProcedureAttachment;
 use App\Models\LabServiceRequest;
 use App\Models\ImagingServiceRequest;
 use App\Models\ProductRequest;
@@ -15,6 +16,8 @@ use App\Helpers\HmoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * PatientProcedureController
@@ -39,6 +42,7 @@ class PatientProcedureController extends Controller
             'preNotesBy',
             'postNotesBy',
             'cancelledByUser',
+            'consentMarkedBy',
             'patient.hmo',
             'encounter',
             'teamMembers.user',
@@ -48,6 +52,7 @@ class PatientProcedureController extends Controller
             'items.productRequest.product.price',
             'items.productOrServiceRequest',
             'productOrServiceRequest.payment',
+            'attachments.uploadedBy',
         ]);
 
         return view('admin.patient-procedures.show', compact('procedure'));
@@ -1263,6 +1268,8 @@ class PatientProcedureController extends Controller
             'items.productRequest.product',
             'items.productOrServiceRequest',
             'productOrServiceRequest.payment',
+            'consentMarkedBy',
+            'attachments.uploadedBy',
         ]);
 
         return view('admin.patient-procedures.print', compact('procedure'));
@@ -1532,5 +1539,149 @@ HTML;
 HTML;
 
         return $html;
+    }
+
+    // =========================================================================
+    // CONSENT MANAGEMENT
+    // =========================================================================
+
+    /**
+     * Update patient consent status for a procedure.
+     */
+    public function updateConsent(Request $request, Procedure $procedure)
+    {
+        $request->validate([
+            'consent_status' => 'required|in:pending,obtained,waived,not_required',
+            'consent_notes'  => 'nullable|string|max:500|required_if:consent_status,waived',
+        ]);
+
+        try {
+            $procedure->consent_status    = $request->consent_status;
+            $procedure->consent_notes     = $request->consent_notes;
+            $procedure->consent_marked_by = Auth::id();
+            $procedure->consent_marked_at = now();
+            $procedure->save();
+
+            $procedure->load('consentMarkedBy');
+
+            return response()->json([
+                'success'          => true,
+                'message'          => 'Consent status updated successfully.',
+                'consent_status'   => $procedure->consent_status,
+                'consent_notes'    => $procedure->consent_notes,
+                'consent_marked_by'=> optional($procedure->consentMarkedBy)->name ?? 'Unknown',
+                'consent_marked_at'=> $procedure->consent_marked_at
+                    ? $procedure->consent_marked_at->format('d M Y H:i')
+                    : null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating consent: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // =========================================================================
+    // ATTACHMENT MANAGEMENT
+    // =========================================================================
+
+    /**
+     * Upload an attachment for a procedure.
+     */
+    public function uploadAttachment(Request $request, Procedure $procedure)
+    {
+        $request->validate([
+            'file'  => 'required|file|mimes:pdf,jpg,jpeg,png,docx|max:10240',
+            'label' => 'nullable|string|max:100',
+        ]);
+
+        try {
+            $file      = $request->file('file');
+            $extension = $file->getClientOriginalExtension();
+            $uuid      = Str::uuid()->toString();
+            $path      = "procedure-attachments/{$procedure->id}/{$uuid}.{$extension}";
+
+            Storage::disk('local')->put($path, file_get_contents($file->getRealPath()));
+
+            $attachment = ProcedureAttachment::create([
+                'procedure_id'  => $procedure->id,
+                'uploaded_by'   => Auth::id(),
+                'file_path'     => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'file_size'     => $file->getSize(),
+                'mime_type'     => $file->getMimeType(),
+                'label'         => $request->label,
+            ]);
+
+            $attachment->load('uploadedBy');
+
+            return response()->json([
+                'success'       => true,
+                'message'       => 'File uploaded successfully.',
+                'attachment'    => [
+                    'id'            => $attachment->id,
+                    'original_name' => $attachment->original_name,
+                    'label'         => $attachment->label,
+                    'formatted_size'=> $attachment->formattedSize(),
+                    'mime_type'     => $attachment->mime_type,
+                    'uploaded_by'   => optional($attachment->uploadedBy)->name ?? 'Unknown',
+                    'created_at'    => $attachment->created_at->format('d M Y H:i'),
+                    'download_url'  => route('patient-procedures.attachments.download', [
+                        'procedure'  => $procedure->id,
+                        'attachment' => $attachment->id,
+                    ]),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error uploading file: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Stream-download an attachment (never exposes raw storage path).
+     */
+    public function downloadAttachment(Procedure $procedure, ProcedureAttachment $attachment)
+    {
+        if ($attachment->procedure_id !== $procedure->id) {
+            abort(403, 'Attachment does not belong to this procedure.');
+        }
+
+        if (!Storage::disk('local')->exists($attachment->file_path)) {
+            abort(404, 'File not found.');
+        }
+
+        return Storage::disk('local')->download($attachment->file_path, $attachment->original_name);
+    }
+
+    /**
+     * Delete an attachment record and its stored file.
+     */
+    public function deleteAttachment(Procedure $procedure, ProcedureAttachment $attachment)
+    {
+        if ($attachment->procedure_id !== $procedure->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Attachment does not belong to this procedure.',
+            ], 403);
+        }
+
+        try {
+            Storage::disk('local')->delete($attachment->file_path);
+            $attachment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Attachment deleted successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting attachment: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

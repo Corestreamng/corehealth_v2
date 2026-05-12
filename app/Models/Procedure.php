@@ -52,6 +52,10 @@ class Procedure extends Model implements Auditable
         'cancelled_at',
         'cancelled_by',
         'status',
+        'consent_status',
+        'consent_marked_by',
+        'consent_marked_at',
+        'consent_notes',
     ];
 
     protected $casts = [
@@ -63,6 +67,7 @@ class Procedure extends Model implements Auditable
         'cancelled_at' => 'datetime',
         'refund_amount' => 'decimal:2',
         'status' => 'boolean',
+        'consent_marked_at' => 'datetime',
     ];
 
     /**
@@ -108,6 +113,21 @@ class Procedure extends Model implements Auditable
         'complications' => 'Complications Occurred',
         'aborted' => 'Aborted',
         'converted' => 'Converted to Different Procedure',
+    ];
+
+    /**
+     * Consent constants
+     */
+    const CONSENT_PENDING = 'pending';
+    const CONSENT_OBTAINED = 'obtained';
+    const CONSENT_WAIVED = 'waived';
+    const CONSENT_NOT_REQUIRED = 'not_required';
+
+    const CONSENT_STATUSES = [
+        'pending'      => 'Pending',
+        'obtained'     => 'Obtained',
+        'waived'       => 'Waived',
+        'not_required' => 'Not Required',
     ];
 
     /**
@@ -220,6 +240,22 @@ class Procedure extends Model implements Auditable
     public function items()
     {
         return $this->hasMany(ProcedureItem::class, 'procedure_id', 'id');
+    }
+
+    /**
+     * Get the procedure attachments.
+     */
+    public function attachments()
+    {
+        return $this->hasMany(ProcedureAttachment::class, 'procedure_id', 'id');
+    }
+
+    /**
+     * Get the user who marked consent.
+     */
+    public function consentMarkedBy()
+    {
+        return $this->belongsTo(User::class, 'consent_marked_by', 'id');
     }
 
     /**

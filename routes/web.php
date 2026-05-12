@@ -417,6 +417,14 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('{procedure}/imaging-history', [\App\Http\Controllers\PatientProcedureController::class, 'imagingHistoryList'])->name('imaging-history');
             Route::get('{procedure}/medication-history', [\App\Http\Controllers\PatientProcedureController::class, 'medicationHistoryList'])->name('medication-history');
 
+            // Consent Management
+            Route::patch('{procedure}/consent', [\App\Http\Controllers\PatientProcedureController::class, 'updateConsent'])->name('consent.update');
+
+            // Attachments Management
+            Route::post('{procedure}/attachments', [\App\Http\Controllers\PatientProcedureController::class, 'uploadAttachment'])->name('attachments.store');
+            Route::get('{procedure}/attachments/{attachment}/download', [\App\Http\Controllers\PatientProcedureController::class, 'downloadAttachment'])->name('attachments.download');
+            Route::delete('{procedure}/attachments/{attachment}', [\App\Http\Controllers\PatientProcedureController::class, 'deleteAttachment'])->name('attachments.destroy');
+
             // List procedures by patient (for clinical context modal and workbenches)
             Route::get('list-by-patient/{patient}', [\App\Http\Controllers\PatientProcedureController::class, 'listByPatient'])->name('list-by-patient');
         });
