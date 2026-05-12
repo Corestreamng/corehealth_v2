@@ -3386,7 +3386,7 @@ class NursingWorkbenchController extends Controller{
     {
         $validated = $request->validate([
             'schedule_id' => 'required|exists:patient_immunization_schedules,id',
-            'product_id' => 'required|exists:products,id',
+            'product_id' => 'nullable|exists:products,id',
             'route' => 'required|string|max:50',
             'site' => 'required|string|max:100',
             'batch_id' => 'nullable|exists:stock_batches,id', // NEW: Batch ID from dropdown
@@ -3397,6 +3397,7 @@ class NursingWorkbenchController extends Controller{
             'vis_date' => 'nullable|date',
             'notes' => 'nullable|string',
             'store_id' => 'nullable|exists:stores,id',
+            'service_id' => 'nullable|exists:services,id', // NEW: Optional service charge for external vaccines
         ]);
 
         // Map full route names to abbreviations for database ENUM
@@ -3414,37 +3415,66 @@ class NursingWorkbenchController extends Controller{
 
         $schedule = PatientImmunizationSchedule::with('scheduleItem')->findOrFail($validated['schedule_id']);
         $patient = Patient::findOrFail($schedule->patient_id);
-        $product = Product::with('price')->findOrFail($validated['product_id']);
+        
+        $product = null;
+        if (!empty($validated['product_id'])) {
+            $product = Product::with('price')->findOrFail($validated['product_id']);
+        }
 
         DB::beginTransaction();
         try {
-            // Create billing record
-            $billing = new ProductOrServiceRequest();
-            $billing->user_id = $patient->user_id;
-            $billing->staff_user_id = Auth::id();
-            $billing->product_id = $product->id;
-            $billing->qty = 1;
-
-            // Try to apply HMO tariff, fallback to regular price if not found
-            try {
-                $hmoData = HmoHelper::applyHmoTariff($patient->id, $product->id, null);
-                if ($hmoData) {
-                    $billing->payable_amount = $hmoData['payable_amount'];
-                    $billing->claims_amount = $hmoData['claims_amount'];
-                    $billing->coverage_mode = $hmoData['coverage_mode'];
-                    $billing->validation_status = $hmoData['validation_status'];
-                }
-            } catch (\Exception $e) {
-                // If no HMO tariff, use regular price (non-HMO patient or tariff not configured)
-                $billing->payable_amount = $product->price ? $product->price->current_sale_price : 0;
-            }
-
-            $billing->save();
-
-            // Deduct stock from selected batch or using FIFO
+            $billingId = null;
             $storeId = $validated['store_id'] ?? null;
             $batchId = $validated['batch_id'] ?? null;
+            $serviceId = $validated['service_id'] ?? null;
 
+            // Billing Logic:
+            // - If from hospital stock ($storeId), bill for the product.
+            // - If external/patient's own (no $storeId) but $serviceId is provided, bill for the administration service.
+            // - If neither, no billing record is created.
+            if ($storeId || (!$storeId && $serviceId)) {
+                $billing = new ProductOrServiceRequest();
+                $billing->patient_id = $patient->id;
+                $billing->user_id = $patient->user_id;
+                $billing->staff_user_id = Auth::id();
+                
+                if ($storeId && $product) {
+                    $billing->product_id = $product->id;
+                    $billing->type = 'product';
+                } else {
+                    $billing->service_id = $serviceId;
+                    $billing->type = 'service';
+                }
+                
+                $billing->qty = 1;
+
+                // Try to apply HMO tariff, fallback to regular price if not found
+                try {
+                    $tariffItemId = $storeId ? $product->id : $serviceId;
+                    $hmoData = HmoHelper::applyHmoTariff($patient->id, $storeId ? $tariffItemId : null, $storeId ? null : $tariffItemId);
+                    
+                    if ($hmoData) {
+                        $billing->payable_amount = $hmoData['payable_amount'];
+                        $billing->claims_amount = $hmoData['claims_amount'];
+                        $billing->coverage_mode = $hmoData['coverage_mode'];
+                        $billing->validation_status = $hmoData['validation_status'];
+                    }
+                } catch (\Exception $e) {
+                    // If no HMO tariff, use regular price (non-HMO patient or tariff not configured)
+                    if ($storeId) {
+                        $billing->payable_amount = $product->price ? $product->price->current_sale_price : 0;
+                    } else {
+                        $service = \App\Models\Service::with('price')->find($serviceId);
+                        // Fallback to price_assign if price relation is missing
+                        $billing->payable_amount = $service ? ($service->price ? $service->price->sale_price : $service->price_assign) : 0;
+                    }
+                }
+
+                $billing->save();
+                $billingId = $billing->id;
+            }
+
+            // Deduct stock from selected batch or using FIFO (only if from hospital stock)
             if ($storeId) {
                 $stockService = app(StockService::class);
                 $qty = 1;
@@ -3455,7 +3485,7 @@ class NursingWorkbenchController extends Controller{
                         $batchId,
                         $qty,
                         ProductOrServiceRequest::class,
-                        $billing->id,
+                        $billingId,
                         "Immunization administered (manual batch selection)"
                     );
 
@@ -3466,22 +3496,24 @@ class NursingWorkbenchController extends Controller{
                     }
                 } else {
                     // Use FIFO batch-based system
-                    $stockService->dispenseStock(
-                        $product->id,
-                        $storeId,
-                        $qty,
-                        ProductOrServiceRequest::class,
-                        $billing->id,
-                        "Immunization administered (FIFO)"
-                    );
+                    if ($product) {
+                        $stockService->dispenseStock(
+                            $product->id,
+                            $storeId,
+                            $qty,
+                            ProductOrServiceRequest::class,
+                            $billingId,
+                            "Immunization administered (FIFO)"
+                        );
+                    }
                 }
             }
 
             // Create immunization record
             $immunizationRecord = ImmunizationRecord::create([
                 'patient_id' => $schedule->patient_id,
-                'product_id' => $product->id,
-                'product_or_service_request_id' => $billing->id,
+                'product_id' => $product ? $product->id : null,
+                'product_or_service_request_id' => $billingId,
                 'vaccine_name' => $schedule->scheduleItem->vaccine_name,
                 'dose_number' => $schedule->scheduleItem->dose_number,
                 'dose' => $schedule->scheduleItem->dose_label,

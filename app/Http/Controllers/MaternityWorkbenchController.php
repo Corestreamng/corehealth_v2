@@ -3504,49 +3504,59 @@ class MaternityWorkbenchController extends Controller
     public function searchServices(Request $request)
     {
         $term = $request->get('term', '');
-        $type = $request->get('type', 'all');
+        $categoryId = $request->get('category_id');
+        $patientId = $request->get('patient_id');
 
         if (strlen($term) < 2) return response()->json([]);
 
-        $results = [];
+        $query = Service::with(['price', 'category'])
+            ->where('status', 1);
 
-        if (in_array($type, ['lab', 'all'])) {
-            $labServices = Service::where('name', 'like', "%{$term}%")
-                ->whereHas('category', function ($q) {
-                    $q->where('name', 'like', '%lab%');
-                })
-                ->limit(10)
-                ->get(['id', 'name', 'price']);
+        if ($term) {
+            $query->where(function ($q) use ($term) {
+                $q->where('service_name', 'like', "%{$term}%")
+                  ->orWhere('service_code', 'like', "%{$term}%");
+            });
+        }
 
-            foreach ($labServices as $s) {
-                $results[] = ['id' => $s->id, 'name' => $s->name, 'price' => $s->price, 'type' => 'lab'];
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+
+        $services = $query->limit(15)->get();
+
+        // Batch-load HMO tariffs in one query instead of N+1
+        $hmoMap = [];
+        if ($patientId) {
+            $patient = Patient::find($patientId);
+            if ($patient && $patient->hmo_id) {
+                $serviceIds = $services->pluck('id')->toArray();
+                $tariffs = \App\Models\HmoTariff::where('hmo_id', $patient->hmo_id)
+                    ->whereIn('service_id', $serviceIds)
+                    ->whereNull('product_id')
+                    ->get()
+                    ->keyBy('service_id');
+
+                foreach ($tariffs as $sid => $tariff) {
+                    $hmoMap[$sid] = [
+                        'payable' => $tariff->payable_amount,
+                        'claims'  => $tariff->claims_amount,
+                        'mode'    => $tariff->coverage_mode,
+                    ];
+                }
             }
         }
 
-        if (in_array($type, ['imaging', 'all'])) {
-            $imagingServices = Service::where('name', 'like', "%{$term}%")
-                ->whereHas('category', function ($q) {
-                    $q->where('name', 'like', '%imag%')
-                        ->orWhere('name', 'like', '%radiol%')
-                        ->orWhere('name', 'like', '%scan%');
-                })
-                ->limit(10)
-                ->get(['id', 'name', 'price']);
-
-            foreach ($imagingServices as $s) {
-                $results[] = ['id' => $s->id, 'name' => $s->name, 'price' => $s->price, 'type' => 'imaging'];
-            }
-        }
-
-        if (in_array($type, ['product', 'all'])) {
-            $products = Product::where('name', 'like', "%{$term}%")
-                ->limit(10)
-                ->get(['id', 'name', 'price']);
-
-            foreach ($products as $p) {
-                $results[] = ['id' => $p->id, 'name' => $p->name, 'price' => $p->price, 'type' => 'product'];
-            }
-        }
+        $results = $services->map(function ($service) use ($hmoMap) {
+            return [
+                'id'       => $service->id,
+                'name'     => $service->service_name,
+                'code'     => $service->service_code,
+                'price'    => $service->price ? $service->price->sale_price : $service->price_assign,
+                'category' => $service->category ? $service->category->category_name : 'N/A',
+                'hmo'      => $hmoMap[$service->id] ?? null,
+            ];
+        });
 
         return response()->json($results);
     }
