@@ -2886,6 +2886,10 @@
 
         <div class="quick-actions">
             <h6>⚡ QUICK ACTIONS</h6>
+            <button class="quick-action-btn" id="btn-register-walkin">
+                <i class="mdi mdi-account-plus text-success"></i>
+                <span>Register Walk-in</span>
+            </button>
             <button class="quick-action-btn" id="btn-new-request" style="display: none;">
                 <i class="mdi mdi-plus-circle"></i>
                 <span>New Request</span>
@@ -7463,6 +7467,45 @@ $(document).on('submit', '#rejectionReasonForm', function(e) {
 
 $(document).on('click', '#openApprovalQueue', function() {
     showQueue('approval');
+});
+
+// --- Walk-in Registration ---
+function openWalkInRegistration() {
+    // Extend config to preserve registerUrl and other defaults
+    window.patientFormConfig = window.patientFormConfig || {};
+    window.patientFormConfig.onSuccess = function(patientId) {
+        loadPatient(patientId);
+        $('#patientFormModal').modal('hide');
+        toastr.success('Patient registered successfully.');
+        
+        // Clear search if open
+        if ($('#patient_search_results').is(':visible')) {
+            $('#patient_search').val('');
+            $('#patient_search_results').hide();
+        }
+    };
+    window.patientFormConfig.onCancel = function() {
+        disableWalkInMode();
+    };
+    window.patientFormConfig.hmos = @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other']));
+
+
+    // Show modal first
+    showPatientFormModal('create');
+
+    // After modal is shown, enable walk-in mode
+    $('#patientFormModal').one('shown.bs.modal', function() {
+        enableWalkInMode('LAB-');
+    });
+}
+
+// Ensure walk-in mode is disabled when modal is hidden
+$('#patientFormModal').on('hidden.bs.modal', function() {
+    disableWalkInMode();
+});
+
+$(document).on('click', '#btn-register-walkin', function() {
+    openWalkInRegistration();
 });
 
 </script>
