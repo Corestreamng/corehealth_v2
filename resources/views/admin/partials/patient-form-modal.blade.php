@@ -1403,7 +1403,9 @@ if (typeof window.patientFormConfig === 'undefined') {
 // PATIENT FORM MODAL (REGISTER/EDIT)
 // =============================================
 let patientFormCurrentStep = 1;
-const patientFormTotalSteps = 4;
+let patientFormTotalSteps = 6;
+let pfWalkInMode = false;
+let pfStepSequence = [1, 2, 3, 4];
 let patientFormAllergies = [];
 
 function showPatientFormModal(mode = 'create', patientData = null) {
@@ -1514,6 +1516,7 @@ function resetPatientForm() {
 }
 
 function generatePatientFormFileNumber() {
+    if (pfWalkInMode || pfEmergencyMode) return;
     const $input = $('#pf-file-no');
     $input.removeClass('status-valid status-checking status-duplicate');
 
@@ -1987,14 +1990,17 @@ function updatePatientFormStepper() {
 
 function updatePatientFormNavigation() {
     // Show/hide prev button
-    if (patientFormCurrentStep === 1) {
+    if (patientFormCurrentStep === pfStepSequence[0]) {
         $('#pf-btn-prev').hide();
     } else {
         $('#pf-btn-prev').show();
     }
 
     // Show/hide next/submit buttons
-    if (patientFormCurrentStep === patientFormTotalSteps) {
+    var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
+    var isLast = (currentIdx === pfStepSequence.length - 1);
+
+    if (isLast) {
         $('#pf-btn-next').hide();
         $('#pf-btn-submit').show();
         // Show registration summary, hide emergency summary
@@ -2413,14 +2419,26 @@ $(document).ready(function() {
 
     // Next button
     $('#pf-btn-next').on('click', function() {
-        // In emergency mode, navigate by sequence index rather than step number
-        if ($('#patientFormModal').hasClass('pf-emergency-mode')) return;
+        // In emergency or walk-in mode, navigate by sequence index
+        if ($('#patientFormModal').hasClass('pf-emergency-mode') || $('#patientFormModal').hasClass('pf-walkin-mode')) {
+            var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
+            if (currentIdx < pfStepSequence.length - 1) {
+                goToPatientFormStep(pfStepSequence[currentIdx + 1]);
+            }
+            return;
+        }
         goToPatientFormStep(patientFormCurrentStep + 1);
     });
 
     // Previous button
     $('#pf-btn-prev').on('click', function() {
-        if ($('#patientFormModal').hasClass('pf-emergency-mode')) return;
+        if ($('#patientFormModal').hasClass('pf-emergency-mode') || $('#patientFormModal').hasClass('pf-walkin-mode')) {
+            var currentIdx = pfStepSequence.indexOf(patientFormCurrentStep);
+            if (currentIdx > 0) {
+                goToPatientFormStep(pfStepSequence[currentIdx - 1]);
+            }
+            return;
+        }
         goToPatientFormStep(patientFormCurrentStep - 1);
     });
 
@@ -2806,6 +2824,73 @@ $(document).ready(function() {
 });
 
 // =============================================
+// WALK-IN MODE LOGIC
+// =============================================
+function enableWalkInMode(prefix) {
+    pfWalkInMode = true;
+    pfStepSequence = [1, 4];
+    
+    var $modal = $('#patientFormModal');
+    $modal.addClass('pf-walkin-mode');
+    
+    // Hide specific stepper items and lines for brevity
+    $('.stepper-item[data-step="2"], .stepper-item[data-step="3"]').hide();
+    $('.stepper-line').hide();
+    
+    $('#patient-form-title').html('<i class="mdi mdi-account-plus"></i> Register Walk-in Patient');
+    
+    // Customize file number field
+    $('.file-no-btn-group').hide();
+    $('#pf-file-no').prop('readonly', false);
+    
+    // Update total steps for navigation
+    window._pfTotalSteps = pfStepSequence.length;
+    
+    generatePrefixedFileNumber(prefix);
+}
+
+function generatePrefixedFileNumber(prefix) {
+    $.ajax({
+        url: '/reception/patient/next-file-number',
+        method: 'GET',
+        data: { prefix: prefix },
+        success: function(response) {
+            var nextFileNo = response.file_no;
+            $('#pf-file-no').val(nextFileNo).addClass('status-valid');
+            $('#pf-next-file-no').text(nextFileNo);
+            $('#pf-duplicate-warning').hide();
+            
+            var recent = response.recent_file_nos || [];
+            var lastTwo = recent.slice(0, 2);
+            if (lastTwo.length > 0) {
+                $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
+            } else {
+                $('#pf-file-no-hint').hide();
+            }
+        },
+        error: function() {
+            $('#pf-file-no').val(prefix + '001');
+            $('#pf-next-file-no').text(prefix + '001');
+        }
+    });
+}
+
+function disableWalkInMode() {
+    pfWalkInMode = false;
+    pfStepSequence = [1, 2, 3, 4];
+    var $modal = $('#patientFormModal');
+    $modal.removeClass('pf-walkin-mode');
+    $('.stepper-item').show();
+    $('.stepper-line').show();
+    $('.file-no-btn-group').show();
+    $('#pf-file-no').prop('readonly', true);
+    $('#patient-form-title').html('<i class="mdi mdi-account-plus"></i> New Patient Registration');
+    
+    // Reset total steps
+    window._pfTotalSteps = 4;
+}
+
+// =============================================
 // EMERGENCY MODE LOGIC
 // =============================================
 (function() {
@@ -2818,7 +2903,10 @@ $(document).ready(function() {
     let pfDirectServiceSearchTimeout = null;
     let pfDirectServices = []; // [{type, id, name}]
     // Step sequence: normal = [1,2,3,4], emergency = [1,5,6,4] (skip Medical & NOK)
-    let pfStepSequence = [1, 2, 3, 4];
+    // Remove redundant definition if exists, or keep as is if it's the only one.
+    // Actually, I already added it at the top, so I'll just remove this one to avoid redeclaration issues if it's let.
+    // let pfStepSequence = [1, 2, 3, 4]; 
+
 
     const pfApproxAgeMap = {
         'neonate': 14, 'infant': 183, 'child_1_5': 1095, 'child_6_12': 3285,
@@ -2948,14 +3036,9 @@ $(document).ready(function() {
     function disableEmergencyMode() {
         pfEmergencyMode = false;
         pfStepSequence = [1, 2, 3, 4];
-
         var $modal = $('#patientFormModal');
-        $modal.removeClass('pf-emergency-mode pf-morgue-mode');
-        $('#patient-form-header').css('background', ''); // Reset background
-
-        // Hide emergency stepper items (form-steps handled by CSS .form-step via .active class)
+        $modal.removeClass('pf-emergency-mode pf-bid-active');
         $('.pf-emergency-stepper').hide();
-
         // Reset summaries to default state
         $('#registration-summary').show();
         $('#emergency-intake-summary').hide();
@@ -2966,6 +3049,8 @@ $(document).ready(function() {
         stopEmergencyTimer();
         resetEmergencyFields();
     }
+
+
 
     // ---- Timer ----
     function startEmergencyTimer() {
