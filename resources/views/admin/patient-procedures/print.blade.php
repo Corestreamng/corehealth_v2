@@ -11,7 +11,7 @@
 
         // Determine which sections to show based on query parameters
         // Default to showing all sections if no params provided
-        $showAll = !request()->hasAny(['patient_info', 'procedure_details', 'team', 'notes', 'labs', 'imaging', 'meds', 'outcome', 'billing']);
+        $showAll = !request()->hasAny(['patient_info', 'procedure_details', 'team', 'notes', 'labs', 'imaging', 'meds', 'outcome', 'billing', 'consent', 'attachments']);
 
         $showPatientInfo = $showAll || request()->has('patient_info');
         $showProcedureDetails = $showAll || request()->has('procedure_details');
@@ -21,7 +21,9 @@
         $showImaging = $showAll || request()->has('imaging');
         $showMeds = $showAll || request()->has('meds');
         $showOutcome = $showAll || request()->has('outcome');
-        $showBilling = $showAll || request()->has('billing');
+        $showBilling     = $showAll || request()->has('billing');
+        $showConsent     = $showAll || request()->has('consent');
+        $showAttachments = $showAll || request()->has('attachments');
     @endphp
     <style>
         * {
@@ -691,6 +693,64 @@
                         <td><strong>Payment Status</strong></td>
                         <td><strong>{{ $billing->payment_id ? 'PAID' : 'UNPAID' }}</strong></td>
                     </tr>
+                </table>
+            </div>
+        @endif
+
+        {{-- Consent --}}
+        @if($showConsent && $procedure->consent_status)
+            <div class="section">
+                <div class="section-title">Consent</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">{{ \App\Models\Procedure::CONSENT_STATUSES[$procedure->consent_status] ?? ucfirst($procedure->consent_status) }}</span>
+                    </div>
+                    @if($procedure->consentMarkedBy)
+                    <div class="info-item">
+                        <span class="info-label">Marked By:</span>
+                        <span class="info-value">{{ $procedure->consentMarkedBy->name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Date:</span>
+                        <span class="info-value">{{ $procedure->consent_marked_at?->format('d M Y H:i') }}</span>
+                    </div>
+                    @endif
+                    @if($procedure->consent_notes)
+                    <div class="info-item" style="grid-column:span 2;">
+                        <span class="info-label">Notes:</span>
+                        <span class="info-value">{{ $procedure->consent_notes }}</span>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        {{-- Attachments --}}
+        @if($showAttachments && $procedure->attachments->count() > 0)
+            <div class="section">
+                <div class="section-title">Attachments</div>
+                <table class="billing-table">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="padding:6px;">File Name</th>
+                            <th style="padding:6px;">Label</th>
+                            <th style="padding:6px;">Uploaded By</th>
+                            <th style="padding:6px;">Date</th>
+                            <th style="padding:6px;">Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($procedure->attachments as $att)
+                            <tr>
+                                <td style="padding:6px;">{{ $att->original_name }}</td>
+                                <td style="padding:6px;">{{ $att->label ?? '—' }}</td>
+                                <td style="padding:6px;">{{ optional($att->uploadedBy)->name ?? 'N/A' }}</td>
+                                <td style="padding:6px;">{{ $att->created_at->format('d M Y H:i') }}</td>
+                                <td style="padding:6px;">{{ $att->formattedSize() }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
                 </table>
             </div>
         @endif

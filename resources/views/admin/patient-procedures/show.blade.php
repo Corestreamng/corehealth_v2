@@ -273,6 +273,33 @@
     .print-option-item:last-child {
         border-bottom: none;
     }
+    /* Consent option picker */
+    .consent-option-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .consent-option-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: border-color .15s, background .15s;
+        background: #fff;
+    }
+    .consent-option-btn:hover {
+        border-color: #adb5bd;
+        background: #f8f9fa;
+    }
+    .consent-option-btn.selected-obtained  { border-color: #28a745; background: #f0fff4; }
+    .consent-option-btn.selected-waived    { border-color: #ffc107; background: #fffdf0; }
+    .consent-option-btn.selected-not_required { border-color: #6c757d; background: #f8f9fa; }
+    .consent-option-btn.selected-pending   { border-color: #fd7e14; background: #fff8f0; }
+    .consent-option-btn .opt-label { font-weight: 600; font-size: .85rem; line-height: 1.2; display: block; }
+    .consent-option-btn .opt-sub   { font-size: .75rem; color: #6c757d; display: block; }
 </style>
 
 <section class="container-fluid procedure-page">
@@ -320,6 +347,14 @@
             <i class="fa fa-external-link-alt"></i> View Patient
         </a>
     </div>
+
+    {{-- Consent Warning Banner --}}
+    @if(in_array($procedure->procedure_status, ['scheduled','in_progress']) && in_array($procedure->consent_status, [null, 'pending']))
+    <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+        <i class="fa fa-exclamation-triangle"></i> <strong>Consent not obtained.</strong> Please ensure patient consent is documented before proceeding.
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+    </div>
+    @endif
 
     <div class="row">
         {{-- Left Column (8 cols) --}}
@@ -485,6 +520,51 @@
                 </div>
             </div>
 
+            {{-- Attachments Section --}}
+            <div class="section-card" id="attachments-card">
+                <div class="section-card-header">
+                    <h5><i class="fa fa-paperclip"></i> Attachments</h5>
+                    <span class="badge badge-secondary" id="attachment-count">{{ $procedure->attachments->count() }}</span>
+                </div>
+                <div class="section-card-body">
+                    <div id="attachments-list">
+                        @forelse($procedure->attachments as $att)
+                            <div class="d-flex align-items-center justify-content-between mb-2 p-2 border rounded" id="attachment-row-{{ $att->id }}">
+                                <div>
+                                    <i class="fa fa-file-alt text-muted"></i>
+                                    <strong>{{ $att->original_name }}</strong>
+                                    @if($att->label) <span class="badge badge-info ml-1">{{ $att->label }}</span> @endif
+                                    <br><small class="text-muted">{{ $att->formattedSize() }} &middot; {{ optional($att->uploadedBy)->name ?? 'Unknown' }} &middot; {{ $att->created_at->format('d M Y H:i') }}</small>
+                                </div>
+                                <div class="d-flex">
+                                    <a href="{{ route('patient-procedures.attachments.download', [$procedure->id, $att->id]) }}" class="btn btn-sm btn-outline-primary mr-1" title="Download"><i class="fa fa-download"></i></a>
+                                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment({{ $att->id }})" title="Delete"><i class="fa fa-trash"></i></button>
+                                    @endhasanyrole
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-muted small" id="no-attachments-msg">No attachments yet.</p>
+                        @endforelse
+                    </div>
+                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+                    <hr>
+                    <form id="upload-attachment-form" enctype="multipart/form-data">
+                        @csrf
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold">Upload File</label>
+                            <input type="file" class="form-control-file" id="attachment-file" accept=".pdf,.jpg,.jpeg,.png,.docx" required>
+                            <small class="text-muted">Max 10 MB &mdash; Accepted: PDF, JPG, PNG, DOCX</small>
+                        </div>
+                        <div class="form-group mb-2">
+                            <input type="text" class="form-control form-control-sm" id="attachment-label" placeholder="Label (optional)" maxlength="100">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-upload"></i> Upload</button>
+                    </form>
+                    @endhasanyrole
+                </div>
+            </div>
+
             {{-- Procedure Orders & History (Workbench-style) --}}
             <div class="section-card">
                 <div class="section-card-header">
@@ -607,6 +687,62 @@
                         </div>
                         @endif
                     </div>
+                </div>
+            </div>
+
+            {{-- Consent Card --}}
+            <div class="section-card" id="consent-card">
+                <div class="section-card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fa fa-clipboard-check"></i> Consent</h5>
+                    @php
+                        $consentBadges = ['pending'=>'warning','obtained'=>'success','waived'=>'info','not_required'=>'secondary'];
+                        $consentBadge  = $consentBadges[$procedure->consent_status ?? ''] ?? null;
+                    @endphp
+                    @if($procedure->consent_status)
+                        <span class="badge badge-{{ $consentBadge }}">
+                            {{ \App\Models\Procedure::CONSENT_STATUSES[$procedure->consent_status] ?? ucfirst($procedure->consent_status) }}
+                        </span>
+                    @else
+                        <span class="badge badge-light text-muted">Not Set</span>
+                    @endif
+                </div>
+                <div class="section-card-body">
+                    @if($procedure->consent_status)
+                        {{-- Status is already recorded --}}
+                        <div class="info-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="info-item">
+                                <span class="info-label">Marked By</span>
+                                <span class="info-value">{{ optional($procedure->consentMarkedBy)->name ?? '—' }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Date</span>
+                                <span class="info-value">{{ $procedure->consent_marked_at?->format('d M Y H:i') ?? '—' }}</span>
+                            </div>
+                            @if($procedure->consent_notes)
+                            <div class="info-item" style="grid-column:span 2;">
+                                <span class="info-label">Notes</span>
+                                <span class="info-value">{{ $procedure->consent_notes }}</span>
+                            </div>
+                            @endif
+                        </div>
+                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+                        @if(!in_array($procedure->procedure_status, ['cancelled','completed']))
+                        <button class="btn btn-sm btn-outline-primary mt-3 w-100" onclick="openConsentModal()">
+                            <i class="fa fa-sync"></i> Change Consent Status
+                        </button>
+                        @endif
+                        @endhasanyrole
+                    @else
+                        {{-- No consent recorded yet --}}
+                        <p class="text-muted small mb-3">Consent has not been recorded for this procedure.</p>
+                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+                        @if(!in_array($procedure->procedure_status, ['cancelled','completed']))
+                        <button class="btn btn-sm btn-primary w-100" onclick="openConsentModal()">
+                            <i class="fa fa-clipboard-check"></i> Record Consent
+                        </button>
+                        @endif
+                        @endhasanyrole
+                    @endif
                 </div>
             </div>
 
@@ -895,6 +1031,24 @@
                     </div>
                 </div>
 
+                <div class="print-option-item">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input print-section-check" id="print_consent" value="consent" checked>
+                        <label class="custom-control-label" for="print_consent">
+                            <i class="fa fa-clipboard-check text-info mr-2"></i> Consent Information
+                        </label>
+                    </div>
+                </div>
+
+                <div class="print-option-item">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input print-section-check" id="print_attachments" value="attachments">
+                        <label class="custom-control-label" for="print_attachments">
+                            <i class="fa fa-paperclip text-secondary mr-2"></i> Attachments List
+                        </label>
+                    </div>
+                </div>
+
                 <div class="mt-3 pt-3 border-top">
                     <button type="button" class="btn btn-sm btn-link p-0" onclick="selectAllPrintOptions(true)">
                         <i class="fa fa-check-square"></i> Select All
@@ -1119,6 +1273,62 @@
 </div>
 
 {{-- Generic Confirmation Modal --}}
+{{-- Consent Modal --}}
+<div class="modal fade" id="consentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: {{ $hosColor }}; color: white;">
+                <h5 class="modal-title"><i class="fa fa-clipboard-check"></i> <span id="consentModalHeadingText">Record Patient Consent</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Select the consent status for this procedure:</p>
+                <div class="consent-option-grid">
+                    <div class="consent-option-btn" id="copt-obtained" onclick="selectConsentOption('obtained')">
+                        <i class="fa fa-check-circle fa-lg text-success"></i>
+                        <div>
+                            <span class="opt-label">Obtained</span>
+                            <span class="opt-sub">Patient has given consent</span>
+                        </div>
+                    </div>
+                    <div class="consent-option-btn" id="copt-waived" onclick="selectConsentOption('waived')">
+                        <i class="fa fa-times-circle fa-lg text-warning"></i>
+                        <div>
+                            <span class="opt-label">Waived</span>
+                            <span class="opt-sub">Waived — reason required</span>
+                        </div>
+                    </div>
+                    <div class="consent-option-btn" id="copt-not_required" onclick="selectConsentOption('not_required')">
+                        <i class="fa fa-minus-circle fa-lg text-secondary"></i>
+                        <div>
+                            <span class="opt-label">Not Required</span>
+                            <span class="opt-sub">Not needed for this procedure</span>
+                        </div>
+                    </div>
+                    <div class="consent-option-btn" id="copt-pending" onclick="selectConsentOption('pending')">
+                        <i class="fa fa-clock fa-lg" style="color:#fd7e14;"></i>
+                        <div>
+                            <span class="opt-label">Pending</span>
+                            <span class="opt-sub">Not yet obtained</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="consentNotesGroup" style="display:none;" class="mt-3">
+                    <label class="font-weight-bold small">Reason for waiving <span class="text-danger">*</span></label>
+                    <textarea id="consentModalNotes" class="form-control mt-1" rows="3" placeholder="Enter reason for waiving consent..."></textarea>
+                    <small class="text-danger d-none" id="consentNotesError">A reason is required when waiving consent.</small>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
+                <button type="button" class="btn btn-primary px-4" id="consentModalConfirmBtn" onclick="executeConsentUpdate()" disabled>
+                    <i class="fa fa-check"></i> Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="confirmActionModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1559,6 +1769,8 @@ function confirmDelete(type, id, title, message, subtext) {
         btn.attr('onclick', `executeDeleteNote(${id})`);
     } else if (type === 'item') {
         btn.attr('onclick', `executeRemoveItem(${id})`);
+    } else if (type === 'attachment') {
+        btn.attr('onclick', `executeDeleteAttachment(${id})`);
     }
 
     $('#confirmActionModal').modal('show');
@@ -1887,6 +2099,150 @@ function viewLabResult(requestId) {
 // View Imaging Result
 function viewImagingResult(requestId) {
     window.open(`/imaging-requests/${requestId}`, '_blank');
+}
+
+// =========================================================================
+// CONSENT
+// =========================================================================
+
+var _consentPendingStatus = null;
+
+function openConsentModal() {
+    // Reset picker
+    _consentPendingStatus = null;
+    $('.consent-option-btn').removeClass('selected-obtained selected-waived selected-not_required selected-pending');
+    $('#consentNotesGroup').hide();
+    $('#consentModalNotes').val('');
+    $('#consentNotesError').addClass('d-none');
+    $('#consentModalConfirmBtn').prop('disabled', true).html('<i class="fa fa-check"></i> Confirm');
+
+    var currentStatus = '{{ $procedure->consent_status }}';
+    $('#consentModalHeadingText').text(currentStatus ? 'Change Consent Status' : 'Record Patient Consent');
+
+    $('#consentModal').modal('show');
+}
+
+function selectConsentOption(status) {
+    _consentPendingStatus = status;
+
+    // Highlight selection, clear others
+    $('.consent-option-btn').removeClass('selected-obtained selected-waived selected-not_required selected-pending');
+    $('#copt-' + status).addClass('selected-' + status);
+
+    // Show notes only for waived
+    if (status === 'waived') {
+        $('#consentNotesGroup').show();
+    } else {
+        $('#consentNotesGroup').hide();
+        $('#consentModalNotes').val('');
+        $('#consentNotesError').addClass('d-none');
+    }
+
+    $('#consentModalConfirmBtn').prop('disabled', false);
+}
+
+function executeConsentUpdate() {
+    var status = _consentPendingStatus;
+    if (!status) return;
+
+    var notes = $('#consentModalNotes').val().trim();
+    if (status === 'waived' && !notes) {
+        $('#consentNotesError').removeClass('d-none');
+        return;
+    }
+    $('#consentNotesError').addClass('d-none');
+
+    var btn = $('#consentModalConfirmBtn');
+    btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+    $.ajax({
+        url: '/patient-procedures/' + procedureId + '/consent',
+        method: 'POST',
+        data: {
+            _method: 'PATCH',
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            consent_status: status,
+            consent_notes:  notes || null
+        },
+        success: function(response) {
+            $('#consentModal').modal('hide');
+            if (response.success) {
+                toastr.success(response.message);
+                location.reload();
+            } else {
+                toastr.error(response.message);
+                btn.prop('disabled', false).html('<i class="fa fa-check"></i> Confirm');
+            }
+        },
+        error: function(xhr) {
+            $('#consentModal').modal('hide');
+            toastr.error(xhr.responseJSON?.message || 'Failed to update consent.');
+            btn.prop('disabled', false).html('<i class="fa fa-check"></i> Confirm');
+        }
+    });
+}
+
+// =========================================================================
+// ATTACHMENTS
+// =========================================================================
+
+$('#upload-attachment-form').on('submit', function(e) {
+    e.preventDefault();
+    var formData = new FormData();
+    formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+    formData.append('file', $('#attachment-file')[0].files[0]);
+    formData.append('label', $('#attachment-label').val());
+
+    $.ajax({
+        url: '/patient-procedures/' + procedureId + '/attachments',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message);
+                location.reload();
+            } else {
+                toastr.error(response.message);
+            }
+        },
+        error: function(xhr) {
+            toastr.error('Failed to upload file.');
+        }
+    });
+});
+
+function deleteAttachment(attachmentId) {
+    confirmDelete('attachment', attachmentId, 'Delete Attachment', 'Are you sure you want to delete this attachment?', 'This action cannot be undone.');
+}
+
+function executeDeleteAttachment(attachmentId) {
+    $('#confirmActionModal').modal('hide');
+    $.ajax({
+        url: '/patient-procedures/' + procedureId + '/attachments/' + attachmentId,
+        method: 'POST',
+        data: {
+            _method: 'DELETE',
+            _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message);
+                $('#attachment-row-' + attachmentId).remove();
+                var remaining = $('#attachments-list .d-flex').length;
+                $('#attachment-count').text(remaining);
+                if (remaining === 0) {
+                    $('#attachments-list').append('<p class="text-muted small" id="no-attachments-msg">No attachments yet.</p>');
+                }
+            } else {
+                toastr.error(response.message);
+            }
+        },
+        error: function(xhr) {
+            toastr.error('Failed to delete attachment.');
+        }
+    });
 }
 </script>
 @endsection
