@@ -443,6 +443,7 @@
         _modalSelectedProduct = null;
         var form = document.getElementById('imm-modal-immunization-form');
         if (form) form.reset();
+        $('#imm-modal-vaccine-is-external').prop('checked', false).trigger('change');
         $('#imm-modal-schedule-id').val('');
         $('#imm-modal-product-id').val('');
         $('#imm-modal-vaccine-name').text('-');
@@ -568,32 +569,45 @@
      * Submit immunization from shared modal
      */
     ImmunizationModule.submitAdministration = function() {
-        if (!$('#imm-modal-product-id').val()) { toastr.error('Please select a vaccine product'); return; }
+        var isExternal = $('#imm-modal-vaccine-is-external').is(':checked');
+
+        if (!isExternal && !$('#imm-modal-product-id').val()) { toastr.error('Please select a vaccine product'); return; }
         if (!$('#imm-modal-vaccine-site').val()) { toastr.error('Please select administration site'); return; }
         if (!$('#imm-modal-vaccine-route').val()) { toastr.error('Please select administration route'); return; }
         if (!$('#imm-modal-vaccine-time').val()) { toastr.error('Please enter administration time'); return; }
-        if (!$('#imm-modal-vaccine-store').val()) { toastr.error('Please select a store'); return; }
+        if (!isExternal && !$('#imm-modal-vaccine-store').val()) { toastr.error('Please select a store'); return; }
+
+        var storeId = isExternal ? '' : $('#imm-modal-vaccine-store').val();
 
         var $btn = $('#imm-modal-submit-immunization');
         var originalHtml = $btn.html();
         $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Administering...');
 
-        var $batchSelect = $('#imm-modal-vaccine-batch-select');
-        var selectedOption = $batchSelect.find(':selected');
+        var selectedBatchId = '';
+        var batchNumber = '';
+        if (isExternal) {
+            batchNumber = $('#imm-modal-vaccine-batch-manual').val();
+        } else {
+            var $batchSelect = $('#imm-modal-vaccine-batch-select');
+            selectedBatchId = $batchSelect.val();
+            var selectedOption = $batchSelect.find(':selected');
+            batchNumber = selectedOption.data('batch-number') || selectedOption.text().split(' ')[0] || '';
+        }
 
         var data = {
             schedule_id: $('#imm-modal-schedule-id').val(),
             product_id: $('#imm-modal-product-id').val(),
             site: $('#imm-modal-vaccine-site').val(),
             route: $('#imm-modal-vaccine-route').val(),
-            batch_id: $batchSelect.val(),
-            batch_number: selectedOption.data('batch-number') || selectedOption.text().split(' ')[0],
+            batch_id: selectedBatchId,
+            batch_number: batchNumber,
             expiry_date: $('#imm-modal-vaccine-expiry').val(),
             administered_at: $('#imm-modal-vaccine-time').val(),
             manufacturer: $('#imm-modal-vaccine-manufacturer').val(),
             vis_date: $('#imm-modal-vaccine-vis').val(),
             notes: $('#imm-modal-vaccine-notes').val(),
-            store_id: $('#imm-modal-vaccine-store').val()
+            store_id: storeId,
+            service_id: isExternal ? $('#imm-modal-external-service-id').val() : ''
         };
 
         $.ajax({
@@ -772,11 +786,36 @@
                             return;
                         }
                         data.forEach(function(item) {
-                            var cat = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
-                            var name = item.product_name || 'Unknown';
-                            var code = item.product_code || '';
-                            var qty = item.stock && item.stock.current_quantity !== undefined ? item.stock.current_quantity : 0;
-                            var price = item.price && item.price.initial_sale_price !== undefined ? item.price.initial_sale_price : 0;
+                            var cat = 'N/A';
+                            if (item.category && item.category.category_name) {
+                                cat = item.category.category_name;
+                            } else if (typeof item.category === 'string') {
+                                cat = item.category;
+                            } else if (item.category_name) {
+                                cat = item.category_name;
+                            }
+
+                            var name = item.product_name || item.name || 'Unknown';
+                            var code = item.product_code || item.code || '';
+                            
+                            var qty = 0;
+                            if (item.stock && item.stock.current_quantity !== undefined) {
+                                qty = item.stock.current_quantity;
+                            } else if (typeof item.stock === 'number') {
+                                qty = item.stock;
+                            } else if (item.current_quantity !== undefined) {
+                                qty = item.current_quantity;
+                            }
+
+                            var price = 0;
+                            if (item.price && (item.price.current_sale_price !== undefined || item.price.initial_sale_price !== undefined)) {
+                                price = item.price.current_sale_price || item.price.initial_sale_price;
+                            } else if (typeof item.price === 'number') {
+                                price = item.price;
+                            } else if (item.current_sale_price !== undefined) {
+                                price = item.current_sale_price;
+                            }
+
                             var payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
                             var claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                             var mode = item.coverage_mode || 'cash';
@@ -815,6 +854,130 @@
             _modalSelectedProduct = null;
             $('#imm-modal-product-id').val('');
             $('#imm-modal-selected-product-card').addClass('d-none');
+        });
+
+        // Toggle external vaccine mode
+        $(document).on('change', '#imm-modal-vaccine-is-external', function() {
+            var isExternal = $(this).is(':checked');
+            if (isExternal) {
+                $('#imm-modal-store-selection-container').slideUp();
+                $('#imm-modal-vaccine-store').prop('required', false);
+                $('#imm-modal-product-selection-container').slideUp();
+                
+                $('#imm-modal-vaccine-batch-container').addClass('d-none');
+                $('#imm-modal-vaccine-batch-manual-container').removeClass('d-none');
+                $('#imm-modal-vaccine-expiry').prop('readonly', false);
+                
+                $('#imm-modal-external-billing-container').removeClass('d-none');
+            } else {
+                $('#imm-modal-store-selection-container').slideDown();
+                $('#imm-modal-vaccine-store').prop('required', true);
+                
+                $('#imm-modal-product-selection-container').slideDown();
+                
+                $('#imm-modal-vaccine-batch-container').removeClass('d-none');
+                $('#imm-modal-vaccine-batch-manual-container').addClass('d-none');
+                $('#imm-modal-vaccine-expiry').prop('readonly', true);
+                
+                $('#imm-modal-external-billing-container').addClass('d-none');
+                $('#imm-modal-external-service-id').val('');
+                $('#imm-modal-external-service-search').val('');
+            }
+        });
+
+        // Search external service
+        var externalServiceTimer;
+        $(document).on('input', '#imm-modal-external-service-search', function() {
+            clearTimeout(externalServiceTimer);
+            var term = $(this).val();
+            var $results = $('#imm-modal-external-service-results');
+            
+            if (term.length < 2) {
+                $results.hide();
+                return;
+            }
+            
+            externalServiceTimer = setTimeout(function() {
+                $.ajax({
+                    url: _config.baseUrl + '/search-services',
+                    method: 'GET',
+                    data: { 
+                        term: term,
+                        patient_id: _config.currentPatientId 
+                    },
+                    success: function(response) {
+                        $results.empty();
+                        if (response.length === 0) {
+                            $results.html('<li class="list-group-item text-muted">No services found</li>').show();
+                            return;
+                        }
+                        
+                        response.forEach(function(item) {
+                            var price = item.price !== undefined ? item.price : 0;
+                            var payable = item.hmo && item.hmo.payable !== undefined ? item.hmo.payable : price;
+                            var mode = item.hmo && item.hmo.mode ? item.hmo.mode : 'cash';
+                            
+                            var badge = mode !== 'cash' 
+                                ? '<span class="badge bg-info">' + mode + '</span> <span class="text-danger small">Pay: ₦' + payable + '</span>' 
+                                : '<span class="badge bg-secondary">Cash</span> <span class="text-dark small">₦' + payable + '</span>';
+                                
+                            $results.append(
+                                '<li class="list-group-item list-group-item-action" style="cursor: pointer;"' +
+                                ' data-id="' + item.id + '"' +
+                                ' data-name="' + item.name + '"' +
+                                ' data-price="' + price + '"' +
+                                ' data-category="' + (item.category || 'N/A') + '"' +
+                                ' data-payable="' + payable + '"' +
+                                ' data-mode="' + mode + '"' +
+                                ' onclick="ImmunizationModule.selectExternalService(this)">' +
+                                '<div class="d-flex justify-content-between">' +
+                                '<strong>' + item.name + '</strong>' +
+                                '<div>' + badge + '</div>' +
+                                '</div>' +
+                                '</li>'
+                            );
+                        });
+                        $results.show();
+                    }
+                });
+            }, 300);
+        });
+
+        ImmunizationModule.selectExternalService = function(el) {
+            var $el = $(el);
+            var id = $el.data('id');
+            var name = $el.data('name');
+            var category = $el.data('category');
+            var price = $el.data('price');
+            var payable = $el.data('payable');
+            var mode = $el.data('mode');
+
+            $('#imm-modal-external-service-id').val(id);
+            $('#imm-modal-external-service-search').val(name).hide();
+            $('#imm-modal-external-service-results').hide();
+            
+            $('#imm-modal-selected-service-name').text(name);
+            $('#imm-modal-selected-service-category').text(category);
+            $('#imm-modal-selected-service-price').text('₦' + parseFloat(payable).toLocaleString());
+            
+            var hmoInfo = '';
+            if (mode !== 'cash') {
+                hmoInfo = '<span class="badge bg-info text-white mb-1">' + mode + ' Covered</span><br>';
+            }
+            $('#imm-modal-selected-service-hmo-info').html(hmoInfo);
+            $('#imm-modal-selected-service-card').removeClass('d-none');
+        };
+
+        $(document).on('click', '#imm-modal-remove-service', function() {
+            $('#imm-modal-external-service-id').val('');
+            $('#imm-modal-external-service-search').val('').show();
+            $('#imm-modal-selected-service-card').addClass('d-none');
+        });
+
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#imm-modal-external-billing-container').length) {
+                $('#imm-modal-external-service-results').hide();
+            }
         });
 
         // Store change
