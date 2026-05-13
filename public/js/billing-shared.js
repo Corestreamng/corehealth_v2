@@ -1,6 +1,6 @@
 /**
  * BillingKit — Shared Billing Tab Module
- * Used in: Nursing Workbench, Maternity Workbench
+ * Used in: Nursing Workbench, Maternity Workbench, Patient Procedures
  *
  * Each workbench must emit window.BILLING_KIT_CONFIG before loading this script:
  *
@@ -21,6 +21,8 @@
  *     resolvedStoreId:       '',
  *     resolvedStoreName:     '',
  *     showMedicationOption:  true,
+ *     canBundle:             false, // true for procedure context
+ *     procedureId:           null,  // procedure ID if canBundle is true
  *   };
  */
 window.BillingKit = (function ($) {
@@ -42,9 +44,28 @@ window.BillingKit = (function ($) {
        ═══════════════════════════════════════════════════════════ */
 
     function _buildHtml() {
-        const storeOpt = _cfg.resolvedStoreId
+        let storeOpts = _cfg.resolvedStoreId
             ? '<option value="' + _cfg.resolvedStoreId + '" selected>' + _escHtml(_cfg.resolvedStoreName) + '</option>'
             : '<option value="">-- No store assigned --</option>';
+
+        if (_cfg.accessibleStores && Array.isArray(_cfg.accessibleStores)) {
+            let opts = "";
+            _cfg.accessibleStores.forEach(function(s) {
+                const sel = s.id == _cfg.resolvedStoreId ? "selected" : "";
+                opts += '<option value="' + s.id + '" ' + sel + '>' + _escHtml(s.store_name || s.name) + '</option>';
+            });
+            if (opts) storeOpts = opts;
+        }
+
+        const bundleHtml = (id) => _cfg.canBundle ? `
+            <div class="form-group mb-3">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="${id}" checked>
+                    <label class="custom-control-label" for="${id}">
+                        <i class="mdi mdi-package-variant"></i> Included in Procedure Bundle
+                    </label>
+                </div>
+            </div>` : '';
 
         const medicationSection = _cfg.showMedicationOption !== false ? `
             <div class="form-group mb-3">
@@ -104,6 +125,7 @@ window.BillingKit = (function ($) {
                             <label for="service-notes"><i class="mdi mdi-note-text"></i> Notes</label>
                             <textarea class="form-control" id="service-notes" rows="2" placeholder="Any additional notes..."></textarea>
                         </div>
+                        ${bundleHtml('service-is-bundled')}
                         <div class="form-actions text-right">
                             <button type="submit" class="btn btn-warning"><i class="mdi mdi-plus"></i> Add Service</button>
                         </div>
@@ -137,6 +159,7 @@ window.BillingKit = (function ($) {
                             <label for="lab-billing-notes"><i class="mdi mdi-note-text"></i> Clinical Notes</label>
                             <textarea class="form-control" id="lab-billing-notes" rows="2" placeholder="Any clinical notes..."></textarea>
                         </div>
+                        ${bundleHtml('lab-is-bundled')}
                         <div class="form-actions text-right">
                             <button type="submit" class="btn btn-success"><i class="mdi mdi-flask-plus"></i> Add Lab Bill</button>
                         </div>
@@ -170,6 +193,7 @@ window.BillingKit = (function ($) {
                             <label for="imaging-billing-notes"><i class="mdi mdi-note-text"></i> Clinical Notes</label>
                             <textarea class="form-control" id="imaging-billing-notes" rows="2" placeholder="Any clinical notes..."></textarea>
                         </div>
+                        ${bundleHtml('imaging-is-bundled')}
                         <div class="form-actions text-right">
                             <button type="submit" class="btn" style="background:#6f42c1;color:white;"><i class="mdi mdi-radioactive"></i> Add Imaging Bill</button>
                         </div>
@@ -188,7 +212,7 @@ window.BillingKit = (function ($) {
                             <div class="col-md-6">
                                 <label class="form-label fw-bold mb-2" style="font-size:1rem;"><i class="mdi mdi-store text-info"></i> Step 1: Select Dispensing Store</label>
                                 <select id="consumable-store" class="form-control form-control-lg" style="border:2px solid #0288d1;font-weight:500;" required>
-                                    ${storeOpt}
+                                    ${storeOpts}
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -252,6 +276,7 @@ window.BillingKit = (function ($) {
                             </div>
                         </div>
                         ${medicationSection}
+                        ${bundleHtml('consumable-is-bundled')}
                         <div class="form-actions text-right">
                             <button type="submit" class="btn btn-info btn-lg"><i class="mdi mdi-plus"></i> Add Consumable</button>
                         </div>
@@ -372,7 +397,7 @@ window.BillingKit = (function ($) {
     }
 
     function _renderSearchResults(results, $container, onSelectFn) {
-        if (!results.length) {
+        if (!results || !Array.isArray(results) || !results.length) {
             $container.html('<li class="list-group-item billing-search-no-results text-muted">No services found</li>').show();
             return;
         }
@@ -389,11 +414,11 @@ window.BillingKit = (function ($) {
 
             const rawName = svc.name || svc.service_name || svc.product_name || '';
             const name = _escHtml(rawName);
-            const escapedName = rawName.replace(/'/g, "\\'");
+            const escapedName = rawName.replace(/'/g, "\\'").replace(/\n/g, ' ').replace(/\r/g, ' ');
             const modeClass = mode ? (' mode-' + mode.replace(/[^a-z0-9_-]/g, '')) : '';
             const showCoverage = !!mode || claims > 0 || payable !== price;
 
-            html += '<li class="list-group-item list-group-item-action" onclick="(' + onSelectFn + ')(' + svc.id + ', \'" + escapedName + "\', ' + payable + ')" style="cursor:pointer;">' +
+            html += '<li class="list-group-item list-group-item-action" onclick="' + onSelectFn + '(' + svc.id + ', \'' + escapedName + '\', ' + payable + ')" style="cursor:pointer;">' +
                 '<div class="billing-search-item-name"><b>' + name + '</b></div>' +
                 '<div class="billing-search-item-meta">' +
                     '<span class="billing-search-item-price">' + (showCoverage ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '</s>' : '₦' + price.toLocaleString()) + '</span>' +
@@ -729,6 +754,7 @@ window.BillingKit = (function ($) {
                 _svcXhr = $.ajax({
                     url: _cfg.searchServicesRoute,
                     data: { term: q, patient_id: _patientId || null },
+                    dataType: 'json',
                     success: function(res) {
                         _svcXhr = null;
                         _renderSearchResults(res, $('#service-search-results'), '_bkSelectService');
@@ -752,12 +778,18 @@ window.BillingKit = (function ($) {
             $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
             $.ajax({
                 url: _cfg.addServiceRoute, method: 'POST',
-                data: { patient_id: _patientId, service_id: svcId, qty: parseInt($('#service-qty').val()) || 1, notes: $('#service-notes').val() },
+                data: { 
+                    patient_id: _patientId, 
+                    procedure_id: _cfg.procedureId || null,
+                    service_id: svcId, 
+                    qty: parseInt($('#service-qty').val()) || 1, 
+                    notes: $('#service-notes').val(),
+                    is_bundled: $('#service-is-bundled').is(':checked') ? 1 : 0
+                },
                 headers: { 'X-CSRF-TOKEN': _csrf() },
                 success: function(r) {
                     $btn.prop('disabled', false).html(orig);
                     _notify('success', r.message || 'Service added');
-                    this.reset && this.reset();
                     $('#service-billing-form')[0].reset();
                     $('#service-id, #service-unit-price').val('0');
                     loadPendingBills(_patientId);
@@ -781,6 +813,7 @@ window.BillingKit = (function ($) {
                 _labXhr = $.ajax({
                     url: _cfg.searchServicesRoute,
                     data: { term: q, patient_id: _patientId || null, category_id: _cfg.investigationCategoryId || '' },
+                    dataType: 'json',
                     success: function(res) { _labXhr = null; _renderSearchResults(res, $('#lab-billing-search-results'), '_bkSelectLabBilling'); }
                 });
             }, 300);
@@ -793,14 +826,20 @@ window.BillingKit = (function ($) {
             if (!svcId) { _notify('error', 'Please select a lab service'); return; }
             const $btn = $(this).find('button[type="submit"]');
             const orig = $btn.html();
-            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
             $.ajax({
                 url: _cfg.addLabRoute, method: 'POST',
-                data: { patient_id: _patientId, service_id: svcId, notes: $('#lab-billing-notes').val() },
+                data: { 
+                    patient_id: _patientId, 
+                    procedure_id: _cfg.procedureId || null,
+                    service_id: svcId, 
+                    note: $('#lab-billing-notes').val(),
+                    is_bundled: $('#lab-is-bundled').is(':checked') ? 1 : 0
+                },
                 headers: { 'X-CSRF-TOKEN': _csrf() },
                 success: function(r) {
                     $btn.prop('disabled', false).html(orig);
-                    _notify('success', r.message || 'Lab billed');
+                    _notify('success', r.message || 'Lab request created');
                     $('#lab-billing-form')[0].reset();
                     $('#lab-billing-id').val('');
                     loadPendingBills(_patientId);
@@ -808,7 +847,7 @@ window.BillingKit = (function ($) {
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false).html(orig);
-                    _notify('error', (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to bill lab');
+                    _notify('error', (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to create lab request');
                 }
             });
         });
@@ -823,7 +862,8 @@ window.BillingKit = (function ($) {
             _imgTimer = setTimeout(function() {
                 _imgXhr = $.ajax({
                     url: _cfg.searchServicesRoute,
-                    data: { term: q, patient_id: _patientId || null, category_id: _cfg.imagingCategoryId || 6 },
+                    data: { term: q, patient_id: _patientId || null, category_id: _cfg.imagingCategoryId || '' },
+                    dataType: 'json',
                     success: function(res) { _imgXhr = null; _renderSearchResults(res, $('#imaging-billing-search-results'), '_bkSelectImagingBilling'); }
                 });
             }, 300);
@@ -836,14 +876,20 @@ window.BillingKit = (function ($) {
             if (!svcId) { _notify('error', 'Please select an imaging service'); return; }
             const $btn = $(this).find('button[type="submit"]');
             const orig = $btn.html();
-            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
             $.ajax({
                 url: _cfg.addImagingRoute, method: 'POST',
-                data: { patient_id: _patientId, service_id: svcId, notes: $('#imaging-billing-notes').val() },
+                data: { 
+                    patient_id: _patientId, 
+                    procedure_id: _cfg.procedureId || null,
+                    service_id: svcId, 
+                    note: $('#imaging-billing-notes').val(),
+                    is_bundled: $('#imaging-is-bundled').is(':checked') ? 1 : 0
+                },
                 headers: { 'X-CSRF-TOKEN': _csrf() },
                 success: function(r) {
                     $btn.prop('disabled', false).html(orig);
-                    _notify('success', r.message || 'Imaging billed');
+                    _notify('success', r.message || 'Imaging request created');
                     $('#imaging-billing-form')[0].reset();
                     $('#imaging-billing-id').val('');
                     loadPendingBills(_patientId);
@@ -851,109 +897,101 @@ window.BillingKit = (function ($) {
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false).html(orig);
-                    _notify('error', (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to bill imaging');
+                    _notify('error', (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to create imaging request');
                 }
             });
+        });
+
+        // ── Consumable store change ────────────────────────
+        $root.on('change', '#consumable-store', function() {
+            const storeId = $(this).val();
+            if (storeId) {
+                $('#consumable-store-placeholder').hide();
+                $('#consumable-store-info').show();
+                const productId = $('#consumable-id').val();
+                if (productId) {
+                    _updateConsumableStockDisplay();
+                    _fetchBatchesForSelect(productId, storeId, '#consumable-batch-select');
+                }
+            } else {
+                $('#consumable-store-placeholder').show();
+                $('#consumable-store-info').hide();
+                $('#consumable-batch-select').html('<option value="">-- Select store first --</option>');
+            }
         });
 
         // ── Consumable search input ────────────────────────
         $root.on('input', '#consumable-search', function() {
             const q = $(this).val().trim();
+            const storeId = $('#consumable-store').val();
             clearTimeout(_conTimer);
             if (_conXhr) { _conXhr.abort(); _conXhr = null; }
             if (q.length < 2) { $('#consumable-search-results').hide(); return; }
-            $('#consumable-search-results').html('<li class="billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+            $('#consumable-search-results').html('<li class="list-group-item billing-search-no-results"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
             _conTimer = setTimeout(function() {
                 _conXhr = $.ajax({
                     url: _cfg.searchProductsRoute,
-                    data: { term: q, patient_id: _patientId || null },
-                    success: function(results) {
-                        _conXhr = null;
-                        if (!results.length) { $('#consumable-search-results').html('<li class="billing-search-no-results">No products found</li>').show(); return; }
-                        let html = '';
-                        results.forEach(function(p) {
-                            const price = _extractPrice(p.price);
-                            const hmo = p.hmo || null;
-                            const payable = _toNum(p.payable_amount ?? (hmo ? hmo.payable : null), price);
-                            const claims = _toNum(p.claims_amount ?? (hmo ? hmo.claims : null), 0);
-                            const mode = String(p.coverage_mode ?? (hmo ? hmo.mode : '') ?? '').toLowerCase();
-                            const showCoverage = !!mode || claims > 0 || payable !== price;
-                            const stock = parseInt((p.stock?.current_quantity ?? p.stock ?? p.current_quantity ?? 0), 10) || 0;
-                            const scls    = stock > 10 ? 'text-success' : stock > 0 ? 'text-warning' : 'text-danger';
-                            const rawName = p.name || p.product_name || '';
-                            const rawCode = p.code || p.product_code || '';
-                            const name = _escHtml(rawName);
-                            const code = rawCode.replace(/'/g, "\\'");
-                            const ename = rawName.replace(/'/g, "\\'");
-                            const modeClass = mode ? (' mode-' + mode.replace(/[^a-z0-9_-]/g, '')) : '';
-                            html += '<li class="list-group-item list-group-item-action" onclick="_bkSelectConsumable(' + p.id + ', \'' + ename + '\', ' + payable + ', \'' + code + '\')" style="cursor:pointer;">' +
-                                '<div class="billing-search-item-name">' + name + '</div>' +
-                                '<div class="billing-search-item-meta">' +
-                                    '<span class="billing-search-item-price">' + (showCoverage ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '/unit</s>' : '₦' + price.toLocaleString() + '/unit') + '</span>' +
-                                    (rawCode ? '<span class="billing-search-item-badge">' + _escHtml(rawCode) + '</span>' : '') +
-                                    '<span class="billing-search-item-stock ' + scls + '"><i class="mdi mdi-package-variant-closed"></i> ' + stock + ' in stock</span>' +
-                                '</div>' +
-                                (showCoverage ? '<div class="billing-search-hmo-row"><span class="billing-search-hmo-label">Coverage:</span><span class="billing-search-hmo-payable">Pay ₦' + payable.toLocaleString() + '/unit</span><span class="billing-search-hmo-claims">Claim ₦' + claims.toLocaleString() + '</span>' + (mode ? '<span class="billing-search-hmo-mode' + modeClass + '">' + _escHtml(mode.toUpperCase()) + '</span>' : '') + '</div>' : '') +
-                            '</li>';
-                        });
-                        $('#consumable-search-results').html(html).show();
-                    }
+                    data: { term: q, store_id: storeId, patient_id: _patientId || null },
+                    dataType: "json",
+                    success: function(res) { _conXhr = null; _renderSearchResults(res, $('#consumable-search-results'), '_bkSelectConsumable'); }
                 });
             }, 300);
         });
 
-        // ── Consumable qty / packaging change ─────────────
-        $root.on('change input', '#consumable-quantity', function() {
-            const unitPrice = $('#consumable-quantity').data('unit-price') || 0;
-            if ($('#consumable-id').val()) _updateConsumablePrice(unitPrice);
+        // ── Consumable unit change ─────────────────────────
+        $root.on('change', '#consumable-packaging', function() {
             _updateConsumableBaseEquiv();
         });
-        $root.on('change', '#consumable-packaging', function() { _updateConsumableBaseEquiv(); });
 
-        // ── Store change ───────────────────────────────────
-        $root.on('change', '#consumable-store', function() {
-            const storeId = $(this).val();
-            if (storeId) { $('#consumable-store-info').show(); $('#consumable-store-placeholder').hide(); _updateConsumableStockDisplay(); }
-            else { $('#consumable-store-info').hide(); $('#consumable-store-placeholder').show(); }
+        // ── Consumable quantity change ─────────────────────
+        $root.on('input', '#consumable-quantity', function() {
+            const price = $(this).data('unit-price');
+            if (price) _updateConsumablePrice(price);
+            _updateConsumableBaseEquiv();
         });
 
-        // ── Medication toggle ──────────────────────────────
+        // ── Medication checkbox toggle ─────────────────────
         $root.on('change', '#consumable-is-medication', function() {
-            $('#consumable-dose-section').toggle(this.checked);
-            if (!this.checked) $('#consumable-dose').val('');
+            if ($(this).is(':checked')) $('#consumable-dose-section').slideDown();
+            else $('#consumable-dose-section').slideUp();
         });
 
         // ── Consumable form submit ─────────────────────────
         $root.on('submit', '#consumable-billing-form', function(e) {
             e.preventDefault();
-            const storeId = $('#consumable-store').val();
-            if (!storeId) { _notify('error', 'Please select a store'); $('#consumable-store').focus(); return; }
             const productId = $('#consumable-id').val();
-            if (!productId) { _notify('error', 'Please select a product'); return; }
-            const qty = parseInt($('#consumable-quantity').val()) || 1;
+            const storeId   = $('#consumable-store').val();
+            if (!productId || !storeId) { _notify('error', 'Select product and store'); return; }
+            const qty = $('#consumable-quantity').val();
+            const batchId = $('#consumable-batch-select').val();
             const packagingId = $('#consumable-packaging').val();
-            const batchId = $('#consumable-batch-select').val() || null;
-            const isMed = $('#consumable-is-medication').is(':checked') ? 1 : 0;
-            const dose = $('#consumable-dose').val();
+            const isMed = $('#consumable-is-medication').is(':checked');
 
             const $btn = $(this).find('button[type="submit"]');
             const orig = $btn.html();
             $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+
             $.ajax({
                 url: _cfg.addConsumableRoute, method: 'POST',
-                data: { patient_id: _patientId, store_id: storeId, product_id: productId, qty: qty,
-                        packaging_id: packagingId || null, batch_id: batchId,
-                        is_medication: isMed, dose: dose },
+                data: {
+                    patient_id: _patientId,
+                    procedure_id: _cfg.procedureId || null,
+                    store_id: storeId,
+                    product_id: productId,
+                    batch_id: batchId,
+                    qty: qty,
+                    packaging_id: packagingId,
+                    dose: isMed ? $('#consumable-dose').val() : null,
+                    is_bundled: $('#consumable-is-bundled').is(':checked') ? 1 : 0
+                },
                 headers: { 'X-CSRF-TOKEN': _csrf() },
                 success: function(r) {
                     $btn.prop('disabled', false).html(orig);
                     _notify('success', r.message || 'Consumable added');
                     $('#consumable-billing-form')[0].reset();
+                    $('#consumable-dose-section').hide();
                     $('#consumable-id').val('');
                     $('#consumable-selected-stock').hide();
-                    $('#consumable-batch-info').hide();
-                    $('#consumable-packaging').html('<option value="" data-base="1">Base Unit</option>');
-                    $('#consumable-base-equiv').hide();
                     loadPendingBills(_patientId);
                     if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
                 },
@@ -964,20 +1002,17 @@ window.BillingKit = (function ($) {
             });
         });
 
-        // ── Remove bill (pending) ──────────────────────────
-        $root.on('click', '.bk-remove-bill-btn', function() { _removeBillItem($(this).data('id')); });
-
-        // ── Billing history tab shown ──────────────────────
-        $root.on('shown.bs.tab', '#billing-history-tab', function() {
-            if (!_billingHistoryLoaded && _patientId) _initBillingHistory(_patientId);
+        // ── Remove bill button ─────────────────────────────
+        $root.on('click', '.bk-remove-bill-btn', function() {
+            _removeBillItem($(this).data('id'));
         });
 
-        // ── Billing history filter form ────────────────────
-        $root.on('submit', '#bh-filter-form', function(e) {
-            e.preventDefault();
+        // ── History Filter change ──────────────────────────
+        $root.on('change', '#bh-date-from, #bh-date-to, #bh-type-filter, #bh-billing-filter, #bh-delivery-filter', function() {
             if (_billingHistoryTable) _billingHistoryTable.ajax.reload();
         });
 
+        // ── History Filter Clear ───────────────────────────
         $root.on('click', '#bh-clear-filters', function() {
             const now = new Date();
             const first = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -987,94 +1022,55 @@ window.BillingKit = (function ($) {
             $('#bh-type-filter, #bh-billing-filter, #bh-delivery-filter').val('');
             if (_billingHistoryTable) _billingHistoryTable.ajax.reload();
         });
-
-        // ── View request details from billing history ──────
-        $root.on('click', '.view-request-btn', function() {
-            _showRequestDetails($(this).data('type'), $(this).data('id'));
-        });
-    }
-
-    /* ═══════════════════════════════════════════════════════════
-       REQUEST DETAILS (Swal)
-       ═══════════════════════════════════════════════════════════ */
-
-    function _showRequestDetails(type, id) {
-        if (typeof Swal === 'undefined') return;
-        const typeColors  = { lab: '#17a2b8', imaging: '#ffc107', product: '#28a745', service: '#fd7e14' };
-        const typeLabels  = { lab: 'Lab Test', imaging: 'Imaging', product: 'Product/Drug', service: 'Service' };
-        const color = typeColors[type] || '#6c757d';
-        const label = typeLabels[type] || 'Request';
-
-        Swal.fire({
-            title: '<i class="mdi mdi-eye"></i> ' + label + ' Details',
-            html: '<div class="text-center"><i class="mdi mdi-loading mdi-spin mdi-36px"></i><br>Loading...</div>',
-            showConfirmButton: true, confirmButtonText: 'Close', width: '500px',
-            didOpen: function() {
-                const tableData = _billingHistoryTable ? _billingHistoryTable.rows().data().toArray() : [];
-                const row = tableData.find(function(r) { return r.id == id && r.type === type; });
-                if (!row) return;
-                const hmoCov = row.hmo_covers > 0
-                    ? '<tr><td class="text-muted">HMO Covers</td><td class="text-success font-weight-bold">₦' + parseFloat(row.hmo_covers).toFixed(2) + '</td></tr>'
-                    : '';
-                Swal.update({ html:
-                    '<div class="text-left">' +
-                    '<div class="mb-3 p-2 rounded" style="background:' + color + '15;border-left:4px solid ' + color + '">' +
-                    '<strong style="color:' + color + ';">' + _escHtml(row.request_no) + '</strong>' +
-                    '<span class="badge ml-2" style="background:' + color + ';color:#fff;">' + label + '</span></div>' +
-                    '<table class="table table-sm table-borderless mb-0">' +
-                    '<tr><td class="text-muted" style="width:40%;">Service/Item</td><td class="font-weight-bold">' + _escHtml(row.name) + '</td></tr>' +
-                    '<tr><td class="text-muted">Price</td><td>₦' + parseFloat(row.price || 0).toFixed(2) + '</td></tr>' +
-                    hmoCov +
-                    '<tr><td class="text-muted">Payable</td><td class="text-primary font-weight-bold">₦' + parseFloat(row.payable || 0).toFixed(2) + '</td></tr>' +
-                    '</table></div>'
-                });
-            }
-        });
     }
 
     /* ═══════════════════════════════════════════════════════════
        PUBLIC API
        ═══════════════════════════════════════════════════════════ */
 
-    /**
-     * init — first call; inserts HTML and binds events.
-     * @param {string|number} patientId
-     * @param {object} cfg — merged over window.BILLING_KIT_CONFIG
-     */
-    function init(patientId, cfg) {
-        _cfg = $.extend({}, window.BILLING_KIT_CONFIG || {}, cfg || {});
-        _patientId = patientId;
-        _billingHistoryLoaded = false;
+    return {
+        init: function (config) {
+            _cfg = config || {};
+            const $root = $('#billing-kit-root');
+            if (!$root.length) { console.error('BillingKit: #billing-kit-root not found.'); return; }
 
-        // Unbind any previous delegated events from old instance
-        $(document).off('click.billingKit');
-        $('#billing-kit-root').off();
+            $root.html(_buildHtml());
+            _bindEvents();
 
-        $('#billing-kit-root').html(_buildHtml());
-        _bindEvents();
+            // Auto-load history tab when clicked for the first time
+            $('a[href="#billing-history"]').on('shown.bs.tab', function (e) {
+                if (!_billingHistoryLoaded && _patientId) {
+                    _initBillingHistory(_patientId);
+                }
+            });
 
-        if (patientId) loadPendingBills(patientId);
-    }
+            // Auto-load pending tab
+            $('a[href="#billing-pending"]').on('shown.bs.tab', function (e) {
+                if (_patientId) loadPendingBills(_patientId);
+            });
+        },
 
-    /**
-     * update — call when patient changes (no re-render of HTML; just reload data).
-     * @param {string|number} patientId
-     */
-    function update(patientId) {
-        _patientId = patientId;
-        _billingHistoryLoaded = false;
-        if (_billingHistoryTable) { _billingHistoryTable.destroy(); _billingHistoryTable = null; }
-        // Reset forms
-        ['#service-billing-form', '#lab-billing-form', '#imaging-billing-form', '#consumable-billing-form'].forEach(function(f) {
-            var el = document.querySelector(f);
-            if (el) el.reset();
-        });
-        $('#service-id, #service-unit-price').val('0');
-        $('#lab-billing-id, #imaging-billing-id, #consumable-id').val('');
-        $('#consumable-selected-stock').hide();
-        if (patientId) loadPendingBills(patientId);
-    }
+        setPatient: function (patientId) {
+            _patientId = patientId;
+            _billingHistoryLoaded = false;
+            _billingHistoryTable = null;
 
-    return { init: init, update: update, loadPendingBills: loadPendingBills };
+            // If pending tab is active, load it
+            if ($('#billing-pending').hasClass('active')) {
+                loadPendingBills(patientId);
+            }
+            // If history tab is active, load it
+            if ($('#billing-history').hasClass('active')) {
+                _initBillingHistory(patientId);
+            }
+        },
+
+        refresh: function() {
+            if (_patientId) {
+                loadPendingBills(_patientId);
+                if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
+            }
+        }
+    };
 
 })(jQuery);
