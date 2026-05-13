@@ -5560,13 +5560,20 @@ $sett = appsettings();
                         const mode = item.coverage_mode || null;
                         const payable = item.payable_amount ?? price;
                         const claims = item.claims_amount ?? 0;
-                        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
-
-                        if (alreadyAdded) {
-                            $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
-                        } else {
-                            $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addLabService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Lab') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
-                        }
+                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.addLabService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')';
+                        $res.append(ClinicalOrdersKit.renderSearchResultItem({
+                            id: item.id,
+                            category: item.category?.category_name || 'Lab',
+                            name: name,
+                            code: code,
+                            price: price,
+                            payable: payable,
+                            claims: claims,
+                            mode: mode,
+                            alreadyAdded: alreadyAdded,
+                            alreadyLabel: 'Already Added',
+                            onClick: onClick
+                        }));
                     });
                 }
                 $res.show();
@@ -5593,13 +5600,20 @@ $sett = appsettings();
                         const mode = item.coverage_mode || null;
                         const payable = item.payable_amount ?? price;
                         const claims = item.claims_amount ?? 0;
-                        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
-
-                        if (alreadyAdded) {
-                            $res.append('<li class="list-group-item co-already-added"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
-                        } else {
-                            $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')"><b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
-                        }
+                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')';
+                        $res.append(ClinicalOrdersKit.renderSearchResultItem({
+                            id: item.id,
+                            name: name,
+                            code: code,
+                            qty: qty,
+                            price: price,
+                            payable: payable,
+                            claims: claims,
+                            mode: mode,
+                            alreadyAdded: alreadyAdded,
+                            alreadyLabel: 'Already Added',
+                            onClick: onClick
+                        }));
                     });
                 }
                 $res.show();
@@ -5626,13 +5640,20 @@ $sett = appsettings();
                         const mode = item.coverage_mode || null;
                         const payable = item.payable_amount ?? price;
                         const claims = item.claims_amount ?? 0;
-                        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(mode, payable, claims);
-
-                        if (alreadyAdded) {
-                            $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
-                        } else {
-                            $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addImagingService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')">[' + (item.category?.category_name || 'Imaging') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
-                        }
+                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.addImagingService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')';
+                        $res.append(ClinicalOrdersKit.renderSearchResultItem({
+                            id: item.id,
+                            category: item.category?.category_name || 'Imaging',
+                            name: name,
+                            code: code,
+                            price: price,
+                            payable: payable,
+                            claims: claims,
+                            mode: mode,
+                            alreadyAdded: alreadyAdded,
+                            alreadyLabel: 'Already Added',
+                            onClick: onClick
+                        }));
                     });
                 }
                 $res.show();
@@ -5657,13 +5678,20 @@ $sett = appsettings();
                         const display = name + '[' + code + ']';
                         const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('procedures', parseInt(item.id));
                         const payable = item.payable_amount ?? price;
-                        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(item.coverage_mode || null, payable, item.claims_amount ?? 0);
-
-                        if (alreadyAdded) {
-                            $res.append('<li class="list-group-item co-already-added">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + ' <span class="badge bg-warning ms-2">Already Added</span></li>');
-                        } else {
-                            $res.append('<li class="list-group-item" onclick="MaternityClinicalOrders.addProcedureService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + payable + ')">[' + (item.category?.category_name || 'Procedure') + '] <b>' + display + '</b> NGN ' + payable + ' ' + coverageBadge + '</li>');
-                        }
+                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.addProcedureService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + payable + ')';
+                        $res.append(ClinicalOrdersKit.renderSearchResultItem({
+                            id: item.id,
+                            category: item.category?.category_name || 'Procedure',
+                            name: name,
+                            code: code,
+                            price: price,
+                            payable: payable,
+                            claims: item.claims_amount ?? 0,
+                            mode: item.coverage_mode || null,
+                            alreadyAdded: alreadyAdded,
+                            alreadyLabel: 'Already Added',
+                            onClick: onClick
+                        }));
                     });
                 }
                 $res.show();

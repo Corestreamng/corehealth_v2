@@ -359,6 +359,18 @@ window.BillingKit = (function ($) {
 
     function _csrf() { return _cfg.csrf || $('meta[name="csrf-token"]').attr('content') || ''; }
 
+    function _toNum(v, fallback) {
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : (fallback || 0);
+    }
+
+    function _extractPrice(raw) {
+        if (raw && typeof raw === 'object') {
+            return _toNum(raw.sale_price ?? raw.initial_sale_price ?? raw.unit_price, 0);
+        }
+        return _toNum(raw, 0);
+    }
+
     function _renderSearchResults(results, $container, onSelectFn) {
         if (!results.length) {
             $container.html('<li class="list-group-item billing-search-no-results text-muted">No services found</li>').show();
@@ -366,23 +378,34 @@ window.BillingKit = (function ($) {
         }
         let html = '';
         results.forEach(function(svc) {
-            const price = parseFloat(svc.price || 0);
-            const hmo = svc.hmo;
-            const payable = hmo ? parseFloat(hmo.payable) : price;
-            const name = _escHtml(svc.name || '');
-            const escapedName = (svc.name || '').replace(/'/g, "\\'");
-            html += '<li class="list-group-item list-group-item-action" onclick="(' + onSelectFn + ')(' + svc.id + ', \'' + escapedName + '\', ' + payable + ')" style="cursor:pointer;">' +
-                '<div class="billing-search-item-name">' + name + '</div>' +
+            const price = _extractPrice(svc.price);
+            const hmo = svc.hmo || null;
+            const payable = _toNum(svc.payable_amount ?? (hmo ? hmo.payable : null), price);
+            const claims = _toNum(svc.claims_amount ?? (hmo ? hmo.claims : null), 0);
+            const mode = String(svc.coverage_mode ?? (hmo ? hmo.mode : '') ?? '').toLowerCase();
+            const category = svc.category?.category_name || svc.category || '';
+            const code = svc.service_code || svc.product_code || svc.code || '';
+            const stock = svc.stock?.current_quantity ?? svc.current_quantity ?? null;
+
+            const rawName = svc.name || svc.service_name || svc.product_name || '';
+            const name = _escHtml(rawName);
+            const escapedName = rawName.replace(/'/g, "\\'");
+            const modeClass = mode ? (' mode-' + mode.replace(/[^a-z0-9_-]/g, '')) : '';
+            const showCoverage = !!mode || claims > 0 || payable !== price;
+
+            html += '<li class="list-group-item list-group-item-action" onclick="(' + onSelectFn + ')(' + svc.id + ', \'" + escapedName + "\', ' + payable + ')" style="cursor:pointer;">' +
+                '<div class="billing-search-item-name"><b>' + name + '</b></div>' +
                 '<div class="billing-search-item-meta">' +
-                    '<span class="billing-search-item-price">' + (hmo ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '</s>' : '₦' + price.toLocaleString()) + '</span>' +
-                    (svc.category ? '<span class="billing-search-item-badge">' + _escHtml(svc.category) + '</span>' : '') +
-                    (svc.code ? '<span class="billing-search-item-badge">' + _escHtml(svc.code) + '</span>' : '') +
+                    '<span class="billing-search-item-price">' + (showCoverage ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '</s>' : '₦' + price.toLocaleString()) + '</span>' +
+                    (category ? '<span class="billing-search-item-badge">' + _escHtml(category) + '</span>' : '') +
+                    (code ? '<span class="billing-search-item-badge">' + _escHtml(code) + '</span>' : '') +
+                    (stock !== null ? '<span class="billing-search-item-stock text-muted">' + _escHtml(String(stock)) + ' avail.</span>' : '') +
                 '</div>' +
-                (hmo ? '<div class="billing-search-hmo-row">' +
-                    '<span class="billing-search-hmo-label">HMO:</span>' +
-                    '<span class="billing-search-hmo-payable">Pay ₦' + parseFloat(hmo.payable).toLocaleString() + '</span>' +
-                    '<span class="billing-search-hmo-claims">Claim ₦' + parseFloat(hmo.claims).toLocaleString() + '</span>' +
-                    '<span class="billing-search-hmo-mode mode-' + (hmo.mode || '') + '">' + (hmo.mode || '') + '</span>' +
+                (showCoverage ? '<div class="billing-search-hmo-row">' +
+                    '<span class="billing-search-hmo-label">Coverage:</span>' +
+                    '<span class="billing-search-hmo-payable">Pay ₦' + payable.toLocaleString() + '</span>' +
+                    '<span class="billing-search-hmo-claims">Claim ₦' + claims.toLocaleString() + '</span>' +
+                    (mode ? '<span class="billing-search-hmo-mode' + modeClass + '">' + _escHtml(mode.toUpperCase()) + '</span>' : '') +
                 '</div>' : '') +
             '</li>';
         });
@@ -849,22 +872,28 @@ window.BillingKit = (function ($) {
                         if (!results.length) { $('#consumable-search-results').html('<li class="billing-search-no-results">No products found</li>').show(); return; }
                         let html = '';
                         results.forEach(function(p) {
-                            const price = parseFloat(p.price || 0);
-                            const hmo   = p.hmo;
-                            const payable = hmo ? parseFloat(hmo.payable) : price;
-                            const stock   = parseInt(p.stock || 0);
+                            const price = _extractPrice(p.price);
+                            const hmo = p.hmo || null;
+                            const payable = _toNum(p.payable_amount ?? (hmo ? hmo.payable : null), price);
+                            const claims = _toNum(p.claims_amount ?? (hmo ? hmo.claims : null), 0);
+                            const mode = String(p.coverage_mode ?? (hmo ? hmo.mode : '') ?? '').toLowerCase();
+                            const showCoverage = !!mode || claims > 0 || payable !== price;
+                            const stock = parseInt((p.stock?.current_quantity ?? p.stock ?? p.current_quantity ?? 0), 10) || 0;
                             const scls    = stock > 10 ? 'text-success' : stock > 0 ? 'text-warning' : 'text-danger';
-                            const name    = _escHtml(p.name || '');
-                            const code    = (p.code || '').replace(/'/g, "\\'");
-                            const ename   = (p.name || '').replace(/'/g, "\\'");
+                            const rawName = p.name || p.product_name || '';
+                            const rawCode = p.code || p.product_code || '';
+                            const name = _escHtml(rawName);
+                            const code = rawCode.replace(/'/g, "\\'");
+                            const ename = rawName.replace(/'/g, "\\'");
+                            const modeClass = mode ? (' mode-' + mode.replace(/[^a-z0-9_-]/g, '')) : '';
                             html += '<li class="list-group-item list-group-item-action" onclick="_bkSelectConsumable(' + p.id + ', \'' + ename + '\', ' + payable + ', \'' + code + '\')" style="cursor:pointer;">' +
                                 '<div class="billing-search-item-name">' + name + '</div>' +
                                 '<div class="billing-search-item-meta">' +
-                                    '<span class="billing-search-item-price">₦' + price.toLocaleString() + '/unit</span>' +
-                                    (p.code ? '<span class="billing-search-item-badge">' + _escHtml(p.code) + '</span>' : '') +
+                                    '<span class="billing-search-item-price">' + (showCoverage ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '/unit</s>' : '₦' + price.toLocaleString() + '/unit') + '</span>' +
+                                    (rawCode ? '<span class="billing-search-item-badge">' + _escHtml(rawCode) + '</span>' : '') +
                                     '<span class="billing-search-item-stock ' + scls + '"><i class="mdi mdi-package-variant-closed"></i> ' + stock + ' in stock</span>' +
                                 '</div>' +
-                                (hmo ? '<div class="billing-search-hmo-row"><span class="billing-search-hmo-label">HMO:</span><span class="billing-search-hmo-payable">Pay ₦' + parseFloat(hmo.payable).toLocaleString() + '/unit</span><span class="billing-search-hmo-claims">Claim ₦' + parseFloat(hmo.claims).toLocaleString() + '</span><span class="billing-search-hmo-mode mode-' + (hmo.mode || '') + '">' + (hmo.mode || '') + '</span></div>' : '') +
+                                (showCoverage ? '<div class="billing-search-hmo-row"><span class="billing-search-hmo-label">Coverage:</span><span class="billing-search-hmo-payable">Pay ₦' + payable.toLocaleString() + '/unit</span><span class="billing-search-hmo-claims">Claim ₦' + claims.toLocaleString() + '</span>' + (mode ? '<span class="billing-search-hmo-mode' + modeClass + '">' + _escHtml(mode.toUpperCase()) + '</span>' : '') + '</div>' : '') +
                             '</li>';
                         });
                         $('#consumable-search-results').html(html).show();

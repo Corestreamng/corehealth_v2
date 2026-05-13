@@ -473,19 +473,20 @@ function searchProcedures(query) {
                     const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                     const mode = item.coverage_mode || null;
 
-                    const coverageBadge = mode ?
-                        `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` :
-                        '';
-                    const displayName = `${name}[${code}]`;
-
-                    const disabledClass = isSelected ? 'disabled' : '';
-                    const disabledBadge = isSelected ? '<span class="badge bg-warning ms-2">Already Added</span>' : '';
-                    const cursorStyle = isSelected ? 'cursor: not-allowed;' : 'cursor: pointer;';
-
-                    const mk = `<li class='list-group-item ${disabledClass}'
-                        style="background-color: #f0f0f0; ${cursorStyle}"
-                        ${!isSelected ? `onclick="addProcedure(${JSON.stringify(item).replace(/"/g, '&quot;')})"` : ''}>
-                        [${category}]<b>${displayName}</b> NGN ${price} ${coverageBadge} ${disabledBadge}</li>`;
+                    const onClick = isSelected ? '' : `addProcedure(${JSON.stringify(item).replace(/"/g, '&quot;')})`;
+                    const mk = ClinicalOrdersKit.renderSearchResultItem({
+                        id: item.id,
+                        category: category,
+                        name: name,
+                        code: code,
+                        price: price,
+                        payable: payable,
+                        claims: claims,
+                        mode: mode,
+                        alreadyAdded: isSelected,
+                        alreadyLabel: 'Already Added',
+                        onClick: onClick
+                    });
                     $results.append(mk);
                 });
             }
