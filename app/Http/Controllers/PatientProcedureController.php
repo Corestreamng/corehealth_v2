@@ -58,10 +58,11 @@ class PatientProcedureController extends Controller
             'attachments.uploadedBy',
         ]);
 
-        $resolver     = app(StoreContextResolver::class);
-        $resolvedStore = $resolver->resolve(auth()->user());
+        $resolver         = app(StoreContextResolver::class);
+        $resolvedStore    = $resolver->resolve(auth()->user());
+        $accessibleStores = $resolver->candidateStores(auth()->user());
 
-        return view('admin.patient-procedures.show', compact('procedure', 'resolvedStore'));
+        return view("admin.patient-procedures.show", compact("procedure", "resolvedStore", "accessibleStores"));
     }
 
     /**
@@ -211,12 +212,9 @@ class PatientProcedureController extends Controller
             'productOrServiceRequest.payment'
         ])->get();
 
-        return response()->json([
-            'success' => true,
-            'items' => $items->map(function ($item) {
-                return $this->formatItemResponse($item);
-            })
-        ]);
+        return response()->json($items->map(function ($item) {
+            return $this->formatItemResponse($item);
+        }));
     }
 
     /**
@@ -336,6 +334,76 @@ class PatientProcedureController extends Controller
             ], 500);
         }
     }
+    /**
+     * Add a service bill to the procedure
+     * Spec Reference: Part 3.2.1, 3.2.2, 3.4
+     */
+    public function addServiceBill(Request $request, Procedure $procedure)
+    {
+        $request->validate([
+            "service_id" => "required|exists:services,id",
+            "qty" => "required|integer|min:1",
+            "is_bundled" => "required|boolean",
+        ]);
+
+        try {
+            return DB::transaction(function () use ($request, $procedure) {
+                $service = \App\Models\Service::with("price")->find($request->service_id);
+
+                // Create the billing record
+                $billReq = new ProductOrServiceRequest();
+                $billReq->user_id = $procedure->patient->user_id;
+                $billReq->staff_user_id = Auth::id();
+                $billReq->service_id = $service->id;
+                $billReq->encounter_id = $procedure->encounter_id;
+                $billReq->qty = $request->qty;
+
+                // Handle status based on is_bundled flag
+                if ($request->is_bundled) {
+                    // Bundled: Included in procedure, 0 price on this line, mark as validated
+                    $billReq->payable_amount = 0;
+                    $billReq->claims_amount = 0;
+                    $billReq->validation_status = "approved";
+                } else {
+                    // Non-bundled: Apply standard HMO tariff or price
+                    try {
+                        $hmoData = \App\Helpers\HmoHelper::applyHmoTariff($procedure->patient_id, null, $service->id);
+                        if ($hmoData) {
+                            $billReq->payable_amount = $hmoData["payable_amount"] * $request->qty;
+                            $billReq->claims_amount = $hmoData["claims_amount"] * $request->qty;
+                            $billReq->coverage_mode = $hmoData["coverage_mode"];
+                            $billReq->validation_status = $hmoData["validation_status"];
+                        }
+                    } catch (\Exception $e) {
+                        $billReq->payable_amount = (optional($service->price)->sale_price ?? 0) * $request->qty;
+                        $billReq->validation_status = "pending";
+                    }
+                }
+
+                $billReq->save();
+
+                // Create procedure item
+                $procedureItem = new ProcedureItem();
+                $procedureItem->procedure_id = $procedure->id;
+                $procedureItem->product_or_service_request_id = $billReq->id;
+                $procedureItem->is_bundled = $request->is_bundled;
+                $procedureItem->save();
+
+                return response()->json([
+                    "success" => true,
+                    "message" => "Service added successfully",
+                    "item" => $this->formatItemResponse($procedureItem->fresh()->load([
+                        "productOrServiceRequest.service.price"
+                    ]))
+                ]);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                "success" => false,
+                "message" => "Error adding service: " . $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
      * Add a medication/product to the procedure
@@ -427,9 +495,9 @@ class PatientProcedureController extends Controller
                     ProductRequest::where('id', $item->product_request_id)->delete();
                 }
 
-                // Delete the billing entry if non-bundled
-                if (!$item->is_bundled && $item->product_or_service_request_id) {
-                    ProductOrServiceRequest::where('id', $item->product_or_service_request_id)->delete();
+                // Delete the billing entry if it exists
+                if ($item->product_or_service_request_id) {
+                    ProductOrServiceRequest::where("id", $item->product_or_service_request_id)->delete();
                 }
 
                 // Delete the procedure item
@@ -1363,6 +1431,11 @@ class PatientProcedureController extends Controller
             $code = optional($item->productRequest->product)->product_code ?? '';
             $price = (optional($item->productRequest->product->price)->sale_price ?? 0) * ($item->productRequest->qty ?? 1);
             $deliveryStatus = $item->productRequest->status ?? 'pending';
+        } elseif ($item->productOrServiceRequest) {
+            $name = optional($item->productOrServiceRequest->service)->service_name ?? 'Service';
+            $code = optional($item->productOrServiceRequest->service)->service_code ?? '';
+            $price = $item->productOrServiceRequest->payable_amount + $item->productOrServiceRequest->claims_amount;
+            $deliveryStatus = $item->productOrServiceRequest->payment_id ? 'paid' : 'pending';
         }
 
         $billingStatus = null;
@@ -1376,15 +1449,24 @@ class PatientProcedureController extends Controller
             ];
         }
 
+        $addedById = optional($item->productOrServiceRequest)->staff_user_id ?? optional($item->productRequest)->doctor_id ?? optional($item->labServiceRequest)->doctor_id ?? optional($item->imagingServiceRequest)->doctor_id ?? null;
+
         return [
-            'id' => $item->id,
-            'type' => $type,
-            'name' => $name,
-            'code' => $code,
-            'price' => $price,
-            'is_bundled' => $item->is_bundled,
-            'delivery_status' => $deliveryStatus,
-            'billing_status' => $billingStatus,
+            "id" => $item->id,
+            "type" => $type,
+            "name" => $name,
+            "item_name" => $name . ($item->is_bundled ? " <span class='badge badge-secondary'>Bundled</span>" : ""),
+            "code" => $code,
+            "qty" => optional($item->productRequest)->qty ?? 1,
+            "price" => $price,
+            "payable_amount" => optional($item->productOrServiceRequest)->payable_amount ?? 0,
+            "claims_amount" => optional($item->productOrServiceRequest)->claims_amount ?? 0,
+            "is_bundled" => $item->is_bundled,
+            "added_by" => $addedById ? userfullname($addedById) : "N/A",
+            "created_at" => \Carbon\Carbon::parse($item->created_at)->format("h:i a, d M Y"),
+            "delivery_status" => $deliveryStatus,
+            "billing_status" => $billingStatus,
+            "can_delete" => true,
         ];
     }
 

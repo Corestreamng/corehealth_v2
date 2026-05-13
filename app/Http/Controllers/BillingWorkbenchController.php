@@ -209,7 +209,7 @@ class BillingWorkbenchController extends Controller
     private function excludeFullyHmoCovered($query)
     {
         return $query->whereRaw(
-            'NOT ((payable_amount IS NULL OR payable_amount = 0) AND claims_amount > 0 AND validation_status = ?)',
+            'NOT ((payable_amount IS NULL OR payable_amount = 0) AND ((claims_amount > 0 AND validation_status = ?) OR (claims_amount IS NULL OR claims_amount = 0)))',
             ['approved']
         );
     }

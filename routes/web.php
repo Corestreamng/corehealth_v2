@@ -394,8 +394,10 @@ Route::group(['middleware' => ['auth']], function () {
 
             // Items Management (Bundled Billing)
             Route::get('{procedure}/items', [\App\Http\Controllers\PatientProcedureController::class, 'getItems'])->name('items.index');
+            Route::get("{procedure}/{patient}/pending-bills", [\App\Http\Controllers\PatientProcedureController::class, "getItems"])->name("items.pending");
             Route::post('{procedure}/items/lab', [\App\Http\Controllers\PatientProcedureController::class, 'addLabRequest'])->name('items.lab');
             Route::post('{procedure}/items/imaging', [\App\Http\Controllers\PatientProcedureController::class, 'addImagingRequest'])->name('items.imaging');
+            Route::post("{procedure}/items/service", [\App\Http\Controllers\PatientProcedureController::class, "addServiceBill"])->name("items.service");
             Route::post('{procedure}/items/medication', [\App\Http\Controllers\PatientProcedureController::class, 'addMedication'])->name('items.medication');
             Route::delete('{procedure}/items/{item}', [\App\Http\Controllers\PatientProcedureController::class, 'removeItem'])->name('items.destroy');
 
