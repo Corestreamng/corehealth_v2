@@ -303,6 +303,17 @@
 </style>
 
 <section class="container-fluid procedure-page">
+    {{-- Back Navigation --}}
+    <div class="d-flex align-items-center py-2 px-1 mb-1">
+        <a href="{{ route('surgery-workbench.index') }}" class="btn btn-sm btn-outline-secondary mr-3">
+            <i class="fa fa-arrow-left mr-1"></i> Surgery Workbench
+        </a>
+        <small class="text-muted">
+            <i class="fa fa-chevron-right mx-1 text-muted" style="font-size:.65rem;"></i>
+            {{ $procedure->service->service_name ?? 'Procedure' }}
+        </small>
+    </div>
+
     {{-- Procedure Header --}}
     <div class="procedure-header-card">
         <div class="row align-items-center">
@@ -331,15 +342,16 @@
 
     {{-- Patient Info Bar --}}
     <div class="patient-info-bar">
+        @php $pt = $procedure->patient; @endphp
         <div>
-            <h5>{{ userfullname($procedure->patient->user_id) }}</h5>
+            <h5>{{ $pt ? userfullname($pt->user_id) : 'Unknown Patient' }}</h5>
             <div class="patient-details">
-                <span><i class="fa fa-id-card"></i> {{ $procedure->patient->file_no ?? 'N/A' }}</span>
+                <span><i class="fa fa-id-card"></i> {{ $pt->file_no ?? 'N/A' }}</span>
                 <span class="mx-2">|</span>
-                <span><i class="fa fa-calendar"></i> {{ $procedure->patient->dob ? \Carbon\Carbon::parse($procedure->patient->dob)->age . ' yrs' : 'N/A' }}</span>
-                @if($procedure->patient->hmo)
+                <span><i class="fa fa-calendar"></i> {{ $pt && $pt->dob ? \Carbon\Carbon::parse($pt->dob)->age . ' yrs' : 'N/A' }}</span>
+                @if($pt && $pt->hmo)
                     <span class="mx-2">|</span>
-                    <span><i class="fa fa-hospital"></i> {{ $procedure->patient->hmo->name ?? 'HMO' }}</span>
+                    <span><i class="fa fa-hospital"></i> {{ $pt->hmo->name ?? 'HMO' }}</span>
                 @endif
             </div>
         </div>
@@ -538,16 +550,16 @@
                                 </div>
                                 <div class="d-flex">
                                     <a href="{{ route('patient-procedures.attachments.download', [$procedure->id, $att->id]) }}" class="btn btn-sm btn-outline-primary mr-1" title="Download"><i class="fa fa-download"></i></a>
-                                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+                                    @if(auth()->id() === $att->uploaded_by || auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'DOCTOR']))
                                     <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment({{ $att->id }})" title="Delete"><i class="fa fa-trash"></i></button>
-                                    @endhasanyrole
+                                    @endif
                                 </div>
                             </div>
                         @empty
                             <p class="text-muted small" id="no-attachments-msg">No attachments yet.</p>
                         @endforelse
                     </div>
-                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
                     <hr>
                     <form id="upload-attachment-form" enctype="multipart/form-data">
                         @csrf
@@ -602,6 +614,13 @@
                                 <span class="badge badge-primary ml-1" id="proc-meds-count">{{ $procedure->items->filter(fn($i) => $i->product_request_id !== null)->count() }}</span>
                             </a>
                         </li>
+                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#proc-orders-services" id="services-rendered-tab">
+                                <i class="fa fa-receipt text-warning"></i> Services Rendered
+                            </a>
+                        </li>
+                        @endhasanyrole
                     </ul>
                     <div class="tab-content">
                         {{-- Labs History Tab --}}
@@ -628,6 +647,12 @@
                                 </table>
                             </div>
                         </div>
+                        {{-- Services Rendered Tab (BillingKit — Services + Consumables only) --}}
+                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
+                        <div class="tab-pane fade" id="proc-orders-services">
+                            <div id="billing-kit-root"></div>
+                        </div>
+                        @endhasanyrole
                     </div>
                 </div>
             </div>
@@ -725,7 +750,7 @@
                             </div>
                             @endif
                         </div>
-                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
                         @if(!in_array($procedure->procedure_status, ['cancelled','completed']))
                         <button class="btn btn-sm btn-outline-primary mt-3 w-100" onclick="openConsentModal()">
                             <i class="fa fa-sync"></i> Change Consent Status
@@ -735,7 +760,7 @@
                     @else
                         {{-- No consent recorded yet --}}
                         <p class="text-muted small mb-3">Consent has not been recorded for this procedure.</p>
-                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
                         @if(!in_array($procedure->procedure_status, ['cancelled','completed']))
                         <button class="btn btn-sm btn-primary w-100" onclick="openConsentModal()">
                             <i class="fa fa-clipboard-check"></i> Record Consent
@@ -1357,6 +1382,25 @@
 @endsection
 
 @section('scripts')
+{{-- BillingKit config — must be emitted before billing-shared.js --}}
+@hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
+<script>
+window.BILLING_KIT_CONFIG = {
+    csrf:                  '{{ csrf_token() }}',
+    addServiceRoute:       '{{ route("nursing-workbench.billing.add-service") }}',
+    addConsumableRoute:    '{{ route("nursing-workbench.billing.add-consumable") }}',
+    removeBillBase:        '/nursing-workbench/remove-bill',
+    pendingBillsBase:      '/nursing-workbench/patient',
+    searchServicesRoute:   '{{ route("nursing-workbench.search-services") }}',
+    searchProductsRoute:   '{{ route("nursing-workbench.search-products") }}',
+    productBatchesRoute:   '{{ route("nursing-workbench.product-batches") }}',
+    resolvedStoreId:       '{{ $resolvedStore?->id ?? "" }}',
+    resolvedStoreName:     '{{ $resolvedStore?->name ?? "" }}',
+    showMedicationOption:  true,
+};
+</script>
+<script src="{{ asset('js/billing-shared.js') }}"></script>
+@endhasanyrole
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('assets/js/chosen.jquery.min.js') }}"></script>
@@ -1997,6 +2041,14 @@ $(document).ready(function() {
             initImagingHistoryTable();
         } else if (target === '#proc-orders-meds' && !medsHistoryTable) {
             initMedsHistoryTable();
+        } else if (target === '#proc-orders-services' && window.BillingKit) {
+            // Lazy init BillingKit on first activation
+            if (!window._billingKitInitialized) {
+                BillingKit.init(patientId);
+                // Hide Labs/Imaging tabs — procedure has its own section for those
+                $('#billing-labs-tab, #billing-imaging-tab').closest('li').hide();
+                window._billingKitInitialized = true;
+            }
         }
     });
 });

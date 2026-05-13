@@ -463,6 +463,14 @@
                 </a>
             </li>
             @endhasanyrole
+            @hasanyrole('SUPERADMIN|ADMIN|SURGERY|DOCTOR|NURSE')
+            <li class="nav-item {{ request()->routeIs('surgery-workbench.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('surgery-workbench.*') ? 'active' : '' }}" href="{{ route('surgery-workbench.index') }}" id="sidebar-surgery-workbench">
+                    <i class="mdi mdi-scalpel menu-icon"></i>
+                    <span class="menu-title">Surgery Workbench</span>
+                </a>
+            </li>
+            @endhasanyrole
             <!-- Nursing Queue - Old DataTable Approach
             <li class="nav-item {{ request()->routeIs('vitals.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('vitals.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-nurse-queue-old" data-bs-target="#sidebar-nurse-queue-old" aria-expanded="{{ request()->routeIs('vitals.*') ? 'true' : 'false' }}" aria-controls="sidebar-nurse-queue-old" id="sidebar-nurse-queue-old-toggle">

@@ -67,6 +67,11 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->namespace($this->namespace)
                 ->group(base_path('routes/maternity_workbench.php'));
+
+            // Surgery Workbench Routes
+            Route::middleware('web')
+                ->namespace($this->namespace)
+                ->group(base_path('routes/surgery_workbench.php'));
         });
     }
 

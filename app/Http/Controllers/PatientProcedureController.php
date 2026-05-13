@@ -13,6 +13,8 @@ use App\Models\ProductRequest;
 use App\Models\ProductOrServiceRequest;
 use App\Models\PatientAccount;
 use App\Helpers\HmoHelper;
+use App\Services\StoreContextResolver;
+use App\Models\StoreContextRule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +45,7 @@ class PatientProcedureController extends Controller
             'postNotesBy',
             'cancelledByUser',
             'consentMarkedBy',
+            'patient.user',
             'patient.hmo',
             'encounter',
             'teamMembers.user',
@@ -55,7 +58,10 @@ class PatientProcedureController extends Controller
             'attachments.uploadedBy',
         ]);
 
-        return view('admin.patient-procedures.show', compact('procedure'));
+        $resolver     = app(StoreContextResolver::class);
+        $resolvedStore = $resolver->resolve(auth()->user());
+
+        return view('admin.patient-procedures.show', compact('procedure', 'resolvedStore'));
     }
 
     /**

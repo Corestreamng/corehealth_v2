@@ -986,6 +986,9 @@ require __DIR__ . '/nurse_chart.php';
 // Reception Workbench routes
 require __DIR__ . '/reception_workbench.php';
 
+// Surgery Workbench routes
+require __DIR__ . '/surgery_workbench.php';
+
 // Appointment & Scheduling routes
 require __DIR__ . '/appointments.php';
 
