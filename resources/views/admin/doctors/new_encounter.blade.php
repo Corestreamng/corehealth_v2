@@ -1663,19 +1663,25 @@
                             const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
                             const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                             const mode = item.coverage_mode || null;
-                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                             const displayName = `${name}[${code}](${qty} avail.)`;
 
                             // Phase 2c (Plan §4.4): Duplicate filtering for medications
                             const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
-                            const disabledStyle = alreadyAdded ? 'opacity:0.5; pointer-events:none; cursor:default;' : 'cursor:pointer;';
-                            const alreadyBadge = alreadyAdded ? '<span class="badge bg-secondary ms-2">Already Added</span>' : '';
-
-                            var mk =
-                                `<li class='list-group-item'
-                                   style="background-color: #f0f0f0; ${disabledStyle}"
-                                   ${alreadyAdded ? '' : `onclick="setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')"`}>
-                                   [${category}]<b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}${alreadyBadge}</li>`;
+                            const onClick = alreadyAdded ? '' : `setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
+                            var mk = ClinicalOrdersKit.renderSearchResultItem({
+                                id: item.id,
+                                category: category,
+                                name: name,
+                                code: code,
+                                qty: qty,
+                                price: price,
+                                payable: payable,
+                                claims: claims,
+                                mode: mode,
+                                alreadyAdded: alreadyAdded,
+                                alreadyLabel: 'Already Added',
+                                onClick: onClick
+                            });
                             $('#consult_presc_res').append(mk);
                             $('#consult_presc_res').show();
                         }
@@ -1799,17 +1805,22 @@
                             const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
                             const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                             const mode = item.coverage_mode || null;
-                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                             const displayName = `${name}[${code}]`;
                             const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('labs', parseInt(item.id));
-
-                            var mk = alreadyAdded
-                                ? `<li class='list-group-item text-muted' style="background-color: #e9ecef; cursor: not-allowed;">
-                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`
-                                : `<li class='list-group-item'
-                                   style="background-color: #f0f0f0;"
-                                   onclick="setSearchValSer('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
-                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
+                            const onClick = alreadyAdded ? '' : `setSearchValSer('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
+                            var mk = ClinicalOrdersKit.renderSearchResultItem({
+                                id: item.id,
+                                category: category,
+                                name: name,
+                                code: code,
+                                price: price,
+                                payable: payable,
+                                claims: claims,
+                                mode: mode,
+                                alreadyAdded: alreadyAdded,
+                                alreadyLabel: 'Already Added',
+                                onClick: onClick
+                            });
                             $('#consult_invest_res').append(mk);
                             $('#consult_invest_res').show();
                         }
@@ -1848,17 +1859,22 @@
                             const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
                             const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                             const mode = item.coverage_mode || null;
-                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                             const displayName = `${name}[${code}]`;
                             const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('imaging', parseInt(item.id));
-
-                            var mk = alreadyAdded
-                                ? `<li class='list-group-item text-muted' style="background-color: #e9ecef; cursor: not-allowed;">
-                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`
-                                : `<li class='list-group-item'
-                                   style="background-color: #f0f0f0;"
-                                   onclick="setSearchValImaging('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
-                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
+                            const onClick = alreadyAdded ? '' : `setSearchValImaging('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
+                            var mk = ClinicalOrdersKit.renderSearchResultItem({
+                                id: item.id,
+                                category: category,
+                                name: name,
+                                code: code,
+                                price: price,
+                                payable: payable,
+                                claims: claims,
+                                mode: mode,
+                                alreadyAdded: alreadyAdded,
+                                alreadyLabel: 'Already Added',
+                                onClick: onClick
+                            });
                             $('#consult_imaging_res').append(mk);
                             $('#consult_imaging_res').show();
                         }

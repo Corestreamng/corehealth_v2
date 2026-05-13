@@ -82,6 +82,66 @@ window.ClinicalOrdersKit = (function ($) {
             '</div>';
     }
 
+    function toNumber(val, fallback) {
+        var n = parseFloat(val);
+        return Number.isFinite(n) ? n : (fallback || 0);
+    }
+
+    function formatAmount(val) {
+        return toNumber(val, 0).toLocaleString();
+    }
+
+    function renderSearchResultItem(cfg) {
+        ensureSearchStyles();
+        cfg = cfg || {};
+        var id = cfg.id || '';
+        var category = cfg.category || '';
+        var name = cfg.name || 'Unknown';
+        var code = cfg.code || '';
+        var qty = cfg.qty;
+        var price = toNumber(cfg.price, 0);
+        var payable = toNumber(cfg.payable, price);
+        var claims = toNumber(cfg.claims, 0);
+        var mode = (cfg.mode || '').toString();
+        var modeLc = mode.toLowerCase();
+        var alreadyAdded = !!cfg.alreadyAdded;
+        var alreadyLabel = cfg.alreadyLabel || 'Already Added';
+        var onClick = cfg.onClick || '';
+
+        var showCoverage = !!mode || claims > 0 || payable !== price;
+        var modeClass = modeLc ? ' mode-' + modeLc.replace(/[^a-z0-9_-]/g, '') : '';
+        var itemClass = alreadyAdded ? 'list-group-item co-already-added' : 'list-group-item list-group-item-action';
+        var display = code ? (name + '[' + code + ']') : name;
+        var lead = category ? '[' + category + '] ' : '';
+        var stockHtml = (qty !== undefined && qty !== null)
+            ? '<span class="co-search-stock text-muted">' + qty + ' avail.</span>'
+            : '';
+        var clickAttr = (!alreadyAdded && onClick) ? ' onclick="' + onClick + '"' : '';
+
+        return '<li class="' + itemClass + '" data-item-id="' + id + '"' + clickAttr + '>' +
+            '<div class="co-search-title">' + lead + '<b>' + display + '</b></div>' +
+            '<div class="co-search-meta">' +
+                '<span class="co-search-price">' + (showCoverage ? '<s style="color:#999;font-weight:400">NGN ' + formatAmount(price) + '</s>' : 'NGN ' + formatAmount(price)) + '</span>' +
+                stockHtml +
+            '</div>' +
+            (showCoverage ? '<div class="co-search-coverage">' +
+                '<span class="co-search-coverage-label">Coverage:</span>' +
+                '<span class="co-search-pay">Pay: NGN ' + formatAmount(payable) + '</span>' +
+                '<span class="co-search-claim">Claim: NGN ' + formatAmount(claims) + '</span>' +
+                (mode ? '<span class="co-search-mode' + modeClass + '">' + mode.toUpperCase() + '</span>' : '') +
+            '</div>' : '') +
+            (alreadyAdded ? '<span class="badge bg-warning ms-2">' + alreadyLabel + '</span>' : '') +
+        '</li>';
+    }
+
+    function ensureSearchStyles() {
+        if (document.getElementById('co-search-rich-styles')) return;
+        var style = document.createElement('style');
+        style.id = 'co-search-rich-styles';
+        style.textContent = '\n.co-search-dropdown{z-index:1060;max-height:320px;overflow-y:auto;overflow-x:hidden;background:#fff;border:1px solid #dee2e6;box-shadow:0 8px 20px rgba(0,0,0,.14);border-radius:0 0 8px 8px;padding:0;list-style:none;}\n.co-search-dropdown .list-group-item{cursor:pointer;border-left:3px solid transparent;transition:all .15s ease;padding:10px 12px;}\n.co-search-dropdown .list-group-item:hover{background:#f0f8ff;border-left-color:#0d6efd;}\n.co-search-dropdown .co-already-added{cursor:not-allowed;background:#fff8e1 !important;opacity:.9;}\n.co-search-title{font-weight:600;color:#2c3e50;font-size:.9rem;}\n.co-search-meta{display:flex;align-items:center;gap:8px;margin-top:4px;}\n.co-search-price{font-weight:600;color:#1b8f4f;font-size:.84rem;}\n.co-search-stock{font-size:.76rem;margin-left:auto;}\n.co-search-coverage{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:5px;padding-top:5px;border-top:1px dashed #e0e0e0;font-size:.78rem;}\n.co-search-coverage-label{font-size:.72rem;color:#888;}\n.co-search-pay{color:#e67e22;font-weight:600;}\n.co-search-claim{color:#1b8f4f;font-weight:600;}\n.co-search-mode{font-size:.68rem;padding:1px 6px;border-radius:4px;font-weight:700;letter-spacing:.2px;}\n.co-search-mode.mode-express{background:#d4edda;color:#155724;}\n.co-search-mode.mode-primary{background:#cce5ff;color:#004085;}\n.co-search-mode.mode-secondary{background:#fff3cd;color:#856404;}\n.co-search-mode.mode-hmo{background:#d1ecf1;color:#0c5460;}\n.co-search-mode.mode-cash{background:#f1f3f5;color:#495057;}\n.co-search-empty,.co-search-loading{text-align:center;color:#6c757d;font-style:italic;}\n';
+        document.head.appendChild(style);
+    }
+
     /* ═══════════════════════════════════════════
        STRUCTURED DOSE BUILDER  (Plan §2.1 — buildStructuredDoseHtml)
        Exact selectors match current codebase:
@@ -1531,6 +1591,8 @@ window.ClinicalOrdersKit = (function ($) {
         var $drop  = $(dropSel);
         if (!$input.length || !$drop.length) return;
 
+        ensureSearchStyles();
+
         // Ensure dropdown class
         $drop.addClass('co-search-dropdown');
 
@@ -1573,6 +1635,7 @@ window.ClinicalOrdersKit = (function ($) {
         debounce: debounce,
         showInlineMessage: showInlineMessage,
         renderCoverageBadge: renderCoverageBadge,
+        renderSearchResultItem: renderSearchResultItem,
 
         // Structured dose
         buildStructuredDoseHtml: buildStructuredDoseHtml,
