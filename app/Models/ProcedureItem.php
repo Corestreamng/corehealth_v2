@@ -73,6 +73,7 @@ class ProcedureItem extends Model implements Auditable
         if ($this->lab_service_request_id) return 'lab';
         if ($this->imaging_service_request_id) return 'imaging';
         if ($this->product_request_id) return 'product';
+        if ($this->product_or_service_request_id) return "service";
         if ($this->misc_bill_id) return 'misc';
         return 'unknown';
     }

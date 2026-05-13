@@ -1724,17 +1724,22 @@
 @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
 <script>
 window.BILLING_KIT_CONFIG = {
-    csrf:                  '{{ csrf_token() }}',
-    addServiceRoute:       '{{ route("nursing-workbench.billing.add-service") }}',
-    addConsumableRoute:    '{{ route("nursing-workbench.billing.add-consumable") }}',
-    removeBillBase:        '/nursing-workbench/remove-bill',
-    pendingBillsBase:      '/nursing-workbench/patient',
-    searchServicesRoute:   '{{ route("nursing-workbench.search-services") }}',
-    searchProductsRoute:   '{{ route("nursing-workbench.search-products") }}',
-    productBatchesRoute:   '{{ route("nursing-workbench.product-batches") }}',
-    resolvedStoreId:       '{{ $resolvedStore?->id ?? "" }}',
-    resolvedStoreName:     '{{ $resolvedStore?->name ?? "" }}',
+    csrf:                  "{{ csrf_token() }}",
+    addServiceRoute:       "{{ route("patient-procedures.items.service", $procedure->id) }}",
+    addLabRoute:           "{{ route("patient-procedures.items.lab", $procedure->id) }}",
+    addImagingRoute:       "{{ route("patient-procedures.items.imaging", $procedure->id) }}",
+    addConsumableRoute:    "{{ route("patient-procedures.items.medication", $procedure->id) }}",
+    removeBillBase:        "/patient-procedures/{{ $procedure->id }}/items",
+    pendingBillsBase:      "/patient-procedures/{{ $procedure->id }}",
+    searchServicesRoute:   "{{ route("nursing-workbench.search-services") }}",
+    searchProductsRoute:   "{{ route("nursing-workbench.search-products") }}",
+    productBatchesRoute:   "{{ route("nursing-workbench.product-batches") }}",
+    resolvedStoreId:       "{{ $resolvedStore?->id ?? "" }}",
+    resolvedStoreName:     "{{ $resolvedStore?->name ?? "" }}",
+    accessibleStores:      {!! json_encode($accessibleStores ?? []) !!},
     showMedicationOption:  true,
+    canBundle:             true,
+    procedureId:           {{ $procedure->id }},
 };
 </script>
 <script src="{{ asset('js/billing-shared.js') }}"></script>
@@ -1833,8 +1838,8 @@ $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
     const target = $(e.target).attr('href');
     if (target === '#proc-orders-services' && window.BillingKit) {
         if (!window._billingKitInitialized) {
-            BillingKit.init(patientId);
-            $('#billing-labs-tab, #billing-imaging-tab').closest('li').hide();
+            BillingKit.init(window.BILLING_KIT_CONFIG);
+            BillingKit.setPatient(patientId);
             window._billingKitInitialized = true;
         }
     }
