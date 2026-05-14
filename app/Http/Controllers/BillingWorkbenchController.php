@@ -257,7 +257,8 @@ class BillingWorkbenchController extends Controller
             ])
             ->where('user_id', $patient->user_id)
             ->whereNull('payment_id')
-            ->whereNull('invoice_id');
+            ->whereNull('invoice_id')
+            ->where('is_bundle_item', false); // Exclude child items from billing list
         // Exclude fully HMO-covered approved items
         $this->excludeFullyHmoCovered($itemsQuery);
         $items = $itemsQuery
@@ -926,6 +927,7 @@ class BillingWorkbenchController extends Controller
 
         // Aggregate items from selected payments
         $allItems = ProductOrServiceRequest::whereIn('payment_id', $request->payment_ids)
+            ->where('is_bundle_item', false) // Exclude child items from receipt
             ->with(['service.price', 'product.price'])
             ->get();
 
@@ -1026,6 +1028,7 @@ class BillingWorkbenchController extends Controller
         $items = ProductOrServiceRequest::whereIn('id', $request->item_ids)
             ->whereNull('payment_id')
             ->whereNull('invoice_id')
+            ->where('is_bundle_item', false) // Exclude child items from invoice
             ->with(['service.price', 'product.price'])
             ->get();
 
@@ -1577,7 +1580,7 @@ class BillingWorkbenchController extends Controller
                 ->get();
 
             foreach ($directPayments as $pmt) {
-                $items = $pmt->product_or_service_request->map(function ($item) {
+                $items = $pmt->product_or_service_request->reject(fn($i) => $i->is_bundle_item)->map(function ($item) {
                     if ($item->service_id) {
                         return $item->service?->service_name ?? 'Service';
                     }

@@ -6296,6 +6296,7 @@
 </div>
 
 @include('admin.partials.patient-form-modal')
+@include('admin.partials.combo_confirm_modal')
 
 @endsection
 
@@ -6615,6 +6616,8 @@ function displayProductSearchResults(results) {
     const $container = $('#product-search-results');
     $container.empty();
 
+    window.comboSearchMap = {};
+
     if (results.length === 0) {
         $container.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-magnify"></i> No products found matching your search</li>');
         $container.show();
@@ -6622,12 +6625,17 @@ function displayProductSearchResults(results) {
     }
 
     results.forEach(product => {
-        const isAlreadySelected = selectedProducts.some(p => p.id === product.id);
+        const isCombo = !!product.is_combo;
+        const isAlreadySelected = isCombo ? false : selectedProducts.some(p => p.id === product.id);
         const price = parseFloat(product.price || 0);
         const stockQty = product.stock_qty || 0;
         const payableAmount = parseFloat(product.payable_amount || price);
         const claimsAmount = parseFloat(product.claims_amount || 0);
         const coverageMode = product.coverage_mode;
+
+        if (isCombo) {
+            window.comboSearchMap[String(product.id)] = product;
+        }
 
         // Product type badge
         const typeBadgeMap = {
@@ -6635,14 +6643,39 @@ function displayProductSearchResults(results) {
             consumable: '<span class="badge" style="background:#fff3cd;color:#856404;">Consumable</span>',
             utility: '<span class="badge" style="background:#d1ecf1;color:#0c5460;">Utility</span>'
         };
-        const typeBadge = typeBadgeMap[product.product_type] || typeBadgeMap.drug;
+        const typeBadge = isCombo
+            ? '<span class="badge badge-primary">Combo</span>'
+            : (typeBadgeMap[product.product_type] || typeBadgeMap.drug);
 
         // Packaging chain info
         let packagingInfo = '';
-        if (product.packagings && product.packagings.length> 0) {
+        if (!isCombo && product.packagings && product.packagings.length > 0) {
             const baseUnit = product.base_unit_name || 'Piece';
             const chain = [baseUnit, ...product.packagings.sort((a,b) => a.level - b.level).map(p => p.name)];
             packagingInfo = `<div class="mt-1 small text-muted"><i class="mdi mdi-package-variant-closed"></i> ${chain.join(' → ')}</div>`;
+        }
+
+        // Combo breakdown
+        let comboInfo = '';
+        if (isCombo) {
+            const productItems = (product.bundle_items || []).filter(item => item.type === 'product');
+            const serviceItems = (product.bundle_items || []).filter(item => item.type === 'service');
+
+            const productsHtml = productItems.length
+                ? productItems.map(item => `<span class="badge badge-light mr-1 mb-1">${item.qty}x ${item.name}</span>`).join('')
+                : '<span class="text-muted">No product items</span>';
+
+            const servicesHtml = serviceItems.length
+                ? `<div class="mt-1 small text-muted"><i class="mdi mdi-stethoscope"></i> Includes service items: ${serviceItems.map(item => `${item.qty}x ${item.name}`).join(', ')}</div>`
+                : '';
+
+            comboInfo = `
+                <div class="mt-2">
+                    <div class="small text-muted"><i class="mdi mdi-package-variant"></i> Product bundle:</div>
+                    <div class="mt-1">${productsHtml}</div>
+                    ${servicesHtml}
+                </div>
+            `;
         }
 
         // Build HMO coverage badge (like new_encounter)
@@ -6660,7 +6693,9 @@ function displayProductSearchResults(results) {
         // Stock availability badge with intuitive thresholds
         // Thresholds: Out (0), Critical (1-5), Low (6-20), OK (>20)
         let stockBadge = '';
-        if (stockQty <= 0) {
+        if (isCombo) {
+            stockBadge = `<span class="badge badge-secondary ml-1">Bundle</span>`;
+        } else if (stockQty <= 0) {
             stockBadge = `<span class="badge badge-stock-out ml-1"><i class="mdi mdi-alert-circle"></i> Out of stock</span>`;
         } else if (stockQty <= 5) {
             stockBadge = `<span class="badge badge-stock-critical ml-1"><i class="mdi mdi-alert"></i> ${stockQty} only!</span>`;
@@ -6682,7 +6717,7 @@ function displayProductSearchResults(results) {
                 data-claims-amount="${claimsAmount}"
                 data-coverage-mode="${coverageMode || ''}"
                 data-stock-qty="${stockQty}"
-                ${isAlreadySelected ? '' : 'onclick="selectProduct(this)"'}>
+                ${isAlreadySelected ? '' : `onclick="${isCombo ? `selectComboProducts(${product.id})` : 'selectProduct(this)'}"`}>
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <span class="text-muted">[${product.category_name || 'N/A'}]</span>
@@ -6692,10 +6727,12 @@ function displayProductSearchResults(results) {
                         ${stockBadge}
                         ${coverageBadge}
                         ${packagingInfo}
+                        ${comboInfo}
                     </div>
                     <div class="text-right">
                         <strong>₦${price.toLocaleString()}</strong>
                         ${isAlreadySelected ? '<br><span class="badge badge-secondary">Already Added</span>' : ''}
+                        ${isCombo ? '<br><span class="badge badge-primary mt-1">Add Bundle Items</span>' : ''}
                     </div>
                 </div>
             </li>
@@ -6734,6 +6771,65 @@ function selectProduct(element) {
     // Clear search
     $('#product-search-input').val('');
     $('#product-search-results').hide();
+}
+
+function selectComboProducts(comboId) {
+    const combo = window.comboSearchMap ? window.comboSearchMap[String(comboId)] : null;
+    if (!combo) {
+        toastr.error('Unable to load combo items');
+        return;
+    }
+
+    // Store to comboDataMap for the modal
+    window.comboDataMap = window.comboDataMap || {};
+    window.comboDataMap[comboId] = combo;
+
+    ComboConfirmModal.show({
+        name        : combo.product_name || combo.service_name || 'Combo',
+        bundleItems : combo.bundle_items || [],
+        price       : parseFloat(combo.base_price || 0),
+        payable     : parseFloat(combo.payable_amount != null ? combo.payable_amount : (combo.base_price || 0)),
+        claims      : parseFloat(combo.claims_amount || 0),
+        mode        : combo.coverage_mode || null,
+        onConfirm   : function() {
+            const productItems = (combo.bundle_items || []).filter(item => item.type === 'product');
+            if (productItems.length === 0) {
+                toastr.warning('Selected combo has no product items');
+                return;
+            }
+
+            let addedCount = 0;
+            productItems.forEach(item => {
+                const itemQty = parseFloat(item.qty || 1) || 1;
+                const existingIndex = selectedProducts.findIndex(p => p.id === item.id);
+
+                if (existingIndex >= 0) {
+                    selectedProducts[existingIndex].qty = (parseFloat(selectedProducts[existingIndex].qty) || 0) + itemQty;
+                    return;
+                }
+
+                selectedProducts.push({
+                    id: item.id,
+                    name: item.name,
+                    code: item.code || '',
+                    price: parseFloat(item.price || 0),
+                    category: item.category_name || '',
+                    payableAmount: parseFloat(item.payable_amount || item.price || 0),
+                    claimsAmount: parseFloat(item.claims_amount || 0),
+                    coverageMode: item.coverage_mode || null,
+                    stockQty: parseFloat(item.stock_qty || 0),
+                    qty: itemQty,
+                    dose: ''
+                });
+                addedCount++;
+            });
+
+            renderSelectedProducts();
+            $('#product-search-input').val('');
+            $('#product-search-results').hide();
+            toastr.success(`${combo.product_name || 'Combo'}: ${productItems.length} combo item(s) added`);
+        }
+    });
 }
 
 function renderSelectedProducts() {
@@ -17465,5 +17561,42 @@ $(document).on('click', '#btn-register-walkin', function() {
         </div>
     </div>
 </div>
+
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
+<script>
+function showBundleRemove(btn) {
+    var parentId = btn.dataset.parentId;
+    var bundleName = btn.dataset.bundleName;
+    var items = JSON.parse(btn.dataset.items || '[]');
+    var removeUrl = btn.dataset.removeUrl;
+    BundleRemoveModal.show({
+        bundleId: parentId,
+        bundleName: bundleName,
+        items: items,
+        onConfirm: function(callback) {
+            $.ajax({
+                url: removeUrl,
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({ parent_request_id: parentId }),
+                success: function(r) {
+                    if (r.success) {
+                        toastr.success(r.message || 'Combo removed');
+                        callback(false);
+                        if ($.fn.DataTable.isDataTable('#presc_history_table')) { $('#presc_history_table').DataTable().ajax.reload(null, false); }
+                    } else {
+                        toastr.error(r.message || 'Failed to remove combo');
+                        callback(true);
+                    }
+                },
+                error: function() { toastr.error('Error removing combo'); callback(true); }
+            });
+        }
+    });
+}
+</script>
 
 @endsection

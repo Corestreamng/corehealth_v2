@@ -15,6 +15,8 @@ use App\Models\StockBatch;
 use App\Models\Hmo;
 use App\Models\DoctorQueue;
 use App\Models\AdmissionRequest;
+use App\Models\Service;
+use App\Models\ServiceBundleItem;
 use App\Helpers\HmoHelper;
 use App\Helpers\BatchHelper;
 use App\Services\StockService;
@@ -327,11 +329,11 @@ class PharmacyWorkbenchController extends Controller
                 $isPaid = optional(optional($posr)->payment)->payment_status === 'paid';
                 $isValidated = in_array(optional($posr)->validation_status, ['validated', 'approved', 'awaiting_code']);
 
-                // Check if bundled with procedure
+                // Check if bundled with procedure (is_bundled — procedure system, NOT our combo)
                 $procedureItem = $item->procedureItem;
                 $isBundled = $procedureItem && $procedureItem->is_bundled;
 
-                // Bundled items can be dispensed if procedure is paid
+                // Procedure-bundled items can be dispensed if procedure is paid
                 if ($isBundled) {
                     $procedurePosr = optional(optional($procedureItem->procedure)->productOrServiceRequest);
                     $procedurePaid = optional($procedurePosr->payment)->payment_status === 'paid';
@@ -407,7 +409,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function prescHistoryList($patientId)
     {
-        $items = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'dispenser', 'dispensedFromBatch', 'dispensedFromStore'])
+        $items = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser', 'dispensedFromBatch', 'dispensedFromStore'])
             ->where('status', 3)
             ->where('patient_id', $patientId)
             ->orderBy('dispense_date', 'DESC')
@@ -481,6 +483,25 @@ class PharmacyWorkbenchController extends Controller
                 // Show store if available
                 if ($item->dispensedFromStore) {
                     $str .= '<br><small class="text-secondary"><i class="mdi mdi-store"></i> From: ' . $item->dispensedFromStore->store_name . '</small>';
+                }
+
+                // Bundle info block (View only — items are dispensed/paid)
+                if ($posr && $posr->is_bundle_item && $posr->parent_id) {
+                    $parentReq = $posr->parent;
+                    if ($parentReq) {
+                        $bName    = optional($parentReq->service)->service_name ?? 'Combo';
+                        $bPay     = $parentReq->payable_amount ?? 0;
+                        $bClaims  = $parentReq->claims_amount ?? 0;
+                        $bChildren = $parentReq->children->map(function ($c) {
+                            return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
+                        })->values()->toArray();
+                        $bDataJson = htmlspecialchars(json_encode(['name' => $bName, 'payable_amount' => $bPay, 'claims_amount' => $bClaims, 'items' => $bChildren]), ENT_QUOTES);
+                        $bNameEsc  = htmlspecialchars($bName, ENT_QUOTES);
+                        $str .= "<div class='bundle-info-block mt-1 p-2 bg-light rounded'>";
+                        $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bNameEsc}</strong> &mdash; &#8358;" . number_format($bPay, 2) . " patient / &#8358;" . number_format($bClaims, 2) . " claims</small>";
+                        $str .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
+                        $str .= "</div>";
+                    }
                 }
 
                 return $str;
@@ -714,7 +735,8 @@ class PharmacyWorkbenchController extends Controller
                 'product.category',
                 'doctor',
                 'biller',
-                'productOrServiceRequest.payment'
+            'productOrServiceRequest.payment',
+            'productOrServiceRequest.parent.payment'
             ])
             ->where('patient_id', $patientId)
             ->whereIn('status', [1, 2]); // Requested or Billed
@@ -727,10 +749,25 @@ class PharmacyWorkbenchController extends Controller
                 // Billed but not yet paid/validated for HMO
                 $query->where('status', 2)
                       ->where(function($q) {
-                          $q->whereDoesntHave('productOrServiceRequest.payment')
-                            ->orWhereHas('productOrServiceRequest', function($sq) {
-                                $sq->whereNotIn('validation_status', ['validated', 'approved', 'awaiting_code']);
-                            });
+                          $q->where(function ($own) {
+                              $own->whereHas('productOrServiceRequest', function ($sq) {
+                                  $sq->whereNull('payment_id')
+                                     ->where(function ($v) {
+                                         $v->whereNull('validation_status')
+                                           ->orWhereNotIn('validation_status', ['validated', 'approved', 'awaiting_code']);
+                                     });
+                              });
+                          })->where(function ($parentState) {
+                              // For combo child rows, treat parent payment/validation as readiness signal.
+                              $parentState->whereDoesntHave('productOrServiceRequest.parent')
+                                  ->orWhereHas('productOrServiceRequest.parent', function ($parent) {
+                                      $parent->whereNull('payment_id')
+                                          ->where(function ($v) {
+                                              $v->whereNull('validation_status')
+                                                ->orWhereNotIn('validation_status', ['validated', 'approved', 'awaiting_code']);
+                                          });
+                                  });
+                          });
                       });
             } elseif ($statusFilter === 'ready') {
                 // Ready to dispense: billed AND (paid OR HMO validated)
@@ -740,6 +777,12 @@ class PharmacyWorkbenchController extends Controller
                                 $sq->whereNotNull('payment_id');
                             })
                             ->orWhereHas('productOrServiceRequest', function($sq) {
+                                $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
+                            })
+                            ->orWhereHas('productOrServiceRequest.parent', function($sq) {
+                                $sq->whereNotNull('payment_id');
+                            })
+                            ->orWhereHas('productOrServiceRequest.parent', function($sq) {
                                 $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                             });
                       });
@@ -752,11 +795,14 @@ class PharmacyWorkbenchController extends Controller
                 $basePrice = optional(optional($pr->product)->price)->current_sale_price ?? 0;
                 $posr = $pr->productOrServiceRequest;
                 $payment = optional($posr)->payment;
+                $parentPosr = optional($posr)->parent;
 
                 // Determine ready status
-                $isPaid = optional($payment)->payment_status === 'paid';
+                $isPaid = !is_null(optional($posr)->payment_id);
                 $isValidated = in_array(optional($posr)->validation_status, ['validated', 'approved', 'awaiting_code']);
-                $isReady = $isPaid || $isValidated;
+                $isParentPaid = !is_null(optional($parentPosr)->payment_id);
+                $isParentValidated = in_array(optional($parentPosr)->validation_status, ['validated', 'approved', 'awaiting_code']);
+                $isReady = $isPaid || $isValidated || $isParentPaid || $isParentValidated;
 
                 // Status label logic
                 $statusLabel = $pr->status == 1 ? 'Unbilled' : 'Billed';
@@ -824,10 +870,24 @@ class PharmacyWorkbenchController extends Controller
         $billedNotReadyCount = ProductRequest::where('patient_id', $patientId)
             ->where('status', 2)
             ->where(function($q) {
-                $q->whereDoesntHave('productOrServiceRequest.payment')
-                  ->orWhereHas('productOrServiceRequest', function($sq) {
-                      $sq->whereNotIn('validation_status', ['validated', 'approved', 'awaiting_code']);
-                  });
+                $q->where(function ($own) {
+                    $own->whereHas('productOrServiceRequest', function($sq) {
+                        $sq->whereNull('payment_id')
+                           ->where(function ($v) {
+                               $v->whereNull('validation_status')
+                                 ->orWhereNotIn('validation_status', ['validated', 'approved', 'awaiting_code']);
+                           });
+                    });
+                })->where(function ($parentState) {
+                    $parentState->whereDoesntHave('productOrServiceRequest.parent')
+                        ->orWhereHas('productOrServiceRequest.parent', function ($parent) {
+                            $parent->whereNull('payment_id')
+                                ->where(function ($v) {
+                                    $v->whereNull('validation_status')
+                                      ->orWhereNotIn('validation_status', ['validated', 'approved', 'awaiting_code']);
+                                });
+                        });
+                });
             })
             ->count();
 
@@ -839,6 +899,12 @@ class PharmacyWorkbenchController extends Controller
                       $sq->whereNotNull('payment_id');
                   })
                   ->orWhereHas('productOrServiceRequest', function($sq) {
+                      $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
+                  })
+                  ->orWhereHas('productOrServiceRequest.parent', function($sq) {
+                      $sq->whereNotNull('payment_id');
+                  })
+                  ->orWhereHas('productOrServiceRequest.parent', function($sq) {
                       $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                   });
             })
@@ -1507,10 +1573,159 @@ class PharmacyWorkbenchController extends Controller
                             'is_default_dispense' => (bool) $pkg->is_default_dispense,
                         ];
                     })->values(),
+                    'is_combo' => false,
+                    'bundle_items' => [],
                 ];
             });
 
-        return response()->json($products);
+        // --- Combo detection ---
+        // Find combos that contain products matching the search term, or whose name matches
+        $matchingProductIds = Product::drugsOnly()
+            ->where(function ($q) use ($term) {
+                $q->where('product_name', 'like', "%{$term}%")
+                  ->orWhere('product_code', 'like', "%{$term}%");
+            })
+            ->where('status', 1)
+            ->pluck('id');
+
+        $comboServiceIds = collect();
+        if ($matchingProductIds->isNotEmpty()) {
+            $comboServiceIds = ServiceBundleItem::whereIn('item_id', $matchingProductIds)
+                ->where('item_type', 'product')
+                ->pluck('parent_service_id')
+                ->unique();
+        }
+
+        $comboByNameIds = Service::where('is_combo', true)
+            ->where(function ($q) use ($term) {
+                $q->where('service_name', 'like', "%{$term}%")
+                  ->orWhere('service_code', 'like', "%{$term}%");
+            })
+            ->pluck('id');
+
+        $allComboIds = $comboServiceIds->merge($comboByNameIds)->unique();
+
+        $comboResults = collect();
+        if ($allComboIds->isNotEmpty()) {
+            $combos = Service::with([
+                'bundleItems.product.category',
+                'bundleItems.product.price',
+                'bundleItems.product.stock',
+                'bundleItems.product.packagings',
+                'bundleItems.service',
+                'price'
+            ])
+                ->where('is_combo', true)
+                ->whereIn('id', $allComboIds)
+                ->get();
+
+            // Batch-load HMO tariffs for combos
+            $comboTariffMap = [];
+            if ($patient && $patient->hmo_id) {
+                $svcIds = $combos->pluck('id')->toArray();
+                $previews = HmoHelper::batchPreviewTariffs($patient->hmo_id, [], $svcIds);
+                $comboTariffMap = $previews['services'] ?? [];
+            }
+
+            $comboResults = $combos->map(function ($combo) use ($patient, $comboTariffMap) {
+                $basePrice = optional($combo->price)->current_sale_price
+                    ?? optional($combo->price)->sale_price ?? 0;
+                $payableAmount = $basePrice;
+                $claimsAmount  = 0;
+                $coverageMode  = null;
+
+                if ($patient && $patient->hmo_id) {
+                    $t = $comboTariffMap[$combo->id] ?? null;
+                    if ($t && isset($t['payable_amount'])) {
+                        $payableAmount = $t['payable_amount'];
+                        $claimsAmount  = $t['claims_amount'] ?? 0;
+                        $coverageMode  = $t['coverage_mode'] ?? null;
+                    }
+                }
+
+                $bundleItems = $combo->bundleItems->map(function ($item) use ($patient) {
+                    if ($item->item_type === 'product') {
+                        $prod = $item->product;
+                        $itemBasePrice = optional($prod->price)->current_sale_price ?? 0;
+                        $itemPayableAmount = $itemBasePrice;
+                        $itemClaimsAmount = 0;
+                        $itemCoverageMode = null;
+
+                        if ($patient && $patient->hmo_id && $prod) {
+                            try {
+                                $tariffInfo = HmoHelper::applyHmoTariff($patient->id, $prod->id);
+                                if ($tariffInfo) {
+                                    $itemPayableAmount = $tariffInfo['payable_amount'] ?? $itemBasePrice;
+                                    $itemClaimsAmount = $tariffInfo['claims_amount'] ?? 0;
+                                    $itemCoverageMode = $tariffInfo['coverage_mode'] ?? null;
+                                }
+                            } catch (\Exception $e) {
+                                // No tariff found, use base price
+                            }
+                        }
+
+                        $itemStockQty = optional($prod->stock)->current_quantity ?? 0;
+
+                        return [
+                            'id' => $item->item_id,
+                            'name' => $prod ? $prod->product_name : '(unknown)',
+                            'code' => $prod ? $prod->product_code : null,
+                            'qty' => (float) $item->qty,
+                            'type' => 'product',
+                            'product_type' => $prod->product_type ?? 'drug',
+                            'base_unit_name' => $prod->base_unit_name ?? 'Piece',
+                            'allow_decimal_qty' => $prod->allow_decimal_qty ?? false,
+                            'category_name' => optional($prod->category)->category_name,
+                            'price' => $itemBasePrice,
+                            'stock_qty' => $itemStockQty,
+                            'payable_amount' => $itemPayableAmount,
+                            'claims_amount' => $itemClaimsAmount,
+                            'coverage_mode' => $itemCoverageMode,
+                            'packagings' => $prod ? $prod->packagings->sortBy('level')->map(function ($pkg) {
+                                return [
+                                    'id' => $pkg->id,
+                                    'name' => $pkg->name,
+                                    'level' => $pkg->level,
+                                    'units_in_parent' => (float) $pkg->units_in_parent,
+                                    'base_unit_qty' => (float) $pkg->base_unit_qty,
+                                    'is_default_purchase' => (bool) $pkg->is_default_purchase,
+                                    'is_default_dispense' => (bool) $pkg->is_default_dispense,
+                                ];
+                            })->values()->toArray() : [],
+                        ];
+                    }
+                    $svc = $item->service;
+                    return [
+                        'id' => $item->item_id,
+                        'name' => $svc ? $svc->service_name : '(unknown)',
+                        'qty' => (float) $item->qty,
+                        'type' => 'service',
+                    ];
+                })->values()->toArray();
+
+                return [
+                    'id'                 => $combo->id,
+                    'product_name'       => $combo->service_name,
+                    'product_code'       => $combo->service_code ?? null,
+                    'product_type'       => 'combo',
+                    'base_unit_name'     => 'Package',
+                    'allow_decimal_qty'  => false,
+                    'category_name'      => 'Combo',
+                    'price'              => $basePrice,
+                    'stock_qty'          => 99,
+                    'stock_formatted'    => 'N/A',
+                    'store_stocks'       => [],
+                    'payable_amount'     => $payableAmount,
+                    'claims_amount'      => $claimsAmount,
+                    'coverage_mode'      => $coverageMode,
+                    'packagings'         => [],
+                    'is_combo'           => true,
+                    'bundle_items'       => $bundleItems,
+                ];
+            });
+        }
+
+        return response()->json($products->merge($comboResults)->values());
     }
 
     /**
