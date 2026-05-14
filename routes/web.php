@@ -384,6 +384,33 @@ Route::group(['middleware' => ['auth']], function () {
 
         // Patient Procedure Detail Page & Items Management (PatientProcedureController)
         // Spec Reference: Part 3.4, 3.5.2, 3.6
+        // Staff Search API for dropdowns
+        Route::get("api/staff-search", function (Illuminate\Http\Request $request) {
+            $query = \App\Models\User::whereHas("staff_profile")
+                ->where("status", ">", 0);
+
+            if ($request->has("search")) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where("firstname", "LIKE", "%{$search}%")
+                      ->orWhere("surname", "LIKE", "%{$search}%")
+                      ->orWhere("othername", "LIKE", "%{$search}%");
+                });
+            }
+
+            $staff = $query->orderBy("surname")
+                ->orderBy("firstname")
+                ->limit(200)
+                ->get()
+                ->map(function ($u) {
+                    return [
+                        "id" => $u->id,
+                        "name" => $u->surname . " " . $u->firstname . ($u->othername ? " " . $u->othername : "")
+                    ];
+                });
+
+            return response()->json(["data" => $staff]);
+        });
         Route::prefix('patient-procedures')->name('patient-procedures.')->group(function () {
             Route::get('{procedure}', [\App\Http\Controllers\PatientProcedureController::class, 'show'])->name('show');
             Route::put('{procedure}', [\App\Http\Controllers\PatientProcedureController::class, 'update'])->name('update');

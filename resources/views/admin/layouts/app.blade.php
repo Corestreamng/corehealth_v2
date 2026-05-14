@@ -1722,7 +1722,7 @@ rgba(255, 255, 255, 0.7) !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
             transition: all 0.2s ease;
             margin-bottom: 1rem;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .card-modern:hover {

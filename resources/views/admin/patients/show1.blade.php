@@ -3,6 +3,7 @@
 @section('page_name', 'Patients')
 @section('subpage_name', 'Show Patient')
 @section('content')
+<link rel="stylesheet" href="{{ asset("css/modern-forms.css") }}">
 @php
     $section = request()->get('section');
 @endphp
