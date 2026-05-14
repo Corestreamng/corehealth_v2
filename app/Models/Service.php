@@ -32,6 +32,7 @@ class Service extends Model implements Auditable
         'price_assign',
         'status',
         'result_template_v2',
+        'is_combo',
     ];
 
     protected $casts = [
@@ -71,10 +72,34 @@ class Service extends Model implements Auditable
     }
 
     /**
+     * Check if this service is a lab (investigation) service.
+     */
+    public function isLab(): bool
+    {
+        return (int) $this->category_id === (int) appsettings('investigation_category_id', 2);
+    }
+
+    /**
+     * Check if this service is an imaging service.
+     */
+    public function isImaging(): bool
+    {
+        return (int) $this->category_id === (int) appsettings('imaging_category_id', 6);
+    }
+
+    /**
      * Check if this service is a procedure.
      */
     public function isProcedure()
     {
         return $this->procedureDefinition()->exists();
+    }
+
+    /**
+     * Get the items that make up this combo service.
+     */
+    public function bundleItems()
+    {
+        return $this->hasMany(ServiceBundleItem::class, 'parent_service_id', 'id')->orderBy('sort_order');
     }
 }

@@ -16,6 +16,7 @@ use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\ReasonForEncounter;
+use App\Models\Service;
 use App\Models\Staff;
 use App\Models\User;
 use App\Services\QueueStatusService;
@@ -437,7 +438,7 @@ class EncounterController extends Controller
 
     public function investigationHistoryList($patient_id)
     {
-        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
+        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
             ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
         // dd($pc);
@@ -467,7 +468,12 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
-                if ($his->billed_by && $his->billed_by == $his->doctor_id) {
+                // Combo badge (our service combo system — distinct from procedure is_bundled)
+                if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item) {
+                    $str .= " <span class='badge bg-secondary ms-1'><i class='mdi mdi-link-variant'></i> Combo</span>";
+                }
+                // Self-Performed badge — only when doctor explicitly opted in
+                if ($his->self_perform_intent) {
                     $str .= " <span class='badge bg-info ms-1'><i class='mdi mdi-account-check'></i> Self-Performed</span>";
                 }
 
@@ -478,6 +484,34 @@ class EncounterController extends Controller
                 }
                 $str .= '</div>';
                 $str .= '</div>';
+
+                // Combo info block — View Details + Remove buttons (for combo items)
+                if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item && $his->productOrServiceRequest->parent_id) {
+                    $parentReq = $his->productOrServiceRequest->parent;
+                    if ($parentReq) {
+                        $bundleName    = optional($parentReq->service)->service_name ?? 'Combo';
+                        $bundlePayable = $parentReq->payable_amount ?? 0;
+                        $bundleClaims  = $parentReq->claims_amount ?? 0;
+                        $parentId      = $parentReq->id;
+                        $isPaid        = $parentReq->payment_id !== null;
+                        $isCreator     = $parentReq->staff_user_id == Auth::id();
+                        $childrenArr   = $parentReq->children->map(function ($c) {
+                            return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
+                        })->values()->toArray();
+                        $bundleDataJson  = htmlspecialchars(json_encode(['name' => $bundleName, 'payable_amount' => $bundlePayable, 'claims_amount' => $bundleClaims, 'items' => $childrenArr]), ENT_QUOTES);
+                        $removeItemsJson = htmlspecialchars(json_encode($childrenArr), ENT_QUOTES);
+                        $removeUrl       = url('/service-combo/remove-bundle');
+                        $bundleNameEsc   = htmlspecialchars($bundleName, ENT_QUOTES);
+                        $str .= "<div class='bundle-info-block mb-2 p-2 bg-light rounded'>";
+                        $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bundleNameEsc}</strong> &mdash; &#8358;" . number_format($bundlePayable, 2) . " patient / &#8358;" . number_format($bundleClaims, 2) . " claims</small>";
+                        $str .= "<div class='d-flex gap-1 flex-wrap'>";
+                        $str .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bundleDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
+                        if (!$isPaid && $isCreator) {
+                            $str .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$parentId}' data-bundle-name='{$bundleNameEsc}' data-items='{$removeItemsJson}' data-remove-url='{$removeUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                        }
+                        $str .= "</div></div>";
+                    }
+                }
 
                 // Timeline section
                 $str .= '<div class="mb-3"><small>';
@@ -584,7 +618,7 @@ class EncounterController extends Controller
 
                 // Enter Result button for doctors/nurses who requested the investigation
                 $canEnterResult = false;
-                if (empty($his->result) && ($canDeliver || $his->billed_by == Auth::id()) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
+                if (empty($his->result) && ($canDeliver || $his->self_perform_intent) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
                         || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))
@@ -607,6 +641,23 @@ class EncounterController extends Controller
                         || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))
                     ) {
                         $canPerformInvestigation = true;
+                    }
+                }
+                // "Perform Investigation" button — combo item (status == 2, is_bundle_item), not yet claimed
+                $canClaimComboPerform = false;
+                if (
+                    empty($his->result)
+                    && $his->status == 2
+                    && !$his->self_perform_intent
+                    && Auth::id() == $his->doctor_id
+                    && $his->productOrServiceRequest
+                    && $his->productOrServiceRequest->is_bundle_item
+                ) {
+                    $user = Auth::user();
+                    if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
+                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))
+                    ) {
+                        $canClaimComboPerform = true;
                     }
                 }
                 if ($canPerformInvestigation) {
@@ -636,6 +687,15 @@ class EncounterController extends Controller
                             data-coverage-mode='{$piCovMode}'
                             data-payable='{$piPayable}'
                             data-claims='{$piClaims}'>
+                            <i class='mdi mdi-flask-outline'></i> Perform Investigation
+                        </button>";
+                }
+                if ($canClaimComboPerform) {
+                    $comboServiceName = htmlspecialchars(optional($his->service)->service_name ?? 'N/A', ENT_QUOTES);
+                    $str .= "
+                        <button type='button' class='btn btn-warning btn-sm'
+                            onclick='claimComboPerform({$his->id}, &quot;lab&quot;, &quot;{$comboServiceName}&quot;, this)'
+                            title='This test was auto-billed as part of a combo. Click to confirm you will self-perform it.'>
                             <i class='mdi mdi-flask-outline'></i> Perform Investigation
                         </button>";
                 }
@@ -747,7 +807,7 @@ class EncounterController extends Controller
 
     public function imagingHistoryList($patient_id)
     {
-        $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
+        $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
             ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
         return DataTables::of($his)
@@ -774,7 +834,12 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
-                if ($his->billed_by && $his->billed_by == $his->doctor_id) {
+                // Combo badge (our service combo system — distinct from procedure is_bundled)
+                if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item) {
+                    $str .= " <span class='badge bg-secondary ms-1'><i class='mdi mdi-link-variant'></i> Combo</span>";
+                }
+                // Self-Performed badge — only when doctor explicitly opted in
+                if ($his->self_perform_intent) {
                     $str .= " <span class='badge bg-info ms-1'><i class='mdi mdi-account-check'></i> Self-Performed</span>";
                 }
 
@@ -785,6 +850,34 @@ class EncounterController extends Controller
                 }
                 $str .= '</div>';
                 $str .= '</div>';
+
+                // Combo info block — View Details + Remove buttons (for combo items)
+                if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item && $his->productOrServiceRequest->parent_id) {
+                    $parentReq = $his->productOrServiceRequest->parent;
+                    if ($parentReq) {
+                        $bundleName    = optional($parentReq->service)->service_name ?? 'Combo';
+                        $bundlePayable = $parentReq->payable_amount ?? 0;
+                        $bundleClaims  = $parentReq->claims_amount ?? 0;
+                        $parentId      = $parentReq->id;
+                        $isPaid        = $parentReq->payment_id !== null;
+                        $isCreator     = $parentReq->staff_user_id == Auth::id();
+                        $childrenArr   = $parentReq->children->map(function ($c) {
+                            return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
+                        })->values()->toArray();
+                        $bundleDataJson  = htmlspecialchars(json_encode(['name' => $bundleName, 'payable_amount' => $bundlePayable, 'claims_amount' => $bundleClaims, 'items' => $childrenArr]), ENT_QUOTES);
+                        $removeItemsJson = htmlspecialchars(json_encode($childrenArr), ENT_QUOTES);
+                        $removeUrl       = url('/service-combo/remove-bundle');
+                        $bundleNameEsc   = htmlspecialchars($bundleName, ENT_QUOTES);
+                        $str .= "<div class='bundle-info-block mb-2 p-2 bg-light rounded'>";
+                        $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bundleNameEsc}</strong> &mdash; &#8358;" . number_format($bundlePayable, 2) . " patient / &#8358;" . number_format($bundleClaims, 2) . " claims</small>";
+                        $str .= "<div class='d-flex gap-1 flex-wrap'>";
+                        $str .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bundleDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
+                        if (!$isPaid && $isCreator) {
+                            $str .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$parentId}' data-bundle-name='{$bundleNameEsc}' data-items='{$removeItemsJson}' data-remove-url='{$removeUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                        }
+                        $str .= "</div></div>";
+                    }
+                }
 
                 // Timeline section
                 $str .= '<div class="mb-3"><small>';
@@ -881,7 +974,7 @@ class EncounterController extends Controller
 
                 // Enter Result button for doctors/nurses who requested the imaging
                 $canEnterImagingResult = false;
-                if (empty($his->result) && ($canDeliver || $his->billed_by == Auth::id()) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
+                if (empty($his->result) && ($canDeliver || $his->self_perform_intent) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
                         || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))
@@ -904,6 +997,23 @@ class EncounterController extends Controller
                         || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))
                     ) {
                         $canPerformImagingInvestigation = true;
+                    }
+                }
+                // "Perform Investigation" button — combo item (status == 2, is_bundle_item), not yet claimed
+                $canClaimComboImagingPerform = false;
+                if (
+                    empty($his->result)
+                    && $his->status == 2
+                    && !$his->self_perform_intent
+                    && Auth::id() == $his->doctor_id
+                    && $his->productOrServiceRequest
+                    && $his->productOrServiceRequest->is_bundle_item
+                ) {
+                    $user = Auth::user();
+                    if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
+                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))
+                    ) {
+                        $canClaimComboImagingPerform = true;
                     }
                 }
                 if ($canPerformImagingInvestigation) {
@@ -933,6 +1043,15 @@ class EncounterController extends Controller
                             data-coverage-mode='{$piCovMode}'
                             data-payable='{$piPayable}'
                             data-claims='{$piClaims}'>
+                            <i class='mdi mdi-radiology-box-outline'></i> Perform Investigation
+                        </button>";
+                }
+                if ($canClaimComboImagingPerform) {
+                    $comboServiceName = htmlspecialchars(optional($his->service)->service_name ?? 'N/A', ENT_QUOTES);
+                    $str .= "
+                        <button type='button' class='btn btn-warning btn-sm'
+                            onclick='claimComboPerform({$his->id}, &quot;imaging&quot;, &quot;{$comboServiceName}&quot;, this)'
+                            title='This imaging was auto-billed as part of a combo. Click to confirm you will self-perform it.'>
                             <i class='mdi mdi-radiology-box-outline'></i> Perform Investigation
                         </button>";
                 }
@@ -1554,7 +1673,7 @@ class EncounterController extends Controller
     public function prescHistoryList($patient_id)
     {
         // Show ALL prescription requests (not just dispensed) for complete history
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'dispenser'])
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser'])
             ->where('patient_id', $patient_id)
             ->orderBy('created_at', 'DESC')
             ->get();
@@ -1715,6 +1834,36 @@ class EncounterController extends Controller
                     }
                 }
 
+                // Combo info block (if this prescription is a combo child)
+                $bundleHtml = '';
+                $posr = $item->productOrServiceRequest;
+                if ($posr && $posr->is_bundle_item && $posr->parent_id) {
+                    $parentReq = $posr->parent;
+                    if ($parentReq) {
+                        $bName    = optional($parentReq->service)->service_name ?? 'Combo';
+                        $bPay     = $parentReq->payable_amount ?? 0;
+                        $bClaims  = $parentReq->claims_amount ?? 0;
+                        $bId      = $parentReq->id;
+                        $bPaid    = $parentReq->payment_id !== null;
+                        $bCreator = $parentReq->staff_user_id == Auth::id();
+                        $bChildren = $parentReq->children->map(function ($c) {
+                            return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
+                        })->values()->toArray();
+                        $bDataJson = htmlspecialchars(json_encode(['name' => $bName, 'payable_amount' => $bPay, 'claims_amount' => $bClaims, 'items' => $bChildren]), ENT_QUOTES);
+                        $bItemsJson = htmlspecialchars(json_encode($bChildren), ENT_QUOTES);
+                        $bRemoveUrl = url('/service-combo/remove-bundle');
+                        $bNameEsc   = htmlspecialchars($bName, ENT_QUOTES);
+                        $bundleHtml .= "<div class='bundle-info-block mt-1 mb-1 p-2 bg-light rounded'>";
+                        $bundleHtml .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bNameEsc}</strong> &mdash; &#8358;" . number_format($bPay, 2) . " patient / &#8358;" . number_format($bClaims, 2) . " claims</small>";
+                        $bundleHtml .= "<div class='d-flex gap-1 flex-wrap'>";
+                        $bundleHtml .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
+                        if (!$bPaid && $bCreator) {
+                            $bundleHtml .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$bId}' data-bundle-name='{$bNameEsc}' data-items='{$bItemsJson}' data-remove-url='{$bRemoveUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                        }
+                        $bundleHtml .= "</div></div>";
+                    }
+                }
+
                 return "
                     <div class='p-2 border-bottom'>
                         <div class='d-flex justify-content-between'>
@@ -1728,6 +1877,7 @@ class EncounterController extends Controller
                             <span class='ms-2'><i class='mdi mdi-cash'></i> ₦" . number_format($price, 2) . "</span>
                         </div>
                         {$statusInfo}
+                        {$bundleHtml}
                         <div class='mt-1'>
                             {$deleteBtn}
                             <button type='button' class='btn btn-outline-primary btn-sm re-order-btn'
@@ -3961,6 +4111,112 @@ class EncounterController extends Controller
      * Add a single lab request for the encounter.
      * POST encounters/{encounter}/add-lab
      */
+    /**
+     * Apply a service combo bundle to the encounter.
+     */
+    public function applyCombo(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate([
+                "service_id" => "required|exists:services,id",
+            ]);
+
+            $service = Service::findOrFail($request->service_id);
+            if (!$service->is_combo) {
+                return response()->json(["success" => false, "message" => "Selected service is not a combo."]);
+            }
+
+            $result = $this->applyServiceCombo($service, $encounter->patient_id, $encounter->id);
+
+            return response()->json([
+                "success" => true,
+                "message" => "Combo applied successfully",
+                "data" => $result
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error applying combo: " . $e->getMessage());
+            return response()->json([
+                "success" => false,
+                "message" => "Error applying combo: " . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function removeBundle(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate([
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id'
+            ]);
+
+            $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
+
+            // Verify this combo belongs to this encounter and is a combo item
+            if ($parentRequest->encounter_id !== $encounter->id || !$parentRequest->is_bundle_item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid combo or permission denied'
+                ], 403);
+            }
+
+            $result = $this->removeServiceCombo($parentRequest->id);
+
+            if ($result['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message']
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            Log::error("Error removing combo: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error removing combo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Generic remove-bundle endpoint — no encounter context required.
+     * Validates that the current user created the bundle before removing.
+     */
+    public function removeBundleGeneric(Request $request)
+    {
+        try {
+            $request->validate([
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id'
+            ]);
+
+            $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
+
+            // Only the staff member who created the combo may remove it
+            if ($parentRequest->staff_user_id !== Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permission denied: only the person who applied this combo may remove it.'
+                ], 403);
+            }
+
+            $result = $this->removeServiceCombo($parentRequest->id);
+
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message']
+            ], $result['success'] ? 200 : 400);
+        } catch (\Exception $e) {
+            Log::error("Error removing combo (generic): " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error removing combo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function addSingleLabRequest(Request $request, Encounter $encounter)
     {
         try {

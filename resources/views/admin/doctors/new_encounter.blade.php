@@ -1655,32 +1655,47 @@
 
                         for (var i = 0; i < data.length; i++) {
                             const item = data[i] || {};
+                            const isCombo = item.is_combo || false;
+                            const bundleItems = item.bundle_items || [];
+                            if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
                             const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
                             const name = item.product_name || 'Unknown';
                             const code = item.product_code || '';
                             const qty = item.stock && item.stock.current_quantity !== undefined ? item.stock.current_quantity : 0;
-                            const price = item.price && item.price.initial_sale_price !== undefined ? item.price.initial_sale_price : 0;
+                            const price = isCombo
+                                ? (item.price && item.price.sale_price !== undefined ? item.price.sale_price : (item.payable_amount || 0))
+                                : (item.price && item.price.initial_sale_price !== undefined ? item.price.initial_sale_price : 0);
                             const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
                             const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                             const mode = item.coverage_mode || null;
-                            const displayName = `${name}[${code}](${qty} avail.)`;
 
-                            // Phase 2c (Plan §4.4): Duplicate filtering for medications
-                            const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
-                            const onClick = alreadyAdded ? '' : `setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
+                            let onClick = '';
+                            let alreadyAdded = false;
+
+                            if (isCombo) {
+                                alreadyAdded = false; // combos are always available
+                                onClick = `applyComboEncounter(${item.id}, '{{ route("encounters.applyCombo", $encounter->id) }}')`;
+                            } else {
+                                const displayName = `${name}[${code}](${qty} avail.)`;
+                                alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
+                                onClick = alreadyAdded ? '' : `setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
+                            }
+
                             var mk = ClinicalOrdersKit.renderSearchResultItem({
                                 id: item.id,
                                 category: category,
                                 name: name,
                                 code: code,
-                                qty: qty,
+                                qty: isCombo ? null : qty,
                                 price: price,
                                 payable: payable,
                                 claims: claims,
                                 mode: mode,
                                 alreadyAdded: alreadyAdded,
                                 alreadyLabel: 'Already Added',
-                                onClick: onClick
+                                onClick: onClick,
+                                isCombo: isCombo,
+                                bundleItems: bundleItems
                             });
                             $('#consult_presc_res').append(mk);
                             $('#consult_presc_res').show();
@@ -1780,6 +1795,59 @@
             $('#consult_imaging_res').html('');
         }
 
+        /**
+         * Apply a service combo bundle to the encounter.
+         * Shows a confirmation modal first so the user understands the bundle contents.
+         */
+        function applyComboEncounter(comboId, route) {
+            var comboData = (window.comboDataMap || {})[comboId] || {};
+            var name = comboData.service_name || comboData.product_name || 'Combo';
+            var bundleItems = comboData.bundle_items || [];
+            var price   = parseFloat(comboData.base_price  || 0);
+            var payable = parseFloat(comboData.payable_amount != null ? comboData.payable_amount : price);
+            var claims  = parseFloat(comboData.claims_amount  || 0);
+            var mode    = comboData.coverage_mode || null;
+
+            ComboConfirmModal.show({
+                name        : name,
+                bundleItems : bundleItems,
+                price       : price,
+                payable     : payable,
+                claims      : claims,
+                mode        : mode,
+                onConfirm   : function() {
+                    $.ajax({
+                        type: 'POST',
+                        url: route,
+                        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                        data: { service_id: comboId },
+                        success: function(response) {
+                            if (response.success) {
+                                toastr.success('Combo applied — all items added.', '', { timeOut: 5000 });
+                                if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                                    $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                                }
+                                if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                                    $('#imaging_history_list').DataTable().ajax.reload(null, false);
+                                }
+                                if (typeof refreshPrescHistory === 'function') refreshPrescHistory();
+                                if (typeof refreshProceduresList === 'function') refreshProceduresList();
+                            } else {
+                                toastr.error(response.message || 'Failed to apply combo');
+                            }
+                        },
+                        error: function(xhr) {
+                            const msg = xhr.responseJSON?.message || 'Network error occurred';
+                            toastr.error(msg, '', { timeOut: 5000 });
+                        }
+                    });
+                    $('#consult_invest_res').html('');
+                    $('#consult_imaging_res').html('');
+                    $('#consult_presc_res').html('');
+                }
+            });
+        }
+
         function searchServices(q) {
             if (q != "") {
                 searchRequest = $.ajax({
@@ -1791,35 +1859,51 @@
                         patient_id: '{{ $patient->id }}'
                     },
                     success: function(data) {
-                        // Clear existing options from the select field
                         $('#consult_invest_res').html('');
                         console.log(data);
-                        // data = JSON.parse(data);
 
                         for (var i = 0; i < data.length; i++) {
                             const item = data[i] || {};
-                            const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+                            const category = item.category || 'N/A';
                             const name = item.service_name || 'Unknown';
                             const code = item.service_code || '';
-                            const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
-                            const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
-                            const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+                            const basePrice = item.base_price !== undefined ? item.base_price : 0;
+                            const payable = item.payable_amount !== undefined ? item.payable_amount : basePrice;
+                            const claims = item.claims_amount !== undefined ? item.claims_amount : 0;
                             const mode = item.coverage_mode || null;
+                            const isCombo = item.is_combo || false;
+                            const bundleItems = item.bundle_items || [];
+                            if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+
                             const displayName = `${name}[${code}]`;
                             const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('labs', parseInt(item.id));
-                            const onClick = alreadyAdded ? '' : `setSearchValSer('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
+
+                            let onClick = '';
+                            if (!alreadyAdded) {
+                                if (isCombo) {
+                                    // For combos, show confirmation modal first
+                                    onClick = `applyComboEncounter(${item.id}, '{{ route("encounters.applyCombo", $encounter->id) }}')`;
+                                } else {
+                                    // For direct services, use existing handler
+                                    onClick = `setSearchValSer('${displayName}', '${item.id}', '${basePrice}', '${mode}', '${claims}', '${payable}')`;
+                                }
+                            }
+
+                            // Render result with combo detection
                             var mk = ClinicalOrdersKit.renderSearchResultItem({
                                 id: item.id,
                                 category: category,
                                 name: name,
                                 code: code,
-                                price: price,
+                                price: basePrice,
                                 payable: payable,
                                 claims: claims,
                                 mode: mode,
                                 alreadyAdded: alreadyAdded,
                                 alreadyLabel: 'Already Added',
-                                onClick: onClick
+                                onClick: onClick,
+                                isCombo: isCombo,
+                                bundleItems: bundleItems
                             });
                             $('#consult_invest_res').append(mk);
                             $('#consult_invest_res').show();
@@ -1841,39 +1925,52 @@
                     dataType: 'json',
                     data: {
                         term: q,
-                        category_id: 6, // Imaging category ID
+                        category_id: {{ appsettings('imaging_category_id', 6) }},
                         patient_id: '{{ $patient->id }}'
                     },
                     success: function(data) {
-                        // Clear existing options from the select field
                         $('#consult_imaging_res').html('');
                         console.log(data);
-                        // data = JSON.parse(data);
 
                         for (var i = 0; i < data.length; i++) {
                             const item = data[i] || {};
-                            const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+                            const category = item.category || 'N/A';
                             const name = item.service_name || 'Unknown';
                             const code = item.service_code || '';
-                            const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
-                            const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
-                            const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+                            const basePrice = item.base_price !== undefined ? item.base_price : 0;
+                            const payable = item.payable_amount !== undefined ? item.payable_amount : basePrice;
+                            const claims = item.claims_amount !== undefined ? item.claims_amount : 0;
                             const mode = item.coverage_mode || null;
+                            const isCombo = item.is_combo || false;
+                            const bundleItems = item.bundle_items || [];
+                            if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+
                             const displayName = `${name}[${code}]`;
                             const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('imaging', parseInt(item.id));
-                            const onClick = alreadyAdded ? '' : `setSearchValImaging('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
+
+                            let onClick = '';
+                            if (!alreadyAdded) {
+                                if (isCombo) {
+                                    onClick = `applyComboEncounter(${item.id}, '{{ route("encounters.applyCombo", $encounter->id) }}')`;
+                                } else {
+                                    onClick = `setSearchValImaging('${displayName}', '${item.id}', '${basePrice}', '${mode}', '${claims}', '${payable}')`;
+                                }
+                            }
+
                             var mk = ClinicalOrdersKit.renderSearchResultItem({
                                 id: item.id,
                                 category: category,
                                 name: name,
                                 code: code,
-                                price: price,
+                                price: basePrice,
                                 payable: payable,
                                 claims: claims,
                                 mode: mode,
                                 alreadyAdded: alreadyAdded,
                                 alreadyLabel: 'Already Added',
-                                onClick: onClick
+                                onClick: onClick,
+                                isCombo: isCombo,
+                                bundleItems: bundleItems
                             });
                             $('#consult_imaging_res').append(mk);
                             $('#consult_imaging_res').show();
@@ -2104,6 +2201,7 @@
     @include('admin.partials.invest_res_view_imaging_modal')
     @include('admin.partials.invest_res_view_imaging_js')
     @include('admin.partials.perform_investigation_modal')
+    @include('admin.partials.combo_confirm_modal')
 
     <script>
         // setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
@@ -5290,5 +5388,43 @@
     @include('admin.doctors.partials.modals')
     @include('admin.partials.treatment-plan-modal')
     @include('admin.partials.re-prescribe-encounter-modal')
+    @include('admin.partials.bundle_view_modal')
+    @include('admin.partials.bundle_remove_modal')
     @include('admin.doctors.partials.scripts')
+    <script>
+    function showBundleRemove(btn) {
+        var parentId = btn.dataset.parentId;
+        var bundleName = btn.dataset.bundleName;
+        var items = JSON.parse(btn.dataset.items || '[]');
+        var removeUrl = btn.dataset.removeUrl;
+        BundleRemoveModal.show({
+            bundleId: parentId,
+            bundleName: bundleName,
+            items: items,
+            onConfirm: function(callback) {
+                $.ajax({
+                    url: removeUrl,
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    data: JSON.stringify({ parent_request_id: parentId }),
+                    success: function(r) {
+                        if (r.success) {
+                            toastr.success(r.message || 'Combo removed');
+                            callback(false);
+                            if ($.fn.DataTable.isDataTable('#investigation_history_list')) { $('#investigation_history_list').DataTable().ajax.reload(null, false); }
+                            if ($.fn.DataTable.isDataTable('#presc_history_list')) { $('#presc_history_list').DataTable().ajax.reload(null, false); }
+                            if ($.fn.DataTable.isDataTable('#imaging_history_list')) { $('#imaging_history_list').DataTable().ajax.reload(null, false); }
+                        } else {
+                            toastr.error(r.message || 'Failed to remove combo');
+                            callback(true);
+                        }
+                    },
+                    error: function() { toastr.error('Error removing combo'); callback(true); }
+                });
+            }
+        });
+    }
+    </script>
 @endsection

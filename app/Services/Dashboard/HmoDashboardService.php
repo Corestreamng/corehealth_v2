@@ -18,11 +18,13 @@ class HmoDashboardService
             'pending_claims' => DB::table('product_or_service_requests as posr')
                 ->join('patients as p', 'posr.user_id', '=', 'p.id')
                 ->whereNotNull('p.hmo_id')
+                ->where('posr.is_bundle_item', false)
                 ->whereNull('posr.validation_status')
                 ->count(),
             'approved_claims' => DB::table('product_or_service_requests as posr')
                 ->join('patients as p', 'posr.user_id', '=', 'p.id')
                 ->whereNotNull('p.hmo_id')
+                ->where('posr.is_bundle_item', false)
                 ->where('posr.validation_status', 'approved')
                 ->whereMonth('posr.validated_at', now()->month)
                 ->count(),
@@ -39,12 +41,14 @@ class HmoDashboardService
             $pending = DB::table('product_or_service_requests as posr')
                 ->join('patients as p', 'posr.user_id', '=', 'p.id')
                 ->whereNotNull('p.hmo_id')
+                ->where('posr.is_bundle_item', false)
                 ->whereNull('posr.validation_status')
                 ->count();
 
             $approved = DB::table('product_or_service_requests as posr')
                 ->join('patients as p', 'posr.user_id', '=', 'p.id')
                 ->whereNotNull('p.hmo_id')
+                ->where('posr.is_bundle_item', false)
                 ->where('posr.validation_status', 'approved')
                 ->whereMonth('posr.validated_at', now()->month)
                 ->count();
@@ -52,6 +56,7 @@ class HmoDashboardService
             $rejected = DB::table('product_or_service_requests as posr')
                 ->join('patients as p', 'posr.user_id', '=', 'p.id')
                 ->whereNotNull('p.hmo_id')
+                ->where('posr.is_bundle_item', false)
                 ->where('posr.validation_status', 'rejected')
                 ->whereMonth('posr.validated_at', now()->month)
                 ->count();
@@ -100,6 +105,7 @@ class HmoDashboardService
         return DB::table('product_or_service_requests as posr')
             ->join('patients as p', 'posr.user_id', '=', 'p.id')
             ->whereNotNull('p.hmo_id')
+            ->where('posr.is_bundle_item', false)
             ->whereBetween(DB::raw('DATE(posr.created_at)'), [$start, $end])
             ->selectRaw('DATE(posr.created_at) as date, SUM(posr.claims_amount) as total')
             ->groupByRaw('DATE(posr.created_at)')
@@ -118,6 +124,7 @@ class HmoDashboardService
             ->join('users as u', 'p.user_id', '=', 'u.id')
             ->join('hmos as h', 'p.hmo_id', '=', 'h.id')
             ->whereNotNull('p.hmo_id')
+            ->where('posr.is_bundle_item', false)
             ->select(
                 'posr.id',
                 'p.id as patient_id',
@@ -153,6 +160,7 @@ class HmoDashboardService
         $totalClaims = DB::table('product_or_service_requests as posr')
             ->join('patients as p', 'posr.user_id', '=', 'p.id')
             ->whereNotNull('p.hmo_id')
+            ->where('posr.is_bundle_item', false)
             ->whereNotNull('posr.validation_status')
             ->whereMonth('posr.validated_at', now()->month)
             ->count();
@@ -160,6 +168,7 @@ class HmoDashboardService
         $approvedClaims = DB::table('product_or_service_requests as posr')
             ->join('patients as p', 'posr.user_id', '=', 'p.id')
             ->whereNotNull('p.hmo_id')
+            ->where('posr.is_bundle_item', false)
             ->where('posr.validation_status', 'approved')
             ->whereMonth('posr.validated_at', now()->month)
             ->count();
@@ -178,6 +187,7 @@ class HmoDashboardService
         $pendingSettlement = DB::table('product_or_service_requests as posr')
             ->join('patients as p', 'posr.user_id', '=', 'p.id')
             ->whereNotNull('p.hmo_id')
+            ->where('posr.is_bundle_item', false)
             ->where('posr.validation_status', 'approved')
             ->whereNull('posr.payment_id')
             ->sum('posr.claims_amount');

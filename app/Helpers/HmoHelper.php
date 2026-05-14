@@ -173,6 +173,21 @@ class HmoHelper
      */
     public static function canDeliverService($request)
     {
+        // 1. If this is a bundle item, check the parent's status (Service Combo System)
+        if ($request->is_bundle_item && $request->parent_id) {
+            $parent = $request->parent;
+            if ($parent) {
+                $parentStatus = self::canDeliverService($parent);
+                if (!$parentStatus['can_deliver']) {
+                    return [
+                        'can_deliver' => false,
+                        'reason' => 'Bundle Payment/Approval Required',
+                        'hint' => 'This item is part of a bundle. ' . $parentStatus['hint']
+                    ];
+                }
+            }
+        }
+
         // Check if payable_amount exists and is greater than 0 but not paid
         if ($request->payable_amount !== null && $request->payable_amount > 0) {
             if (!$request->payment_id) {
@@ -233,8 +248,33 @@ class HmoHelper
      */
     public static function isBundledItem($itemType, $itemId)
     {
-        $procedureItem = null;
+        // 1. Check for Service Combo (New System)
+        $posr = null;
+        switch ($itemType) {
+            case 'lab':
+                $posr = \App\Models\LabServiceRequest::find($itemId)?->productOrServiceRequest;
+                break;
+            case 'imaging':
+                $posr = \App\Models\ImagingServiceRequest::find($itemId)?->productOrServiceRequest;
+                break;
+            case 'product':
+                $posr = \App\Models\ProductRequest::find($itemId)?->productOrServiceRequest;
+                break;
+        }
 
+        if ($posr && $posr->is_bundle_item && $posr->parent_id) {
+            $parent = $posr->parent;
+            return [
+                'is_bundled' => true,
+                'procedure_id' => $parent->id,
+                'procedure_name' => optional($parent->service)->service_name ?? 'Service Bundle',
+                'procedure_item' => $parent, // ProductOrServiceRequest model
+                'bundle_type' => 'service_combo'
+            ];
+        }
+
+        // 2. Fallback to Procedure Item (Legacy/Surgical System)
+        $procedureItem = null;
         switch ($itemType) {
             case 'lab':
                 $procedureItem = \App\Models\ProcedureItem::where('lab_service_request_id', $itemId)->first();
@@ -258,7 +298,8 @@ class HmoHelper
             'is_bundled' => $procedureItem->is_bundled,
             'procedure_id' => $procedureItem->procedure_id,
             'procedure_name' => $procedureName,
-            'procedure_item' => $procedureItem,
+            'procedure_item' => $procedureItem, // ProcedureItem model
+            'bundle_type' => 'legacy_procedure'
         ];
     }
 
@@ -269,8 +310,15 @@ class HmoHelper
      * @param \App\Models\ProcedureItem $procedureItem
      * @return array ['can_deliver' => bool, 'reason' => string, 'hint' => string]
      */
-    public static function canDeliverBundledItem($procedureItem)
+    public static function canDeliverBundledItem($item)
     {
+        // 1. If passed a ProductOrServiceRequest (Service Combo System), use canDeliverService
+        if ($item instanceof \App\Models\ProductOrServiceRequest) {
+            return self::canDeliverService($item);
+        }
+
+        // 2. Logic for ProcedureItem (Legacy/Surgical System)
+        $procedureItem = $item;
         // If not bundled, use normal delivery check
         if (!$procedureItem->is_bundled) {
             // Non-bundled items have their own billing entry

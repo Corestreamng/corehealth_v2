@@ -45,6 +45,8 @@ protected $fillable = [
         'reception_validated_by',
         'reception_validated_at',
         'reception_validation_notes',
+        'parent_id',
+        'is_bundle_item',
     ];
 
     public function receptionValidator()
@@ -150,5 +152,21 @@ protected $fillable = [
     public function hmo()
     {
         return $this->belongsTo(Hmo::class, 'hmo_id');
+    }
+
+    /**
+     * Get the parent combo request.
+     */
+    public function parent()
+    {
+        return $this->belongsTo(ProductOrServiceRequest::class, 'parent_id');
+    }
+
+    /**
+     * Get the child items in this combo.
+     */
+    public function children()
+    {
+        return $this->hasMany(ProductOrServiceRequest::class, 'parent_id');
     }
 }
