@@ -142,6 +142,75 @@
                                     </div>
                                 </div>
 
+                                {{-- Service Combo / Bundle (conditional) --}}
+                                <div class="card-modern mt-3">
+                                    <div class="card-header-modern">
+                                        <h5 class="card-title-modern">
+                                            <i class="mdi mdi-package-variant-closed text-primary"></i> Combo / Bundle Settings
+                                        </h5>
+                                    </div>
+                                    <div class="card-body p-4">
+                                        <div class="custom-control custom-switch mb-3">
+                                            <input type="checkbox" class="custom-control-input" id="is_combo" name="is_combo" value="1" {{ old('is_combo', $product->is_combo) ? 'checked' : '' }}>
+                                            <label class="custom-control-label font-weight-bold" for="is_combo">Is this a Combo Bundle?</label>
+                                            <p class="small text-muted mb-0">Check this if this service represents a bundle of other services or products.</p>
+                                        </div>
+
+                                        <div id="bundle-items-section" style="display: none;">
+                                            <hr>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 class="mb-0">Bundle Constituent Items</h6>
+                                                <button type="button" class="btn btn-sm btn-primary" onclick="addBundleItemRow()">
+                                                    <i class="mdi mdi-plus"></i> Add Item
+                                                </button>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered" id="bundle-items-table">
+                                                    <thead class="bg-light">
+                                                        <tr>
+                                                            <th style="width: 130px;">Type</th>
+                                                            <th>Item (Service/Product)</th>
+                                                            <th style="width: 100px;">Qty</th>
+                                                            <th>Notes/Dose</th>
+                                                            <th style="width: 40px;"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="bundle-items-body">
+                                                        @foreach($product->bundleItems as $idx => $item)
+                                                            <tr id="row-{{ $idx }}">
+                                                                <td>
+                                                                    <select name="bundle_items[{{ $idx }}][item_type]" class="form-control form-control-sm w-100" onchange="resetItemSelect({{ $idx }})">
+                                                                        <option value="service" {{ $item->item_type == 'service' ? 'selected' : '' }}>Service</option>
+                                                                        <option value="product" {{ $item->item_type == 'product' ? 'selected' : '' }}>Product</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <select name="bundle_items[{{ $idx }}][item_id]" class="form-control form-control-sm item-select" data-row="{{ $idx }}" required style="width: 100%;">
+                                                                        <option value="{{ $item->item_id }}" selected>
+                                                                            {{ $item->item_type == 'service' ? optional($item->service)->service_name : optional($item->product)->product_name }}
+                                                                        </option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" name="bundle_items[{{ $idx }}][qty]" class="form-control form-control-sm w-100" value="{{ $item->qty }}" min="0.01" step="0.01" required placeholder="Qty">
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" name="bundle_items[{{ $idx }}][note]" class="form-control form-control-sm w-100" value="{{ $item->note ?? $item->dose }}" placeholder="Note / Dose instructions">
+                                                                </td>
+                                                                <td class="text-center align-middle">
+                                                                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="$('#row-{{ $idx }}').remove()" title="Remove item">
+                                                                        <i class="mdi mdi-delete-outline" style="font-size: 1.2rem;"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {{-- Submit --}}
                                 <div class="d-flex justify-content-between mt-3">
                                     <a href="{{ route('services.index', ['category' => $selectedCategory ?? $product->category_id]) }}" class="btn btn-outline-secondary">
@@ -189,8 +258,98 @@
             }
         }
 
+        $('#is_combo').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#bundle-items-section').slideDown();
+                if ($('#bundle-items-body tr').length === 0) {
+                    addBundleItemRow();
+                }
+            } else {
+                $('#bundle-items-section').slideUp();
+            }
+        });
+
+        let rowIdx = {{ count($product->bundleItems) }};
+        window.addBundleItemRow = function() {
+            const html = `
+                <tr id="row-${rowIdx}">
+                    <td>
+                        <select name="bundle_items[${rowIdx}][item_type]" class="form-control form-control-sm w-100" onchange="resetItemSelect(${rowIdx})">
+                            <option value="service">Service</option>
+                            <option value="product">Product</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="bundle_items[${rowIdx}][item_id]" class="form-control form-control-sm item-select" data-row="${rowIdx}" required style="width: 100%;">
+                            <option value="">Search for item...</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" name="bundle_items[${rowIdx}][qty]" class="form-control form-control-sm w-100" value="1" min="0.01" step="0.01" required placeholder="Qty">
+                    </td>
+                    <td>
+                        <input type="text" name="bundle_items[${rowIdx}][note]" class="form-control form-control-sm w-100" placeholder="Note / Dose instructions">
+                    </td>
+                    <td class="text-center align-middle">
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="$('#row-${rowIdx}').remove()" title="Remove item">
+                            <i class="mdi mdi-delete-outline" style="font-size: 1.2rem;"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            $('#bundle-items-body').append(html);
+            initSelect2(rowIdx);
+            rowIdx++;
+        };
+
+        function initSelect2(idx) {
+            $(`#row-${idx} .item-select`).select2({
+                ajax: {
+                    url: function() {
+                        const type = $(`#row-${idx} select[name*="item_type"]`).val();
+                        return type === 'service' ? "{{ route('live-search-services') }}" : "{{ route('live-search-products') }}";
+                    },
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return { term: params.term };
+                    },
+                    processResults: function(data) {
+                        const items = Array.isArray(data) ? data : (data.data || []);
+                        return {
+                            results: items.map(item => ({
+                                id: item.id,
+                                text: item.service_name || item.product_name
+                            }))
+                        };
+                    },
+                    cache: true
+                },
+                placeholder: 'Search for item...',
+                minimumInputLength: 2
+            });
+        }
+
+        window.resetItemSelect = function(idx) {
+            $(`#row-${idx} .item-select`).val(null).trigger('change');
+        };
+
+        // Initialize existing select2s
+        $('.item-select').each(function() {
+            const idx = $(this).data('row');
+            initSelect2(idx);
+        });
+
         // Initial check
         toggleProcedureFields();
+        if ($('#is_combo').is(':checked')) $('#bundle-items-section').show();
     });
 </script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<style>
+    .select2-container--default .select2-selection--single { height: 31px; border: 1px solid #ced4da; border-radius: 4px; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 31px; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 30px; }
+</style>
 @endsection

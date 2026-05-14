@@ -348,3 +348,4 @@ Route::prefix('mobile/patient/chat')->middleware('auth:sanctum')->group(function
     Route::get('unread-count',               [MobileChatController::class, 'unreadCount']);
     Route::delete('messages/{messageId}',    [MobileChatController::class, 'deleteMessage']);
 });
+

@@ -13,7 +13,7 @@
  *
  * Each view passes a config object to specify its prefix, selectors, and endpoints.
  */
-window.ClinicalOrdersKit = (function ($) {
+window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (function ($) {
     'use strict';
 
     /* ═══════════════════════════════════════════
@@ -107,6 +107,8 @@ window.ClinicalOrdersKit = (function ($) {
         var alreadyAdded = !!cfg.alreadyAdded;
         var alreadyLabel = cfg.alreadyLabel || 'Already Added';
         var onClick = cfg.onClick || '';
+        var isCombo = !!cfg.isCombo;
+        var bundleItems = cfg.bundleItems || [];
 
         var showCoverage = !!mode || claims > 0 || payable !== price;
         var modeClass = modeLc ? ' mode-' + modeLc.replace(/[^a-z0-9_-]/g, '') : '';
@@ -117,9 +119,27 @@ window.ClinicalOrdersKit = (function ($) {
             ? '<span class="co-search-stock text-muted">' + qty + ' avail.</span>'
             : '';
         var clickAttr = (!alreadyAdded && onClick) ? ' onclick="' + onClick + '"' : '';
+        
+        // Add combo badge if this is a combo
+        var comboBadge = isCombo ? '<span class="badge bg-info ms-2" style="font-size:0.7rem;font-weight:600;">[COMBO]</span>' : '';
+
+        // Build bundle items HTML if this is a combo
+        var bundleItemsHtml = '';
+        if (isCombo && bundleItems && bundleItems.length > 0) {
+            bundleItemsHtml = '<div class="co-combo-items" style="margin-top:8px;padding:8px;background:#f8f9fa;border-left:3px solid #0d6efd;border-radius:3px;">' +
+                '<small style="color:#666;font-weight:600;">Includes:</small>' +
+                '<ul style="margin:6px 0 0 16px;list-style:disc;font-size:0.8rem;color:#555;">';
+            for (var i = 0; i < bundleItems.length; i++) {
+                var item = bundleItems[i];
+                var itemName = item.name || 'Unknown';
+                var itemQty = item.qty && item.qty !== 1 ? ' (' + item.qty + ')' : '';
+                bundleItemsHtml += '<li>' + itemName + itemQty + '</li>';
+            }
+            bundleItemsHtml += '</ul></div>';
+        }
 
         return '<li class="' + itemClass + '" data-item-id="' + id + '"' + clickAttr + '>' +
-            '<div class="co-search-title">' + lead + '<b>' + display + '</b></div>' +
+            '<div class="co-search-title">' + lead + '<b>' + display + '</b>' + comboBadge + '</div>' +
             '<div class="co-search-meta">' +
                 '<span class="co-search-price">' + (showCoverage ? '<s style="color:#999;font-weight:400">NGN ' + formatAmount(price) + '</s>' : 'NGN ' + formatAmount(price)) + '</span>' +
                 stockHtml +
@@ -130,6 +150,7 @@ window.ClinicalOrdersKit = (function ($) {
                 '<span class="co-search-claim">Claim: NGN ' + formatAmount(claims) + '</span>' +
                 (mode ? '<span class="co-search-mode' + modeClass + '">' + mode.toUpperCase() + '</span>' : '') +
             '</div>' : '') +
+            bundleItemsHtml +
             (alreadyAdded ? '<span class="badge bg-warning ms-2">' + alreadyLabel + '</span>' : '') +
         '</li>';
     }
@@ -1688,4 +1709,4 @@ window.ClinicalOrdersKit = (function ($) {
         showSearchEmpty: showSearchEmpty
     };
 
-})(jQuery);
+})(jQuery));

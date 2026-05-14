@@ -168,5 +168,53 @@
             .prop('disabled', false)
             .html('<i class="mdi mdi-check me-1"></i> Confirm &amp; Enter Result');
     });
+
+    // ── Claim self-perform for combo/bundle items ─────────────────────────
+    // Combo items are auto-billed as part of a service bundle, so the doctor
+    // must explicitly claim intent to self-perform before entering a result.
+    window.claimComboPerform = function (requestId, type, serviceName, btn) {
+        if (!confirm('Confirm you are self-performing "' + serviceName + '"?\n\nThis item was auto-billed as part of a service bundle.')) {
+            return;
+        }
+
+        var $btn = $(btn);
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> Claiming...');
+
+        var claimUrl = type === 'lab'
+            ? '{{ route("lab.claimSelfPerform") }}'
+            : '{{ route("imaging.claimSelfPerform") }}';
+
+        $.ajax({
+            url:    claimUrl,
+            method: 'POST',
+            data: {
+                _token:     $('meta[name="csrf-token"]').attr('content'),
+                request_id: requestId
+            },
+            success: function (response) {
+                if (!response.success) {
+                    toastr.error(response.message || 'Failed to claim perform intent.');
+                    $btn.prop('disabled', false).html('<i class="mdi mdi-flask-outline"></i> Perform Investigation');
+                    return;
+                }
+                // Immediately open result entry
+                if (type === 'lab') {
+                    if (typeof enterLabResult === 'function') enterLabResult(requestId);
+                } else {
+                    if (typeof enterImagingResult === 'function') enterImagingResult(requestId);
+                }
+                // Refresh the investigation history datatable
+                if (typeof labHistoryTable !== 'undefined' && labHistoryTable) labHistoryTable.ajax.reload(null, false);
+                if (typeof imagingHistoryTable !== 'undefined' && imagingHistoryTable) imagingHistoryTable.ajax.reload(null, false);
+            },
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                    ? xhr.responseJSON.message
+                    : 'Error claiming perform intent. Please try again.';
+                toastr.error(msg);
+                $btn.prop('disabled', false).html('<i class="mdi mdi-flask-outline"></i> Perform Investigation');
+            }
+        });
+    };
 })();
 </script>

@@ -16,6 +16,7 @@ protected $fillable = [
         'service_request_id',
         'billed_by',
         'billed_date',
+        'self_perform_intent',
         'service_id',
         'encounter_id',
         'patient_id',

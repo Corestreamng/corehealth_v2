@@ -76,7 +76,9 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::delete('/enrollment/{id}/procedures/{procedure}', [MaternityWorkbenchController::class, 'maternityRemoveSingleProcedure'])->name('enrollment.removeProcedure');
         Route::put('/enrollment/{id}/labs/{lab}/note', [MaternityWorkbenchController::class, 'maternityUpdateLabNote'])->name('enrollment.updateLabNote');
         Route::put('/enrollment/{id}/imaging/{imaging}/note', [MaternityWorkbenchController::class, 'maternityUpdateImagingNote'])->name('enrollment.updateImagingNote');
-
+        // Combo/bundle handling (Phase 1: unified search)
+        Route::post('/enrollment/{id}/apply-combo', [MaternityWorkbenchController::class, 'maternityApplyCombo'])->name('enrollment.applyCombo');
+        Route::post('/enrollment/{id}/remove-bundle', [MaternityWorkbenchController::class, 'removeBundle'])->name('enrollment.removeBundle');
         // ── Delivery ────────────────────────────────────────────────
         Route::post('/enrollment/{id}/delivery', [MaternityWorkbenchController::class, 'saveDeliveryRecord'])->name('enrollment.delivery.store');
         Route::put('/delivery/{id}', [MaternityWorkbenchController::class, 'updateDeliveryRecord'])->name('delivery.update');

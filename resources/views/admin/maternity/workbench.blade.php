@@ -2530,6 +2530,7 @@ $sett = appsettings();
 ])
 @include('admin.partials.invest_res_js')
 @include('admin.partials.perform_investigation_modal')
+@include('admin.partials.combo_confirm_modal')
 <script>
     // ═══════════════════════════════════════════════════════════════
     // GLOBAL STATE (mirrors nursing workbench pattern)
@@ -5556,11 +5557,17 @@ $sett = appsettings();
                         const code = item.service_code || '';
                         const price = item.price?.sale_price ?? 0;
                         const display = name + '[' + code + ']';
-                        const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('labs', parseInt(item.id));
+                        const isCombo = item.is_combo || false;
+                        const bundleItems = item.bundle_items || [];
+                        if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+                        const alreadyAdded = false; // combos can't be "added" twice
                         const mode = item.coverage_mode || null;
                         const payable = item.payable_amount ?? price;
                         const claims = item.claims_amount ?? 0;
-                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.addLabService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')';
+                        const onClick = isCombo 
+                            ? `MaternityClinicalOrders.applyLabCombo(${item.id}, ${enrollmentId}, '${name.replace(/'/g, "\\'")}')`
+                            : `MaternityClinicalOrders.addLabService('${display.replace(/'/g, "\\'") }', ${item.id}, ${price}, '${mode || ''}', ${claims}, ${payable})`;
+                        
                         $res.append(ClinicalOrdersKit.renderSearchResultItem({
                             id: item.id,
                             category: item.category?.category_name || 'Lab',
@@ -5572,7 +5579,9 @@ $sett = appsettings();
                             mode: mode,
                             alreadyAdded: alreadyAdded,
                             alreadyLabel: 'Already Added',
-                            onClick: onClick
+                            onClick: onClick,
+                            isCombo: isCombo,
+                            bundleItems: bundleItems
                         }));
                     });
                 }
@@ -5636,11 +5645,17 @@ $sett = appsettings();
                         const code = item.service_code || '';
                         const price = item.price?.sale_price ?? 0;
                         const display = name + '[' + code + ']';
-                        const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('imaging', parseInt(item.id));
+                        const isCombo = item.is_combo || false;
+                        const bundleItems = item.bundle_items || [];
+                        if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+                        const alreadyAdded = false; // combos can't be "added" twice
                         const mode = item.coverage_mode || null;
                         const payable = item.payable_amount ?? price;
                         const claims = item.claims_amount ?? 0;
-                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.addImagingService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')';
+                        const onClick = isCombo 
+                            ? `MaternityClinicalOrders.applyImagingCombo(${item.id}, ${enrollmentId}, '${name.replace(/'/g, "\\'")}')`
+                            : `MaternityClinicalOrders.addImagingService('${display.replace(/'/g, "\\'") }', ${item.id}, ${price}, '${mode || ''}', ${claims}, ${payable})`;
+                        
                         $res.append(ClinicalOrdersKit.renderSearchResultItem({
                             id: item.id,
                             category: item.category?.category_name || 'Imaging',
@@ -5652,7 +5667,9 @@ $sett = appsettings();
                             mode: mode,
                             alreadyAdded: alreadyAdded,
                             alreadyLabel: 'Already Added',
-                            onClick: onClick
+                            onClick: onClick,
+                            isCombo: isCombo,
+                            bundleItems: bundleItems
                         }));
                     });
                 }
@@ -5911,11 +5928,85 @@ $sett = appsettings();
             }, 5000);
         }
 
+        function applyLabCombo(comboId, enrollmentId, comboName) {
+            var comboData = (window.comboDataMap || {})[comboId] || {};
+            var name = comboName || comboData.service_name || 'Combo';
+            ComboConfirmModal.show({
+                name        : name,
+                bundleItems : comboData.bundle_items || [],
+                price       : parseFloat(comboData.base_price || 0),
+                payable     : parseFloat(comboData.payable_amount != null ? comboData.payable_amount : (comboData.base_price || 0)),
+                claims      : parseFloat(comboData.claims_amount || 0),
+                mode        : comboData.coverage_mode || null,
+                onConfirm   : function() {
+                    $.ajax({
+                        url         : '/maternity-workbench/enrollment/' + enrollmentId + '/apply-combo',
+                        method      : 'POST',
+                        headers     : { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                        data        : JSON.stringify({ service_id: comboId, note: '' }),
+                        contentType : 'application/json',
+                        dataType    : 'json',
+                        success     : function(response) {
+                            if (response.success) {
+                                toastr.success(response.message, 'Combo Applied');
+                                $('#mco_lab_search').val('');
+                                $('#mco_lab_results').hide();
+                                if (typeof initMaternityLabsHistory === 'function') { initMaternityLabsHistory(); }
+                            } else {
+                                toastr.error(response.message || 'Failed to apply combo', 'Error');
+                            }
+                        },
+                        error       : function(err) {
+                            toastr.error((err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : ('Error: ' + err.statusText), 'Error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function applyImagingCombo(comboId, enrollmentId, comboName) {
+            var comboData = (window.comboDataMap || {})[comboId] || {};
+            var name = comboName || comboData.service_name || 'Combo';
+            ComboConfirmModal.show({
+                name        : name,
+                bundleItems : comboData.bundle_items || [],
+                price       : parseFloat(comboData.base_price || 0),
+                payable     : parseFloat(comboData.payable_amount != null ? comboData.payable_amount : (comboData.base_price || 0)),
+                claims      : parseFloat(comboData.claims_amount || 0),
+                mode        : comboData.coverage_mode || null,
+                onConfirm   : function() {
+                    $.ajax({
+                        url         : '/maternity-workbench/enrollment/' + enrollmentId + '/apply-combo',
+                        method      : 'POST',
+                        headers     : { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                        data        : JSON.stringify({ service_id: comboId, note: '' }),
+                        contentType : 'application/json',
+                        dataType    : 'json',
+                        success     : function(response) {
+                            if (response.success) {
+                                toastr.success(response.message, 'Combo Applied');
+                                $('#mco_imaging_search').val('');
+                                $('#mco_imaging_results').hide();
+                                if (typeof initMaternityImagingHistory === 'function') { initMaternityImagingHistory(); }
+                            } else {
+                                toastr.error(response.message || 'Failed to apply combo', 'Error');
+                            }
+                        },
+                        error       : function(err) {
+                            toastr.error((err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : ('Error: ' + err.statusText), 'Error');
+                        }
+                    });
+                }
+            });
+        }
+
         return {
             init: init,
             addProductService: addProductService,
             addLabService: addLabService,
             addImagingService: addImagingService,
+            applyLabCombo: applyLabCombo,
+            applyImagingCombo: applyImagingCombo,
             addProcedureService: addProcedureService,
             removeAutoSavedRow: removeAutoSavedRow,
             _searchBound: false
@@ -8311,6 +8402,44 @@ $sett = appsettings();
                 toastr.error(errs);
             });
     });
+</script>
+
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
+<script>
+function showBundleRemove(btn) {
+    var parentId = btn.dataset.parentId;
+    var bundleName = btn.dataset.bundleName;
+    var items = JSON.parse(btn.dataset.items || '[]');
+    var removeUrl = btn.dataset.removeUrl;
+    BundleRemoveModal.show({
+        bundleId: parentId,
+        bundleName: bundleName,
+        items: items,
+        onConfirm: function(callback) {
+            $.ajax({
+                url: removeUrl,
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({ parent_request_id: parentId }),
+                success: function(r) {
+                    if (r.success) {
+                        toastr.success(r.message || 'Combo removed');
+                        callback(false);
+                        if ($.fn.DataTable.isDataTable('#mco_lab_history_list')) { $('#mco_lab_history_list').DataTable().ajax.reload(null, false); }
+                        if ($.fn.DataTable.isDataTable('#mco_imaging_history_list')) { $('#mco_imaging_history_list').DataTable().ajax.reload(null, false); }
+                    } else {
+                        toastr.error(r.message || 'Failed to remove combo');
+                        callback(true);
+                    }
+                },
+                error: function() { toastr.error('Error removing combo'); callback(true); }
+            });
+        }
+    });
+}
 </script>
 
 @endsection

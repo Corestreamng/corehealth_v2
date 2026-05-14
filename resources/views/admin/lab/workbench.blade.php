@@ -3950,9 +3950,10 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'lab'])
-@include('admin.partials.invest_res_js')
-@include('admin.partials.bulk_result_entry_js')
+@include('admin.partials.invest_res_js', ['resultContext' => 'lab'])
+@include('admin.partials.bulk_result_entry_js', ['resultContext' => 'lab'])
 @include('admin.partials.perform_investigation_modal')
+@include('admin.partials.combo_confirm_modal')
 <script>
 // Global state
 let currentPatient = null;
@@ -6872,10 +6873,13 @@ function searchLabServices(q) {
 
                 for (var i = 0; i < data.length; i++) {
                     const item = data[i] || {};
+                    const isCombo = item.is_combo || false;
+                    const bundleItems = item.bundle_items || [];
+                    if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
                     const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
                     const name = item.service_name || 'Unknown';
                     const code = item.service_code || '';
-                    const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
+                    const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : (item.base_price || 0);
                     const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
                     const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                     const mode = item.coverage_mode || null;
@@ -6885,11 +6889,33 @@ function searchLabServices(q) {
                     const escapedDisplayName = displayName.replace(/'/g, "\\'");
                     const escapedId = (item.id + '').replace(/'/g, "\\'");
 
-                    var mk =
-                        `<li class='list-group-item'
-                           style="background-color: #f0f0f0; cursor: pointer;"
-                           onclick="setSearchValLab('${escapedDisplayName}', '${escapedId}', '${price}', '${mode}', '${claims}', '${payable}')">
-                           [${category}] <b>${name}[${code}]</b> NGN ${Number(price).toLocaleString()} ${coverageBadge}</li>`;
+                    var mk;
+                    if (isCombo) {
+                        var itemList = bundleItems.length > 0
+                            ? bundleItems.map(function(bi) { return '<span class="badge bg-secondary me-1">' + (bi.name || 'Item') + '</span>'; }).join('')
+                            : '<span class="text-muted fst-italic small">Preview not available</span>';
+                        mk = `<li class='list-group-item list-group-item-action'
+                               style="cursor: pointer; border-left: 3px solid #0d6efd;"
+                               onclick="applyLabComboWb('${escapedId}')">
+                               <div class="d-flex justify-content-between align-items-start">
+                                   <div>
+                                       <span class="badge bg-primary me-1"><i class="fa fa-cubes"></i> BUNDLE</span>
+                                       <b>${name}</b>
+                                       <div class="small text-muted mt-1">${itemList}</div>
+                                   </div>
+                                   <div class="text-end">
+                                       <div class="fw-bold text-primary">NGN ${Number(payable).toLocaleString()}</div>
+                                       ${coverageBadge}
+                                   </div>
+                               </div>
+                           </li>`;
+                    } else {
+                        mk =
+                            `<li class='list-group-item'
+                               style="background-color: #f0f0f0; cursor: pointer;"
+                               onclick="setSearchValLab('${escapedDisplayName}', '${escapedId}', '${price}', '${mode}', '${claims}', '${payable}')">
+                               [${category}] <b>${name}[${code}]</b> NGN ${Number(price).toLocaleString()} ${coverageBadge}</li>`;
+                    }
                     $results.append(mk);
                 }
                 $results.show();
@@ -6921,6 +6947,63 @@ function setSearchValLab(name, id, price, coverageMode, claims, payable) {
     $('#selected-lab-services').append(mk);
     $('#service-search-results').html('').hide();
     $('#service-search-input').val('');
+}
+
+function applyLabComboWb(comboId) {
+    var comboData = (window.comboDataMap || {})[comboId] || {};
+    var name = comboData.service_name || 'Combo';
+    var bundleItems = comboData.bundle_items || [];
+    var price   = parseFloat(comboData.base_price  || 0);
+    var payable = parseFloat(comboData.payable_amount != null ? comboData.payable_amount : price);
+    var claims  = parseFloat(comboData.claims_amount  || 0);
+    var mode    = comboData.coverage_mode || null;
+
+    var patientId = currentPatient
+        ? (typeof currentPatient === 'object' ? currentPatient.id : currentPatient)
+        : null;
+
+    if (!patientId) {
+        toastr.warning('Please select a patient first before applying a bundle.');
+        return;
+    }
+
+    ComboConfirmModal.show({
+        name        : name,
+        bundleItems : bundleItems,
+        price       : price,
+        payable     : payable,
+        claims      : claims,
+        mode        : mode,
+        onConfirm   : function() {
+            $.ajax({
+                url         : '{{ route("lab.applyCombo") }}',
+                method      : 'POST',
+                contentType : 'application/json',
+                dataType    : 'json',
+                headers     : { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data        : JSON.stringify({ service_id: comboId, patient_id: patientId, note: '' }),
+                success     : function(r) {
+                    if (r.success) {
+                        toastr.success(r.message || 'Combo applied successfully!');
+                        $('#service-search-results').html('').hide();
+                        $('#service-search-input').val('');
+                        if (typeof loadLabServices === 'function') loadLabServices();
+                        if (typeof LabWorkbench !== 'undefined' && typeof LabWorkbench.refreshPendingQueue === 'function') {
+                            LabWorkbench.refreshPendingQueue();
+                        }
+                        if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                            $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                        }
+                    } else {
+                        toastr.error(r.message || 'Failed to apply combo');
+                    }
+                },
+                error       : function(e) {
+                    toastr.error((e.responseJSON && e.responseJSON.message) ? e.responseJSON.message : 'Error applying combo');
+                }
+            });
+        }
+    });
 }
 
 function removeProdRow(btn) {
@@ -7512,5 +7595,42 @@ $(document).on('click', '#btn-register-walkin', function() {
 
 {{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
 {{-- @include('admin.partials.emergency-intake-modal') --}}
+
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
+<script>
+function showBundleRemove(btn) {
+    var parentId = btn.dataset.parentId;
+    var bundleName = btn.dataset.bundleName;
+    var items = JSON.parse(btn.dataset.items || '[]');
+    var removeUrl = btn.dataset.removeUrl;
+    BundleRemoveModal.show({
+        bundleId: parentId,
+        bundleName: bundleName,
+        items: items,
+        onConfirm: function(callback) {
+            $.ajax({
+                url: removeUrl,
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({ parent_request_id: parentId }),
+                success: function(r) {
+                    if (r.success) {
+                        toastr.success(r.message || 'Combo removed');
+                        callback(false);
+                        if ($.fn.DataTable.isDataTable('#investigation_history_list')) { $('#investigation_history_list').DataTable().ajax.reload(null, false); }
+                    } else {
+                        toastr.error(r.message || 'Failed to remove combo');
+                        callback(true);
+                    }
+                },
+                error: function() { toastr.error('Error removing combo'); callback(true); }
+            });
+        }
+    });
+}
+</script>
 
 @endsection
