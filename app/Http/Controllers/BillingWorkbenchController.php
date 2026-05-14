@@ -269,7 +269,9 @@ class BillingWorkbenchController extends Controller
                     ? optional(optional($row->service)->price)->sale_price
                     : optional(optional($row->product)->price)->current_sale_price;
 
-                $price = $row->payable_amount !== null ? $row->payable_amount : ($basePrice ?? 0);
+                $storedQty = $row->qty ?? 1;
+                $totalPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $storedQty);
+                $unitPrice = $storedQty > 0 ? $totalPayable / $storedQty : $totalPayable;
 
                 return [
                     'id' => $row->id,
@@ -277,8 +279,9 @@ class BillingWorkbenchController extends Controller
                     'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
                     'code' => $isService ? optional($row->service)->service_code : optional($row->product)->product_code,
                     'category' => $isService ? optional(optional($row->service)->category)->category_name : optional(optional($row->product)->category)->category_name,
-                    'qty' => $row->qty ?? 1,
-                    'price' => $price,
+                    'qty' => $storedQty,
+                    'price' => $unitPrice,
+                    'unit_price' => $unitPrice,
                     'base_price' => $basePrice ?? 0,
                     'payable_amount' => $row->payable_amount,
                     'claims_amount' => $row->claims_amount,
@@ -691,12 +694,15 @@ class BillingWorkbenchController extends Controller
                 $basePrice = $isService
                     ? optional(optional($row->service)->price)->sale_price
                     : optional(optional($row->product)->price)->current_sale_price;
-                $price = $row->payable_amount !== null ? $row->payable_amount : ($basePrice ?? 0);
+
+                $storedQty = $row->qty ?? 1;
+                $storedPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $storedQty);
+                $unitPrice = $storedQty > 0 ? $storedPayable / $storedQty : $storedPayable;
 
                 $qty = $itemPayload['qty'];
                 $discountPercent = isset($itemPayload['discount']) ? $itemPayload['discount'] : 0;
-                $discountAmount = ($price * $qty) * ($discountPercent / 100);
-                $lineTotal = ($price * $qty) - $discountAmount;
+                $discountAmount = ($unitPrice * $qty) * ($discountPercent / 100);
+                $lineTotal = ($unitPrice * $qty) - $discountAmount;
 
                 $total += $lineTotal;
                 $totalDiscount += $discountAmount;
@@ -707,13 +713,14 @@ class BillingWorkbenchController extends Controller
                 $row->save();
 
                 if ($row->claims_amount > 0) {
-                    $claimsTotal += $row->claims_amount * $qty;
+                    $unitClaims = $storedQty > 0 ? ($row->claims_amount / $storedQty) : $row->claims_amount;
+                    $claimsTotal += $unitClaims * $qty;
                 }
 
                 $receiptDetails[] = [
                     'type' => $isService ? 'Service' : 'Product',
                     'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
-                    'price' => $price,
+                    'price' => $unitPrice,
                     'qty' => $qty,
                     'discount_percent' => $discountPercent,
                     'discount_amount' => $discountAmount,
@@ -931,11 +938,12 @@ class BillingWorkbenchController extends Controller
             $basePrice = $isService
                 ? optional(optional($row->service)->price)->sale_price
                 : optional(optional($row->product)->price)->current_sale_price;
-            $price = $row->payable_amount !== null ? $row->payable_amount : ($basePrice ?? 0);
             $qty = $row->qty ?? 1;
+            $storedPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $qty);
+            $unitPrice = $qty > 0 ? $storedPayable / $qty : $storedPayable;
             $discountPercent = $row->discount ?? 0;
-            $discountAmount = ($price * $qty) * ($discountPercent / 100);
-            $lineTotal = ($price * $qty) - $discountAmount;
+            $discountAmount = ($unitPrice * $qty) * ($discountPercent / 100);
+            $lineTotal = ($unitPrice * $qty) - $discountAmount;
 
             $totalAmount += $lineTotal;
             $totalDiscount += $discountAmount;
@@ -943,7 +951,7 @@ class BillingWorkbenchController extends Controller
             $receiptDetails[] = [
                 'type' => $isService ? 'Service' : 'Product',
                 'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
-                'price' => $price,
+                'price' => $unitPrice,
                 'qty' => $qty,
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
@@ -1035,10 +1043,11 @@ class BillingWorkbenchController extends Controller
             $basePrice = $isService
                 ? optional(optional($row->service)->price)->sale_price
                 : optional(optional($row->product)->price)->current_sale_price;
-            $price = $row->payable_amount !== null ? $row->payable_amount : ($basePrice ?? 0);
             $qty = $row->qty ?? 1;
+            $storedPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $qty);
+            $unitPrice = $qty > 0 ? $storedPayable / $qty : $storedPayable;
             $discountPercent = $row->discount ?? 0;
-            $subtotal = $price * $qty;
+            $subtotal = $unitPrice * $qty;
             $discountAmount = $subtotal * ($discountPercent / 100);
             $lineTotal = $subtotal - $discountAmount;
             $hmoCoverage = $row->claims_amount ?? 0;
@@ -1050,7 +1059,7 @@ class BillingWorkbenchController extends Controller
             $invoiceDetails[] = [
                 'type' => $isService ? 'Service' : 'Product',
                 'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
-                'price' => $price,
+                'price' => $unitPrice,
                 'qty' => $qty,
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
