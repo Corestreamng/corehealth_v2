@@ -562,8 +562,22 @@
                 <div class="patient-cmd-meta">
                     @if($pt)
                         <span><i class="fa fa-id-card mr-1"></i>{{ $pt->file_no ?? 'N/A' }}</span>
+                        <span><i class="fa fa-{{ strtolower($pt->gender) == 'male' ? 'mars' : (strtolower($pt->gender) == 'female' ? 'venus' : 'user') }} mr-1"></i>{{ $pt->gender ?? 'N/A' }}</span>
                         <span><i class="fa fa-birthday-cake mr-1"></i>{{ $pt->dob ? \Carbon\Carbon::parse($pt->dob)->age . ' yrs' : 'N/A' }}</span>
-                        @if($pt->hmo)<span><i class="fa fa-hospital mr-1"></i>{{ $pt->hmo->name }}</span>@endif
+                        @if($pt->blood_group || $pt->genotype)
+                            <span><i class="fa fa-tint mr-1"></i>{{ $pt->blood_group ?? '' }}{{ ($pt->blood_group && $pt->genotype) ? ' / ' : '' }}{{ $pt->genotype ?? '' }}</span>
+                        @endif
+                        @if($pt->phone_no)
+                            <span><i class="fa fa-phone mr-1"></i>{{ $pt->phone_no }}</span>
+                        @endif
+                        @if($pt->hmo)
+                            <span><i class="fa fa-hospital mr-1"></i>{{ $pt->hmo->name }}</span>
+                        @endif
+                        @if($pt->account)
+                            <span class="text-{{ $pt->account->balance >= 0 ? 'success' : 'danger' }} font-weight-bold">
+                                <i class="fa fa-wallet mr-1"></i>{{ appsettings('currency_symbol') ?? '₦' }}{{ number_format($pt->account->balance, 2) }}
+                            </span>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -1712,10 +1726,16 @@
     </div>
 </div>
 
+{{-- Result View Modals --}}
+@include("admin.partials.invest_res_view_modal")
+@include("admin.partials.invest_res_view_imaging_modal")
 @endsection
 
 @section('scripts')
 {{-- Chosen --}}
+{{-- Result View JS --}}
+@include("admin.partials.invest_res_view_js")
+@include("admin.partials.invest_res_view_imaging_js")
 <script src="{{ asset('assets/js/chosen.jquery.min.js') }}"></script>
 {{-- CKEditor --}}
 <script src="{{ asset('js/ckeditor5/ckeditor.js') }}"></script>
@@ -1870,7 +1890,10 @@ function openAddTeamModal() {
     $('#addTeamModal').modal('show');
     setTimeout(function() {
         if (!$('#team_user_id').hasClass('chosen-initialized')) {
-            $('#team_user_id').chosen({ search_contains: true });
+            $('#team_user_id').chosen({ 
+                search_contains: true,
+                width: '100%'
+            }).addClass('chosen-initialized');
         }
     }, 300);
 }
@@ -2456,78 +2479,45 @@ function executePrint() {
 
 /* ═══════════════ DATATABLES ═══════════════ */
 function initLabHistoryTable() {
-    if ($.fn.DataTable.isDataTable('#procedure_lab_history')) return;
-    $('#procedure_lab_history').DataTable({
-        ajax: { url: '/patient-procedures/' + procedureId + '/lab-history', dataSrc: 'data' },
-        columns: [{ data: null, render: function(d) {
-            return '<div class="item-row">'
-                + '<div class="item-icon lab"><i class="fa fa-flask"></i></div>'
-                + '<div class="item-info">'
-                + '<div class="item-name">' + (d.service_name || '—') + '</div>'
-                + '<div class="item-code"><small>' + (d.service_code || '') + ' · ' + (d.requested_at || '') + '</small></div>'
-                + '</div>'
-                + '<span class="badge badge-' + (d.status === 'completed' ? 'success' : 'warning') + '">' + (d.status || '') + '</span>'
-                + '</div>';
-        }}],
+    if ($.fn.DataTable.isDataTable("#procedure_lab_history")) return;
+    $("#procedure_lab_history").DataTable({
+        ajax: { url: "/patient-procedures/" + procedureId + "/lab-history", dataSrc: "data" },
+        columns: [{ data: "info" }],
         pageLength: 10,
         dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
-        language: { search: '', searchPlaceholder: 'Search labs…', emptyTable: 'No lab requests.' },
+        language: { search: "", searchPlaceholder: "Search labs…", emptyTable: "No lab requests." },
     });
 }
 
 function initImagingHistoryTable() {
-    if ($.fn.DataTable.isDataTable('#procedure_imaging_history')) return;
-    $('#procedure_imaging_history').DataTable({
-        ajax: { url: '/patient-procedures/' + procedureId + '/imaging-history', dataSrc: 'data' },
-        columns: [{ data: null, render: function(d) {
-            return '<div class="item-row">'
-                + '<div class="item-icon imaging"><i class="fa fa-x-ray"></i></div>'
-                + '<div class="item-info">'
-                + '<div class="item-name">' + (d.service_name || '—') + '</div>'
-                + '<div class="item-code"><small>' + (d.service_code || '') + ' · ' + (d.requested_at || '') + '</small></div>'
-                + '</div>'
-                + '<span class="badge badge-' + (d.status === 'completed' ? 'success' : 'warning') + '">' + (d.status || '') + '</span>'
-                + '</div>';
-        }}],
+    if ($.fn.DataTable.isDataTable("#procedure_imaging_history")) return;
+    $("#procedure_imaging_history").DataTable({
+        ajax: { url: "/patient-procedures/" + procedureId + "/imaging-history", dataSrc: "data" },
+        columns: [{ data: "info" }],
         pageLength: 10,
         dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
-        language: { search: '', searchPlaceholder: 'Search imaging…', emptyTable: 'No imaging requests.' },
+        language: { search: "", searchPlaceholder: "Search imaging…", emptyTable: "No imaging requests." },
     });
 }
 
 function initMedsHistoryTable() {
-    if ($.fn.DataTable.isDataTable('#procedure_meds_history')) return;
-    $('#procedure_meds_history').DataTable({
-        ajax: { url: '/patient-procedures/' + procedureId + '/medication-history', dataSrc: 'data' },
-        columns: [{ data: null, render: function(d) {
-            return '<div class="item-row">'
-                + '<div class="item-icon product"><i class="fa fa-pills"></i></div>'
-                + '<div class="item-info">'
-                + '<div class="item-name">' + (d.product_name || '—') + '</div>'
-                + '<div class="item-code"><small>Qty: ' + (d.quantity || 1) + ' · ' + (d.dispensed_at || '') + '</small></div>'
-                + '</div>'
-                + '<span class="badge badge-' + (d.status === 'dispensed' ? 'success' : 'warning') + '">' + (d.status || '') + '</span>'
-                + '</div>';
-        }}],
+    if ($.fn.DataTable.isDataTable("#procedure_meds_history")) return;
+    $("#procedure_meds_history").DataTable({
+        ajax: { url: "/patient-procedures/" + procedureId + "/medication-history", dataSrc: "data" },
+        columns: [{ data: "info" }],
         pageLength: 10,
         dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
-        language: { search: '', searchPlaceholder: 'Search meds…', emptyTable: 'No medication requests.' },
+        language: { search: "", searchPlaceholder: "Search meds…", emptyTable: "No medication requests." },
     });
 }
 
-$('#proc-orders-labs').on('shown.bs.tab', function() { initLabHistoryTable(); });
-$('#tab-orders-link').on('shown.bs.tab', function() { initLabHistoryTable(); });
+$("#proc-orders-labs").on("shown.bs.tab", function() { initLabHistoryTable(); });
+$("#tab-orders-link").on("shown.bs.tab", function() { initLabHistoryTable(); });
+$("#proc-orders-imaging").on("shown.bs.tab", function() { initImagingHistoryTable(); });
+$("#proc-orders-meds").on("shown.bs.tab", function() { initMedsHistoryTable(); });
 
-$(document).on('shown.bs.tab', 'a[href="#proc-orders-labs"]', function() { initLabHistoryTable(); });
-$(document).on('shown.bs.tab', 'a[href="#proc-orders-imaging"]', function() { initImagingHistoryTable(); });
-$(document).on('shown.bs.tab', 'a[href="#proc-orders-meds"]', function() { initMedsHistoryTable(); });
-$(document).on('shown.bs.tab', 'a[href="#tab-orders"]', function() {
-    setTimeout(function() { initLabHistoryTable(); }, 100);
-});
-
-/* ═══════════════ CONSENT ═══════════════ */
 function openConsentModal() {
-    $('#consentModal').modal('show');
+    $("#consentModal").modal("show");
 }
 
 function selectConsentOption(optionKey) {

@@ -113,6 +113,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
         return response()->json(['data' => $services]);
     });
+
 });
 
 Route::get('get-facility-settings', [DataEndpoint::class, 'getFacilitySetting'])->middleware(['auth.basic.sha256']);
