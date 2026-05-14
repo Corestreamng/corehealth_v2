@@ -323,7 +323,7 @@
 
     function _loadBulkV1Templates() {
         if (_bulkV1TemplatesLoaded) return;
-        $.get('{{ route("v1-result-templates.list") }}', function(response) {
+        $.get('{{ route("v1-result-templates.list") }}' + '{{ isset($resultContext) ? "?type={$resultContext}" : "" }}', function(response) {
             if (response.success && response.groups && response.groups.length> 0) {
                 _bulkV1TemplateData = response.groups;
                 _bulkV1TemplatesLoaded = true;

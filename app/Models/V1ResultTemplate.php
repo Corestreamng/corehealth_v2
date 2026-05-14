@@ -18,6 +18,7 @@ class V1ResultTemplate extends Model implements Auditable
         'description',
         'content',
         'category',
+        'template_type',
         'sort_order',
         'is_active',
         'created_by',

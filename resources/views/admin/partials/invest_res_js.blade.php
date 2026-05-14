@@ -576,7 +576,7 @@ function copyResTemplateToField() {
 
     window._loadV1ResultTemplates = function() {
         if (_v1TemplatesLoaded) return;
-        $.get('{{ route("v1-result-templates.list") }}', function(response) {
+        $.get('{{ route("v1-result-templates.list") }}' + '{{ isset($resultContext) ? "?type={$resultContext}" : "" }}', function(response) {
             if (response.success && response.groups && response.groups.length> 0) {
                 _v1TemplateData = response.groups;
                 _v1TemplatesLoaded = true;
