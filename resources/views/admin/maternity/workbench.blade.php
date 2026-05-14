@@ -8428,6 +8428,7 @@ function showBundleRemove(btn) {
                     if (r.success) {
                         toastr.success(r.message || 'Combo removed');
                         callback(false);
+                        if ($.fn.DataTable.isDataTable('#mco_presc_history_list')) { $('#mco_presc_history_list').DataTable().ajax.reload(null, false); }
                         if ($.fn.DataTable.isDataTable('#mco_lab_history_list')) { $('#mco_lab_history_list').DataTable().ajax.reload(null, false); }
                         if ($.fn.DataTable.isDataTable('#mco_imaging_history_list')) { $('#mco_imaging_history_list').DataTable().ajax.reload(null, false); }
                     } else {

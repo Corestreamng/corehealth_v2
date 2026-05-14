@@ -439,7 +439,16 @@ class EncounterController extends Controller
     public function investigationHistoryList($patient_id)
     {
         $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
-            ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+            ->where('status', '>', 0)
+            ->where('patient_id', $patient_id)
+            ->where(function ($query) {
+                $query->whereNull('service_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
+            ->orderBy('created_at', 'DESC')
+            ->get();
 
         // dd($pc);
         return DataTables::of($his)
@@ -808,7 +817,16 @@ class EncounterController extends Controller
     public function imagingHistoryList($patient_id)
     {
         $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
-            ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+            ->where('status', '>', 0)
+            ->where('patient_id', $patient_id)
+            ->where(function ($query) {
+                $query->whereNull('service_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
+            ->orderBy('created_at', 'DESC')
+            ->get();
 
         return DataTables::of($his)
             ->addColumn('info', function ($his) {
@@ -1675,6 +1693,12 @@ class EncounterController extends Controller
         // Show ALL prescription requests (not just dispensed) for complete history
         $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser'])
             ->where('patient_id', $patient_id)
+            ->where(function ($query) {
+                $query->whereNull('product_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
             ->orderBy('created_at', 'DESC')
             ->get();
 

@@ -25,7 +25,15 @@
 window.BundleViewModal = (function() {
     function show(bundleData) {
         // comboData = { name, service_name, service_code, bundle_items, base_price, payable_amount, claims_amount, coverage_mode }
-        const items = bundleData.bundle_items || [];
+        const rawItems = bundleData.items || bundleData.bundle_items || [];
+        const items = rawItems.map(function(item) {
+            return {
+                name: item.name || item.service_name || item.product_name || 'Item',
+                code: item.code || item.service_code || item.product_code || null,
+                qty: item.qty || 1,
+                price: item.price || item.payable_amount || item.amount || 0
+            };
+        });
         
         let html = `
             <div class="card border-0">

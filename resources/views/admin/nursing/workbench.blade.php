@@ -18406,6 +18406,7 @@ function showBundleRemove(btn) {
                         toastr.success(r.message || 'Combo removed');
                         callback(false);
                         if ($.fn.DataTable.isDataTable('#investigation_history_list')) { $('#investigation_history_list').DataTable().ajax.reload(null, false); }
+                        if ($.fn.DataTable.isDataTable('#cr_presc_history_list')) { $('#cr_presc_history_list').DataTable().ajax.reload(null, false); }
                         if ($.fn.DataTable.isDataTable('#cr_lab_history_list')) { $('#cr_lab_history_list').DataTable().ajax.reload(null, false); }
                         if ($.fn.DataTable.isDataTable('#cr_imaging_history_list')) { $('#cr_imaging_history_list').DataTable().ajax.reload(null, false); }
                     } else {

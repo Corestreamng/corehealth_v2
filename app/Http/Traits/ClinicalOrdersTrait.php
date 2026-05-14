@@ -603,19 +603,43 @@ trait ClinicalOrdersTrait
             }
 
             $staffId = Auth::id();
+            $removedAt = now();
 
             // Mark parent as removed
             $parent->update([
                 'removed_by' => $staffId,
-                'removed_at' => now()
+                'removed_at' => $removedAt
             ]);
 
-            // Mark all child items as removed
-            $childCount = ProductOrServiceRequest::where('parent_id', $parent->id)
+            $childIds = ProductOrServiceRequest::where('parent_id', $parent->id)->pluck('id');
+
+            // Mark all child billing rows as removed
+            $childCount = ProductOrServiceRequest::whereIn('id', $childIds)
                 ->update([
                     'removed_by' => $staffId,
-                    'removed_at' => now()
+                    'removed_at' => $removedAt
                 ]);
+
+            // Soft-delete linked clinical rows so they disappear from workbench/history tables
+            if ($childIds->isNotEmpty()) {
+                $deletionReason = 'Removed as part of combo removal';
+
+                LabServiceRequest::whereIn('service_request_id', $childIds)
+                    ->update(['deleted_by' => $staffId, 'deletion_reason' => $deletionReason]);
+                LabServiceRequest::whereIn('service_request_id', $childIds)->delete();
+
+                ImagingServiceRequest::whereIn('service_request_id', $childIds)
+                    ->update(['deleted_by' => $staffId, 'deletion_reason' => $deletionReason]);
+                ImagingServiceRequest::whereIn('service_request_id', $childIds)->delete();
+
+                ProductRequest::whereIn('product_request_id', $childIds)
+                    ->update(['deleted_by' => $staffId, 'deletion_reason' => $deletionReason]);
+                ProductRequest::whereIn('product_request_id', $childIds)->delete();
+
+                Procedure::whereIn('product_or_service_request_id', $childIds)
+                    ->update(['cancelled_by' => $staffId, 'cancellation_reason' => $deletionReason, 'cancelled_at' => $removedAt]);
+                Procedure::whereIn('product_or_service_request_id', $childIds)->delete();
+            }
 
             return [
                 'success' => true,

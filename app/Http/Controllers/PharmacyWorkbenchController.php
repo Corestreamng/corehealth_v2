@@ -412,6 +412,12 @@ class PharmacyWorkbenchController extends Controller
         $items = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser', 'dispensedFromBatch', 'dispensedFromStore'])
             ->where('status', 3)
             ->where('patient_id', $patientId)
+            ->where(function ($query) {
+                $query->whereNull('product_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
             ->orderBy('dispense_date', 'DESC')
             ->get();
 
@@ -583,6 +589,13 @@ class PharmacyWorkbenchController extends Controller
         $query = ProductRequest::query()
             ->whereIn('status', [1, 2]); // Requested or Billed only
 
+        $query->where(function ($subQuery) {
+            $subQuery->whereNull('product_request_id')
+                ->orWhereHas('productOrServiceRequest', function ($posr) {
+                    $posr->whereNull('removed_at');
+                });
+        });
+
         // Apply filters
         if ($filter === 'unbilled') {
             $query->where('status', 1);
@@ -739,6 +752,12 @@ class PharmacyWorkbenchController extends Controller
             'productOrServiceRequest.parent.payment'
             ])
             ->where('patient_id', $patientId)
+            ->where(function ($subQuery) {
+                $subQuery->whereNull('product_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
             ->whereIn('status', [1, 2]); // Requested or Billed
 
         // Apply status filter if provided
@@ -863,11 +882,33 @@ class PharmacyWorkbenchController extends Controller
             });
 
         // Get counts for subtabs
-        $allPending = ProductRequest::where('patient_id', $patientId)->whereIn('status', [1, 2])->count();
-        $unbilledCount = ProductRequest::where('patient_id', $patientId)->where('status', 1)->count();
+        $allPending = ProductRequest::where('patient_id', $patientId)
+            ->where(function ($subQuery) {
+                $subQuery->whereNull('product_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
+            ->whereIn('status', [1, 2])
+            ->count();
+        $unbilledCount = ProductRequest::where('patient_id', $patientId)
+            ->where(function ($subQuery) {
+                $subQuery->whereNull('product_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
+            ->where('status', 1)
+            ->count();
 
         // Billed but not ready
         $billedNotReadyCount = ProductRequest::where('patient_id', $patientId)
+            ->where(function ($subQuery) {
+                $subQuery->whereNull('product_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
             ->where('status', 2)
             ->where(function($q) {
                 $q->where(function ($own) {
@@ -893,6 +934,12 @@ class PharmacyWorkbenchController extends Controller
 
         // Ready to dispense count
         $readyCount = ProductRequest::where('patient_id', $patientId)
+            ->where(function ($subQuery) {
+                $subQuery->whereNull('product_request_id')
+                    ->orWhereHas('productOrServiceRequest', function ($posr) {
+                        $posr->whereNull('removed_at');
+                    });
+            })
             ->where('status', 2)
             ->where(function($q) {
                 $q->whereHas('productOrServiceRequest', function($sq) {
