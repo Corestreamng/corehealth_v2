@@ -26,7 +26,7 @@ class ClinicNoteTemplateController extends Controller
     public function data(Request $request)
     {
         $query = ClinicNoteTemplate::query()
-            ->with('clinic:id,name', 'creator:id,name');
+            ->with('clinic:id,name', 'creator:id,firstname,surname,othername');
 
         if ($request->has('clinic_id') && $request->clinic_id !== '') {
             if ($request->clinic_id === 'global') {
