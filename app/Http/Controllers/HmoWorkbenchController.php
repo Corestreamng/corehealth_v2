@@ -77,7 +77,8 @@ class HmoWorkbenchController extends Controller
         ->whereHas('user.patient_profile', function($q) {
             $q->whereNotNull('hmo_id');
         })
-        ->whereNotNull('coverage_mode'); // Only HMO requests
+        ->whereNotNull('coverage_mode') // Only HMO requests
+        ->where('is_bundle_item', false);
 
         // Tab filters - each tab has different logic
         if ($request->filled('tab')) {
@@ -620,6 +621,7 @@ class HmoWorkbenchController extends Controller
         $history = ProductOrServiceRequest::with(['service', 'product', 'validator'])
             ->where('user_id', $patient->user_id)
             ->whereNotNull('coverage_mode')
+        ->where('is_bundle_item', false)
             ->orderBy('created_at', 'DESC')
             ->limit(20)
             ->get()
@@ -640,15 +642,18 @@ class HmoWorkbenchController extends Controller
         // Calculate summary stats
         $totalClaims = ProductOrServiceRequest::where('user_id', $patient->user_id)
             ->whereNotNull('coverage_mode')
+        ->where('is_bundle_item', false)
             ->where('validation_status', 'approved')
             ->sum('claims_amount');
 
         $totalVisits = ProductOrServiceRequest::where('user_id', $patient->user_id)
             ->whereNotNull('coverage_mode')
+        ->where('is_bundle_item', false)
             ->count();
 
         $thisMonthClaims = ProductOrServiceRequest::where('user_id', $patient->user_id)
             ->whereNotNull('coverage_mode')
+        ->where('is_bundle_item', false)
             ->where('validation_status', 'approved')
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
@@ -1343,6 +1348,7 @@ class HmoWorkbenchController extends Controller
                 })
                 ->whereIn('validation_status', ['pending', 'awaiting_code'])
                 ->whereNotNull('coverage_mode')
+        ->where('is_bundle_item', false)
                 ->sum('claims_amount'),
 
             'approved_today_total' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
@@ -1399,7 +1405,8 @@ class HmoWorkbenchController extends Controller
             $q->whereNotNull('hmo_id');
         })
         ->whereIn('validation_status', ['approved', 'awaiting_code'])
-        ->whereNotNull('coverage_mode');
+        ->whereNotNull('coverage_mode')
+        ->where('is_bundle_item', false);
 
         // Apply date filters
         if ($request->filled('date_from')) {
@@ -2122,7 +2129,8 @@ class HmoWorkbenchController extends Controller
                 'hmo',
             ])
             ->where('user_id', $patient->user_id)
-            ->whereNotNull('coverage_mode');
+            ->whereNotNull('coverage_mode')
+        ->where('is_bundle_item', false);
 
         // Fetch all in one query then partition in PHP
         $allRequests = (clone $baseQuery)->orderBy('created_at', 'desc')->get();

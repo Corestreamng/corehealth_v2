@@ -16,9 +16,11 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\HmoHelper;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
+use App\Http\Traits\ClinicalOrdersTrait;
 
 class LabWorkbenchController extends Controller
 {
+    use ClinicalOrdersTrait;
     /**
      * Display the lab workbench main page
      */
@@ -569,6 +571,7 @@ class LabWorkbenchController extends Controller
                     'status' => 2,
                     'billed_by' => Auth::id(),
                     'billed_date' => now(),
+                    'self_perform_intent' => true,
                     'service_request_id' => $billReq->id,
                 ]);
 
@@ -589,6 +592,100 @@ class LabWorkbenchController extends Controller
                 'message' => 'Error recording billing: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Apply a service combo from the lab workbench (without an encounter context).
+     */
+    public function labApplyCombo(Request $request)
+    {
+        try {
+            $request->validate([
+                'service_id' => 'required|integer|exists:services,id',
+                'patient_id' => 'required|integer|exists:patients,id',
+                'note'       => 'nullable|string',
+            ]);
+
+            $comboService = Service::with('bundleItems')->find($request->service_id);
+
+            if (!$comboService || !$comboService->is_combo) {
+                return response()->json(['success' => false, 'message' => 'Invalid combo service'], 400);
+            }
+
+            $result = $this->applyServiceCombo($comboService, (int) $request->patient_id, null);
+
+            return response()->json([
+                'success'           => true,
+                'message'           => $comboService->service_name . ' combo applied successfully',
+                'parent_billing_id' => $result['parent']->id,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function removeBundle(Request $request)
+    {
+        try {
+            $request->validate([
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'patient_id' => 'required|integer|exists:patients,id'
+            ]);
+
+            $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
+
+            // Verify this bundle belongs to this patient
+            if ($parentRequest->user_id !== Patient::find($request->patient_id)->user_id || $parentRequest->parent_id !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid bundle or permission denied'
+                ], 403);
+            }
+
+            $result = $this->removeServiceCombo($parentRequest->id);
+
+            if ($result['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message']
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Claim self-perform intent for a combo-billed lab request.
+     * Called when a doctor/nurse explicitly chooses to perform a lab test
+     * that was auto-billed as part of a service combo.
+     */
+    public function claimSelfPerform(Request $request)
+    {
+        $request->validate([
+            'request_id' => 'required|exists:lab_service_requests,id',
+        ]);
+
+        $labRequest = LabServiceRequest::findOrFail($request->request_id);
+
+        if ($labRequest->doctor_id !== Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($labRequest->self_perform_intent) {
+            return response()->json(['success' => true, 'message' => 'Already claimed']);
+        }
+
+        $labRequest->update(['self_perform_intent' => true]);
+
+        $this->logAudit($labRequest->id, 'self_perform_claim', 'Doctor claimed self-perform intent for combo lab request');
+
+        return response()->json(['success' => true, 'message' => 'Self-perform intent recorded']);
     }
 
     /**

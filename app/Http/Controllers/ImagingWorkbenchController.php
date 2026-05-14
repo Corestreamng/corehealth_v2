@@ -16,9 +16,11 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\HmoHelper;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
+use App\Http\Traits\ClinicalOrdersTrait;
 
 class ImagingWorkbenchController extends Controller
 {
+    use ClinicalOrdersTrait;
     /**
      * Display the imaging workbench main page
      */
@@ -536,6 +538,7 @@ class ImagingWorkbenchController extends Controller
                     'status' => 2,
                     'billed_by' => Auth::id(),
                     'billed_date' => now(),
+                    'self_perform_intent' => true,
                     'service_request_id' => $billReq->id,
                 ]);
 
@@ -556,6 +559,34 @@ class ImagingWorkbenchController extends Controller
                 'message' => 'Error recording billing: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Claim self-perform intent for a combo-billed imaging request.
+     * Called when a doctor/nurse explicitly chooses to perform an imaging study
+     * that was auto-billed as part of a service combo.
+     */
+    public function claimSelfPerform(Request $request)
+    {
+        $request->validate([
+            'request_id' => 'required|exists:imaging_service_requests,id',
+        ]);
+
+        $imagingRequest = ImagingServiceRequest::findOrFail($request->request_id);
+
+        if ($imagingRequest->doctor_id !== Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($imagingRequest->self_perform_intent) {
+            return response()->json(['success' => true, 'message' => 'Already claimed']);
+        }
+
+        $imagingRequest->update(['self_perform_intent' => true]);
+
+        $this->logAudit($imagingRequest->id, 'self_perform_claim', 'Doctor claimed self-perform intent for combo imaging request');
+
+        return response()->json(['success' => true, 'message' => 'Self-perform intent recorded']);
     }
 
     /**
@@ -1238,30 +1269,128 @@ class ImagingWorkbenchController extends Controller
     public function searchServices(Request $request)
     {
         $term = $request->get('term', '');
-        $imagingCategory = appsettings('imaging_services_category', null);
+        $patientId = $request->get('patient_id');
+        $imagingCategory = appsettings('imaging_category_id', 6);
 
         if (strlen($term) < 2) {
             return response()->json([]);
         }
 
-        $query = Service::where('service_name', 'like', "%{$term}%")
-            ->where('is_active', 1);
+        $query = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+            ->where('service_name', 'like', "%{$term}%")
+            ->where('status', 1);
 
         // Filter by imaging category if set
         if ($imagingCategory) {
             $query->where('category_id', $imagingCategory);
         }
 
-        $services = $query->limit(15)->get();
+        $directServices = $query->limit(15)->get();
 
-        $results = $services->map(function ($service) {
-            return [
-                'id' => $service->id,
-                'name' => $service->service_name,
-                'price' => $service->price ? $service->price->sale_price : 0,
-                'category' => $service->category ? $service->category->name : 'N/A'
+        // Also find combos that contain imaging services matching the term
+        $relatedCombos = collect();
+        if (!$imagingCategory) {
+            // If no specific imaging category set, just search for combos with matching items
+            $relatedCombos = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+                ->where('is_combo', true)
+                ->where('status', 1)
+                ->whereHas('bundleItems', function ($q) use ($term) {
+                    $q->where(function ($subQ) use ($term) {
+                        $subQ->where('item_type', 'service')
+                            ->whereHas('service', function ($sQ) use ($term) {
+                                $sQ->where('service_name', 'like', "%{$term}%");
+                            });
+                    })->orWhere(function ($subQ) use ($term) {
+                        $subQ->where('item_type', 'product')
+                            ->whereHas('product', function ($pQ) use ($term) {
+                                $pQ->where('product_name', 'like', "%{$term}%");
+                            });
+                    });
+                })
+                ->limit(10)
+                ->get();
+        }
+
+        // Batch-load HMO tariffs
+        $hmoMap = [];
+        if ($patientId) {
+            try {
+                $patient = \App\Models\Patient::find($patientId);
+                if ($patient && $patient->hmo_id) {
+                    $serviceIds = $directServices->pluck('id')
+                        ->merge($relatedCombos->pluck('id'))
+                        ->unique()
+                        ->toArray();
+
+                    $tariffs = \App\Models\HmoTariff::where('hmo_id', $patient->hmo_id)
+                        ->whereIn('service_id', $serviceIds)
+                        ->whereNull('product_id')
+                        ->get()
+                        ->keyBy('service_id');
+
+                    foreach ($tariffs as $sid => $tariff) {
+                        $hmoMap[$sid] = [
+                            'payable' => $tariff->payable_amount,
+                            'claims'  => $tariff->claims_amount,
+                            'mode'    => $tariff->coverage_mode,
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Imaging search HMO tariff load failed: ' . $e->getMessage());
+            }
+        }
+
+        // Format results - direct services first
+        $results = [];
+        foreach ($directServices as $service) {
+            $basePrice = $service->price ? $service->price->sale_price : 0;
+            $hmoData = $hmoMap[$service->id] ?? null;
+            
+            $result = [
+                'id'       => $service->id,
+                'name'     => $service->service_name,
+                'price'    => $basePrice,
+                'category' => $service->category ? $service->category->category_name : 'N/A',
+                'hmo'      => $hmoData ? [
+                    'payable' => $hmoData['payable'],
+                    'claims'  => $hmoData['claims'],
+                    'mode'    => $hmoData['mode'],
+                ] : null,
+                'is_combo' => false,
             ];
-        });
+            $results[] = $result;
+        }
+        
+        // Add related combos
+        foreach ($relatedCombos as $service) {
+            $basePrice = $service->price ? $service->price->sale_price : 0;
+            $hmoData = $hmoMap[$service->id] ?? null;
+            
+            $result = [
+                'id'       => $service->id,
+                'name'     => $service->service_name,
+                'price'    => $basePrice,
+                'category' => $service->category ? $service->category->category_name : 'N/A',
+                'hmo'      => $hmoData ? [
+                    'payable' => $hmoData['payable'],
+                    'claims'  => $hmoData['claims'],
+                    'mode'    => $hmoData['mode'],
+                ] : null,
+                'is_combo' => true,
+                'bundle_items' => $service->bundleItems->map(function ($item) {
+                    return [
+                        'id'    => $item->id,
+                        'type'  => $item->item_type,
+                        'name'  => $item->item_type === 'service' 
+                            ? ($item->service->service_name ?? 'Unknown')
+                            : ($item->product->product_name ?? 'Unknown'),
+                        'qty'   => $item->qty,
+                    ];
+                })->toArray(),
+            ];
+            $results[] = $result;
+        }
 
         return response()->json($results);
     }
@@ -1676,6 +1805,82 @@ class ImagingWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Approval has been reversed. The result is now pending approval again.']);
         } catch (\Exception $e) {
             DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Apply a service combo (bundle) for imaging workbench.
+     * POST /imaging-workbench/clinical-requests/apply-combo
+     * Creates parent request (billed once) + child requests (bundled, not billed separately)
+     * 
+     * Payload:
+     *   - service_id (int, required): The combo/bundle parent service ID
+     *   - patient_id (int, required): Patient ID
+     *   - note (string, optional): Clinical note for the bundle
+     * 
+     * Response: { success: true, message: "...", parent_request_id: ..., parent_request_type: "..." }
+     */
+    public function imagingApplyCombo(Request $request)
+    {
+        try {
+            $request->validate([
+                'service_id' => 'required|integer|exists:services,id',
+                'patient_id' => 'required|integer|exists:patients,id',
+                'note' => 'nullable|string'
+            ]);
+
+            $comboService = Service::with('bundleItems')->find($request->service_id);
+
+            if (!$comboService || !$comboService->is_combo) {
+                return response()->json(['success' => false, 'message' => 'Invalid combo service'], 400);
+            }
+
+            // Delegate to ClinicalOrdersTrait::applyServiceCombo (no encounter for imaging workbench)
+            $result = $this->applyServiceCombo($comboService, (int) $request->patient_id, null);
+
+            return response()->json([
+                'success' => true,
+                'message' => $comboService->service_name . ' combo applied successfully',
+                'parent_billing_id' => $result['parent']->id,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function removeBundle(Request $request)
+    {
+        try {
+            $request->validate([
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'patient_id' => 'required|integer|exists:patients,id'
+            ]);
+
+            $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
+
+            // Verify this bundle belongs to this patient
+            if ($parentRequest->user_id !== Patient::find($request->patient_id)->user_id || $parentRequest->parent_id !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid bundle or permission denied'
+                ], 403);
+            }
+
+            $result = $this->removeServiceCombo($parentRequest->id);
+
+            if ($result['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message']
+                ], 400);
+            }
+        } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }

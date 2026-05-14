@@ -3509,7 +3509,7 @@ class MaternityWorkbenchController extends Controller
 
         if (strlen($term) < 2) return response()->json([]);
 
-        $query = Service::with(['price', 'category'])
+        $query = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
             ->where('status', 1);
 
         if ($term) {
@@ -3523,14 +3523,41 @@ class MaternityWorkbenchController extends Controller
             $query->where('category_id', $categoryId);
         }
 
-        $services = $query->limit(15)->get();
+        $directServices = $query->limit(15)->get();
+
+        // Also find combos that contain matching items (if term provided and no category filter)
+        $relatedCombos = collect();
+        if ($term && !isset($categoryId)) {
+            $relatedCombos = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+                ->where('is_combo', true)
+                ->where('status', 1)
+                ->whereHas('bundleItems', function ($q) use ($term) {
+                    $q->where(function ($subQ) use ($term) {
+                        $subQ->where('item_type', 'service')
+                            ->whereHas('service', function ($sQ) use ($term) {
+                                $sQ->where('service_name', 'like', "%{$term}%");
+                            });
+                    })->orWhere(function ($subQ) use ($term) {
+                        $subQ->where('item_type', 'product')
+                            ->whereHas('product', function ($pQ) use ($term) {
+                                $pQ->where('product_name', 'like', "%{$term}%");
+                            });
+                    });
+                })
+                ->limit(10)
+                ->get();
+        }
 
         // Batch-load HMO tariffs in one query instead of N+1
         $hmoMap = [];
         if ($patientId) {
             $patient = Patient::find($patientId);
             if ($patient && $patient->hmo_id) {
-                $serviceIds = $services->pluck('id')->toArray();
+                $serviceIds = $directServices->pluck('id')
+                    ->merge($relatedCombos->pluck('id'))
+                    ->unique()
+                    ->toArray();
+                    
                 $tariffs = \App\Models\HmoTariff::where('hmo_id', $patient->hmo_id)
                     ->whereIn('service_id', $serviceIds)
                     ->whereNull('product_id')
@@ -3547,17 +3574,135 @@ class MaternityWorkbenchController extends Controller
             }
         }
 
-        $results = $services->map(function ($service) use ($hmoMap) {
-            return [
+        // Format results - direct services first
+        $results = [];
+        foreach ($directServices as $service) {
+            $basePrice = $service->price ? $service->price->sale_price : $service->price_assign;
+            $hmoData = $hmoMap[$service->id] ?? null;
+            
+            $result = [
                 'id'       => $service->id,
                 'name'     => $service->service_name,
                 'code'     => $service->service_code,
-                'price'    => $service->price ? $service->price->sale_price : $service->price_assign,
+                'price'    => $basePrice,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
-                'hmo'      => $hmoMap[$service->id] ?? null,
+                'hmo'      => $hmoData ? [
+                    'payable' => $hmoData['payable'],
+                    'claims'  => $hmoData['claims'],
+                    'mode'    => $hmoData['mode'],
+                ] : null,
+                'is_combo' => false,
             ];
-        });
+            $results[] = $result;
+        }
+        
+        // Add related combos
+        foreach ($relatedCombos as $service) {
+            $basePrice = $service->price ? $service->price->sale_price : $service->price_assign;
+            $hmoData = $hmoMap[$service->id] ?? null;
+            
+            $result = [
+                'id'       => $service->id,
+                'name'     => $service->service_name,
+                'code'     => $service->service_code,
+                'price'    => $basePrice,
+                'category' => $service->category ? $service->category->category_name : 'N/A',
+                'hmo'      => $hmoData ? [
+                    'payable' => $hmoData['payable'],
+                    'claims'  => $hmoData['claims'],
+                    'mode'    => $hmoData['mode'],
+                ] : null,
+                'is_combo' => true,
+                'bundle_items' => $service->bundleItems->map(function ($item) {
+                    return [
+                        'id'    => $item->id,
+                        'type'  => $item->item_type,
+                        'name'  => $item->item_type === 'service' 
+                            ? ($item->service->service_name ?? 'Unknown')
+                            : ($item->product->product_name ?? 'Unknown'),
+                        'qty'   => $item->qty,
+                    ];
+                })->toArray(),
+            ];
+            $results[] = $result;
+        }
 
         return response()->json($results);
+    }
+
+    /**
+     * Apply a service combo (bundle) for maternity workbench enrollment.
+     * POST /maternity-workbench/enrollment/{id}/apply-combo
+     * Creates parent request (billed once) + child requests (bundled, not billed separately)
+     * 
+     * Payload:
+     *   - service_id (int, required): The combo/bundle parent service ID
+     *   - note (string, optional): Clinical note for the bundle
+     * 
+     * Response: { success: true, message: "...", parent_request_id: ..., parent_request_type: "..." }
+     */
+    public function maternityApplyCombo(Request $request, $enrollmentId)
+    {
+        try {
+            $enrollment = Enrollment::findOrFail($enrollmentId);
+            $request->validate([
+                'service_id' => 'required|integer|exists:services,id',
+                'note' => 'nullable|string'
+            ]);
+
+            $comboService = Service::with('bundleItems')->find($request->service_id);
+
+            if (!$comboService || !$comboService->is_combo) {
+                return response()->json(['success' => false, 'message' => 'Invalid combo service'], 400);
+            }
+
+            // Delegate to ClinicalOrdersTrait::applyServiceCombo (no encounter for maternity enrollment)
+            $result = $this->applyServiceCombo($comboService, (int) $enrollment->patient_id, null);
+
+            return response()->json([
+                'success' => true,
+                'message' => $comboService->service_name . ' combo applied successfully',
+                'parent_billing_id' => $result['parent']->id,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function removeBundle(Request $request, $enrollmentId)
+    {
+        try {
+            $enrollment = Enrollment::findOrFail($enrollmentId);
+            
+            $request->validate([
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id'
+            ]);
+
+            $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
+
+            // Verify this bundle belongs to this patient
+            if ($parentRequest->user_id !== Patient::find($enrollment->patient_id)->user_id || $parentRequest->parent_id !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid bundle or permission denied'
+                ], 403);
+            }
+
+            $result = $this->removeServiceCombo($parentRequest->id);
+
+            if ($result['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message']
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

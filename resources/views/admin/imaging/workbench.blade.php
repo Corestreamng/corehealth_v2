@@ -3821,9 +3821,10 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'imaging'])
-@include('admin.partials.invest_res_js')
-@include('admin.partials.bulk_result_entry_js')
+@include('admin.partials.invest_res_js', ['resultContext' => 'imaging'])
+@include('admin.partials.bulk_result_entry_js', ['resultContext' => 'imaging'])
 @include('admin.partials.perform_investigation_modal')
+@include('admin.partials.combo_confirm_modal')
 <script>
 // Global state
 let currentPatient = null;
@@ -6179,17 +6180,39 @@ function searchImagingServices(q) {
                     const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
                     const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                     const mode = item.coverage_mode || null;
+                    const isCombo = item.is_combo || false;
+                    const bundleItems = item.bundle_items || [];
+                    if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+                    
                     const coverageBadge = mode && mode !== 'cash' ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                    const comBoBadge = isCombo ? `<span class='badge bg-primary ms-1'>COMBO</span>` : '';
                     const displayName = `${name}[${code}]`;
 
                     const escapedDisplayName = displayName.replace(/'/g, "\\'");
                     const escapedId = (item.id + '').replace(/'/g, "\\'");
 
-                    var mk =
-                        `<li class='list-group-item'
-                           style="background-color: #f0f0f0; cursor: pointer;"
-                           onclick="setSearchValImaging('${escapedDisplayName}', '${escapedId}', '${price}', '${mode}', '${claims}', '${payable}')">
-                           [${category}] <b>${name}[${code}]</b> NGN ${Number(price).toLocaleString()} ${coverageBadge}</li>`;
+                    let mk = '';
+                    if (isCombo) {
+                        // Combo rendering with bundle items
+                        const bundleList = bundleItems.map(bi => `<li class="ms-3"><small>${bi.name || 'Unknown'} (${bi.qty || 1})</small></li>`).join('');
+                        mk = `<li class='list-group-item' style="background-color: #e8f4f8; cursor: pointer;">
+                                <div onclick="ImagingWorkbench.applyCombo('${escapedId}', '${escapedDisplayName}')">
+                                    [${category}] <b>${name}[${code}]</b> ${comBoBadge} NGN ${Number(price).toLocaleString()} ${coverageBadge}
+                                    <div style="margin-top: 8px; font-size: 12px; color: #666; border-left: 2px solid #0066cc; padding-left: 8px;">
+                                        <strong>Includes:</strong>
+                                        <ul style="margin: 4px 0 0 0; padding-left: 20px; list-style: disc;">
+                                            ${bundleList}
+                                        </ul>
+                                    </div>
+                                </div>
+                             </li>`;
+                    } else {
+                        // Direct service rendering
+                        mk = `<li class='list-group-item'
+                               style="background-color: #f0f0f0; cursor: pointer;"
+                               onclick="setSearchValImaging('${escapedDisplayName}', '${escapedId}', '${price}', '${mode}', '${claims}', '${payable}')">
+                               [${category}] <b>${name}[${code}]</b> NGN ${Number(price).toLocaleString()} ${coverageBadge}</li>`;
+                    }
                     $results.append(mk);
                 }
                 $results.show();
@@ -6223,6 +6246,54 @@ function setSearchValImaging(name, id, price, coverageMode = null, claims = null
     $('#service-search-results').html('').hide();
     $('#service-search-input').val('');
 }
+
+// Namespace for imaging workbench combo operations
+const ImagingWorkbench = {
+    applyCombo: function(comboId, comboName) {
+        var comboData = (window.comboDataMap || {})[comboId] || {};
+        var name = comboName || comboData.service_name || 'Combo';
+        var bundleItems = comboData.bundle_items || [];
+        var price   = parseFloat(comboData.base_price  || 0);
+        var payable = parseFloat(comboData.payable_amount != null ? comboData.payable_amount : price);
+        var claims  = parseFloat(comboData.claims_amount  || 0);
+        var mode    = comboData.coverage_mode || null;
+
+        ComboConfirmModal.show({
+            name        : name,
+            bundleItems : bundleItems,
+            price       : price,
+            payable     : payable,
+            claims      : claims,
+            mode        : mode,
+            onConfirm   : function() {
+                $.ajax({
+                    url         : '/imaging-workbench/clinical-requests/apply-combo',
+                    method      : 'POST',
+                    headers     : { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    data        : JSON.stringify({ service_id: comboId, patient_id: currentPatient, note: '' }),
+                    contentType : 'application/json',
+                    dataType    : 'json',
+                    success     : function(response) {
+                        if (response.success) {
+                            toastr.success(response.message, 'Combo Applied');
+                            $('#service-search-results').html('').hide();
+                            $('#service-search-input').val('');
+                            if (typeof loadImagingServices === 'function') loadImagingServices();
+                            if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                                $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                            }
+                        } else {
+                            toastr.error(response.message || 'Failed to apply combo', 'Error');
+                        }
+                    },
+                    error       : function(err) {
+                        toastr.error((err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : ('Error: ' + err.statusText), 'Error');
+                    }
+                });
+            }
+        });
+    }
+};
 
 function removeProdRow(btn) {
     $(btn).closest('tr').remove();
@@ -7307,5 +7378,42 @@ $(document).on('click', '#btn-register-walkin', function() {
 
 {{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
 {{-- @include('admin.partials.emergency-intake-modal') --}}
+
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
+<script>
+function showBundleRemove(btn) {
+    var parentId = btn.dataset.parentId;
+    var bundleName = btn.dataset.bundleName;
+    var items = JSON.parse(btn.dataset.items || '[]');
+    var removeUrl = btn.dataset.removeUrl;
+    BundleRemoveModal.show({
+        bundleId: parentId,
+        bundleName: bundleName,
+        items: items,
+        onConfirm: function(callback) {
+            $.ajax({
+                url: removeUrl,
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({ parent_request_id: parentId }),
+                success: function(r) {
+                    if (r.success) {
+                        toastr.success(r.message || 'Combo removed');
+                        callback(false);
+                        if ($.fn.DataTable.isDataTable('#investigation_history_list')) { $('#investigation_history_list').DataTable().ajax.reload(null, false); }
+                    } else {
+                        toastr.error(r.message || 'Failed to remove combo');
+                        callback(true);
+                    }
+                },
+                error: function() { toastr.error('Error removing combo'); callback(true); }
+            });
+        }
+    });
+}
+</script>
 
 @endsection

@@ -204,6 +204,7 @@ class ProductController extends Controller
                     'payable_amount' => $coverage['payable_amount'] ?? ($basePrice ?? 0),
                     'claims_amount' => $coverage['claims_amount'] ?? 0,
                     'validation_status' => $coverage['validation_status'] ?? null,
+                    'is_combo' => false,
                     'category' => $product->category,
                     'stock' => $product->stock,
                     'price' => $product->price,
@@ -218,7 +219,73 @@ class ProductController extends Controller
                 ];
             });
 
-        return response()->json($pc);
+        // Also return service combos containing matching products
+        $combos = collect();
+        if ($request->filled('term')) {
+            $combos = \App\Models\Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+                ->where('is_combo', true)
+                ->where('status', 1)
+                ->where(function ($q) use ($request) {
+                    // Match by combo name OR by bundle item product names
+                    $q->where('service_name', 'LIKE', "%{$request->term}%")
+                      ->orWhereHas('bundleItems', function ($bq) use ($request) {
+                          $bq->where('item_type', 'product')
+                             ->whereHas('product', function ($pQ) use ($request) {
+                                 $pQ->where('product_name', 'LIKE', "%{$request->term}%");
+                             });
+                      });
+                })
+                // Combo must contain at least one product item (medications combos)
+                ->whereHas('bundleItems', function ($q) {
+                    $q->where('item_type', 'product');
+                })
+                ->limit(5)
+                ->get()
+                ->map(function ($combo) use ($request) {
+                    $basePrice = optional($combo->price)->sale_price ?? 0;
+                    $coverage = null;
+
+                    if ($request->filled('patient_id')) {
+                        try {
+                            $coverage = \App\Helpers\HmoHelper::applyHmoTariff($request->patient_id, null, $combo->id);
+                        } catch (\Exception $e) {
+                            $coverage = null;
+                        }
+                    }
+
+                    return [
+                        'id' => $combo->id,
+                        'product_name' => $combo->service_name,
+                        'product_code' => $combo->service_code ?? '',
+                        'product_type' => 'combo',
+                        'is_combo' => true,
+                        'bundle_items' => $combo->bundleItems->map(fn($item) => [
+                            'id'         => $item->id,
+                            'type'       => $item->item_type,
+                            'item_id'    => $item->item_id,
+                            'name'       => $item->item_type === 'service'
+                                ? ($item->service->service_name ?? 'Unknown')
+                                : ($item->product->product_name ?? 'Unknown'),
+                            'qty'        => $item->qty,
+                            'dose'       => $item->dose,
+                            'note'       => $item->note,
+                            'unit_price' => $item->unit_price ?? 0,
+                        ])->toArray(),
+                        'base_unit_name' => 'Package',
+                        'allow_decimal_qty' => false,
+                        'coverage_mode' => $coverage['coverage_mode'] ?? 'cash',
+                        'payable_amount' => $coverage['payable_amount'] ?? $basePrice,
+                        'claims_amount' => $coverage['claims_amount'] ?? 0,
+                        'validation_status' => null,
+                        'category' => $combo->category,
+                        'stock' => null,
+                        'price' => $combo->price,
+                        'packagings' => [],
+                    ];
+                });
+        }
+
+        return response()->json($pc->concat($combos)->values());
     }
 
     public function listSalesProduct(Request $request, $id)

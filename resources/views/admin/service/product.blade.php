@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
-@section('title', 'Sevice Management')
-@section('page_name', 'Sevice Management')
-@section('subpage_name', 'Sevice Issue History')
+@section('title', 'Service Management')
+@section('page_name', 'Service Management')
+@section('subpage_name', 'Service Issue History')
 @section('content')
 
     <div id="content-wrapper">
@@ -11,8 +11,35 @@
             {{-- @include('admin.layouts.partials.infoBox') --}}
             <div class="card-modern">
                 <div class="card-header">
-                    <h4 class="card-title">All {{ $pp->product_name }} Issue History</h4>
+                    <h4 class="card-title">All {{ $pp->service_name }} Issue History</h4>
                 </div>
+                @if($pp->is_combo && $pp->bundleItems->count() > 0)
+                <div class="card-body border-bottom">
+                    <h5 class="mb-3 text-primary"><i class="mdi mdi-package-variant"></i> Bundle Constituents</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Type</th>
+                                    <th>Qty</th>
+                                    <th>Notes/Dose</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($pp->bundleItems as $item)
+                                <tr>
+                                    <td>{{ $item->display_name }}</td>
+                                    <td><span class="badge {{ $item->item_type === "service" ? "badge-info" : "badge-success" }}">{{ ucfirst($item->item_type) }}</span></td>
+                                    <td>{{ $item->qty }}</td>
+                                    <td>{{ $item->note ?: ($item->dose ?: "-") }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
 
                 <div class="card-body">
                     <div class="table-responsive">
@@ -20,7 +47,7 @@
                             <thead>
                                 <tr>
                                     <th>SN</th>
-                                    <th>Product</th>
+                                    <th>Service</th>
                                     <th>SIV Number</th>
                                     <th>Client</th>
                                     <th>Qty</th>
@@ -95,7 +122,7 @@
                     "processing": true,
                     "serverSide": true,
                     "ajax": {
-                        "url": "{{ route('listSalesProduct', $id) }}",
+                        "url": "{{ route('listSalesService', $id) }}",
                         "type": "GET"
                     },
                     "columns": [

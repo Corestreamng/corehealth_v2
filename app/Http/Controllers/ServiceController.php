@@ -12,6 +12,7 @@ use App\Models\Stock;
 use App\Models\ServiceCategory;
 use App\Models\ProcedureDefinition;
 use App\Models\ProcedureCategory;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Yajra\DataTables\DataTables;
@@ -35,7 +36,6 @@ class ServiceController extends Controller
             $q->select(['id', 'category_name']);
         }, 'price']);
 
-        // Filter by category if provided
         if ($request->filled('category') && $request->category !== 'all') {
             $query->where('category_id', $request->category);
         }
@@ -59,11 +59,13 @@ class ServiceController extends Controller
                         : ' <span class="badge badge-light text-muted" style="font-size:0.65rem"><i class="mdi mdi-alert-outline"></i> No Template</span>';
                 }
 
+                $comboBadge = $pc->is_combo ? ' <span class="badge badge-info" style="font-size:0.65rem"><i class="mdi mdi-package-variant"></i> Combo</span>' : '';
+
                 return '<div>'
                     . '<strong>' . e($pc->service_name) . '</strong>'
                     . '<br><small class="text-muted">' . e($pc->service_code) . '</small>'
                     . ' <span class="badge" style="background:' . $catBg . ';color:' . $catFg . ';font-size:0.7rem">' . e($catName) . '</span>'
-                    . $templateBadge
+                    . $templateBadge . $comboBadge
                     . '</div>';
             })
             ->addColumn('price_info', function ($pc) {
@@ -115,156 +117,6 @@ class ServiceController extends Controller
             ->make(true);
     }
 
-    public function toggleStatus($id)
-    {
-        try {
-            $service = Service::withoutGlobalScopes()->findOrFail($id);
-            $service->status = $service->status == 1 ? 0 : 1;
-            $service->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Service status updated successfully.',
-                'new_status' => $service->status
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function liveSearchServices(Request $request)
-    {
-        $request->validate([
-            'term' => 'nullable|string',
-            'patient_id' => 'nullable|integer'
-        ]);
-
-        $categoryId = $request->input('category_id', appsettings('investigation_category_id'));
-
-        $query = Service::where('status', 1)
-            ->where('category_id', $categoryId)
-            ->whereHas('price');
-
-        if ($request->filled('term')) {
-            $query->where('service_name', 'LIKE', "%{$request->term}%");
-        }
-
-        $pc = $query
-            ->with(['category', 'price'])
-            ->orderBy('service_name', 'ASC')
-            ->get()
-            ->map(function ($service) use ($request) {
-                $basePrice = optional($service->price)->sale_price;
-                $coverage = null;
-
-                if ($request->filled('patient_id')) {
-                    try {
-                        $coverage = \App\Helpers\HmoHelper::applyHmoTariff($request->patient_id, null, $service->id);
-                    } catch (\Exception $e) {
-                        $coverage = null; // fallback to cash if tariff missing
-                    }
-                }
-
-                return [
-                    'id' => $service->id,
-                    'service_name' => $service->service_name,
-                    'service_code' => $service->service_code,
-                    'coverage_mode' => $coverage['coverage_mode'] ?? 'cash',
-                    'payable_amount' => $coverage['payable_amount'] ?? ($basePrice ?? 0),
-                    'claims_amount' => $coverage['claims_amount'] ?? 0,
-                    'validation_status' => $coverage['validation_status'] ?? null,
-                    'category' => $service->category,
-                    'price' => $service->price,
-                ];
-            });
-
-        return response()->json($pc);
-    }
-
-    public function listSalesService(Request $request, $id)
-    {
-
-        $pc = Sale::where('service_id', '=', $id)->with('product_or_service_request', 'product', 'store')->orderBy('id', 'DESC')->get();
-
-        return Datatables::of($pc)
-            ->addIndexColumn()
-            ->addColumn('view', function ($pc) {
-                // return '<a href="' . route('transactions.show', $pc->transaction->id) . '" class="btn btn-dark btn-sm"><i class="fa fa-eye"></i> SIV</a>';
-                return 'todo';
-            })
-            ->editColumn('product', function ($pc) {
-                return ($pc->product->service_name);
-            })
-            ->editColumn('store', function ($pc) {
-                return ($pc->store->store_name);
-            })
-            ->editColumn('trans', function ($pc) {
-                return ($pc->product_or_service_request->invoice->id);
-            })
-            ->editColumn('customer', function ($pc) {
-                // return ($pc->transaction->customer_name);
-                return 'todo';
-            })
-            ->editColumn('budgetYear', function ($pc) {
-                // $budgetYear = getBudgetYearName($pc->budget_year_id);
-
-                return 'todo';
-            })
-
-            ->rawColumns(['view', 'product', 'store', 'trans', 'customer', 'budgetYear'])
-
-            ->make(true);
-    }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
-    {
-        $categoryId = $request->input('category');
-        $categoryName = null;
-
-        if ($categoryId) {
-            $category = ServiceCategory::find($categoryId);
-            $categoryName = $category ? $category->category_name : null;
-        }
-
-        $categories = ServiceCategory::where('status', 1)->orderBy('category_name')->pluck('category_name', 'id')->all();
-
-        return view('admin.service.index', [
-            'filterCategory' => $categoryId,
-            'categoryName' => $categoryName,
-            'categories' => $categories,
-        ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create(Request $request)
-    {
-        $selectedCategory = $request->query('category');
-        $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
-        $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
-        $procedureCategoryId = appsettings('procedure_category_id');
-        
-        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId', 'selectedCategory'));
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-
     public function store(Request $request)
     {
         $procedureCategoryId = appsettings('procedure_category_id');
@@ -276,107 +128,63 @@ class ServiceController extends Controller
             'service_code'          => 'required',
         ];
 
-        // Add procedure-specific validation rules
         if ($isProcedure) {
             $rules['procedure_category_id'] = 'required|exists:procedure_categories,id';
-            $rules['procedure_code'] = 'nullable|string|max:50';
-            $rules['is_surgical'] = 'nullable|boolean';
-            $rules['estimated_duration_minutes'] = 'nullable|integer|min:1';
-            $rules['procedure_description'] = 'nullable|string';
+        }
+
+        if ($request->is_combo) {
+            $rules['bundle_items'] = 'required|array|min:1';
         }
 
         try {
             $v = validator()->make($request->all(), $rules);
-
             if ($v->fails()) {
-                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
-            } else {
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all());
+            }
 
-                DB::beginTransaction();
+            DB::beginTransaction();
+            $myservice                      = new Service();
+            $myservice->user_id             = Auth::user()->id;
+            $myservice->category_id         = $request->category_id;
+            $myservice->service_name        = trim($request->service_name);
+            $myservice->service_code        = $request->service_code;
+            $myservice->is_combo            = $request->has('is_combo');
+            $myservice->status              = 1;
+            $myservice->save();
 
-                $myservice                      = new Service();
-                $myservice->user_id             = Auth::user()->id;
-                $myservice->category_id         = $request->category_id;
-                $myservice->service_name        = trim($request->service_name);
-                $myservice->service_code        = $request->service_code;
-                $myservice->status              = 1;
+            if ($isProcedure) {
+                ProcedureDefinition::create([
+                    'service_id' => $myservice->id,
+                    'procedure_category_id' => $request->procedure_category_id,
+                    'name' => trim($request->service_name),
+                    'code' => $request->procedure_code ?? $request->service_code,
+                    'description' => $request->procedure_description,
+                    'is_surgical' => $request->has('is_surgical'),
+                    'estimated_duration_minutes' => $request->estimated_duration_minutes,
+                    'status' => 1,
+                ]);
+            }
 
-                if ($myservice->save()) {
-                    // If this is a procedure service, create linked procedure definition
-                    if ($isProcedure) {
-                        ProcedureDefinition::create([
-                            'service_id' => $myservice->id,
-                            'procedure_category_id' => $request->procedure_category_id,
-                            'name' => trim($request->service_name),
-                            'code' => $request->procedure_code ?? $request->service_code,
-                            'description' => $request->procedure_description,
-                            'is_surgical' => $request->has('is_surgical'),
-                            'estimated_duration_minutes' => $request->estimated_duration_minutes,
-                            'status' => 1,
-                        ]);
-                    }
-
-                    DB::commit();
-                    $msg = 'The Service  ' . $request->service_name . ' was Saved Successfully.';
-                    return redirect(route('services.index', ['category' => $myservice->category_id]))->withMessage($msg)->withMessageType('success');
-                } else {
-                    DB::rollBack();
-                    $msg = 'Something is went wrong. Please try again later, Service not Saved.';
-                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
+            if ($myservice->is_combo && $request->has('bundle_items')) {
+                foreach ($request->bundle_items as $item) {
+                    $myservice->bundleItems()->create([
+                        'item_id'   => $item['item_id'],
+                        'item_type' => $item['item_type'],
+                        'qty'       => $item['qty'] ?? 1,
+                        'note'      => $item['note'] ?? null,
+                        'dose'      => $item['dose'] ?? null,
+                    ]);
                 }
             }
+
+            DB::commit();
+            return redirect(route('services.index', ['category' => $myservice->category_id]))->withMessage('Saved successfully')->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        $pc = Sale::where('service_id', '=', $id)->with('transaction', 'product', 'store')->sum('total_amount');
-        $qt = Sale::where('service_id', '=', $id)->with('transaction', 'product', 'store')->sum('quantity_buy');
-        $pp = Service::withoutGlobalScopes()->find($id);
-
-        return view('admin.service.product', compact('id', 'pp', 'pc', 'qt'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Request $request, $id)
-    {
-
-        try {
-            $selectedCategory = $request->query('category');
-            $product = Service::withoutGlobalScopes()->with('procedureDefinition')->whereId($id)->first();
-            $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
-            $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
-            $procedureCategoryId = appsettings('procedure_category_id');
-            $procedure = $product->procedureDefinition;
-
-            return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'procedure', 'selectedCategory'));
-        } catch (\Exception $e) {
-
-            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
         try {
@@ -389,215 +197,305 @@ class ServiceController extends Controller
                 'service_code'          => 'required',
             ];
 
-            // Add procedure-specific validation rules
             if ($isProcedure) {
                 $rules['procedure_category_id'] = 'required|exists:procedure_categories,id';
-                $rules['procedure_code'] = 'nullable|string|max:50';
-                $rules['is_surgical'] = 'nullable|boolean';
-                $rules['estimated_duration_minutes'] = 'nullable|integer|min:1';
-                $rules['procedure_description'] = 'nullable|string';
+            }
+
+            if ($request->is_combo) {
+                $rules['bundle_items'] = 'required|array|min:1';
             }
 
             $v = validator()->make($request->all(), $rules);
-
             if ($v->fails()) {
-                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all());
+            }
+
+            DB::beginTransaction();
+            $myservice                 = Service::withoutGlobalScopes()->whereId($id)->first();
+            $oldCategoryId             = $myservice->category_id;
+            $myservice->category_id    = $request->category_id;
+            $myservice->service_name   = $request->service_name;
+            $myservice->service_code   = $request->service_code;
+            $myservice->is_combo       = $request->has('is_combo');
+            $myservice->update();
+
+            if ($isProcedure) {
+                ProcedureDefinition::updateOrCreate(
+                    ['service_id' => $myservice->id],
+                    [
+                        'procedure_category_id' => $request->procedure_category_id,
+                        'name' => trim($request->service_name),
+                        'code' => $request->procedure_code ?? $request->service_code,
+                        'description' => $request->procedure_description,
+                        'is_surgical' => $request->has('is_surgical'),
+                        'estimated_duration_minutes' => $request->estimated_duration_minutes,
+                        'status' => 1,
+                    ]
+                );
             } else {
-
-                DB::beginTransaction();
-
-                $myservice                 = Service::withoutGlobalScopes()->whereId($id)->first();
-                $oldCategoryId             = $myservice->category_id;
-                $myservice->user_id        = Auth::user()->id;
-                $myservice->category_id    = $request->category_id;
-                $myservice->service_name   = $request->service_name;
-                $myservice->service_code   = $request->service_code;
-
-                if ($myservice->update()) {
-                    // Handle procedure definition
-                    if ($isProcedure) {
-                        // Create or update procedure definition
-                        ProcedureDefinition::updateOrCreate(
-                            ['service_id' => $myservice->id],
-                            [
-                                'procedure_category_id' => $request->procedure_category_id,
-                                'name' => trim($request->service_name),
-                                'code' => $request->procedure_code ?? $request->service_code,
-                                'description' => $request->procedure_description,
-                                'is_surgical' => $request->has('is_surgical'),
-                                'estimated_duration_minutes' => $request->estimated_duration_minutes,
-                                'status' => 1,
-                            ]
-                        );
-                    } else {
-                        // If category changed away from procedure, delete linked procedure definition
-                        if ($oldCategoryId == $procedureCategoryId) {
-                            ProcedureDefinition::where('service_id', $myservice->id)->delete();
-                        }
-                    }
-
-                    DB::commit();
-                    $msg = 'The Service ' . $request->service_name . ' Was Updated Successfully.';
-                    return redirect(route('services.index', ['category' => $myservice->category_id]))->withMessage($msg)->withMessageType('success');
-                } else {
-                    DB::rollBack();
-                    $msg = 'Something is went wrong. Please try again later, information not save.';
-
-                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success')->withInput();
+                if ($oldCategoryId == $procedureCategoryId) {
+                    ProcedureDefinition::where('service_id', $myservice->id)->delete();
                 }
             }
+
+            if ($myservice->is_combo && $request->has('bundle_items')) {
+                $myservice->bundleItems()->delete();
+                foreach ($request->bundle_items as $item) {
+                    $myservice->bundleItems()->create([
+                        'item_id'   => $item['item_id'],
+                        'item_type' => $item['item_type'],
+                        'qty'       => $item['qty'] ?? 1,
+                        'note'      => $item['note'] ?? null,
+                        'dose'      => $item['dose'] ?? null,
+                    ]);
+                }
+            } else {
+                $myservice->bundleItems()->delete();
+            }
+
+            DB::commit();
+            return redirect(route('services.index', ['category' => $myservice->category_id]))->withMessage('Updated successfully')->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function index(Request $request)
     {
-        //
+        $filterCategory = $request->input('category');
+        $categories = ServiceCategory::where('status', 1)->orderBy('category_name')->pluck('category_name', 'id')->all();
+        $categoryName = $filterCategory ? ($categories[$filterCategory] ?? null) : null;
+        return view('admin.service.index', compact('filterCategory', 'categories', 'categoryName'));
+    }
+
+    public function create(Request $request)
+    {
+        $selectedCategory = $request->query('category');
+        $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+        $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
+        $procedureCategoryId = appsettings('procedure_category_id');
+        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId', 'selectedCategory'));
+    }
+
+    public function edit(Request $request, $id)
+    {
+        $product = Service::withoutGlobalScopes()->with('bundleItems.service', 'bundleItems.product', 'procedureDefinition')->whereId($id)->first();
+        $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+        $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
+        $procedureCategoryId = appsettings('procedure_category_id');
+        $procedure = $product->procedureDefinition;
+        $selectedCategory = $product->category_id;
+        return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'procedure', 'selectedCategory'));
+    }
+
+    public function show($id)
+    {
+        $pp = Service::withoutGlobalScopes()->with(['bundleItems.service', 'bundleItems.product'])->findOrFail($id);
+        $pc = \App\Models\Sale::where('service_id', $id)->sum('total_amount');
+        $qt = \App\Models\Sale::where('service_id', $id)->sum('quantity_buy');
+        return view('admin.service.product', compact('id', 'pp', 'pc', 'qt'));
+    }
+
+    public function toggleStatus($id)
+    {
+        $service = Service::withoutGlobalScopes()->with(['bundleItems.service', 'bundleItems.product'])->findOrFail($id);
+        $service->status = $service->status == 1 ? 0 : 1;
+        $service->save();
+        return response()->json(['success' => true, 'new_status' => $service->status]);
+    }
+
+    public function liveSearchServices(Request $request)
+    {
+        $term = $request->term;
+        $categoryId = $request->input('category_id');
+        $patientId = $request->input('patient_id');
+        $context = $request->input('context', 'all'); // 'lab', 'imaging', 'product', 'all'
+
+        // PART 1: Direct service/combo matches
+        $query = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+            ->where('status', 1);
+
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+        if ($term) {
+            $query->where('service_name', 'LIKE', "%{$term}%");
+        }
+
+        $directServices = $query->limit(20)->get();
+
+        // PART 2: Combos that contain matching services/products (or match by name)
+        $relatedCombos = collect();
+        if ($term) {
+            $combosQuery = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+                ->where('is_combo', true)
+                ->where('status', 1)
+                ->where(function ($q) use ($term) {
+                    // Match by combo name OR by bundle item names
+                    $q->where('service_name', 'LIKE', "%{$term}%")
+                      ->orWhereHas('bundleItems', function ($bq) use ($term) {
+                          $bq->where(function ($subQ) use ($term) {
+                              $subQ->where('item_type', 'service')
+                                  ->whereHas('service', function ($sQ) use ($term) {
+                                      $sQ->where('service_name', 'LIKE', "%{$term}%");
+                                  });
+                          })->orWhere(function ($subQ) use ($term) {
+                              $subQ->where('item_type', 'product')
+                                  ->whereHas('product', function ($pQ) use ($term) {
+                                      $pQ->where('product_name', 'LIKE', "%{$term}%");
+                                  });
+                          });
+                      });
+                });
+
+            // When searching within a specific category (e.g. imaging), only show combos
+            // that contain at least one service item belonging to that category
+            if ($categoryId) {
+                $combosQuery->whereHas('bundleItems', function ($q) use ($categoryId) {
+                    $q->where('item_type', 'service')
+                      ->whereHas('service', function ($sQ) use ($categoryId) {
+                          $sQ->where('category_id', $categoryId);
+                      });
+                });
+            }
+
+            // Exclude combos already returned as direct results
+            $directIds = $directServices->pluck('id')->toArray();
+            if (!empty($directIds)) {
+                $combosQuery->whereNotIn('id', $directIds);
+            }
+
+            $relatedCombos = $combosQuery->limit(10)->get();
+        }
+
+        // PART 3: Batch-load HMO tariffs for all results (direct + combos)
+        $hmoMap = [];
+        if ($patientId) {
+            try {
+                $patient = \App\Models\Patient::find($patientId);
+                if ($patient && $patient->hmo_id) {
+                    $allServiceIds = $directServices->pluck('id')
+                        ->merge($relatedCombos->pluck('id'))
+                        ->unique()
+                        ->toArray();
+
+                    $tariffs = \App\Models\HmoTariff::where('hmo_id', $patient->hmo_id)
+                        ->whereIn('service_id', $allServiceIds)
+                        ->whereNull('product_id')
+                        ->get();
+
+                    foreach ($tariffs as $tariff) {
+                        $hmoMap[$tariff->service_id] = [
+                            'payable_amount' => $tariff->payable_amount,
+                            'claims_amount'  => $tariff->claims_amount,
+                            'coverage_mode'  => $tariff->coverage_mode,
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('HMO tariff batch load failed: ' . $e->getMessage());
+            }
+        }
+
+        // PART 4: Format response - direct services first
+        $results = [];
+
+        foreach ($directServices as $service) {
+            $results[] = $this->formatServiceSearchResult($service, $hmoMap, false);
+        }
+
+        // PART 5: Add related combos as separate group
+        foreach ($relatedCombos as $combo) {
+            $results[] = $this->formatServiceSearchResult($combo, $hmoMap, true);
+        }
+
+        return response()->json($results);
     }
 
     /**
-     * Show the result template builder for a service
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Format a single service or combo for search results.
+     * Includes full pricing (base, payable, claims) and combo detection.
      */
+    protected function formatServiceSearchResult($service, $hmoMap, $isCombo)
+    {
+        $basePrice = $service->price ? $service->price->sale_price : 0;
+        $hmoData = $hmoMap[$service->id] ?? null;
+
+        $result = [
+            'id'               => $service->id,
+            'service_name'     => $service->service_name,
+            'service_code'     => $service->service_code ?? '',
+            'category'         => $service->category ? $service->category->category_name : 'N/A',
+            'price'            => $service->price,
+            'base_price'       => $basePrice,
+            'payable_amount'   => $hmoData['payable_amount'] ?? $basePrice,
+            'claims_amount'    => $hmoData['claims_amount'] ?? 0,
+            'coverage_mode'    => $hmoData['coverage_mode'] ?? null,
+            'is_combo'         => $isCombo || $service->is_combo,
+        ];
+
+        // If this is a combo, include bundle item summary
+        if ($result['is_combo'] && $service->bundleItems && $service->bundleItems->count() > 0) {
+            $result['bundle_items'] = $service->bundleItems->map(function ($item) {
+                return [
+                    'id'        => $item->id,
+                    'type'      => $item->item_type, // 'service' | 'product'
+                    'item_id'   => $item->item_id,
+                    'name'      => $item->item_type === 'service'
+                        ? ($item->service->service_name ?? 'Unknown')
+                        : ($item->product->product_name ?? 'Unknown'),
+                    'qty'       => $item->qty,
+                    'dose'      => $item->dose,
+                    'note'      => $item->note,
+                ];
+            })->toArray();
+        }
+
+        return $result;
+    }
+
     public function buildTemplate($id)
     {
         $service = Service::with('category')->findOrFail($id);
-
-        // Decode existing template if any
-        $template = $service->result_template_v2;
-
-        return view('admin.service.template-builder', [
-            'service' => $service,
-            'template' => $template
-        ]);
+        return view('admin.service.template-builder', ['service' => $service, 'template' => $service->result_template_v2]);
     }
 
-    /**
-     * Save the result template for a service
-     *
-     * @param  Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function saveTemplate(Request $request, $id)
     {
-        try {
-            $service = Service::findOrFail($id);
+        $service = Service::findOrFail($id);
+        $service->result_template_v2 = $request->template;
+        $service->save();
+        return response()->json(['success' => true]);
+    }
 
-            // Validate the template structure with flexible rules
-            $validated = $request->validate([
-                'template_name' => 'required|string|max:255',
-                'parameters' => 'required|array|min:1',
-                'parameters.*.id' => 'required|string',
-                'parameters.*.name' => 'required|string',
-                'parameters.*.code' => 'required|string',
-                'parameters.*.type' => 'required|in:string,integer,float,boolean,enum,long_text',
-                'parameters.*.unit' => 'nullable|string',
-                'parameters.*.required' => 'required',
-                'parameters.*.show_in_report' => 'required',
-                'parameters.*.order' => 'required|integer',
-                'parameters.*.reference_range' => 'nullable|array',
-                'parameters.*.reference_range.min' => 'nullable|numeric',
-                'parameters.*.reference_range.max' => 'nullable|numeric',
-                'parameters.*.reference_range.reference_value' => 'nullable',
-                'parameters.*.reference_range.text' => 'nullable|string',
-                'parameters.*.options' => 'nullable|array',
-                'parameters.*.options.*.value' => 'nullable|string',
-                'parameters.*.options.*.label' => 'nullable|string',
-            ]);
+    public function listSalesService(Request $request, $id)
+    {
+        $pc = \App\Models\Sale::where('service_id', '=', $id)
+            ->with(['product_or_service_request.invoice', 'service', 'store'])
+            ->orderBy('id', 'DESC')->get();
 
-            // Clean up and process parameters
-            $parameters = [];
-            foreach ($validated['parameters'] as $param) {
-                $cleanParam = [
-                    'id' => $param['id'],
-                    'name' => $param['name'],
-                    'code' => $param['code'],
-                    'type' => $param['type'],
-                    'unit' => $param['unit'] ?? null,
-                    'required' => filter_var($param['required'], FILTER_VALIDATE_BOOLEAN),
-                    'show_in_report' => filter_var($param['show_in_report'], FILTER_VALIDATE_BOOLEAN),
-                    'order' => (int)$param['order'],
-                ];
-
-                // Add options if present and not empty (for enum type)
-                if (isset($param['options']) && is_array($param['options']) && !empty($param['options'])) {
-                    $cleanParam['options'] = array_values(array_filter($param['options'], function($opt) {
-                        return isset($opt['value']) && $opt['value'] !== '';
-                    }));
-                }
-
-                // Add reference range if present and not empty
-                if (isset($param['reference_range']) && is_array($param['reference_range'])) {
-                    $refRange = array_filter($param['reference_range'], function($value) {
-                        return $value !== null && $value !== '';
-                    });
-
-                    if (!empty($refRange)) {
-                        // For enum type, validate that reference_value is in options
-                        if ($param['type'] === 'enum' && isset($refRange['reference_value'])) {
-                            if (!isset($cleanParam['options']) || empty($cleanParam['options'])) {
-                                return response()->json([
-                                    'success' => false,
-                                    'message' => "Enum parameter '{$param['name']}' must have options defined before setting a reference value."
-                                ], 400);
-                            }
-
-                            $optionValues = array_column($cleanParam['options'], 'value');
-                            if (!in_array($refRange['reference_value'], $optionValues)) {
-                                return response()->json([
-                                    'success' => false,
-                                    'message' => "Reference value '{$refRange['reference_value']}' for parameter '{$param['name']}' must be one of the defined options: " . implode(', ', $optionValues)
-                                ], 400);
-                            }
-                        }
-
-                        // Convert numeric strings to numbers for min/max
-                        if (isset($refRange['min'])) {
-                            $refRange['min'] = is_numeric($refRange['min']) ? (float)$refRange['min'] : $refRange['min'];
-                        }
-                        if (isset($refRange['max'])) {
-                            $refRange['max'] = is_numeric($refRange['max']) ? (float)$refRange['max'] : $refRange['max'];
-                        }
-                        $cleanParam['reference_range'] = $refRange;
-                    }
-                }
-
-                $parameters[] = $cleanParam;
-            }
-
-            // Build the template structure
-            $template = [
-                'template_name' => $validated['template_name'],
-                'version' => '2.0',
-                'parameters' => $parameters
-            ];
-
-            // Save to database
-            $service->result_template_v2 = $template;
-            $service->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Template saved successfully',
-                'template' => $template
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error saving template: ' . $e->getMessage()
-            ], 500);
-        }
+        return \Yajra\DataTables\DataTables::of($pc)
+            ->addIndexColumn()
+            ->addColumn('view', function ($pc) {
+                return 'todo';
+            })
+            ->editColumn('product', function ($pc) {
+                return $pc->service->service_name ?? 'N/A';
+            })
+            ->editColumn('store', function ($pc) {
+                return $pc->store->store_name ?? 'N/A';
+            })
+            ->editColumn('trans', function ($pc) {
+                return $pc->product_or_service_request->invoice->id ?? 'N/A';
+            })
+            ->editColumn('customer', function ($pc) {
+                return $pc->product_or_service_request->user->surname ?? 'N/A';
+            })
+            ->editColumn('budgetYear', function ($pc) {
+                return 'todo';
+            })
+            ->rawColumns(['view', 'product', 'store', 'trans', 'customer', 'budgetYear'])
+            ->make(true);
     }
 }

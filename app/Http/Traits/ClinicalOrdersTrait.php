@@ -2,114 +2,30 @@
 
 namespace App\Http\Traits;
 
+use App\Models\Encounter;
 use App\Models\LabServiceRequest;
 use App\Models\ImagingServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\Procedure;
+use App\Models\ProcedureItem;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Service;
-use App\Models\Patient;
-use App\Helpers\HmoHelper;
-use App\Models\Encounter;
 use App\Models\Product;
+use App\Models\Patient;
+use App\Models\ServicePrice;
+use App\Models\AdmissionRequest;
+use App\Models\DoctorQueue;
+use App\Models\QueueStatus;
+use App\Services\QueueStatusService;
+use App\Helpers\HmoHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-/**
- * ClinicalOrdersTrait — Shared single-item CRUD for clinical orders.
- *
- * Ref:  CLINICAL_ORDERS_PLAN.md §3.1
- *
- * Used by:
- *   - EncounterController   (doctor — encounter-bound, encounter_id set)
- *   - NursingWorkbenchController (nurse — patient-bound, encounter_id = null)
- *
- * Column references verified against models:
- *   LabServiceRequest:       service_id, note, patient_id, encounter_id, doctor_id, status, priority
- *   ImagingServiceRequest:   service_id, note, patient_id, encounter_id, doctor_id, status, priority
- *   ProductRequest:          product_id, dose, patient_id, encounter_id, doctor_id
- *   Procedure:               service_id, patient_id, encounter_id, requested_by, requested_on,
- *                            priority, procedure_status, pre_notes, pre_notes_by,
- *                            scheduled_date, procedure_definition_id, product_or_service_request_id
- *   ProductOrServiceRequest: type, service_id, user_id, staff_user_id, encounter_id,
- *                            admission_request_id, created_by, order_date,
- *                            amount, claims_amount, coverage_mode, hmo_id
- */
 trait ClinicalOrdersTrait
 {
     /* ═══════════════════════════════════════════
-       DELETION ELIGIBILITY CHECK
-       ═══════════════════════════════════════════ */
-
-    /**
-     * Determine whether the current user may delete a clinical request.
-     *
-     * Rules checked (in order):
-     *   1. Current user must be the original requester (doctor_id / requested_by).
-     *   2. The request must still be within the note_edit_window (appsettings).
-     *   3. Item must NOT already be delivered / completed / billed.
-     *
-     * @param  string $type  One of: lab, imaging, prescription, procedure
-     * @param  \Illuminate\Database\Eloquent\Model $item  The Eloquent model instance
-     * @return array{allowed: bool, reason: string}
-     */
-    protected function canDeleteClinicalRequest(string $type, $item): array
-    {
-        $userId = Auth::id();
-
-        // 1. Ownership check
-        $creatorField = ($type === 'procedure') ? 'requested_by' : 'doctor_id';
-        if ((int) $item->{$creatorField} !== (int) $userId) {
-            return ['allowed' => false, 'reason' => 'You can only delete your own requests.'];
-        }
-
-        // 2. Edit-window check
-        $editWindowMinutes = appsettings('note_edit_window', 30);
-        $createdAt = $item->created_at;
-        if ($createdAt && now()->diffInMinutes($createdAt) > $editWindowMinutes) {
-            return ['allowed' => false, 'reason' => "Edit window ({$editWindowMinutes} min) has expired."];
-        }
-
-        // 3. Type-specific status / delivery checks
-        switch ($type) {
-            case 'lab':
-            case 'imaging':
-                // status > 2 means sample collected / completed / approved / rejected
-                if ($item->status > 2) {
-                    return ['allowed' => false, 'reason' => 'Results have already been entered.'];
-                }
-                if ($item->billed_by || $item->billed_date) {
-                    return ['allowed' => false, 'reason' => 'This request has already been billed.'];
-                }
-                if (!empty($item->result)) {
-                    return ['allowed' => false, 'reason' => 'Results have already been entered.'];
-                }
-                break;
-
-            case 'prescription':
-                // status > 2 means dispensed
-                if ($item->status > 2) {
-                    return ['allowed' => false, 'reason' => 'This prescription has already been dispensed.'];
-                }
-                if ($item->billed_by || $item->billed_date) {
-                    return ['allowed' => false, 'reason' => 'This prescription has already been billed.'];
-                }
-                break;
-
-            case 'procedure':
-                $allowed = [Procedure::STATUS_REQUESTED, Procedure::STATUS_SCHEDULED];
-                if (!in_array($item->procedure_status, $allowed)) {
-                    return ['allowed' => false, 'reason' => 'Cannot delete a procedure that is already in progress or completed.'];
-                }
-                break;
-        }
-
-        return ['allowed' => true, 'reason' => ''];
-    }
-
-    /* ═══════════════════════════════════════════
-       LABS  (LabServiceRequest model)
+       LABORATORY (LabServiceRequest model)
        ═══════════════════════════════════════════ */
 
     /**
@@ -119,9 +35,10 @@ trait ClinicalOrdersTrait
      * @param string|null $note         clinical note
      * @param int         $patientId    patients.id
      * @param int|null    $encounterId  encounters.id (null for nurse)
+     * @param array       $extra        Extra fields (service_request_id, status, etc)
      * @return LabServiceRequest
      */
-    protected function addSingleLab(int $serviceId, ?string $note, int $patientId, ?int $encounterId): LabServiceRequest
+    protected function addSingleLab(int $serviceId, ?string $note, int $patientId, ?int $encounterId, array $extra = []): LabServiceRequest
     {
         $lab = new LabServiceRequest();
         $lab->service_id   = $serviceId;
@@ -129,6 +46,20 @@ trait ClinicalOrdersTrait
         $lab->patient_id   = $patientId;
         $lab->encounter_id = $encounterId; // null for nurse
         $lab->doctor_id    = Auth::id();
+
+        if (isset($extra['service_request_id'])) {
+            $lab->service_request_id = $extra['service_request_id'];
+        }
+        if (isset($extra['status'])) {
+            $lab->status = $extra['status'];
+        }
+        if (isset($extra['billed_by'])) {
+            $lab->billed_by = $extra['billed_by'];
+        }
+        if (isset($extra['billed_date'])) {
+            $lab->billed_date = $extra['billed_date'];
+        }
+
         $lab->save();
 
         return $lab;
@@ -178,9 +109,10 @@ trait ClinicalOrdersTrait
      * @param string|null $note         clinical note
      * @param int         $patientId    patients.id
      * @param int|null    $encounterId  encounters.id (null for nurse)
+     * @param array       $extra        Extra fields
      * @return ImagingServiceRequest
      */
-    protected function addSingleImaging(int $serviceId, ?string $note, int $patientId, ?int $encounterId): ImagingServiceRequest
+    protected function addSingleImaging(int $serviceId, ?string $note, int $patientId, ?int $encounterId, array $extra = []): ImagingServiceRequest
     {
         $imaging = new ImagingServiceRequest();
         $imaging->service_id   = $serviceId;
@@ -188,13 +120,27 @@ trait ClinicalOrdersTrait
         $imaging->patient_id   = $patientId;
         $imaging->encounter_id = $encounterId;
         $imaging->doctor_id    = Auth::id();
+
+        if (isset($extra['service_request_id'])) {
+            $imaging->service_request_id = $extra['service_request_id'];
+        }
+        if (isset($extra['status'])) {
+            $imaging->status = $extra['status'];
+        }
+        if (isset($extra['billed_by'])) {
+            $imaging->billed_by = $extra['billed_by'];
+        }
+        if (isset($extra['billed_date'])) {
+            $imaging->billed_date = $extra['billed_date'];
+        }
+
         $imaging->save();
 
         return $imaging;
     }
 
     /**
-     * Update a single imaging request's clinical note (debounced auto-save).
+     * Update a single imaging's clinical note (debounced auto-save).
      */
     protected function updateSingleImagingNote(int $id, ?string $note): ImagingServiceRequest
     {
@@ -237,9 +183,10 @@ trait ClinicalOrdersTrait
      * @param string      $dose         pipe-delimited dose or empty
      * @param int         $patientId    patients.id
      * @param int|null    $encounterId  encounters.id (null for nurse)
+     * @param array       $extra        Extra fields
      * @return ProductRequest
      */
-    protected function addSinglePrescription(int $productId, ?string $dose, int $patientId, ?int $encounterId): ProductRequest
+    protected function addSinglePrescription(int $productId, ?string $dose, int $patientId, ?int $encounterId, array $extra = []): ProductRequest
     {
         $presc = new ProductRequest();
         $presc->product_id    = $productId;
@@ -247,30 +194,38 @@ trait ClinicalOrdersTrait
         $presc->patient_id    = $patientId;
         $presc->encounter_id  = $encounterId;
         $presc->doctor_id     = Auth::id();
+
+        if (isset($extra['status'])) {
+            $presc->status = $extra['status'];
+        }
+        if (isset($extra['billed_by'])) {
+            $presc->billed_by = $extra['billed_by'];
+        }
+        if (isset($extra['billed_date'])) {
+            $presc->billed_date = $extra['billed_date'];
+        }
+        if (isset($extra['product_request_id'])) {
+            $presc->product_request_id = $extra['product_request_id'];
+        }
+
         $presc->save();
 
         return $presc;
     }
 
     /**
-     * Update a prescription's dose (for debounced auto-save).
-     * Ref: Plan §4.3 — Two-phase medication save.
+     * Update a single prescription's dose (debounced auto-save).
      */
-    protected function updatePrescriptionDose(int $id, string $dose): ProductRequest
+    protected function updateSinglePrescriptionDose(int $id, ?string $dose): ProductRequest
     {
         $presc = ProductRequest::findOrFail($id);
-        $presc->dose = $dose;
+        $presc->dose = $dose ?? '';
         $presc->save();
-
         return $presc;
     }
 
     /**
      * Remove a single prescription (validated + soft-delete with audit).
-     *
-     * @param int         $id
-     * @param string|null $reason  Optional deletion reason
-     * @throws \RuntimeException when deletion is not allowed
      */
     protected function removeSinglePrescription(int $id, ?string $reason = null): void
     {
@@ -288,22 +243,20 @@ trait ClinicalOrdersTrait
     }
 
     /* ═══════════════════════════════════════════
-       PROCEDURES  (Procedure + ProductOrServiceRequest models)
-       Billing logic extracted from existing:
-         - EncounterController::saveProcedures()      (line 2790)
-         - NursingWorkbenchController::saveNurseProcedures() (line 4651)
+       PROCEDURES (Procedure model)
        ═══════════════════════════════════════════ */
 
     /**
-     * Create a single procedure with billing entry.
+     * Add a single procedure and its billing entry.
      *
-     * @param array    $data  { service_id, priority, scheduled_date?, pre_notes? }
-     * @param int      $patientId
-     * @param int|null $encounterId        null for nurse
-     * @param int|null $admissionRequestId null for nurse
+     * @param array       $data
+     * @param int         $patientId
+     * @param int|null    $encounterId
+     * @param int|null    $admissionRequestId
+     * @param array       $extra        Extra billing fields (is_bundle_item, parent_id)
      * @return Procedure
      */
-    protected function addSingleProcedure(array $data, int $patientId, ?int $encounterId, ?int $admissionRequestId = null): Procedure
+    protected function addSingleProcedure(array $data, int $patientId, ?int $encounterId, ?int $admissionRequestId = null, array $extra = []): Procedure
     {
         $service = Service::with('price', 'procedureDefinition')->find($data['service_id']);
 
@@ -318,7 +271,7 @@ trait ClinicalOrdersTrait
         $procedure->encounter_id     = $encounterId;         // null for nurse
         $procedure->requested_by     = Auth::id();
         $procedure->requested_on     = now();
-        $procedure->priority         = $data['priority'];
+        $procedure->priority         = $data['priority'] ?? 'routine';
         $procedure->procedure_status = Procedure::STATUS_REQUESTED;
         $procedure->pre_notes        = $data['pre_notes'] ?? null;
         $procedure->pre_notes_by     = !empty($data['pre_notes']) ? Auth::id() : null;
@@ -338,11 +291,13 @@ trait ClinicalOrdersTrait
         $basePrice = optional($service->price)->sale_price ?? 0;
 
         $coverage = null;
-        try {
-            $coverage = HmoHelper::applyHmoTariff($patientId, null, $service->id);
-        } catch (\Exception $e) {
-            Log::warning('HmoHelper::applyHmoTariff failed for patient ' . $patientId . ', service ' . $service->id . ': ' . $e->getMessage());
-            $coverage = null;
+        if (!($extra['is_bundle_item'] ?? false)) {
+            try {
+                $coverage = HmoHelper::applyHmoTariff($patientId, null, $service->id);
+            } catch (\Exception $e) {
+                Log::warning('HmoHelper::applyHmoTariff failed: ' . $e->getMessage());
+                $coverage = null;
+            }
         }
 
         $patient = Patient::find($patientId);
@@ -355,19 +310,25 @@ trait ClinicalOrdersTrait
         $billing->created_by           = Auth::id();
         $billing->order_date           = now();
 
-        // Only set encounter/admission on billing if available (doctor has them, nurse doesn't)
         if ($encounterId) {
             $billing->encounter_id          = $encounterId;
             $billing->admission_request_id  = $admissionRequestId;
         }
 
-        if ($coverage && ($coverage['coverage_mode'] ?? '') === 'hmo') {
-            $billing->amount        = $coverage['payable_amount'];
+        if ($extra['is_bundle_item'] ?? false) {
+            $billing->payable_amount = 0;
+            $billing->claims_amount  = 0;
+            $billing->coverage_mode  = $extra['coverage_mode'] ?? 'none';
+            $billing->parent_id      = $extra['parent_id'] ?? null;
+            $billing->is_bundle_item = true;
+        } elseif ($coverage && ($coverage['coverage_mode'] ?? '') === 'hmo') {
+            $billing->payable_amount = $coverage['payable_amount'];
             $billing->claims_amount = $coverage['claims_amount'];
-            $billing->coverage_mode = 'hmo';
+            $billing->coverage_mode = $coverage['coverage_mode'];
             $billing->hmo_id        = $coverage['hmo_id'] ?? null;
+            $billing->validation_status = $coverage['validation_status'] ?? 'pending';
         } else {
-            $billing->amount        = $basePrice;
+            $billing->payable_amount = $basePrice;
             $billing->claims_amount = 0;
             $billing->coverage_mode = 'cash';
         }
@@ -383,10 +344,6 @@ trait ClinicalOrdersTrait
 
     /**
      * Remove a single procedure + its billing entry (validated + soft-delete with audit).
-     *
-     * @param int         $id
-     * @param string|null $reason  Optional deletion reason
-     * @throws \RuntimeException when deletion is not allowed
      */
     protected function removeSingleProcedure(int $id, ?string $reason = null): void
     {
@@ -397,10 +354,9 @@ trait ClinicalOrdersTrait
             throw new \RuntimeException($check['reason']);
         }
 
-        // Remove unpaid billing entry if linked
         if ($procedure->product_or_service_request_id) {
             $billing = ProductOrServiceRequest::find($procedure->product_or_service_request_id);
-            if ($billing && !$billing->paid) {
+            if ($billing && !$billing->payment_id) {
                 $billing->delete();
             }
         }
@@ -414,148 +370,73 @@ trait ClinicalOrdersTrait
     }
 
     /* ═══════════════════════════════════════════
-       RE-PRESCRIBE FROM PREVIOUS ENCOUNTERS  (Plan §5.1)
+       UTILITIES
        ═══════════════════════════════════════════ */
 
     /**
-     * Re-prescribe (copy) items from a previous encounter/history into the current one.
-     *
-     * @param string      $type          'labs' | 'imaging' | 'prescriptions' | 'procedures'
-     * @param array       $sourceIds     IDs of the original records to copy
-     * @param int         $patientId     Target patient
-     * @param int|null    $encounterId   Target encounter (null for nurse)
-     * @param array       $doseOverrides Optional dose overrides keyed by source ID
-     * @return \Illuminate\Support\Collection  Newly created records
+     * Check if a clinical request can be deleted.
      */
-    protected function rePrescribeItems(
-        string $type,
-        array  $sourceIds,
-        int    $patientId,
-        ?int   $encounterId,
-        array  $doseOverrides = []
-    ): \Illuminate\Support\Collection {
-        return DB::transaction(function () use ($type, $sourceIds, $patientId, $encounterId, $doseOverrides) {
-            $created = collect();
+    protected function canDeleteClinicalRequest(string $type, $model): array
+    {
+        $editWindowMinutes = appsettings('note_edit_window', 30);
+        $withinWindow = $model->created_at && now()->diffInMinutes($model->created_at) <= $editWindowMinutes;
+        $isAuthor = Auth::id() == ($model->doctor_id ?? $model->requested_by);
 
-            switch ($type) {
-                case 'labs':
-                    $originals = LabServiceRequest::whereIn('id', $sourceIds)->get();
-                    foreach ($originals as $orig) {
-                        $new = $this->addSingleLab(
-                            $orig->service_id,
-                            $orig->note,
-                            $patientId,
-                            $encounterId
-                        );
-                        $created->push($new);
-                    }
-                    break;
-
-                case 'imaging':
-                    $originals = ImagingServiceRequest::whereIn('id', $sourceIds)->get();
-                    foreach ($originals as $orig) {
-                        $new = $this->addSingleImaging(
-                            $orig->service_id,
-                            $orig->note,
-                            $patientId,
-                            $encounterId
-                        );
-                        $created->push($new);
-                    }
-                    break;
-
-                case 'prescriptions':
-                    $originals = ProductRequest::whereIn('id', $sourceIds)->get();
-                    foreach ($originals as $orig) {
-                        $dose = $doseOverrides[$orig->id] ?? $orig->dose;
-                        $new = $this->addSinglePrescription(
-                            $orig->product_id,
-                            $dose ?? '',
-                            $patientId,
-                            $encounterId
-                        );
-                        $created->push($new);
-                    }
-                    break;
-
-                case 'procedures':
-                    $originals = Procedure::whereIn('id', $sourceIds)->get();
-                    foreach ($originals as $orig) {
-                        $new = $this->addSingleProcedure(
-                            [
-                                'service_id'     => $orig->service_id,
-                                'priority'       => $orig->priority ?? 'routine',
-                                'pre_notes'      => $orig->pre_notes,
-                                'scheduled_date' => null,
-                            ],
-                            $patientId,
-                            $encounterId
-                        );
-                        $created->push($new);
-                    }
-                    break;
-
-                default:
-                    throw new \InvalidArgumentException("Unsupported re-prescribe type: {$type}");
-            }
-
-            return $created;
-        });
-    }
-
-    /* ═══════════════════════════════════════════
-       APPLY TREATMENT PLAN  (Plan §6.3)
-       ═══════════════════════════════════════════ */
-
-    /**
-     * Apply a treatment plan — creates real orders for each plan item.
-     *
-     * @param \App\Models\TreatmentPlan $plan
-     * @param int                       $patientId
-     * @param int|null                  $encounterId  null for nurse
-     * @param array                     $selectedItemIds  Optional subset — if empty, apply all items
-     * @return \Illuminate\Support\Collection  Newly created records, keyed by type
-     */
-    protected function applyTreatmentPlan(
-        \App\Models\TreatmentPlan $plan,
-        int $patientId,
-        ?int $encounterId,
-        array $selectedItemIds = []
-    ): \Illuminate\Support\Collection {
-        $items = $plan->items;
-        if (!empty($selectedItemIds)) {
-            $items = $items->whereIn('id', $selectedItemIds);
+        if (!$isAuthor) {
+            return ['allowed' => false, 'reason' => 'You are not the author of this request.'];
         }
 
-        return DB::transaction(function () use ($items, $patientId, $encounterId) {
-            $results = ['labs' => [], 'imaging' => [], 'prescriptions' => [], 'procedures' => []];
+        if (!$withinWindow) {
+            return ['allowed' => false, 'reason' => 'The edit/delete window has expired.'];
+        }
 
-            foreach ($items as $item) {
+        // Check if billed (except for procedures which have linked billing already)
+        if ($type !== 'procedure') {
+            if ($model->service_request_id || $model->product_request_id || $model->billed_by) {
+                return ['allowed' => false, 'reason' => 'This request has already been billed.'];
+            }
+        } else {
+            // For procedures, check if payment exists
+            $billing = ProductOrServiceRequest::find($model->product_or_service_request_id);
+            if ($billing && $billing->payment_id) {
+                return ['allowed' => false, 'reason' => 'The billing entry for this procedure has been paid.'];
+            }
+        }
+
+        return ['allowed' => true];
+    }
+
+    /**
+     * Apply a treatment plan.
+     */
+    protected function applyTreatmentPlan(int $planId, int $patientId, ?int $encounterId): \Illuminate\Support\Collection
+    {
+        return DB::transaction(function () use ($planId, $patientId, $encounterId) {
+            $plan = \App\Models\TreatmentPlan::with('items')->findOrFail($planId);
+            $results = [
+                'labs'          => [],
+                'imaging'       => [],
+                'prescriptions' => [],
+                'procedures'    => [],
+            ];
+
+            foreach ($plan->items as $item) {
                 switch ($item->item_type) {
                     case 'lab':
-                        $record = $this->addSingleLab($item->reference_id, $item->note, $patientId, $encounterId);
-                        $results['labs'][] = $record;
+                        $results['labs'][] = $this->addSingleLab($item->reference_id, $item->note, $patientId, $encounterId);
                         break;
                     case 'imaging':
-                        $record = $this->addSingleImaging($item->reference_id, $item->note, $patientId, $encounterId);
-                        $results['imaging'][] = $record;
+                        $results['imaging'][] = $this->addSingleImaging($item->reference_id, $item->note, $patientId, $encounterId);
                         break;
-                    case 'medication':
-                        $record = $this->addSinglePrescription($item->reference_id, $item->dose ?? '', $patientId, $encounterId);
-                        $results['prescriptions'][] = $record;
+                    case 'product':
+                        $results['prescriptions'][] = $this->addSinglePrescription($item->reference_id, $item->dose, $patientId, $encounterId);
                         break;
                     case 'procedure':
-                        $record = $this->addSingleProcedure(
-                            [
-                                'service_id'     => $item->reference_id,
-                                'priority'       => $item->priority ?? 'routine',
-                                'pre_notes'      => $item->note,
-                                'scheduled_date' => null,
-                            ],
-                            $patientId,
-                            $encounterId
-                        );
-                        $results['procedures'][] = $record;
+                        $results['procedures'][] = $this->addSingleProcedure([
+                            'service_id' => $item->reference_id,
+                            'priority'   => $item->priority ?? 'routine',
+                            'pre_notes'  => $item->note,
+                        ], $patientId, $encounterId);
                         break;
                 }
             }
@@ -564,18 +445,8 @@ trait ClinicalOrdersTrait
         });
     }
 
-    /* ═══════════════════════════════════════════
-       RECENT ENCOUNTERS (Plan §5.3)
-       ═══════════════════════════════════════════ */
-
     /**
-     * Fetch the last N encounters for a patient with item counts per type.
-     * Used by "Re-prescribe from encounter" dropdown.
-     *
-     * @param int $patientId
-     * @param int $limit            defaults to 5
-     * @param int|null $exceptId    encounter ID to exclude (current encounter)
-     * @return \Illuminate\Support\Collection
+     * Fetch the last N encounters for a patient.
      */
     protected function recentEncountersForPatient(int $patientId, int $limit = 5, ?int $exceptId = null): \Illuminate\Support\Collection
     {
@@ -583,7 +454,7 @@ trait ClinicalOrdersTrait
             ->when($exceptId, fn($q) => $q->where('id', '!=', $exceptId))
             ->orderByDesc('created_at')
             ->limit($limit)
-            ->get(['id', 'created_at', 'doctor_id']);
+            ->get();
 
         return $encounters->map(function ($enc) {
             return [
@@ -599,58 +470,158 @@ trait ClinicalOrdersTrait
     }
 
     /**
-     * Get all items from a specific encounter, grouped by type.
-     * Used for "Re-prescribe all from encounter" feature.
-     *
-     * @param int $encounterId
-     * @return array  ['labs' => [...], 'imaging' => [...], 'prescriptions' => [...], 'procedures' => [...]]
+     * Apply a service combo.
      */
-    protected function getEncounterItems(int $encounterId): array
+    protected function applyServiceCombo(Service $combo, int $patientId, ?int $encounterId): array
     {
-        $labs = LabServiceRequest::where('encounter_id', $encounterId)
-            ->with('service:id,service_name,service_code')
-            ->get(['id', 'service_id', 'note']);
+        return DB::transaction(function () use ($combo, $patientId, $encounterId) {
+            $patient = Patient::findOrFail($patientId);
+            $staffId = Auth::id();
 
-        $imaging = ImagingServiceRequest::where('encounter_id', $encounterId)
-            ->with('service:id,service_name,service_code')
-            ->get(['id', 'service_id', 'note']);
+            // 1. Create Parent Billing Request
+            $parentRequest = new ProductOrServiceRequest();
+            $parentRequest->user_id       = $patient->user_id;
+            $parentRequest->staff_user_id = $staffId;
+            $parentRequest->created_by    = $staffId;
+            $parentRequest->service_id    = $combo->id;
+            $parentRequest->qty           = 1;
+            $parentRequest->encounter_id  = $encounterId;
+            $parentRequest->order_date    = now();
 
-        $prescriptions = ProductRequest::where('encounter_id', $encounterId)
-            ->with('product:id,product_name')
-            ->get(['id', 'product_id', 'dose']);
+            try {
+                $hmoData = HmoHelper::applyHmoTariff($patientId, null, $combo->id);
+                if ($hmoData) {
+                    $parentRequest->payable_amount   = $hmoData['payable_amount'];
+                    $parentRequest->claims_amount    = $hmoData['claims_amount'];
+                    $parentRequest->coverage_mode    = $hmoData['coverage_mode'];
+                    $parentRequest->validation_status = $hmoData['validation_status'];
+                }
+            } catch (\Exception $e) {
+                $price = ServicePrice::where('service_id', $combo->id)->value('sale_price') ?? 0;
+                $parentRequest->payable_amount = $price;
+                $parentRequest->coverage_mode  = 'cash';
+            }
+            $parentRequest->save();
 
-        $procedures = Procedure::where('encounter_id', $encounterId)
-            ->get(['id', 'service_id', 'priority', 'pre_notes']);
+            $results = ['parent' => $parentRequest, 'items' => []];
 
-        return [
-            'labs' => $labs->map(fn($l) => [
-                'id' => $l->id,
-                'service_id' => $l->service_id,
-                'name' => optional($l->service)->service_name ?? 'Unknown',
-                'note' => $l->note,
-            ])->toArray(),
-            'imaging' => $imaging->map(fn($i) => [
-                'id' => $i->id,
-                'service_id' => $i->service_id,
-                'name' => optional($i->service)->service_name ?? 'Unknown',
-                'note' => $i->note,
-            ])->toArray(),
-            'prescriptions' => $prescriptions->map(fn($p) => [
-                'id' => $p->id,
-                'product_id' => $p->product_id,
-                'name' => optional($p->product)->product_name ?? 'Unknown',
-                'dose' => $p->dose,
-            ])->toArray(),
-            'procedures' => $procedures->map(function ($proc) {
-                $svc = Service::find($proc->service_id);
+            foreach ($combo->bundleItems as $bundleItem) {
+                $childRequest = null;
+                $clinicalRecord = null;
+
+                if ($bundleItem->item_type === 'service') {
+                    $service = Service::find($bundleItem->item_id);
+                    if (!$service) continue;
+
+                    $childRequest = new ProductOrServiceRequest();
+                    $childRequest->user_id        = $patient->user_id;
+                    $childRequest->staff_user_id  = $staffId;
+                    $childRequest->created_by     = $staffId;
+                    $childRequest->service_id     = $service->id;
+                    $childRequest->qty            = $bundleItem->qty;
+                    $childRequest->encounter_id   = $encounterId;
+                    $childRequest->payable_amount = 0;
+                    $childRequest->claims_amount  = 0;
+                    $childRequest->coverage_mode  = $parentRequest->coverage_mode;
+                    $childRequest->parent_id      = $parentRequest->id;
+                    $childRequest->is_bundle_item = true;
+                    $childRequest->save();
+
+                    if ($service->isLab()) {
+                        $clinicalRecord = $this->addSingleLab($service->id, $bundleItem->note, $patientId, $encounterId, [
+                            'service_request_id' => $childRequest->id,
+                            'status'             => 2,
+                            'billed_by'          => $staffId,
+                            'billed_date'        => now()
+                        ]);
+                    } elseif ($service->isImaging()) {
+                        $clinicalRecord = $this->addSingleImaging($service->id, $bundleItem->note, $patientId, $encounterId, [
+                            'service_request_id' => $childRequest->id,
+                            'status'             => 2,
+                            'billed_by'          => $staffId,
+                            'billed_date'        => now()
+                        ]);
+                    } elseif ($service->isProcedure()) {
+                        $clinicalRecord = $this->addSingleProcedure([
+                            'service_id' => $service->id,
+                            'priority'   => 'routine',
+                            'pre_notes'  => $bundleItem->note,
+                        ], $patientId, $encounterId, null, [
+                            'is_bundle_item' => true,
+                            'parent_id'      => $parentRequest->id,
+                            'coverage_mode'  => $parentRequest->coverage_mode
+                        ]);
+                    }
+                } elseif ($bundleItem->item_type === 'product') {
+                    $product = Product::find($bundleItem->item_id);
+                    if (!$product) continue;
+
+                    $childRequest = new ProductOrServiceRequest();
+                    $childRequest->user_id        = $patient->user_id;
+                    $childRequest->staff_user_id  = $staffId;
+                    $childRequest->created_by     = $staffId;
+                    $childRequest->product_id     = $product->id;
+                    $childRequest->qty            = $bundleItem->qty;
+                    $childRequest->encounter_id   = $encounterId;
+                    $childRequest->payable_amount = 0;
+                    $childRequest->claims_amount  = 0;
+                    $childRequest->coverage_mode  = $parentRequest->coverage_mode;
+                    $childRequest->parent_id      = $parentRequest->id;
+                    $childRequest->is_bundle_item = true;
+                    $childRequest->save();
+
+                    $clinicalRecord = $this->addSinglePrescription($product->id, $bundleItem->dose, $patientId, $encounterId, [
+                        'status'             => 2,
+                        'billed_by'          => $staffId,
+                        'billed_date'        => now(),
+                        'product_request_id' => $childRequest->id
+                    ]);
+                }
+
+                $results['items'][] = ['billing' => $childRequest, 'clinical' => $clinicalRecord];
+            }
+
+            return $results;
+        });
+    }
+
+    /**
+     * Remove a service combo (bundle) and mark items as removed
+     * Only works if bundle hasn't been paid and items not delivered
+     */
+    protected function removeServiceCombo(int $parentRequestId): array
+    {
+        return DB::transaction(function () use ($parentRequestId) {
+            $parent = ProductOrServiceRequest::findOrFail($parentRequestId);
+            
+            // Check if combo was already paid (payment_id not null means payment has been recorded)
+            if ($parent->payment_id !== null) {
                 return [
-                    'id'         => $proc->id,
-                    'service_id' => $proc->service_id,
-                    'name'       => optional($svc)->service_name ?? 'Unknown',
-                    'priority'   => $proc->priority,
-                    'note'       => $proc->pre_notes,
+                    'success' => false,
+                    'message' => 'Cannot remove paid combo. Contact billing for refund requests.'
                 ];
-            })->toArray(),
-        ];
+            }
+
+            $staffId = Auth::id();
+
+            // Mark parent as removed
+            $parent->update([
+                'removed_by' => $staffId,
+                'removed_at' => now()
+            ]);
+
+            // Mark all child items as removed
+            $childCount = ProductOrServiceRequest::where('parent_id', $parent->id)
+                ->update([
+                    'removed_by' => $staffId,
+                    'removed_at' => now()
+                ]);
+
+            return [
+                'success' => true,
+                'message' => "Combo removed successfully. {$childCount} items removed.",
+                'parentRequestId' => $parent->id
+            ];
+        });
     }
 }

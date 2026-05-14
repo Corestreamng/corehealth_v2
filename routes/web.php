@@ -291,6 +291,15 @@ Route::group(['middleware' => ['auth']], function () {
         // V1 Result Templates (for lab/imaging WYSIWYG result entry)
         Route::get('v1-result-templates', [\App\Http\Controllers\V1ResultTemplateController::class, 'getTemplates'])->name('v1-result-templates.list');
 
+        // V1 Result Templates — Admin CRUD (must be before parameterised routes)
+        Route::get('v1-result-templates/manage', [\App\Http\Controllers\V1ResultTemplateController::class, 'index'])->name('v1-result-templates.index');
+        Route::get('v1-result-templates/dt-data', [\App\Http\Controllers\V1ResultTemplateController::class, 'dtData'])->name('v1-result-templates.data');
+        Route::post('v1-result-templates', [\App\Http\Controllers\V1ResultTemplateController::class, 'store'])->name('v1-result-templates.store');
+        Route::get('v1-result-templates/{v1_result_template}', [\App\Http\Controllers\V1ResultTemplateController::class, 'show'])->name('v1-result-templates.show');
+        Route::put('v1-result-templates/{v1_result_template}', [\App\Http\Controllers\V1ResultTemplateController::class, 'update'])->name('v1-result-templates.update');
+        Route::post('v1-result-templates/{v1_result_template}/toggle', [\App\Http\Controllers\V1ResultTemplateController::class, 'toggle'])->name('v1-result-templates.toggle');
+        Route::delete('v1-result-templates/{v1_result_template}', [\App\Http\Controllers\V1ResultTemplateController::class, 'destroy'])->name('v1-result-templates.destroy');
+
         // Clinic Schedules & Doctor Availability Management
         Route::get('clinic-schedules', [\App\Http\Controllers\ClinicScheduleController::class, 'index'])->name('clinic-schedules.index');
 
@@ -337,6 +346,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('encounters/{encounter}/add-procedure', [EncounterController::class, 'addSingleProcedureRequest'])->name('encounters.addProcedure');
 
         // Re-prescribe from history (Plan §5.1)
+        Route::post('encounters/{encounter}/apply-combo', [EncounterController::class, 'applyCombo'])->name('encounters.applyCombo');
+        Route::post('encounters/{encounter}/remove-bundle', [EncounterController::class, 'removeBundle'])->name('encounters.removeBundle');
+        // Generic remove-bundle (no encounter context needed — used by all history views)
+        Route::post('service-combo/remove-bundle', [EncounterController::class, 'removeBundleGeneric'])->name('serviceCombo.removeBundle');
         Route::post('encounters/{encounter}/re-prescribe', [EncounterController::class, 'rePrescribe'])->name('encounters.rePrescribe');
 
         // Recent encounters + items for re-prescribe dropdown (Plan §5.3)
@@ -591,6 +604,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/lab-workbench/patient/{id}/medications', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientMedications'])->name('lab.patient-medications');
         Route::get('/lab-workbench/patient/{id}/clinical-context', [\App\Http\Controllers\LabWorkbenchController::class, 'getClinicalContext'])->name('lab.clinical-context');
         Route::post('/lab-workbench/record-billing', [\App\Http\Controllers\LabWorkbenchController::class, 'recordBilling'])->name('lab.recordBilling');
+        Route::post('/lab-workbench/apply-combo', [\App\Http\Controllers\LabWorkbenchController::class, 'labApplyCombo'])->name('lab.applyCombo');
+        Route::post('/lab-workbench/remove-bundle', [\App\Http\Controllers\LabWorkbenchController::class, 'removeBundle'])->name('lab.removeBundle');
+        Route::post('/lab-workbench/claim-self-perform', [\App\Http\Controllers\LabWorkbenchController::class, 'claimSelfPerform'])->name('lab.claimSelfPerform');
         Route::post('/lab-workbench/collect-sample', [\App\Http\Controllers\LabWorkbenchController::class, 'collectSample'])->name('lab.collectSample');
         Route::post('/lab-workbench/dismiss-requests', [\App\Http\Controllers\LabWorkbenchController::class, 'dismissRequests'])->name('lab.dismissRequests');
         Route::get('/lab-workbench/lab-service-requests/{id}', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabRequest'])->name('lab.getRequest');
@@ -639,6 +655,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/imaging-workbench/patient/{id}/clinical-context', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getClinicalContext'])->name('imaging.clinical-context');
         Route::get('/imaging-workbench/patient/{patientId}/history', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingHistoryList'])->name('imaging.patient-history');
         Route::post('/imaging-workbench/record-billing', [\App\Http\Controllers\ImagingWorkbenchController::class, 'recordBilling'])->name('imaging.recordBilling');
+        Route::post('/imaging-workbench/claim-self-perform', [\App\Http\Controllers\ImagingWorkbenchController::class, 'claimSelfPerform'])->name('imaging.claimSelfPerform');
         Route::post('/imaging-workbench/dismiss-requests', [\App\Http\Controllers\ImagingWorkbenchController::class, 'dismissRequests'])->name('imaging.dismissRequests');
         Route::get('/imaging-workbench/imaging-service-requests/{id}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingRequest'])->name('imaging.getRequest');
         Route::get('/imaging-workbench/imaging-service-requests/{id}/attachments', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getRequestAttachments'])->name('imaging.getAttachments');
@@ -652,6 +669,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/imaging-workbench/audit-logs', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getAuditLog'])->name('imaging.auditLogs');
         Route::get('/imaging-workbench/search-services', [\App\Http\Controllers\ImagingWorkbenchController::class, 'searchServices'])->name('imaging.searchServices');
         Route::post('/imaging-workbench/create-request', [\App\Http\Controllers\ImagingWorkbenchController::class, 'createRequest'])->name('imaging.createRequest');
+        Route::post('/imaging-workbench/clinical-requests/apply-combo', [\App\Http\Controllers\ImagingWorkbenchController::class, 'imagingApplyCombo'])->name('imaging.applyCombo');
+        Route::post('/imaging-workbench/remove-bundle', [\App\Http\Controllers\ImagingWorkbenchController::class, 'removeBundle'])->name('imaging.removeBundle');
 
         // Imaging Result Approval Routes
         Route::get('/imaging-workbench/approval-queue', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getApprovalQueue'])->name('imaging.approvalQueue');
@@ -685,6 +704,31 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('clinical-context/patient/{patientId}/labs', [ClinicalContextController::class, 'getLabs'])->name('clinical-context.labs');
         Route::get('clinical-context/patient/{patientId}/imaging', [ClinicalContextController::class, 'getImaging'])->name('clinical-context.imaging');
         Route::get('clinical-context/patient/{patientId}/procedures', [ClinicalContextController::class, 'getProcedures'])->name('clinical-context.procedures');
+
+        // Service Combo Search (Web Route for Encounter selection)
+        Route::get('service-combos/search', function (Illuminate\Http\Request $request) {
+            $term = $request->term;
+            $combos = App\Models\Service::with(['bundleItems.service', 'bundleItems.product', 'price'])
+                ->where('is_combo', true)
+                ->where('status', 1)
+                ->where('service_name', 'LIKE', "%{$term}%")
+                ->get()
+                ->map(function ($combo) {
+                    $items = $combo->bundleItems->map(function($i) {
+                        return $i->item_type === 'service' 
+                            ? (optional($i->service)->service_name ?? 'Service')
+                            : (optional($i->product)->product_name ?? 'Product');
+                    })->implode(', ');
+                    
+                    return [
+                        'id' => $combo->id,
+                        'service_name' => $combo->service_name,
+                        'price' => optional($combo->price)->sale_price ?? 0,
+                        'items_summary' => $items
+                    ];
+                });
+            return response()->json($combos);
+        })->name('api.service-combos.search');
 
         // Creating and Listing Permissions
         Route::resource('services', ServiceController::class);
