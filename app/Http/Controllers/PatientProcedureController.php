@@ -1122,7 +1122,7 @@ class PatientProcedureController extends Controller
 
         // Action buttons
         $str .= '<div class="btn-group mt-2" role="group">';
-        $str .= "<button type='button' class='btn btn-info btn-sm' onclick='viewLabResult({$req->id})'><i class='mdi mdi-eye'></i> View</button>";
+        $str .= "<button type='button' class='btn btn-info btn-sm' onclick='setResViewInModal(this)' data-result-obj='" . htmlspecialchars(json_encode($req), ENT_QUOTES) . "' data-service-name='" . ($req->service ? $req->service->service_name : 'N/A') . "'><i class='mdi mdi-eye'></i> View</button>";
         $str .= "<a href='" . route('service-requests.show', $req->id) . "' target='_blank' class='btn btn-primary btn-sm'><i class='mdi mdi-printer'></i> Print</a>";
         $str .= '</div>';
 
@@ -1216,7 +1216,7 @@ class PatientProcedureController extends Controller
 
         // Action buttons
         $str .= '<div class="btn-group mt-2" role="group">';
-        $str .= "<button type='button' class='btn btn-info btn-sm' onclick='viewImagingResult({$req->id})'><i class='mdi mdi-eye'></i> View</button>";
+        $str .= "<button type='button' class='btn btn-info btn-sm' onclick='setImagingResViewInModal(this)' data-result-obj='" . htmlspecialchars(json_encode($req), ENT_QUOTES) . "' data-service-name='" . ($req->service ? $req->service->service_name : 'N/A') . "'><i class='mdi mdi-eye'></i> View</button>";
         $str .= "<a href='" . route('imaging-requests.show', $req->id) . "' target='_blank' class='btn btn-primary btn-sm'><i class='mdi mdi-printer'></i> Print</a>";
         $str .= '</div>';
 
