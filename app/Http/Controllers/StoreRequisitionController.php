@@ -163,28 +163,35 @@ class StoreRequisitionController extends Controller
         $resolvedStore = $this->resolver->resolve($user);
         $myStores      = $this->resolver->candidateStores($user); // stores I'm requesting FOR
 
-        // Active stores accessible to this user — used for source (from_store) cards with lane-awareness.
-        // Server-side lane policy and to_store ownership check in store() enforce the actual rules.
-        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
+        // Active stores for source (from_store) selection.
+        // We show all active stores so non-admins can requisition from hubs/central stores.
+        // Lane policies handled by JS and store() validate actual eligibility.
+        $stores = Store::active()->orderBy('store_name')->get();
 
         $products = Product::with('price')
             ->where('status', true)
             ->orderBy('product_name')
             ->get();
 
-        // Compute per-store stats for store selection cards
+        // Optimized per-store stats calculation (single query)
+        $statsData = \App\Models\StoreStock::where('is_active', true)
+            ->select('store_id')
+            ->selectRaw("COUNT(CASE WHEN current_quantity > 0 THEN 1 END) as products")
+            ->selectRaw("SUM(current_quantity) as stock")
+            ->selectRaw("COUNT(CASE WHEN current_quantity <= reorder_level AND current_quantity > 0 THEN 1 END) as low")
+            ->selectRaw("COUNT(CASE WHEN current_quantity <= 0 THEN 1 END) as out_of_stock")
+            ->groupBy('store_id')
+            ->get()
+            ->keyBy('store_id');
+
         $storeStats = [];
         foreach ($stores as $store) {
-            $storeStockQuery = \App\Models\StoreStock::where('store_id', $store->id)->where('is_active', true);
-            $totalProducts = (clone $storeStockQuery)->where('current_quantity', '>', 0)->count();
-            $totalStock    = (clone $storeStockQuery)->sum('current_quantity');
-            $lowStock      = (clone $storeStockQuery)->whereColumn('current_quantity', '<=', 'reorder_level')->where('current_quantity', '>', 0)->count();
-            $outOfStock    = (clone $storeStockQuery)->where('current_quantity', '<=', 0)->count();
+            $s = $statsData->get($store->id);
             $storeStats[$store->id] = [
-                'products' => $totalProducts,
-                'stock'    => $totalStock,
-                'low'      => $lowStock,
-                'out'      => $outOfStock,
+                'products' => $s ? (int) $s->products : 0,
+                'stock'    => $s ? (int) $s->stock : 0,
+                'low'      => $s ? (int) $s->low : 0,
+                'out'      => $s ? (int) $s->out_of_stock : 0,
             ];
         }
 
