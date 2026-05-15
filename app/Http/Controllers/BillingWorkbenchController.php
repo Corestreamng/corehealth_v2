@@ -208,8 +208,10 @@ class BillingWorkbenchController extends Controller
      */
     private function excludeFullyHmoCovered($query)
     {
+        // Only exclude items that are FULLY covered by HMO (approved status and no patient payable)
+        // Self-pay items or items awaiting HMO approval should always be visible in the billing queue.
         return $query->whereRaw(
-            'NOT ((payable_amount IS NULL OR payable_amount = 0) AND ((claims_amount > 0 AND validation_status = ?) OR (claims_amount IS NULL OR claims_amount = 0)))',
+            'NOT ((payable_amount IS NULL OR payable_amount = 0) AND (claims_amount > 0 AND validation_status = ?))',
             ['approved']
         );
     }

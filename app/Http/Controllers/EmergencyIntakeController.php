@@ -481,6 +481,10 @@ class EmergencyIntakeController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
+        } else {
+            // Private patient - standard pricing
+            $service = Service::with('price')->find($serviceId);
+            $serviceRequest->payable_amount = ($service->price->sale_price ?? 0);
         }
 
         $serviceRequest->save();
@@ -565,6 +569,10 @@ class EmergencyIntakeController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
+        } else {
+            // Private patient - standard pricing
+            $service = Service::with('price')->find($serviceId);
+            $serviceRequest->payable_amount = $service->price->sale_price ?? 0;
         }
 
         $serviceRequest->save();
@@ -618,7 +626,13 @@ class EmergencyIntakeController extends Controller
                     }
                 } catch (\Exception $e) {
                     // No tariff — patient pays full price
+                    $service = Service::with('price')->find($item['id']);
+                    $serviceRequest->payable_amount = ($service->price->sale_price ?? 0);
                 }
+            } else {
+                // Private patient - standard pricing
+                $service = Service::with('price')->find($item['id']);
+                $serviceRequest->payable_amount = ($service->price->sale_price ?? 0);
             }
 
             $serviceRequest->save();
