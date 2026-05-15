@@ -206,6 +206,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Ward::observe(\App\Observers\WardObserver::class);
         \App\Models\Department::observe(\App\Observers\DepartmentObserver::class);
         \App\Models\Store::observe(\App\Observers\StoreObserver::class);
+        \App\Models\ChatMessage::observe(\App\Observers\ChatMessageObserver::class);
 
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();
