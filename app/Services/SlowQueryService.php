@@ -197,6 +197,14 @@ class SlowQueryService
         }
         $data['query'] = implode("\n", $queryLines);
 
+        // Extract Source Tag from query comment if present
+        $data['source'] = null;
+        if (preg_match('/\/\* Source: (.*?) \*\//', $data['query'], $sourceMatches)) {
+            $data['source'] = $sourceMatches[1];
+            // Remove the comment from the query to keep it clean in the UI
+            $data['query'] = trim(str_replace($sourceMatches[0], '', $data['query']));
+        }
+
         if (empty($data['query'])) return false;
         if (!$data['timestamp']) $data['timestamp'] = now();
 
@@ -215,6 +223,7 @@ class SlowQueryService
                     'rows_sent' => $data['rows_sent'],
                     'rows_examined' => $data['rows_examined'],
                     'query' => $data['query'],
+                    'source' => $data['source'],
                 ]
             );
             return true;

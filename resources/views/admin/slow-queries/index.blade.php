@@ -1,114 +1,171 @@
 @extends('admin.layouts.app')
 
+@section('style')
+    @php $primaryColor = appsettings()->hos_color ?? '#011b33'; @endphp
+    <style>
+        :root { --primary-color: {{ $primaryColor }}; --primary-light: {{ $primaryColor }}15; }
+        .card-stat { border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card-stat:hover { transform: translateY(-5px); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .filter-bar { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
+        .pointer { cursor: pointer; }
+        .bg-soft-primary { background-color: #e3f2fd; }
+        .bg-soft-warning { background-color: #fff3e0; }
+        .bg-soft-danger { background-color: #ffebee; }
+        .bg-soft-success { background-color: #e8f5e9; }
+    </style>
+@endsection
+
 @section('content')
-<div class="content-wrapper">
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="card-title mb-0">MySQL Slow Query Monitor</h4>
-                <div>
-                    <button class="btn btn-outline-info mr-2" id="btn-guide">
-                        <i class="mdi mdi-help-circle mr-1"></i> Setup Guide
-                    </button>
-                    <button class="btn btn-outline-primary mr-2" id="btn-configure">
-                        <i class="mdi mdi-cog mr-1"></i> Configure MySQL
-                    </button>
-                    <button class="btn btn-primary" id="btn-refresh">
-                        <i class="mdi mdi-refresh mr-1"></i> Parse Log Now
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<div class="container-fluid py-4">
     <div class="row mb-4">
-        <div class="col-md-3 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Status</h4>
-                    <h2 class="mb-0" id="stat-enabled">
-                        @if($config && $config['enabled'])
-                            <span class="badge badge-success">Enabled</span>
-                        @else
-                            <span class="badge badge-danger">Disabled</span>
-                        @endif
-                    </h2>
+        <div class="col-md-3">
+            <div class="card card-stat bg-white h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-soft-primary text-primary mr-3">
+                        <i class="mdi mdi-database-search"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase small font-weight-bold">Total Slow Queries</h6>
+                        <h3 class="mb-0 font-weight-bold">{{ number_format($stats['total_count']) }}</h3>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Threshold</h4>
-                    <h2 class="mb-0 text-primary" id="stat-threshold">{{ $config['threshold'] ?? 'N/A' }}s</h2>
+        <div class="col-md-3">
+            <div class="card card-stat bg-white h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-soft-warning text-warning mr-3">
+                        <i class="mdi mdi-timer-outline"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase small font-weight-bold">Avg Execution Time</h6>
+                        <h3 class="mb-0 font-weight-bold">{{ $stats['avg_time'] }}s</h3>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Log File Path</h4>
-                    <p class="mb-0 text-muted overflow-hidden text-truncate" id="stat-log-path" title="{{ $config['log_file'] ?? 'Not set' }}">
-                        <code>{{ $config['log_file'] ?? 'Not set' }}</code>
-                    </p>
-                    @if($appSettings->slow_query_log_path && $appSettings->slow_query_log_path !== ($config['log_file'] ?? ''))
-                        <small class="text-warning">App tracking: {{ $appSettings->slow_query_log_path }}</small>
-                    @endif
+        <div class="col-md-3">
+            <div class="card card-stat bg-white h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-soft-danger text-danger mr-3">
+                        <i class="mdi mdi-alert-circle-outline"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase small font-weight-bold">Slowest Query</h6>
+                        <h3 class="mb-0 font-weight-bold">{{ $stats['max_time'] }}s</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-stat bg-white h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon bg-soft-success text-success mr-3">
+                        <i class="mdi mdi-xml"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase small font-weight-bold">Top Source</h6>
+                        @php 
+                            $topSource = optional($stats['top_source'])->source ?? 'N/A';
+                            $displaySource = $topSource !== 'N/A' ? (str_contains($topSource, '@') ? explode('@', $topSource)[1] : $topSource) : 'N/A';
+                        @endphp
+                        <h5 class="mb-0 font-weight-bold text-truncate" style="max-width: 150px;" title="{{ $topSource }}">
+                            {{ $displaySource }}
+                        </h5>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-12 grid-margin stretch-card">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Advanced Filters</h4>
-                    <form id="filter-form" class="row align-items-end mb-4">
-                        <div class="col-md-2">
-                            <label>Start Date</label>
-                            <input type="date" name="start_date" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-2">
-                            <label>End Date</label>
-                            <input type="date" name="end_date" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-2">
-                            <label>Min Duration (s)</label>
-                            <input type="number" name="min_duration" step="0.1" class="form-control form-control-sm" value="2">
-                        </div>
-                        <div class="col-md-2">
-                            <label>Min Rows Examined</label>
-                            <input type="number" name="min_rows" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-md-3">
-                            <label>Search Query</label>
-                            <input type="text" name="search" class="form-control form-control-sm" placeholder="SQL keyword...">
-                        </div>
-                        <div class="col-md-1">
-                            <button type="submit" class="btn btn-info btn-sm btn-block">Filter</button>
-                        </div>
-                    </form>
+    <div class="card card-modern shadow-sm border-0">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0 font-weight-bold"><i class="mdi mdi-database-clock text-primary mr-2"></i> MySQL Slow Query Monitor</h4>
+                <p class="text-muted small mb-0">Identify and optimize expensive database operations across your application.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-info btn-sm mr-2" id="btn-guide">
+                    <i class="mdi mdi-help-circle-outline"></i> Setup Guide
+                </button>
+                <button class="btn btn-outline-primary btn-sm mr-2" id="btn-configure">
+                    <i class="mdi mdi-cog-outline"></i> Configure MySQL
+                </button>
+                <button class="btn btn-success btn-sm" id="btn-refresh">
+                    <i class="mdi mdi-sync"></i> Parse Log Now
+                </button>
+            </div>
+        </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="slow-queries-table" width="100%">
-                            <thead>
-                                <tr>
-                                    <th>Timestamp</th>
-                                    <th>Duration</th>
-                                    <th>Lock</th>
-                                    <th>Examined</th>
-                                    <th>Sent</th>
-                                    <th>Query</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Data loaded via AJAX -->
-                            </tbody>
-                        </table>
+        <div class="card-body p-4">
+            <div class="alert alert-info py-2 small mb-4">
+                <i class="mdi mdi-information-outline mr-1"></i> 
+                <strong>Current Configuration:</strong> 
+                Slow Log: <span class="badge {{ ($config['enabled'] ?? false) ? 'badge-success' : 'badge-danger' }}">{{ ($config['enabled'] ?? false) ? 'ON' : 'OFF' }}</span> | 
+                Threshold: <span class="badge badge-light text-dark">{{ $config['threshold'] ?? 'N/A' }}s</span> | 
+                Log File: <code>{{ $config['log_file'] ?? 'Not set' }}</code> |
+                Last Background Check: <span class="text-primary font-weight-bold">{{ $appSettings->last_slow_query_check ? \Carbon\Carbon::parse($appSettings->last_slow_query_check)->diffForHumans() : 'Never' }}</span>
+            </div>
+
+            {{-- Modern Filter Bar --}}
+            <div class="filter-bar">
+                <form id="filter-form" class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label small font-weight-bold">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" class="form-control form-control-sm">
                     </div>
-                    <div id="pagination-container" class="mt-4"></div>
-                </div>
+                    <div class="col-md-2">
+                        <label class="form-label small font-weight-bold">End Date</label>
+                        <input type="date" name="end_date" id="end_date" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small font-weight-bold">Source Filter</label>
+                        <select name="source_filter" id="source_filter" class="form-control form-control-sm select2">
+                            <option value="all">All Sources</option>
+                            @foreach($sources as $source)
+                                <option value="{{ $source }}">{{ $source }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label small font-weight-bold">Min Time (s)</label>
+                        <input type="number" name="min_duration" id="min_duration" step="0.1" value="2" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label small font-weight-bold">Min Rows</label>
+                        <input type="number" name="min_rows" id="min_rows" value="0" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small font-weight-bold">Search SQL</label>
+                        <input type="text" name="search_query" id="search_query" class="form-control form-control-sm" placeholder="Keyword...">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" id="btn-apply-filters" class="btn btn-primary btn-sm btn-block">
+                            <i class="mdi mdi-filter-variant"></i> Apply
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-responsive mt-2">
+                <table class="table table-hover table-striped" id="slow-queries-table" width="100%">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Timestamp</th>
+                            <th>Duration</th>
+                            <th>Lock</th>
+                            <th>Examined</th>
+                            <th>Source</th>
+                            <th>Query Preview</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data loaded via DataTables -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -125,23 +182,23 @@
             <form id="config-form">
                 @csrf
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label>Long Query Time (seconds)</label>
+                    <div class="form-group mb-3">
+                        <label class="form-label font-weight-bold">Long Query Time (seconds)</label>
                         <input type="number" name="threshold" step="0.1" class="form-control" value="{{ $config['threshold'] ?? 2 }}" required>
                         <small class="text-muted">Queries taking longer than this will be logged.</small>
                     </div>
-                    <div class="form-group">
-                        <label>Custom Log Path (Optional)</label>
+                    <div class="form-group mb-3">
+                        <label class="form-label font-weight-bold">Custom Log Path (Optional)</label>
                         <input type="text" name="custom_path" class="form-control" value="{{ $appSettings->slow_query_log_path }}" placeholder="/var/log/mysql/mysql-slow.log">
                         <small class="text-muted">Leave empty to use MySQL's current setting. Ensure PHP has read permission.</small>
                     </div>
-                    <div class="alert alert-info py-2">
+                    <div class="alert alert-warning py-2">
                         <small><i class="mdi mdi-information-outline mr-1"></i> This requires SUPER or SYSTEM_VARIABLES_ADMIN privileges on the database.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Apply Settings</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Apply Settings</button>
                 </div>
             </form>
         </div>
@@ -167,10 +224,16 @@
                     <div class="col-md-4"><strong>Rows Examined:</strong> <span id="modal-examined"></span></div>
                     <div class="col-md-4"><strong>Rows Sent:</strong> <span id="modal-sent"></span></div>
                 </div>
-                <label><strong>SQL Query:</strong></label>
+                <div class="row mb-3">
+                    <div class="col-md-12"><strong>Source Code:</strong> <code id="modal-source" class="text-info"></code></div>
+                </div>
+                <label class="font-weight-bold">SQL Query:</label>
                 <div class="p-3 bg-light rounded border">
                     <pre id="modal-query" class="mb-0" style="white-space: pre-wrap; word-break: break-all; font-family: 'Courier New', Courier, monospace;"></pre>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -247,7 +310,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close Guide</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close Guide</button>
             </div>
         </div>
     </div>
@@ -258,97 +321,50 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    let currentPage = 1;
+    let table = $('#slow-queries-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('admin.slow_queries.index') }}",
+            data: function(d) {
+                d.start_date = $('#start_date').val();
+                d.end_date = $('#end_date').val();
+                d.source_filter = $('#source_filter').val();
+                d.min_duration = $('#min_duration').val();
+                d.min_rows = $('#min_rows').val();
+                d.search_query = $('#search_query').val();
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'timestamp', name: 'timestamp' },
+            { data: 'query_time', name: 'query_time' },
+            { data: 'lock_time', name: 'lock_time' },
+            { data: 'rows_examined', name: 'rows_examined' },
+            { data: 'source_info', name: 'source' },
+            { data: 'query', name: 'query' },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[1, 'desc']],
+        pageLength: 25,
+        drawCallback: function() {
+            $('.pointer').css('cursor', 'pointer');
+        }
+    });
 
+    $('#btn-apply-filters').click(function() {
+        table.ajax.reload();
+    });
+
+    $('#filter-form input').on('keypress', function(e) {
+        if (e.which == 13) {
+            e.preventDefault();
+            table.ajax.reload();
+        }
+    });
 
     $('#btn-guide').click(function() {
         $('#guideModal').modal('show');
-    });
-
-    function loadQueries(page = 1) {
-        currentPage = page;
-        const formData = $('#filter-form').serialize();
-        
-        $.get(`{{ route('admin.slow_queries.index') }}?page=${page}&${formData}`, function(res) {
-            const tbody = $('#slow-queries-table tbody');
-            tbody.empty();
-
-            if (res.queries.data.length === 0) {
-                tbody.append('<tr><td colspan="6" class="text-center text-muted">No slow queries found.</td></tr>');
-            } else {
-                res.queries.data.forEach(function(q) {
-                    const durationClass = q.query_time > 10 ? 'text-danger font-weight-bold' : (q.query_time > 5 ? 'text-warning' : '');
-                    const rowClass = q.rows_examined > 100000 ? 'table-warning' : '';
-                    
-                    tbody.append(`
-                        <tr class="${rowClass} pointer" onclick="showQuery(${JSON.stringify(q).replace(/"/g, '&quot;')})">
-                            <td>${new Date(q.timestamp).toLocaleString()}</td>
-                            <td class="${durationClass}">${q.query_time}s</td>
-                            <td>${q.lock_time}s</td>
-                            <td>${q.rows_examined.toLocaleString()}</td>
-                            <td>${q.rows_sent.toLocaleString()}</td>
-                            <td class="text-truncate" style="max-width: 300px;"><code>${q.query.substring(0, 100)}...</code></td>
-                        </tr>
-                    `);
-                });
-            }
-
-            renderPagination(res.queries);
-        });
-    }
-
-    function renderPagination(data) {
-        const container = $('#pagination-container');
-        container.empty();
-        
-        if (data.last_page <= 1) return;
-
-        let html = '<ul class="pagination pagination-sm justify-content-center">';
-        html += `<li class="page-item ${data.current_page === 1 ? 'disabled' : ''}"><a class="page-link" href="javascript:void(0)" onclick="loadQueries(${data.current_page - 1})">Prev</a></li>`;
-        
-        for (let i = 1; i <= data.last_page; i++) {
-            if (i === 1 || i === data.last_page || (i >= data.current_page - 2 && i <= data.current_page + 2)) {
-                html += `<li class="page-item ${data.current_page === i ? 'active' : ''}"><a class="page-link" href="javascript:void(0)" onclick="loadQueries(${i})">${i}</a></li>`;
-            } else if (i === data.current_page - 3 || i === data.current_page + 3) {
-                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-            }
-        }
-        
-        html += `<li class="page-item ${data.current_page === data.last_page ? 'disabled' : ''}"><a class="page-link" href="javascript:void(0)" onclick="loadQueries(${data.current_page + 1})">Next</a></li>`;
-        html += '</ul>';
-        
-        container.html(html);
-    }
-
-    // Export loadQueries to global scope for pagination links
-    window.loadQueries = loadQueries;
-
-    window.showQuery = function(q) {
-        $('#modal-time').text(new Date(q.timestamp).toLocaleString());
-        $('#modal-duration').text(q.query_time + 's');
-        $('#modal-user').text(q.user_host || 'Unknown');
-        $('#modal-lock').text(q.lock_time + 's');
-        $('#modal-examined').text(q.rows_examined.toLocaleString());
-        $('#modal-sent').text(q.rows_sent.toLocaleString());
-        $('#modal-query').text(q.query);
-        $('#queryModal').modal('show');
-    };
-
-    $('#filter-form').submit(function(e) {
-        e.preventDefault();
-        loadQueries(1);
-    });
-
-    $('#btn-refresh').click(function() {
-        const btn = $(this);
-        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> Parsing...');
-        
-        $.post('{{ route("admin.slow_queries.refresh") }}', { _token: '{{ csrf_token() }}' }, function(res) {
-            toastr.success(res.message);
-            loadQueries(1);
-        }).always(function() {
-            btn.prop('disabled', false).html('<i class="mdi mdi-refresh mr-1"></i> Parse Log Now');
-        });
     });
 
     $('#btn-configure').click(function() {
@@ -358,37 +374,54 @@ $(document).ready(function() {
     $('#config-form').submit(function(e) {
         e.preventDefault();
         const btn = $(this).find('button[type="submit"]');
-        btn.prop('disabled', true).text('Applying...');
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
 
-        $.ajax({
-            url: '{{ route("admin.slow_queries.setup") }}',
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function(res) {
-                if (res.success) {
-                    toastr.success(res.message);
-                    location.reload();
-                } else {
-                    toastr.error(res.message);
-                }
-            },
-            error: function(xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Error occurred');
-            },
-            complete: function() {
+        $.post("{{ route('admin.slow_queries.setup') }}", $(this).serialize(), function(res) {
+            if (res.success) {
+                toastr.success(res.message);
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                toastr.error(res.message);
                 btn.prop('disabled', false).text('Apply Settings');
             }
+        }).fail(function() {
+            toastr.error('System error occurred.');
+            btn.prop('disabled', false).text('Apply Settings');
         });
     });
 
-    // Initial load
-    loadQueries(1);
+    $('#btn-refresh').click(function() {
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Parsing...');
+
+        $.post("{{ route('admin.slow_queries.refresh') }}", { _token: '{{ csrf_token() }}' }, function(res) {
+            if (res.success) {
+                toastr.success(res.message);
+                table.ajax.reload();
+            } else {
+                toastr.error(res.message);
+            }
+        }).always(() => {
+            btn.prop('disabled', false).html('<i class="mdi mdi-sync"></i> Parse Log Now');
+        });
+    });
+
+    window.showQuery = function(q) {
+        if (typeof q === 'string') {
+            try {
+                q = JSON.parse(q);
+            } catch(e) {}
+        }
+        $('#modal-time').text(q.timestamp);
+        $('#modal-duration').text(q.query_time + 's');
+        $('#modal-user').text(q.user_host || 'Unknown');
+        $('#modal-lock').text(q.lock_time + 's');
+        $('#modal-examined').text(q.rows_examined.toLocaleString());
+        $('#modal-sent').text(q.rows_sent.toLocaleString());
+        $('#modal-source').text(q.source || 'Unknown/Tagging disabled');
+        $('#modal-query').text(q.query);
+        $('#queryModal').modal('show');
+    };
 });
 </script>
-
-<style>
-.pointer { cursor: pointer; }
-#slow-queries-table tbody tr:hover { background-color: rgba(0,0,0,0.05); }
-.text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-</style>
 @endsection
