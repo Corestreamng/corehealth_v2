@@ -184,47 +184,66 @@
                 <h5 class="modal-title">MySQL Slow Query Setup Guide</h5>
                 <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
                 <div class="mb-4">
-                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-1-box mr-1"></i> Phase 1: Linux Permissions</h6>
-                    <p>MySQL needs <strong>write</strong> access to the log file, and PHP needs <strong>read</strong> access. Run these commands as root/sudo:</p>
-                    <div class="p-3 bg-dark text-white rounded mb-2">
-                        <code>sudo touch {{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }}</code><br>
-                        <code>sudo chown mysql:www-data {{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }}</code><br>
-                        <code>sudo chmod 664 {{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }}</code>
-                    </div>
-                    <p class="small text-muted">Ensure all parent directories are traversable by MySQL:</p>
+                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-magnify mr-1"></i> Phase 0: Discover your current settings</h6>
+                    <p>To see where MySQL is currently logging (if at all), run this in your MySQL console:</p>
                     <div class="p-2 bg-light border rounded">
-                        <code>sudo chmod o+x /var/www/html/corehealth_v2</code><br>
-                        <code>sudo chmod o+x /var/www/html/corehealth_v2/storage</code><br>
-                        <code>sudo chmod o+x /var/www/html/corehealth_v2/storage/logs</code>
+                        <code>SHOW VARIABLES LIKE 'slow_query_log%';</code><br>
+                        <code>SHOW VARIABLES LIKE 'long_query_time';</code>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-2-box mr-1"></i> Phase 2: AppArmor (Ubuntu 20.04+)</h6>
-                    <p>Ubuntu prevents MySQL from writing to <code>/var/www</code> even with file permissions fixed. You must update AppArmor:</p>
+                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-1-box mr-1"></i> Phase 1: Option A - Use App Storage (Recommended)</h6>
+                    <p>This allows the app to manage the file easily. Run these commands to create and authorize a custom log:</p>
+                    @php
+                        $customPath = base_path('storage/logs/mysql-slow.log');
+                        $appDir = base_path();
+                        $storageDir = storage_path();
+                        $logsDir = storage_path('logs');
+                    @endphp
+                    <div class="p-3 bg-dark text-white rounded mb-2">
+                        <code>sudo touch {{ $customPath }}</code><br>
+                        <code>sudo chown mysql:www-data {{ $customPath }}</code><br>
+                        <code>sudo chmod 664 {{ $customPath }}</code>
+                    </div>
+                    <p class="small text-muted">Ensure MySQL can traverse the path (Parent folders must have +x):</p>
+                    <div class="p-2 bg-light border rounded mb-3">
+                        <code>sudo chmod o+x {{ $appDir }}</code><br>
+                        <code>sudo chmod o+x {{ $storageDir }}</code><br>
+                        <code>sudo chmod o+x {{ $logsDir }}</code>
+                    </div>
+                    
+                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-1-box mr-1"></i> Phase 1: Option B - Use Default Log Location</h6>
+                    <p>If you prefer MySQL's default (usually <code>/var/log/mysql/mysql-slow.log</code>):</p>
+                    <div class="p-2 bg-light border rounded">
+                        <code>sudo chmod 644 /var/log/mysql/mysql-slow.log</code><br>
+                        <small class="text-muted">This allows PHP to read the file, but MySQL already has write access.</small>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-2-box mr-1"></i> Phase 2: Handle AppArmor (Ubuntu Systems)</h6>
+                    <p>If you used <strong>Option A (App Storage)</strong>, you MUST authorize the path in AppArmor:</p>
                     <div class="p-3 bg-light border rounded">
                         <ol class="mb-0">
-                            <li>Edit the local profile: <code>sudo nano /etc/apparmor.d/local/usr.sbin.mysqld</code></li>
-                            <li>Add this line:<br><code>{{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }} rw,</code></li>
-                            <li>Reload AppArmor: <code>sudo systemctl reload apparmor</code></li>
+                            <li>Edit profile: <code>sudo nano /etc/apparmor.d/local/usr.sbin.mysqld</code></li>
+                            <li>Add: <code>{{ $customPath }} rw,</code></li>
+                            <li>Reload: <code>sudo systemctl reload apparmor</code></li>
                         </ol>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-3-box mr-1"></i> Phase 3: MySQL Configuration</h6>
-                    <p>Finally, enable logging in MySQL. You can use the <strong>Configure MySQL</strong> button or run manually:</p>
+                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-3-box mr-1"></i> Phase 3: Apply in MySQL</h6>
+                    <p>Run these in MySQL to point to your chosen file (Option A or B):</p>
                     <div class="p-3 bg-dark text-white rounded">
                         <code>SET GLOBAL slow_query_log = 'ON';</code><br>
                         <code>SET GLOBAL long_query_time = 2;</code><br>
-                        <code>SET GLOBAL slow_query_log_file = '{{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }}';</code>
+                        <code>SET GLOBAL slow_query_log_file = '{{ $appSettings->slow_query_log_path ?: $customPath }}';</code>
                     </div>
-                </div>
-
-                <div class="alert alert-warning py-2">
-                    <small><i class="mdi mdi-alert mr-1"></i> If you cannot modify AppArmor, use <code>/var/log/mysql/mysql-slow.log</code> instead and ensure PHP can read it.</small>
+                    <p class="mt-2 small text-info"><i class="mdi mdi-information-outline"></i> Use the <strong>Configure MySQL</strong> button to do this automatically if you have privileges.</p>
                 </div>
             </div>
             <div class="modal-footer">
