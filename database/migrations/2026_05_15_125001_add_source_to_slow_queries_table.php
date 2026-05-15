@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddSourceToSlowQueriesTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('slow_queries', function (Blueprint $table) {
+            $table->string('source')->nullable()->after('query');
+        });
+    }
+
+    public function down()
+    {
+        Schema::table('slow_queries', function (Blueprint $table) {
+            $table->dropColumn('source');
+        });
+    }
+}
