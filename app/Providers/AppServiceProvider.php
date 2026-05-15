@@ -208,6 +208,45 @@ class AppServiceProvider extends ServiceProvider
 
         // Run department notification checks - runs once per hour
         $this->runDepartmentNotificationChecks();
+
+        // Process MySQL slow query logs - runs automatically
+        $this->processSlowQueryLogs();
+    }
+
+    /**
+     * Process MySQL slow query logs
+     * Runs on every request but uses a cooldown and file locks
+     */
+    protected function processSlowQueryLogs()
+    {
+        try {
+            $today = Carbon::now();
+            $lastCheck = appsettings('last_slow_query_check');
+            
+            // Run every 5 minutes
+            if ($lastCheck && Carbon::parse($lastCheck)->addMinutes(5)->isFuture()) {
+                return;
+            }
+
+            // Use file lock to prevent concurrent execution
+            $lockFile = storage_path('framework/slow_query_parse.lock');
+            $lockHandle = fopen($lockFile, 'c+');
+
+            if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
+                fclose($lockHandle);
+                return;
+            }
+
+            try {
+                $service = new \App\Services\SlowQueryService();
+                $service->parseLog();
+            } finally {
+                flock($lockHandle, LOCK_UN);
+                fclose($lockHandle);
+            }
+        } catch (\Exception $e) {
+            Log::error("Error processing slow query logs: " . $e->getMessage());
+        }
     }
 
     /**
