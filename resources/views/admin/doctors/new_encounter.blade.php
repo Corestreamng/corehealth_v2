@@ -1597,10 +1597,7 @@
                 referenceId: parseInt(id),
                 buildRowHtml: function(resp) {
                     const recordId = resp.id;
-                    const doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, ''); " +
-                        "ClinicalOrdersKit.debouncedUpdate({url:'/encounters/" + encounterId + "/prescriptions/" + recordId + "/dose'," +
-                        "payload:{dose: $(this).closest('.structured-dose').find('.structured-dose-value').val()}," +
-                        "csrfToken:'" + csrfToken + "'});";
+                    const doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, ''); ";
 
                     let doseCell;
                     if (doseStructuredMode) {
@@ -1612,11 +1609,11 @@
                             rowId: rowId
                         }) + '<input type="hidden" name="consult_presc_id[]" value="' + id + '"></td>';
                     } else {
-                        var simpleDoseCmd = "ClinicalOrdersKit.debouncedUpdate({url:'/encounters/" + encounterId + "/prescriptions/" + recordId + "/dose'," +
-                            "payload:{dose:this.value},csrfToken:'" + csrfToken + "',flashTarget:this.closest('td')})";
+                        var simpleDoseCmd = "ClinicalOrdersKit.updateDoseValue(this, '');";
                         doseCell = '<td><input type="text" class="form-control" name="consult_presc_dose[]" ' +
                             'placeholder="e.g. 500mg BD x 5days" ' +
-                            'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
+                            'onfocus="ClinicalOrdersKit.startPeriodicSave(this)" ' +
+                            'onblur="ClinicalOrdersKit.stopPeriodicSave(this); ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
                             'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + simpleDoseCmd + ' }, 3000)" required>' +
                             '<input type="hidden" name="consult_presc_id[]" value="' + id + '"></td>';
                     }
