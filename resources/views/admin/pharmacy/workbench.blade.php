@@ -7459,7 +7459,7 @@ function initializePrescriptionDataTables(patientId) {
                 name: "select",
                 orderable: false,
                 render: function(data, type, row) {
-                    const price = parseFloat(row.payable_amount || row.price || 0);
+                    const price = parseFloat(row.payable_amount || 0) + parseFloat(row.claims_amount || 0);
                     return `<input type="checkbox" class="presc-card-checkbox presc-billing-check form-check-input"
                             data-id="${row.id}" data-price="${price}"
                             onchange="handlePrescBillingCheckPharmacy(this)">`;
@@ -7721,9 +7721,9 @@ function gatherSelectedItems() {
         const $row = $(this).closest('tr');
         const $card = $row.find('.presc-card');
         const id = $(this).data('id');
-        const price = parseFloat($(this).data('price')) || 0;
+        const price = parseFloat($card.attr('data-total-price')) || 0;
         const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-        const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
+        const qty = parseInt($card.attr('data-qty')) || 1;
         grandTotal += price;
         data.billing.push({ id, name, qty, price });
     });
@@ -7733,9 +7733,8 @@ function gatherSelectedItems() {
         const $card = $row.find('.presc-card');
         const id = $(this).data('id');
         const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-        const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
-        const priceText = $card.find('.presc-card-price').text();
-        const price = parseFloat(priceText.replace(/[₦,]/g, '')) || 0;
+        const qty = parseInt($card.attr('data-qty')) || 1;
+        const price = parseFloat($card.attr('data-total-price')) || 0;
         grandTotal += price;
         data.pending.push({ id, name, qty, price });
     });
@@ -7745,9 +7744,8 @@ function gatherSelectedItems() {
         const $card = $row.find('.presc-card');
         const id = $(this).data('id');
         const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-        const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
-        const priceText = $card.find('.presc-card-price').text();
-        const price = parseFloat(priceText.replace(/[₦,]/g, '')) || 0;
+        const qty = parseInt($card.attr('data-qty')) || 1;
+        const price = parseFloat($card.attr('data-total-price')) || 0;
         grandTotal += price;
         data.dispense.push({ id, name, qty, price });
     });
@@ -8302,13 +8300,13 @@ function renderPrescCardPharmacy(row, type) {
         // Unbilled items - can always be adapted, qty adjusted, or price adjusted (no billing impact yet)
         actionButtons = `
             <div class="presc-card-actions mt-2 pt-2 border-top">
-                <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${price}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change to a different product">
+                <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change to a different product">
                     <i class="mdi mdi-swap-horizontal"></i> Adapt Product
                 </button>
-                <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${price}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change the quantity">
+                <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change the quantity">
                     <i class="mdi mdi-counter"></i> Adjust Qty
                 </button>
-                <button type="button" class="btn btn-xs btn-outline-primary btn-adjust-price-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-qty="${qty}" data-price="${price}" data-coverage-mode="${coverageMode}" data-tariff-payable="${tariffPayableUnit}" data-tariff-claims="${tariffClaimsUnit}" data-price-override="${row.price_override ?? ''}" data-price-override-reason="${row.price_override_reason || ''}" data-price-override-by="${row.price_override_by || ''}" data-price-override-at="${row.price_override_at || ''}" title="Adjust the unit price before billing">
+                <button type="button" class="btn btn-xs btn-outline-primary btn-adjust-price-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-coverage-mode="${coverageMode}" data-tariff-payable="${tariffPayableUnit}" data-tariff-claims="${tariffClaimsUnit}" data-price-override="${row.price_override ?? ''}" data-price-override-reason="${row.price_override_reason || ''}" data-price-override-by="${row.price_override_by || ''}" data-price-override-at="${row.price_override_at || ''}" title="Adjust the unit price before billing">
                     <i class="mdi mdi-cash-edit"></i> Adjust Price
                 </button>
             </div>
@@ -8331,10 +8329,10 @@ function renderPrescCardPharmacy(row, type) {
         if (canModify) {
             actionButtons = `
                 <div class="presc-card-actions mt-2 pt-2 border-top">
-                    <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${price}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change to a different product (will update billing)">
+                    <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change to a different product (will update billing)">
                         <i class="mdi mdi-swap-horizontal"></i> Adapt Product
                     </button>
-                    <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${price}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change the quantity (will update billing)">
+                    <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change the quantity (will update billing)">
                         <i class="mdi mdi-counter"></i> Adjust Qty
                     </button>
                 </div>
@@ -8356,13 +8354,20 @@ function renderPrescCardPharmacy(row, type) {
     }
     // NOTE: No action buttons for 'dispense' type - items are ready/settled
 
-    // Display price: use override if present, otherwise standard
+    // Display price: total billed amount (patient share + HMO share)
     const displayPrice = (row.price_override !== null && row.price_override !== undefined && row.price_override !== '')
         ? parseFloat(row.price_override) * qty
-        : (payableAmount || totalPrice);
+        : (payableAmount + claimsAmount);
 
     return `
-        <div class="${cardClass}" data-id="${row.id}" data-product-id="${row.product_id || ''}" style="${cardStyle}">
+        <div class="${cardClass}" 
+             data-id="${row.id}" 
+             data-product-id="${row.product_id || ''}" 
+             data-qty="${qty}"
+             data-payable="${payableAmount}"
+             data-claims="${claimsAmount}"
+             data-total-price="${displayPrice}"
+             style="${cardStyle}">
             <div class="presc-card-header">
                 <div>
                     <div class="presc-card-title">${row.product_name || 'Unknown Product'}</div>
@@ -13585,19 +13590,19 @@ function addSelectedToCartAndOpen() {
             return;
         }
 
-        // Get item details from card data or DOM
+        // Get item details from card data-attributes (most reliable)
         const productId = $card.attr('data-product-id') || $checkbox.attr('data-product-id');
         const productName = $card.find('.presc-card-title').text().trim() || 'Unknown Product';
-        const qtyMatch = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/);
-        const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
-        const price = parseFloat($card.find('.presc-card-price').text().replace(/[^0-9.]/g, '')) || 0;
+        const qty = parseInt($card.attr('data-qty')) || 1;
+        const price = parseFloat($card.attr('data-total-price')) || 0;
 
         dispenseCart.push({
             id: id,
             product_id: productId,
             product_name: productName,
             qty: qty,
-            price: price,
+            price: price / qty, // Store as unit price for consistency in renderDispenseCart
+            total_billed: price,
             stock: null,
             stock_status: 'pending' // Will check when store is selected
         });
