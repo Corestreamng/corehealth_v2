@@ -18,6 +18,7 @@ class SlowQuery extends Model
         'rows_examined',
         'query',
         'query_hash',
+        'source',
     ];
 
     protected $casts = [

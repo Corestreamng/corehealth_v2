@@ -86,6 +86,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\App;
+use App\Support\QueryContext;
+use App\Database\CommenterMySqlGrammar;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -211,6 +215,30 @@ class AppServiceProvider extends ServiceProvider
 
         // Process MySQL slow query logs - runs automatically
         $this->processSlowQueryLogs();
+
+        // Register Global Query Tagging for Console and Queues
+        if (App::runningInConsole()) {
+            QueryContext::$currentAction = 'Console/' . (isset($_SERVER['argv']) ? implode(' ', $_SERVER['argv']) : 'Unknown');
+            $this->applyGlobalGrammar();
+        }
+
+        Queue::before(function ($event) {
+            QueryContext::$currentAction = 'Job/' . $event->job->resolveName();
+            $this->applyGlobalGrammar();
+        });
+    }
+
+    /**
+     * Apply the custom grammar to all MySQL connections globally
+     */
+    protected function applyGlobalGrammar()
+    {
+        $grammar = new CommenterMySqlGrammar();
+        foreach (config('database.connections') as $name => $config) {
+            if (isset($config['driver']) && $config['driver'] === 'mysql') {
+                DB::connection($name)->setQueryGrammar($grammar);
+            }
+        }
     }
 
     /**
