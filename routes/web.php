@@ -945,6 +945,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('admin/backups/restore-external', [\App\Http\Controllers\Admin\BackupController::class, 'restoreExternal'])->name('backups.restore-external');
         Route::delete('admin/backups/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'delete'])->name('backups.delete');
         Route::get('admin/backups/download/{filename}', [\App\Http\Controllers\Admin\BackupController::class, 'download'])->name('backups.download');
+
+        // Slow Query Monitor
+        Route::get('admin/slow-queries', [\App\Http\Controllers\Admin\SlowQueryController::class, 'index'])->name('admin.slow_queries.index');
+        Route::post('admin/slow-queries/setup', [\App\Http\Controllers\Admin\SlowQueryController::class, 'setup'])->name('admin.slow_queries.setup');
+        Route::post('admin/slow-queries/refresh', [\App\Http\Controllers\Admin\SlowQueryController::class, 'refresh'])->name('admin.slow_queries.refresh');
     });
 
     Route::group(['middleware' => ['auth']], function () {
