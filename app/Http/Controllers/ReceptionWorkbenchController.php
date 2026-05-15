@@ -748,6 +748,10 @@ class ReceptionWorkbenchController extends Controller
                         'error' => $e->getMessage()
                     ]);
                 }
+            } else {
+                // Private patient - standard pricing
+                $service = Service::with('price')->find($request->service_id);
+                $serviceRequest->payable_amount = $service->price->sale_price ?? 0;
             }
 
             $serviceRequest->save();
