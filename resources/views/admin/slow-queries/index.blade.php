@@ -7,6 +7,9 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="card-title mb-0">MySQL Slow Query Monitor</h4>
                 <div>
+                    <button class="btn btn-outline-info mr-2" id="btn-guide">
+                        <i class="mdi mdi-help-circle mr-1"></i> Setup Guide
+                    </button>
                     <button class="btn btn-outline-primary mr-2" id="btn-configure">
                         <i class="mdi mdi-cog mr-1"></i> Configure MySQL
                     </button>
@@ -173,12 +176,75 @@
     </div>
 </div>
 
+<!-- Setup Guide Modal -->
+<div class="modal fade" id="guideModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">MySQL Slow Query Setup Guide</h5>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div class="mb-4">
+                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-1-box mr-1"></i> Phase 1: Linux Permissions</h6>
+                    <p>MySQL needs <strong>write</strong> access to the log file, and PHP needs <strong>read</strong> access. Run these commands as root/sudo:</p>
+                    <div class="p-3 bg-dark text-white rounded mb-2">
+                        <code>sudo touch {{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }}</code><br>
+                        <code>sudo chown mysql:www-data {{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }}</code><br>
+                        <code>sudo chmod 664 {{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }}</code>
+                    </div>
+                    <p class="small text-muted">Ensure all parent directories are traversable by MySQL:</p>
+                    <div class="p-2 bg-light border rounded">
+                        <code>sudo chmod o+x /var/www/html/corehealth_v2</code><br>
+                        <code>sudo chmod o+x /var/www/html/corehealth_v2/storage</code><br>
+                        <code>sudo chmod o+x /var/www/html/corehealth_v2/storage/logs</code>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-2-box mr-1"></i> Phase 2: AppArmor (Ubuntu 20.04+)</h6>
+                    <p>Ubuntu prevents MySQL from writing to <code>/var/www</code> even with file permissions fixed. You must update AppArmor:</p>
+                    <div class="p-3 bg-light border rounded">
+                        <ol class="mb-0">
+                            <li>Edit the local profile: <code>sudo nano /etc/apparmor.d/local/usr.sbin.mysqld</code></li>
+                            <li>Add this line:<br><code>{{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }} rw,</code></li>
+                            <li>Reload AppArmor: <code>sudo systemctl reload apparmor</code></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-primary font-weight-bold"><i class="mdi mdi-numeric-3-box mr-1"></i> Phase 3: MySQL Configuration</h6>
+                    <p>Finally, enable logging in MySQL. You can use the <strong>Configure MySQL</strong> button or run manually:</p>
+                    <div class="p-3 bg-dark text-white rounded">
+                        <code>SET GLOBAL slow_query_log = 'ON';</code><br>
+                        <code>SET GLOBAL long_query_time = 2;</code><br>
+                        <code>SET GLOBAL slow_query_log_file = '{{ $appSettings->slow_query_log_path ?: '/var/www/html/corehealth_v2/storage/logs/mysql-slow.log' }}';</code>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning py-2">
+                    <small><i class="mdi mdi-alert mr-1"></i> If you cannot modify AppArmor, use <code>/var/log/mysql/mysql-slow.log</code> instead and ensure PHP can read it.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close Guide</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
 <script>
 $(document).ready(function() {
     let currentPage = 1;
+
+
+    $('#btn-guide').click(function() {
+        $('#guideModal').modal('show');
+    });
 
     function loadQueries(page = 1) {
         currentPage = page;
