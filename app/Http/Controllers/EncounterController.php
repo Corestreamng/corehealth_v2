@@ -4325,7 +4325,7 @@ class EncounterController extends Controller
             if ($prescription->encounter_id != $encounter->id) {
                 return response()->json(['success' => false, 'message' => 'Prescription does not belong to this encounter'], 403);
             }
-            $presc = $this->updatePrescriptionDose($prescription->id, $request->input('dose', ''));
+            $presc = $this->updateSinglePrescriptionDose($prescription->id, $request->input('dose', ''));
             return response()->json(['success' => true, 'id' => $presc->id, 'message' => 'Dose updated']);
         } catch (\Exception $e) {
             Log::error('updatePrescriptionDoseRequest: ' . $e->getMessage());

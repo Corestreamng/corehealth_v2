@@ -1557,7 +1557,7 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $dose = request()->input('dose', '');
-            $presc = $this->updatePrescriptionDose($prescription->id, $dose);
+            $presc = $this->updateSinglePrescriptionDose($prescription->id, $dose);
             return response()->json(['success' => true, 'id' => $presc->id, 'message' => 'Dose updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
