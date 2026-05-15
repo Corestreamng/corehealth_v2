@@ -203,8 +203,9 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
 
         var rowIdAttr = cfg.rowId ? ' data-row-id="' + cfg.rowId + '"' : '';
 
-        // blur = immediate save; input = 3s idle save
-        var blurAttr  = 'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + oc + '"';
+        // focus = start periodic save; blur = immediate save + stop periodic; input = 3s idle save
+        var focusAttr = 'onfocus="ClinicalOrdersKit.startPeriodicSave(this)"';
+        var blurAttr  = 'onblur="ClinicalOrdersKit.stopPeriodicSave(this); ClinicalOrdersKit.cancelIdleTimer(this); ' + oc + '"';
         var idleAttr  = 'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + oc + ' }, 3000)"';
         // selects fire on change (no typing), treat like blur
         var selAttr   = 'onchange="ClinicalOrdersKit.cancelIdleTimer(this); ' + oc + '"';
@@ -213,7 +214,7 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
             '<div class="row g-1 mb-1">' +
                 '<div class="col-4">' +
                     '<span class="co-field-label">Amount</span>' +
-                    '<input type="number" class="form-control form-control-sm ' + amtCls + '" placeholder="e.g. 500" min="0" step="0.01" ' + blurAttr + ' ' + idleAttr + '>' +
+                    '<input type="number" class="form-control form-control-sm ' + amtCls + '" placeholder="e.g. 500" min="0" step="0.01" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
                     '<span class="co-field-hint">e.g. 500, 1.5</span>' +
                 '</div>' +
                 '<div class="col-4">' +
@@ -247,7 +248,7 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                 '<div class="col-4">' +
                     '<span class="co-field-label">Duration</span>' +
                     '<div class="input-group input-group-sm">' +
-                        '<input type="number" class="form-control ' + durCls + '" placeholder="e.g. 5" min="1" ' + blurAttr + ' ' + idleAttr + '>' +
+                        '<input type="number" class="form-control ' + durCls + '" placeholder="e.g. 5" min="1" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
                         '<select class="form-select ' + durUCls + '" style="max-width:70px;" ' + selAttr + '>' +
                             '<option value="days">d</option><option value="weeks">w</option><option value="months">m</option>' +
                         '</select>' +
@@ -257,7 +258,7 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                 '<div class="col-4">' +
                     '<span class="co-field-label">Qty to dispense</span>' +
                     '<div class="input-group input-group-sm">' +
-                        '<input type="number" class="form-control ' + qtyCls + '" placeholder="e.g. 10" min="1" ' + blurAttr + ' ' + idleAttr + '>' +
+                        '<input type="number" class="form-control ' + qtyCls + '" placeholder="e.g. 10" min="1" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
                     '</div>' +
                     '<span class="co-field-hint">auto-calculated</span>' +
                 '</div>' +
@@ -284,6 +285,38 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
             delete _idleTimers[key];
             fn.call(el);
         }, ms || 3000);
+    }
+
+    /* ─── Periodic save while focused (Plan §4.3 extension) ─── */
+    var _periodicTimers = {};
+
+    /**
+     * Start a periodic timer to trigger updateDoseValue every 5 seconds while a field is focused.
+     */
+    function startPeriodicSave(el) {
+        var key = _idleKey(el);
+        if (_periodicTimers[key]) clearInterval(_periodicTimers[key]);
+        
+        // Detect prefix from name attribute (e.g. cr_presc_dose[] -> cr-)
+        var name = el.name || '';
+        var p = '';
+        if (name.indexOf('cr_') === 0) p = 'cr-';
+        else if (name.indexOf('mco_') === 0) p = 'mco-';
+        
+        _periodicTimers[key] = setInterval(function() {
+            updateDoseValue(el, p);
+        }, 5000);
+    }
+
+    /**
+     * Stop the periodic timer for an element.
+     */
+    function stopPeriodicSave(el) {
+        var key = _idleKey(el);
+        if (_periodicTimers[key]) {
+            clearInterval(_periodicTimers[key]);
+            delete _periodicTimers[key];
+        }
     }
 
     /**
@@ -342,43 +375,55 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         var wrapSel = p ? '.cr-structured-dose' : '.structured-dose';
         var $row = $(el).closest(wrapSel);
 
-        // Only auto-calc qty when the changed field is NOT the qty field itself
-        var qtySel  = p ? '.cr-dose-qty' : '.dose-qty';
-        if (!$(el).hasClass(qtySel.substring(1))) {
-            autoCalculateQty($row, p);
+        var doseValue = '';
+        var flashEl = null;
+
+        if ($row.length > 0) {
+            // --- Structured Case ---
+            // Only auto-calc qty when the changed field is NOT the qty field itself
+            var qtySel  = p ? '.cr-dose-qty' : '.dose-qty';
+            if (!$(el).hasClass(qtySel.substring(1))) {
+                autoCalculateQty($row, p);
+            }
+
+            var amtSel     = p ? '.cr-dose-amount' : '.dose-amount';
+            var unitSel    = p ? '.cr-dose-unit' : '.dose-unit';
+            var routeSel   = p ? '.cr-dose-route' : '.dose-route';
+            var freqSel    = p ? '.cr-dose-freq' : '.dose-frequency';
+            var durSel     = p ? '.cr-dose-dur' : '.dose-duration';
+            var durUSel    = p ? '.cr-dose-dur-unit' : '.dose-duration-unit';
+            var qtySel     = p ? '.cr-dose-qty' : '.dose-qty';
+            var hiddenSel  = p ? '.cr-structured-dose-value' : '.structured-dose-value';
+
+            var amount  = $row.find(amtSel).val() || '';
+            var unit    = $row.find(unitSel).val() || '';
+            var route   = $row.find(routeSel).val() || '';
+            var freq    = $row.find(freqSel).val() || '';
+            var dur     = $row.find(durSel).val() || '';
+            var durUnit = $row.find(durUSel).val() || '';
+            var qty     = $row.find(qtySel).val() || '';
+
+            var parts = [];
+            if (amount) parts.push(amount + unit);
+            if (route) parts.push(route);
+            if (freq) parts.push(freq);
+            if (dur) parts.push(dur + ' ' + durUnit);
+            if (qty) parts.push('Qty: ' + qty);
+
+            doseValue = parts.join(' | ');
+            $row.find(hiddenSel).val(doseValue);
+            flashEl = $row[0];
+        } else {
+            // --- Simple Case (Mode Toggle fallback) ---
+            doseValue = $(el).val() || '';
+            flashEl = el.closest('td');
         }
 
-        var amtSel     = p ? '.cr-dose-amount' : '.dose-amount';
-        var unitSel    = p ? '.cr-dose-unit' : '.dose-unit';
-        var routeSel   = p ? '.cr-dose-route' : '.dose-route';
-        var freqSel    = p ? '.cr-dose-freq' : '.dose-frequency';
-        var durSel     = p ? '.cr-dose-dur' : '.dose-duration';
-        var durUSel    = p ? '.cr-dose-dur-unit' : '.dose-duration-unit';
-        var qtySel     = p ? '.cr-dose-qty' : '.dose-qty';
-        var hiddenSel  = p ? '.cr-structured-dose-value' : '.structured-dose-value';
-
-        var amount  = $row.find(amtSel).val() || '';
-        var unit    = $row.find(unitSel).val() || '';
-        var route   = $row.find(routeSel).val() || '';
-        var freq    = $row.find(freqSel).val() || '';
-        var dur     = $row.find(durSel).val() || '';
-        var durUnit = $row.find(durUSel).val() || '';
-        var qty     = $row.find(qtySel).val() || '';
-
-        var parts = [];
-        if (amount) parts.push(amount + unit);
-        if (route) parts.push(route);
-        if (freq) parts.push(freq);
-        if (dur) parts.push(dur + ' ' + durUnit);
-        if (qty) parts.push('Qty: ' + qty);
-
-        $row.find(hiddenSel).val(parts.join(' | '));
-
         // Trigger auto-save debounce if a record ID exists on the row (Phase 2)
-        var $tr = $row.closest('tr');
+        var $tr = $(el).closest('tr');
         var recordId = $tr.attr('data-record-id');
         if (recordId && _doseUpdateHandlers[p]) {
-            _doseUpdateHandlers[p](recordId, parts.join(' | '), $row[0]);
+            _doseUpdateHandlers[p](recordId, doseValue, flashEl);
         }
     }
 
@@ -390,7 +435,8 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
      * Called by each view during initialization.
      */
     function onDoseUpdate(cssPrefix, handler) {
-        _doseUpdateHandlers[cssPrefix || ''] = debounce(handler, 800);
+        // Fix: Removed double-debounce (handler itself calls debouncedUpdate which handles the 800ms delay)
+        _doseUpdateHandlers[cssPrefix || ''] = handler;
     }
 
     /**
@@ -446,8 +492,13 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                     }) + hiddenId);
                 } else {
                     var collapsed = collapseStructuredDose($td, config.cssPrefix);
+                    var oc = config.onchange;
+                    var focusAttr = 'onfocus="ClinicalOrdersKit.startPeriodicSave(this)"';
+                    var blurAttr  = 'onblur="ClinicalOrdersKit.stopPeriodicSave(this); ClinicalOrdersKit.cancelIdleTimer(this); ' + oc + '"';
+                    var idleAttr  = 'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + oc + ' }, 3000)"';
+
                     $td.html('<input type="text" class="form-control form-control-sm" name="' +
-                        config.doseInputName + '" value="' + collapsed + '" required>' + hiddenId);
+                        config.doseInputName + '" value="' + collapsed + '" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + ' required>' + hiddenId);
                 }
             });
         }
@@ -1666,6 +1717,8 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         onDoseUpdate: onDoseUpdate,
         scheduleIdleUpdate: scheduleIdleUpdate,
         cancelIdleTimer: cancelIdleTimer,
+        startPeriodicSave: startPeriodicSave,
+        stopPeriodicSave: stopPeriodicSave,
 
         // Dose mode toggle
         initDoseModeToggle: initDoseModeToggle,

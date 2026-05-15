@@ -5735,10 +5735,7 @@ $sett = appsettings();
                 referenceId: parseInt(id),
                 buildRowHtml: function(resp) {
                     var recordId = resp.id;
-                    var doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, 'mco-'); " +
-                        "ClinicalOrdersKit.debouncedUpdate({url:'/maternity-workbench/enrollment/" + enrollmentId + "/prescriptions/" + recordId + "/dose'," +
-                        "payload:{dose: $(this).closest('.cr-structured-dose').find('.cr-structured-dose-value').val()}," +
-                        "csrfToken:'" + CSRF_TOKEN + "'});";
+                    var doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, 'mco-'); ";
 
                     var doseCell;
                     if (mcoDoseStructuredMode) {
@@ -5750,11 +5747,11 @@ $sett = appsettings();
                             rowId: rowId
                         }) + '<input type="hidden" name="mco_presc_id[]" value="' + id + '"></td>';
                     } else {
-                        var simpleDoseCmd = "ClinicalOrdersKit.debouncedUpdate({url:'/maternity-workbench/enrollment/" + enrollmentId + "/prescriptions/" + recordId + "/dose'," +
-                            "payload:{dose:this.value},csrfToken:'" + CSRF_TOKEN + "',flashTarget:this.closest('td')})";
+                        var simpleDoseCmd = "ClinicalOrdersKit.updateDoseValue(this, 'mco-');";
                         doseCell = '<td><input type="text" class="form-control form-control-sm" name="mco_presc_dose[]" ' +
                             'placeholder="e.g. 500mg BD x 5days" ' +
-                            'onblur="ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
+                            'onfocus="ClinicalOrdersKit.startPeriodicSave(this)" ' +
+                            'onblur="ClinicalOrdersKit.stopPeriodicSave(this); ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
                             'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + simpleDoseCmd + ' }, 3000)" required>' +
                             '<input type="hidden" name="mco_presc_id[]" value="' + id + '"></td>';
                     }
