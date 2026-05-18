@@ -2023,31 +2023,56 @@ window.NonPharmManager = (function($) {
             'Diabetic-friendly low carbohydrate diet',
             'NPO (Nothing by mouth) except medications',
             'Clear liquid diet only',
-            'High protein, high fiber diet'
+            'High protein, high fiber diet',
+            'Soft/puréed mechanical diet to prevent aspiration',
+            'Low fat, low cholesterol diet (cardiac diet)',
+            'Renal diet (low potassium, low sodium, restricted fluid)',
+            'Fluid restriction to 1.5L total daily intake',
+            'Encourage oral fluids (minimum 2.5L daily)'
         ],
         'Activity': [
             'Strict bed rest with passive range of motion',
             'Ambulate assisted 3 times daily',
             'Elevate lower extremities above heart level',
-            'Deep breathing and coughing exercises every 2 hours'
+            'Deep breathing and coughing exercises every 2 hours',
+            'Out of bed to chair for all meals',
+            'Weight-bearing as tolerated (WBAT)',
+            'Non-weight-bearing (NWB) on affected limb',
+            'Active range of motion (AROM) exercises twice daily',
+            'Dangle legs at bedside for 5 mins before ambulating'
         ],
         'Counseling': [
             'Smoking cessation counseling and lifestyle guidance',
             'Anxiety management and relaxation techniques guidance',
             'Post-operative care and mobility transition education',
-            'Lactation support, positioning, and latch techniques guidance'
+            'Lactation support, positioning, and latch techniques guidance',
+            'Dietary choices and glycaemic index education',
+            'Hypertension management and home pressure tracking education',
+            'Medication adherence support and calendar setup education',
+            'Newborn care education and thermal regulation guidance',
+            'Signs of clinical worsening and red flags education'
         ],
         'Hygiene': [
             'Maintain strict dry sterile dressing on wound site',
             'Warm saline gargles 3-4 times daily',
             'Cleanse surgical site daily with mild antiseptic',
-            'Daily skin integrity checks and moisturizing'
+            'Daily skin integrity checks and moisturizing',
+            'Assist with bed bath daily and perianal care',
+            'Oral hygiene twice daily (soft toothbrush, alcohol-free rinse)',
+            'Foley catheter site cleaning with soap and water every shift',
+            'Apply protective barrier cream to sacrum every 8 hours',
+            'Trim fingernails and keep clean to prevent scratching'
         ],
         'Bedside Care': [
             'Reposition/turn patient every 2 hours to prevent pressure ulcers',
             'Strict intake and output charting (I/O)',
             'Apply cold compress to forehead every 4 hours for hyperthermia',
-            'Catheter care and bag emptying every shift'
+            'Catheter care and bag emptying every shift',
+            'Check peripheral pulse and capillary refill in affected limb Q4H',
+            'Keep head of bed (HOB) elevated to 30-45 degrees',
+            'Apply sequential compression devices (SCDs) while in bed',
+            'Perform neurological checks (GCS, pupil reaction) Q4H',
+            'Seizure precautions (padded side rails, suction set up)'
         ]
     };
 
@@ -2064,6 +2089,14 @@ window.NonPharmManager = (function($) {
     }
 
     function renderFormAndTable() {
+        if ($('#np-preset-styles').length === 0) {
+            $('head').append(
+                '<style id="np-preset-styles">' +
+                    '.np-preset-item { transition: all 0.2s ease-in-out !important; }' +
+                    '.np-preset-item:hover { background-color: #e2e8f0 !important; border-color: #94a3b8 !important; color: #0f172a !important; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; }' +
+                '</style>'
+            );
+        }
         var $container = $(currentContainerId);
         if (!$container.length) return;
 
@@ -2112,9 +2145,9 @@ window.NonPharmManager = (function($) {
                             '<div class="col-md-12">' +
                                 '<label class="form-label text-secondary fw-semibold d-flex justify-content-between align-items-center mb-1" style="font-size: 0.78rem;">' +
                                     '<span>Detailed Instructions / Presets</span>' +
-                                    '<span class="badge bg-light text-primary border" id="np-presets-badge" style="cursor: pointer; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px;">Show presets</span>' +
+                                    '<span class="badge bg-light text-secondary border" id="np-presets-badge" style="cursor: pointer; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px;">Hide presets</span>' +
                                 '</label>' +
-                                '<div id="np-presets-container" class="mb-2 p-2 border rounded" style="display:none; max-height: 120px; overflow-y: auto; background-color: #f8fafc;"></div>' +
+                                '<div id="np-presets-container" class="mb-2 p-3 border rounded shadow-inner" style="max-height: 200px; overflow-y: auto; background-color: #f8fafc; border-color: #cbd5e1 !important; border-radius: 10px;"></div>' +
                                 '<textarea class="form-control form-control-sm" id="np-instructions" placeholder="Enter detailed guidelines or clinical directives..." rows="3" required style="border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;"></textarea>' +
                             '</div>' +
                             '<div class="col-md-12 text-end">' +
@@ -2180,7 +2213,7 @@ window.NonPharmManager = (function($) {
         
         var presetsHtml = '<div class="d-flex flex-wrap gap-2">';
         presets.forEach(function(p) {
-            presetsHtml += '<span class="badge bg-white text-secondary border np-preset-item" style="cursor: pointer; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem;" onclick="window.NonPharmManager.applyPreset(\'' + p.replace(/'/g, "\\'") + '\')">' + p + '</span>';
+            presetsHtml += '<span class="badge bg-white text-secondary border np-preset-item" style="cursor: pointer; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 500; border-color: #cbd5e1 !important; display: inline-flex; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.02);" onclick="window.NonPharmManager.applyPreset(\'' + p.replace(/'/g, "\\'") + '\')">' + p + '</span>';
         });
         presetsHtml += '</div>';
         $presetsContainer.html(presetsHtml);
