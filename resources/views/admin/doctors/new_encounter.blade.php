@@ -341,11 +341,13 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="laboratory_services_tab" data-bs-toggle="tab" data-bs-target="#laboratory_services" type="button" role="tab" aria-controls="laboratory_services" aria-selected="false">
                 <i class="fa fa-flask me-1"></i> Laboratory Services
+                <span class="badge bg-danger rounded-pill ms-1 lab-unviewed-badge" id="lab-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="imaging_services_tab" data-bs-toggle="tab" data-bs-target="#imaging_services" type="button" role="tab" aria-controls="imaging_services" aria-selected="false">
                 <i class="fa fa-x-ray me-1"></i> Imaging Services
+                <span class="badge bg-danger rounded-pill ms-1 imaging-unviewed-badge" id="imaging-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -5640,6 +5642,11 @@
     }
 
     $(document).ready(function() {
+        window.currentPatientId = {{ $patient->id }};
+        if(typeof loadUnviewedCounts === 'function') {
+            loadUnviewedCounts({{ $patient->id }});
+        }
+
         if(typeof ClinicalAlerts !== 'undefined') {
             ClinicalAlerts.init({{ $patient->id }}, 'doctors');
         }

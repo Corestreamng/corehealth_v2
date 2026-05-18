@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 18, 2026 at 05:48 PM
+-- Generation Time: May 18, 2026 at 07:59 PM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -3120,7 +3120,8 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (2483, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductRequest', 56, '[]', '{\"product_id\":167,\"dose\":\"\",\"patient_id\":1,\"encounter_id\":null,\"doctor_id\":1,\"id\":56}', 'http://localhost:8000/maternity-workbench/enrollment/3/add-prescription', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', NULL, '2026-05-18 12:52:05', '2026-05-18 12:52:05'),
 (2484, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 56, '{\"deleted_by\":null,\"deletion_reason\":null}', '{\"deleted_by\":1,\"deletion_reason\":\"Entered in error\"}', 'http://localhost:8000/maternity-workbench/enrollment/3/prescriptions/56', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', NULL, '2026-05-18 12:52:13', '2026-05-18 12:52:13'),
 (2485, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\ProductRequest', 56, '{\"id\":56,\"product_request_id\":null,\"billed_by\":null,\"dispensed_by\":null,\"returned_by\":null,\"dispense_date\":null,\"returned_date\":null,\"dispensed_from_store_id\":null,\"billed_date\":null,\"product_id\":167,\"encounter_id\":null,\"patient_id\":1,\"doctor_id\":1,\"dose\":\"\",\"qty\":1,\"packaging_id\":null,\"packaging_qty\":null,\"returned_qty\":null,\"status\":1,\"old_medical_report_id\":null,\"deleted_by\":1,\"deletion_reason\":\"Entered in error\",\"dispensed_from_batch_id\":null,\"original_product_id\":null,\"adapted_from_product_id\":null,\"original_qty\":null,\"adaptation_note\":null,\"is_adapted\":0,\"adapted_by\":null,\"adapted_at\":null,\"qty_adjusted_from\":null,\"qty_adjustment_reason\":null,\"qty_adjusted_at\":null,\"qty_adjusted_by\":null,\"price_override\":null,\"price_original\":null,\"price_override_reason\":null,\"price_override_by\":null,\"price_override_at\":null,\"refund_amount\":null,\"return_reason\":null,\"return_condition\":null,\"damaged_by\":null,\"damaged_date\":null,\"damaged_qty\":null,\"damage_reason\":null,\"damage_type\":null,\"approved_by\":null,\"approved_at\":null,\"approval_notes\":null}', '[]', 'http://localhost:8000/maternity-workbench/enrollment/3/prescriptions/56', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', NULL, '2026-05-18 12:52:13', '2026-05-18 12:52:13'),
-(2486, NULL, NULL, 'created', 'App\\Models\\ChatMessage', 161, '[]', '{\"conversation_id\":8,\"user_id\":1,\"body\":\"\\ud83d\\udc8a **New Medication Order**\\n\\nPatient: **Apollos Walshak Hhh**\\nLocation: special ward - bed specal 1\\nMedications: AMLODIPINE  10MG\\nOrdered by: Dr. Admin System Ing\\n\\n_02:00 PM, May 18_\",\"type\":\"text\",\"id\":161}', 'http://localhost:8000/chat/check-unread', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', NULL, '2026-05-18 13:00:15', '2026-05-18 13:00:15');
+(2486, NULL, NULL, 'created', 'App\\Models\\ChatMessage', 161, '[]', '{\"conversation_id\":8,\"user_id\":1,\"body\":\"\\ud83d\\udc8a **New Medication Order**\\n\\nPatient: **Apollos Walshak Hhh**\\nLocation: special ward - bed specal 1\\nMedications: AMLODIPINE  10MG\\nOrdered by: Dr. Admin System Ing\\n\\n_02:00 PM, May 18_\",\"type\":\"text\",\"id\":161}', 'http://localhost:8000/chat/check-unread', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', NULL, '2026-05-18 13:00:15', '2026-05-18 13:00:15'),
+(2487, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Patient', 1, '{\"allergies\":\"\\\"[\\\\\\\"beans\\\\\\\",\\\\\\\"Nuts\\\\\\\",\\\\\\\"oil\\\\\\\"]\\\"\"}', '{\"allergies\":\"[\\\"beans\\\",\\\"Nuts\\\",\\\"oil\\\",\\\"yuwyeuqw\\\"]\"}', 'http://localhost:8000/patient/1/update-allergies', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', NULL, '2026-05-18 17:09:33', '2026-05-18 17:09:33');
 
 -- --------------------------------------------------------
 
@@ -19967,7 +19968,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (367, '2026_05_15_125001_add_source_to_slow_queries_table', 192),
 (368, '2026_05_18_140804_create_non_pharm_orders_table', 193),
 (369, '2026_05_18_143333_add_completed_notes_to_non_pharm_orders_table', 194),
-(370, '2026_05_18_164341_create_clinical_alerts_table', 195);
+(370, '2026_05_18_164341_create_clinical_alerts_table', 195),
+(371, '2026_05_18_184622_create_result_views_table', 196);
 
 -- --------------------------------------------------------
 
@@ -77838,7 +77840,7 @@ CREATE TABLE `patients` (
 --
 
 INSERT INTO `patients` (`id`, `user_id`, `file_no`, `insurance_scheme`, `hmo_id`, `is_deceased`, `date_of_death`, `hmo_no`, `gender`, `dob`, `blood_group`, `genotype`, `disability`, `address`, `phone_no`, `nationality`, `ethnicity`, `misc`, `allergies`, `medical_history`, `next_of_kin_name`, `created_at`, `updated_at`, `next_of_kin_phone`, `next_of_kin_address`, `old_patient_id`, `old_user_id`, `dhis_consult_enrollment_id`, `dhis_consult_tracker_id`) VALUES
-(1, 64684, '0001', NULL, 8, 0, NULL, '777767676', 'Male', '1999-10-15', 'B+', 'AA', 0, 'Elwazir Street,bosso\r\nVcm 105 Elwazir Estate', '07050737404', 'Nigerian', 'Igbo', NULL, '\"[\\\"beans\\\",\\\"Nuts\\\",\\\"oil\\\"]\"', 'Known champion', 'Chin Timothy', '2026-02-02 13:18:01', '2026-04-17 09:37:15', '0987655353', 'Jos North, NG', NULL, NULL, NULL, NULL),
+(1, 64684, '0001', NULL, 8, 0, NULL, '777767676', 'Male', '1999-10-15', 'B+', 'AA', 0, 'Elwazir Street,bosso\r\nVcm 105 Elwazir Estate', '07050737404', 'Nigerian', 'Igbo', NULL, '[\"beans\",\"Nuts\",\"oil\",\"yuwyeuqw\"]', 'Known champion', 'Chin Timothy', '2026-02-02 13:18:01', '2026-05-18 17:09:33', '0987655353', 'Jos North, NG', NULL, NULL, NULL, NULL),
 (3, 64686, NULL, NULL, 1, 0, NULL, NULL, 'Male', '1986-03-01', NULL, NULL, 0, NULL, '08188223653', NULL, NULL, NULL, '\"[\\\"penta\\\",\\\"nuts\\\"]\"', NULL, 'em1', '2026-02-19 03:45:20', '2026-02-19 03:45:20', '0398283202', NULL, NULL, NULL, NULL, NULL),
 (4, 65194, '000001', NULL, 8, 0, NULL, '777767676', 'male', '2026-02-26', NULL, NULL, 0, 'Elwazir Street,bosso\r\nVcm 105 Elwazir Estate', '07050737404', NULL, NULL, NULL, NULL, NULL, 'Apollos Walshak  ', '2026-02-26 06:00:22', '2026-02-26 06:00:22', '07050737404', NULL, NULL, NULL, NULL, NULL),
 (5, 65195, '000002', NULL, 8, 0, NULL, '777767676', 'male', '2026-02-26', NULL, NULL, 0, 'Elwazir Street,bosso\r\nVcm 105 Elwazir Estate', '07050737404', NULL, NULL, NULL, NULL, NULL, 'Apollos Walshak  ', '2026-02-26 06:00:38', '2026-02-26 06:00:38', '07050737404', NULL, NULL, NULL, NULL, NULL),
@@ -93989,6 +93991,37 @@ INSERT INTO `reason_for_encounters` (`id`, `code`, `name`, `category`, `sub_cate
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `result_views`
+--
+
+CREATE TABLE `result_views` (
+  `id` bigint UNSIGNED NOT NULL,
+  `viewable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `viewable_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `view_type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'modal',
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `result_views`
+--
+
+INSERT INTO `result_views` (`id`, `viewable_type`, `viewable_id`, `user_id`, `view_type`, `ip_address`, `created_at`, `updated_at`) VALUES
+(1, 'App\\Models\\LabServiceRequest', 20, 1, 'modal', '127.0.0.1', '2026-05-18 18:33:27', '2026-05-18 18:33:27'),
+(2, 'App\\Models\\LabServiceRequest', 20, 1, 'modal', '127.0.0.1', '2026-05-18 18:35:46', '2026-05-18 18:35:46'),
+(3, 'App\\Models\\LabServiceRequest', 13, 1, 'modal', '127.0.0.1', '2026-05-18 18:40:36', '2026-05-18 18:40:36'),
+(4, 'App\\Models\\LabServiceRequest', 20, 1, 'modal', '127.0.0.1', '2026-05-18 18:45:11', '2026-05-18 18:45:11'),
+(5, 'App\\Models\\LabServiceRequest', 13, 1, 'modal', '127.0.0.1', '2026-05-18 18:45:17', '2026-05-18 18:45:17'),
+(6, 'App\\Models\\LabServiceRequest', 20, 1, 'modal', '127.0.0.1', '2026-05-18 18:51:00', '2026-05-18 18:51:00'),
+(7, 'App\\Models\\LabServiceRequest', 2, 1, 'modal', '127.0.0.1', '2026-05-18 18:51:07', '2026-05-18 18:51:07'),
+(8, 'App\\Models\\LabServiceRequest', 3, 1, 'modal', '127.0.0.1', '2026-05-18 18:51:16', '2026-05-18 18:51:16');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `roles`
 --
 
@@ -107239,6 +107272,15 @@ ALTER TABLE `reason_for_encounters`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `result_views`
+--
+ALTER TABLE `result_views`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `result_views_viewable_type_viewable_id_index` (`viewable_type`,`viewable_id`),
+  ADD KEY `result_views_user_id_foreign` (`user_id`),
+  ADD KEY `result_views_viewable_user_idx` (`viewable_type`,`viewable_id`,`user_id`);
+
+--
 -- Indexes for table `roles`
 --
 ALTER TABLE `roles`
@@ -107807,7 +107849,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2487;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2488;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -108431,7 +108473,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=371;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=372;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -108702,6 +108744,12 @@ ALTER TABLE `purchase_order_returns`
 --
 ALTER TABLE `reason_for_encounters`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12132;
+
+--
+-- AUTO_INCREMENT for table `result_views`
+--
+ALTER TABLE `result_views`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -110094,6 +110142,12 @@ ALTER TABLE `purchase_order_returns`
   ADD CONSTRAINT `purchase_order_returns_purchase_order_id_foreign` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `purchase_order_returns_purchase_order_item_id_foreign` FOREIGN KEY (`purchase_order_item_id`) REFERENCES `purchase_order_items` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `purchase_order_returns_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `result_views`
+--
+ALTER TABLE `result_views`
+  ADD CONSTRAINT `result_views_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `saved_report_filters`

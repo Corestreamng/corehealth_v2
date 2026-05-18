@@ -720,6 +720,18 @@ class ImagingServiceRequestController extends Controller
             'patient.user', 'patient.hmo', 'service', 'doctor',
             'resultBy', 'approver', 'encounter', 'productOrServiceRequest'
         ])->findOrFail($id);
+
+        // Record a server-side print view
+        if (Auth::check() && $req->result) {
+            \App\Models\ResultView::create([
+                'viewable_type' => ImagingServiceRequest::class,
+                'viewable_id'   => $req->id,
+                'user_id'       => Auth::id(),
+                'view_type'     => 'print',
+                'ip_address'    => request()->ip(),
+            ]);
+        }
+
         return view('admin.imaging_service_requests.show', ['req' => $req]);
     }
 }
