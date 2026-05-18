@@ -785,7 +785,13 @@
                         <div class="pf-patient-card card mb-3">
                             <div class="card-body text-center">
                                 <img src="" id="pfPatientPhoto" class="pf-avatar mb-2" alt="Patient">
-                                <div class="pf-name" id="pfPatientName"></div>
+                                <div class="pf-name d-flex justify-content-center align-items-center gap-2 mb-1">
+                                    <span id="pfPatientName"></span>
+                                    <button class="btn btn-sm btn-danger btn-manage-alerts p-1 ms-2" id="btn-manage-alerts" style="display:none; font-size: 0.75rem; border-radius: 4px;">
+                                        <i class="mdi mdi-alert-octagon"></i> Alerts
+                                    </button>
+                                </div>
+                                <div class="sticky-header-alerts text-start mb-2" style="max-height: 80px; overflow-y: auto;"></div>
                                 <div class="pf-detail mb-1"><i class="mdi mdi-folder-account"></i> <span id="pfPatientFileNo"></span></div>
                                 <div class="pf-detail mb-2" id="pfAgeRow"><i class="mdi mdi-cake-variant"></i> <span id="pfPatientAge"></span></div>
                                 <hr class="my-2">
@@ -4476,7 +4482,15 @@ $(function() {
                 var $bal = $('#pfPatientBalance');
                 $bal.text('₦' + fmtN(bal));
                 $bal.removeClass('pf-balance-positive pf-balance-negative pf-balance-zero');
-                $bal.addClass(bal> 0 ? 'pf-balance-positive' : (bal < 0 ? 'pf-balance-negative' : 'pf-balance-zero'));
+                $bal.addClass(bal > 0 ? 'pf-balance-positive' : (bal < 0 ? 'pf-balance-negative' : 'pf-balance-zero'));
+
+                // Initialize Clinical Alerts
+                try { 
+                    $('#btn-manage-alerts').show();
+                    if(typeof ClinicalAlerts !== 'undefined') {
+                        ClinicalAlerts.init(patientId, 'hmo');
+                    }
+                } catch(e) { console.error('ClinicalAlerts init error:', e); }
 
                 // Quick action links
                 $('#pfPrintReportLink').attr('href', "{{ url('hmo/reports/patient') }}/" + patientId);
@@ -5063,5 +5077,8 @@ $(document).on('click', 'a[href="#pf-tab-admissions"]', function() {
     setTimeout(_initHmoAdmissions, 150);
 });
 </script>
+
+@include('admin.partials.clinical_alerts_modal')
+<script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
 @endsection

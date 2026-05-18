@@ -46,42 +46,127 @@
         </div>
     @endif
 
-    <!-- Action Bar -->
-    <div class="card-modern mb-3 border-0 shadow-sm">
-        <div class="card-body py-2">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="mdi mdi-stethoscope text-primary" style="font-size: 24px; color: {{ appsettings('hos_color', '#007bff') }} !important;"></i>
+    <!-- Sticky Consultation Header -->
+    <style>
+        .sticky-consultation-header {
+            position: sticky;
+            top: 60px; /* Assuming navbar height */
+            z-index: 1020;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #dee2e6;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+        }
+        .patient-badge {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            margin-right: 0.5rem;
+            margin-bottom: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .patient-badge i { width: 14px; text-align: center; }
+    </style>
+
+    <div class="sticky-consultation-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <!-- Patient Demographics & Clinical Info -->
+            <div class="d-flex flex-column flex-grow-1 me-3" style="max-width: 65%;">
+                <div class="d-flex align-items-center flex-wrap mb-2">
+                    <h5 class="mb-0 me-3 fw-bold text-primary">
+                        <i class="fa fa-user-circle me-1"></i> {{ userfullname($patient->user->id) }}
+                        <small class="text-muted fs-6 ms-1">#{{ $patient->file_no }}</small>
+                    </h5>
+                    <span class="patient-badge" title="Age & Gender">
+                        <i class="fa fa-birthday-cake text-muted"></i> 
+                        {{ \Carbon\Carbon::parse($patient->dob)->age }} yrs ({{ substr($patient->gender ?? 'N/A', 0, 1) }})
+                    </span>
+                    <span class="patient-badge" title="Blood Group / Genotype">
+                        <i class="fa fa-tint text-danger"></i> 
+                        {{ $patient->blood_group ?? 'N/A' }} / {{ $patient->genotype ?? 'N/A' }}
+                    </span>
+                    <span class="patient-badge" title="HMO/Insurance">
+                        <i class="fa fa-shield-alt text-success"></i> 
+                        {{ $patient->hmo->name ?? 'Private' }}
+                    </span>
+                    
+                    <button class="btn btn-sm btn-outline-danger ms-auto d-flex align-items-center btn-manage-alerts" data-patient-id="{{ $patient->id }}">
+                        <i class="mdi mdi-alert-octagon me-1"></i> Clinical Alerts
+                    </button>
+                </div>
+                
+                <div class="d-flex align-items-start gap-2">
+                    <!-- Allergies Container -->
+                    <div class="d-flex align-items-center bg-light rounded p-1 border flex-grow-1 shadow-sm" style="flex-basis: 50%;">
+                        <div class="fw-bold text-danger me-2 small"><i class="fa fa-allergies"></i> Allergies:</div>
+                        <div class="d-flex flex-wrap gap-1 align-items-center" id="sticky-allergies-container">
+                            @php
+                                $allergies = [];
+                                if(!empty($patient->allergies)) {
+                                    $allergies = is_string($patient->allergies) ? (json_decode($patient->allergies, true) ?? explode(',', $patient->allergies)) : $patient->allergies;
+                                }
+                            @endphp
+                            @if(count($allergies) > 0)
+                                @foreach($allergies as $allergy)
+                                    <span class="badge bg-danger">{{ trim($allergy) }}</span>
+                                @endforeach
+                            @else
+                                <span class="text-muted small">None known</span>
+                            @endif
+                        </div>
+                        <button class="btn btn-sm btn-light ms-auto py-0 px-1 border text-secondary" onclick="promptAddAllergy({{ $patient->id }})" title="Add Allergy">
+                            <i class="fa fa-plus"></i>
+                        </button>
                     </div>
-                    <div>
-                        <h6 class="mb-0 fw-bold">Consultation Actions</h6>
-                        <small class="text-muted" style="font-size: 0.85rem;">
-                            Manage patient admission status or finalize this consultation session.
-                        </small>
+
+                    <!-- Latest Vitals Container -->
+                    <div class="d-flex align-items-center bg-light rounded p-1 border flex-grow-1 shadow-sm" style="flex-basis: 50%;">
+                        <div class="fw-bold text-info me-2 small"><i class="fa fa-heartbeat"></i> Vitals:</div>
+                        <div class="d-flex flex-wrap gap-3 small text-muted w-100" id="sticky-vitals-container">
+                            <span id="sticky-vital-temp" title="Temperature"><i class="fa fa-thermometer-half text-danger"></i> --</span>
+                            <span id="sticky-vital-bp" title="Blood Pressure"><i class="fa fa-heart text-danger"></i> --</span>
+                            <span id="sticky-vital-wt" title="Weight"><i class="fa fa-weight text-primary"></i> --</span>
+                            <span id="sticky-vital-hr" title="Heart Rate"><i class="fa fa-stethoscope text-success"></i> --</span>
+                        </div>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    {{-- Consultation Timer --}}
-                    @include('admin.doctors.partials.consultation_timer')
+                
+                <!-- Clinical Alerts Display -->
+                <div class="sticky-header-alerts mt-2 w-100">
+                    <!-- JS will inject alerts here -->
+                </div>
+            </div>
 
+            <!-- Consultation Actions -->
+            <div class="d-flex flex-column align-items-end border-start ps-3" style="min-width: 30%;">
+                <div class="mb-2 w-100 d-flex justify-content-end">
+                    @include('admin.doctors.partials.consultation_timer')
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end w-100">
                     @if (isset($admission_request))
                         <!-- Patient has admission request - show status and discharge button -->
-                        <div class="d-flex align-items-center me-2 px-3 py-1 bg-light rounded border">
+                        <div class="d-flex align-items-center me-2 px-2 py-1 bg-light rounded border shadow-sm">
                             <i class="fa fa-bed me-2" style="color: {{ appsettings('hos_color', '#007bff') }};"></i>
                             <div class="d-flex flex-column lh-1">
                                 @if($admission_request->admission_status === 'discharge_requested')
-                                    <span class="fw-bold text-warning" style="font-size: 0.8rem;">Discharge Requested</span>
-                                    <small class="text-muted" style="font-size: 0.7rem;">Awaiting Nursing</small>
+                                    <span class="fw-bold text-warning" style="font-size: 0.75rem;">Discharge Req</span>
+                                    <small class="text-muted" style="font-size: 0.65rem;">Awaiting Nursing</small>
                                 @elseif($admission_request->admission_status === 'pending_checklist')
-                                    <span class="fw-bold text-info" style="font-size: 0.8rem;">Admission Requested</span>
-                                    <small class="text-muted" style="font-size: 0.7rem;">Pending Checklist</small>
+                                    <span class="fw-bold text-info" style="font-size: 0.75rem;">Admission Req</span>
+                                    <small class="text-muted" style="font-size: 0.65rem;">Pending Checklist</small>
                                 @elseif($admission_request->discharged)
-                                    <span class="fw-bold text-secondary" style="font-size: 0.8rem;">Discharged</span>
-                                    <small class="text-muted" style="font-size: 0.7rem;">{{ $admission_request->discharge_date ? date('M j, Y', strtotime($admission_request->discharge_date)) : '' }}</small>
+                                    <span class="fw-bold text-secondary" style="font-size: 0.75rem;">Discharged</span>
+                                    <small class="text-muted" style="font-size: 0.65rem;">{{ $admission_request->discharge_date ? date('M j', strtotime($admission_request->discharge_date)) : '' }}</small>
                                 @else
-                                    <span class="fw-bold text-dark" style="font-size: 0.8rem;">Admitted</span>
-                                    <small class="text-muted" style="font-size: 0.7rem;">
+                                    <span class="fw-bold text-dark" style="font-size: 0.75rem;">Admitted</span>
+                                    <small class="text-muted" style="font-size: 0.65rem;">
                                         {{ $admission_request->bed ? $admission_request->bed->name : 'Pending Bed' }}
                                     </small>
                                 @endif
@@ -89,28 +174,26 @@
                         </div>
                         @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
                         <button type="button" class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" onclick="openDischargeModal()">
-                            <i class="fa fa-sign-out-alt me-2"></i> Request Discharge
+                            <i class="fa fa-sign-out-alt me-1"></i> Discharge
                         </button>
                         @endif
                     @else
                         <!-- Patient not admitted - show admit button -->
                         <button type="button" class="btn btn-info btn-sm text-white d-flex align-items-center shadow-sm" onclick="openAdmitModal()">
-                            <i class="fa fa-bed me-2"></i> Request Admission
+                            <i class="fa fa-bed me-1"></i> Admit
                         </button>
                     @endif
 
                     <button type="button" class="btn btn-outline-dark btn-sm d-flex align-items-center shadow-sm" onclick="openReportBuilder()">
-                        <i class="mdi mdi-file-document me-1"></i> Medical Report
+                        <i class="mdi mdi-file-document me-1"></i> Report
                     </button>
 
                     <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center shadow-sm" onclick="$('button[data-bs-target=\'#referrals\']').tab('show'); setTimeout(function(){ $('#toggle-referral-form-btn').click(); }, 300);">
-                        <i class="mdi mdi-account-switch me-1"></i> Refer Patient
+                        <i class="mdi mdi-account-switch me-1"></i> Refer
                     </button>
 
-                    <div class="vr mx-2 text-muted"></div>
-
-                    <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
-                        <i class="fa fa-check-circle me-2"></i> Conclude Encounter
+                    <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm ms-2" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
+                        <i class="fa fa-check-circle me-1"></i> Conclude
                     </button>
                 </div>
             </div>
@@ -185,80 +268,33 @@
                 <div class="card-body table-responsive">
                     <div class="row">
                         <div class="col-md-9">
-                            <h1>{{ userfullname($patient->user->id) }}</h1>
-                            <h3>File No: {{ $patient->file_no }}</h3>
+                            <h1>Patient Data Overview</h1>
+                            <p class="text-muted">Demographics, allergies, and vitals are now displayed in the sticky header for quick access during consultation.</p>
+                            
                             @if ($patient->user->old_records)
-                                <div class="form-group">
-                                    <a href="{!! url('storage/image/user/old_records/' . $patient->user->old_records) !!}" target="_blank"><i class="fa fa-file"></i> Old
-                                        Records</a>
-                                    <br>
+                                <div class="form-group mt-3">
+                                    <a href="{!! url('storage/image/user/old_records/' . $patient->user->old_records) !!}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fa fa-file"></i> View Old Records
+                                    </a>
                                 </div>
                             @else
-                                <div class="form-group">
-                                    <a href="#"><i class="fa fa-file"></i> No Old Records Attached</a>
-                                    <br>
+                                <div class="form-group mt-3 text-muted">
+                                    <i class="fa fa-info-circle"></i> No Old Records Attached
                                 </div>
                             @endif
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <img src="{!! url('storage/image/user/' . $patient->user->filename) !!}" valign="middle" width="150px" height="120px" />
-                                <br>
+                            
+                            <div class="mt-4">
+                                <h6>Next of Kin Information:</h6>
+                                <p class="mb-1"><strong>Name:</strong> {{ $patient->next_of_kin_name ?? 'N/A' }}</p>
+                                <p class="mb-1"><strong>Phone:</strong> {{ $patient->next_of_kin_phone ?? 'N/A' }}</p>
+                                <p class="mb-0"><strong>Address:</strong> {{ $patient->next_of_kin_address ?? 'N/A' }}</p>
                             </div>
                         </div>
-                    </div>
-                    <br>
-                    <hr>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered table-striped">
-                            <tbody>
-                                <tr>
-                                    <th>Gender: </th>
-                                    <td>{{ $patient->gender ?? 'N/A' }}</td>
-                                    <th>D.O.B:</th>
-                                    <td>{{ $patient->dob ?? 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Blood Group:</th>
-                                    <td>{{ $patient->blood_group ?? 'N/A' }}</td>
-                                    <th>Genotype :</th>
-                                    <td>{{ $patient->genotype ?? 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Nationality: </th>
-                                    <td>{{ $patient->nationality ?? 'N/A' }}</td>
-                                    <th>Ethnicity:</th>
-                                    <td>{{ $patient->ethnicity ?? 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Address: </th>
-                                    <td>{{ $patient->address ?? 'N/A' }}</td>
-                                    <th>Other info:</th>
-                                    <td>{{ $patient->misc ?? 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Insurance/HMO: </th>
-                                    <td>{{ $patient->hmo->name ?? 'N/A' }}</td>
-                                    <th>HMO No:</th>
-                                    <td>{{ $patient->hmo_no ?? 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Disability status:</th>
-                                    <td>{{ $patient->disability == 1 ? 'Disabled' : 'None' }}</td>
-                                    <th>Phone: </th>
-                                    <td>{{ $patient->phone_no }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Next Of Kin: </th>
-                                    <td>{{ $patient->next_of_kin_name ?? 'N/A' }}</td>
-                                    <th>Other next of kin info:</th>
-                                    <td>
-                                        Phone : {{ $patient->next_of_kin_phone ?? 'N/A' }} <br>
-                                        Address : {{ $patient->next_of_kin_address ?? 'N/A' }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="col-md-3">
+                            <div class="form-group text-center">
+                                <img src="{!! url('storage/image/user/' . $patient->user->filename) !!}" class="img-fluid rounded shadow-sm border" style="max-height: 150px; object-fit: cover;" alt="Patient Photo" />
+                            </div>
+                        </div>
                     </div>
                     @if (isset($admission_request))
                         <hr>
@@ -5453,5 +5489,64 @@
             }
         });
     }
+
+    // Quick add allergy from sticky header
+    function promptAddAllergy(patientId) {
+        var newAllergy = prompt("Enter new allergy (e.g., Penicillin, Peanuts):");
+        if (newAllergy && newAllergy.trim() !== "") {
+            var currentAllergiesText = "";
+            $('#sticky-allergies-container .badge').each(function() {
+                var text = $(this).text().trim();
+                if(text !== 'None known') {
+                    currentAllergiesText += (currentAllergiesText ? ", " : "") + text;
+                }
+            });
+            var combinedAllergies = currentAllergiesText ? currentAllergiesText + ", " + newAllergy : newAllergy;
+            
+            $.ajax({
+                url: '/patient/' + patientId + '/update-allergies',
+                method: 'PUT',
+                data: {
+                    allergies: combinedAllergies,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(res) {
+                    if (res.status === 'success') {
+                        var html = '';
+                        res.data.forEach(function(a) {
+                            html += '<span class="badge bg-danger">' + a + '</span> ';
+                        });
+                        $('#sticky-allergies-container').html(html);
+                        toastr.success('Allergy added successfully.');
+                    }
+                },
+                error: function() {
+                    toastr.error('Failed to add allergy.');
+                }
+            });
+        }
+    }
+
+    $(document).ready(function() {
+        if(typeof ClinicalAlerts !== 'undefined') {
+            ClinicalAlerts.init({{ $patient->id }}, 'doctors');
+        }
+        
+        // Fetch latest vitals for sticky header
+        if(typeof currentPatient !== 'undefined' || typeof {{ $patient->id }} !== 'undefined') {
+            $.get('/clinical-context/patient/' + {{ $patient->id }} + '/vitals', function(vitals) {
+                if(vitals && vitals.length > 0) {
+                    var latest = vitals[0];
+                    $('#sticky-vital-temp').html('<i class="fa fa-thermometer-half text-danger"></i> ' + (latest.temp ? latest.temp + '°C' : '--'));
+                    $('#sticky-vital-bp').html('<i class="fa fa-heart text-danger"></i> ' + (latest.blood_pressure ? latest.blood_pressure : '--'));
+                    $('#sticky-vital-wt').html('<i class="fa fa-weight text-primary"></i> ' + (latest.weight ? latest.weight + 'kg' : '--'));
+                    $('#sticky-vital-hr').html('<i class="fa fa-stethoscope text-success"></i> ' + (latest.heart_rate ? latest.heart_rate + 'bpm' : '--'));
+                }
+            });
+        }
+    });
     </script>
+    
+    @include('admin.partials.clinical_alerts_modal')
+    <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 @endsection

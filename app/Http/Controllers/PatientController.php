@@ -980,6 +980,27 @@ class PatientController extends Controller
      * @param  \App\Models\patient  $patient
      * @return \Illuminate\Http\Response
      */
+    public function updateAllergies(Request $request, Patient $patient)
+    {
+        $request->validate([
+            'allergies' => 'required|string'
+        ]);
+
+        // Clean and parse the allergies to store as JSON array
+        $allergiesStr = $request->allergies;
+        $allergiesArray = array_map('trim', explode(',', $allergiesStr));
+        $allergiesArray = array_filter($allergiesArray); // Remove empty values
+        
+        $patient->allergies = $allergiesArray;
+        $patient->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Allergies updated successfully',
+            'data' => $patient->allergies
+        ]);
+    }
+
     public function destroy(Patient $patient)
     {
         //
