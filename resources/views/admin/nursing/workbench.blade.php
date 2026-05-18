@@ -5060,6 +5060,11 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="cr-non-pharm-tab" data-bs-toggle="tab" data-bs-target="#cr-non-pharm" type="button" role="tab">
+                                <i class="fa fa-heartbeat"></i> Care Plan / Non-Pharm
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="cr-lab-tab" data-bs-toggle="tab" data-bs-target="#cr-lab" type="button" role="tab">
                                 <i class="mdi mdi-flask"></i> Lab Requests
                             </button>
@@ -5143,6 +5148,15 @@
                                             <div id="cr_presc_message" class="mt-2"></div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ===== NON-PHARM / CARE PLAN SUB-TAB ===== -->
+                        <div class="tab-pane fade" id="cr-non-pharm" role="tabpanel">
+                            <div class="card-modern">
+                                <div class="card-body">
+                                    <div id="cr-non-pharm-container"></div>
                                 </div>
                             </div>
                         </div>
@@ -8020,6 +8034,14 @@ const ClinicalRequests = (function() {
         patientId = pid;
         $('#cr-patient-badge').text('Patient #' + pid).removeClass('bg-info').addClass('bg-primary');
         selectedProcedures = [];
+
+        // Initialize Non-Pharmacological Bedside Care Orders
+        window.NonPharmManager.init({
+            patientId: pid,
+            encounterId: null,
+            containerId: '#cr-non-pharm-container',
+            isNurseView: true
+        });
 
         // Setup search handlers FIRST (only once) — must bind before any
         // ClinicalOrdersKit calls that could throw and abort the rest of init()

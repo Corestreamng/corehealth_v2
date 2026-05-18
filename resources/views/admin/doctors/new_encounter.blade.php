@@ -159,6 +159,11 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="non_pharm_tab" data-bs-toggle="tab" data-bs-target="#non_pharm" type="button" role="tab" aria-controls="non_pharm" aria-selected="false">
+                <i class="fa fa-heartbeat me-1"></i> Care Plan / Non-Pharm
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="procedures_tab" data-bs-toggle="tab" data-bs-target="#procedures" type="button" role="tab" aria-controls="procedures" aria-selected="false">
                 <i class="fa fa-user-md me-1"></i> Procedures
             </button>
@@ -375,6 +380,23 @@
         {{-- Medications: Combined Prescription History + New Prescription --}}
         <div class="tab-pane fade" id="medications" role="tabpanel" aria-labelledby="medications_tab">
             @include('admin.doctors.partials.medications')
+        </div>
+
+        {{-- Non-Pharmacological Care Orders / Care Plan --}}
+        <div class="tab-pane fade" id="non_pharm" role="tabpanel" aria-labelledby="non_pharm_tab">
+            <div class="card-modern mt-2">
+                <div class="card-body">
+                    <div id="non-pharm-encounter-container"></div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <button type="button" class="btn btn-secondary" onclick="$('#medications_tab').click()" style="border-radius: 8px; font-weight: 600;">
+                    <i class="fa fa-arrow-left me-1"></i> Previous (Medications)
+                </button>
+                <button type="button" class="btn btn-primary" onclick="$('#procedures_tab').click()" style="border-radius: 8px; font-weight: 600;">
+                    Next (Procedures) <i class="fa fa-arrow-right ms-1"></i>
+                </button>
+            </div>
         </div>
 
         {{-- Procedures Tab --}}
@@ -3634,6 +3656,14 @@
                     $('#procedure_history_list').DataTable().ajax.reload(null, false);
                 }
             }
+        });
+
+        // Initialize Non-Pharmacological Care Orders
+        window.NonPharmManager.init({
+            patientId: patientId,
+            encounterId: encounterId,
+            containerId: '#non-pharm-encounter-container',
+            isNurseView: false
         });
 
         // Helper function to show messages
