@@ -838,26 +838,261 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
      *   config.referenceId   - the service_id or product_id being removed
      *   config.onSuccess     - optional callback
      */
+    function ensureDeleteModal() {
+        if ($('#clinicalOrdersDeleteModal').length > 0) {
+            return;
+        }
+
+        var modalHtml = 
+            '<div class="modal fade" id="clinicalOrdersDeleteModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 1060;">' +
+            '    <div class="modal-dialog modal-dialog-centered" role="document">' +
+            '        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">' +
+            '            <div class="modal-header bg-danger text-white py-3 border-0">' +
+            '                <h5 class="modal-title font-weight-bold m-0 d-flex align-items-center" style="font-size: 1.15rem; letter-spacing: 0.3px;">' +
+            '                    <i class="fa fa-exclamation-triangle me-2" style="font-size: 1.25rem;"></i> Confirm Deletion' +
+            '                </h5>' +
+            '                <button type="button" class="btn-close btn-close-white ms-auto border-0 bg-transparent text-white fs-4" data-bs-dismiss="modal" aria-label="Close" style="cursor: pointer; line-height: 1;">&times;</button>' +
+            '            </div>' +
+            '            <div class="modal-body p-4 bg-white">' +
+            '                <div class="alert alert-warning border-0 d-flex align-items-start mb-3" style="background-color: #fffbeb; color: #b45309; border-radius: 8px; font-size: 0.9rem; padding: 12px 16px; border-left: 4px solid #f59e0b;">' +
+            '                    <i class="fa fa-info-circle me-2 mt-1" style="font-size: 1.1rem; flex-shrink: 0;"></i>' +
+            '                    <div>You are about to soft-delete this clinical request. A reason for this deletion is required for audit history.</div>' +
+            '                </div>' +
+            '                <div class="mb-3 p-3 rounded" id="coDeleteModalItemInfo" style="background-color: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.9rem; color: #334155; border-radius: 8px;"></div>' +
+            '                <div class="form-group mb-0">' +
+            '                    <label class="form-label font-weight-semibold text-dark mb-2" style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">Reason for Deletion <span class="text-danger">*</span></label>' +
+            '                    <select class="form-select form-control mb-3" id="coDeleteReasonSelect" style="border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem; padding: 8px 12px; height: auto;">' +
+            '                        <option value="">-- Select a reason --</option>' +
+            '                        <option value="Duplicate request">Duplicate request</option>' +
+            '                        <option value="Entered in error">Entered in error</option>' +
+            '                        <option value="Patient refused">Patient refused</option>' +
+            '                        <option value="No longer needed">No longer needed</option>' +
+            '                        <option value="Doctor changed order">Doctor changed order</option>' +
+            '                        <option value="Other">Other (specify below)</option>' +
+            '                    </select>' +
+            '                    <textarea class="form-control d-none mb-0" id="coDeleteReasonOther" rows="3" placeholder="Please specify the custom reason..." style="border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem; padding: 8px 12px; resize: none;"></textarea>' +
+            '                </div>' +
+            '            </div>' +
+            '            <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end" style="gap: 8px;">' +
+            '                <button type="button" class="btn btn-secondary px-4 py-2 border-0" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 500; font-size: 0.875rem; background-color: #64748b; color: #ffffff; cursor: pointer; transition: all 0.2s;">' +
+            '                    <i class="fa fa-times me-1"></i> Cancel' +
+            '                </button>' +
+            '                <button type="button" class="btn btn-danger px-4 py-2 border-0" id="coConfirmDeleteBtn" style="border-radius: 8px; font-weight: 500; font-size: 0.875rem; background-color: #ef4444; color: #ffffff; cursor: pointer; transition: all 0.2s;">' +
+            '                    <i class="fa fa-trash-alt me-1"></i> Confirm Delete' +
+            '                </button>' +
+            '            </div>' +
+            '        </div>' +
+            '    </div>' +
+            '</div>';
+
+        $('body').append(modalHtml);
+
+        // Bind events
+        $('#coDeleteReasonSelect').on('change', function() {
+            if ($(this).val() === 'Other') {
+                $('#coDeleteReasonOther').removeClass('d-none').focus();
+            } else {
+                $('#coDeleteReasonOther').addClass('d-none').val('');
+            }
+        });
+    }
+
+    function showDeleteConfirmation(config) {
+        ensureDeleteModal();
+
+        // Populate item info
+        var typeLabels = {
+            lab:          'Laboratory Test',
+            imaging:      'Imaging/Radiology',
+            prescription: 'Prescription',
+            procedure:    'Procedure'
+        };
+        var typeLabel = typeLabels[config.type] || config.type.charAt(0).toUpperCase() + config.type.slice(1);
+        $('#coDeleteModalItemInfo').html(
+            '<strong>Item:</strong> ' + (config.itemName || 'Selected Clinical Request') + '<br>' +
+            '<strong>Type:</strong> ' + typeLabel
+        );
+
+        // Reset inputs
+        $('#coDeleteReasonSelect').val('');
+        $('#coDeleteReasonOther').addClass('d-none').val('');
+        $('#coConfirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt me-1"></i> Confirm Delete');
+
+        // Show modal using jQuery-based bootstrap 4 syntax
+        $('#clinicalOrdersDeleteModal').modal('show');
+
+        // Unbind previous handler and bind the new one
+        $('#coConfirmDeleteBtn').off('click').on('click', function () {
+            var reasonSelect = $('#coDeleteReasonSelect').val();
+            var reasonOther = $('#coDeleteReasonOther').val();
+
+            if (!reasonSelect) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.warning('Please select a reason for deletion');
+                } else {
+                    alert('Please select a reason for deletion');
+                }
+                return;
+            }
+
+            if (reasonSelect === 'Other' && !reasonOther) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.warning('Please specify the reason');
+                } else {
+                    alert('Please specify the reason');
+                }
+                return;
+            }
+
+            var finalReason = reasonSelect === 'Other' ? reasonOther : reasonSelect;
+
+            // Disable button
+            $('#coConfirmDeleteBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Deleting...');
+
+            if (config.onConfirm) {
+                config.onConfirm(finalReason, function (success) {
+                    $('#coConfirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt me-1"></i> Confirm Delete');
+                    if (success) {
+                        $('#clinicalOrdersDeleteModal').modal('hide');
+                    }
+                });
+            }
+        });
+    }
+
+    function triggerHistoryDelete(type, id, encounterId, name) {
+        var pathMap = {
+            lab:          'labs',
+            imaging:      'imaging',
+            prescription: 'prescriptions',
+            procedure:    'procedures'
+        };
+
+        var url = '';
+        var isNurseRoute = (encounterId === null || encounterId === undefined);
+
+        if (isNurseRoute) {
+            // Determine workbench route
+            if (window.maternityEnrollmentId !== undefined) {
+                var enrollmentId = window.maternityEnrollmentId || $('#mat-partograph-enrollment-id').val();
+                url = '/maternity-workbench/enrollment/' + enrollmentId + '/' + pathMap[type] + '/' + id;
+            } else {
+                url = '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id;
+            }
+        } else {
+            // Encounter-specific route
+            url = '/encounters/' + encounterId + '/' + pathMap[type] + '/' + id;
+        }
+
+        showDeleteConfirmation({
+            type: type,
+            itemName: name,
+            onConfirm: function (reason, callback) {
+                $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        reason: reason
+                    },
+                    success: function (response) {
+                        callback(true);
+                        if (response.success) {
+                            if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+
+                            // Reload standard DataTables on all workbenches
+                            var tables = [
+                                '#presc_history_list', '#cr_presc_history_list', '#mco_presc_history_list',
+                                '#investigation_history_list', '#cr_lab_history_list', '#mco_lab_history_list',
+                                '#imaging_history_list', '#cr_imaging_history_list', '#mco_imaging_history_list',
+                                '#procedure_history_list', '#cr_proc_history_list', '#mco_proc_history_list'
+                            ];
+                            tables.forEach(function (t) {
+                                if ($.fn.DataTable.isDataTable(t)) {
+                                    $(t).DataTable().ajax.reload(null, false);
+                                }
+                            });
+                        }
+                    },
+                    error: function (xhr) {
+                        callback(false);
+                        var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting item') : 'Error deleting item';
+                        if (typeof toastr !== 'undefined') toastr.error(msg);
+                    }
+                });
+            }
+        });
+    }
+
+    // Expose global window history delete functions
+    window.deletePrescription = function (id, encounterId, name) {
+        triggerHistoryDelete('prescription', id, encounterId, name);
+    };
+
+    window.deleteLabRequest = function (id, encounterId, name) {
+        triggerHistoryDelete('lab', id, encounterId, name);
+    };
+
+    window.deleteImagingRequest = function (id, encounterId, name) {
+        triggerHistoryDelete('imaging', id, encounterId, name);
+    };
+
+    window.deleteProcedureRequest = function (id, encounterId, name) {
+        triggerHistoryDelete('procedure', id, encounterId, name);
+    };
+
+    window.deleteNurseClinicalRequest = function (type, id, name) {
+        triggerHistoryDelete(type, id, null, name);
+    };
+
     function removeItem(config) {
         var $row = $(config.rowSelector);
-        $row.css('opacity', '0.5');
+        
+        // Retrieve name of drug/item from data-drug-name or from the first td text
+        var itemName = $row.attr('data-drug-name') || $row.find('td:first').text() || 'Selected Item';
+        // strip any HTML/coverage badges from first td text to keep it clean
+        itemName = itemName.replace(/Pay:.*Claims:.*/i, '').replace(/cash|hmo/i, '').trim();
 
-        $.ajax({
-            url: config.url,
-            method: 'DELETE',
-            data: { _token: config.csrfToken },
-            success: function (response) {
-                $row.fadeOut(300, function () { $(this).remove(); });
-                if (config.type && config.referenceId && addedIds[config.type]) {
-                    addedIds[config.type].delete(config.referenceId);
-                }
-                updateStatusLine(config.tableSelector, config.type);
-                if (config.onSuccess) config.onSuccess(response);
-            },
-            error: function (xhr) {
-                $row.css('opacity', '1');
-                var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error removing item') : 'Error removing item';
-                if (typeof toastr !== 'undefined') toastr.error(msg);
+        // Convert addedIds mapping keys to labels for showDeleteConfirmation
+        var itemTypeMap = {
+            labs: 'lab',
+            imaging: 'imaging',
+            meds: 'prescription',
+            procedures: 'procedure'
+        };
+        var resolvedType = itemTypeMap[config.type] || config.type || 'request';
+
+        showDeleteConfirmation({
+            type: resolvedType,
+            itemName: itemName,
+            onConfirm: function (reason, callback) {
+                $row.css('opacity', '0.5');
+                $.ajax({
+                    url: config.url,
+                    method: 'DELETE',
+                    data: { 
+                        _token: config.csrfToken,
+                        reason: reason
+                    },
+                    success: function (response) {
+                        callback(true);
+                        $row.fadeOut(300, function () { $(this).remove(); });
+                        if (config.type && config.referenceId && addedIds[config.type]) {
+                            addedIds[config.type].delete(config.referenceId);
+                        }
+                        updateStatusLine(config.tableSelector, config.type);
+                        if (config.onSuccess) config.onSuccess(response);
+                        if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+                    },
+                    error: function (xhr) {
+                        callback(false);
+                        $row.css('opacity', '1');
+                        var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error removing item') : 'Error removing item';
+                        if (typeof toastr !== 'undefined') toastr.error(msg);
+                    }
+                });
             }
         });
     }
@@ -1759,7 +1994,10 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         initSearchDropdown: initSearchDropdown,
         positionDropdown: positionDropdown,
         showSearchLoading: showSearchLoading,
-        showSearchEmpty: showSearchEmpty
+        showSearchEmpty: showSearchEmpty,
+
+        // Unified deletion confirmation
+        showDeleteConfirmation: showDeleteConfirmation
     };
 
 })(jQuery));

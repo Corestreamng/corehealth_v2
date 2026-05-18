@@ -18244,88 +18244,40 @@ $(document).ready(function() {
             prescription: 'prescriptions',
             procedure:    'procedures'
         };
-        var typeLabels = {
-            lab:          'Laboratory Test',
-            imaging:      'Imaging/Radiology',
-            prescription: 'Prescription',
-            procedure:    'Procedure'
-        };
-
-        crCurrentDeleteItem = {
+        ClinicalOrdersKit.showDeleteConfirmation({
             type: type,
-            id: id,
-            url: '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id
-        };
-
-        $('#crDeleteItemInfo').html(
-            '<strong>Service:</strong> ' + name + '<br>' +
-            '<strong>Type:</strong> ' + (typeLabels[type] || type)
-        );
-
-        $('#crDeletionReasonSelect').val('');
-        $('#crDeletionReasonOther').addClass('d-none').val('');
-        $('#crConfirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
-        $('#crDeleteConfirmModal').modal('show');
-    };
-
-    // Confirm delete handler
-    $('#crConfirmDeleteBtn').on('click', function() {
-        if (!crCurrentDeleteItem) return;
-
-        var reasonSelect = $('#crDeletionReasonSelect').val();
-        var reasonOther  = $('#crDeletionReasonOther').val();
-
-        if (!reasonSelect) {
-            alert('Please select a reason for deletion');
-            return;
-        }
-        if (reasonSelect === 'Other' && !reasonOther) {
-            alert('Please specify the reason');
-            return;
-        }
-
-        var finalReason = (reasonSelect === 'Other' && reasonOther) ? reasonOther : reasonSelect;
-
-        $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
-
-        $.ajax({
-            url: crCurrentDeleteItem.url,
-            type: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: { reason: finalReason },
-            success: function(response) {
-                if (response.success) {
-                    $('#crDeleteConfirmModal').modal('hide');
-                    toastr.success(response.message || 'Request deleted successfully');
-
-                    // Reload the appropriate nurse workbench DataTable
-                    var tableMap = {
-                        lab:          '#cr_lab_history_list',
-                        imaging:      '#cr_imaging_history_list',
-                        prescription: '#cr_presc_history_list',
-                        procedure:    '#cr_proc_history_list'
-                    };
-                    var tableId = tableMap[crCurrentDeleteItem.type];
-                    if (tableId && $.fn.DataTable.isDataTable(tableId)) {
-                        $(tableId).DataTable().ajax.reload();
+            itemName: name,
+            onConfirm: function (reason, callback) {
+                $.ajax({
+                    url: '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id,
+                    type: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    data: { reason: reason },
+                    success: function(response) {
+                        callback(true);
+                        if (response.success) {
+                            toastr.success(response.message || 'Request deleted successfully');
+                            var tableMap = {
+                                lab:          '#cr_lab_history_list',
+                                imaging:      '#cr_imaging_history_list',
+                                prescription: '#cr_presc_history_list',
+                                procedure:    '#cr_proc_history_list'
+                            };
+                            var tableId = tableMap[type];
+                            if (tableId && $.fn.DataTable.isDataTable(tableId)) {
+                                $(tableId).DataTable().ajax.reload();
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        callback(false);
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to delete request';
+                        toastr.error(msg);
                     }
-
-                    crCurrentDeleteItem = null;
-                }
-            },
-            error: function(xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to delete request';
-                toastr.error(msg);
-                $('#crConfirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
+                });
             }
         });
-    });
-
-    // Reset on modal close
-    $('#crDeleteConfirmModal').on('hidden.bs.modal', function() {
-        crCurrentDeleteItem = null;
-        $('#crConfirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
-    });
+    };
 })();
 </script>
 
