@@ -1691,7 +1691,7 @@ class EncounterController extends Controller
     public function prescHistoryList($patient_id)
     {
         // Show ALL prescription requests (not just dispensed) for complete history
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser'])
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser', 'adaptedFromProduct', 'adapter', 'qtyAdjuster'])
             ->where('patient_id', $patient_id)
             ->where(function ($query) {
                 $query->whereNull('product_request_id')
@@ -1825,6 +1825,48 @@ class EncounterController extends Controller
                     }
                 }
 
+                // Render Adaptation Details if applicable
+                $adaptationHtml = '';
+                if ($item->adapted_from_product_id) {
+                    $originalProductName = optional($item->adaptedFromProduct)->product_name ?? 'Unknown';
+                    $adaptationNote = htmlspecialchars($item->adaptation_note ?? '', ENT_QUOTES);
+                    $adaptedBy = $item->adapted_by ? userfullname($item->adapted_by) : 'N/A';
+                    $adaptedAt = $item->adapted_at ? date('M j, Y h:i A', strtotime($item->adapted_at)) : 'N/A';
+                    
+                    $adaptationHtml = "
+                        <div class='mt-1 p-2 bg-light rounded border-start border-warning'>
+                            <small class='text-warning d-block'><strong><i class='mdi mdi-swap-horizontal'></i> Adapted Prescription</strong></small>
+                            <small class='text-muted d-block'>Original Drug: <strong>{$originalProductName}</strong></small>
+                            <small class='text-muted d-block'>Reason: <em>{$adaptationNote}</em></small>
+                            <small class='text-muted d-block'>Adapted by: {$adaptedBy} on {$adaptedAt}</small>
+                        </div>
+                    ";
+                }
+
+                // Render Quantity Adjustment Details if applicable
+                $qtyAdjustmentHtml = '';
+                if ($item->qty_adjusted_from !== null) {
+                    $qtyAdjustedFrom = $item->qty_adjusted_from;
+                    $qtyAdjustmentReason = htmlspecialchars($item->qty_adjustment_reason ?? '', ENT_QUOTES);
+                    $qtyAdjustedBy = $item->qty_adjusted_by ? userfullname($item->qty_adjusted_by) : 'N/A';
+                    $qtyAdjustedAt = $item->qty_adjusted_at ? date('M j, Y h:i A', strtotime($item->qty_adjusted_at)) : 'N/A';
+
+                    $qtyAdjustmentHtml = "
+                        <div class='mt-1 p-2 bg-light rounded border-start border-info'>
+                            <small class='text-info d-block'><strong><i class='mdi mdi-scale-balance'></i> Quantity Adjusted</strong></small>
+                            <small class='text-muted d-block'>Original Requested Qty: <strong>{$qtyAdjustedFrom}</strong></small>
+                            <small class='text-muted d-block'>Adjusted Qty: <strong>{$qty}</strong></small>
+                            <small class='text-muted d-block'>Reason: <em>{$qtyAdjustmentReason}</em></small>
+                            <small class='text-muted d-block'>Adjusted by: {$qtyAdjustedBy} on {$qtyAdjustedAt}</small>
+                        </div>
+                    ";
+                }
+
+                // Custom quantity layout based on dispense status
+                $qtyDisplay = $status == 3 
+                    ? "<span class='ms-2 text-success'><i class='mdi mdi-check-circle-outline'></i> Qty Dispensed: <strong>{$qty}</strong></span>"
+                    : "<span class='ms-2'><i class='mdi mdi-numeric'></i> Qty: {$qty}</span>";
+
                 // Re-prescribe button data (Plan §5.2)
                 $roName  = htmlspecialchars($productName, ENT_QUOTES);
                 $roDose  = htmlspecialchars($dose, ENT_QUOTES);
@@ -1897,11 +1939,13 @@ class EncounterController extends Controller
                         <small class='text-muted'>{$productCode}</small>
                         <div class='mt-1'>
                             <span><i class='mdi mdi-pill'></i> {$dose}</span>
-                            <span class='ms-2'><i class='mdi mdi-numeric'></i> Qty: {$qty}</span>
+                            {$qtyDisplay}
                             <span class='ms-2'><i class='mdi mdi-cash'></i> ₦" . number_format($price, 2) . "</span>
                         </div>
                         {$statusInfo}
                         {$bundleHtml}
+                        {$adaptationHtml}
+                        {$qtyAdjustmentHtml}
                         <div class='mt-1'>
                             {$deleteBtn}
                             <button type='button' class='btn btn-outline-primary btn-sm re-order-btn'

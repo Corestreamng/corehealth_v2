@@ -2539,6 +2539,9 @@ $sett = appsettings();
     let currentPatientData = null;
     let currentEnrollment = null;
     let currentEnrollmentId = null;
+    Object.defineProperty(window, 'maternityEnrollmentId', {
+        get: function() { return currentEnrollmentId; }
+    });
     const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
     // ═══════════════════════════════════════════════════════════════
