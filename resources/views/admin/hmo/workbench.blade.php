@@ -2590,6 +2590,11 @@ $(function() {
         // Show modal first with loading state
         $('#clinical-context-modal').modal('show');
 
+        // Load unviewed counts for badges
+        if (typeof window.loadUnviewedCounts === 'function') {
+            window.loadUnviewedCounts(patientId);
+        }
+
         // Load vitals using DataTable rendering (nursing workbench approach)
         $.get("{{ url('hmo/patient') }}/" + patientId + "/vitals", function(vitals) {
             hmoDisplayVitals(vitals, patientId);

@@ -48,6 +48,11 @@
         // Show modal
         $('#clinical-context-modal').modal('show');
 
+        // Load unviewed counts for badges
+        if (typeof window.loadUnviewedCounts === 'function') {
+            window.loadUnviewedCounts(patientId);
+        }
+
         // Eager-load vitals (first/active tab)
         $.get(config.baseUrl + '/' + patientId + '/vitals', function(vitals) {
             ClinicalContext.displayVitals(vitals, patientId);
