@@ -3910,29 +3910,39 @@
         <div class="patient-header" id="patient-header">
             <div class="patient-header-top">
                 <div style="flex: 1;">
-                    <div class="patient-name" id="patient-name"></div>
+                    <div class="d-flex align-items-center mb-1">
+                        <div class="patient-name mb-0 me-3" id="patient-name"></div>
+                        <button class="btn btn-sm btn-danger btn-manage-alerts" id="btn-manage-alerts" style="display:none;">
+                            <i class="mdi mdi-alert-octagon"></i> Alerts
+                        </button>
+                    </div>
                     <div class="patient-meta" id="patient-meta"></div>
+                    <div class="sticky-header-alerts mt-2" style="max-height: 60px; overflow-y: auto;"></div>
                     <div class="patient-allergies" id="patient-allergies" style="display: none;">
                         <span class="allergy-alert-badge"><i class="mdi mdi-alert"></i> Allergies: <span id="allergy-list"></span></span>
                     </div>
                 </div>
-                <div class="patient-account-balance" id="patient-header-balance" style="display: none;">
-                    <div class="balance-label">Account Balance</div>
-                    <div class="balance-value" id="header-balance-amount">₦0.00</div>
+                <div class="d-flex flex-column align-items-end gap-2">
+                    <div class="patient-account-balance" id="patient-header-balance" style="display: none;">
+                        <div class="balance-label">Account Balance</div>
+                        <div class="balance-value" id="header-balance-amount">₦0.00</div>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-light" id="btn-edit-patient" title="Edit Patient">
+                            <i class="mdi mdi-pencil"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-info" id="btn-print-card" title="Print Hospital Card">
+                            <i class="mdi mdi-card-account-details"></i> Print Card
+                        </button>
+                        <button class="btn btn-sm btn-outline-dark" id="btn-medical-reports" title="Medical Reports" style="display:none;">
+                            <i class="mdi mdi-file-document-multiple"></i> Medical Reports
+                        </button>
+                        <button class="btn-expand-patient d-inline-flex" id="btn-expand-patient" title="Show more details">
+                            <span class="btn-expand-text">more biodata</span>
+                            <i class="mdi mdi-chevron-down ms-1"></i>
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn-sm btn-light" id="btn-edit-patient" title="Edit Patient">
-                    <i class="mdi mdi-pencil"></i> Edit
-                </button>
-                <button class="btn btn-sm btn-info" id="btn-print-card" title="Print Hospital Card">
-                    <i class="mdi mdi-card-account-details"></i> Print Card
-                </button>
-                <button class="btn btn-sm btn-outline-dark" id="btn-medical-reports" title="Medical Reports" style="display:none;">
-                    <i class="mdi mdi-file-document-multiple"></i> Medical Reports
-                </button>
-                <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
-                    <span class="btn-expand-text">more biodata</span>
-                    <i class="mdi mdi-chevron-down"></i>
-                </button>
             </div>
             <div class="patient-details-expanded" id="patient-details-expanded">
                 <div class="patient-details-grid" id="patient-details-grid"></div>
@@ -5922,6 +5932,14 @@ function loadPatient(patientId) {
         success: function(data) {
             currentPatientData = data.patient;
             displayPatientInfo(data.patient);
+
+            // Initialize Clinical Alerts
+            try { 
+                $('#btn-manage-alerts').show();
+                if(typeof ClinicalAlerts !== 'undefined') {
+                    ClinicalAlerts.init(patientId, 'records_reception');
+                }
+            } catch(e) { console.error('ClinicalAlerts init error:', e); }
 
             // Display upcoming appointments / follow-up alerts
             displayUpcomingAppointments(data.upcoming_appointments || []);
@@ -10618,6 +10636,9 @@ function loadPatientAppointments(patientId) {
 
 {{-- Clinical Reports JS --}}
 @include('admin.partials.clinical-reports-scripts')
+
+@include('admin.partials.clinical_alerts_modal')
+<script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
 @endsection
 

@@ -209,6 +209,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('patient', PatientController::class);
+        Route::put('patient/{patient}/update-allergies', [PatientController::class, 'updateAllergies'])->name('patient.update-allergies');
         Route::get('patientsList', [PatientController::class, 'patientsList'])->name('patientsList');
         Route::get('patient-services-rendered/{patient_id}', [PatientController::class, 'PatientServicesRendered'])->name('patient-services-rendered');
         Route::get('add-to-queue', [PatientController::class, 'addToQueue'])->name('add-to-queue');
@@ -704,6 +705,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('clinical-context/patient/{patientId}/labs', [ClinicalContextController::class, 'getLabs'])->name('clinical-context.labs');
         Route::get('clinical-context/patient/{patientId}/imaging', [ClinicalContextController::class, 'getImaging'])->name('clinical-context.imaging');
         Route::get('clinical-context/patient/{patientId}/procedures', [ClinicalContextController::class, 'getProcedures'])->name('clinical-context.procedures');
+
+        // Clinical Alerts CRUD
+        Route::get('clinical-alerts/patient/{patientId}', [\App\Http\Controllers\ClinicalAlertController::class, 'index'])->name('clinical-alerts.index');
+        Route::post('clinical-alerts/patient/{patientId}', [\App\Http\Controllers\ClinicalAlertController::class, 'store'])->name('clinical-alerts.store');
+        Route::put('clinical-alerts/patient/{patientId}/{alertId}', [\App\Http\Controllers\ClinicalAlertController::class, 'update'])->name('clinical-alerts.update');
+        Route::delete('clinical-alerts/patient/{patientId}/{alertId}', [\App\Http\Controllers\ClinicalAlertController::class, 'destroy'])->name('clinical-alerts.destroy');
 
         // Non-Pharmacological Care Orders
         Route::get('non-pharm-orders/patient/{patient_id}', [\App\Http\Controllers\NonPharmOrderController::class, 'getPatientOrders'])->name('non-pharm-orders.patient');

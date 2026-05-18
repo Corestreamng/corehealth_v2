@@ -175,23 +175,25 @@ window.ComboConfirmModal = (function () {
     }
 
     // Wire up confirm button (once, on first load)
-    $(document).on('click', '#comboConfirmApplyBtn', function () {
-        // Show spinner, disable button while running
-        var applyBtn  = document.getElementById('comboConfirmApplyBtn');
-        var applyIcon = document.getElementById('comboConfirmApplyIcon');
-        var spinner   = document.getElementById('comboConfirmApplySpinner');
-        applyBtn.disabled = true;
-        applyIcon.classList.add('d-none');
-        spinner.classList.remove('d-none');
+    document.addEventListener('DOMContentLoaded', function() {
+        $(document).on('click', '#comboConfirmApplyBtn', function () {
+            // Show spinner, disable button while running
+            var applyBtn  = document.getElementById('comboConfirmApplyBtn');
+            var applyIcon = document.getElementById('comboConfirmApplyIcon');
+            var spinner   = document.getElementById('comboConfirmApplySpinner');
+            applyBtn.disabled = true;
+            applyIcon.classList.add('d-none');
+            spinner.classList.remove('d-none');
 
-        // Hide modal
-        $('#comboConfirmModal').modal('hide');
+            // Hide modal
+            $('#comboConfirmModal').modal('hide');
 
-        // Execute callback
-        if (typeof _onConfirm === 'function') {
-            _onConfirm();
-            _onConfirm = null;
-        }
+            // Execute callback
+            if (typeof _onConfirm === 'function') {
+                _onConfirm();
+                _onConfirm = null;
+            }
+        });
     });
 
     return { show: show };

@@ -3327,17 +3327,25 @@
         <div class="patient-header" id="patient-header">
             <div class="patient-header-top">
                 <div style="flex: 1;">
-                    <div class="patient-name" id="patient-name"></div>
+                    <div class="d-flex align-items-center mb-1">
+                        <div class="patient-name mb-0 me-3" id="patient-name"></div>
+                        <button class="btn btn-sm btn-danger btn-manage-alerts" id="btn-manage-alerts" style="display:none;">
+                            <i class="mdi mdi-alert-octagon"></i> Alerts
+                        </button>
+                    </div>
                     <div class="patient-meta" id="patient-meta"></div>
+                    <div class="sticky-header-alerts mt-2" style="max-height: 60px; overflow-y: auto;"></div>
                 </div>
-                <div class="patient-account-balance" id="patient-header-balance" style="display: none;">
-                    <div class="balance-label">Account Balance</div>
-                    <div class="balance-value" id="header-balance-amount">₦0.00</div>
+                <div class="d-flex flex-column align-items-end gap-2">
+                    <div class="patient-account-balance" id="patient-header-balance" style="display: none;">
+                        <div class="balance-label">Account Balance</div>
+                        <div class="balance-value" id="header-balance-amount">₦0.00</div>
+                    </div>
+                    <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
+                        <span class="btn-expand-text">more biodata</span>
+                        <i class="mdi mdi-chevron-down"></i>
+                    </button>
                 </div>
-                <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
-                    <span class="btn-expand-text">more biodata</span>
-                    <i class="mdi mdi-chevron-down"></i>
-                </button>
             </div>
             <div class="patient-details-expanded" id="patient-details-expanded">
                 <div class="patient-details-grid" id="patient-details-grid"></div>
@@ -4553,6 +4561,14 @@ function loadPatient(patientId) {
             console.log('Patient billing data loaded:', data);
             currentPatientData = data.patient;
             displayPatientInfo(data.patient);
+
+            // Initialize Clinical Alerts
+            try { 
+                $('#btn-manage-alerts').show();
+                if(typeof ClinicalAlerts !== 'undefined') {
+                    ClinicalAlerts.init(patientId, 'billing');
+                }
+            } catch(e) { console.error('ClinicalAlerts init error:', e); }
 
             // Load billing items for the active Billing tab
             renderBillingItems(data.items);
@@ -8583,5 +8599,8 @@ $('#receiptPreviewModal, #accountStatementModal').on('hidden.bs.modal', function
 
 {{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
 {{-- @include('admin.partials.emergency-intake-modal') --}}
+
+@include('admin.partials.clinical_alerts_modal')
+<script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
 @endsection
