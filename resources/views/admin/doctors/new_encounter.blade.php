@@ -50,153 +50,265 @@
     <style>
         .sticky-consultation-header {
             position: sticky;
-            top: 60px; /* Assuming navbar height */
+            top: 60px;
             z-index: 1020;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
             border-bottom: 1px solid #dee2e6;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             margin-bottom: 1rem;
-            padding: 0.75rem 1.25rem;
+            padding: 0;
             border-radius: 0.5rem;
+            overflow: hidden;
         }
-        .patient-badge {
+
+        /* ─── ROW 1: Identity + Actions ─── */
+        .sch-row-identity {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .sch-patient-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0d6efd;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sch-patient-name .file-no {
+            font-weight: 400;
             font-size: 0.8rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 0.25rem;
-            background: #f8f9fa;
+            color: #6c757d;
+        }
+        .sch-demographics {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .sch-badge {
+            font-size: 0.72rem;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #f1f3f5;
             border: 1px solid #e9ecef;
-            margin-right: 0.5rem;
-            margin-bottom: 0.25rem;
             display: inline-flex;
             align-items: center;
             gap: 4px;
+            white-space: nowrap;
+            line-height: 1.4;
         }
-        .patient-badge i { width: 14px; text-align: center; }
+        .sch-badge i { font-size: 0.7rem; width: 12px; text-align: center; }
+        .sch-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+        .sch-actions .btn { font-size: 0.72rem; padding: 3px 10px; white-space: nowrap; }
+
+        /* ─── ROW 2: Clinical strips ─── */
+        .sch-row-clinical {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .sch-strip {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 4px 12px;
+            gap: 6px;
+            min-height: 32px;
+        }
+        .sch-strip + .sch-strip { border-left: 1px solid #e9ecef; }
+        .sch-strip-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .sch-strip-allergy { background: #fff5f5; }
+        .sch-strip-allergy .sch-strip-label { color: #dc3545; }
+        .sch-strip-vitals { background: #f0f7ff; }
+        .sch-strip-vitals .sch-strip-label { color: #0d6efd; }
+        .sch-strip-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+        }
+        .sch-vital-item {
+            font-size: 0.72rem;
+            color: #495057;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 1px 6px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+        .sch-vital-item i { font-size: 0.65rem; }
+        .sch-strip .btn-add-allergy {
+            font-size: 0.65rem;
+            padding: 0 4px;
+            line-height: 1.4;
+            margin-left: auto;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 3px;
+            color: #6c757d;
+            cursor: pointer;
+        }
+        .sch-strip .btn-add-allergy:hover { background: #f8f9fa; color: #dc3545; }
+
+        /* ─── ROW 3: Alerts (injected by JS — only shows when active) ─── */
+        .sch-row-alerts { padding: 0 12px; }
+        .sch-row-alerts:empty { display: none; }
+
+        /* ─── Timer inline ─── */
+        .sch-actions .consultation-timer-widget {
+            padding: 3px 10px;
+            min-width: auto;
+            border-radius: 5px;
+        }
+        .sch-actions .timer-display { font-size: 0.95rem; }
+        .sch-actions .timer-meta { font-size: 0.6rem; }
+        .sch-actions .timer-status-label { font-size: 0.55rem; }
     </style>
 
     <div class="sticky-consultation-header">
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
-            <!-- Patient Demographics & Clinical Info -->
-            <div class="d-flex flex-column flex-grow-1 me-3" style="max-width: 65%;">
-                <div class="d-flex align-items-center flex-wrap mb-2">
-                    <h5 class="mb-0 me-3 fw-bold text-primary">
-                        <i class="fa fa-user-circle me-1"></i> {{ userfullname($patient->user->id) }}
-                        <small class="text-muted fs-6 ms-1">#{{ $patient->file_no }}</small>
-                    </h5>
-                    <span class="patient-badge" title="Age & Gender">
-                        <i class="fa fa-birthday-cake text-muted"></i> 
-                        {{ \Carbon\Carbon::parse($patient->dob)->age }} yrs ({{ substr($patient->gender ?? 'N/A', 0, 1) }})
+        {{-- ═══ ROW 1: Patient Identity + Demographics + Timer + Actions ═══ --}}
+        <div class="sch-row-identity">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="sch-patient-name">
+                    <i class="fa fa-user-circle"></i>
+                    {{ userfullname($patient->user->id) }}
+                    <span class="file-no">#{{ $patient->file_no }}</span>
+                </span>
+                <div class="sch-demographics">
+                    <span class="sch-badge" title="Age & Gender">
+                        <i class="fa fa-birthday-cake text-muted"></i>
+                        {{ \Carbon\Carbon::parse($patient->dob)->age }}yrs ({{ substr($patient->gender ?? 'N/A', 0, 1) }})
                     </span>
-                    <span class="patient-badge" title="Blood Group / Genotype">
-                        <i class="fa fa-tint text-danger"></i> 
+                    <span class="sch-badge" title="Blood Group / Genotype">
+                        <i class="fa fa-tint text-danger"></i>
                         {{ $patient->blood_group ?? 'N/A' }} / {{ $patient->genotype ?? 'N/A' }}
                     </span>
-                    <span class="patient-badge" title="HMO/Insurance">
-                        <i class="fa fa-shield-alt text-success"></i> 
+                    <span class="sch-badge" title="HMO/Insurance">
+                        <i class="fa fa-shield-alt text-success"></i>
                         {{ $patient->hmo->name ?? 'Private' }}
                     </span>
-                    
-                    <button class="btn btn-sm btn-outline-danger ms-auto d-flex align-items-center btn-manage-alerts" data-patient-id="{{ $patient->id }}">
-                        <i class="mdi mdi-alert-octagon me-1"></i> Clinical Alerts
-                    </button>
                 </div>
-                
-                <div class="d-flex align-items-start gap-2">
-                    <!-- Allergies Container -->
-                    <div class="d-flex align-items-center bg-light rounded p-1 border flex-grow-1 shadow-sm" style="flex-basis: 50%;">
-                        <div class="fw-bold text-danger me-2 small"><i class="fa fa-allergies"></i> Allergies:</div>
-                        <div class="d-flex flex-wrap gap-1 align-items-center" id="sticky-allergies-container">
-                            @php
-                                $allergies = [];
-                                if(!empty($patient->allergies)) {
-                                    $allergies = is_string($patient->allergies) ? (json_decode($patient->allergies, true) ?? explode(',', $patient->allergies)) : $patient->allergies;
-                                }
-                            @endphp
-                            @if(count($allergies) > 0)
-                                @foreach($allergies as $allergy)
-                                    <span class="badge bg-danger">{{ trim($allergy) }}</span>
-                                @endforeach
+            </div>
+
+            <div class="sch-actions">
+                @include('admin.doctors.partials.consultation_timer')
+
+                @if (isset($admission_request))
+                    {{-- Patient has admission request - show status and discharge button --}}
+                    <div class="d-flex align-items-center px-2 py-1 bg-light rounded border" style="gap: 5px;">
+                        <i class="fa fa-bed" style="color: {{ appsettings('hos_color', '#007bff') }}; font-size: 0.75rem;"></i>
+                        <div class="d-flex flex-column lh-1">
+                            @if($admission_request->admission_status === 'discharge_requested')
+                                <span class="fw-bold text-warning" style="font-size: 0.68rem;">Discharge Req</span>
+                                <small class="text-muted" style="font-size: 0.58rem;">Awaiting Nursing</small>
+                            @elseif($admission_request->admission_status === 'pending_checklist')
+                                <span class="fw-bold text-info" style="font-size: 0.68rem;">Admission Req</span>
+                                <small class="text-muted" style="font-size: 0.58rem;">Pending Checklist</small>
+                            @elseif($admission_request->discharged)
+                                <span class="fw-bold text-secondary" style="font-size: 0.68rem;">Discharged</span>
+                                <small class="text-muted" style="font-size: 0.58rem;">{{ $admission_request->discharge_date ? date('M j', strtotime($admission_request->discharge_date)) : '' }}</small>
                             @else
-                                <span class="text-muted small">None known</span>
+                                <span class="fw-bold text-dark" style="font-size: 0.68rem;">Admitted</span>
+                                <small class="text-muted" style="font-size: 0.58rem;">
+                                    {{ $admission_request->bed ? $admission_request->bed->name : 'Pending Bed' }}
+                                </small>
                             @endif
                         </div>
-                        <button class="btn btn-sm btn-light ms-auto py-0 px-1 border text-secondary" onclick="promptAddAllergy({{ $patient->id }})" title="Add Allergy">
-                            <i class="fa fa-plus"></i>
-                        </button>
                     </div>
-
-                    <!-- Latest Vitals Container -->
-                    <div class="d-flex align-items-center bg-light rounded p-1 border flex-grow-1 shadow-sm" style="flex-basis: 50%;">
-                        <div class="fw-bold text-info me-2 small"><i class="fa fa-heartbeat"></i> Vitals:</div>
-                        <div class="d-flex flex-wrap gap-3 small text-muted w-100" id="sticky-vitals-container">
-                            <span id="sticky-vital-temp" title="Temperature"><i class="fa fa-thermometer-half text-danger"></i> --</span>
-                            <span id="sticky-vital-bp" title="Blood Pressure"><i class="fa fa-heart text-danger"></i> --</span>
-                            <span id="sticky-vital-wt" title="Weight"><i class="fa fa-weight text-primary"></i> --</span>
-                            <span id="sticky-vital-hr" title="Heart Rate"><i class="fa fa-stethoscope text-success"></i> --</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Clinical Alerts Display -->
-                <div class="sticky-header-alerts mt-2 w-100">
-                    <!-- JS will inject alerts here -->
-                </div>
-            </div>
-
-            <!-- Consultation Actions -->
-            <div class="d-flex flex-column align-items-end border-start ps-3" style="min-width: 30%;">
-                <div class="mb-2 w-100 d-flex justify-content-end">
-                    @include('admin.doctors.partials.consultation_timer')
-                </div>
-                <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end w-100">
-                    @if (isset($admission_request))
-                        <!-- Patient has admission request - show status and discharge button -->
-                        <div class="d-flex align-items-center me-2 px-2 py-1 bg-light rounded border shadow-sm">
-                            <i class="fa fa-bed me-2" style="color: {{ appsettings('hos_color', '#007bff') }};"></i>
-                            <div class="d-flex flex-column lh-1">
-                                @if($admission_request->admission_status === 'discharge_requested')
-                                    <span class="fw-bold text-warning" style="font-size: 0.75rem;">Discharge Req</span>
-                                    <small class="text-muted" style="font-size: 0.65rem;">Awaiting Nursing</small>
-                                @elseif($admission_request->admission_status === 'pending_checklist')
-                                    <span class="fw-bold text-info" style="font-size: 0.75rem;">Admission Req</span>
-                                    <small class="text-muted" style="font-size: 0.65rem;">Pending Checklist</small>
-                                @elseif($admission_request->discharged)
-                                    <span class="fw-bold text-secondary" style="font-size: 0.75rem;">Discharged</span>
-                                    <small class="text-muted" style="font-size: 0.65rem;">{{ $admission_request->discharge_date ? date('M j', strtotime($admission_request->discharge_date)) : '' }}</small>
-                                @else
-                                    <span class="fw-bold text-dark" style="font-size: 0.75rem;">Admitted</span>
-                                    <small class="text-muted" style="font-size: 0.65rem;">
-                                        {{ $admission_request->bed ? $admission_request->bed->name : 'Pending Bed' }}
-                                    </small>
-                                @endif
-                            </div>
-                        </div>
-                        @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
-                        <button type="button" class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" onclick="openDischargeModal()">
-                            <i class="fa fa-sign-out-alt me-1"></i> Discharge
-                        </button>
-                        @endif
-                    @else
-                        <!-- Patient not admitted - show admit button -->
-                        <button type="button" class="btn btn-info btn-sm text-white d-flex align-items-center shadow-sm" onclick="openAdmitModal()">
-                            <i class="fa fa-bed me-1"></i> Admit
-                        </button>
+                    @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
+                    <button type="button" class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" onclick="openDischargeModal()">
+                        <i class="fa fa-sign-out-alt me-1"></i> Discharge
+                    </button>
                     @endif
-
-                    <button type="button" class="btn btn-outline-dark btn-sm d-flex align-items-center shadow-sm" onclick="openReportBuilder()">
-                        <i class="mdi mdi-file-document me-1"></i> Report
+                @else
+                    {{-- Patient not admitted - show admit button --}}
+                    <button type="button" class="btn btn-info btn-sm text-white d-flex align-items-center shadow-sm" onclick="openAdmitModal()">
+                        <i class="fa fa-bed me-1"></i> Admit
                     </button>
+                @endif
 
-                    <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center shadow-sm" onclick="$('button[data-bs-target=\'#referrals\']').tab('show'); setTimeout(function(){ $('#toggle-referral-form-btn').click(); }, 300);">
-                        <i class="mdi mdi-account-switch me-1"></i> Refer
-                    </button>
+                <button type="button" class="btn btn-outline-danger btn-sm d-flex align-items-center btn-manage-alerts" data-patient-id="{{ $patient->id }}">
+                    <i class="mdi mdi-alert-octagon me-1"></i> Alerts
+                </button>
 
-                    <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm ms-2" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
-                        <i class="fa fa-check-circle me-1"></i> Conclude
-                    </button>
+                <button type="button" class="btn btn-outline-dark btn-sm d-flex align-items-center shadow-sm" onclick="openReportBuilder()">
+                    <i class="mdi mdi-file-document me-1"></i> Report
+                </button>
+
+                <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center shadow-sm" onclick="$('button[data-bs-target=\'#referrals\']').tab('show'); setTimeout(function(){ $('#toggle-referral-form-btn').click(); }, 300);">
+                    <i class="mdi mdi-account-switch me-1"></i> Refer
+                </button>
+
+                <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
+                    <i class="fa fa-check-circle me-1"></i> Conclude
+                </button>
+            </div>
+        </div>
+
+        {{-- ═══ ROW 2: Allergies + Vitals ═══ --}}
+        <div class="sch-row-clinical">
+            {{-- Allergies Strip --}}
+            <div class="sch-strip sch-strip-allergy">
+                <span class="sch-strip-label"><i class="fa fa-allergies"></i> Allergies:</span>
+                <div class="sch-strip-content" id="sticky-allergies-container">
+                    @php
+                        $allergies = [];
+                        if(!empty($patient->allergies)) {
+                            $allergies = is_string($patient->allergies) ? (json_decode($patient->allergies, true) ?? explode(',', $patient->allergies)) : $patient->allergies;
+                        }
+                    @endphp
+                    @if(count($allergies) > 0)
+                        @foreach($allergies as $allergy)
+                            <span class="badge bg-danger" style="font-size: 0.68rem;">{{ trim($allergy) }}</span>
+                        @endforeach
+                    @else
+                        <span class="text-muted" style="font-size: 0.7rem;">None known</span>
+                    @endif
+                </div>
+                <button class="btn-add-allergy" onclick="promptAddAllergy({{ $patient->id }})" title="Add Allergy">
+                    <i class="fa fa-plus"></i>
+                </button>
+            </div>
+
+            {{-- Vitals Strip --}}
+            <div class="sch-strip sch-strip-vitals">
+                <span class="sch-strip-label"><i class="fa fa-heartbeat"></i> Vitals:</span>
+                <div class="sch-strip-content" id="sticky-vitals-container">
+                    <span class="sch-vital-item" id="sticky-vital-temp" title="Temperature"><i class="fa fa-thermometer-half text-danger"></i> --</span>
+                    <span class="sch-vital-item" id="sticky-vital-bp" title="Blood Pressure"><i class="fa fa-heart text-danger"></i> --</span>
+                    <span class="sch-vital-item" id="sticky-vital-wt" title="Weight"><i class="fa fa-weight text-primary"></i> --</span>
+                    <span class="sch-vital-item" id="sticky-vital-hr" title="Heart Rate"><i class="fa fa-stethoscope text-success"></i> --</span>
                 </div>
             </div>
+        </div>
+
+        {{-- ═══ ROW 3: Clinical Alerts Banner (JS injects here) ═══ --}}
+        <div class="sch-row-alerts sticky-header-alerts">
+            <!-- JS will inject alerts here -->
         </div>
     </div>
 
