@@ -1070,6 +1070,10 @@ window.BillingKit = (function ($) {
                 loadPendingBills(_patientId);
                 if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
             }
+        },
+
+        loadPendingBills: function (patientId) {
+            loadPendingBills(patientId);
         }
     };
 
