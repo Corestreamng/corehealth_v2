@@ -738,6 +738,40 @@
     }
 
     const $ = jQuery;
+
+    // Define fallback for loadUnviewedCounts if not already defined globally (e.g., for HMO workbench)
+    if (typeof window.loadUnviewedCounts === 'undefined') {
+        window.loadUnviewedCounts = function(pId) {
+            if (!pId) return;
+            $.ajax({
+                url: '/result-views/unviewed-counts/' + pId,
+                type: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        updateUnviewedBadge('#lab-unviewed-badge', response.lab_unviewed);
+                        updateUnviewedBadge('#imaging-unviewed-badge', response.imaging_unviewed);
+                        updateUnviewedBadge('.lab-unviewed-badge', response.lab_unviewed);
+                        updateUnviewedBadge('.imaging-unviewed-badge', response.imaging_unviewed);
+                    }
+                },
+                error: function(err) {
+                    console.error('Error loading unviewed result counts:', err);
+                }
+            });
+        };
+
+        function updateUnviewedBadge(selector, count) {
+            var $badge = $(selector);
+            if ($badge.length) {
+                if (count > 0) {
+                    $badge.text(count).show();
+                } else {
+                    $badge.text('').hide();
+                }
+            }
+        }
+    }
+
     let clinicalEncounterNotesLoaded = false;
 
     // Load when modal is shown — use both show.bs.modal (BS4) and shown.bs.modal for reliability
