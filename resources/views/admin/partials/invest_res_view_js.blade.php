@@ -25,8 +25,11 @@ if (typeof trackResultView !== 'function') {
             success: function(response) {
                 if (response.success) {
                     console.log('Result view tracked successfully', response);
-                    if (window.loadUnviewedCounts && window.currentPatientId) {
-                        window.loadUnviewedCounts(window.currentPatientId);
+                    if (window.loadUnviewedCounts) {
+                        var pId = window.currentPatientId || window.currentPatient || window.currentClinicalPatientId;
+                        if (pId) {
+                            window.loadUnviewedCounts(pId);
+                        }
                     }
                     // Auto-refresh any active result-related DataTables
                     var dtSelectors = [
