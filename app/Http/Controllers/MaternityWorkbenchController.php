@@ -1492,7 +1492,7 @@ class MaternityWorkbenchController extends Controller
     public function maternityRemoveSingleLab($id, LabServiceRequest $lab)
     {
         try {
-            $this->removeSingleLab($lab->id);
+            $this->removeSingleLab($lab->id, request()->input('reason'));
             return response()->json(['success' => true, 'message' => 'Lab removed']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1524,7 +1524,7 @@ class MaternityWorkbenchController extends Controller
     public function maternityRemoveSingleImaging($id, ImagingServiceRequest $imaging)
     {
         try {
-            $this->removeSingleImaging($imaging->id);
+            $this->removeSingleImaging($imaging->id, request()->input('reason'));
             return response()->json(['success' => true, 'message' => 'Imaging removed']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1567,7 +1567,7 @@ class MaternityWorkbenchController extends Controller
     public function maternityRemoveSinglePrescription($id, ProductRequest $prescription)
     {
         try {
-            $this->removeSinglePrescription($prescription->id);
+            $this->removeSinglePrescription($prescription->id, request()->input('reason'));
             return response()->json(['success' => true, 'message' => 'Prescription removed']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1602,7 +1602,7 @@ class MaternityWorkbenchController extends Controller
     public function maternityRemoveSingleProcedure($id, Procedure $procedure)
     {
         try {
-            $this->removeSingleProcedure($procedure->id);
+            $this->removeSingleProcedure($procedure->id, request()->input('reason'));
             return response()->json(['success' => true, 'message' => 'Procedure removed']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

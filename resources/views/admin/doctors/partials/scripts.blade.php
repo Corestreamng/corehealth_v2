@@ -4,53 +4,86 @@ let currentDeleteItem = null;
 
 // Delete Lab Request
 function deleteLabRequest(labId, encounterId, serviceName) {
-    currentDeleteItem = {
+    ClinicalOrdersKit.showDeleteConfirmation({
         type: 'lab',
-        id: labId,
-        encounterId: encounterId,
-        name: serviceName
-    };
-
-    $('#deleteItemInfo').html(`
-        <strong>Service:</strong> ${serviceName}<br>
-        <strong>Type:</strong> Laboratory Test
-    `);
-
-    $('#deleteConfirmModal').modal('show');
+        itemName: serviceName,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: `/encounters/${encounterId}/labs/${labId}`,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        toastr.success('Request deleted successfully');
+                        if ($.fn.DataTable.isDataTable('#investigation_history_list')) $('#investigation_history_list').DataTable().ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    toastr.error(msg);
+                }
+            });
+        }
+    });
 }
 
 // Delete Imaging Request
 function deleteImagingRequest(imagingId, encounterId, serviceName) {
-    currentDeleteItem = {
+    ClinicalOrdersKit.showDeleteConfirmation({
         type: 'imaging',
-        id: imagingId,
-        encounterId: encounterId,
-        name: serviceName
-    };
-
-    $('#deleteItemInfo').html(`
-        <strong>Service:</strong> ${serviceName}<br>
-        <strong>Type:</strong> Imaging/Radiology
-    `);
-
-    $('#deleteConfirmModal').modal('show');
+        itemName: serviceName,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: `/encounters/${encounterId}/imaging/${imagingId}`,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        toastr.success('Request deleted successfully');
+                        if ($.fn.DataTable.isDataTable('#imaging_history_list')) $('#imaging_history_list').DataTable().ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    toastr.error(msg);
+                }
+            });
+        }
+    });
 }
 
 // Delete Prescription
 function deletePrescription(prescriptionId, encounterId, productName) {
-    currentDeleteItem = {
+    ClinicalOrdersKit.showDeleteConfirmation({
         type: 'prescription',
-        id: prescriptionId,
-        encounterId: encounterId,
-        name: productName
-    };
-
-    $('#deleteItemInfo').html(`
-        <strong>Medication:</strong> ${productName}<br>
-        <strong>Type:</strong> Prescription
-    `);
-
-    $('#deleteConfirmModal').modal('show');
+        itemName: productName,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: `/encounters/${encounterId}/prescriptions/${prescriptionId}`,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        toastr.success('Request deleted successfully');
+                        if ($.fn.DataTable.isDataTable('#presc_history_list')) $('#presc_history_list').DataTable().ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    toastr.error(msg);
+                }
+            });
+        }
+    });
 }
 
 // Confirm Delete Button Handler
@@ -183,34 +216,43 @@ $('#deleteConfirmModal').on('hidden.bs.modal', function() {
  * @param {string} name  Display name for the confirmation dialog
  */
 function deleteNurseClinicalRequest(type, id, name) {
-    // Map type to the nurse API path segment
     var pathMap = {
         lab:          'labs',
         imaging:      'imaging',
         prescription: 'prescriptions',
         procedure:    'procedures'
     };
-    var typeLabels = {
-        lab:          'Laboratory Test',
-        imaging:      'Imaging/Radiology',
-        prescription: 'Prescription',
-        procedure:    'Procedure'
-    };
-
-    currentDeleteItem = {
+    ClinicalOrdersKit.showDeleteConfirmation({
         type: type,
-        id: id,
-        encounterId: null,
-        name: name,
-        _nurseRoute: '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id
-    };
-
-    $('#deleteItemInfo').html(
-        '<strong>Service:</strong> ' + name + '<br>' +
-        '<strong>Type:</strong> ' + (typeLabels[type] || type)
-    );
-
-    $('#deleteConfirmModal').modal('show');
+        itemName: name,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        toastr.success('Request deleted successfully');
+                        var tableMap = {
+                            lab:          '#cr_lab_history_list',
+                            imaging:      '#cr_imaging_history_list',
+                            prescription: '#cr_presc_history_list',
+                            procedure:    '#cr_proc_history_list'
+                        };
+                        var tableId = tableMap[type];
+                        if (tableId && $.fn.DataTable.isDataTable(tableId)) $(tableId).DataTable().ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    toastr.error(msg);
+                }
+            });
+        }
+    });
 }
 
 // Delete Encounter Note
