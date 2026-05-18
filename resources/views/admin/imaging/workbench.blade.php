@@ -3151,10 +3151,16 @@
         <div class="patient-header" id="patient-header">
             <div class="patient-header-top">
                 <div style="flex: 1;">
-                    <div class="patient-name" id="patient-name"></div>
+                    <div class="d-flex align-items-center mb-1">
+                        <div class="patient-name mb-0 me-3" id="patient-name"></div>
+                        <button class="btn btn-sm btn-danger btn-manage-alerts" id="btn-manage-alerts" style="display:none;">
+                            <i class="mdi mdi-alert-octagon"></i> Alerts
+                        </button>
+                    </div>
                     <div class="patient-meta" id="patient-meta"></div>
+                    <div class="sticky-header-alerts mt-2" style="max-height: 60px; overflow-y: auto;"></div>
                 </div>
-                <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
+                <button class="btn-expand-patient mt-2" id="btn-expand-patient" title="Show more details">
                     <span class="btn-expand-text">more biodata</span>
                     <i class="mdi mdi-chevron-down"></i>
                 </button>
@@ -3981,6 +3987,15 @@ function loadPatient(patientId) {
         success: function(data) {
             currentPatientData = data.patient; // Store patient data including allergies
             displayPatientInfo(data.patient);
+
+            // Initialize Clinical Alerts
+            try { 
+                $('#btn-manage-alerts').show();
+                if(typeof ClinicalAlerts !== 'undefined') {
+                    ClinicalAlerts.init(patientId, 'lab_imaging');
+                }
+            } catch(e) { console.error('ClinicalAlerts init error:', e); }
+
             displayPendingRequests(data.requests);
 
             // Initialize history DataTable
@@ -7415,5 +7430,8 @@ function showBundleRemove(btn) {
     });
 }
 </script>
+
+@include('admin.partials.clinical_alerts_modal')
+<script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
 @endsection

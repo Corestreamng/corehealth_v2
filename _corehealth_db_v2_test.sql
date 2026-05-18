@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 18, 2026 at 02:39 PM
+-- Generation Time: May 18, 2026 at 05:48 PM
 -- Server version: 8.0.45-0ubuntu0.24.04.1
 -- PHP Version: 8.3.6
 
@@ -4287,6 +4287,37 @@ INSERT INTO `child_growth_records` (`id`, `baby_id`, `patient_id`, `record_date`
 (6, 4, 9, '2026-04-17', 0.0, 3.50, 56.0, 32.9, NULL, 0.31, 3.23, NULL, NULL, 'normal', NULL, NULL, NULL, NULL, 1, '2026-04-17 10:16:28', '2026-04-17 10:16:28', NULL),
 (7, 6, 11, '2026-04-26', 0.0, 3.70, 55.0, 40.0, NULL, 0.70, 2.70, NULL, NULL, 'normal', NULL, NULL, NULL, NULL, 1, '2026-04-26 19:16:52', '2026-04-26 19:16:52', NULL),
 (8, 4, 9, '2026-05-05', 0.6, 3.70, 55.0, 36.7, 13.0, -1.38, 0.14, NULL, -2.25, 'mild_underweight', NULL, NULL, NULL, NULL, 1, '2026-05-05 10:22:49', '2026-05-05 10:22:49', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `clinical_alerts`
+--
+
+CREATE TABLE `clinical_alerts` (
+  `id` bigint UNSIGNED NOT NULL,
+  `patient_id` bigint UNSIGNED NOT NULL,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `alert_text` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `severity` enum('low','medium','high') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'medium',
+  `visibility` json DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `clinical_alerts`
+--
+
+INSERT INTO `clinical_alerts` (`id`, `patient_id`, `created_by`, `alert_text`, `severity`, `visibility`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 'test alert', 'medium', '[]', 0, '2026-05-18 16:14:48', '2026-05-18 16:15:08'),
+(2, 1, 1, 'One more', 'high', '[\"doctors\", \"pharmacy\"]', 1, '2026-05-18 16:15:21', '2026-05-18 16:15:21'),
+(3, 1, 1, 'test 2', 'medium', '[]', 1, '2026-05-18 16:37:45', '2026-05-18 16:37:45'),
+(4, 1, 1, 'test 3', 'medium', '[]', 1, '2026-05-18 16:37:52', '2026-05-18 16:37:52'),
+(5, 1, 1, 'tehhw', 'medium', '[]', 1, '2026-05-18 16:47:41', '2026-05-18 16:47:41'),
+(6, 1, 1, 'eiweroi', 'medium', '[]', 1, '2026-05-18 16:47:45', '2026-05-18 16:47:45'),
+(7, 1, 1, 'erewre', 'medium', '[]', 1, '2026-05-18 16:47:50', '2026-05-18 16:47:50');
 
 -- --------------------------------------------------------
 
@@ -19935,7 +19966,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (366, '2026_05_15_115603_add_slow_query_settings_to_application_status', 191),
 (367, '2026_05_15_125001_add_source_to_slow_queries_table', 192),
 (368, '2026_05_18_140804_create_non_pharm_orders_table', 193),
-(369, '2026_05_18_143333_add_completed_notes_to_non_pharm_orders_table', 194);
+(369, '2026_05_18_143333_add_completed_notes_to_non_pharm_orders_table', 194),
+(370, '2026_05_18_164341_create_clinical_alerts_table', 195);
 
 -- --------------------------------------------------------
 
@@ -77593,7 +77625,8 @@ INSERT INTO `non_pharm_orders` (`id`, `patient_id`, `encounter_id`, `maternity_e
 (1, 1, 13, NULL, 1, 'Diet', 'nurse', 'NPO (Nothing by mouth) except medications', '2 db', '3 days', 'completed', 1, '2026-05-18 13:30:53', NULL, NULL, NULL, NULL, '2026-05-18 13:29:27', '2026-05-18 13:30:53'),
 (2, 1, 13, NULL, 1, 'Counseling', 'patient', 'Smoking cessation counseling and lifestyle guidance', NULL, NULL, 'discontinued', NULL, NULL, NULL, 1, '2026-05-18 13:31:08', 'eiuqe', '2026-05-18 13:30:27', '2026-05-18 13:31:08'),
 (3, 1, 13, NULL, 1, 'Diet', 'nurse', 'High protein, high fiber diet', '32', '23', 'discontinued', NULL, NULL, NULL, 1, '2026-05-18 13:37:28', 'Other clinical reason - ewqeq', '2026-05-18 13:37:04', '2026-05-18 13:37:28'),
-(4, 1, 13, NULL, 1, 'Diet', 'nurse', 'Diabetic-friendly low carbohydrate diet', '56', '234', 'completed', 1, '2026-05-18 13:38:13', 'adpodwqeqw', NULL, NULL, NULL, '2026-05-18 13:37:47', '2026-05-18 13:38:13');
+(4, 1, 13, NULL, 1, 'Diet', 'nurse', 'Diabetic-friendly low carbohydrate diet', '56', '234', 'completed', 1, '2026-05-18 13:38:13', 'adpodwqeqw', NULL, NULL, NULL, '2026-05-18 13:37:47', '2026-05-18 13:38:13'),
+(5, 1, 13, NULL, 1, 'Counseling', 'patient', 'Lactation support, positioning, and latch techniques guidance', NULL, NULL, 'active', NULL, NULL, NULL, NULL, NULL, NULL, '2026-05-18 13:43:29', '2026-05-18 13:43:29');
 
 -- --------------------------------------------------------
 
@@ -105873,6 +105906,14 @@ ALTER TABLE `child_growth_records`
   ADD KEY `child_growth_records_patient_id_index` (`patient_id`);
 
 --
+-- Indexes for table `clinical_alerts`
+--
+ALTER TABLE `clinical_alerts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `clinical_alerts_patient_id_foreign` (`patient_id`),
+  ADD KEY `clinical_alerts_created_by_foreign` (`created_by`);
+
+--
 -- Indexes for table `clinics`
 --
 ALTER TABLE `clinics`
@@ -107919,6 +107960,12 @@ ALTER TABLE `child_growth_records`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `clinical_alerts`
+--
+ALTER TABLE `clinical_alerts`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
 -- AUTO_INCREMENT for table `clinics`
 --
 ALTER TABLE `clinics`
@@ -108384,7 +108431,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=370;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=371;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -108402,7 +108449,7 @@ ALTER TABLE `morgue_admissions`
 -- AUTO_INCREMENT for table `non_pharm_orders`
 --
 ALTER TABLE `non_pharm_orders`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `nursing_notes`
@@ -109233,6 +109280,13 @@ ALTER TABLE `child_growth_records`
   ADD CONSTRAINT `child_growth_records_baby_id_foreign` FOREIGN KEY (`baby_id`) REFERENCES `maternity_babies` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `child_growth_records_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
   ADD CONSTRAINT `child_growth_records_recorded_by_foreign` FOREIGN KEY (`recorded_by`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `clinical_alerts`
+--
+ALTER TABLE `clinical_alerts`
+  ADD CONSTRAINT `clinical_alerts_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `staff` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `clinical_alerts_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `clinic_schedules`
