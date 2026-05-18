@@ -2001,3 +2001,543 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
     };
 
 })(jQuery));
+
+/**
+ * window.NonPharmManager — Unified Non-Pharmacological Care Plan & Bedside Care Orders Manager
+ * Features presets, category filters, and bedside checklist completion handlers
+ */
+window.NonPharmManager = (function($) {
+    'use strict';
+
+    var currentPatientId = null;
+    var currentEncounterId = null;
+    var currentMaternityEnrollmentId = null;
+    var currentContainerId = null;
+    var isNurseView = false;
+    var loadedOrdersCache = [];
+
+    // Standard Preset Database
+    var PRESETS = {
+        'Diet': [
+            'Low sodium diet (less than 2g daily)',
+            'Diabetic-friendly low carbohydrate diet',
+            'NPO (Nothing by mouth) except medications',
+            'Clear liquid diet only',
+            'High protein, high fiber diet'
+        ],
+        'Activity': [
+            'Strict bed rest with passive range of motion',
+            'Ambulate assisted 3 times daily',
+            'Elevate lower extremities above heart level',
+            'Deep breathing and coughing exercises every 2 hours'
+        ],
+        'Counseling': [
+            'Smoking cessation counseling and lifestyle guidance',
+            'Anxiety management and relaxation techniques guidance',
+            'Post-operative care and mobility transition education',
+            'Lactation support, positioning, and latch techniques guidance'
+        ],
+        'Hygiene': [
+            'Maintain strict dry sterile dressing on wound site',
+            'Warm saline gargles 3-4 times daily',
+            'Cleanse surgical site daily with mild antiseptic',
+            'Daily skin integrity checks and moisturizing'
+        ],
+        'Bedside Care': [
+            'Reposition/turn patient every 2 hours to prevent pressure ulcers',
+            'Strict intake and output charting (I/O)',
+            'Apply cold compress to forehead every 4 hours for hyperthermia',
+            'Catheter care and bag emptying every shift'
+        ]
+    };
+
+    function init(config) {
+        currentPatientId = config.patientId;
+        currentEncounterId = config.encounterId || null;
+        currentMaternityEnrollmentId = config.maternityEnrollmentId || null;
+        currentContainerId = config.containerId;
+        isNurseView = !!config.isNurseView;
+
+        renderFormAndTable();
+        loadOrders();
+        setupEventHandlers();
+    }
+
+    function renderFormAndTable() {
+        var $container = $(currentContainerId);
+        if (!$container.length) return;
+
+        var executorToggleHtml = '';
+        if (!isNurseView) {
+            executorToggleHtml = 
+                '<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; background: linear-gradient(145deg, #ffffff, #fdfdfd); border: 1px solid rgba(0,0,0,0.05);">' +
+                    '<div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center" style="background-color: #f8fafc !important;">' +
+                        '<div class="d-flex align-items-center gap-2">' +
+                            '<div class="bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px;">' +
+                                '<i class="fa fa-heartbeat" style="font-size: 1.1rem;"></i>' +
+                            '</div>' +
+                            '<div>' +
+                                '<h5 class="m-0 text-dark fw-bold" style="font-size: 0.95rem; letter-spacing: -0.2px;">Add Non-Pharmacological Care Order</h5>' +
+                                '<small class="text-muted" style="font-size: 0.75rem;">Formulate home guidance or ward nursing instructions</small>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="card-body p-3">' +
+                        '<form id="non-pharm-add-form" class="row g-3">' +
+                            '<div class="col-md-3">' +
+                                '<label class="form-label text-secondary fw-semibold mb-1" style="font-size: 0.78rem;">Category</label>' +
+                                '<select class="form-select form-select-sm" id="np-category" required style="border-radius: 8px; padding: 0.45rem 0.75rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">' +
+                                    '<option value="Diet">Diet / Nutrition</option>' +
+                                    '<option value="Activity">Physical Activity / Physio</option>' +
+                                    '<option value="Counseling">Counseling & Education</option>' +
+                                    '<option value="Hygiene">Lifestyle & Hygiene</option>' +
+                                    '<option value="Bedside Care">Nursing Bedside Care Plan</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="col-md-3">' +
+                                '<label class="form-label text-secondary fw-semibold mb-1" style="font-size: 0.78rem;">Target Executor</label>' +
+                                '<select class="form-select form-select-sm" id="np-executor" required style="border-radius: 8px; padding: 0.45rem 0.75rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">' +
+                                    '<option value="patient">Patient (Home Guidance / Diet)</option>' +
+                                    '<option value="nurse">Nurse (Active Bedside Ward Care)</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="col-md-3">' +
+                                '<label class="form-label text-secondary fw-semibold mb-1" style="font-size: 0.78rem;">Frequency (Optional)</label>' +
+                                '<input type="text" class="form-control form-control-sm" id="np-frequency" placeholder="e.g. Q2H, 3x daily" style="border-radius: 8px; padding: 0.45rem 0.75rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">' +
+                            '</div>' +
+                            '<div class="col-md-3">' +
+                                '<label class="form-label text-secondary fw-semibold mb-1" style="font-size: 0.78rem;">Duration (Optional)</label>' +
+                                '<input type="text" class="form-control form-control-sm" id="np-duration" placeholder="e.g. 5 days, lifetime" style="border-radius: 8px; padding: 0.45rem 0.75rem; border: 1px solid #cbd5e1; font-size: 0.85rem;">' +
+                            '</div>' +
+                            '<div class="col-md-12">' +
+                                '<label class="form-label text-secondary fw-semibold d-flex justify-content-between align-items-center mb-1" style="font-size: 0.78rem;">' +
+                                    '<span>Detailed Instructions / Presets</span>' +
+                                    '<span class="badge bg-light text-primary border" id="np-presets-badge" style="cursor: pointer; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px;">Show presets</span>' +
+                                '</label>' +
+                                '<div id="np-presets-container" class="mb-2 p-2 border rounded" style="display:none; max-height: 120px; overflow-y: auto; background-color: #f8fafc;"></div>' +
+                                '<textarea class="form-control form-control-sm" id="np-instructions" placeholder="Enter detailed guidelines or clinical directives..." rows="3" required style="border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;"></textarea>' +
+                            '</div>' +
+                            '<div class="col-md-12 text-end">' +
+                                '<button type="submit" class="btn btn-sm btn-primary px-4 fw-bold" style="border-radius: 8px; padding: 0.5rem 1.25rem; font-size: 0.8rem; background: linear-gradient(135deg, #0d6efd, #0b5ed7); border: none; box-shadow: 0 4px 6px rgba(13,110,253,0.15);">' +
+                                    '<i class="fa fa-plus-circle me-1"></i> Add to Care Plan' +
+                                '</button>' +
+                            '</div>' +
+                        '</form>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        var tableHtml = 
+            '<div class="card border-0 shadow-sm" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">' +
+                '<div class="card-header bg-light border-0 py-3" style="background-color: #f8fafc !important;">' +
+                    '<div class="d-flex justify-content-between align-items-center">' +
+                        '<div>' +
+                            '<h5 class="m-0 text-dark fw-bold" style="font-size: 0.95rem; letter-spacing: -0.2px;">Active Care Plan & Non-Pharmacological Orders</h5>' +
+                            '<small class="text-muted" style="font-size: 0.75rem;">Ongoing lifestyle adjustments and nursing duties</small>' +
+                        '</div>' +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary" id="np-refresh-btn" style="border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.78rem;">' +
+                            '<i class="fa fa-refresh me-1"></i> Refresh' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="card-body p-0">' +
+                    '<div id="np-alert-container" class="p-3 pb-0" style="display:none;"></div>' +
+                    '<div class="table-responsive">' +
+                        '<table class="table table-hover align-middle mb-0" id="np-orders-table" style="font-size: 0.85rem;">' +
+                            '<thead class="table-light text-uppercase text-secondary fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">' +
+                                '<tr>' +
+                                    '<th class="px-3" style="width: 15%;">Category</th>' +
+                                    '<th style="width: 15%;">Target Executor</th>' +
+                                    '<th style="width: 35%;">Instructions</th>' +
+                                    '<th style="width: 15%;">Schedule</th>' +
+                                    '<th style="width: 10%;">Ordered By</th>' +
+                                    '<th class="text-center px-3" style="width: 10%;">Action</th>' +
+                                '</tr>' +
+                            '</thead>' +
+                            '<tbody id="np-orders-body">' +
+                                '<tr>' +
+                                    '<td colspan="6" class="text-center text-muted py-4">' +
+                                        '<div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading care plan...' +
+                                    '</td>' +
+                                '</tr>' +
+                            '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+        $container.html(executorToggleHtml + tableHtml);
+
+        if (!isNurseView) {
+            updatePresetsList();
+        }
+    }
+
+    function updatePresetsList() {
+        var category = $('#np-category').val();
+        var presets = PRESETS[category] || [];
+        var $presetsContainer = $('#np-presets-container');
+        
+        var presetsHtml = '<div class="d-flex flex-wrap gap-2">';
+        presets.forEach(function(p) {
+            presetsHtml += '<span class="badge bg-white text-secondary border np-preset-item" style="cursor: pointer; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem;" onclick="window.NonPharmManager.applyPreset(\'' + p.replace(/'/g, "\\'") + '\')">' + p + '</span>';
+        });
+        presetsHtml += '</div>';
+        $presetsContainer.html(presetsHtml);
+    }
+
+    function applyPreset(text) {
+        var currentVal = $('#np-instructions').val();
+        if (currentVal) {
+            $('#np-instructions').val(currentVal + '\n' + text);
+        } else {
+            $('#np-instructions').val(text);
+        }
+    }
+
+    function setupEventHandlers() {
+        $(document).off('click', '#np-presets-badge').on('click', '#np-presets-badge', function() {
+            var $presetsContainer = $('#np-presets-container');
+            if ($presetsContainer.is(':visible')) {
+                $presetsContainer.slideUp();
+                $(this).text('Show presets');
+            } else {
+                $presetsContainer.slideDown();
+                $(this).text('Hide presets');
+            }
+        });
+
+        $(document).off('change', '#np-category').on('change', '#np-category', function() {
+            updatePresetsList();
+            
+            var cat = $(this).val();
+            if (cat === 'Bedside Care') {
+                $('#np-executor').val('nurse');
+            } else if (cat === 'Diet' || cat === 'Counseling' || cat === 'Hygiene') {
+                $('#np-executor').val('patient');
+            }
+        });
+
+        $(document).off('submit', '#non-pharm-add-form').on('submit', '#non-pharm-add-form', function(e) {
+            e.preventDefault();
+            
+            var payload = {
+                patient_id: currentPatientId,
+                encounter_id: currentEncounterId,
+                maternity_enrollment_id: currentMaternityEnrollmentId,
+                category: $('#np-category').val(),
+                target_executor: $('#np-executor').val(),
+                instructions: $('#np-instructions').val(),
+                frequency: $('#np-frequency').val(),
+                duration: $('#np-duration').val()
+            };
+
+            $.ajax({
+                url: '/non-pharm-orders',
+                method: 'POST',
+                data: $.extend({ _token: $('meta[name="csrf-token"]').attr('content') }, payload),
+                success: function(res) {
+                    if (res.success) {
+                        $('#np-instructions').val('');
+                        $('#np-frequency').val('');
+                        $('#np-duration').val('');
+                        loadOrders();
+                    } else {
+                        alert('Error: ' + res.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error adding order: ' + (xhr.responseJSON?.message || 'Server error'));
+                }
+            });
+        });
+
+        $(document).off('click', '#np-refresh-btn').on('click', '#np-refresh-btn', function() {
+            loadOrders();
+        });
+    }
+
+    function loadOrders() {
+        var $body = $('#np-orders-body');
+        if (!$body.length) return;
+
+        $.ajax({
+            url: '/non-pharm-orders/patient/' + currentPatientId,
+            method: 'GET',
+            success: function(res) {
+                if (res.success) {
+                    loadedOrdersCache = res.orders;
+                    renderOrders(res.orders);
+                } else {
+                    $body.html('<tr><td colspan="6" class="text-center text-danger">Failed to fetch care plan.</td></tr>');
+                }
+            },
+            error: function() {
+                $body.html('<tr><td colspan="6" class="text-center text-danger">Error loading care plan.</td></tr>');
+            }
+        });
+    }
+
+    function renderOrders(orders) {
+        var $body = $('#np-orders-body');
+        if (!$body.length) return;
+
+        if (!orders || orders.length === 0) {
+            $body.html('<tr><td colspan="6" class="text-center text-muted py-4">No non-pharmacological care orders defined for this patient.</td></tr>');
+            return;
+        }
+
+        var html = '';
+        orders.forEach(function(o) {
+            var categoryBadge = '';
+            var catColors = {
+                'Diet': 'bg-success',
+                'Activity': 'bg-info text-dark',
+                'Counseling': 'bg-primary',
+                'Hygiene': 'bg-secondary',
+                'Bedside Care': 'bg-warning text-dark'
+            };
+            var color = catColors[o.category] || 'bg-dark';
+            categoryBadge = '<span class="badge ' + color + ' px-2 py-1" style="font-size: 0.75rem; border-radius: 6px;">' + o.category + '</span>';
+
+            var executorBadge = o.target_executor === 'nurse' 
+                ? '<span class="badge bg-danger px-2 py-1" style="font-size: 0.75rem; border-radius: 6px;"><i class="fa fa-user-md me-1"></i> Nurse</span>'
+                : '<span class="badge bg-info text-dark px-2 py-1" style="font-size: 0.75rem; border-radius: 6px;"><i class="fa fa-home me-1"></i> Patient</span>';
+
+            var orderedBy = o.requested_by_user 
+                ? (o.requested_by_user.surname + ' ' + (o.requested_by_user.firstname ? o.requested_by_user.firstname.substring(0, 1) + '.' : '')) 
+                : 'Dr. Admin';
+
+            var schedule = '';
+            if (o.frequency || o.duration) {
+                schedule = '<div class="fw-semibold text-dark">' + (o.frequency || 'N/A') + '</div>' +
+                           '<div class="text-muted small" style="font-size: 0.7rem;">Duration: ' + (o.duration || 'N/A') + '</div>';
+            } else {
+                schedule = '<span class="text-muted">Routine</span>';
+            }
+
+            var instructionsHtml = '<div>' + o.instructions.replace(/\n/g, '<br>') + '</div>';
+            if (o.status === 'completed') {
+                var compBy = o.completed_by_user 
+                    ? (o.completed_by_user.surname + ' ' + (o.completed_by_user.firstname ? o.completed_by_user.firstname.substring(0, 1) + '.' : ''))
+                    : 'Nurse';
+                instructionsHtml += '<div class="mt-2 text-success small fw-bold"><i class="fa fa-check-circle"></i> Performed/Completed by ' + compBy + ' at ' + new Date(o.completed_at).toLocaleString() + '</div>';
+                if (o.completed_notes) {
+                    instructionsHtml += '<div class="mt-1 text-muted small border-start border-success ps-2" style="font-style: italic;"><i class="fa fa-commenting me-1"></i> ' + o.completed_notes.replace(/\n/g, '<br>') + '</div>';
+                }
+            } else if (o.status === 'discontinued') {
+                var discBy = o.discontinued_by_user
+                    ? (o.discontinued_by_user.surname + ' ' + (o.discontinued_by_user.firstname ? o.discontinued_by_user.firstname.substring(0, 1) + '.' : ''))
+                    : 'Clinician';
+                instructionsHtml += '<div class="mt-2 text-danger small fw-bold">' +
+                                        '<i class="fa fa-ban"></i> Discontinued by ' + discBy + ' at ' + new Date(o.discontinued_at).toLocaleString() +
+                                        '<br><span class="text-muted fw-normal">Reason: ' + (o.discontinue_reason || 'N/A') + '</span>' +
+                                     '</div>';
+            }
+
+            var actionHtml = '';
+            if (o.status === 'active') {
+                if (isNurseView && o.target_executor === 'nurse') {
+                    actionHtml += '<button type="button" class="btn btn-xs btn-success me-1 px-2 py-1 fw-bold" onclick="window.NonPharmManager.completeOrder(' + o.id + ')" title="Mark completed" style="font-size: 0.72rem; border-radius: 6px;">' +
+                                    '<i class="fa fa-check"></i> Complete' +
+                                  '</button>';
+                }
+                
+                actionHtml += '<button type="button" class="btn btn-xs btn-outline-danger px-2 py-1 fw-bold" onclick="window.NonPharmManager.discontinueOrder(' + o.id + ')" title="Discontinue order" style="font-size: 0.72rem; border-radius: 6px;">' +
+                                '<i class="fa fa-times-circle"></i> Stop' +
+                              '</button>';
+            } else {
+                actionHtml = '<span class="text-uppercase small fw-bold ' + (o.status === 'completed' ? 'text-success' : 'text-danger') + '" style="font-size: 0.75rem;">' + o.status + '</span>';
+            }
+
+            html += '<tr class="' + (o.status === 'discontinued' ? 'table-light text-muted opacity-75' : '') + '">' +
+                        '<td class="px-3">' + categoryBadge + '</td>' +
+                        '<td>' + executorBadge + '</td>' +
+                        '<td style="white-space: normal; word-break: break-word;">' + instructionsHtml + '</td>' +
+                        '<td>' + schedule + '</td>' +
+                        '<td>' + orderedBy + '</td>' +
+                        '<td class="text-center px-3">' + actionHtml + '</td>' +
+                    '</tr>';
+        });
+
+        $body.html(html);
+    }
+
+    function ensureCarePlanModals() {
+        if ($('#carePlanCompleteModal').length > 0) return;
+
+        // Complete Modal HTML
+        var completeModalHtml = 
+            '<div class="modal fade" id="carePlanCompleteModal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog modal-dialog-centered" role="document">' +
+                    '<div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">' +
+                        '<div class="modal-header border-0 bg-success text-white py-3">' +
+                            '<h5 class="modal-title fw-bold" style="font-size: 1.05rem;"><i class="fa fa-check-circle me-2"></i>Perform &amp; Complete Bedside Task</h5>' +
+                            '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="background: none; border: none; color: white; font-size: 1.25rem; opacity: 0.8; cursor: pointer;">&times;</button>' +
+                        '</div>' +
+                        '<div class="modal-body p-4">' +
+                            '<div class="alert alert-success border-0 bg-light-success text-success py-2 mb-3" style="border-radius: 8px; font-size: 0.82rem; background-color: #e8f5e9 !important; border-left: 4px solid #2e7d32 !important;">' +
+                                '<i class="fa fa-info-circle me-1"></i> You are marking this active bedside order as performed/completed.' +
+                            '</div>' +
+                            '<div class="form-group mb-3">' +
+                                '<label class="form-label text-muted small fw-semibold">Task Instructions</label>' +
+                                '<div id="cpc-instructions-display" class="p-3 bg-light rounded text-dark small" style="font-size: 0.8rem; line-height: 1.4; border-left: 3px solid #198754; background-color: #f8fafc !important;"></div>' +
+                            '</div>' +
+                            '<div class="form-group mb-0">' +
+                                '<label for="cpc-notes" class="form-label text-dark fw-bold small"><i class="fa fa-pencil me-1"></i>Execution / Observation Notes (Optional)</label>' +
+                                '<textarea class="form-control" id="cpc-notes" rows="3" placeholder="Enter dressing details, patient tolerance, or vitals observation..." style="border-radius: 8px; font-size: 0.85rem; border: 1px solid #cbd5e1;"></textarea>' +
+                                '<small class="text-muted" style="font-size: 0.72rem; display: block; margin-top: 5px;"><i class="fa fa-question-circle me-1"></i> Notes will be appended directly to the patient\'s care plan audit trail.</small>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="modal-footer border-0 bg-light px-4 py-3 d-flex justify-content-end gap-2" style="background-color: #f8fafc !important;">' +
+                            '<button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 8px; font-size: 0.85rem; border: 1px solid #cbd5e1;">Cancel</button>' +
+                            '<button type="button" class="btn btn-success px-4" id="cpc-submit-btn" style="border-radius: 8px; font-size: 0.85rem; font-weight: 600; background-color: #198754 !important; border-color: #198754 !important;">' +
+                                '<i class="fa fa-check me-1"></i> Confirm Performance' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+        // Discontinue Modal HTML
+        var discontinueModalHtml = 
+            '<div class="modal fade" id="carePlanDiscontinueModal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog modal-dialog-centered" role="document">' +
+                    '<div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">' +
+                        '<div class="modal-header border-0 bg-danger text-white py-3">' +
+                            '<h5 class="modal-title fw-bold" style="font-size: 1.05rem;"><i class="fa fa-ban me-2"></i>Stop Care Plan / Non-Pharm Order</h5>' +
+                            '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="background: none; border: none; color: white; font-size: 1.25rem; opacity: 0.8; cursor: pointer;">&times;</button>' +
+                        '</div>' +
+                        '<div class="modal-body p-4">' +
+                            '<div class="alert alert-warning border-0 bg-light-warning text-warning py-2 mb-3" style="border-radius: 8px; font-size: 0.82rem; background-color: #fff3e0 !important; border-left: 4px solid #ef6c00 !important; color: #ef6c00 !important;">' +
+                                '<i class="fa fa-exclamation-triangle me-1"></i> Stop instructions immediately. Order status will be updated to "Discontinued".' +
+                            '</div>' +
+                            '<div class="form-group mb-3">' +
+                                '<label for="cpd-reason-select" class="form-label text-dark fw-bold small">Discontinuation Reason</label>' +
+                                '<select class="form-control" id="cpd-reason-select" style="border-radius: 8px; font-size: 0.85rem; border: 1px solid #cbd5e1;">' +
+                                    '<option value="Treatment plan changed / updated">Treatment plan changed / updated</option>' +
+                                    '<option value="Patient transferred / discharged">Patient transferred / discharged</option>' +
+                                    '<option value="Ineffective or replaced by alternative">Ineffective or replaced by alternative</option>' +
+                                    '<option value="Patient request / refusal">Patient request / refusal</option>' +
+                                    '<option value="Other clinical reason">Other clinical reason</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="form-group mb-0">' +
+                                '<label for="cpd-custom-notes" class="form-label text-muted small fw-semibold">Optional Explanatory Notes</label>' +
+                                '<textarea class="form-control" id="cpd-custom-notes" rows="2" placeholder="Provide extra clinical context or doctor signature note..." style="border-radius: 8px; font-size: 0.85rem; border: 1px solid #cbd5e1;"></textarea>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="modal-footer border-0 bg-light px-4 py-3 d-flex justify-content-end gap-2" style="background-color: #f8fafc !important;">' +
+                            '<button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 8px; font-size: 0.85rem; border: 1px solid #cbd5e1;">Cancel</button>' +
+                            '<button type="button" class="btn btn-danger px-4" id="cpd-submit-btn" style="border-radius: 8px; font-size: 0.85rem; font-weight: 600; background-color: #dc3545 !important; border-color: #dc3545 !important;">' +
+                                '<i class="fa fa-times-circle me-1"></i> Discontinue Order' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+        $('body').append(completeModalHtml + discontinueModalHtml);
+        
+        // Add direct listener to close buttons just in case bootstrap event is bypassed in old versions
+        $('.btn-close[data-bs-dismiss="modal"], button[data-bs-dismiss="modal"]').off('click').on('click', function() {
+            $(this).closest('.modal').modal('hide');
+        });
+    }
+
+    function completeOrder(id) {
+        ensureCarePlanModals();
+        
+        var order = loadedOrdersCache.find(function(o) { return o.id === id; });
+        var instrText = order ? order.instructions : 'Dressing/Activity bedside task';
+        $('#cpc-instructions-display').html(instrText.replace(/\n/g, '<br>'));
+        
+        // Reset notes input
+        $('#cpc-notes').val('');
+
+        $('#cpc-submit-btn').off('click').on('click', function() {
+            var notes = $('#cpc-notes').val().trim();
+            var $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Saving...');
+
+            $.ajax({
+                url: '/non-pharm-orders/' + id + '/complete',
+                method: 'POST',
+                data: { 
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    notes: notes
+                },
+                success: function(res) {
+                    $btn.prop('disabled', false).html('<i class="fa fa-check me-1"></i> Confirm Performance');
+                    $('#carePlanCompleteModal').modal('hide');
+                    if (res.success) {
+                        loadOrders();
+                    } else {
+                        alert('Error: ' + res.message);
+                    }
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).html('<i class="fa fa-check me-1"></i> Confirm Performance');
+                    $('#carePlanCompleteModal').modal('hide');
+                    alert('Error completing task: ' + (xhr.responseJSON?.message || 'Server error'));
+                }
+            });
+        });
+
+        $('#carePlanCompleteModal').modal('show');
+    }
+
+    function discontinueOrder(id) {
+        ensureCarePlanModals();
+        
+        // Reset fields
+        $('#cpd-reason-select').val('Treatment plan changed / updated');
+        $('#cpd-custom-notes').val('');
+
+        $('#cpd-submit-btn').off('click').on('click', function() {
+            var reason = $('#cpd-reason-select').val();
+            var customNotes = $('#cpd-custom-notes').val().trim();
+            if (customNotes) {
+                reason += ' - ' + customNotes;
+            }
+            
+            var $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Stopping...');
+
+            $.ajax({
+                url: '/non-pharm-orders/' + id,
+                method: 'DELETE',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    action: 'discontinue',
+                    reason: reason
+                },
+                success: function(res) {
+                    $btn.prop('disabled', false).html('<i class="fa fa-times-circle me-1"></i> Discontinue Order');
+                    $('#carePlanDiscontinueModal').modal('hide');
+                    if (res.success) {
+                        loadOrders();
+                    } else {
+                        alert('Error: ' + res.message);
+                    }
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).html('<i class="fa fa-times-circle me-1"></i> Discontinue Order');
+                    $('#carePlanDiscontinueModal').modal('hide');
+                    alert('Error discontinuing order: ' + (xhr.responseJSON?.message || 'Server error'));
+                }
+            });
+        });
+
+        $('#carePlanDiscontinueModal').modal('show');
+    }
+
+    return {
+        init: init,
+        loadOrders: loadOrders,
+        applyPreset: applyPreset,
+        completeOrder: completeOrder,
+        discontinueOrder: discontinueOrder
+    };
+
+})(jQuery);

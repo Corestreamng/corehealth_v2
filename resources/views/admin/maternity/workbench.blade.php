@@ -4907,6 +4907,11 @@ $sett = appsettings();
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#mco-non-pharm" type="button" role="tab">
+                    <i class="fa fa-heartbeat"></i> Care Plan / Non-Pharm
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#mco-lab" type="button" role="tab">
                     <i class="mdi mdi-flask"></i> Lab Requests
                 </button>
@@ -4975,6 +4980,15 @@ $sett = appsettings();
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ NON-PHARM / CARE PLAN ══ -->
+            <div class="tab-pane fade" id="mco-non-pharm" role="tabpanel">
+                <div class="card-modern">
+                    <div class="card-body">
+                        <div id="mco-non-pharm-container"></div>
                     </div>
                 </div>
             </div>
@@ -5178,6 +5192,15 @@ $sett = appsettings();
             $('#mco-selected-labs').empty();
             $('#mco-selected-imaging').empty();
             $('#mco-selected-procedures').empty();
+
+            // Initialize Non-Pharmacological Bedside Care Orders
+            window.NonPharmManager.init({
+                patientId: pid,
+                maternityEnrollmentId: eid,
+                encounterId: null,
+                containerId: '#mco-non-pharm-container',
+                isNurseView: true
+            });
 
             // Init history DataTables
             initPrescHistory();

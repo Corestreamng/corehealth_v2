@@ -705,6 +705,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('clinical-context/patient/{patientId}/imaging', [ClinicalContextController::class, 'getImaging'])->name('clinical-context.imaging');
         Route::get('clinical-context/patient/{patientId}/procedures', [ClinicalContextController::class, 'getProcedures'])->name('clinical-context.procedures');
 
+        // Non-Pharmacological Care Orders
+        Route::get('non-pharm-orders/patient/{patient_id}', [\App\Http\Controllers\NonPharmOrderController::class, 'getPatientOrders'])->name('non-pharm-orders.patient');
+        Route::post('non-pharm-orders', [\App\Http\Controllers\NonPharmOrderController::class, 'store'])->name('non-pharm-orders.store');
+        Route::post('non-pharm-orders/{id}/complete', [\App\Http\Controllers\NonPharmOrderController::class, 'complete'])->name('non-pharm-orders.complete');
+        Route::delete('non-pharm-orders/{id}', [\App\Http\Controllers\NonPharmOrderController::class, 'destroy'])->name('non-pharm-orders.destroy');
+
         // Service Combo Search (Web Route for Encounter selection)
         Route::get('service-combos/search', function (Illuminate\Http\Request $request) {
             $term = $request->term;

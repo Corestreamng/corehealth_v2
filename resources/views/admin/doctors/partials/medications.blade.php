@@ -107,7 +107,7 @@
             <button type="button" onclick="switch_tab(event,'imaging_services_tab')" class="btn btn-secondary">
                 <i class="fa fa-arrow-left"></i> Previous
             </button>
-            <button type="button" onclick="switch_tab(event,'procedures_tab')" class="btn btn-primary">
+            <button type="button" onclick="switch_tab(event,'non_pharm_tab')" class="btn btn-primary">
                 Next <i class="fa fa-arrow-right"></i>
             </button>
         </div>
