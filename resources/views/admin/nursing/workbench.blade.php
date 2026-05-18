@@ -5073,11 +5073,13 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="cr-lab-tab" data-bs-toggle="tab" data-bs-target="#cr-lab" type="button" role="tab">
                                 <i class="mdi mdi-flask"></i> Lab Requests
+                                <span class="badge bg-danger rounded-pill ms-1 lab-unviewed-badge" id="cr-lab-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="cr-imaging-tab" data-bs-toggle="tab" data-bs-target="#cr-imaging" type="button" role="tab">
                                 <i class="mdi mdi-radioactive"></i> Imaging
+                                <span class="badge bg-danger rounded-pill ms-1 imaging-unviewed-badge" id="cr-imaging-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -7911,6 +7913,11 @@ function initializeEventListeners() {
 
 function loadPatient(patientId) {
     currentPatient = patientId;
+    window.currentPatientId = patientId;
+
+    if (window.loadUnviewedCounts) {
+        window.loadUnviewedCounts(patientId);
+    }
 
     // Set PATIENT_ID for medication and I/O charts
     PATIENT_ID = patientId;

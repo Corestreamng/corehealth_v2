@@ -11,8 +11,99 @@
 --}}
 
 <script>
+if (typeof trackResultView !== 'function') {
+    window.trackResultView = function(type, id, viewType = 'modal') {
+        $.ajax({
+            url: '{{ route("result-views.store") }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                viewable_type: type,
+                viewable_id: id,
+                view_type: viewType
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('Result view tracked successfully', response);
+                    if (window.loadUnviewedCounts && window.currentPatientId) {
+                        window.loadUnviewedCounts(window.currentPatientId);
+                    }
+                    // Auto-refresh any active result-related DataTables
+                    var dtSelectors = [
+                        '#investigation_history_list',
+                        '#imaging_history_list',
+                        '#cr_lab_history_list',
+                        '#cr_imaging_history_list',
+                        '#mco_lab_history_list',
+                        '#mco_imaging_history_list'
+                    ];
+                    dtSelectors.forEach(function(sel) {
+                        if (window.jQuery && window.jQuery.fn.DataTable && window.jQuery.fn.DataTable.isDataTable(sel)) {
+                            window.jQuery(sel).DataTable().ajax.reload(null, false);
+                        }
+                    });
+                }
+            },
+            error: function(err) {
+                console.error('Error tracking result view:', err);
+            }
+        });
+    };
+}
+
+if (typeof trackResultPrint !== 'function') {
+    window.trackResultPrint = function(type, id) {
+        trackResultView(type, id, 'print');
+    };
+}
+
+if (typeof loadResultAuditHistory !== 'function') {
+    window.loadResultAuditHistory = function(type, id, containerId, rowsId) {
+        var container = $('#' + containerId);
+        var rows = $('#' + rowsId);
+        
+        container.hide();
+        rows.empty();
+        
+        $.ajax({
+            url: '/result-views/' + type + '/' + id,
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.views && response.views.length > 0) {
+                    var html = '';
+                    response.views.forEach(function(view) {
+                        var badgeClass = view.view_type === 'print' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-info-subtle text-info border border-info-subtle';
+                        var badgeIcon = view.view_type === 'print' ? 'mdi-printer' : 'mdi-eye-outline';
+                        var actionText = view.view_type === 'print' ? 'Printed' : 'Viewed';
+                        
+                        html += '<tr>' +
+                            '<td class="px-3"><strong>' + view.user_name + '</strong></td>' +
+                            '<td><span class="badge ' + badgeClass + ' p-1 px-2"><i class="mdi ' + badgeIcon + ' me-1"></i>' + actionText + '</span></td>' +
+                            '<td class="pe-3 text-end text-muted">' + view.viewed_at + '</td>' +
+                            '</tr>';
+                    });
+                    rows.html(html);
+                    container.show();
+                }
+            },
+            error: function(err) {
+                console.error('Error loading result audit history:', err);
+            }
+        });
+    };
+}
+
 function setResViewInModal(obj) {
     var res_obj = JSON.parse($(obj).attr('data-result-obj'));
+    
+    var viewableType = $(obj).attr('data-viewable-type');
+    var viewableId = $(obj).attr('data-viewable-id');
+    if (viewableType && viewableId) {
+        trackResultView(viewableType, viewableId, 'modal');
+        loadResultAuditHistory(viewableType, viewableId, 'invest_view_history_section', 'invest_view_history_rows');
+    } else {
+        $('#invest_view_history_section').hide();
+    }
 
     // Basic service info
     $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));

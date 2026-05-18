@@ -19,11 +19,13 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="clinical-labs-tab-btn" data-bs-toggle="tab" data-bs-target="#clinical-labs-tab" type="button" role="tab" aria-controls="clinical-labs-tab" aria-selected="false">
                             <i class="mdi mdi-flask"></i> Labs
+                            <span class="badge bg-danger rounded-pill ms-1 lab-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.5em;">0</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="clinical-imaging-tab-btn" data-bs-toggle="tab" data-bs-target="#clinical-imaging-tab" type="button" role="tab" aria-controls="clinical-imaging-tab" aria-selected="false">
                             <i class="mdi mdi-radiology-box"></i> Imaging
+                            <span class="badge bg-danger rounded-pill ms-1 imaging-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.5em;">0</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -742,6 +744,19 @@
     $(document).on('show.bs.modal shown.bs.modal', '#clinical-context-modal', function() {
         if (!clinicalEncounterNotesLoaded) {
             loadClinicalEncounterNotes();
+        }
+        
+        // Fetch unviewed counts to sync modal tab badges
+        let patientId = null;
+        if (typeof currentPatient !== 'undefined' && currentPatient) {
+            patientId = currentPatient;
+        } else if (typeof selectedPatientId !== 'undefined' && selectedPatientId) {
+            patientId = selectedPatientId;
+        } else if ($('#clinical-context-modal').data('patient-id')) {
+            patientId = $('#clinical-context-modal').data('patient-id');
+        }
+        if (window.loadUnviewedCounts && patientId) {
+            window.loadUnviewedCounts(patientId);
         }
     });
 
@@ -1648,6 +1663,30 @@
         if ($icon.hasClass('mdi-eye')) {
             $icon.removeClass('mdi-eye').addClass('mdi-eye-off');
             $(this).html('<i class="mdi mdi-eye-off"></i> Hide Result');
+
+            // Track view in background
+            var labId = $(this).data('target').replace('#lab-result-', '');
+            $.ajax({
+                url: '{{ route("result-views.store") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    viewable_type: 'lab',
+                    viewable_id: labId,
+                    view_type: 'modal'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        var patientId = getPatientId();
+                        if (window.loadUnviewedCounts && patientId) {
+                            window.loadUnviewedCounts(patientId);
+                        }
+                    }
+                },
+                error: function(err) {
+                    console.error('Error tracking lab result view:', err);
+                }
+            });
         } else {
             $icon.removeClass('mdi-eye-off').addClass('mdi-eye');
             $(this).html('<i class="mdi mdi-eye"></i> View Result');
@@ -1844,6 +1883,30 @@
         if ($icon.hasClass('mdi-eye')) {
             $icon.removeClass('mdi-eye').addClass('mdi-eye-off');
             $(this).html('<i class="mdi mdi-eye-off"></i> Hide Result');
+
+            // Track view in background
+            var imgId = $(this).data('target').replace('#imaging-result-', '');
+            $.ajax({
+                url: '{{ route("result-views.store") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    viewable_type: 'imaging',
+                    viewable_id: imgId,
+                    view_type: 'modal'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        var patientId = getPatientId();
+                        if (window.loadUnviewedCounts && patientId) {
+                            window.loadUnviewedCounts(patientId);
+                        }
+                    }
+                },
+                error: function(err) {
+                    console.error('Error tracking imaging result view:', err);
+                }
+            });
         } else {
             $icon.removeClass('mdi-eye-off').addClass('mdi-eye');
             $(this).html('<i class="mdi mdi-eye"></i> View Result');

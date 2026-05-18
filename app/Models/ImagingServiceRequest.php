@@ -131,6 +131,14 @@ protected $fillable = [
     }
 
     /**
+     * Get all view/print tracking records for this result.
+     */
+    public function resultViews()
+    {
+        return $this->morphMany(ResultView::class, 'viewable');
+    }
+
+    /**
      * Get the procedure item if this imaging is part of a procedure.
      * Spec Reference: PROCEDURE_MODULE_DESIGN_PLAN.md Part 3.7
      */
