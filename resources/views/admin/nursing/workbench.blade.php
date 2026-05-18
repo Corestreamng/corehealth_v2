@@ -7788,6 +7788,9 @@ function createVitalTooltip() {
 
 $(document).ready(function() {
     // Initialize
+    if (window.BillingKit && window.BILLING_KIT_CONFIG) {
+        BillingKit.init(window.BILLING_KIT_CONFIG);
+    }
     loadQueueCounts();
     startQueueRefresh();
     initializeEventListeners();
@@ -7939,7 +7942,9 @@ function loadPatient(patientId) {
             loadInjectionHistory(patientId);
             loadImmunizationSchedule(patientId);
             loadImmunizationHistory(patientId);
-            BillingKit.init(patientId);
+            if (window.BillingKit) {
+                BillingKit.setPatient(patientId);
+            }
             loadNotesHistory(patientId);
 
             // Reset note autosave state when switching patients
@@ -13361,7 +13366,9 @@ function switchWorkspaceTab(tab) {
             $('#vaccine-time').val(new Date().toISOString().slice(0, 16));
             break;
         case 'billing':
-            BillingKit.init(currentPatient);
+            if (window.BillingKit) {
+                BillingKit.setPatient(currentPatient);
+            }
             break;
         case 'notes':
             // Removed loadNoteTypes call as it is no longer needed

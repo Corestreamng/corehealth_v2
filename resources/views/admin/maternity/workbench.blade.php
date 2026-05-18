@@ -2899,6 +2899,10 @@ $sett = appsettings();
                 // Load enrollment tab content
                 loadEnrollmentTab();
 
+                if (window.BillingKit) {
+                    BillingKit.setPatient(patientId);
+                }
+
                 switchWorkspaceTab('overview');
             },
             error: function(xhr) {
@@ -3147,7 +3151,9 @@ $sett = appsettings();
                 loadAuditTab();
                 break;
             case 'billing':
-                BillingKit.init(currentPatient);
+                if (window.BillingKit) {
+                    BillingKit.setPatient(currentPatient);
+                }
                 break;
             case 'vitals':
                 if (typeof window.initUnifiedVitals === 'function') {
@@ -7634,6 +7640,11 @@ $sett = appsettings();
     // EVENT BINDINGS (SHARED pattern with nursing workbench)
     // ═══════════════════════════════════════════════════════════════
     $(document).ready(function() {
+        // Initialize BillingKit
+        if (window.BillingKit && window.BILLING_KIT_CONFIG) {
+            BillingKit.init(window.BILLING_KIT_CONFIG);
+        }
+
         // Initialize shared patient search module
         PatientSearch.init();
 
