@@ -256,6 +256,31 @@
                     <!-- Attachments -->
                     <div id="imaging_attachments" style="margin: 0 20px;"></div>
 
+                    <!-- View Audit History -->
+                    <div id="imaging_view_history_section" style="margin: 0 20px 20px 20px; display: none;">
+                        <div class="card border border-lightshadow shadow-sm mb-0">
+                            <div class="card-header bg-light py-2 px-3">
+                                <h6 class="mb-0 text-muted" style="font-size: 0.85rem; font-weight: 700;">
+                                    <i class="mdi mdi-history me-1"></i> Result Access Audit Log
+                                </h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                    <table class="table table-sm table-hover table-striped mb-0" style="font-size: 0.8rem;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="px-3" style="width: 50%;">User / Staff</th>
+                                                <th style="width: 25%;">Action Type</th>
+                                                <th class="pe-3 text-end" style="width: 25%;">Timestamp</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="imaging_view_history_rows"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Footer Section -->
                     <div class="imaging-result-section" style="padding-top: 40px;">
                         <div style="display: flex; justify-content: space-between; border-top: 2px solid #eee; padding-top: 20px;">

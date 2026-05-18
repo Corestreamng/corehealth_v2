@@ -141,6 +141,7 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'investigationsCardBody' ? 'active' : '' }}" id="investigations-tab" data-bs-toggle="tab" data-bs-target="#investigationsCardBody" type="button" role="tab">
                     <i class="fa fa-flask me-1"></i> Investigations
+                    <span class="badge bg-danger rounded-pill ms-1 lab-unviewed-badge" id="lab-unviewed-badge" style="display: none; font-size: 0.75rem; padding: 0.25em 0.6em;"></span>
                 </button>
             </li>
         @endcan
@@ -148,6 +149,7 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'imagingCardBody' ? 'active' : '' }}" id="imaging-tab" data-bs-toggle="tab" data-bs-target="#imagingCardBody" type="button" role="tab">
                     <i class="fa fa-x-ray me-1"></i> Imaging
+                    <span class="badge bg-danger rounded-pill ms-1 imaging-unviewed-badge" id="imaging-unviewed-badge" style="display: none; font-size: 0.75rem; padding: 0.25em 0.6em;"></span>
                 </button>
             </li>
         @endcan
@@ -271,9 +273,15 @@
     <script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
     <!-- Bootstrap 4 -->
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}"></script>
+    <!-- Clinical Context (needed for unviewed badge counts and result tracking) -->
+    <script src="{{ asset('js/clinical-context.js') }}"></script>
     <script>
+        window.currentPatientId = {{ $patient->id }};
         $(document).ready(function() {
             $(".select2").select2();
+            if (typeof window.loadUnviewedCounts === 'function') {
+                window.loadUnviewedCounts(window.currentPatientId);
+            }
         });
         $(function() {
             $('#encounter_history_list').DataTable({
@@ -615,6 +623,18 @@
                     attachHtml += '</div></div>';
                     $('#imaging_attachments').html(attachHtml);
                 }
+            }
+
+            // Track polymorphic view event and load access history
+            let viewableType = $(obj).attr('data-viewable-type') || 'imaging';
+            let viewableId = $(obj).attr('data-viewable-id') || res_obj.id;
+            if (typeof trackResultView === 'function') {
+                trackResultView(viewableType, viewableId, 'modal');
+                if (typeof loadResultAuditHistory === 'function') {
+                    loadResultAuditHistory(viewableType, viewableId, 'imaging_view_history_section', 'imaging_view_history_rows');
+                }
+            } else {
+                $('#imaging_view_history_section').hide();
             }
 
             $('#imagingResViewModal').modal('show');

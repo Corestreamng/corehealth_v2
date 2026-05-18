@@ -2840,6 +2840,12 @@ $sett = appsettings();
 
     function loadPatient(patientId) {
         currentPatient = patientId;
+        window.currentPatientId = patientId;
+
+        if (window.loadUnviewedCounts) {
+            window.loadUnviewedCounts(patientId);
+        }
+
         hideAllViews();
 
         $('#workspace-content').show().addClass('active');
@@ -4914,11 +4920,13 @@ $sett = appsettings();
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#mco-lab" type="button" role="tab">
                     <i class="mdi mdi-flask"></i> Lab Requests
+                    <span class="badge bg-danger rounded-pill ms-1 lab-unviewed-badge" id="mco-lab-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#mco-imaging" type="button" role="tab">
                     <i class="mdi mdi-radioactive"></i> Imaging
+                    <span class="badge bg-danger rounded-pill ms-1 imaging-unviewed-badge" id="mco-imaging-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">

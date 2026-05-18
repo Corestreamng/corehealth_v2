@@ -818,6 +818,17 @@ class LabServiceRequestController extends Controller
             'resultBy', 'approver', 'encounter', 'productOrServiceRequest'
         ])->findOrFail($id);
 
+        // Record a server-side print view
+        if (Auth::check() && $req->result) {
+            \App\Models\ResultView::create([
+                'viewable_type' => LabServiceRequest::class,
+                'viewable_id'   => $req->id,
+                'user_id'       => Auth::id(),
+                'view_type'     => 'print',
+                'ip_address'    => request()->ip(),
+            ]);
+        }
+
         return view('admin.lab_service_requests.show', ['req' => $req]);
     }
 

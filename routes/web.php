@@ -712,6 +712,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('clinical-alerts/patient/{patientId}/{alertId}', [\App\Http\Controllers\ClinicalAlertController::class, 'update'])->name('clinical-alerts.update');
         Route::delete('clinical-alerts/patient/{patientId}/{alertId}', [\App\Http\Controllers\ClinicalAlertController::class, 'destroy'])->name('clinical-alerts.destroy');
 
+        // Result View Tracking (lab/imaging result audit trail + unviewed badges)
+        Route::post('result-views', [\App\Http\Controllers\ResultViewController::class, 'store'])->name('result-views.store');
+        Route::get('result-views/unviewed-counts/{patient_id}', [\App\Http\Controllers\ResultViewController::class, 'unviewedCounts'])->name('result-views.unviewed');
+        Route::get('result-views/{type}/{id}', [\App\Http\Controllers\ResultViewController::class, 'show'])->name('result-views.show');
+
         // Non-Pharmacological Care Orders
         Route::get('non-pharm-orders/patient/{patient_id}', [\App\Http\Controllers\NonPharmOrderController::class, 'getPatientOrders'])->name('non-pharm-orders.patient');
         Route::post('non-pharm-orders', [\App\Http\Controllers\NonPharmOrderController::class, 'store'])->name('non-pharm-orders.store');

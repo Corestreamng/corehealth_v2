@@ -438,7 +438,7 @@ class EncounterController extends Controller
 
     public function investigationHistoryList($patient_id)
     {
-        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
+        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person', 'resultViews'])
             ->where('status', '>', 0)
             ->where('patient_id', $patient_id)
             ->where(function ($query) {
@@ -557,7 +557,12 @@ class EncounterController extends Controller
                     }
                     $str .= '</small></div>';
                 } elseif ($his->result) {
-                    $str .= '<div class="alert alert-light mb-2"><small><b>Result:</b><br>' . $his->result . '</small></div>';
+                    $viewCount = $his->resultViews->unique('user_id')->count();
+                    $viewText = $viewCount == 1 ? '1 staff' : "{$viewCount} staff members";
+                    $badgeClass = $viewCount > 0 ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle';
+                    $badgeIcon = $viewCount > 0 ? 'mdi-eye-check-outline' : 'mdi-eye-off-outline';
+                    $labelText = $viewCount > 0 ? "Viewed by {$viewText}" : 'Unviewed';
+                    $str .= '<div class="alert alert-light mb-2 p-2 d-flex align-items-center gap-2"><span class="badge ' . $badgeClass . ' p-1 px-2"><i class="mdi ' . $badgeIcon . ' me-1"></i> ' . $labelText . '</span></div>';
                 }
 
                 // Request note
@@ -646,8 +651,8 @@ class EncounterController extends Controller
                 $canPerformInvestigation = false;
                 if (empty($his->result) && $his->status == 1 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
-                    if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
-                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))
+                    if (($user->hasRole('DOCTOR') && e(appsettings('doctor_can_enter_lab_result')))
+                        || ($user->hasRole('NURSE') && e(appsettings('nurse_can_enter_lab_result')))
                     ) {
                         $canPerformInvestigation = true;
                     }
@@ -655,12 +660,12 @@ class EncounterController extends Controller
                 // "Perform Investigation" button — combo item (status == 2, is_bundle_item), not yet claimed
                 $canClaimComboPerform = false;
                 if (
-                    empty($his->result)
-                    && $his->status == 2
-                    && !$his->self_perform_intent
-                    && Auth::id() == $his->doctor_id
-                    && $his->productOrServiceRequest
-                    && $his->productOrServiceRequest->is_bundle_item
+                     empty($his->result)
+                     && $his->status == 2
+                     && !$his->self_perform_intent
+                     && Auth::id() == $his->doctor_id
+                     && $his->productOrServiceRequest
+                     && $his->productOrServiceRequest->is_bundle_item
                 ) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
@@ -713,10 +718,12 @@ class EncounterController extends Controller
                     <button type='button' class='btn btn-info btn-sm' onclick='setResViewInModal(this)'
                         data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
                         data-result = '" . htmlspecialchars($his->result) . "'
-                        data-result-obj = '" . htmlspecialchars($his) . "'>
+                        data-result-obj = '" . htmlspecialchars($his) . "'
+                        data-viewable-type='lab'
+                        data-viewable-id='{$his->id}'>
                         <i class='mdi mdi-eye'></i> View
                     </button>
-                    <a href='" . route('service-requests.show', $his->id) . "' target='_blank' class='btn btn-primary btn-sm'>
+                    <a href='" . route('service-requests.show', $his->id) . "' target='_blank' class='btn btn-primary btn-sm' onclick='trackResultPrint(\"lab\", {$his->id})'>
                         <i class='mdi mdi-printer'></i> Print
                     </a>";
 
@@ -816,7 +823,7 @@ class EncounterController extends Controller
 
     public function imagingHistoryList($patient_id)
     {
-        $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
+        $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person', 'resultViews'])
             ->where('status', '>', 0)
             ->where('patient_id', $patient_id)
             ->where(function ($query) {
@@ -922,7 +929,12 @@ class EncounterController extends Controller
                     }
                     $str .= '</small></div>';
                 } elseif ($his->result) {
-                    $str .= '<div class="alert alert-light mb-2"><small><b>Result:</b><br>' . $his->result . '</small></div>';
+                    $viewCount = $his->resultViews->unique('user_id')->count();
+                    $viewText = $viewCount == 1 ? '1 staff' : "{$viewCount} staff members";
+                    $badgeClass = $viewCount > 0 ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle';
+                    $badgeIcon = $viewCount > 0 ? 'mdi-eye-check-outline' : 'mdi-eye-off-outline';
+                    $labelText = $viewCount > 0 ? "Viewed by {$viewText}" : 'Unviewed';
+                    $str .= '<div class="alert alert-light mb-2 p-2 d-flex align-items-center gap-2"><span class="badge ' . $badgeClass . ' p-1 px-2"><i class="mdi ' . $badgeIcon . ' me-1"></i> ' . $labelText . '</span></div>';
                 }
 
                 // Request note
@@ -995,7 +1007,7 @@ class EncounterController extends Controller
                 if (empty($his->result) && ($canDeliver || $his->self_perform_intent) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
-                        || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))
+                        || ($user->hasRole('NURSE') && e(appsettings('nurse_can_enter_imaging_result')))
                     ) {
                         $canEnterImagingResult = true;
                     }
@@ -1078,10 +1090,12 @@ class EncounterController extends Controller
                     <button type='button' class='btn btn-info btn-sm' onclick='setImagingResViewInModal(this)'
                         data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
                         data-result = '" . htmlspecialchars($his->result) . "'
-                        data-result-obj = '" . htmlspecialchars($his) . "'>
+                        data-result-obj = '" . htmlspecialchars($his) . "'
+                        data-viewable-type='imaging'
+                        data-viewable-id='{$his->id}'>
                         <i class='mdi mdi-eye'></i> View
                     </button>
-                    <a href='" . route('imaging-requests.show', $his->id) . "' target='_blank' class='btn btn-primary btn-sm'>
+                    <a href='" . route('imaging-requests.show', $his->id) . "' target='_blank' class='btn btn-primary btn-sm' onclick='trackResultPrint(\"imaging\", {$his->id})'>
                         <i class='mdi mdi-printer'></i> Print
                     </a>";
 

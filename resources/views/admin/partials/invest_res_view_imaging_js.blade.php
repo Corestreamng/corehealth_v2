@@ -6,8 +6,85 @@
 --}}
 
 <script>
+if (typeof trackResultView !== 'function') {
+    window.trackResultView = function(type, id, viewType = 'modal') {
+        $.ajax({
+            url: '{{ route("result-views.store") }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                viewable_type: type,
+                viewable_id: id,
+                view_type: viewType
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('Result view tracked successfully', response);
+                    if (window.loadUnviewedCounts && window.currentPatientId) {
+                        window.loadUnviewedCounts(window.currentPatientId);
+                    }
+                }
+            },
+            error: function(err) {
+                console.error('Error tracking result view:', err);
+            }
+        });
+    };
+}
+
+if (typeof trackResultPrint !== 'function') {
+    window.trackResultPrint = function(type, id) {
+        trackResultView(type, id, 'print');
+    };
+}
+
+if (typeof loadResultAuditHistory !== 'function') {
+    window.loadResultAuditHistory = function(type, id, containerId, rowsId) {
+        var container = $('#' + containerId);
+        var rows = $('#' + rowsId);
+        
+        container.hide();
+        rows.empty();
+        
+        $.ajax({
+            url: '/result-views/' + type + '/' + id,
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.views && response.views.length > 0) {
+                    var html = '';
+                    response.views.forEach(function(view) {
+                        var badgeClass = view.view_type === 'print' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-info-subtle text-info border border-info-subtle';
+                        var badgeIcon = view.view_type === 'print' ? 'mdi-printer' : 'mdi-eye-outline';
+                        var actionText = view.view_type === 'print' ? 'Printed' : 'Viewed';
+                        
+                        html += '<tr>' +
+                            '<td class="px-3"><strong>' + view.user_name + '</strong></td>' +
+                            '<td><span class="badge ' + badgeClass + ' p-1 px-2"><i class="mdi ' + badgeIcon + ' me-1"></i>' + actionText + '</span></td>' +
+                            '<td class="pe-3 text-end text-muted">' + view.viewed_at + '</td>' +
+                            '</tr>';
+                    });
+                    rows.html(html);
+                    container.show();
+                }
+            },
+            error: function(err) {
+                console.error('Error loading result audit history:', err);
+            }
+        });
+    };
+}
+
 function setImagingResViewInModal(obj) {
     let res_obj = JSON.parse($(obj).attr('data-result-obj'));
+    
+    let viewableType = $(obj).attr('data-viewable-type');
+    let viewableId = $(obj).attr('data-viewable-id');
+    if (viewableType && viewableId) {
+        trackResultView(viewableType, viewableId, 'modal');
+        loadResultAuditHistory(viewableType, viewableId, 'imaging_view_history_section', 'imaging_view_history_rows');
+    } else {
+        $('#imaging_view_history_section').hide();
+    }
 
     // Basic service info
     $('.imaging_res_service_name_view').text($(obj).attr('data-service-name'));
