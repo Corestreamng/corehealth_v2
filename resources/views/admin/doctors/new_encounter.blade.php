@@ -4289,6 +4289,45 @@
                         } else {
                             $('#summary_prescriptions').html(`<span class="text-muted">None selected</span>`);
                         }
+
+                        // Update procedures summary
+                        if (data.procedures && data.procedures.length > 0) {
+                            let procHtml = `<span class="badge bg-success mb-2">${data.procedures.length} procedure(s)</span><br>`;
+                            procHtml += '<ul class="small mb-0 ps-3">';
+                            data.procedures.forEach(proc => {
+                                procHtml += `<li>${proc.name} ${proc.code ? '[' + proc.code + ']' : ''}</li>`;
+                            });
+                            procHtml += '</ul>';
+                            $('#summary_procedures').html(procHtml);
+                        } else {
+                            $('#summary_procedures').html(`<span class="text-muted">None selected</span>`);
+                        }
+
+                        // Update referrals summary
+                        if (data.referrals && data.referrals.length > 0) {
+                            let refHtml = `<span class="badge bg-success mb-2">${data.referrals.length} referral(s)</span><br>`;
+                            refHtml += '<ul class="small mb-0 ps-3">';
+                            data.referrals.forEach(ref => {
+                                refHtml += `<li>${ref.target}</li>`;
+                            });
+                            refHtml += '</ul>';
+                            $('#summary_referrals').html(refHtml);
+                        } else {
+                            $('#summary_referrals').html(`<span class="text-muted">None selected</span>`);
+                        }
+
+                        // Update care plans summary
+                        if (data.care_plans && data.care_plans.length > 0) {
+                            let cpHtml = `<span class="badge bg-success mb-2">${data.care_plans.length} care plan(s)</span><br>`;
+                            cpHtml += '<ul class="small mb-0 ps-3">';
+                            data.care_plans.forEach(cp => {
+                                cpHtml += `<li>${cp.category} (${cp.frequency})</li>`;
+                            });
+                            cpHtml += '</ul>';
+                            $('#summary_care_plans').html(cpHtml);
+                        } else {
+                            $('#summary_care_plans').html(`<span class="text-muted">None selected</span>`);
+                        }
                     }
                 },
                 error: function(xhr) {
@@ -4511,6 +4550,36 @@
                                     <div class="card-body">
                                         <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-pills"></i> Prescriptions</h6>
                                         <p class="card-text" id="modal_summary_prescriptions">
+                                            <span class="text-muted">None selected</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-modern summary-card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-user-md"></i> Procedures</h6>
+                                        <p class="card-text" id="modal_summary_procedures">
+                                            <span class="text-muted">None selected</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-modern summary-card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="mdi mdi-account-switch"></i> Specialist Referrals</h6>
+                                        <p class="card-text" id="modal_summary_referrals">
+                                            <span class="text-muted">None selected</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card-modern summary-card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-heartbeat"></i> Care Plan / Non-Pharm</h6>
+                                        <p class="card-text" id="modal_summary_care_plans">
                                             <span class="text-muted">None selected</span>
                                         </p>
                                     </div>
@@ -5008,30 +5077,81 @@
                     }
 
                     // Update labs summary
-                    if (data.labs.count> 0) {
-                        $('#modal_summary_labs').html(`
-                            <span class="text-success"><i class="fa fa-check-circle"></i> ${data.labs.count} lab service(s) requested</span>
-                        `);
+                    if (data.labs && data.labs.length > 0) {
+                        let html = `<span class="badge bg-success mb-2">${data.labs.length} service(s)</span><br>`;
+                        html += '<ul class="small mb-0 ps-3 text-start">';
+                        data.labs.forEach(lab => {
+                            html += `<li><strong>${lab.name}</strong> ${lab.code ? '[' + lab.code + ']' : ''}</li>`;
+                        });
+                        html += '</ul>';
+                        $('#modal_summary_labs').html(html);
                     } else {
                         $('#modal_summary_labs').html(`<span class="text-muted">None selected</span>`);
                     }
 
                     // Update imaging summary
-                    if (data.imaging.count> 0) {
-                        $('#modal_summary_imaging').html(`
-                            <span class="text-success"><i class="fa fa-check-circle"></i> ${data.imaging.count} imaging service(s) requested</span>
-                        `);
+                    if (data.imaging && data.imaging.length > 0) {
+                        let html = `<span class="badge bg-success mb-2">${data.imaging.length} service(s)</span><br>`;
+                        html += '<ul class="small mb-0 ps-3 text-start">';
+                        data.imaging.forEach(img => {
+                            html += `<li><strong>${img.name}</strong> ${img.code ? '[' + img.code + ']' : ''}</li>`;
+                        });
+                        html += '</ul>';
+                        $('#modal_summary_imaging').html(html);
                     } else {
                         $('#modal_summary_imaging').html(`<span class="text-muted">None selected</span>`);
                     }
 
                     // Update prescriptions summary
-                    if (data.prescriptions.count> 0) {
-                        $('#modal_summary_prescriptions').html(`
-                            <span class="text-success"><i class="fa fa-check-circle"></i> ${data.prescriptions.count} prescription(s) added</span>
-                        `);
+                    if (data.prescriptions && data.prescriptions.length > 0) {
+                        let html = `<span class="badge bg-success mb-2">${data.prescriptions.length} medication(s)</span><br>`;
+                        html += '<ul class="small mb-0 ps-3 text-start">';
+                        data.prescriptions.forEach(presc => {
+                            html += `<li><strong>${presc.name}</strong>${presc.dose ? ' - ' + presc.dose : ''}</li>`;
+                        });
+                        html += '</ul>';
+                        $('#modal_summary_prescriptions').html(html);
                     } else {
                         $('#modal_summary_prescriptions').html(`<span class="text-muted">None selected</span>`);
+                    }
+
+                    // Update procedures summary
+                    if (data.procedures && data.procedures.length > 0) {
+                        let html = `<span class="badge bg-success mb-2">${data.procedures.length} procedure(s)</span><br>`;
+                        html += '<ul class="small mb-0 ps-3 text-start">';
+                        data.procedures.forEach(proc => {
+                            html += `<li><strong>${proc.name}</strong> ${proc.code ? '[' + proc.code + ']' : ''} <span class="badge bg-light text-dark small">${proc.priority}</span></li>`;
+                        });
+                        html += '</ul>';
+                        $('#modal_summary_procedures').html(html);
+                    } else {
+                        $('#modal_summary_procedures').html(`<span class="text-muted">None selected</span>`);
+                    }
+
+                    // Update referrals summary
+                    if (data.referrals && data.referrals.length > 0) {
+                        let html = `<span class="badge bg-success mb-2">${data.referrals.length} referral(s)</span><br>`;
+                        html += '<ul class="small mb-0 ps-3 text-start">';
+                        data.referrals.forEach(ref => {
+                            html += `<li><strong>${ref.target}</strong> <span class="badge bg-light text-dark small">${ref.urgency}</span></li>`;
+                        });
+                        html += '</ul>';
+                        $('#modal_summary_referrals').html(html);
+                    } else {
+                        $('#modal_summary_referrals').html(`<span class="text-muted">None selected</span>`);
+                    }
+
+                    // Update care plans summary
+                    if (data.care_plans && data.care_plans.length > 0) {
+                        let html = `<span class="badge bg-success mb-2">${data.care_plans.length} care plan(s)</span><br>`;
+                        html += '<ul class="small mb-0 ps-3 text-start">';
+                        data.care_plans.forEach(cp => {
+                            html += `<li><strong>${cp.category}</strong> (to ${cp.target_executor})<br><small class="text-muted">${cp.frequency} for ${cp.duration}</small></li>`;
+                        });
+                        html += '</ul>';
+                        $('#modal_summary_care_plans').html(html);
+                    } else {
+                        $('#modal_summary_care_plans').html(`<span class="text-muted">None selected</span>`);
                     }
                 }
             },
