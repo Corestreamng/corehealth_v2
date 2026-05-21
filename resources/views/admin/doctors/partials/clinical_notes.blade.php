@@ -242,12 +242,18 @@
                 <div>
                     <label for="doctor_diagnosis_text">Clinical Notes / Diagnosis <span class="text-danger">*</span></label>
 
-                    {{-- Template Selector --}}
+                    {{-- Template Selector & Voice Dictation --}}
                     <div class="d-flex align-items-center justify-content-between mb-2 mt-1">
-                        <div class="d-flex align-items-center">
-                            <button class="btn btn-outline-primary btn-sm me-2" type="button" onclick="showInsertTemplateModal()">
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-outline-primary btn-sm" type="button" onclick="showInsertTemplateModal()">
                                 <i class="mdi mdi-file-document-edit"></i> Insert Template
                             </button>
+                            @include('admin.partials.speech_dictation', [
+                                'targetId' => 'doctor_diagnosis_text',
+                                'editorType' => 'ckeditor',
+                                'defaultLang' => 'en-US',
+                                'showLangSelect' => true
+                            ])
                         </div>
                         <small id="autosave_status_text" class="text-muted"><i class="mdi mdi-floppy"></i> <i class="mdi mdi-cloud-check-outline"></i> Autosave enabled</small>
                     </div>
