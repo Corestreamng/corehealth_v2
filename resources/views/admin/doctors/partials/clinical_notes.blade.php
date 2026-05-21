@@ -54,29 +54,54 @@
                     <input type="hidden" value="{{ request()->get('admission_req_id') }}" name="queue_id">
                 @endif
 
-                <div class="form-group">
-                    <div class="container">
+                {{-- Clinical Notes Input Box --}}
+                <div class="mb-4">
+                    <label for="doctor_diagnosis_text">Clinical Notes / Diagnosis <span class="text-danger">*</span></label>
+
+                    {{-- Template Selector & Voice Dictation --}}
+                    <div class="d-flex align-items-center justify-content-between mb-2 mt-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-outline-primary btn-sm" type="button" onclick="showInsertTemplateModal()">
+                                <i class="mdi mdi-file-document-edit"></i> Insert Template
+                            </button>
+                            @include('admin.partials.speech_dictation', [
+                                'targetId' => 'doctor_diagnosis_text',
+                                'editorType' => 'ckeditor',
+                                'defaultLang' => 'en-US',
+                                'showLangSelect' => true
+                            ])
+                        </div>
+                        <small id="autosave_status_text" class="text-muted"><i class="mdi mdi-floppy"></i> <i class="mdi mdi-cloud-check-outline"></i> Autosave enabled</small>
+                    </div>
+
+                    <textarea name="doctor_diagnosis" id="doctor_diagnosis_text" class="form-control classic-editor2">{{ $encounter->notes }}</textarea>
+                </div>
+
+                <hr>
+
+                {{-- Patient Profiles Accordion --}}
+                <div class="form-group mb-4">
+                    <div class="container px-0">
                         <div class="accordion" id="accordionForProfile">
-                            <div class="accordion-item">
+                            <div class="accordion-item border rounded-3">
                                 <h4 class="accordion-header" id="flush-headingOne">
-                                    <span class="collapsed" type="button" data-bs-toggle="collapse"
+                                    <button class="accordion-button collapsed fw-bold d-flex justify-content-between align-items-center py-2 px-3 bg-light" type="button" data-bs-toggle="collapse"
                                         data-bs-target="#flush-collapseOne" aria-expanded="false"
-                                        aria-controls="flush-collapseOne">
-                                        <span class="fa fa-eye"></span>
-                                        See Patient Profiles</span>
-                                    <span class="fa fa-caret-down"></span>
+                                        aria-controls="flush-collapseOne" style="font-size: 0.9rem;">
+                                        <span><i class="fa fa-eye me-2 text-primary"></i> See Patient Profiles</span>
+                                    </button>
                                 </h4>
                                 <div id="flush-collapseOne" class="accordion-collapse collapse"
                                     aria-labelledby="flush-headingOne" data-bs-parent="#accordionForProfile">
-                                    <div class="accordion-body">
-                                        <div class="d-flex justify-content-between">
-                                            <h5>Forms/Profiles</h5>
-                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal"> <span class="fa fa-plus"></span>
-                                                Fill New patient Profile
+                                    <div class="accordion-body p-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h5 class="fw-bold mb-0" style="font-size: 0.95rem;">Forms/Profiles</h5>
+                                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#profileModal"> 
+                                                <i class="fa fa-plus me-1"></i> Fill New Patient Profile
                                             </button>
                                         </div>
                                         <div class="table-responsive">
-                                            <table class="table" id="profile_forms_table" style="width: 100%">
+                                            <table class="table table-sm align-middle" id="profile_forms_table" style="width: 100%">
                                                 <thead>
                                                     <th>#</th>
                                                     <th>Form Data</th>
@@ -96,10 +121,10 @@
                 @if (appsettings('requirediagnosis', 0))
                     <!-- Modern Toggle Switch for Diagnosis -->
                     <div class="diagnosis-toggle-container mb-4">
-                        <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+                        <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border">
                             <div>
-                                <strong class="d-block mb-1">Diagnosis Applicable?</strong>
-                                <small class="text-muted">Toggle to show/hide diagnosis fields</small>
+                                <strong class="d-block mb-1" style="font-size: 0.9rem;">Diagnosis Applicable?</strong>
+                                <small class="text-muted" style="font-size: 0.78rem;">Toggle to show/hide diagnosis fields</small>
                             </div>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="diagnosisApplicable">
@@ -110,7 +135,7 @@
 
                     <div class="diagnosis-fields-wrapper collapsed" id="diagnosisFields" style="display: none;">
                         <div class="form-group">
-                            <label for="reasons_for_encounter_search">
+                            <label for="reasons_for_encounter_search" class="fw-semibold mb-1" style="font-size: 0.85rem;">
                                 Search ICPC-2 Reason(s) for Encounter/Diagnosis <span class="text-danger">*</span>
                             </label>
                             <div class="d-flex gap-2 mb-2">
@@ -128,10 +153,10 @@
                                     </ul>
                                 </div>
                             </div>
-                            <small class="text-muted d-block mb-2">
+                            <small class="text-muted d-block mb-2" style="font-size: 0.78rem;">
                                 <i class="mdi mdi-information"></i> Type at least 2 characters to search. You can also add custom reasons.
                             </small>
-                            <ul class="list-group" id="reasons_search_results" style="display: none; max-height: 250px; overflow-y: auto;"></ul>
+                            <ul class="list-group shadow-sm" id="reasons_search_results" style="display: none; max-height: 250px; overflow-y: auto; z-index: 10;"></ul>
 
                             <!-- Selected diagnoses table with per-diagnosis comments -->
                             <div id="selected_reasons_container" class="mt-3">
@@ -146,7 +171,7 @@
 
                             <!-- Save as favorite button (shown when diagnoses selected) -->
                             <div id="save_favorite_section" class="mt-2" style="display: none;">
-                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="showSaveFavoriteModal()">
+                                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3" onclick="showSaveFavoriteModal()">
                                     <i class="fa fa-star"></i> Save as Favorite
                                 </button>
                             </div>
@@ -238,28 +263,6 @@
     </div>
 </div>
                 @endif
-
-                <div>
-                    <label for="doctor_diagnosis_text">Clinical Notes / Diagnosis <span class="text-danger">*</span></label>
-
-                    {{-- Template Selector & Voice Dictation --}}
-                    <div class="d-flex align-items-center justify-content-between mb-2 mt-1">
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-outline-primary btn-sm" type="button" onclick="showInsertTemplateModal()">
-                                <i class="mdi mdi-file-document-edit"></i> Insert Template
-                            </button>
-                            @include('admin.partials.speech_dictation', [
-                                'targetId' => 'doctor_diagnosis_text',
-                                'editorType' => 'ckeditor',
-                                'defaultLang' => 'en-US',
-                                'showLangSelect' => true
-                            ])
-                        </div>
-                        <small id="autosave_status_text" class="text-muted"><i class="mdi mdi-floppy"></i> <i class="mdi mdi-cloud-check-outline"></i> Autosave enabled</small>
-                    </div>
-
-                    <textarea name="doctor_diagnosis" id="doctor_diagnosis_text" class="form-control classic-editor2">{{ $encounter->notes }}</textarea>
-                </div>
 
                 <br>
                 <div class="d-flex justify-content-between align-items-center">
