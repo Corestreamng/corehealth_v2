@@ -86,6 +86,31 @@ $assets = [
     [
         'url' => 'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
         'path' => 'public/assets/js/marked.min.js'
+    ],
+    // Retext JS and Unified NLP scribe dependencies for local offline use
+    [
+        'url' => 'https://esm.sh/unified@10?bundle',
+        'path' => 'public/assets/js/unified.min.js'
+    ],
+    [
+        'url' => 'https://esm.sh/retext-english@4?bundle',
+        'path' => 'public/assets/js/retext-english.min.js'
+    ],
+    [
+        'url' => 'https://esm.sh/retext-stringify@3?bundle',
+        'path' => 'public/assets/js/retext-stringify.min.js'
+    ],
+    [
+        'url' => 'https://esm.sh/retext-repeated-words@3?bundle',
+        'path' => 'public/assets/js/retext-repeated-words.min.js'
+    ],
+    [
+        'url' => 'https://esm.sh/retext-indefinite-article@3?bundle',
+        'path' => 'public/assets/js/retext-indefinite-article.min.js'
+    ],
+    [
+        'url' => 'https://esm.sh/unist-util-visit@4?bundle',
+        'path' => 'public/assets/js/unist-util-visit.min.js'
     ]
 ];
 

@@ -5668,4 +5668,5 @@
     
     @include('admin.partials.clinical_alerts_modal')
     <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
+    <script src="{{ asset('js/speech-dictation.js') }}"></script>
 @endsection
