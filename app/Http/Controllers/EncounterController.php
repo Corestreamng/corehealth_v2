@@ -2335,6 +2335,9 @@ class EncounterController extends Controller
             $doctorQueue = $queue_id ? DoctorQueue::with('clinic')->find($queue_id) : null;
             $clinic = ($doctorQueue && $doctorQueue->clinic) ? $doctorQueue->clinic : Clinic::find($doctor->clinic_id);
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
+            if (!$req_entry && $doctorQueue && $doctorQueue->request_entry_id) {
+                $req_entry = ProductOrServiceRequest::find($doctorQueue->request_entry_id);
+            }
             $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
 
             // Single query — derive categories/subcategories in memory
@@ -2349,12 +2352,25 @@ class EncounterController extends Controller
                 ->where('patient_id', $patient->id)
                 ->where('completed', false);
 
-            // If we have a service request (req_entry_id), use it to identify the encounter
-            if ($req_entry) {
-                $encounterQuery->where('service_request_id', $req_entry->id);
+            if ($doctorQueue) {
+                // Try to find encounter specifically for this queue first
+                $encounter = (clone $encounterQuery)->where('queue_id', $doctorQueue->id)->first();
+                
+                // If not found, try to find an encounter with the same service request
+                if (!$encounter && $req_entry) {
+                    $encounter = (clone $encounterQuery)->where('service_request_id', $req_entry->id)->first();
+                }
+                
+                // Fallback: get any active encounter for this patient/doctor that doesn't have a queue_id or has the same queue_id
+                if (!$encounter) {
+                    $encounter = (clone $encounterQuery)->whereNull('queue_id')->first();
+                }
+            } else {
+                if ($req_entry) {
+                    $encounterQuery->where('service_request_id', $req_entry->id);
+                }
+                $encounter = $encounterQuery->first();
             }
-
-            $encounter = $encounterQuery->first();
 
             if (!$encounter) {
                 $encounter = new Encounter();
@@ -3192,6 +3208,20 @@ class EncounterController extends Controller
     public function getEncounterSummary(Encounter $encounter)
     {
         try {
+            // Get all encounter IDs associated with the same queue visit or request entry to show all actions across sessions
+            $encounterIds = Encounter::where(function ($q) use ($encounter) {
+                if ($encounter->queue_id) {
+                    $q->where('queue_id', $encounter->queue_id);
+                }
+                if ($encounter->service_request_id) {
+                    $q->orWhere('service_request_id', $encounter->service_request_id);
+                }
+            })
+            ->pluck('id')
+            ->push($encounter->id)
+            ->unique()
+            ->toArray();
+
             // Get diagnosis/notes
             $diagnosis = [
                 'saved' => !empty($encounter->notes) || !empty($encounter->reasons_for_encounter),
@@ -3202,7 +3232,7 @@ class EncounterController extends Controller
             ];
 
             // Get lab requests
-            $labs = LabServiceRequest::where('encounter_id', $encounter->id)
+            $labs = LabServiceRequest::whereIn('encounter_id', $encounterIds)
                 ->with('service')
                 ->get()
                 ->map(function ($lab) {
@@ -3217,7 +3247,7 @@ class EncounterController extends Controller
                 });
 
             // Get imaging requests
-            $imaging = ImagingServiceRequest::where('encounter_id', $encounter->id)
+            $imaging = ImagingServiceRequest::whereIn('encounter_id', $encounterIds)
                 ->with('service')
                 ->get()
                 ->map(function ($img) {
@@ -3232,7 +3262,7 @@ class EncounterController extends Controller
                 });
 
             // Get prescriptions
-            $prescriptions = ProductRequest::where('encounter_id', $encounter->id)
+            $prescriptions = ProductRequest::whereIn('encounter_id', $encounterIds)
                 ->with('product')
                 ->get()
                 ->map(function ($presc) {
@@ -3245,6 +3275,60 @@ class EncounterController extends Controller
                     ];
                 });
 
+            // Get procedures
+            $procedures = \App\Models\Procedure::whereIn('encounter_id', $encounterIds)
+                ->with('service')
+                ->get()
+                ->map(function ($proc) {
+                    return [
+                        'id' => $proc->id,
+                        'name' => $proc->service->service_name ?? 'N/A',
+                        'code' => $proc->service->service_code ?? '',
+                        'priority' => $proc->priority,
+                        'status' => $proc->procedure_status,
+                        'created_at' => $proc->created_at->format('M d, Y H:i')
+                    ];
+                });
+
+            // Get referrals
+            $referrals = \App\Models\SpecialistReferral::whereIn('encounter_id', $encounterIds)
+                ->with(['targetClinic', 'targetDoctor.user'])
+                ->get()
+                ->map(function ($ref) {
+                    $target = '';
+                    if ($ref->referral_type === 'internal') {
+                        $clinicName = $ref->targetClinic->name ?? 'Specialist';
+                        $docName = $ref->targetDoctor ? userfullname($ref->targetDoctor->user_id) : 'Any Doctor';
+                        $target = "Internal Referral to {$clinicName} ({$docName})";
+                    } else {
+                        $target = "External Referral to {$ref->external_facility_name}" . ($ref->external_doctor_name ? " (Dr. {$ref->external_doctor_name})" : "");
+                    }
+                    return [
+                        'id' => $ref->id,
+                        'type' => $ref->referral_type,
+                        'target' => $target,
+                        'reason' => $ref->reason,
+                        'urgency' => $ref->urgency,
+                        'created_at' => $ref->created_at->format('M d, Y H:i')
+                    ];
+                });
+
+            // Get care plans
+            $carePlans = \App\Models\NonPharmOrder::whereIn('encounter_id', $encounterIds)
+                ->get()
+                ->map(function ($order) {
+                    return [
+                        'id' => $order->id,
+                        'category' => $order->category,
+                        'target_executor' => $order->target_executor,
+                        'instructions' => $order->instructions,
+                        'frequency' => $order->frequency,
+                        'duration' => $order->duration,
+                        'status' => $order->status,
+                        'created_at' => $order->created_at->format('M d, Y H:i')
+                    ];
+                });
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -3252,6 +3336,9 @@ class EncounterController extends Controller
                     'labs' => $labs,
                     'imaging' => $imaging,
                     'prescriptions' => $prescriptions,
+                    'procedures' => $procedures,
+                    'referrals' => $referrals,
+                    'care_plans' => $carePlans,
                     'encounter' => [
                         'id' => $encounter->id,
                         'completed' => $encounter->completed,
