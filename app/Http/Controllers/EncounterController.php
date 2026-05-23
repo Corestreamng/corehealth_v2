@@ -4597,4 +4597,1230 @@ class EncounterController extends Controller
         $items = $this->getEncounterItems($sourceEncounter);
         return response()->json(['success' => true, 'items' => $items]);
     }
+
+    /**
+     * Get a date-grouped timeline of all tracked clinical models for the patient.
+     * GET encounters/{encounter}/clinical-story/timeline
+     *
+     * Returns dates that have at least one record across all tracked models,
+     * with counts per category, plus encounter sub-group info per date.
+     */
+    public function getClinicalStoryTimeline(Request $request, Encounter $encounter)
+    {
+        try {
+            $patientId = $encounter->patient_id;
+            $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : null;
+            $dateTo   = $request->filled('date_to')   ? Carbon::parse($request->date_to)->endOfDay()     : null;
+            $encounterFilter = $request->input('encounter_filter');
+
+            // Check maternity enrollment
+            $maternityEnrollment = \App\Models\MaternityEnrollment::where('patient_id', $patientId)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            $hasMaternity = !empty($maternityEnrollment);
+
+            // Fetch all patient encounters for date overlap helper matching
+            $allEncountersForMatch = Encounter::where('patient_id', $patientId)
+                ->orderBy('started_at', 'asc')
+                ->get();
+
+            // Helper to match a record timestamp to an encounter id
+            $matchEncounter = function ($timestamp) use ($allEncountersForMatch) {
+                if (!$timestamp) return null;
+                $time = Carbon::parse($timestamp);
+                foreach ($allEncountersForMatch as $enc) {
+                    $start = $enc->started_at;
+                    $end = $enc->completed_at;
+                    if ($start && $time->greaterThanOrEqualTo($start)) {
+                        if (!$end || $time->lessThanOrEqualTo($end)) {
+                            return $enc->id;
+                        }
+                    }
+                }
+                return null;
+            };
+
+            // Collect all dates + category counts from each tracked model.
+            $dateMap = [];
+
+            // Helper: add date entries from a query with robust encounter filtering
+            $addDates = function ($model, $dateColumn, $category) use ($patientId, $dateFrom, $dateTo, $encounterFilter, $matchEncounter, &$dateMap) {
+                $query = $model::where('patient_id', $patientId);
+                if ($dateFrom) $query->where($dateColumn, '>=', $dateFrom);
+                if ($dateTo)   $query->where($dateColumn, '<=', $dateTo);
+                
+                $hasEncounterIdCol = in_array('encounter_id', (new $model)->getFillable() ?? []);
+                if ($encounterFilter && $hasEncounterIdCol) {
+                    $query->where('encounter_id', $encounterFilter);
+                }
+
+                $items = $query->get();
+
+                foreach ($items as $item) {
+                    $dateVal = $item->$dateColumn;
+                    if (!$dateVal) continue;
+                    $d = Carbon::parse($dateVal)->format('Y-m-d');
+                    
+                    if ($encounterFilter && !$hasEncounterIdCol) {
+                        $matchedId = $matchEncounter($dateVal);
+                        if (intval($matchedId) !== intval($encounterFilter)) {
+                            continue;
+                        }
+                    }
+
+                    $dateMap[$d][$category] = ($dateMap[$d][$category] ?? 0) + 1;
+                }
+            };
+
+            // 1. Vitals
+            $addDates(\App\Models\VitalSign::class, 'time_taken', 'vitals');
+
+            // 2. Clinical Notes (from encounters table)
+            $encQuery = Encounter::where('patient_id', $patientId);
+            $anchorCol = 'COALESCE(started_at, created_at)';
+            if ($dateFrom) $encQuery->whereRaw("$anchorCol >= ?", [$dateFrom]);
+            if ($dateTo)   $encQuery->whereRaw("$anchorCol <= ?", [$dateTo]);
+            if ($encounterFilter) {
+                $encQuery->where('id', $encounterFilter);
+            }
+            $encRows = $encQuery->selectRaw("id, DATE($anchorCol) as anchor_date, DATE(updated_at) as note_date, notes")
+                ->get();
+            foreach ($encRows as $row) {
+                if (!$row->anchor_date) continue;
+                $dateMap[$row->anchor_date]['clinical_notes'] = ($dateMap[$row->anchor_date]['clinical_notes'] ?? 0) + 1;
+                if (!empty($row->notes) && $row->note_date && $row->note_date !== $row->anchor_date) {
+                    $dateMap[$row->note_date]['clinical_notes'] = ($dateMap[$row->note_date]['clinical_notes'] ?? 0) + 1;
+                }
+            }
+
+            // 3. Nursing Notes
+            $addDates(\App\Models\NursingNote::class, 'created_at', 'nursing_notes');
+
+            // 4. Medication Administration
+            $addDates(\App\Models\MedicationAdministration::class, 'administered_at', 'med_admin');
+
+            // 5. Intake & Output
+            $addDates(\App\Models\IntakeOutputPeriod::class, 'started_at', 'intake_output');
+
+            // 6. Injections (two models combined)
+            $addDates(\App\Models\InjectionAdministration::class, 'administered_at', 'injections');
+            $addDates(\App\Models\ImmunizationRecord::class, 'administered_at', 'injections');
+
+            // 7. Labs
+            $labQuery = LabServiceRequest::where('patient_id', $patientId)->where('status', '>', 0);
+            if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo)   $labQuery->where('created_at', '<=', $dateTo);
+            if ($encounterFilter) {
+                $labQuery->where('encounter_id', $encounterFilter);
+            }
+            $labCounts = $labQuery->selectRaw("DATE(created_at) as d, COUNT(*) as c")
+                ->groupBy('d')->pluck('c', 'd');
+            foreach ($labCounts as $date => $count) {
+                if (!$date) continue;
+                $dateMap[$date]['labs'] = ($dateMap[$date]['labs'] ?? 0) + $count;
+            }
+
+            // 8. Imaging
+            $imgQuery = ImagingServiceRequest::where('patient_id', $patientId)->where('status', '>', 0);
+            if ($dateFrom) $imgQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo)   $imgQuery->where('created_at', '<=', $dateTo);
+            if ($encounterFilter) {
+                $imgQuery->where('encounter_id', $encounterFilter);
+            }
+            $imgCounts = $imgQuery->selectRaw("DATE(created_at) as d, COUNT(*) as c")
+                ->groupBy('d')->pluck('c', 'd');
+            foreach ($imgCounts as $date => $count) {
+                if (!$date) continue;
+                $dateMap[$date]['imaging'] = ($dateMap[$date]['imaging'] ?? 0) + $count;
+            }
+
+            // 9. Prescriptions
+            $addDates(ProductRequest::class, 'created_at', 'prescriptions');
+
+            // 10. Care Plans (NonPharmOrder)
+            $addDates(\App\Models\NonPharmOrder::class, 'created_at', 'care_plans');
+
+            // 11. Procedures
+            $addDates(\App\Models\Procedure::class, 'created_at', 'procedures');
+
+            // 12. Admissions
+            $addDates(AdmissionRequest::class, 'created_at', 'admissions');
+
+            // 13. Referrals
+            $addDates(\App\Models\SpecialistReferral::class, 'created_at', 'referrals');
+
+            // 14. Maternity (if enrolled)
+            if ($hasMaternity) {
+                $addDates(\App\Models\AncVisit::class, 'visit_date', 'anc_visits');
+                $addDates(\App\Models\DeliveryRecord::class, 'delivery_date', 'delivery');
+                $addDates(\App\Models\PostnatalVisit::class, 'visit_date', 'postnatal');
+            }
+
+            // Build encounter sub-group info per date
+            $encountersByDate = [];
+            $encAllQuery = Encounter::where('patient_id', $patientId)
+                ->with(['doctor', 'service']);
+            if ($dateFrom) $encAllQuery->whereRaw("COALESCE(started_at, created_at) >= ?", [$dateFrom]);
+            if ($dateTo)   $encAllQuery->whereRaw("COALESCE(started_at, created_at) <= ?", [$dateTo]);
+            $allEncounters = $encAllQuery->orderByRaw('COALESCE(started_at, created_at) DESC')->get();
+            foreach ($allEncounters as $enc) {
+                $anchor = $enc->started_at ?? $enc->created_at;
+                if (!$anchor) continue;
+                $d = Carbon::parse($anchor)->format('Y-m-d');
+                $encountersByDate[$d][] = [
+                    'id' => $enc->id,
+                    'doctor_name' => $enc->doctor ? userfullname($enc->doctor->id) : 'Any Doctor',
+                    'clinic_name' => $enc->service ? $enc->service->service_name : 'Consultation',
+                    'started_at' => Carbon::parse($anchor)->format('H:i'),
+                    'completed' => (bool) $enc->completed,
+                ];
+            }
+
+            // Sort dates descending and paginate
+            krsort($dateMap);
+            $allDates = array_keys($dateMap);
+            $page = max(1, (int) $request->input('page', 1));
+            $perPage = 15;
+            $offset = ($page - 1) * $perPage;
+            $pagedDates = array_slice($allDates, $offset, $perPage);
+            $totalDates = count($allDates);
+            $hasMore = ($offset + $perPage) < $totalDates;
+
+            $timeline = [];
+            foreach ($pagedDates as $date) {
+                $timeline[] = [
+                    'date' => $date,
+                    'date_formatted' => Carbon::parse($date)->format('D, M d, Y'),
+                    'categories' => $dateMap[$date],
+                    'encounters' => $encountersByDate[$date] ?? [],
+                ];
+            }
+
+            $consultations = $allEncounters->map(function ($enc) {
+                $anchor = $enc->started_at ?? $enc->created_at;
+                return [
+                    'id' => $enc->id,
+                    'clinic_name' => $enc->service ? $enc->service->service_name : 'Consultation',
+                    'doctor_name' => $enc->doctor ? userfullname($enc->doctor->id) : 'Any Doctor',
+                    'date_formatted' => $anchor ? Carbon::parse($anchor)->format('M d, Y') : 'Unknown Date',
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'timeline' => $timeline,
+                'consultations' => $consultations,
+                'pagination' => [
+                    'current_page' => $page,
+                    'total_dates' => $totalDates,
+                    'has_more' => $hasMore,
+                ],
+                'maternity_enrolled' => $hasMaternity,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching clinical story timeline: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get a date-grouped timeline of all tracked clinical models for the patient.
+     * GET patients/{patient}/clinical-story/timeline
+     */
+    public function getPatientClinicalStoryTimeline(Request $request, $patient)
+    {
+        try {
+            $patientId = is_object($patient) ? $patient->id : intval($patient);
+            $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : null;
+            $dateTo   = $request->filled('date_to')   ? Carbon::parse($request->date_to)->endOfDay()     : null;
+            $encounterFilter = $request->input('encounter_filter');
+
+            // Check maternity enrollment
+            $maternityEnrollment = \App\Models\MaternityEnrollment::where('patient_id', $patientId)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            $hasMaternity = !empty($maternityEnrollment);
+
+            // Fetch all patient encounters for date overlap helper matching
+            $allEncountersForMatch = Encounter::where('patient_id', $patientId)
+                ->orderBy('started_at', 'asc')
+                ->get();
+
+            // Helper to match a record timestamp to an encounter id
+            $matchEncounter = function ($timestamp) use ($allEncountersForMatch) {
+                if (!$timestamp) return null;
+                $time = Carbon::parse($timestamp);
+                foreach ($allEncountersForMatch as $enc) {
+                    $start = $enc->started_at;
+                    $end = $enc->completed_at;
+                    if ($start && $time->greaterThanOrEqualTo($start)) {
+                        if (!$end || $time->lessThanOrEqualTo($end)) {
+                            return $enc->id;
+                        }
+                    }
+                }
+                return null;
+            };
+
+            // Collect all dates + category counts from each tracked model.
+            $dateMap = [];
+
+            // Helper: add date entries from a query with robust encounter filtering
+            $addDates = function ($model, $dateColumn, $category) use ($patientId, $dateFrom, $dateTo, $encounterFilter, $matchEncounter, &$dateMap) {
+                $query = $model::where('patient_id', $patientId);
+                if ($dateFrom) $query->where($dateColumn, '>=', $dateFrom);
+                if ($dateTo)   $query->where($dateColumn, '<=', $dateTo);
+                
+                $hasEncounterIdCol = in_array('encounter_id', (new $model)->getFillable() ?? []);
+                if ($encounterFilter && $hasEncounterIdCol) {
+                    $query->where('encounter_id', $encounterFilter);
+                }
+
+                $items = $query->get();
+
+                foreach ($items as $item) {
+                    $dateVal = $item->$dateColumn;
+                    if (!$dateVal) continue;
+                    $d = Carbon::parse($dateVal)->format('Y-m-d');
+                    
+                    if ($encounterFilter && !$hasEncounterIdCol) {
+                        $matchedId = $matchEncounter($dateVal);
+                        if (intval($matchedId) !== intval($encounterFilter)) {
+                            continue;
+                        }
+                    }
+
+                    $dateMap[$d][$category] = ($dateMap[$d][$category] ?? 0) + 1;
+                }
+            };
+
+            // 1. Vitals
+            $addDates(\App\Models\VitalSign::class, 'time_taken', 'vitals');
+
+            // 2. Clinical Notes (from encounters table)
+            $encQuery = Encounter::where('patient_id', $patientId);
+            $anchorCol = 'COALESCE(started_at, created_at)';
+            if ($dateFrom) $encQuery->whereRaw("$anchorCol >= ?", [$dateFrom]);
+            if ($dateTo)   $encQuery->whereRaw("$anchorCol <= ?", [$dateTo]);
+            if ($encounterFilter) {
+                $encQuery->where('id', $encounterFilter);
+            }
+            $encRows = $encQuery->selectRaw("id, DATE($anchorCol) as anchor_date, DATE(updated_at) as note_date, notes")
+                ->get();
+            foreach ($encRows as $row) {
+                if (!$row->anchor_date) continue;
+                $dateMap[$row->anchor_date]['clinical_notes'] = ($dateMap[$row->anchor_date]['clinical_notes'] ?? 0) + 1;
+                if (!empty($row->notes) && $row->note_date && $row->note_date !== $row->anchor_date) {
+                    $dateMap[$row->note_date]['clinical_notes'] = ($dateMap[$row->note_date]['clinical_notes'] ?? 0) + 1;
+                }
+            }
+
+            // 3. Nursing Notes
+            $addDates(\App\Models\NursingNote::class, 'created_at', 'nursing_notes');
+
+            // 4. Medication Administration
+            $addDates(\App\Models\MedicationAdministration::class, 'administered_at', 'med_admin');
+
+            // 5. Intake & Output
+            $addDates(\App\Models\IntakeOutputPeriod::class, 'started_at', 'intake_output');
+
+            // 6. Injections (two models combined)
+            $addDates(\App\Models\InjectionAdministration::class, 'administered_at', 'injections');
+            $addDates(\App\Models\ImmunizationRecord::class, 'administered_at', 'injections');
+
+            // 7. Labs
+            $labQuery = LabServiceRequest::where('patient_id', $patientId)->where('status', '>', 0);
+            if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo)   $labQuery->where('created_at', '<=', $dateTo);
+            if ($encounterFilter) {
+                $labQuery->where('encounter_id', $encounterFilter);
+            }
+            $labCounts = $labQuery->selectRaw("DATE(created_at) as d, COUNT(*) as c")
+                ->groupBy('d')->pluck('c', 'd');
+            foreach ($labCounts as $date => $count) {
+                if (!$date) continue;
+                $dateMap[$date]['labs'] = ($dateMap[$date]['labs'] ?? 0) + $count;
+            }
+
+            // 8. Imaging
+            $imgQuery = ImagingServiceRequest::where('patient_id', $patientId)->where('status', '>', 0);
+            if ($dateFrom) $imgQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo)   $imgQuery->where('created_at', '<=', $dateTo);
+            if ($encounterFilter) {
+                $imgQuery->where('encounter_id', $encounterFilter);
+            }
+            $imgCounts = $imgQuery->selectRaw("DATE(created_at) as d, COUNT(*) as c")
+                ->groupBy('d')->pluck('c', 'd');
+            foreach ($imgCounts as $date => $count) {
+                if (!$date) continue;
+                $dateMap[$date]['imaging'] = ($dateMap[$date]['imaging'] ?? 0) + $count;
+            }
+
+            // 9. Prescriptions
+            $addDates(ProductRequest::class, 'created_at', 'prescriptions');
+
+            // 10. Care Plans (NonPharmOrder)
+            $addDates(\App\Models\NonPharmOrder::class, 'created_at', 'care_plans');
+
+            // 11. Procedures
+            $addDates(\App\Models\Procedure::class, 'created_at', 'procedures');
+
+            // 12. Admissions
+            $addDates(AdmissionRequest::class, 'created_at', 'admissions');
+
+            // 13. Referrals
+            $addDates(\App\Models\SpecialistReferral::class, 'created_at', 'referrals');
+
+            // 14. Maternity (if enrolled)
+            if ($hasMaternity) {
+                $addDates(\App\Models\AncVisit::class, 'visit_date', 'anc_visits');
+                $addDates(\App\Models\DeliveryRecord::class, 'delivery_date', 'delivery');
+                $addDates(\App\Models\PostnatalVisit::class, 'visit_date', 'postnatal');
+            }
+
+            // Build encounter sub-group info per date
+            $encountersByDate = [];
+            $encAllQuery = Encounter::where('patient_id', $patientId)
+                ->with(['doctor', 'service']);
+            if ($dateFrom) $encAllQuery->whereRaw("COALESCE(started_at, created_at) >= ?", [$dateFrom]);
+            if ($dateTo)   $encAllQuery->whereRaw("COALESCE(started_at, created_at) <= ?", [$dateTo]);
+            $allEncounters = $encAllQuery->orderByRaw('COALESCE(started_at, created_at) DESC')->get();
+            foreach ($allEncounters as $enc) {
+                $anchor = $enc->started_at ?? $enc->created_at;
+                if (!$anchor) continue;
+                $d = Carbon::parse($anchor)->format('Y-m-d');
+                $encountersByDate[$d][] = [
+                    'id' => $enc->id,
+                    'doctor_name' => $enc->doctor ? userfullname($enc->doctor->id) : 'Any Doctor',
+                    'clinic_name' => $enc->service ? $enc->service->service_name : 'Consultation',
+                    'started_at' => Carbon::parse($anchor)->format('H:i'),
+                    'completed' => (bool) $enc->completed,
+                ];
+            }
+
+            // Sort dates descending and paginate
+            krsort($dateMap);
+            $allDates = array_keys($dateMap);
+            $page = max(1, (int) $request->input('page', 1));
+            $perPage = 15;
+            $offset = ($page - 1) * $perPage;
+            $pagedDates = array_slice($allDates, $offset, $perPage);
+            $totalDates = count($allDates);
+            $hasMore = ($offset + $perPage) < $totalDates;
+
+            $timeline = [];
+            foreach ($pagedDates as $date) {
+                $timeline[] = [
+                    'date' => $date,
+                    'date_formatted' => Carbon::parse($date)->format('D, M d, Y'),
+                    'categories' => $dateMap[$date],
+                    'encounters' => $encountersByDate[$date] ?? [],
+                ];
+            }
+
+            $consultations = $allEncounters->map(function ($enc) {
+                $anchor = $enc->started_at ?? $enc->created_at;
+                return [
+                    'id' => $enc->id,
+                    'clinic_name' => $enc->service ? $enc->service->service_name : 'Consultation',
+                    'doctor_name' => $enc->doctor ? userfullname($enc->doctor->id) : 'Any Doctor',
+                    'date_formatted' => $anchor ? Carbon::parse($anchor)->format('M d, Y') : 'Unknown Date',
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'timeline' => $timeline,
+                'consultations' => $consultations,
+                'pagination' => [
+                    'current_page' => $page,
+                    'total_dates' => $totalDates,
+                    'has_more' => $hasMore,
+                ],
+                'maternity_enrolled' => $hasMaternity,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching clinical story timeline for patient: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get clinical story category items for a patient.
+     * GET encounters/{encounter}/clinical-story
+     *
+     * Supports filtering by:
+     *  - category (required)
+     *  - date_filter (YYYY-MM-DD) — returns items for that specific date
+     *  - encounter_filter — returns items for a specific encounter ID
+     *  - date_from / date_to — broad range filter
+     */
+    protected function getPatientClinicalStoryCommon(Request $request, $patientId)
+    {
+        try {
+            $patientId = $patientId;
+            $category = $request->input('category');
+            $encounterFilter = $request->input('encounter_filter');
+            $dateFilter = $request->input('date_filter'); // YYYY-MM-DD — single day filter
+            $dateFrom = $request->input('date_from');
+            $dateTo = $request->input('date_to');
+
+            // If date_filter is set, override dateFrom/dateTo to that single day
+            if ($dateFilter) {
+                $dateFrom = $dateFilter;
+                $dateTo = $dateFilter;
+            }
+
+            if (!$category) {
+                return response()->json(['success' => false, 'message' => 'Category is required'], 400);
+            }
+
+            // Fetch all patient encounters for date overlap helper matching
+            $allEncounters = Encounter::where('patient_id', $patientId)
+                ->orderBy('started_at', 'asc')
+                ->get();
+
+            // Helper to match a record timestamp to an encounter id
+            $matchEncounter = function ($timestamp) use ($allEncounters) {
+                if (!$timestamp) return null;
+                $time = Carbon::parse($timestamp);
+                foreach ($allEncounters as $enc) {
+                    $start = $enc->started_at;
+                    $end = $enc->completed_at;
+                    if ($start && $time->greaterThanOrEqualTo($start)) {
+                        if (!$end || $time->lessThanOrEqualTo($end)) {
+                            return $enc->id;
+                        }
+                    }
+                }
+                return null;
+            };
+
+            $data = [];
+
+            // Query by category
+            switch ($category) {
+                case 'vitals':
+                    $query = \App\Models\VitalSign::where('patient_id', $patientId)
+                        ->with('takenBy');
+                    if ($dateFrom) $query->where('time_taken', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('time_taken', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('time_taken', 'desc')->get();
+                    
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $encId = $matchEncounter($item->time_taken);
+                        $takenBy = $item->takenBy ? userfullname($item->takenBy->id) : 'N/A';
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #dc3545;">';
+                        $html .= '<div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
+                        $html .= '<h6 class="mb-0"><i class="mdi mdi-heart-pulse text-danger"></i> Vital Signs</h6>';
+                        $html .= '<span class="badge bg-info">' . $item->time_taken->format('h:i a D M j, Y') . '</span>';
+                        $html .= '</div>';
+                        $html .= '<div class="row g-2 mb-2">';
+                        $vFields = [
+                            ['BP', $item->blood_pressure, 'mmHg', 'mdi-blood-bag'],
+                            ['Temp', $item->temp, '°C', 'mdi-thermometer'],
+                            ['HR', $item->heart_rate, 'bpm', 'mdi-heart'],
+                            ['SpO2', $item->spo2, '%', 'mdi-pulse'],
+                            ['RR', $item->resp_rate, '/min', 'mdi-lungs'],
+                            ['Weight', $item->weight, 'kg', 'mdi-weight-kilogram'],
+                            ['Height', $item->height, 'cm', 'mdi-human-male-height'],
+                            ['BMI', $item->bmi, '', 'mdi-calculator'],
+                            ['Blood Sugar', $item->blood_sugar, '', 'mdi-water'],
+                            ['Pain', $item->pain_score, '/10', 'mdi-alert-circle'],
+                        ];
+                        foreach ($vFields as $f) {
+                            if ($f[1] !== null && $f[1] !== '') {
+                                $html .= '<div class="col-4"><small><i class="mdi ' . $f[3] . ' text-muted"></i> <b>' . $f[0] . ':</b> ' . $f[1] . ' ' . $f[2] . '</small></div>';
+                            }
+                        }
+                        $html .= '</div>';
+                        if ($item->other_notes) $html .= '<div class="alert alert-light mb-1 p-2"><small><i class="mdi mdi-note-text"></i> ' . e($item->other_notes) . '</small></div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2 mt-2"><i class="mdi mdi-account"></i> ' . $takenBy . '</div>';
+                        $html .= '</div></div>';
+
+                        return [
+                            'id' => $item->id,
+                            'encounter_id' => $encId,
+                            'taken_by_name' => $takenBy,
+                            'date' => $item->time_taken->format('M d, Y H:i'),
+                            'timestamp' => $item->time_taken->toIso8601String(),
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
+
+                case 'clinical_notes':
+                    // Use COALESCE(started_at, created_at) as anchor.
+                    // When date_filter is set, return encounters whose anchor date OR note date matches.
+                    $query = Encounter::where('patient_id', $patientId)
+                        ->with(['doctor.staff_profile.specialization']);
+
+                    if ($dateFilter) {
+                        // Show encounters created on this date OR whose notes were written on this date
+                        $query->where(function ($q) use ($dateFilter) {
+                            $q->whereRaw("DATE(COALESCE(started_at, created_at)) = ?", [$dateFilter])
+                              ->orWhere(function ($q2) use ($dateFilter) {
+                                  $q2->whereNotNull('notes')
+                                     ->where('notes', '!=', '')
+                                     ->whereRaw("DATE(updated_at) = ?", [$dateFilter]);
+                              });
+                        });
+                    } else {
+                        if ($dateFrom) $query->whereRaw("COALESCE(started_at, created_at) >= ?", [Carbon::parse($dateFrom)->startOfDay()]);
+                        if ($dateTo)   $query->whereRaw("COALESCE(started_at, created_at) <= ?", [Carbon::parse($dateTo)->endOfDay()]);
+                    }
+
+                    $items = $query->orderByRaw('COALESCE(started_at, created_at) DESC')->get();
+
+                    $data = $items->map(function ($item) use ($dateFilter) {
+                        $anchor = $item->started_at ?? $item->created_at;
+                        $anchorDate = $anchor ? Carbon::parse($anchor)->format('Y-m-d') : null;
+                        $noteDate = $item->updated_at ? $item->updated_at->format('Y-m-d') : null;
+                        $notesOnDiffDay = !empty($item->notes) && $noteDate && $anchorDate && $noteDate !== $anchorDate;
+
+                        // Build info_html matching EncounterHistoryList card format
+                        $borderColor = $item->completed ? '#0d6efd' : '#ffc107';
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid ' . $borderColor . ';">';
+                        $html .= '<div class="card-body p-3">';
+
+                        // Header: doctor + date + status
+                        $doctorName = $item->doctor ? userfullname($item->doctor->id) : 'Any Doctor';
+                        $specialty = $item->doctor && $item->doctor->staff_profile && $item->doctor->staff_profile->specialization
+                            ? $item->doctor->staff_profile->specialization->name : 'General Practitioner';
+                        $html .= '<div class="d-flex justify-content-between align-items-start mb-3">';
+                        $html .= '<div>';
+                        $html .= '<h6 class="mb-0"><i class="mdi mdi-account-circle"></i> <span class="text-primary">' . $doctorName . '</span></h6>';
+                        $html .= '<small class="text-muted" style="margin-left: 1.5rem; display: block; margin-top: 2px;">' . $specialty . '</small>';
+                        $html .= '</div>';
+                        $html .= '<div class="d-flex flex-column align-items-end gap-1">';
+                        $html .= '<span class="badge bg-info">' . ($anchor ? Carbon::parse($anchor)->format('h:i a D M j, Y') : '') . '</span>';
+                        if (!$item->completed) {
+                            $html .= '<span class="badge bg-warning text-dark"><i class="mdi mdi-clock-outline"></i> In Progress</span>';
+                        }
+                        $html .= '</div></div>';
+
+                        // Show "notes written on [date]" badge when viewing from encounter's anchor date
+                        if ($notesOnDiffDay && $dateFilter === $anchorDate) {
+                            $html .= '<div class="mb-2"><span class="badge bg-light text-dark border"><i class="mdi mdi-pencil-outline"></i> Notes written on ' . Carbon::parse($noteDate)->format('M d, Y') . '</span></div>';
+                        }
+                        // Show "encounter from [date]" badge when viewing from note's written date
+                        if ($notesOnDiffDay && $dateFilter === $noteDate) {
+                            $html .= '<div class="mb-2"><span class="badge bg-light text-dark border"><i class="mdi mdi-calendar-arrow-left"></i> Encounter from ' . Carbon::parse($anchorDate)->format('M d, Y') . '</span></div>';
+                        }
+
+                        // Reasons for encounter / Diagnosis
+                        if ($item->reasons_for_encounter != '') {
+                            $rawReasons = $item->reasons_for_encounter;
+                            $decodedReasons = json_decode($rawReasons, true);
+                            $html .= '<div class="mb-3">';
+                            $html .= '<small><b><i class="mdi mdi-format-list-bulleted"></i> Reason(s) for Encounter/Diagnosis (ICPC-2):</b></small><br>';
+                            if (is_array($decodedReasons) && isset($decodedReasons[0]['code'])) {
+                                $html .= '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;">';
+                                $html .= '<thead><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th></tr></thead><tbody>';
+                                foreach ($decodedReasons as $dx) {
+                                    $code = htmlspecialchars($dx['code'] ?? '');
+                                    $name = htmlspecialchars($dx['name'] ?? '');
+                                    $c1 = htmlspecialchars($dx['comment_1'] ?? '');
+                                    $c2 = htmlspecialchars($dx['comment_2'] ?? '');
+                                    $c1Badge = $c1 ? "<span class='badge bg-secondary'>{$c1}</span>" : '<span class="text-muted">-</span>';
+                                    $c2Badge = $c2 ? "<span class='badge bg-secondary'>{$c2}</span>" : '<span class="text-muted">-</span>';
+                                    $html .= "<tr><td><code>{$code}</code></td><td>{$name}</td><td>{$c1Badge}</td><td>{$c2Badge}</td></tr>";
+                                }
+                                $html .= '</tbody></table>';
+                            } else {
+                                $reasons = explode(',', $rawReasons);
+                                foreach ($reasons as $reason) {
+                                    $html .= "<span class='badge bg-light text-dark me-1 mb-1'>" . trim($reason) . "</span>";
+                                }
+                            }
+                            $html .= '</div>';
+                        }
+
+                        // Legacy diagnosis comments
+                        $hasPerDiagJson = false;
+                        if ($item->reasons_for_encounter) {
+                            $checkJson = json_decode($item->reasons_for_encounter, true);
+                            $hasPerDiagJson = is_array($checkJson) && isset($checkJson[0]['code']);
+                        }
+                        if (!$hasPerDiagJson && $item->reasons_for_encounter_comment_1) {
+                            $html .= '<div class="mb-2"><small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 1:</b> ' . htmlspecialchars($item->reasons_for_encounter_comment_1) . '</small></div>';
+                        }
+                        if (!$hasPerDiagJson && $item->reasons_for_encounter_comment_2) {
+                            $html .= '<div class="mb-2"><small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 2:</b> ' . htmlspecialchars($item->reasons_for_encounter_comment_2) . '</small></div>';
+                        }
+
+                        // Notes
+                        $html .= '<div class="alert alert-light mb-2"><small><b><i class="mdi mdi-note-text"></i> Clinical Notes:</b><br>' . ($item->notes ?: '<em class="text-muted">No notes yet</em>') . '</small></div>';
+
+                        $html .= '</div></div>';
+
+                        return [
+                            'id' => $item->id,
+                            'encounter_id' => $item->id,
+                            'doctor_name' => $doctorName,
+                            'date' => $anchor ? Carbon::parse($anchor)->format('M d, Y H:i') : null,
+                            'timestamp' => $anchor ? Carbon::parse($anchor)->toIso8601String() : null,
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
+
+                case 'nursing_notes':
+                    $query = \App\Models\NursingNote::where('patient_id', $patientId)->with(['createdBy', 'type']);
+                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $nurse = $item->createdBy ? userfullname($item->createdBy->id) : 'N/A';
+                        $typeName = $item->type ? $item->type->name : 'General Note';
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #20c997;">';
+                        $html .= '<div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
+                        $html .= '<div><span class="badge bg-success me-2">' . e($typeName) . '</span><small class="text-muted">' . $item->created_at->format('h:i a D M j, Y') . '</small></div>';
+                        $html .= '</div>';
+                        $html .= '<div class="p-2 bg-light rounded mb-2">' . ($item->note ?: '<em class="text-muted">No content</em>') . '</div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $nurse . '</div>';
+                        $html .= '</div></div>';
+
+                        return [
+                            'id' => $item->id,
+                            'encounter_id' => $matchEncounter($item->created_at),
+                            'created_by' => $nurse,
+                            'date' => $item->created_at->format('M d, Y H:i'),
+                            'timestamp' => $item->created_at->toIso8601String(),
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
+
+                case 'med_admin':
+                    $query = \App\Models\MedicationAdministration::where('patient_id', $patientId)->with(['product', 'administeredBy']);
+                    if ($dateFrom) $query->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('administered_at', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $pName = $item->product ? $item->product->product_name : ($item->external_drug_name ?? 'Unknown Drug');
+                        $admin = $item->administeredBy ? userfullname($item->administeredBy->id) : 'N/A';
+                        $dt = $item->administered_at ? Carbon::parse($item->administered_at) : null;
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #0dcaf0;">';
+                        $html .= '<div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
+                        $html .= '<strong><i class="mdi mdi-pill"></i> ' . e($pName) . '</strong>';
+                        $html .= '<span class="badge bg-info">' . ($dt ? $dt->format('h:i a D M j, Y') : '') . '</span>';
+                        $html .= '</div>';
+                        $html .= '<div class="row g-1 mb-2">';
+                        if ($item->dose) $html .= '<div class="col-auto"><small><b>Dose:</b> ' . e($item->dose) . '</small></div>';
+                        if ($item->qty) $html .= '<div class="col-auto"><small><b>Qty:</b> ' . e($item->qty) . '</small></div>';
+                        if ($item->route) $html .= '<div class="col-auto"><small><b>Route:</b> ' . e($item->route) . '</small></div>';
+                        $html .= '</div>';
+                        if ($item->comment) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->comment) . '</small></div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> Administered by: ' . $admin . '</div>';
+                        $html .= '</div></div>';
+
+                        return [
+                            'id' => $item->id,
+                            'encounter_id' => $matchEncounter($item->administered_at),
+                            'administered_by' => $admin,
+                            'date' => $dt ? $dt->format('M d, Y H:i') : null,
+                            'timestamp' => $dt ? $dt->toIso8601String() : null,
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
+
+                case 'intake_output':
+                    $query = \App\Models\IntakeOutputPeriod::where('patient_id', $patientId)->with(['records', 'nurse']);
+                    if ($dateFrom) $query->where('started_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('started_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('started_at', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $nurse = $item->nurse ? userfullname($item->nurse->id) : 'N/A';
+                        $startDt = $item->started_at ? Carbon::parse($item->started_at) : null;
+                        $endDt = $item->ended_at ? Carbon::parse($item->ended_at) : null;
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #6610f2;">';
+                        $html .= '<div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
+                        $html .= '<h6 class="mb-0"><i class="mdi mdi-cup-water text-purple"></i> ' . e($item->type ?: 'I/O Period') . '</h6>';
+                        $html .= '<div><span class="badge bg-info">' . ($startDt ? $startDt->format('h:i a M j') : '') . '</span>';
+                        $html .= ' → <span class="badge ' . ($endDt ? 'bg-secondary' : 'bg-warning text-dark') . '">' . ($endDt ? $endDt->format('h:i a M j') : 'Ongoing') . '</span></div>';
+                        $html .= '</div>';
+
+                        if ($item->records->count() > 0) {
+                            $html .= '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;">';
+                            $html .= '<thead><tr><th>Type</th><th>Amount</th><th>Description</th><th>Time</th></tr></thead><tbody>';
+                            foreach ($item->records as $r) {
+                                $typeBadge = strtolower($r->type) === 'intake' ? 'bg-success' : 'bg-danger';
+                                $html .= '<tr><td><span class="badge ' . $typeBadge . '">' . e($r->type) . '</span></td>';
+                                $html .= '<td>' . e($r->amount) . '</td><td>' . e($r->description ?: '-') . '</td>';
+                                $html .= '<td><small>' . ($r->recorded_at ? Carbon::parse($r->recorded_at)->format('h:i a') : '-') . '</small></td></tr>';
+                            }
+                            $html .= '</tbody></table>';
+                        } else {
+                            $html .= '<div class="text-muted small">No records logged yet.</div>';
+                        }
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $nurse . '</div>';
+                        $html .= '</div></div>';
+
+                        return [
+                            'id' => $item->id,
+                            'encounter_id' => $matchEncounter($item->started_at),
+                            'nurse_name' => $nurse,
+                            'date' => $startDt ? $startDt->format('M d, Y H:i') : null,
+                            'timestamp' => $startDt ? $startDt->toIso8601String() : null,
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
+
+                case 'injections':
+                    $injQuery = \App\Models\InjectionAdministration::where('patient_id', $patientId)->with(['product', 'administeredBy']);
+                    if ($dateFrom) $injQuery->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $injQuery->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $injections = $injQuery->orderBy('administered_at', 'desc')->get();
+
+                    $immQuery = \App\Models\ImmunizationRecord::where('patient_id', $patientId)->with(['product', 'administeredBy']);
+                    if ($dateFrom) $immQuery->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $immQuery->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $immunizations = $immQuery->orderBy('administered_at', 'desc')->get();
+
+                    $buildInjHtml = function ($pName, $type, $dose, $route, $site, $batch, $notes, $admin, $dt) {
+                        $color = $type === 'Immunization' ? '#198754' : '#e83e8c';
+                        $h = '<div class="card-modern mb-2" style="border-left: 4px solid ' . $color . ';">';
+                        $h .= '<div class="card-body p-3">';
+                        $h .= '<div class="d-flex justify-content-between align-items-center mb-2">';
+                        $h .= '<div><strong><i class="mdi mdi-needle"></i> ' . e($pName) . '</strong></div>';
+                        $h .= '<div><span class="badge ' . ($type === 'Immunization' ? 'bg-success' : 'bg-pink') . '">' . $type . '</span>';
+                        $h .= ' <span class="badge bg-info">' . ($dt ? $dt->format('h:i a M j, Y') : '') . '</span></div>';
+                        $h .= '</div>';
+                        $h .= '<div class="row g-1 mb-2">';
+                        if ($dose) $h .= '<div class="col-auto"><small><b>Dose:</b> ' . e($dose) . '</small></div>';
+                        if ($route) $h .= '<div class="col-auto"><small><b>Route:</b> ' . e($route) . '</small></div>';
+                        if ($site) $h .= '<div class="col-auto"><small><b>Site:</b> ' . e($site) . '</small></div>';
+                        if ($batch) $h .= '<div class="col-auto"><small><b>Batch:</b> ' . e($batch) . '</small></div>';
+                        $h .= '</div>';
+                        if ($notes) $h .= '<div class="alert alert-light mb-1 p-2"><small>' . e($notes) . '</small></div>';
+                        $h .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $admin . '</div>';
+                        $h .= '</div></div>';
+                        return $h;
+                    };
+
+                    $mappedInjections = $injections->map(function ($item) use ($matchEncounter, $buildInjHtml) {
+                        $pName = $item->product ? $item->product->product_name : ($item->external_drug_name ?? 'Unknown Injectable');
+                        $admin = $item->administeredBy ? userfullname($item->administeredBy->id) : 'N/A';
+                        $dt = $item->administered_at ? Carbon::parse($item->administered_at) : null;
+                        return [
+                            'id' => 'inj_' . $item->id,
+                            'encounter_id' => $matchEncounter($item->administered_at),
+                            'administered_by' => $admin,
+                            'date' => $dt ? $dt->format('M d, Y H:i') : null,
+                            'timestamp' => $dt ? $dt->toIso8601String() : null,
+                            'info_html' => $buildInjHtml($pName, 'Injection', $item->dose, $item->route, $item->site, $item->batch_number, $item->notes, $admin, $dt)
+                        ];
+                    });
+
+                    $mappedImmunizations = $immunizations->map(function ($item) use ($matchEncounter, $buildInjHtml) {
+                        $pName = $item->vaccine_name ?: ($item->product ? $item->product->product_name : 'Unknown Vaccine');
+                        $doseStr = $item->dose_number ? "Dose #{$item->dose_number} ({$item->dose})" : $item->dose;
+                        $admin = $item->administeredBy ? userfullname($item->administeredBy->id) : 'N/A';
+                        $dt = $item->administered_at ? Carbon::parse($item->administered_at) : null;
+                        return [
+                            'id' => 'imm_' . $item->id,
+                            'encounter_id' => $matchEncounter($item->administered_at),
+                            'administered_by' => $admin,
+                            'date' => $dt ? $dt->format('M d, Y H:i') : null,
+                            'timestamp' => $dt ? $dt->toIso8601String() : null,
+                            'info_html' => $buildInjHtml($pName, 'Immunization', $doseStr, $item->route, $item->site, $item->batch_number, $item->notes, $admin, $dt)
+                        ];
+                    });
+
+                    $data = $mappedInjections->concat($mappedImmunizations)->sortByDesc('timestamp')->values()->all();
+                    break;
+
+                case 'labs':
+                    $query = LabServiceRequest::where('patient_id', $patientId)
+                        ->with(['service', 'doctor', 'results_person', 'resultViews']);
+                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $statusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed/Pending','bg-info'], 3 => ['Sample Taken','bg-primary'], 4 => ['Completed','bg-success'], 5 => ['Pending Approval','bg-warning'], 6 => ['Rejected','bg-danger']];
+
+                    $data = $items->map(function ($item) use ($matchEncounter, $statusLabels) {
+                        $sName = $item->service ? $item->service->service_name : 'N/A';
+                        $sCode = $item->service ? $item->service->service_code : '';
+                        $sl = $statusLabels[$item->status] ?? ['Unknown','bg-secondary'];
+                        $doctorName = $item->doctor ? userfullname($item->doctor->id) : 'N/A';
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid ' . ($item->status >= 4 ? '#198754' : '#0d6efd') . ';">';
+                        $html .= '<div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
+                        $html .= '<div><h6 class="mb-0"><i class="fa fa-flask text-primary"></i> ' . $sName . '</h6>';
+                        if ($sCode) $html .= '<small class="text-muted">' . $sCode . '</small>';
+                        $html .= '</div>';
+                        $html .= '<span class="badge ' . $sl[1] . '">' . $sl[0] . '</span>';
+                        $html .= '</div>';
+
+                        // Timeline
+                        $html .= '<div class="mb-2"><small>';
+                        $html .= '<div class="mb-1"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> ' . $doctorName . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->created_at)) . ')</span></div>';
+                        if ($item->billed_by) $html .= '<div class="mb-1"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> ' . userfullname($item->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->billed_date)) . ')</span></div>';
+                        if ($item->sample_taken_by) $html .= '<div class="mb-1"><i class="mdi mdi-test-tube text-warning"></i> <b>Sample by:</b> ' . userfullname($item->sample_taken_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->sample_date)) . ')</span></div>';
+                        if ($item->result_by) $html .= '<div class="mb-1"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> ' . userfullname($item->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->result_date)) . ')</span></div>';
+                        $html .= '</small></div>';
+
+                        if ($item->note) $html .= '<div class="mb-2"><small><i class="mdi mdi-note-text"></i> <b>Note:</b> ' . e($item->note) . '</small></div>';
+                        if ($item->result) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->result . '</small></div>';
+
+                        $html .= '</div></div>';
+
+                        return [
+                            'id' => $item->id,
+                            'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at),
+                            'name' => $sName,
+                            'status' => $sl[0],
+                            'doctor_name' => $doctorName,
+                            'date' => $item->created_at->format('M d, Y H:i'),
+                            'timestamp' => $item->created_at->toIso8601String(),
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
+
+                case 'imaging':
+                    $query = ImagingServiceRequest::where('patient_id', $patientId)
+                        ->with(['service', 'doctor', 'results_person', 'resultViews']);
+                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $imgStatusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed/Pending','bg-info'], 3 => ['In Progress','bg-primary'], 4 => ['Completed','bg-success'], 5 => ['Pending Approval','bg-warning'], 6 => ['Rejected','bg-danger']];
+
+                    $data = $items->map(function ($item) use ($matchEncounter, $imgStatusLabels) {
+                        $sName = $item->service ? $item->service->service_name : 'N/A';
+                        $sCode = $item->service ? $item->service->service_code : '';
+                        $sl = $imgStatusLabels[$item->status] ?? ['Unknown','bg-secondary'];
+                        $doctorName = $item->doctor ? userfullname($item->doctor->id) : 'N/A';
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid ' . ($item->status >= 4 ? '#198754' : '#6f42c1') . ';">';
+                        $html .= '<div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
+                        $html .= '<div><h6 class="mb-0"><i class="fa fa-x-ray text-purple"></i> ' . $sName . '</h6>';
+                        if ($sCode) $html .= '<small class="text-muted">' . $sCode . '</small>';
+                        $html .= '</div>';
+                        $html .= '<span class="badge ' . $sl[1] . '">' . $sl[0] . '</span>';
+                        $html .= '</div>';
+
+                        $html .= '<div class="mb-2"><small>';
+                        $html .= '<div class="mb-1"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> ' . $doctorName . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->created_at)) . ')</span></div>';
+                        if ($item->billed_by) $html .= '<div class="mb-1"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> ' . userfullname($item->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->billed_date)) . ')</span></div>';
+                        if ($item->result_by) $html .= '<div class="mb-1"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> ' . userfullname($item->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->result_date)) . ')</span></div>';
+                        $html .= '</small></div>';
+
+                        if ($item->note) $html .= '<div class="mb-2"><small><i class="mdi mdi-note-text"></i> <b>Note:</b> ' . e($item->note) . '</small></div>';
+                        if ($item->result) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->result . '</small></div>';
+
+                        $html .= '</div></div>';
+
+                        return [
+                            'id' => $item->id,
+                            'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at),
+                            'name' => $sName,
+                            'status' => $sl[0],
+                            'doctor_name' => $doctorName,
+                            'date' => $item->created_at->format('M d, Y H:i'),
+                            'timestamp' => $item->created_at->toIso8601String(),
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
+
+                case 'prescriptions':
+                    $query = ProductRequest::where('patient_id', $patientId)
+                        ->with(['product', 'doctor']);
+                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $prescStatusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed','bg-info'], 3 => ['Dispensed','bg-success']];
+
+                    $data = $items->map(function ($item) use ($matchEncounter, $prescStatusLabels) {
+                        $pName = $item->product ? $item->product->product_name : 'N/A';
+                        $pCode = $item->product ? ($item->product->product_code ?? '') : '';
+                        $dose = $item->dose ?? '';
+                        $qty = $item->qty ?? '';
+                        $sl = $prescStatusLabels[$item->status] ?? ['Unknown','bg-secondary'];
+                        $doctorName = $item->doctor ? userfullname($item->doctor->id) : 'N/A';
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid ' . ($item->status == 3 ? '#198754' : '#fd7e14') . ';">';
+                        $html .= '<div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
+                        $html .= '<div><strong>' . $pName . '</strong>';
+                        if ($pCode) $html .= ' <small class="text-muted">' . $pCode . '</small>';
+                        $html .= '</div>';
+                        $html .= '<span class="badge ' . $sl[1] . '">' . $sl[0] . '</span>';
+                        $html .= '</div>';
+                        $html .= '<div class="mt-1">';
+                        $html .= '<span><i class="mdi mdi-pill"></i> ' . ($dose ?: '<em class="text-muted">No dose</em>') . '</span>';
+                        $html .= '<span class="ms-2"><i class="mdi mdi-numeric"></i> Qty: ' . ($qty ?: '-') . '</span>';
+                        $html .= '</div>';
+                        $html .= '<div class="mt-1 text-muted small"><i class="mdi mdi-account"></i> Requested by: ' . $doctorName . ' on ' . date('h:i a D M j, Y', strtotime($item->created_at)) . '</div>';
+                        if ($item->billed_by) $html .= '<div class="text-muted small"><i class="mdi mdi-receipt"></i> Billed by: ' . userfullname($item->billed_by) . ' on ' . date('h:i a D M j, Y', strtotime($item->billed_date)) . '</div>';
+                        if ($item->dispensed_by) $html .= '<div class="text-muted small"><i class="mdi mdi-truck-delivery"></i> Dispensed by: ' . userfullname($item->dispensed_by) . ' on ' . date('h:i a D M j, Y', strtotime($item->dispensed_date)) . '</div>';
+                        $html .= '</div></div>';
+
+                        return [
+                            'id' => $item->id,
+                            'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at),
+                            'name' => $pName,
+                            'dose' => $dose,
+                            'qty' => $qty,
+                            'status' => $sl[0],
+                            'doctor_name' => $doctorName,
+                            'date' => $item->created_at->format('M d, Y H:i'),
+                            'timestamp' => $item->created_at->toIso8601String(),
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
+
+                case 'care_plans':
+                    $query = \App\Models\NonPharmOrder::where('patient_id', $patientId);
+                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $sBadge = $item->status === 'completed' ? 'bg-success' : ($item->status === 'cancelled' ? 'bg-danger' : 'bg-warning text-dark');
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #20c997;"><div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-center mb-2"><strong><i class="mdi mdi-clipboard-list"></i> ' . e($item->category ?: 'Order') . '</strong>';
+                        $html .= '<span class="badge ' . $sBadge . '">' . e($item->status ?: 'Active') . '</span></div>';
+                        if ($item->instructions) $html .= '<div class="p-2 bg-light rounded mb-2"><small>' . e($item->instructions) . '</small></div>';
+                        $html .= '<div class="row g-1 mb-1">';
+                        if ($item->target_executor) $html .= '<div class="col-auto"><small><b>For:</b> ' . e($item->target_executor) . '</small></div>';
+                        if ($item->frequency) $html .= '<div class="col-auto"><small><b>Freq:</b> ' . e($item->frequency) . '</small></div>';
+                        if ($item->duration) $html .= '<div class="col-auto"><small><b>Duration:</b> ' . e($item->duration) . '</small></div>';
+                        $html .= '</div><div class="text-muted small mt-1"><i class="mdi mdi-clock"></i> ' . $item->created_at->format('h:i a D M j, Y') . '</div>';
+                        $html .= '</div></div>';
+                        return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at), 'date' => $item->created_at->format('M d, Y H:i'), 'timestamp' => $item->created_at->toIso8601String(), 'info_html' => $html];
+                    });
+                    break;
+
+                case 'procedures':
+                    $query = \App\Models\Procedure::where('patient_id', $patientId)->with(['service', 'requestedByUser']);
+                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $sName = $item->service ? $item->service->service_name : 'N/A';
+                        $doctor = $item->requestedByUser ? userfullname($item->requestedByUser->id) : 'N/A';
+                        $pStat = $item->procedure_status ?? 'Pending';
+                        $sBadge = strtolower($pStat) === 'completed' ? 'bg-success' : 'bg-info';
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #6f42c1;"><div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-start mb-2"><div><h6 class="mb-0"><i class="mdi mdi-medical-bag"></i> ' . e($sName) . '</h6></div>';
+                        $html .= '<span class="badge ' . $sBadge . '">' . e($pStat) . '</span></div>';
+                        if ($item->priority) $html .= '<div class="mb-1"><small><b>Priority:</b> <span class="badge bg-secondary">' . e($item->priority) . '</span></small></div>';
+                        if ($item->pre_notes) $html .= '<div class="mb-2"><small class="fw-bold">Pre-Op:</small><div class="p-2 bg-light rounded small">' . $item->pre_notes . '</div></div>';
+                        if ($item->post_notes) $html .= '<div class="mb-2"><small class="fw-bold">Post-Op:</small><div class="p-2 bg-light rounded small">' . $item->post_notes . '</div></div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $doctor . ' · ' . $item->created_at->format('h:i a M j, Y') . '</div>';
+                        $html .= '</div></div>';
+                        return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at), 'doctor_name' => $doctor, 'date' => $item->created_at->format('M d, Y H:i'), 'timestamp' => $item->created_at->toIso8601String(), 'info_html' => $html];
+                    });
+                    break;
+
+                case 'admissions':
+                    $query = AdmissionRequest::where('patient_id', $patientId)->with(['service', 'doctor', 'bed', 'bed.wardRelation']);
+                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $wardName = $item->bed && $item->bed->wardRelation ? $item->bed->wardRelation->name : ($item->bed->ward ?? 'Any Ward');
+                        $bedName = $item->bed ? $item->bed->name : 'Any Bed';
+                        $doctor = $item->doctor ? userfullname($item->doctor->id) : 'N/A';
+                        $sLabel = $item->workflow_status_label ?? $item->admission_status ?? 'Admitted';
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #fd7e14;"><div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
+                        $html .= '<div><h6 class="mb-0"><i class="mdi mdi-bed"></i> ' . e($item->admission_reason ?: 'Admission') . '</h6>';
+                        $html .= '<small class="text-muted">' . e($wardName) . ' · Bed: ' . e($bedName) . '</small></div>';
+                        $html .= '<span class="badge bg-info">' . e($sLabel) . '</span></div>';
+                        if ($item->chief_complaint) $html .= '<div class="mb-2"><small><b>Chief Complaint:</b> ' . e($item->chief_complaint) . '</small></div>';
+                        if ($item->days_admitted) $html .= '<div class="mb-1"><small><b>Duration:</b> ' . $item->days_admitted . ' days</small></div>';
+                        if ($item->discharge_reason) $html .= '<div class="mb-1"><small><b>Discharge:</b> ' . e($item->discharge_reason) . '</small></div>';
+                        if ($item->discharge_note) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->discharge_note . '</small></div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $doctor . ' · ' . $item->created_at->format('h:i a M j, Y') . '</div>';
+                        $html .= '</div></div>';
+                        return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at), 'doctor_name' => $doctor, 'date' => $item->created_at->format('M d, Y H:i'), 'timestamp' => $item->created_at->toIso8601String(), 'info_html' => $html];
+                    });
+                    break;
+
+                case 'referrals':
+                    $query = \App\Models\SpecialistReferral::where('patient_id', $patientId)
+                        ->with(['targetClinic', 'targetDoctor.user', 'referringDoctor.user']);
+                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $isInt = $item->referral_type === 'internal';
+                        $target = $isInt
+                            ? ($item->targetClinic->name ?? 'Specialist') . ' (' . ($item->targetDoctor ? userfullname($item->targetDoctor->user_id) : 'Any Doctor') . ')'
+                            : ($item->external_facility_name ?? '') . ($item->external_doctor_name ? " (Dr. {$item->external_doctor_name})" : '');
+                        $referrer = $item->referringDoctor && $item->referringDoctor->user ? userfullname($item->referringDoctor->user->id) : 'N/A';
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;"><div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
+                        $html .= '<div><strong><i class="mdi mdi-account-arrow-right"></i> ' . e($target) . '</strong></div>';
+                        $html .= '<div><span class="badge ' . ($isInt ? 'bg-primary' : 'bg-warning text-dark') . '">' . ucfirst($item->referral_type ?? '') . '</span>';
+                        if ($item->urgency) $html .= ' <span class="badge bg-danger">' . e($item->urgency) . '</span>';
+                        $html .= '</div></div>';
+                        if ($item->reason) $html .= '<div class="p-2 bg-light rounded mb-2"><small>' . e($item->reason) . '</small></div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> Referred by: ' . $referrer . ' · ' . $item->created_at->format('h:i a M j, Y') . '</div>';
+                        $html .= '</div></div>';
+                        return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at), 'doctor_name' => $referrer, 'date' => $item->created_at->format('M d, Y H:i'), 'timestamp' => $item->created_at->toIso8601String(), 'info_html' => $html];
+                    });
+                    break;
+
+                case 'anc_visits':
+                    $query = \App\Models\AncVisit::where('patient_id', $patientId)->with('seenBy');
+                    if ($dateFrom) $query->where('visit_date', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('visit_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('visit_date', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $doctor = $item->seenBy ? userfullname($item->seenBy->id) : 'N/A';
+                        $dt = $item->visit_date;
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #e83e8c;"><div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
+                        $html .= '<h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> ANC Visit #' . ($item->visit_number ?? '?') . '</h6>';
+                        $html .= '<div>';
+                        if ($item->visit_type) $html .= '<span class="badge bg-pink me-1">' . e($item->visit_type) . '</span>';
+                        $html .= '<span class="badge bg-info">' . ($dt ? $dt->format('M j, Y') : '') . '</span></div></div>';
+                        $ga = $item->getGestationalAge();
+                        if ($ga) $html .= '<div class="mb-2"><span class="badge bg-light text-dark border"><i class="mdi mdi-calendar-clock"></i> GA: ' . e($ga) . '</span></div>';
+                        $html .= '<div class="row g-2 mb-2">';
+                        $fields = [['Weight', $item->weight_kg, 'kg'], ['BP', $item->getBloodPressure(), ''], ['Fundal Ht', $item->fundal_height_cm, 'cm'], ['FHR', $item->fetal_heart_rate, 'bpm'], ['Presentation', $item->presentation, ''], ['Foetal Mvt', $item->foetal_movement, ''], ['Oedema', $item->oedema, ''], ['Urine Protein', $item->urine_protein, ''], ['Urine Glucose', $item->urine_glucose, ''], ['Hb', $item->haemoglobin, 'g/dL']];
+                        foreach ($fields as $f) { if ($f[1] !== null && $f[1] !== '') $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . ' ' . $f[2] . '</small></div>'; }
+                        $html .= '</div>';
+                        if ($item->clinical_notes) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->clinical_notes) . '</small></div>';
+                        if ($item->next_appointment) $html .= '<div class="small text-muted mb-1"><i class="mdi mdi-calendar-check"></i> Next: ' . $item->next_appointment->format('M d, Y') . '</div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $doctor . '</div>';
+                        $html .= '</div></div>';
+                        return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->visit_date), 'doctor_name' => $doctor, 'date' => $dt ? $dt->format('M d, Y') : null, 'timestamp' => $dt ? $dt->toIso8601String() : null, 'info_html' => $html];
+                    });
+                    break;
+
+                case 'delivery':
+                    $query = \App\Models\DeliveryRecord::where('patient_id', $patientId)->with(['deliveredBy', 'babies']);
+                    if ($dateFrom) $query->where('delivery_date', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('delivery_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('delivery_date', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $doctor = $item->deliveredBy ? userfullname($item->deliveredBy->id) : 'N/A';
+                        $dt = $item->delivery_date;
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #dc3545;"><div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
+                        $html .= '<h6 class="mb-0"><i class="mdi mdi-human-pregnant"></i> Delivery Record</h6>';
+                        $html .= '<span class="badge bg-danger">' . ($dt ? $dt->format('M j, Y') : '') . ($item->delivery_time ? ' ' . Carbon::parse($item->delivery_time)->format('h:i A') : '') . '</span></div>';
+                        $html .= '<div class="row g-2 mb-2">';
+                        $dFields = [['Type', $item->type_of_delivery], ['Place', $item->place_of_delivery], ['Labour', $item->duration_of_labour_hours ? $item->duration_of_labour_hours . 'h' : null], ['Blood Loss', $item->blood_loss_ml ? $item->blood_loss_ml . 'ml' : null], ['Placenta', $item->placenta_complete ? 'Complete' : 'Incomplete'], ['Episiotomy', $item->episiotomy]];
+                        foreach ($dFields as $f) { if ($f[1]) $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>'; }
+                        $html .= '</div>';
+                        if ($item->complications) $html .= '<div class="mb-2"><small><b>Complications:</b> <span class="text-danger">' . e($item->complications) . '</span></small></div>';
+                        if ($item->babies->count() > 0) {
+                            $html .= '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;"><thead><tr><th>#</th><th>Sex</th><th>Weight</th><th>APGAR</th><th>Feeding</th></tr></thead><tbody>';
+                            foreach ($item->babies as $b) {
+                                $html .= '<tr><td>' . e($b->birth_order) . '</td><td>' . e($b->sex) . '</td><td>' . e($b->birth_weight_kg) . ' kg</td><td>' . e($b->getApgarSummary()) . '</td><td>' . e($b->feeding_method) . '</td></tr>';
+                            }
+                            $html .= '</tbody></table>';
+                        }
+                        if ($item->notes) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->notes) . '</small></div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> Delivered by: ' . $doctor . '</div>';
+                        $html .= '</div></div>';
+                        return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->delivery_date), 'doctor_name' => $doctor, 'date' => $dt ? $dt->format('M d, Y') : null, 'timestamp' => $dt ? $dt->toIso8601String() : null, 'info_html' => $html];
+                    });
+                    break;
+
+                case 'postnatal':
+                    $query = \App\Models\PostnatalVisit::where('patient_id', $patientId)->with('seenBy');
+                    if ($dateFrom) $query->where('visit_date', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    if ($dateTo) $query->where('visit_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    $items = $query->orderBy('visit_date', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $doctor = $item->seenBy ? userfullname($item->seenBy->id) : 'N/A';
+                        $dt = $item->visit_date;
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #d63384;"><div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
+                        $html .= '<h6 class="mb-0"><i class="mdi mdi-mother-heart"></i> Postnatal Visit</h6>';
+                        $html .= '<div>';
+                        if ($item->visit_type) $html .= '<span class="badge bg-pink me-1">' . e($item->visit_type) . '</span>';
+                        if ($item->days_postpartum) $html .= '<span class="badge bg-light text-dark border me-1">Day ' . e($item->days_postpartum) . '</span>';
+                        $html .= '<span class="badge bg-info">' . ($dt ? $dt->format('M j, Y') : '') . '</span></div></div>';
+                        // Mother assessment
+                        $html .= '<div class="mb-2"><small class="fw-bold text-muted">Mother</small></div><div class="row g-2 mb-2">';
+                        $mFields = [['Condition', $item->general_condition], ['BP', $item->blood_pressure], ['Temp', $item->temperature_c ? $item->temperature_c . '°C' : null], ['Uterus', $item->uterus_assessment], ['Lochia', $item->lochia], ['Emotional', $item->emotional_wellbeing]];
+                        foreach ($mFields as $f) { if ($f[1]) $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>'; }
+                        $html .= '</div>';
+                        // Baby assessment
+                        $html .= '<div class="mb-2"><small class="fw-bold text-muted">Baby</small></div><div class="row g-2 mb-2">';
+                        $bFields = [['Weight', $item->baby_weight_kg ? $item->baby_weight_kg . ' kg' : null], ['Feeding', $item->baby_feeding], ['Cord', $item->cord_status]];
+                        foreach ($bFields as $f) { if ($f[1]) $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>'; }
+                        $html .= '</div>';
+                        if ($item->clinical_notes) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->clinical_notes) . '</small></div>';
+                        $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $doctor . '</div>';
+                        $html .= '</div></div>';
+                        return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->visit_date), 'doctor_name' => $doctor, 'date' => $dt ? $dt->format('M d, Y') : null, 'timestamp' => $dt ? $dt->toIso8601String() : null, 'info_html' => $html];
+                    });
+                    break;
+            }
+
+            // Post-filtering by encounter if specified
+            if ($encounterFilter) {
+                $data = collect($data)->filter(function ($item) use ($encounterFilter) {
+                    if ($encounterFilter === 'unassociated') {
+                        return is_null($item['encounter_id']);
+                    }
+                    return intval($item['encounter_id']) === intval($encounterFilter);
+                })->values();
+            } else {
+                $data = collect($data)->values();
+            }
+
+            return response()->json([
+                'success' => true,
+                'category' => $category,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching clinical story category: ' . ($category ?? 'none') . ' - ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Public wrapper to fetch clinical story category items via Encounter.
+     */
+    public function getPatientClinicalStory(Request $request, Encounter $encounter)
+    {
+        return $this->getPatientClinicalStoryCommon($request, $encounter->patient_id);
+    }
+
+    /**
+     * Public fallback to fetch clinical story category items via Patient ID directly.
+     */
+    public function getPatientClinicalStoryFallback(Request $request, $patient)
+    {
+        $patientId = is_object($patient) ? $patient->id : intval($patient);
+        return $this->getPatientClinicalStoryCommon($request, $patientId);
+    }
 }
