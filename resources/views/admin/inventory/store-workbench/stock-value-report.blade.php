@@ -56,6 +56,10 @@
                     <a href="{{ route('inventory.store-workbench.index') }}{{ $store ? '?store_id=' . $store->id : '' }}" class="btn btn-light btn-sm">
                         <i class="mdi mdi-arrow-left"></i> Back to Workbench
                     </a>
+                    @else
+                    <a href="javascript:history.back()" class="btn btn-light btn-sm">
+                        <i class="mdi mdi-arrow-left"></i> Back
+                    </a>
                     @endhasanyrole
                 </div>
             </div>

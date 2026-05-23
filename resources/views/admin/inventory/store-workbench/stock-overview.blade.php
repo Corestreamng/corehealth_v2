@@ -70,9 +70,15 @@
                 <a href="{{ route('products.index') }}" class="btn btn-outline-primary btn-sm mr-2">
                     <i class="mdi mdi-package-variant"></i> All Products
                 </a>
+                @hasanyrole('SUPERADMIN|ADMIN|STORE')
                 <a href="{{ route('inventory.store-workbench.index') }}?store_id={{ $selectedStore->id ?? '' }}" class="btn btn-secondary btn-sm">
                     <i class="mdi mdi-arrow-left"></i> Back to Workbench
                 </a>
+                @else
+                <a href="javascript:history.back()" class="btn btn-secondary btn-sm">
+                    <i class="mdi mdi-arrow-left"></i> Back
+                </a>
+                @endhasanyrole
             </div>
         </div>
 

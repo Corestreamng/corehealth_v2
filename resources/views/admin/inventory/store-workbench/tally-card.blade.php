@@ -598,10 +598,17 @@
                         Live stock ledger — view all movements, manage requisitions, batches &amp; purchase orders
                     </p>
                 </div>
+                @hasanyrole('SUPERADMIN|ADMIN|STORE')
                 <a href="{{ route('inventory.store-workbench.index') }}{{ $selectedStore ? '?store_id=' . $selectedStore->id : '' }}"
                     class="btn btn-light btn-sm" style="border-radius: 8px;">
                     <i class="mdi mdi-arrow-left mr-1"></i> Workbench
                 </a>
+                @else
+                <a href="javascript:history.back()"
+                    class="btn btn-light btn-sm" style="border-radius: 8px;">
+                    <i class="mdi mdi-arrow-left mr-1"></i> Back
+                </a>
+                @endhasanyrole
             </div>
         </div>
 

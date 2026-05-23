@@ -565,6 +565,10 @@
             <a href="{{ route('inventory.store-workbench.index') }}{{ request('to_store_id') ? '?store_id=' . request('to_store_id') : '' }}" class="btn btn-secondary btn-sm">
                 <i class="mdi mdi-arrow-left"></i> Back to Workbench
             </a>
+            @else
+            <a href="javascript:history.back()" class="btn btn-secondary btn-sm">
+                <i class="mdi mdi-arrow-left"></i> Back
+            </a>
             @endhasanyrole
         </div>
         <form id="requisition-form" method="POST" action="{{ route('inventory.requisitions.store') }}">

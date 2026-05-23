@@ -85,6 +85,10 @@
                     <a href="{{ route('inventory.store-workbench.index') }}{{ $selectedStore ? '?store_id=' . $selectedStore->id : '' }}" class="btn btn-light btn-sm mr-2">
                         <i class="mdi mdi-arrow-left"></i> Workbench
                     </a>
+                    @else
+                    <a href="javascript:history.back()" class="btn btn-light btn-sm mr-2">
+                        <i class="mdi mdi-arrow-left"></i> Back
+                    </a>
                     @endhasanyrole
                     <a href="{{ route('inventory.store-workbench.stock-overview') }}{{ $selectedStore ? '?store_id=' . $selectedStore->id . '&product_id=' . $product->id : '?product_id=' . $product->id }}" class="btn btn-light btn-sm">
                         <i class="mdi mdi-view-list-outline"></i> Stock Overview
