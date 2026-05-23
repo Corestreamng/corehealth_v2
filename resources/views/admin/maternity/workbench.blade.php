@@ -1630,6 +1630,10 @@ $sett = appsettings();
                     <i class="fa fa-history"></i>
                     <span>Clinical Story</span>
                 </button>
+                <button class="workspace-tab" data-tab="notes">
+                    <i class="mdi mdi-note-text"></i>
+                    <span>Notes</span>
+                </button>
                 <button class="workspace-tab" data-tab="enrollment">
                     <i class="mdi mdi-clipboard-plus"></i>
                     <span>Enrollment</span>
@@ -1669,10 +1673,6 @@ $sett = appsettings();
                 <button class="workspace-tab" data-tab="vitals">
                     <i class="mdi mdi-heart-pulse"></i>
                     <span>Vitals</span>
-                </button>
-                <button class="workspace-tab" data-tab="notes">
-                    <i class="mdi mdi-note-text"></i>
-                    <span>Notes</span>
                 </button>
                 <button class="workspace-tab" data-tab="audit">
                     <i class="mdi mdi-shield-search"></i>
@@ -1787,11 +1787,13 @@ $sett = appsettings();
 
             <!-- ═══ NOTES TAB ═══ -->
             <div class="workspace-tab-content" id="notes-tab">
-                <div class="p-3">
-                    <div id="notes-content">
-                        <p class="text-muted text-center py-3">Select a patient to view notes</p>
-                    </div>
-                </div>
+                @include('admin.partials.shared_workbench_nurse_notes', [
+                    'prefix' => 'maternity',
+                    'formId' => 'maternity-note-form',
+                    'editorId' => 'maternity-note-editor',
+                    'statusId' => 'maternity-note-autosave-status',
+                    'refreshCallback' => 'loadNotesTab()'
+                ])
             </div>
 
             <!-- ═══ AUDIT TAB ═══ -->
@@ -2509,6 +2511,8 @@ $sett = appsettings();
 @section('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+<script src="{{ asset('js/workbench-notes-shared.js') }}"></script>
+<script src="{{ asset('js/speech-dictation.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/immunization-module.js') }}"></script>
@@ -3196,7 +3200,8 @@ $sett = appsettings();
                 break;
             case 'vitals':
                 if (typeof window.initUnifiedVitals === 'function') {
-                    window.initUnifiedVitals(currentPatient, null, data.clinic_name, data.vitals_template);
+                    const vitalsData = currentPatientData || {};
+                    window.initUnifiedVitals(currentPatient, null, vitalsData.clinic_name, vitalsData.vitals_template);
                 }
                 break;
         }
@@ -7200,38 +7205,48 @@ $sett = appsettings();
     // ═══════════════════════════════════════════════════════════════
     function loadNotesTab() {
         if (!currentEnrollmentId) {
-            $('#notes-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
+            $('#maternity-notes-timeline').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
             return;
         }
 
         $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/notes`, { patient_id: currentPatient }, function(resp) {
             if (!resp.success) return;
             _notesCache = resp.notes; // cache for edit
-            let html = `<div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><i class="mdi mdi-note-text"></i> Notes</h5>
-            <button class="btn text-white" style="background: var(--maternity-pink);" onclick="showAddNoteForm()"><i class="mdi mdi-plus"></i> Add Note</button>
-        </div>`;
 
-            // Cache note types for the modal
+            // Populate note types dropdown if available (saves other notes type primarily)
             if (resp.note_types) {
                 let opts = '';
-                resp.note_types.forEach(t => opts += `<option value="${t.id}">${t.name}</option>`);
-                window._matNoteTypeOptions = opts;
+                resp.note_types.forEach(t => {
+                    const selected = t.id == 5 ? 'selected' : '';
+                    opts += `<option value="${t.id}" ${selected}>${t.name}</option>`;
+                });
+                $('#maternity-note-type-select').html(opts);
+                // Also cache window._matNoteTypeOptions for compatibility
+                let oldOpts = '';
+                resp.note_types.forEach(t => oldOpts += `<option value="${t.id}">${t.name}</option>`);
+                window._matNoteTypeOptions = oldOpts;
             }
 
+            let html = '';
             if (resp.notes.length === 0) {
                 html += '<p class="text-muted text-center py-4">No notes yet</p>';
             } else {
                 resp.notes.forEach(function(n) {
                     const actions = n.can_edit ? `<div class="mt-1"><button class="btn btn-sm btn-outline-primary py-0 px-1" onclick="editNote(${n.id})" title="Edit note"><i class="mdi mdi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteNote(${n.id})" title="Delete note"><i class="mdi mdi-delete"></i></button></div>` : '';
                     const draftBadge = n.completed === false ? '<span class="badge badge-warning mr-1">Draft</span>' : '';
-                    html += `<div class="note-card">
-                    <div class="d-flex justify-content-between"><span class="note-author">${n.created_by} ${draftBadge}<span class="badge bg-secondary">${n.type}</span></span><div class="d-flex align-items-center gap-2"><span class="note-time">${n.time_ago}</span>${actions}</div></div>
-                    <div class="note-body">${n.note}</div>
+                    html += `<div class="note-card border rounded-3 p-3 mb-3 bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="note-author fw-semibold text-dark">${n.created_by} ${draftBadge}<span class="badge bg-secondary ms-1">${n.type}</span></span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="note-time text-muted small">${n.time_ago}</span>
+                            ${actions}
+                        </div>
+                    </div>
+                    <div class="note-body text-secondary">${n.note}</div>
                 </div>`;
                 });
             }
-            $('#notes-content').html(html);
+            $('#maternity-notes-timeline').html(html);
         });
     }
 
@@ -7283,64 +7298,47 @@ $sett = appsettings();
         });
     }
 
-    function showAddNoteForm() {
-        _editMode = null;
-        _editId = null;
-        destroyMaternityEditor('note');
-        // Populate note types from cached options
-        $('#modal-note-type-select').html(window._matNoteTypeOptions || '');
-        $('#addNoteModalLabel').html('<i class="mdi mdi-note-plus"></i> Add Clinical Note');
-        $('#btn-save-note').html('<i class="mdi mdi-check"></i> Save Note');
-        const form = $('#addNoteModal #add-note-form')[0];
-        if (form) form.reset();
-
-        // Init CKEditor after modal is fully visible
-        let _matNoteAutosaveTimer = null;
-        $('#addNoteModal').off('shown.bs.modal.noteEditor').on('shown.bs.modal.noteEditor', function() {
-            initMaternityEditor('#mat-note-editor-modal', 'note').then(function(editor) {
-                if (!editor) return;
-                editor.model.document.on('change:data', function() {
-                    clearTimeout(_matNoteAutosaveTimer);
-                    const noteTypeId = $('#modal-note-type-select').val();
-                    const content = editor.getData();
-                    if (!content.trim() || !noteTypeId || !currentEnrollmentId) return;
-                    $('#mat-note-autosave-status').html('<i class="mdi mdi-loading mdi-spin text-warning"></i> <span class="text-warning">Unsaved...</span>');
-                    _matNoteAutosaveTimer = setTimeout(function() {
-                        $.ajax({
-                            url: '/maternity-workbench/enrollment/' + currentEnrollmentId + '/note',
-                            method: 'POST',
-                            data: {
-                                note_type_id: noteTypeId,
-                                note: content,
-                                completed: 0
-                            },
-                            headers: {
-                                'X-CSRF-TOKEN': CSRF_TOKEN
-                            },
-                            success: function() {
-                                const t = new Date().toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                });
-                                $('#mat-note-autosave-status').html('<i class="mdi mdi-check-circle text-success"></i> <span class="text-success">Autosaved ' + t + '</span>');
-                            },
-                            error: function() {
-                                $('#mat-note-autosave-status').html('<i class="mdi mdi-alert-circle text-danger"></i> <span class="text-danger">Autosave failed</span>');
-                            }
-                        });
-                    }, 3000);
-                });
-            });
+    function initMaternityNotesCKEditor() {
+        WorkbenchNotesKit.initEditor({
+            prefix: 'maternity',
+            editorSelector: '#maternity-note-editor',
+            formSelector: '#maternity-note-form',
+            statusSelector: '#maternity-note-autosave-status',
+            csrfToken: CSRF_TOKEN,
+            getSaveUrl: function(patientId, enrollmentId) {
+                return _editId 
+                    ? `/maternity-workbench/note/${_editId}` 
+                    : `/maternity-workbench/enrollment/${enrollmentId}/note`;
+            },
+            getMethod: function() {
+                return _editId ? 'PUT' : 'POST';
+            },
+            getPatientId: function() {
+                return currentPatient;
+            },
+            getEnrollmentId: function() {
+                return currentEnrollmentId;
+            },
+            noteTypeId: 5,
+            onSaveSuccess: function() {
+                _editId = null;
+                _editMode = null;
+                loadNotesTab();
+                // Switch to History sub-tab
+                $('#notes-history-tab-link').tab('show');
+            }
         });
-        // Destroy CKEditor when modal hides
-        $('#addNoteModal').off('hidden.bs.modal.noteEditor').on('hidden.bs.modal.noteEditor', function() {
-            clearTimeout(_matNoteAutosaveTimer);
-            $('#mat-note-autosave-status').html('');
-            destroyMaternityEditor('note');
-        });
-
-        $('#addNoteModal').modal('show');
     }
+
+    // Ensure editor is initialized when tab shown
+    $('a[data-toggle="tab"][href="#notes-tab"]').on('shown.bs.tab', function (e) {
+        initMaternityNotesCKEditor();
+    });
+    $('a[data-toggle="tab"][href="#notes-add"]').on('shown.bs.tab', function (e) {
+        initMaternityNotesCKEditor();
+    });
+    // Also try to init on page load after a brief delay
+    setTimeout(initMaternityNotesCKEditor, 1000);
 
     function editNote(id) {
         const n = _notesCache.find(x => x.id === id);
@@ -7352,26 +7350,23 @@ $sett = appsettings();
             toastr.warning('This note can no longer be edited');
             return;
         }
-        _editMode = 'note';
+        
         _editId = id;
-        destroyMaternityEditor('note');
-        $('#modal-note-type-select').html(window._matNoteTypeOptions || '');
-        const form = $('#addNoteModal #add-note-form')[0];
-        if (form) form.reset();
-        $('#addNoteModalLabel').html('<i class="mdi mdi-pencil"></i> Edit Note');
-        $('#btn-save-note').html('<i class="mdi mdi-check"></i> Update Note');
-        // Pre-fill note type
-        $('#addNoteModal select[name="note_type_id"]').val(n.note_type_id || '');
-        // CKEditor: set content after init
-        $('#addNoteModal').off('shown.bs.modal.noteEditor').on('shown.bs.modal.noteEditor', function() {
-            initMaternityEditor('#mat-note-editor-modal', 'note').then(function(editor) {
-                if (editor && n.note) editor.setData(n.note);
-            });
-        });
-        $('#addNoteModal').off('hidden.bs.modal.noteEditor').on('hidden.bs.modal.noteEditor', function() {
-            destroyMaternityEditor('note');
-        });
-        $('#addNoteModal').modal('show');
+        _editMode = 'note';
+        
+        // Show the Add Note tab
+        $('#notes-add-tab').tab('show');
+        
+        // Populate the editor content
+        const editor = WorkbenchNotesKit.editors['maternity'];
+        if (editor) {
+            editor.setData(n.note || '');
+        }
+        
+        // Populate note type dropdown
+        if (n.note_type_id) {
+            $('#maternity-note-type-select').val(n.note_type_id);
+        }
     }
 
     function deleteNote(id) {
@@ -7393,54 +7388,6 @@ $sett = appsettings();
             }
         });
     }
-
-    // Add/Edit Note modal save handler
-    $(document).on('click', '#btn-save-note', function() {
-        const noteContent = getEditorData('note', '#mat-note-editor-modal');
-        if (!noteContent || !noteContent.trim()) {
-            toastr.warning('Please enter note content');
-            return;
-        }
-        const noteTypeId = $('#addNoteModal select[name="note_type_id"]').val();
-        if (!noteTypeId) {
-            toastr.warning('Please select a note type');
-            return;
-        }
-        const data = {
-            note_type_id: noteTypeId,
-            note: noteContent,
-            patient_id: currentPatient
-        };
-        const btn = $(this);
-        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
-        const isEdit = _editMode === 'note' && _editId;
-        const url = isEdit ? `/maternity-workbench/note/${_editId}` : `/maternity-workbench/enrollment/${currentEnrollmentId}/note`;
-        const method = isEdit ? 'PUT' : 'POST';
-        $.ajax({
-            url: url,
-            method: method,
-            data: data,
-            headers: {
-                'X-CSRF-TOKEN': CSRF_TOKEN
-            },
-            success: function(r) {
-                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Note');
-                if (r.success) {
-                    _editMode = null;
-                    _editId = null;
-                    destroyMaternityEditor('note');
-                    $('#mat-note-autosave-status').html('');
-                    $('#addNoteModal').modal('hide');
-                    toastr.success(r.message);
-                    loadNotesTab();
-                } else toastr.error(r.message);
-            },
-            error: function(xhr) {
-                btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Save Note');
-                toastr.error(xhr.responseJSON?.message || 'Failed to save');
-            }
-        });
-    });
 
     // ═══════════════════════════════════════════════════════════════
     // REPORTS
