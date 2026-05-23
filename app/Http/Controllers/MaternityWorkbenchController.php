@@ -1638,9 +1638,13 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'delivery_date'    => 'required|date',
-            'type_of_delivery' => 'required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
-            'number_of_babies' => 'required|integer|min:1|max:8',
+            'delivery_date'      => 'required|date',
+            'type_of_delivery'   => 'required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
+            'number_of_babies'   => 'required|integer|min:1|max:8',
+            'induction'          => 'nullable|boolean',
+            'induction_method'   => 'nullable|string|max:255',
+            'augmentation'       => 'nullable|boolean',
+            'anaesthesia_type'   => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -1664,6 +1668,9 @@ class MaternityWorkbenchController extends Controller
                 'duration_of_labour_hours' => $request->duration_of_labour_hours,
                 'type_of_delivery'       => $request->type_of_delivery,
                 'episiotomy'             => $request->episiotomy ?? 'none',
+                'induction'              => $request->induction ?? false,
+                'induction_method'       => $request->induction_method,
+                'augmentation'           => $request->augmentation ?? false,
                 'complications'          => $request->complications,
                 'blood_loss_ml'          => $request->blood_loss_ml,
                 'placenta_complete'      => $request->placenta_complete ?? true,
@@ -1672,6 +1679,7 @@ class MaternityWorkbenchController extends Controller
                 'oxytocin_given'         => $request->oxytocin_given ?? false,
                 'number_of_babies'       => $request->number_of_babies,
                 'delivered_by'           => Auth::id(),
+                'anaesthesia_type'       => $request->anaesthesia_type,
                 'notes'                  => $request->notes,
             ]);
 
@@ -1696,9 +1704,13 @@ class MaternityWorkbenchController extends Controller
         $delivery = DeliveryRecord::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'delivery_date'    => 'sometimes|required|date',
-            'type_of_delivery' => 'sometimes|required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
-            'number_of_babies' => 'sometimes|required|integer|min:1|max:8',
+            'delivery_date'      => 'sometimes|required|date',
+            'type_of_delivery'   => 'sometimes|required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
+            'number_of_babies'   => 'sometimes|required|integer|min:1|max:8',
+            'induction'          => 'nullable|boolean',
+            'induction_method'   => 'nullable|string|max:255',
+            'augmentation'       => 'nullable|boolean',
+            'anaesthesia_type'   => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -1712,6 +1724,9 @@ class MaternityWorkbenchController extends Controller
             'duration_of_labour_hours',
             'type_of_delivery',
             'episiotomy',
+            'induction',
+            'induction_method',
+            'augmentation',
             'complications',
             'blood_loss_ml',
             'placenta_complete',
@@ -1719,6 +1734,7 @@ class MaternityWorkbenchController extends Controller
             'perineal_tear_degree',
             'oxytocin_given',
             'number_of_babies',
+            'anaesthesia_type',
             'notes',
         ]));
 
