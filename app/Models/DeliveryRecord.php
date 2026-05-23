@@ -17,11 +17,12 @@ class DeliveryRecord extends Model implements Auditable
         'delivery_date', 'delivery_time',
         'place_of_delivery', 'duration_of_labour_hours',
         'type_of_delivery', 'episiotomy',
+        'induction', 'induction_method', 'augmentation',
         'complications', 'blood_loss_ml',
         'placenta_complete', 'placenta_notes',
         'perineal_tear_degree', 'oxytocin_given',
         'number_of_babies', 'delivered_by',
-        'notes',
+        'anaesthesia_type', 'notes',
     ];
 
     protected $casts = [
@@ -29,6 +30,8 @@ class DeliveryRecord extends Model implements Auditable
         'delivery_time' => 'datetime',
         'placenta_complete' => 'boolean',
         'oxytocin_given' => 'boolean',
+        'induction' => 'boolean',
+        'augmentation' => 'boolean',
     ];
 
     /* ── Relationships ─────────────────────── */
