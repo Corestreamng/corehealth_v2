@@ -54,9 +54,15 @@
                 <small class="text-muted">Purchase orders awaiting payment</small>
             </div>
             <div>
+                @hasanyrole('SUPERADMIN|ADMIN|STORE')
                 <a href="{{ route('inventory.store-workbench.index') }}" class="btn btn-secondary btn-sm">
                     <i class="mdi mdi-arrow-left"></i> Back to Workbench
                 </a>
+                @else
+                <a href="javascript:history.back()" class="btn btn-secondary btn-sm">
+                    <i class="mdi mdi-arrow-left"></i> Back
+                </a>
+                @endhasanyrole
                 <a href="{{ route('inventory.purchase-orders.index') }}" class="btn btn-outline-primary btn-sm">
                     <i class="mdi mdi-clipboard-list"></i> All POs
                 </a>

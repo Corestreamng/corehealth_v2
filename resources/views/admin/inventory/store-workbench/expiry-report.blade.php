@@ -45,9 +45,15 @@
                 <p class="text-muted mb-0">{{ $selectedStore->store_name ?? 'All Stores' }}</p>
             </div>
             <div>
+                @hasanyrole('SUPERADMIN|ADMIN|STORE')
                 <a href="{{ route('inventory.store-workbench.index') }}?store_id={{ $selectedStore->id ?? '' }}" class="btn btn-secondary btn-sm">
                     <i class="mdi mdi-arrow-left"></i> Back to Workbench
                 </a>
+                @else
+                <a href="javascript:history.back()" class="btn btn-secondary btn-sm">
+                    <i class="mdi mdi-arrow-left"></i> Back
+                </a>
+                @endhasanyrole
             </div>
         </div>
 
