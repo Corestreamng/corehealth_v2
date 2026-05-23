@@ -414,7 +414,12 @@ class StoreContextResolver
             ->first();
 
         // A) Ward store access (Plan §10.A/B)
-        if ($activeShift?->ward_id) {
+        if ($user->hasRole('NURSE')) {
+            $wardStoreIds = Store::active()
+                ->where('distribution_role', Store::ROLE_WARD)
+                ->pluck('id');
+            $ids = $ids->merge($wardStoreIds);
+        } elseif ($activeShift?->ward_id) {
             // Case 1: Active shift in a specific ward -> Restricted to that ward store
             $wardStore = Store::where('ward_id', $activeShift->ward_id)->active()->first();
             if ($wardStore) $ids->push($wardStore->id);
@@ -486,6 +491,20 @@ class StoreContextResolver
                 $legacyQ->whereKey([]); // unknown typeFilter — no-op
             }
             $ids = $ids->merge($legacyQ->pluck('id'));
+        }
+
+        // G) Pharmacist store access: all active stores containing "pharm"
+        if ($user->hasRole('PHARMACIST')) {
+            $pharmStoreIds = Store::active()
+                ->where(function ($q) {
+                    $q->where('store_name', 'like', '%pharm%')
+                      ->orWhere('code', 'like', '%pharm%')
+                      ->orWhere('store_type', 'like', '%pharm%')
+                      ->orWhere('distribution_role', 'like', '%pharm%')
+                      ->orWhere('description', 'like', '%pharm%');
+                })
+                ->pluck('id');
+            $ids = $ids->merge($pharmStoreIds);
         }
 
         // Return unique active stores ordered by name

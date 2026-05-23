@@ -272,13 +272,14 @@ class Store extends Model implements Auditable
             return $query;
         }
 
-        // Pharmacists see pharmacy-role stores only
+        // Pharmacists see any store that contains "pharm" in its name, code, type, role, or description (case-insensitive)
         if ($user->hasRole('PHARMACIST')) {
             return $query->where(function ($q) {
-                $q->whereIn('distribution_role', [
-                    self::ROLE_PHARMACY_HUB,
-                    self::ROLE_PHARMACY_SATELLITE,
-                ])->orWhere('store_type', 'pharmacy');
+                $q->where('store_name', 'like', '%pharm%')
+                  ->orWhere('code', 'like', '%pharm%')
+                  ->orWhere('store_type', 'like', '%pharm%')
+                  ->orWhere('distribution_role', 'like', '%pharm%')
+                  ->orWhere('description', 'like', '%pharm%');
             });
         }
 
@@ -292,6 +293,15 @@ class Store extends Model implements Auditable
                 ->where('status', true)
                 ->pluck('id');
             $ids = $ids->merge($centralIds);
+        }
+
+        // NURSE role gets all active ward stores
+        if ($user->hasRole('NURSE')) {
+            $wardIds = \Illuminate\Support\Facades\DB::table('stores')
+                ->where('distribution_role', self::ROLE_WARD)
+                ->where('status', true)
+                ->pluck('id');
+            $ids = $ids->merge($wardIds);
         }
 
         // Stores this user directly manages
