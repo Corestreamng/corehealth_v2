@@ -4461,6 +4461,10 @@
                     <i class="mdi mdi-account-details"></i>
                     <span>Overview</span>
                 </button>
+                <button class="workspace-tab" data-tab="clinical-story">
+                    <i class="fa fa-history"></i>
+                    <span>Clinical Story</span>
+                </button>
                 <button class="workspace-tab" data-tab="vitals">
                     <i class="mdi mdi-heart-pulse"></i>
                     <span>Vitals</span>
@@ -4627,6 +4631,13 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Clinical Story Tab -->
+            <div class="workspace-tab-content" id="clinical-story-tab">
+                <div class="clinical-story-container p-3">
+                    @include('admin.partials.clinical_story')
                 </div>
             </div>
 
@@ -13385,6 +13396,25 @@ function switchWorkspaceTab(tab) {
     switch(tab) {
         case 'overview':
             loadPatientOverview(currentPatient);
+            break;
+        case 'clinical-story':
+            if (currentPatient) {
+                const $storyWrapper = $('.clinical-story-wrapper');
+                $storyWrapper.data('patient-id', currentPatient);
+                $storyWrapper.attr('data-patient-id', currentPatient);
+                
+                const inst = $storyWrapper.data('clinicalStory');
+                if (inst) {
+                    inst.patientId = currentPatient;
+                    inst.resetTimeline();
+                    inst.loadTimeline();
+                } else {
+                    $('.clinical-story-wrapper').each(function () {
+                        const $w = $(this);
+                        $w.data('clinicalStory', new ClinicalStory(this));
+                    });
+                }
+            }
             break;
         case 'medication':
             // Initialize medication chart with current patient

@@ -319,6 +319,11 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="clinical_story_tab" data-bs-toggle="tab" data-bs-target="#clinical_story" type="button" role="tab" aria-controls="clinical_story" aria-selected="false">
+                <i class="fa fa-history me-1"></i> Clinical Story
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="vitals_data_tab" data-bs-toggle="tab" data-bs-target="#vitals" type="button" role="tab" aria-controls="vitals_data" aria-selected="false">
                 <i class="fa fa-heartbeat me-1"></i> Vitals/ Allergies
             </button>
@@ -378,6 +383,18 @@
     </ul>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="patient_data" role="tabpanel" aria-labelledby="patient_data">
+            <!-- Top Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <div>
+                    <span class="text-muted small"><i class="fa fa-info-circle me-1"></i> Patient Demographics</span>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 500;">
+                        Next (Clinical Story) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <div class="row">
@@ -474,26 +491,91 @@
                         </div>
                         <hr>
                     @endif
-                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')" class="btn btn-primary mr-2">Next</button>
-                    <a href="{{ route('encounters.index') }}"
-                        onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                        class="btn btn-light">Exit</a>
+                    <!-- Bottom Tab Navigation -->
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <div>
+                            <a href="{{ route('encounters.index') }}" onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')" class="btn btn-light" style="border-radius: 8px; font-weight: 600;">Exit</a>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 600;">
+                                Next (Clinical Story) <i class="fa fa-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        {{-- Patient Clinical Story Tab --}}
+        <div class="tab-pane fade" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
+            <!-- Top Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'patient_data_tab')" style="border-radius: 8px; font-weight: 500;">
+                        <i class="fa fa-arrow-left me-1"></i> Prev (Patient Data)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'vitals_data_tab')" style="border-radius: 8px; font-weight: 500;">
+                        Next (Vitals/Allergies) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-modern mt-2">
+                <div class="card-body">
+                    @include('admin.partials.clinical_story', ['encounter' => $encounter])
+                </div>
+            </div>
+
+            <!-- Bottom Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                <div>
+                    <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'patient_data_tab')" style="border-radius: 8px; font-weight: 600;">
+                        <i class="fa fa-arrow-left me-1"></i> Previous (Patient Data)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'vitals_data_tab')" style="border-radius: 8px; font-weight: 600;">
+                        Next (Vitals/Allergies) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="tab-pane fade" id="vitals" role="tabpanel" aria-labelledby="vitals_tab">
+            <!-- Top Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 500;">
+                        <i class="fa fa-arrow-left me-1"></i> Prev (Clinical Story)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'nurse_charts_tab')" style="border-radius: 8px; font-weight: 500;">
+                        Next (Nurse Charts) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="mt-2">
                 @include('admin.partials.unified_vitals', ['patient' => $patient])
             </div>
             <div class="card-modern mt-2 border-0">
                  <div class="card-body px-0">
-                    <button type="button" onclick="switch_tab(event,'patient_data_tab')" class="btn btn-secondary mr-2">
-                        Prev
-                    </button>
-                    <button type="button" onclick="switch_tab(event,'nursing_notes_tab')" class="btn btn-primary mr-2">Next</button>
-                    <a href="{{ route('encounters.index') }}"
-                        onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                        class="btn btn-light">Exit</a>
+                    <!-- Bottom Tab Navigation -->
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <div>
+                            <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 600;">
+                                <i class="fa fa-arrow-left me-1"></i> Previous (Clinical Story)
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'nurse_charts_tab')" style="border-radius: 8px; font-weight: 600;">
+                                Next (Nurse Charts) <i class="fa fa-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
                  </div>
             </div>
         </div>
@@ -534,18 +616,38 @@
 
         {{-- Non-Pharmacological Care Orders / Care Plan --}}
         <div class="tab-pane fade" id="non_pharm" role="tabpanel" aria-labelledby="non_pharm_tab">
+            <!-- Top Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'medications_tab')" style="border-radius: 8px; font-weight: 500;">
+                        <i class="fa fa-arrow-left me-1"></i> Prev (Medications)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'procedures_tab')" style="border-radius: 8px; font-weight: 500;">
+                        Next (Procedures) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="card-modern mt-2">
                 <div class="card-body">
                     <div id="non-pharm-encounter-container"></div>
                 </div>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                <button type="button" class="btn btn-secondary" onclick="$('#medications_tab').click()" style="border-radius: 8px; font-weight: 600;">
-                    <i class="fa fa-arrow-left me-1"></i> Previous (Medications)
-                </button>
-                <button type="button" class="btn btn-primary" onclick="$('#procedures_tab').click()" style="border-radius: 8px; font-weight: 600;">
-                    Next (Procedures) <i class="fa fa-arrow-right ms-1"></i>
-                </button>
+
+            <!-- Bottom Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                <div>
+                    <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'medications_tab')" style="border-radius: 8px; font-weight: 600;">
+                        <i class="fa fa-arrow-left me-1"></i> Previous (Medications)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'procedures_tab')" style="border-radius: 8px; font-weight: 600;">
+                        Next (Procedures) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -556,15 +658,54 @@
 
         {{-- Admission History --}}
         <div class="tab-pane fade" id="admissions" role="tabpanel" aria-labelledby="admissions_tab">
+            <!-- Top Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'procedures_tab')" style="border-radius: 8px; font-weight: 500;">
+                        <i class="fa fa-arrow-left me-1"></i> Prev (Procedures)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'referrals_tab')" style="border-radius: 8px; font-weight: 500;">
+                        Next (Referrals) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="card-modern mt-2">
                 <div class="card-body">
                     @include('admin.patients.partials.admissions')
                 </div>
             </div>
+
+            <!-- Bottom Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                <div>
+                    <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'procedures_tab')" style="border-radius: 8px; font-weight: 600;">
+                        <i class="fa fa-arrow-left me-1"></i> Previous (Procedures)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'referrals_tab')" style="border-radius: 8px; font-weight: 600;">
+                        Next (Referrals) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
-        {{-- Referrals Tab --}}
         <div class="tab-pane fade" id="referrals" role="tabpanel" aria-labelledby="referrals_tab">
+            <!-- Top Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'admissions_tab')" style="border-radius: 8px; font-weight: 500;">
+                        <i class="fa fa-arrow-left me-1"></i> Prev (Admission History)
+                    </button>
+                </div>
+                <div>
+                    <span class="text-muted small"><i class="fa fa-info-circle me-1"></i> Last Tab</span>
+                </div>
+            </div>
+
             <div class="card-modern mt-2">
                 <div class="card-body">
                     {{-- Create / Edit Referral Section --}}
@@ -771,6 +912,18 @@
                             <div id="incoming-referrals-list"></div>
                         </div>
                     </div>
+
+                    <!-- Bottom Tab Navigation -->
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <div>
+                            <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'admissions_tab')" style="border-radius: 8px; font-weight: 600;">
+                                <i class="fa fa-arrow-left me-1"></i> Previous (Admission History)
+                            </button>
+                        </div>
+                        <div>
+                            <span class="text-muted small"><i class="fa fa-check-circle me-1"></i> All sections reviewed</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -780,6 +933,20 @@
             @include('admin.doctors.partials.clinical_notes')
         </div>
         <div class="tab-pane fade" id="nurse_charts" role="tabpanel" aria-labelledby="nurse_charts_tab">
+            <!-- Top Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'vitals_data_tab')" style="border-radius: 8px; font-weight: 500;">
+                        <i class="fa fa-arrow-left me-1"></i> Prev (Vitals/Allergies)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'inj_imm_history_tab')" style="border-radius: 8px; font-weight: 500;">
+                        Next (Inj/Imm History) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="card-modern mt-2">
                 <div class="card-body">
                     <!-- Date Range Filter -->
@@ -915,30 +1082,54 @@
                         </div>
                     </div>
 
-                    <div class="mt-4">
-                        <button type="button" onclick="switch_tab(event,'nursing_notes_tab')" class="btn btn-secondary me-2">
-                            <i class="mdi mdi-arrow-left me-1"></i> Previous
-                        </button>
-                        <button type="button" onclick="switch_tab(event,'inj_imm_history_tab')" class="btn btn-primary">
-                            Next <i class="mdi mdi-arrow-right ms-1"></i>
-                        </button>
+                    <!-- Bottom Tab Navigation -->
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <div>
+                            <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'vitals_data_tab')" style="border-radius: 8px; font-weight: 600;">
+                                <i class="fa fa-arrow-left me-1"></i> Previous (Vitals/Allergies)
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'inj_imm_history_tab')" style="border-radius: 8px; font-weight: 600;">
+                                Next (Inj/Imm History) <i class="fa fa-arrow-right ms-1"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         {{-- Injection & Immunization History Tab --}}
         <div class="tab-pane fade" id="inj_imm_history" role="tabpanel" aria-labelledby="inj_imm_history_tab">
+            <!-- Top Tab Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'nurse_charts_tab')" style="border-radius: 8px; font-weight: 500;">
+                        <i class="fa fa-arrow-left me-1"></i> Prev (Nurse Charts)
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_notes_tab')" style="border-radius: 8px; font-weight: 500;">
+                        Next (Clinical Notes) <i class="fa fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="card-modern mt-2">
                 <div class="card-body">
                     @include('admin.patients.partials.injection_immunization_history', ['patient' => $patient])
 
-                    <div class="mt-4">
-                        <button type="button" onclick="switch_tab(event,'nurse_charts_tab')" class="btn btn-secondary me-2">
-                            <i class="mdi mdi-arrow-left me-1"></i> Previous
-                        </button>
-                        <button type="button" onclick="switch_tab(event,'clinical_notes_tab')" class="btn btn-primary">
-                            Next <i class="mdi mdi-arrow-right ms-1"></i>
-                        </button>
+                    <!-- Bottom Tab Navigation -->
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <div>
+                            <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'nurse_charts_tab')" style="border-radius: 8px; font-weight: 600;">
+                                <i class="fa fa-arrow-left me-1"></i> Previous (Nurse Charts)
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_notes_tab')" style="border-radius: 8px; font-weight: 600;">
+                                Next (Clinical Notes) <i class="fa fa-arrow-right ms-1"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1053,7 +1244,11 @@
                     }
                 </style>
                 {{-- Old conclusion tab content removed - now using modal instead --}}
+                    </div>
+                </div>
+            </div>
         </form>
+        
     </div>
 
     <!-- Medication Details Modal (Read-Only for Doctors) -->
