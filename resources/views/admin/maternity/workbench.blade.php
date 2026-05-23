@@ -1626,6 +1626,10 @@ $sett = appsettings();
                     <i class="mdi mdi-view-dashboard"></i>
                     <span>Overview</span>
                 </button>
+                <button class="workspace-tab" data-tab="clinical-story">
+                    <i class="fa fa-history"></i>
+                    <span>Clinical Story</span>
+                </button>
                 <button class="workspace-tab" data-tab="enrollment">
                     <i class="mdi mdi-clipboard-plus"></i>
                     <span>Enrollment</span>
@@ -1684,6 +1688,13 @@ $sett = appsettings();
             <div class="workspace-tab-content active" id="overview-tab">
                 <div class="p-3" id="overview-content">
                     <p class="text-muted text-center py-3">Select a patient to view overview</p>
+                </div>
+            </div>
+
+            <!-- Clinical Story Tab -->
+            <div class="workspace-tab-content" id="clinical-story-tab">
+                <div class="clinical-story-container p-3">
+                    @include('admin.partials.clinical_story')
                 </div>
             </div>
 
@@ -3125,6 +3136,25 @@ $sett = appsettings();
         switch (tab) {
             case 'overview':
                 populateOverviewTab(currentPatientData);
+                break;
+            case 'clinical-story':
+                if (currentPatient) {
+                    const $storyWrapper = $('.clinical-story-wrapper');
+                    $storyWrapper.data('patient-id', currentPatient);
+                    $storyWrapper.attr('data-patient-id', currentPatient);
+                    
+                    const inst = $storyWrapper.data('clinicalStory');
+                    if (inst) {
+                        inst.patientId = currentPatient;
+                        inst.resetTimeline();
+                        inst.loadTimeline();
+                    } else {
+                        $('.clinical-story-wrapper').each(function () {
+                            const $w = $(this);
+                            $w.data('clinicalStory', new ClinicalStory(this));
+                        });
+                    }
+                }
                 break;
             case 'enrollment':
                 loadEnrollmentTab();
@@ -6087,6 +6117,18 @@ $sett = appsettings();
     function renderDeliveryForm() {
         destroyMaternityEditor('delivery_notes');
         destroyMaternityEditor('delivery_complications');
+        
+        // Define toggle helper globally
+        window.toggleInductionMethod = function(elem) {
+            const val = $(elem).val();
+            if (val === '1') {
+                $('#induction_method_container').slideDown(200);
+            } else {
+                $('#induction_method_container').slideUp(200);
+                $('input[name="induction_method"]').val('');
+            }
+        };
+
         const html = `<div class="card-modern"><div class="card-header text-white" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Record Delivery</h6></div><div class="card-body">
         <div class="mat-info-banner"><i class="mdi mdi-information"></i><div>Record the delivery outcome. All fields contribute to the patient\'s permanent delivery record. Fields marked <span class="text-danger">*</span> are required. After saving, register each baby separately in the Baby Records tab.</div></div>
         <form id="delivery-form">
@@ -6106,13 +6148,19 @@ $sett = appsettings();
                     <div class="col-md-4 mb-2"><label class="form-label">Estimated Blood Loss (ml) <span class="mat-tooltip-icon" title="Normal: SVD \u2264500ml, CS \u22641000ml.>500ml SVD or>1000ml CS = postpartum haemorrhage"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="blood_loss_ml" class="form-control" placeholder="e.g. 300"></div>
                     <div class="col-md-4 mb-2"><label class="form-label">Oxytocin Given <span class="mat-tooltip-icon" title="Active management of third stage: Oxytocin 10 IU IM within 1 minute of delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="oxytocin_given" class="form-select"><option value="1">Yes</option><option value="0">No</option></select></div>
                 </div>
+                <div class="row mt-2">
+                    <div class="col-md-3 mb-2"><label class="form-label">Induction</label><select name="induction" class="form-select" onchange="toggleInductionMethod(this)"><option value="0">No</option><option value="1">Yes</option></select></div>
+                    <div class="col-md-3 mb-2" id="induction_method_container" style="display:none;"><label class="form-label">Induction Method</label><input type="text" name="induction_method" class="form-control" placeholder="e.g. Oxytocin, ARM"></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Augmentation</label><select name="augmentation" class="form-select"><option value="0">No</option><option value="1">Yes</option></select></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Anaesthesia Type</label><select name="anaesthesia_type" class="form-select"><option value="">None</option><option value="Local">Local</option><option value="Epidural">Epidural</option><option value="Spinal">Spinal</option><option value="General">General</option><option value="Other">Other</option></select></div>
+                </div>
             </div>
             <div class="mat-form-section">
                 <div class="mat-form-section-title"><i class="mdi mdi-clipboard-check"></i> Outcomes & Assessment</div>
                 <div class="row">
                     <div class="col-md-3 mb-2"><label class="form-label">Placenta <span class="mat-tooltip-icon" title="Complete: all cotyledons and membranes accounted for. Incomplete: retained products — requires manual removal"><i class="mdi mdi-help-circle"></i></span></label><select name="placenta_complete" class="form-select"><option value="1">Complete</option><option value="0">Incomplete</option></select></div>
                     <div class="col-md-3 mb-2"><label class="form-label">Perineal Tear <span class="mat-tooltip-icon" title="1st: mucosa only. 2nd: perineal muscles. 3rd: anal sphincter involved. 4th: rectal mucosa torn"><i class="mdi mdi-help-circle"></i></span></label><select name="perineal_tear_degree" class="form-select"><option value="">None</option><option value="1st">1st degree</option><option value="2nd">2nd degree</option><option value="3rd">3rd degree</option><option value="4th">4th degree</option></select></div>
-                    <div class="col-md-3 mb-2"><label class="form-label">Episiotomy <span class="mat-tooltip-icon" title="Surgical incision of perineum to widen vaginal opening during delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="episiotomy" class="form-select"><option value="">None</option><option>Yes, mediolateral</option><option>Yes, midline</option></select></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Episiotomy <span class="mat-tooltip-icon" title="Surgical incision of perineum to widen vaginal opening during delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="episiotomy" class="form-select"><option value="none">None</option><option value="mediolateral">Yes, mediolateral</option><option value="median">Yes, midline</option></select></div>
                 </div>
             </div>
             <div class="mat-form-section">
@@ -6182,6 +6230,11 @@ $sett = appsettings();
             </div>`;
         }
 
+        let episiotomyLabel = 'None';
+        if (d.episiotomy === 'mediolateral') episiotomyLabel = 'Yes, mediolateral';
+        else if (d.episiotomy === 'median') episiotomyLabel = 'Yes, midline';
+        else if (d.episiotomy && d.episiotomy !== 'none') episiotomyLabel = d.episiotomy;
+
         html += `<div class="card-modern"><div class="card-header text-white d-flex justify-content-between" style="background: var(--success);"><h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> Delivery Record</h6><div>${actionsHtml}<span class="badge bg-light text-dark">${(d.type_of_delivery || '').toUpperCase()}</span></div></div><div class="card-body">
         <div class="row"><div class="col-md-6"><table class="table table-sm">
             <tr><td class="text-muted">Date</td><td>${d.delivery_date || 'N/A'}</td></tr>
@@ -6189,11 +6242,14 @@ $sett = appsettings();
             <tr><td class="text-muted">Type</td><td class="fw-bold">${(d.type_of_delivery || '').toUpperCase()}</td></tr>
             <tr><td class="text-muted">Babies</td><td>${d.number_of_babies || 0}</td></tr>
             <tr><td class="text-muted">Duration</td><td>${d.duration_of_labour_hours ? d.duration_of_labour_hours + ' hrs' : 'N/A'}</td></tr>
+            <tr><td class="text-muted">Induction</td><td>${d.induction ? 'Yes (' + (d.induction_method || 'N/A') + ')' : 'No'}</td></tr>
+            <tr><td class="text-muted">Augmentation</td><td>${d.augmentation ? 'Yes' : 'No'}</td></tr>
         </table></div><div class="col-md-6"><table class="table table-sm">
             <tr><td class="text-muted">Blood Loss</td><td>${d.blood_loss_ml ? d.blood_loss_ml + ' ml' : 'N/A'}</td></tr>
             <tr><td class="text-muted">Placenta</td><td>${d.placenta_complete ? 'Complete' : 'Incomplete'}</td></tr>
             <tr><td class="text-muted">Perineal Tear</td><td>${d.perineal_tear_degree || 'None'}</td></tr>
-            <tr><td class="text-muted">Episiotomy</td><td>${d.episiotomy || 'None'}</td></tr>
+            <tr><td class="text-muted">Episiotomy</td><td>${episiotomyLabel}</td></tr>
+            <tr><td class="text-muted">Anaesthesia</td><td>${d.anaesthesia_type || 'None'}</td></tr>
             <tr><td class="text-muted">Complications</td><td>${d.complications || 'None'}</td></tr>
             <tr><td class="text-muted">Delivered By</td><td>${d.delivered_by_name || 'N/A'}</td></tr>
         </table></div></div>
@@ -6225,7 +6281,7 @@ $sett = appsettings();
             const f = $('#delivery-form');
             // Parse dates from Eloquent serialization (ISO string or Y-m-d)
             const delivDate = d.delivery_date ? d.delivery_date.substring(0, 10) : '';
-            const delivTime = d.delivery_time ? (d.delivery_time.length> 10 ? d.delivery_time.substring(11, 16) : d.delivery_time) : '';
+            const delivTime = d.delivery_time ? (d.delivery_time.length > 10 ? d.delivery_time.substring(11, 16) : d.delivery_time) : '';
             f.find('input[name="delivery_date"]').val(delivDate);
             f.find('input[name="delivery_time"]').val(delivTime);
             f.find('select[name="type_of_delivery"]').val(d.type_of_delivery || 'svd');
@@ -6233,9 +6289,22 @@ $sett = appsettings();
             f.find('input[name="duration_of_labour_hours"]').val(d.duration_of_labour_hours || '');
             f.find('input[name="blood_loss_ml"]').val(d.blood_loss_ml || '');
             f.find('select[name="oxytocin_given"]').val(d.oxytocin_given ? '1' : '0');
+            
+            // Prefill new fields
+            f.find('select[name="induction"]').val(d.induction ? '1' : '0');
+            if (d.induction) {
+                $('#induction_method_container').show();
+                f.find('input[name="induction_method"]').val(d.induction_method || '');
+            } else {
+                $('#induction_method_container').hide();
+                f.find('input[name="induction_method"]').val('');
+            }
+            f.find('select[name="augmentation"]').val(d.augmentation ? '1' : '0');
+            f.find('select[name="anaesthesia_type"]').val(d.anaesthesia_type || '');
+
             f.find('select[name="placenta_complete"]').val(d.placenta_complete ? '1' : '0');
             f.find('select[name="perineal_tear_degree"]').val(d.perineal_tear_degree || '');
-            f.find('select[name="episiotomy"]').val(d.episiotomy || '');
+            f.find('select[name="episiotomy"]').val(d.episiotomy || 'none');
             // Set CKEditor data after init
             setTimeout(function() {
                 if (MaternityEditors['delivery_complications'] && d.complications) MaternityEditors['delivery_complications'].setData(d.complications);
