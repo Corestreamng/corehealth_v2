@@ -2015,6 +2015,7 @@ window.NonPharmManager = (function($) {
     var currentContainerId = null;
     var isNurseView = false;
     var loadedOrdersCache = [];
+    var currentSubTab = 'active';
 
     // Standard Preset Database
     var PRESETS = {
@@ -2163,9 +2164,9 @@ window.NonPharmManager = (function($) {
         var tableHtml = 
             '<div class="card border-0 shadow-sm" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">' +
                 '<div class="card-header bg-light border-0 py-3" style="background-color: #f8fafc !important;">' +
-                    '<div class="d-flex justify-content-between align-items-center">' +
+                    '<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">' +
                         '<div>' +
-                            '<h5 class="m-0 text-dark fw-bold" style="font-size: 0.95rem; letter-spacing: -0.2px;">Active Care Plan & Non-Pharmacological Orders</h5>' +
+                            '<h5 class="m-0 text-dark fw-bold" style="font-size: 0.95rem; letter-spacing: -0.2px;">Care Plan & Non-Pharmacological Orders</h5>' +
                             '<small class="text-muted" style="font-size: 0.75rem;">Ongoing lifestyle adjustments and nursing duties</small>' +
                         '</div>' +
                         '<button type="button" class="btn btn-sm btn-outline-secondary" id="np-refresh-btn" style="border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.78rem;">' +
@@ -2173,8 +2174,16 @@ window.NonPharmManager = (function($) {
                         '</button>' +
                     '</div>' +
                 '</div>' +
-                '<div class="card-body p-0">' +
-                    '<div id="np-alert-container" class="p-3 pb-0" style="display:none;"></div>' +
+                '<div class="card-body p-3">' +
+                    '<ul class="nav nav-pills mb-3 bg-light p-1 rounded-3" id="cp-sub-tabs" style="max-width: 320px; font-size: 0.8rem; font-weight: 600; border: 1px solid #cbd5e1; display: flex;">' +
+                        '<li class="nav-item flex-fill text-center" style="list-style: none;">' +
+                            '<a class="nav-link active py-1 px-3" href="#" id="cp-tab-active" style="border-radius: 6px; transition: all 0.2s;" onclick="window.NonPharmManager.switchCpSubTab(event, \'active\')">Active Plan</a>' +
+                        '</li>' +
+                        '<li class="nav-item flex-fill text-center" style="list-style: none;">' +
+                            '<a class="nav-link text-secondary py-1 px-3" href="#" id="cp-tab-history" style="border-radius: 6px; transition: all 0.2s;" onclick="window.NonPharmManager.switchCpSubTab(event, \'history\')">Plan History</a>' +
+                        '</li>' +
+                    '</ul>' +
+                    '<div id="np-alert-container" class="mb-3" style="display:none;"></div>' +
                     '<div class="table-responsive">' +
                         '<table class="table table-hover align-middle mb-0" id="np-orders-table" style="font-size: 0.85rem;">' +
                             '<thead class="table-light text-uppercase text-secondary fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">' +
@@ -2290,6 +2299,18 @@ window.NonPharmManager = (function($) {
         });
     }
 
+    function switchCpSubTab(e, tabName) {
+        if (e) e.preventDefault();
+        currentSubTab = tabName;
+        $('#cp-sub-tabs .nav-link').removeClass('active text-white bg-primary bg-secondary').addClass('text-secondary bg-transparent');
+        if (tabName === 'active') {
+            $('#cp-tab-active').addClass('active text-white bg-primary').removeClass('text-secondary bg-transparent');
+        } else {
+            $('#cp-tab-history').addClass('active text-white bg-secondary').removeClass('text-secondary bg-transparent');
+        }
+        renderOrders(loadedOrdersCache);
+    }
+
     function loadOrders() {
         var $body = $('#np-orders-body');
         if (!$body.length) return;
@@ -2315,13 +2336,23 @@ window.NonPharmManager = (function($) {
         var $body = $('#np-orders-body');
         if (!$body.length) return;
 
-        if (!orders || orders.length === 0) {
-            $body.html('<tr><td colspan="6" class="text-center text-muted py-4">No non-pharmacological care orders defined for this patient.</td></tr>');
+        var filteredOrders = [];
+        if (currentSubTab === 'active') {
+            filteredOrders = (orders || []).filter(function(o) { return o.status === 'active'; });
+        } else {
+            filteredOrders = (orders || []).filter(function(o) { return o.status === 'completed' || o.status === 'discontinued'; });
+        }
+
+        if (!filteredOrders || filteredOrders.length === 0) {
+            var msg = currentSubTab === 'active' 
+                ? 'No active non-pharmacological care orders defined for this patient.'
+                : 'No care plan history found for this patient.';
+            $body.html('<tr><td colspan="6" class="text-center text-muted py-4">' + msg + '</td></tr>');
             return;
         }
 
         var html = '';
-        orders.forEach(function(o) {
+        filteredOrders.forEach(function(o) {
             var categoryBadge = '';
             var catColors = {
                 'Diet': 'bg-success',
@@ -2604,7 +2635,8 @@ window.NonPharmManager = (function($) {
         applyPreset: applyPreset,
         completeOrder: completeOrder,
         discontinueOrder: discontinueOrder,
-        loadUnviewedCounts: loadUnviewedCounts
+        loadUnviewedCounts: loadUnviewedCounts,
+        switchCpSubTab: switchCpSubTab
     };
 
 })(jQuery);
