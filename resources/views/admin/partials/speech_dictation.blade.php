@@ -12,7 +12,7 @@
         <button type="button" 
                 id="btn-voice-dictate-{{ $uniqueId }}" 
                 class="btn btn-speech-kit btn-speech-idle d-flex align-items-center gap-2">
-            <span class="speech-mic-icon-wrapper"><i class="fa fa-microphone"></i></span> Start Dictation
+            <span class="speech-mic-icon-wrapper"><i class="fa fa-microphone"></i></span> Start Dictation <span class="badge bg-danger rounded-pill py-0.5 px-1 ms-1" style="font-size: 0.55rem; line-height: 1;">BETA</span>
         </button>
         
         {{-- Polish Note Button (NLP Offline Retext Tool) --}}
@@ -35,6 +35,12 @@
                 <option value="fr-FR" {{ $defaultLang === 'fr-FR' ? 'selected' : '' }}>Français</option>
             </select>
         @endif
+    </div>
+
+    {{-- Micro-Alert Section: AI Development Warning --}}
+    <div class="speech-ai-alert mt-2 p-2 border rounded-3 text-muted" style="background: rgba(255, 193, 7, 0.05); border-color: rgba(255, 193, 7, 0.15) !important; font-size: 0.72rem; max-width: 500px;">
+        <i class="fa fa-info-circle text-warning me-1"></i>
+        <strong>AI Assistant Notice:</strong> Offline Speech Dictation is active. Note formatting, templates, and clinical recommendation features are currently in active beta development and not fully complete.
     </div>
 
     {{-- Live Preview Speech Bubble --}}
@@ -219,6 +225,7 @@
 </style>
 
 <script>
+window.SPEECH_ASSET_BASE = "{{ asset('assets/js') }}";
 document.addEventListener('DOMContentLoaded', function() {
     function initSpeechKit() {
         if (typeof SpeechDictationKit === 'undefined') {

@@ -4465,6 +4465,10 @@
                     <i class="fa fa-history"></i>
                     <span>Clinical Story</span>
                 </button>
+                <button class="workspace-tab" data-tab="notes">
+                    <i class="mdi mdi-note-text"></i>
+                    <span>Nursing Notes</span>
+                </button>
                 <button class="workspace-tab" data-tab="vitals">
                     <i class="mdi mdi-heart-pulse"></i>
                     <span>Vitals</span>
@@ -4496,10 +4500,6 @@
                 <button class="workspace-tab" data-tab="billing">
                     <i class="mdi mdi-cash-register"></i>
                     <span>Billing</span>
-                </button>
-                <button class="workspace-tab" data-tab="notes">
-                    <i class="mdi mdi-note-text"></i>
-                    <span>Nursing Notes</span>
                 </button>
             </div>
 
@@ -5385,79 +5385,14 @@
             </div>
             <!-- Nursing Notes Tab -->
             <div class="workspace-tab-content" id="notes-tab">
-                <div class="notes-container p-3">
-                    <!-- Sub-tabs for Notes -->
-                    <ul class="nav nav-tabs mb-3" id="notes-sub-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="notes-add-tab" data-toggle="tab" href="#notes-add" role="tab">
-                                <i class="mdi mdi-plus-circle"></i> Add Note
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="notes-history-tab-link" data-toggle="tab" href="#notes-history" role="tab">
-                                <i class="mdi mdi-history"></i> History
-                            </a>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content" id="notes-sub-content">
-                        <!-- Add Note Sub-tab -->
-                        <div class="tab-pane fade show active" id="notes-add" role="tabpanel">
-                            <div class="card-modern">
-                                <div class="card-header bg-primary text-white py-2">
-                                    <h6 class="mb-0"><i class="mdi mdi-note-text"></i> Add Nursing Note</h6>
-                                </div>
-                                <div class="card-body">
-                                    <form id="nursing-note-form">
-                                        <div class="form-group">
-                                            <label for="nursing-note-editor"><i class="mdi mdi-text"></i> Note Content *</label>
-                                            <style>
-                                                /* Make nurse notes CKEditor taller */
-                                                #nursing-note-form .ck-editor__editable,
-                                                #editNoteModal .ck-editor__editable {
-                                                    min-height: 55vh !important;
-                                                    max-height: calc(100vh - 250px) !important;
-                                                    overflow-y: auto !important;
-                                                }
-                                            </style>
-                                            <div id="nursing-note-editor"></div>
-                                        </div>
-                                        <div class="form-actions text-right mt-3">
-                                            <div id="note-autosave-status" class="small mb-2" style="min-height: 1.3em;"></div>
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="mdi mdi-content-save"></i> Save Note
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Notes History Sub-tab -->
-                        <div class="tab-pane fade has-timeline" id="notes-history" role="tabpanel">
-                            <div class="card-modern">
-                                <div class="card-header py-2 d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0"><i class="mdi mdi-history"></i> Notes History</h6>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="loadNotesHistory(currentPatient)">
-                                        <i class="mdi mdi-refresh"></i> Refresh
-                                    </button>
-                                </div>
-                                <div class="card-body bg-light p-3">
-                                    <div class="table-responsive">
-                                        <table class="table table-borderless w-100" id="nursing-notes-table">
-                                            <thead class="d-none">
-                                                <tr>
-                                                    <th>Info</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @include('admin.partials.shared_workbench_nurse_notes', [
+                    'prefix' => 'nursing',
+                    'formId' => 'nursing-note-form',
+                    'editorId' => 'nursing-note-editor',
+                    'statusId' => 'note-autosave-status',
+                    'tableId' => 'nursing-notes-table',
+                    'refreshCallback' => 'loadNotesHistory(currentPatient)'
+                ])
             </div>
         </div>
     </div>
@@ -6793,6 +6728,8 @@
 @section('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+<script src="{{ asset('js/workbench-notes-shared.js') }}"></script>
+<script src="{{ asset('js/speech-dictation.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
@@ -7994,7 +7931,12 @@ function loadPatient(patientId) {
             loadNotesHistory(patientId);
 
             // Reset note autosave state when switching patients
-            clearTimeout(nurseNoteAutosaveTimer);
+            if (typeof WorkbenchNotesKit !== 'undefined' && WorkbenchNotesKit.autosaveTimers['nursing']) {
+                clearTimeout(WorkbenchNotesKit.autosaveTimers['nursing']);
+            }
+            if (typeof nurseNoteAutosaveTimer !== 'undefined') {
+                clearTimeout(nurseNoteAutosaveTimer);
+            }
             $('#note-autosave-status').html('');
             if (nursingNoteEditor) { try { nursingNoteEditor.setData(''); } catch(e) {} }
 
@@ -13237,66 +13179,33 @@ $(document).on('click', '#view-timeline-btn, #view-calendar-btn, #view-table-btn
 
 // Nursing Note Form Submit
 // Initialize CKEditor for nursing note
+// Initialize CKEditor for nursing note using the shared WorkbenchNotesKit
 let nursingNoteEditor;
-let nurseNoteAutosaveTimer = null;
-
-function doNurseNoteAutosave() {
-    if (!currentPatient || !nursingNoteEditor) return;
-    const content = nursingNoteEditor.getData();
-    if (!content.trim()) return;
-    $.ajax({
-        url: '{{ route("nursing-workbench.notes.store") }}',
-        method: 'POST',
-        data: { patient_id: currentPatient, note_type_id: 5, note: content, completed: 0 },
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-        success: function() {
-            const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-            $('#note-autosave-status').html('<i class="mdi mdi-check-circle text-success"></i> <span class="text-success">Autosaved ' + t + '</span>');
-        },
-        error: function() {
-            $('#note-autosave-status').html('<i class="mdi mdi-alert-circle text-danger"></i> <span class="text-danger">Autosave failed</span>');
-        }
-    });
-}
+var nurseNoteAutosaveTimer = null;
 
 function initNursingNoteCKEditor() {
-    if (document.querySelector('#nursing-note-editor') && !nursingNoteEditor) {
-        ClassicEditor
-            .create(document.querySelector('#nursing-note-editor'), {
-                toolbar: {
-                    items: [
-                        'heading',
-                        '|',
-                        'bold',
-                        'italic',
-                        'bulletedList',
-                        'numberedList',
-                        '|',
-                        'outdent',
-                        'indent',
-                        '|',
-                        'blockQuote',
-                        'insertTable',
-                        'undo',
-                        'redo'
-                    ]
-                }
-            })
-            .then(editor => {
-                nursingNoteEditor = editor;
-                // Wire up autosave on editor changes
-                editor.model.document.on('change:data', () => {
-                    clearTimeout(nurseNoteAutosaveTimer);
-                    const content = editor.getData();
-                    if (!content.trim() || !currentPatient) return;
-                    $('#note-autosave-status').html('<i class="mdi mdi-loading mdi-spin text-warning"></i> <span class="text-warning">Unsaved changes...</span>');
-                    nurseNoteAutosaveTimer = setTimeout(doNurseNoteAutosave, 3000);
-                });
-            })
-            .catch(error => {
-                console.error(error);
-            });
-    }
+    WorkbenchNotesKit.initEditor({
+        prefix: 'nursing',
+        editorSelector: '#nursing-note-editor',
+        formSelector: '#nursing-note-form',
+        statusSelector: '#note-autosave-status',
+        noteTypeId: 5,
+        csrfToken: '{{ csrf_token() }}',
+        getSaveUrl: function(patientId) {
+            return '{{ route("nursing-workbench.notes.store") }}';
+        },
+        getPatientId: function() {
+            return currentPatient;
+        },
+        onSaveSuccess: function() {
+            // Switch to history tab to see the new note
+            $('#notes-history-tab-link').tab('show');
+            loadNotesHistory(currentPatient);
+        }
+    });
+    
+    // Keep nursingNoteEditor synced for reference
+    nursingNoteEditor = WorkbenchNotesKit.editors['nursing'];
 }
 
 // Ensure editor is initialized when tab shown
@@ -13309,45 +13218,6 @@ $('a[data-toggle="tab"][href="#notes-add"]').on('shown.bs.tab', function (e) {
 
 // Also try to init on page load after a brief delay
 setTimeout(initNursingNoteCKEditor, 1000);
-
-$('#nursing-note-form').on('submit', function(e) {
-    e.preventDefault();
-
-    // Get data from CKEditor
-    const noteContent = nursingNoteEditor ? nursingNoteEditor.getData() : '';
-
-    if (!noteContent.trim()) {
-        showNotification('error', 'Please enter note content');
-        return;
-    }
-
-    const data = {
-        patient_id: currentPatient,
-        note_type_id: 5, // Hardcoded for "Others" as requested
-        note: noteContent
-    };
-
-    $.ajax({
-        url: '{{ route("nursing-workbench.notes.store") }}',
-        method: 'POST',
-        data: data,
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-        success: function(response) {
-            showNotification('success', response.message || 'Note saved successfully');
-            if (nursingNoteEditor) {
-                nursingNoteEditor.setData('');
-            }
-            clearTimeout(nurseNoteAutosaveTimer);
-            $('#note-autosave-status').html('');
-            // Switch to history tab to see the new note
-            $('#notes-history-tab-link').tab('show');
-            loadNotesHistory(currentPatient);
-        },
-        error: function(xhr) {
-            showNotification('error', xhr.responseJSON?.message || 'Failed to save note');
-        }
-    });
-});
 
 // Load Notes History with Cards (DataTable)
 function loadNotesHistory(patientId) {
