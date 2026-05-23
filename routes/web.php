@@ -356,6 +356,10 @@ Route::group(['middleware' => ['auth']], function () {
         // Recent encounters + items for re-prescribe dropdown (Plan §5.3)
         Route::get('encounters/{encounter}/recent-encounters', [EncounterController::class, 'recentEncounters'])->name('encounters.recentEncounters');
         Route::get('encounters/{encounter}/encounter-items/{sourceEncounter}', [EncounterController::class, 'encounterItems'])->name('encounters.encounterItems');
+        Route::get('encounters/{encounter}/clinical-story/timeline', [EncounterController::class, 'getClinicalStoryTimeline'])->name('encounters.clinicalStoryTimeline');
+        Route::get('encounters/{encounter}/clinical-story', [EncounterController::class, 'getPatientClinicalStory'])->name('encounters.clinicalStory');
+        Route::get('patients/{patient}/clinical-story/timeline', [EncounterController::class, 'getPatientClinicalStoryTimeline'])->name('patients.clinicalStoryTimeline');
+        Route::get('patients/{patient}/clinical-story', [EncounterController::class, 'getPatientClinicalStoryFallback'])->name('patients.clinicalStory');
 
         // Apply treatment plan to encounter (Plan §6.3)
         Route::post('encounters/{encounter}/apply-treatment-plan', [TreatmentPlanController::class, 'applyToEncounter'])->name('encounters.applyTreatmentPlan');
