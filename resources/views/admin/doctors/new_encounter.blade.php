@@ -320,7 +320,7 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="clinical_story_tab" data-bs-toggle="tab" data-bs-target="#clinical_story" type="button" role="tab" aria-controls="clinical_story" aria-selected="false">
-                <i class="fa fa-history me-1"></i> Clinical Story
+                <i class="fa fa-history me-1"></i> Clinical Story <span class="badge bg-success rounded-pill ms-1" style="font-size: 0.65rem;">NEW</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">

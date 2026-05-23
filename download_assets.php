@@ -87,31 +87,23 @@ $assets = [
         'url' => 'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
         'path' => 'public/assets/js/marked.min.js'
     ],
-    // Retext JS and Unified NLP scribe dependencies for local offline use
-    [
-        'url' => 'https://esm.sh/unified@10?bundle',
-        'path' => 'public/assets/js/unified.min.js'
-    ],
-    [
-        'url' => 'https://esm.sh/retext-english@4?bundle',
-        'path' => 'public/assets/js/retext-english.min.js'
-    ],
-    [
-        'url' => 'https://esm.sh/retext-stringify@3?bundle',
-        'path' => 'public/assets/js/retext-stringify.min.js'
-    ],
-    [
-        'url' => 'https://esm.sh/retext-repeated-words@3?bundle',
-        'path' => 'public/assets/js/retext-repeated-words.min.js'
-    ],
-    [
-        'url' => 'https://esm.sh/retext-indefinite-article@3?bundle',
-        'path' => 'public/assets/js/retext-indefinite-article.min.js'
-    ],
-    [
-        'url' => 'https://esm.sh/unist-util-visit@4?bundle',
-        'path' => 'public/assets/js/unist-util-visit.min.js'
-    ]
+    // ──────────────────────────────────────────────────────────────────────────
+    // NOTE: Retext NLP offline bundle is NOT downloaded via file_get_contents.
+    // The individual esm.sh stubs are redirect-only files that break when served
+    // locally. Instead, a true monolithic ESM bundle is built using esbuild:
+    //
+    //   mkdir .retext-build && cd .retext-build
+    //   npm init -y
+    //   npm install unified@10.1.2 retext-english@4.1.0 retext-stringify@3.0.0 \
+    //       retext-repeated-words@4.1.0 retext-indefinite-article@4.1.0 unist-util-visit@4.1.2
+    //   # Create entry.js with named re-exports of all packages
+    //   npx esbuild entry.js --bundle --format=esm --platform=browser \
+    //       --target=es2020 --minify --outfile=../public/assets/js/retext-bundle.min.js
+    //   cd .. && rm -rf .retext-build
+    //
+    // IMPORTANT version note: retext-stringify@3.0.0 (NOT 4.x) is required for
+    // compatibility with unified@10.x (uses uppercase `Compiler` API).
+    // ──────────────────────────────────────────────────────────────────────────
 ];
 
 foreach ($assets as $asset) {

@@ -14,14 +14,17 @@ class RetextScribe {
         if (this.initialized) return;
 
         try {
-            // Dynamic ESM imports from local public public/assets/js folder
-            // Fully offline-compatible!
-            const { unified } = await import('/assets/js/unified.min.js');
-            const { default: retextEnglish } = await import('/assets/js/retext-english.min.js');
-            const { default: retextStringify } = await import('/assets/js/retext-stringify.min.js');
-            const { default: retextRepeatedWords } = await import('/assets/js/retext-repeated-words.min.js');
-            const { default: retextIndefiniteArticle } = await import('/assets/js/retext-indefinite-article.min.js');
-            const { visit } = await import('/assets/js/unist-util-visit.min.js');
+            // Load all NLP deps from a single monolithic offline bundle
+            // Built with esbuild from local node_modules — no CDN dependency
+            const base = window.SPEECH_ASSET_BASE || '/assets/js';
+            const {
+                unified,
+                retextEnglish,
+                retextStringify,
+                retextRepeatedWords,
+                retextIndefiniteArticle,
+                visit
+            } = await import(`${base}/retext-bundle.min.js`);
 
             // Custom clinical abbreviation expander plugin
             const clinicalAbbrPlugin = () => {
@@ -39,7 +42,9 @@ class RetextScribe {
                 };
 
                 return (tree) => {
-                    visit(tree, 'WordNode', (node) => {
+                    // nlcst: WordNode is a parent container; TextNode carries the actual string value
+                    visit(tree, 'TextNode', (node) => {
+                        if (!node.value) return;
                         const word = node.value.toLowerCase();
                         if (abbreviations[word]) {
                             node.value = abbreviations[word];
@@ -77,62 +82,63 @@ class SpeechDictationKit {
         this.previewText = document.querySelector(options.previewTextSelector);
         this.langSelect = document.querySelector(options.langSelectSelector);
         this.formatButton = document.querySelector(options.formatButtonSelector);
-        
+
         this.editorType = options.editorType || 'textarea'; // 'textarea' or 'ckeditor'
         this.defaultLang = options.defaultLang || 'en-US';
         this.onResultCallback = options.onResultCallback || null;
-        
+
         this.recognition = null;
         this.isListening = false;
         this.ignoreNextStart = false;
+        this.isFirstInsertOfSession = true; // reset each time start() is called
         this.scribe = new RetextScribe();
-        
+
         if (!this.button || !this.target) {
             console.error('SpeechDictationKit: Button or target element not found.');
             return;
         }
-        
+
         this.init();
     }
-    
+
     init() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
+
         if (!SpeechRecognition) {
             this.markUnsupported();
             return;
         }
-        
+
         // Setup Web Speech API
         this.recognition = new SpeechRecognition();
         this.recognition.continuous = true;
         this.recognition.interimResults = true;
         this.recognition.lang = this.getLanguage();
-        
+
         this.bindEvents();
     }
-    
+
     getLanguage() {
         if (this.langSelect) {
             return this.langSelect.value;
         }
         return this.defaultLang;
     }
-    
+
     markUnsupported() {
         this.button.disabled = true;
         this.button.classList.add('btn-dictate-unsupported');
         this.button.innerHTML = '<i class="fa fa-microphone-slash"></i> Unsupported';
         this.button.title = 'Speech recognition is not supported in this browser (Use Chrome or Safari).';
     }
-    
+
     bindEvents() {
         // Toggle Dictation on Click
         this.button.addEventListener('click', (e) => {
             e.preventDefault();
             this.toggleDictation();
         });
-        
+
         // Manual Polish Note Click
         if (this.formatButton) {
             this.formatButton.addEventListener('click', (e) => {
@@ -140,7 +146,7 @@ class SpeechDictationKit {
                 this.manualFormat();
             });
         }
-        
+
         // Handle Language Change
         if (this.langSelect) {
             this.langSelect.addEventListener('change', () => {
@@ -152,13 +158,13 @@ class SpeechDictationKit {
                 }
             });
         }
-        
+
         // Speech Recognition Lifecycle
         this.recognition.onstart = () => {
             this.isListening = true;
             this.updateUI('listening');
         };
-        
+
         this.recognition.onend = () => {
             if (this.ignoreNextStart) {
                 this.ignoreNextStart = false;
@@ -168,16 +174,16 @@ class SpeechDictationKit {
             this.isListening = false;
             this.updateUI('idle');
         };
-        
+
         this.recognition.onerror = (event) => {
             console.error('Speech recognition error:', event.error);
             this.handleError(event.error);
         };
-        
+
         this.recognition.onresult = async (event) => {
             let interimTranscript = '';
             let finalTranscript = '';
-            
+
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 const transcriptPiece = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
@@ -186,26 +192,26 @@ class SpeechDictationKit {
                     interimTranscript += transcriptPiece;
                 }
             }
-            
+
             // Render Live Preview
             if (interimTranscript && this.previewText) {
                 this.previewText.innerHTML = `<em>${interimTranscript}</em>`;
                 if (this.previewBubble) this.previewBubble.classList.remove('d-none');
             }
-            
+
             // Insert finalized text
             if (finalTranscript) {
                 // Pass raw speech output through Retext NLP Engine
                 const cleanedText = await this.scribe.process(finalTranscript);
                 const formattedText = this.formatSpeech(cleanedText);
-                
+
                 if (formattedText) {
                     this.insertText(formattedText);
                     if (this.onResultCallback) {
                         this.onResultCallback(formattedText);
                     }
                 }
-                
+
                 // Clear active preview
                 if (this.previewText) {
                     this.previewText.textContent = 'Listening...';
@@ -213,7 +219,7 @@ class SpeechDictationKit {
             }
         };
     }
-    
+
     toggleDictation() {
         if (this.isListening) {
             this.stop();
@@ -221,10 +227,11 @@ class SpeechDictationKit {
             this.start();
         }
     }
-    
+
     start() {
         if (this.recognition && !this.isListening) {
             this.recognition.lang = this.getLanguage();
+            this.isFirstInsertOfSession = true; // new session — next insert goes to new paragraph
             this.updateUI('connecting');
             try {
                 this.recognition.start();
@@ -233,23 +240,23 @@ class SpeechDictationKit {
             }
         }
     }
-    
+
     stop() {
         if (this.recognition && this.isListening) {
             this.recognition.stop();
         }
     }
-    
+
     restartRecognition() {
         this.ignoreNextStart = true;
         this.recognition.stop();
     }
-    
+
     updateUI(state) {
         if (state === 'listening') {
             this.button.className = 'btn btn-speech-kit btn-speech-listening d-flex align-items-center gap-2';
             this.button.innerHTML = '<span class="speech-mic-icon-wrapper"><i class="fa fa-microphone"></i></span> Stop Dictation';
-            
+
             if (this.previewBubble) {
                 this.previewBubble.classList.remove('d-none');
             }
@@ -263,13 +270,13 @@ class SpeechDictationKit {
             // Idle State
             this.button.className = 'btn btn-speech-kit btn-speech-idle d-flex align-items-center gap-2';
             this.button.innerHTML = '<span class="speech-mic-icon-wrapper"><i class="fa fa-microphone"></i></span> Start Dictation';
-            
+
             if (this.previewBubble) {
                 this.previewBubble.classList.add('d-none');
             }
         }
     }
-    
+
     handleError(error) {
         let msg = 'Speech recognition error occurred.';
         if (error === 'not-allowed') {
@@ -277,7 +284,7 @@ class SpeechDictationKit {
         } else if (error === 'no-speech') {
             msg = 'No voice detected. Please speak clearly into your microphone.';
         }
-        
+
         if (this.previewText) {
             this.previewText.innerHTML = `<span class="text-danger"><i class="fa fa-exclamation-circle"></i> ${msg}</span>`;
             setTimeout(() => {
@@ -286,14 +293,14 @@ class SpeechDictationKit {
                 }
             }, 5000);
         }
-        
+
         this.updateUI('idle');
         this.isListening = false;
     }
-    
+
     formatSpeech(text) {
         let result = text;
-        
+
         // Punctuation command replacements
         const commands = [
             { pattern: /\b(period|full stop|fullstop)\b/gi, replacement: '.' },
@@ -308,41 +315,61 @@ class SpeechDictationKit {
             { pattern: /\b(open parenthesis|open bracket)\b/gi, replacement: ' (' },
             { pattern: /\b(close parenthesis|close bracket)\b/gi, replacement: ') ' }
         ];
-        
+
         commands.forEach(cmd => {
             result = result.replace(cmd.pattern, cmd.replacement);
         });
-        
+
         // Clean double spaces and punctuation spacing
         result = result.replace(/\s+/g, ' ');
         result = result.replace(/\s+([.,?!:;])/g, '$1');
-        
+
         return result.trim();
     }
-    
+
     getEditorInstance() {
         const editorElement = this.target;
+
+        // 1. Check WorkbenchNotesKit (nursing / maternity shared editor registry)
+        if (window.WorkbenchNotesKit && window.WorkbenchNotesKit.editors) {
+            for (const prefix in window.WorkbenchNotesKit.editors) {
+                const ed = window.WorkbenchNotesKit.editors[prefix];
+                if (ed && ed.sourceElement && editorElement &&
+                    (ed.sourceElement === editorElement || ed.sourceElement.id === editorElement.id)) {
+                    return ed;
+                }
+            }
+        }
+
+        // 2. Global window.editor (doctor encounter page)
         if (window.editor && typeof window.editor.setData === 'function') {
             return window.editor;
-        } else if (editorElement && editorElement.ckeditorInstance) {
+        }
+
+        // 3. CKEditor instance attached directly on the element
+        if (editorElement && editorElement.ckeditorInstance) {
             return editorElement.ckeditorInstance;
-        } else if (typeof window.classicEditors !== 'undefined') {
+        }
+
+        // 4. Legacy classicEditors array
+        if (typeof window.classicEditors !== 'undefined') {
             let instance = null;
             window.classicEditors.forEach(ed => {
                 if (ed.sourceElement && ed.sourceElement.id === editorElement.id) instance = ed;
             });
             return instance;
         }
+
         return null;
     }
-    
+
     async manualFormat() {
         if (!this.formatButton) return;
-        
+
         const originalHTML = this.formatButton.innerHTML;
         this.formatButton.disabled = true;
         this.formatButton.innerHTML = '<span class="speech-format-icon-wrapper"><i class="fa fa-spinner fa-spin"></i></span> Polishing...';
-        
+
         try {
             let text = '';
             if (this.editorType === 'ckeditor') {
@@ -351,32 +378,32 @@ class SpeechDictationKit {
             } else {
                 text = this.target.value;
             }
-            
+
             if (text && text.trim() !== '') {
                 // SOAP/Clinical Auto-paragraphing
                 let polished = this.formatMedicalStructure(text);
-                
+
                 // Clean repeated words/articles via Retext NLP Scribe
                 polished = await this.scribe.process(polished);
-                
+
                 // Clean general spacing and punctuation issues
                 polished = this.cleanSpacingAndCasing(polished);
-                
+
                 if (this.editorType === 'ckeditor') {
                     const editor = this.getEditorInstance();
                     if (editor) editor.setData(polished);
                 } else {
                     this.target.value = polished;
                 }
-                
+
                 // Dispatch input events for autosave
                 this.target.dispatchEvent(new Event('change', { bubbles: true }));
                 this.target.dispatchEvent(new Event('input', { bubbles: true }));
-                
+
                 if (typeof window.autosavenotes === 'function') {
                     window.autosavenotes();
                 }
-                
+
                 if (window.toastr) {
                     toastr.success('✨ Clinical Note formatted & NLP-polished successfully!');
                 }
@@ -393,15 +420,15 @@ class SpeechDictationKit {
             this.formatButton.innerHTML = originalHTML;
         }
     }
-    
+
     formatMedicalStructure(text) {
         const sections = [
-            'Subjective', 'Objective', 'Assessment', 'Plan', 
+            'Subjective', 'Objective', 'Assessment', 'Plan',
             'History', 'Vitals', 'Examination', 'Diagnosis', 'Rx',
-            'Chief Complaint', 'Present Illness', 'Past History', 
+            'Chief Complaint', 'Present Illness', 'Past History',
             'Treatment Plan', 'Clinical Notes'
         ];
-        
+
         if (this.editorType === 'ckeditor') {
             // Process as HTML content for CKEditor 5
             sections.forEach(sec => {
@@ -418,47 +445,52 @@ class SpeechDictationKit {
             });
             text = text.replace(/\n{3,}/g, '\n\n');
         }
-        
+
         return text;
     }
-    
+
     cleanSpacingAndCasing(text) {
         // Clean duplicate spaces
         text = text.replace(/[ \t]+/g, ' ');
-        
+
         // Clean spaces before punctuation
         text = text.replace(/\s+([.,?!:;])/g, '$1');
-        
+
         // Ensure clean space after punctuation (avoiding decimal points like 37.5)
         text = text.replace(/([.,?!:;])([A-Za-z])/g, '$1 $2');
-        
+
         if (this.editorType !== 'ckeditor') {
             // Capitalize plain text sentence beginnings
             text = text.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, letter) => {
                 return separator + letter.toUpperCase();
             });
         }
-        
+
         return text;
     }
-    
+
     insertText(text) {
         if (this.editorType === 'ckeditor') {
             const editor = this.getEditorInstance();
-            
+
             if (editor) {
                 if (text === '\n' || text === '\n\n') {
                     editor.execute('enter');
                     return;
                 }
-                
+
+                // Each finalized result starts in its own paragraph if editor already has content
+                if (editor.getData().trim()) {
+                    editor.execute('enter');
+                }
+
                 try {
-                    const viewFragment = editor.data.processor.toView(' ' + text + ' ');
+                    const viewFragment = editor.data.processor.toView(text);
                     const modelFragment = editor.data.toModel(viewFragment);
                     editor.model.insertContent(modelFragment, editor.model.document.selection);
                 } catch (e) {
                     const currentData = editor.getData();
-                    editor.setData(currentData + ' ' + text);
+                    editor.setData(currentData + '<p>' + text + '</p>');
                 }
             } else {
                 this.insertAtCursor(this.target, ' ' + text);
@@ -467,7 +499,7 @@ class SpeechDictationKit {
             this.insertAtCursor(this.target, ' ' + text);
         }
     }
-    
+
     insertAtCursor(el, text) {
         if (el.selectionStart || el.selectionStart === 0) {
             const startPos = el.selectionStart;
@@ -480,7 +512,7 @@ class SpeechDictationKit {
             el.value += text;
             el.focus();
         }
-        
+
         const event = new Event('change', { bubbles: true });
         el.dispatchEvent(event);
     }
