@@ -99,16 +99,15 @@
                 <div class="row align-items-center">
                     <div class="col-md-3">
                         <select id="store-filter" class="form-control form-control-sm">
-                            <option value="">All Stores</option>
                             @foreach($stores as $store)
-                            <option value="{{ $store->id }}" {{ request('store_id') == $store->id ? 'selected' : '' }}>
+                            <option value="{{ $store->id }}" {{ (request('store_id', $selectedStore?->id) == $store->id) ? 'selected' : '' }}>
                                 {{ $store->store_name }}
                             </option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <a href="{{ route('inventory.store-workbench.manual-batch-form', ['product_id' => $product->id]) }}" class="btn btn-success btn-sm">
+                        <a href="{{ route('inventory.store-workbench.manual-batch-form', ['product_id' => $product->id, 'store_id' => $selectedStore?->id]) }}" class="btn btn-success btn-sm">
                             <i class="mdi mdi-plus"></i> Add Batch
                         </a>
                     </div>

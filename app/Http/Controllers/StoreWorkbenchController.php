@@ -300,11 +300,21 @@ class StoreWorkbenchController extends Controller
     public function productBatches(Request $request, int $productId)
     {
         $product = Product::findOrFail($productId);
-        $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
+        $user = auth()->user();
+        $stores = Store::active()->forUser($user)->orderBy('store_name')->get();
 
-        // Get store filter if specified
+        // Get store filter if specified, otherwise resolve default store
         $storeId = $request->get('store_id');
+        if (! $storeId) {
+            $resolved = $this->contextResolver->resolve($user);
+            $storeId = $resolved?->id ?? $stores->first()?->id;
+        }
         $selectedStore = $storeId ? Store::find($storeId) : null;
+
+        // Ensure the requested store is within the user's accessible stores
+        if ($selectedStore && ! $stores->contains('id', $selectedStore->id)) {
+            abort(403, 'You do not have access to this store.');
+        }
 
         // Build query for batches
         $batchQuery = StockBatch::where('product_id', $productId)
@@ -312,7 +322,7 @@ class StoreWorkbenchController extends Controller
             ->with(['creator', 'store', 'supplier', 'purchaseOrderItem.purchaseOrder'])
             ->fifoOrder();
 
-        // Filter by store if specified
+        // Always scope query to resolved/selected store if any exists
         if ($storeId) {
             $batchQuery->where('store_id', $storeId);
         }
