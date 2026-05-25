@@ -556,7 +556,7 @@ class AuditWorkbenchController extends Controller
      */
     public function settlementBreakdown($paymentId)
     {
-        $payment = \App\Models\Payment::with(['bank', 'user'])->findOrFail($paymentId);
+        $payment = \App\Models\Payment::with(['bank', 'staff_user'])->findOrFail($paymentId);
 
         // Fetch all staff bills allocated in this payment transaction
         $bills = \App\Models\StaffBill::whereHas('payments', function ($q) use ($paymentId) {
@@ -601,7 +601,7 @@ class AuditWorkbenchController extends Controller
                 'total_paid' => floatval($payment->total),
                 'total_discount' => floatval($payment->total_discount),
                 'settled_at' => $payment->created_at->format('Y-m-d H:i'),
-                'settled_by' => $payment->user ? trim($payment->user->surname . ' ' . $payment->user->firstname) : 'System Admin'
+                'settled_by' => $payment->staff_user ? trim($payment->staff_user->surname . ' ' . $payment->staff_user->firstname) : 'System Admin'
             ],
             'bills' => $billsData
         ]);
