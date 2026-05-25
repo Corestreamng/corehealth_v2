@@ -38,21 +38,21 @@
             <small class="text-muted d-block mb-2">{{ $description }}</small>
         @endif
 
-        <table class="table table-sm mb-0" style="font-size: 0.85rem;">
-            <thead style="background: #495057; color: white;">
-                <tr>
-                    <th style="width: 50%;">Account</th>
-                    <th class="text-right" style="width: 25%;">Debit</th>
-                    <th class="text-right" style="width: 25%;">Credit</th>
+        <table class="table table-sm mb-0" style="font-size: 0.78rem; table-layout: fixed; width: 100%;">
+            <thead>
+                <tr class="bg-dark text-white">
+                    <th style="width: 48%; font-weight: 600;" class="pl-2 py-1">Account</th>
+                    <th class="text-right" style="width: 26%; font-weight: 600; text-align: right;">Debit</th>
+                    <th class="text-right pr-2" style="width: 26%; font-weight: 600; text-align: right;">Credit</th>
                 </tr>
             </thead>
             <tbody id="{{ $bodyId ?? 'jePreviewBody' }}">
-                @if(isset($lines) && count($lines)> 0)
+                @if(isset($lines) && count($lines) > 0)
                     @foreach($lines as $line)
                         <tr>
-                            <td>{{ $line['account'] }}</td>
-                            <td class="text-right">{{ $line['debit']> 0 ? '₦' . number_format($line['debit'], 2) : '-' }}</td>
-                            <td class="text-right">{{ $line['credit']> 0 ? '₦' . number_format($line['credit'], 2) : '-' }}</td>
+                            <td class="pl-2 py-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ $line['account'] }}">{{ $line['account'] }}</td>
+                            <td class="text-right text-success font-weight-bold py-1">{{ $line['debit'] > 0 ? '₦' . number_format($line['debit'], 2) : '-' }}</td>
+                            <td class="text-right text-danger pr-2 font-weight-bold py-1">{{ $line['credit'] > 0 ? '₦' . number_format($line['credit'], 2) : '-' }}</td>
                         </tr>
                     @endforeach
                 @else
@@ -66,15 +66,15 @@
             </tbody>
             <tfoot style="background: #f8f9fa; font-weight: 600;">
                 <tr>
-                    <td>TOTALS</td>
-                    <td class="text-right" id="{{ $debitTotalId ?? 'jeTotalDebit' }}">
+                    <td class="pl-2 py-1">TOTALS</td>
+                    <td class="text-right text-success font-weight-bold py-1" id="{{ $debitTotalId ?? 'jeTotalDebit' }}">
                         @if(isset($lines))
                             ₦{{ number_format(collect($lines)->sum('debit'), 2) }}
                         @else
                             ₦0.00
                         @endif
                     </td>
-                    <td class="text-right" id="{{ $creditTotalId ?? 'jeTotalCredit' }}">
+                    <td class="text-right text-danger pr-2 font-weight-bold py-1" id="{{ $creditTotalId ?? 'jeTotalCredit' }}">
                         @if(isset($lines))
                             ₦{{ number_format(collect($lines)->sum('credit'), 2) }}
                         @else

@@ -264,56 +264,205 @@
             {{-- Panel: Staff Receivables Workbench --}}
             <div class="audit-panel d-none" id="tab-staff-receivables">
                 <div class="glass-panel">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="text-dark mb-0"><i class="mdi mdi-account-cash text-primary"></i> Staff Receivables Workbench</h4>
-                        <span class="badge bg-warning text-dark">Outstanding Ledger</span>
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                        <h4 class="text-dark mb-0"><i class="mdi mdi-account-cash text-primary"></i> Staff Receivables Ledger</h4>
+                        <span class="badge bg-warning text-dark font-weight-bold">Clearing & Audit History</span>
                     </div>
 
-                    <div class="table-responsive mt-3">
-                        <table class="table table-striped table-bordered" id="staffReceivablesTable">
-                            <thead>
-                                <tr>
-                                    <th>Staff Member</th>
-                                    <th>Employee ID</th>
-                                    <th>Unpaid Bills</th>
-                                    <th class="text-right">Total Outstanding</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($staffWithBills as $staffUser)
-                                    <tr>
-                                        <td>
-                                            <strong>{{ $staffUser->surname }} {{ $staffUser->firstname }}</strong>
-                                        </td>
-                                        <td><code>{{ $staffUser->staff_profile->employee_id ?? 'N/A' }}</code></td>
-                                        <td>
-                                            <span class="badge bg-secondary">{{ $staffUser->staffBills->count() }} Patient Bills</span>
-                                        </td>
-                                        <td class="text-right font-weight-bold text-warning">
-                                            ₦{{ number_format($staffUser->total_outstanding, 2) }}
-                                        </td>
-                                        <td>
-                                            <button type="button" class="btn btn-xs btn-primary settle-btn" 
-                                                data-id="{{ $staffUser->id }}"
-                                                data-name="{{ $staffUser->surname }} {{ $staffUser->firstname }}"
-                                                data-code="{{ $staffUser->staff_profile->employee_id ?? 'N/A' }}"
-                                                data-outstanding="{{ $staffUser->total_outstanding }}"
-                                                data-bills="{{ json_encode($staffUser->staffBills) }}">
-                                                Settle Bills
-                                            </button>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted">
-                                            <i class="mdi mdi-checkbox-marked-circle-outline text-success mdi-36px"></i>
-                                            <p class="mb-0 mt-2">All staff accounts are fully cleared!</p>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <!-- Sub-tabs Nav -->
+                    <ul class="nav nav-tabs mb-3" id="staffLedgerTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="outstanding-tab" data-bs-toggle="tab" href="#tab-outstanding" role="tab">
+                                <i class="mdi mdi-alert-circle-outline"></i> Outstanding Balances
+                                <span class="badge bg-warning text-dark ms-1">{{ $staffWithBills->count() }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="history-tab" data-bs-toggle="tab" href="#tab-history" role="tab">
+                                <i class="mdi mdi-history"></i> All Bills History
+                                <span class="badge bg-secondary text-white ms-1">{{ $allStaffBills->count() }}</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content">
+                        <!-- Sub-tab 1: Outstanding -->
+                        <div class="tab-pane fade show active" id="tab-outstanding" role="tabpanel">
+                            <div class="table-responsive mt-2">
+                                <table class="table table-striped table-bordered" id="staffReceivablesTable" style="width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Staff Member</th>
+                                            <th>Employee ID</th>
+                                            <th>Unpaid Bills</th>
+                                            <th class="text-right">Total Outstanding</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($staffWithBills as $staffUser)
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ $staffUser->surname }} {{ $staffUser->firstname }}</strong>
+                                                </td>
+                                                <td><code>{{ $staffUser->staff_profile->employee_id ?? 'N/A' }}</code></td>
+                                                <td>
+                                                    <span class="badge bg-secondary">{{ $staffUser->staffBills->count() }} Patient Bills</span>
+                                                </td>
+                                                <td class="text-right font-weight-bold text-warning">
+                                                    ₦{{ number_format($staffUser->total_outstanding, 2) }}
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-xs btn-primary settle-btn" 
+                                                        data-id="{{ $staffUser->id }}"
+                                                        data-name="{{ $staffUser->surname }} {{ $staffUser->firstname }}"
+                                                        data-code="{{ $staffUser->staff_profile->employee_id ?? 'N/A' }}"
+                                                        data-outstanding="{{ $staffUser->total_outstanding }}"
+                                                        data-bills="{{ json_encode($staffUser->staffBills) }}">
+                                                        Settle Bills
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="5" class="text-center py-4 text-muted">
+                                                    <i class="mdi mdi-checkbox-marked-circle-outline text-success mdi-36px"></i>
+                                                    <p class="mb-0 mt-2">All staff accounts are fully cleared!</p>
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Sub-tab 2: History -->
+                        <div class="tab-pane fade" id="tab-history" role="tabpanel">
+                            <div class="table-responsive mt-2">
+                                <table class="table table-hover table-bordered table-striped" id="staffBillsHistoryTable" style="width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Incurred Date</th>
+                                            <th>Staff Member</th>
+                                            <th>Patient Name</th>
+                                            <th>Ref Details</th>
+                                            <th class="text-right">Original Amt</th>
+                                            <th class="text-right">Outstanding</th>
+                                            <th>Status</th>
+                                            <th>Settlement Details / Breakdown</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($allStaffBills as $bill)
+                                            @php
+                                                $staffName = $bill->staffUser 
+                                                    ? trim($bill->staffUser->surname . ' ' . $bill->staffUser->firstname . ' ' . $bill->staffUser->othername) 
+                                                    : 'Unknown Staff';
+                                                $empCode = $bill->staffUser?->staff_profile?->employee_id ?? 'N/A';
+                                                
+                                                $patientName = $bill->patient && $bill->patient->user 
+                                                    ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername) 
+                                                    : ($bill->patient?->fullname ?? 'N/A');
+                                                $fileNo = $bill->patient?->file_no ?? 'N/A';
+                                            @endphp
+                                            <tr>
+                                                <td><span class="small text-muted">{{ $bill->created_at->format('Y-m-d H:i') }}</span></td>
+                                                <td>
+                                                    <strong>{{ $staffName }}</strong><br>
+                                                    <code class="small">{{ $empCode }}</code>
+                                                </td>
+                                                <td>
+                                                    <strong>{{ $patientName }}</strong><br>
+                                                    <code class="small">File: {{ $fileNo }}</code>
+                                                </td>
+                                                <td>
+                                                    <span class="small text-muted">Ref: {{ $bill->checkoutPayment?->reference_no ?? 'N/A' }}</span>
+                                                </td>
+                                                <td class="text-right font-weight-bold">₦{{ number_format($bill->total_amount, 2) }}</td>
+                                                <td class="text-right font-weight-bold @if($bill->outstanding_amount > 0) text-warning @else text-success @endif">
+                                                    ₦{{ number_format($bill->outstanding_amount, 2) }}
+                                                </td>
+                                                <td>
+                                                    @if($bill->status == 'settled')
+                                                        <span class="badge bg-success text-white">Fully Settled</span>
+                                                    @elseif($bill->status == 'partial')
+                                                        <span class="badge bg-warning text-dark">Partially Cleared</span>
+                                                    @else
+                                                        <span class="badge bg-danger text-white">Pending</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($bill->status == 'settled' || $bill->status == 'partial')
+                                                        <div class="small p-2 bg-light rounded border" style="min-width: 250px;">
+                                                            <div><strong>Cleared At:</strong> {{ $bill->settled_at ? $bill->settled_at->format('Y-m-d H:i') : ($bill->updated_at ? $bill->updated_at->format('Y-m-d H:i') : 'N/A') }}</div>
+                                                            <div><strong>Cleared Amount:</strong> ₦{{ number_format(floatval($bill->total_amount) - floatval($bill->outstanding_amount), 2) }}</div>
+                                                            <div><strong>Method:</strong> <span class="badge bg-info text-white">{{ $bill->settlementPayment?->payment_method ?? 'N/A' }}</span></div>
+                                                            @if($bill->settlementPayment?->bank)
+                                                                <div><strong>Bank:</strong> {{ $bill->settlementPayment->bank->name }}</div>
+                                                            @endif
+                                                            @if($bill->settlementPayment?->reference_no)
+                                                                <div><strong>Receipt Ref:</strong> <code>{{ $bill->settlementPayment->reference_no }}</code></div>
+                                                            @endif
+
+                                                            @if($bill->settlementPayment?->journalEntry)
+                                                                <div class="mt-2 pt-2 border-top">
+                                                                    <button type="button" class="btn btn-xs btn-outline-secondary d-flex align-items-center gap-1 toggle-journal-btn" data-target="journal-entry-{{ $bill->id }}" style="font-size: 0.7rem; padding: 2px 5px;">
+                                                                        <i class="mdi mdi-book-open-page-variant mr-1"></i> Show Journal Entry
+                                                                    </button>
+                                                                    <div id="journal-entry-{{ $bill->id }}" class="mt-2 d-none p-2 bg-white rounded border">
+                                                                        <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                                                            <span class="small font-weight-bold text-dark" style="font-size: 0.7rem;">Entry #: {{ $bill->settlementPayment->journalEntry->entry_number }}</span>
+                                                                            <span class="badge bg-{{ $bill->settlementPayment->journalEntry->status === 'posted' ? 'success' : 'warning' }} text-white text-uppercase" style="font-size:0.6rem;">
+                                                                                {{ $bill->settlementPayment->journalEntry->status }}
+                                                                            </span>
+                                                                        </div>
+                                                                        <table class="table table-xs table-bordered mb-0" style="font-size: 0.65rem; width: 100%;">
+                                                                            <thead class="bg-light">
+                                                                                <tr>
+                                                                                    <th>Account</th>
+                                                                                    <th class="text-right">Dr</th>
+                                                                                    <th class="text-right">Cr</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                @foreach($bill->settlementPayment->journalEntry->lines as $line)
+                                                                                    <tr>
+                                                                                        <td>
+                                                                                            <span class="font-weight-bold text-dark">{{ $line->account?->code }}</span><br>
+                                                                                            <span class="text-muted" style="font-size:0.6rem;">{{ $line->account?->name }}</span>
+                                                                                        </td>
+                                                                                        <td class="text-right text-success">{{ $line->debit > 0 ? '₦' . number_format($line->debit, 2) : '-' }}</td>
+                                                                                        <td class="text-right text-danger">{{ $line->credit > 0 ? '₦' . number_format($line->credit, 2) : '-' }}</td>
+                                                                                    </tr>
+                                                                                @endforeach
+                                                                            </tbody>
+                                                                            <tfoot class="font-weight-bold bg-light" style="font-size:0.65rem;">
+                                                                                <tr>
+                                                                                    <td>Total</td>
+                                                                                    <td class="text-right text-success">₦{{ number_format($bill->settlementPayment->journalEntry->lines->sum('debit'), 2) }}</td>
+                                                                                    <td class="text-right text-danger">₦{{ number_format($bill->settlementPayment->journalEntry->lines->sum('credit'), 2) }}</td>
+                                                                                </tr>
+                                                                            </tfoot>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted small">No settlement breakdown available.</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4 text-muted">No staff bills recorded.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -604,56 +753,87 @@
     </div>
 </div>
 
-{{-- Settle Modal --}}
 <div class="modal fade" id="settleModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="settleModalLabel">Settle Outstanding Bills</h5>
+                <h5 class="modal-title font-weight-bold" id="settleModalLabel">Settle Outstanding Bills</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="settleForm">
                 @csrf
                 <input type="hidden" name="staff_id" id="settle_staff_id">
                 <div class="modal-body d-flex flex-column gap-3">
-                    <div class="bg-light p-2 rounded border">
-                        <div class="text-muted small">Staff Member:</div>
-                        <div class="font-weight-bold text-dark" id="settle_staff_name"></div>
-                        <div class="text-muted small mt-1">Outstanding Balance: <span class="text-warning font-weight-bold" id="settle_staff_balance"></span></div>
+                    <div class="bg-light p-3 rounded border">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-muted small font-weight-bold">Staff Member:</div>
+                                <div class="font-weight-bold text-dark h6 mb-0" id="settle_staff_name"></div>
+                            </div>
+                            <div class="col-md-4 border-left">
+                                <div class="text-muted small font-weight-bold">Outstanding Balance:</div>
+                                <div class="text-warning font-weight-bold h5 mb-0" id="settle_staff_balance"></div>
+                            </div>
+                            <div class="col-md-4 border-left">
+                                <div class="text-muted small font-weight-bold">Remaining Balance:</div>
+                                <div class="text-success font-weight-bold h5 mb-0" id="settle_remaining_balance">₦0.00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info py-2 px-3 mb-0 small" style="border-left: 4px solid #17a2b8; font-size: 0.82rem;">
+                        <i class="mdi mdi-information-outline mr-1 text-info"></i>
+                        <strong>Settlement Allocation Note:</strong> The outstanding balance will be cleared by the sum of your <strong>Amount Paid</strong> and any <strong>Discount Allowed</strong>. The remaining balance represents what stays outstanding on the staff ledger. Overpayments are automatically capped.
                     </div>
 
                     <div>
                         <label class="form-label text-muted small font-weight-bold">Select Patient Bills to Settle:</label>
-                        <div id="settle_bills_checkboxes" class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;"></div>
+                        <div id="settle_bills_checkboxes" class="d-flex flex-column gap-2 p-2 border rounded bg-white" style="max-height: 150px; overflow-y: auto;"></div>
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label small text-muted font-weight-bold">Payment Method</label>
-                            <select name="payment_method" id="settle_payment_method" class="form-select">
-                                <option value="CASH">Cash</option>
-                                <option value="POS">POS (Card)</option>
-                                <option value="TRANSFER">Bank Transfer</option>
-                            </select>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted font-weight-bold">Payment Method</label>
+                                <select name="payment_method" id="settle_payment_method" class="form-select">
+                                    <option value="CASH">Cash</option>
+                                    <option value="POS">POS (Card)</option>
+                                    <option value="TRANSFER">Bank Transfer</option>
+                                    <option value="MOBILE">Mobile Money</option>
+                                </select>
+                            </div>
+                            <div class="mb-3" id="settle_bank_group" style="display: none;">
+                                <label class="form-label small text-muted font-weight-bold">Bank Account</label>
+                                <select name="bank_id" id="settle_bank_id" class="form-select">
+                                    @foreach($activeBanks as $bank)
+                                        <option value="{{ $bank->id }}">{{ $bank->name }} ({{ substr($bank->account_number, -4) }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted font-weight-bold">Total Amount to Pay (₦)</label>
+                                <input type="number" name="amount_paid" id="settle_amount_paid" class="form-control text-success font-weight-bold" step="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-danger font-weight-bold">Discount Allowed (₦)</label>
+                                <input type="number" name="discount_amount" id="settle_discount_amount" class="form-control font-weight-bold" step="0.01" value="0.00">
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-2" id="settle_bank_group" style="display: none;">
-                            <label class="form-label small text-muted font-weight-bold">Bank Account</label>
-                            <select name="bank_id" id="settle_bank_id" class="form-select">
-                                @foreach($activeBanks as $bank)
-                                    <option value="{{ $bank->id }}">{{ $bank->name }} ({{ substr($bank->account_number, -4) }})</option>
-                                @endforeach
-                            </select>
+                        <div class="col-md-6">
+                            @include('accounting.partials.journal-entry-preview', [
+                                'title' => 'Journal Entry Preview',
+                                'description' => 'Live preview of the GL journal entry generated upon settlement',
+                                'bodyId' => 'settleJePreviewBody',
+                                'debitTotalId' => 'settleJeTotalDebit',
+                                'creditTotalId' => 'settleJeTotalCredit',
+                                'class' => 'shadow-sm border'
+                            ])
                         </div>
-                    </div>
-
-                    <div>
-                        <label class="form-label small text-muted font-weight-bold">Total Amount to Pay (₦)</label>
-                        <input type="number" name="amount_paid" id="settle_amount_paid" class="form-control" step="0.01" required>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-success">Clear Selected Bills</button>
+                    <button type="submit" class="btn btn-success font-weight-bold">Clear Selected Bills</button>
                 </div>
             </form>
         </div>
@@ -797,7 +977,19 @@ $(document).ready(function() {
         var container = $('#settle_bills_checkboxes');
         container.empty();
         bills.forEach(function(bill) {
-            var labelText = 'Patient: ' + (bill.patient ? bill.patient.surname + ' ' + bill.patient.firstname : 'N/A') + ' | Outstanding: ₦' + parseFloat(bill.outstanding_amount).toFixed(2);
+            var patientName = 'N/A';
+            if (bill.patient) {
+                if (bill.patient.user) {
+                    var parts = [];
+                    if (bill.patient.user.surname) parts.push(bill.patient.user.surname);
+                    if (bill.patient.user.firstname) parts.push(bill.patient.user.firstname);
+                    if (bill.patient.user.othername) parts.push(bill.patient.user.othername);
+                    patientName = parts.join(' ');
+                } else if (bill.patient.fullname) {
+                    patientName = bill.patient.fullname;
+                }
+            }
+            var labelText = 'Patient: ' + patientName + ' | Outstanding: ₦' + parseFloat(bill.outstanding_amount).toFixed(2);
             var chk = $('<div class="form-check">' +
                 '<input class="form-check-input bill-chk" type="checkbox" name="bill_ids[]" value="' + bill.id + '" data-amount="' + bill.outstanding_amount + '" id="bill_chk_' + bill.id + '" checked>' +
                 '<label class="form-check-label text-dark small" for="bill_chk_' + bill.id + '">' + labelText + '</label>' +
@@ -805,8 +997,22 @@ $(document).ready(function() {
             container.append(chk);
         });
 
+        $('#settleModal').data('raw-balance', parseFloat(outstanding));
         $('#settleModal').modal('show');
+        $('#settle_discount_amount').val('0.00');
+        updateJournalEntryPreview();
     });
+
+    // Initialize history table DataTable
+    if ($('#staffBillsHistoryTable tbody tr').length > 1) {
+        $('#staffBillsHistoryTable').DataTable({
+            pageLength: 25,
+            order: [[0, 'desc']],
+            language: {
+                emptyTable: "No staff bills history found"
+            }
+        });
+    }
 
     // Recalculate amount paid based on selected checkboxes
     $(document).on('change', '.bill-chk', function() {
@@ -815,6 +1021,9 @@ $(document).ready(function() {
             total += parseFloat($(this).data('amount'));
         });
         $('#settle_amount_paid').val(total.toFixed(2));
+        $('#settle_discount_amount').val('0.00');
+        $('#settleModal').data('raw-balance', total);
+        updateJournalEntryPreview();
     });
 
     // Settle payment method change
@@ -824,7 +1033,101 @@ $(document).ready(function() {
         } else {
             $('#settle_bank_group').show();
         }
+        updateJournalEntryPreview();
     });
+
+    $('#settle_bank_id').on('change', function() {
+        updateJournalEntryPreview();
+    });
+
+    $('#settle_amount_paid').on('input keyup change', function() {
+        updateJournalEntryPreview();
+    });
+
+    $('#settle_discount_amount').on('input keyup change', function() {
+        updateJournalEntryPreview();
+    });
+
+    function updateJournalEntryPreview() {
+        var amount = parseFloat($('#settle_amount_paid').val()) || 0;
+        var discount = parseFloat($('#settle_discount_amount').val()) || 0;
+        var method = $('#settle_payment_method').val();
+        var bankText = $('#settle_bank_id option:selected').text();
+        var bankId = $('#settle_bank_id').val();
+
+        var $tbody = $('#settleJePreviewBody');
+        var $debitTotal = $('#settleJeTotalDebit');
+        var $creditTotal = $('#settleJeTotalCredit');
+
+        var rawBalance = parseFloat($('#settleModal').data('raw-balance')) || 0;
+        var totalSettled = amount + discount;
+
+        // Calculate remaining balance dynamically
+        var remaining = Math.max(0, rawBalance - totalSettled);
+        var remainingFormatted = '₦' + remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        $('#settle_remaining_balance').text(remainingFormatted);
+        if (remaining <= 0) {
+            $('#settle_remaining_balance').removeClass('text-warning').addClass('text-success');
+        } else {
+            $('#settle_remaining_balance').removeClass('text-success').addClass('text-warning');
+        }
+
+        if (totalSettled <= 0) {
+            $tbody.html('<tr><td colspan="3" class="text-center text-muted py-2"><i class="mdi mdi-information-outline mr-1"></i>Enter a valid amount or discount to see preview</td></tr>');
+            $debitTotal.text('₦0.00');
+            $creditTotal.text('₦0.00');
+            return;
+        }
+
+        var debitAccount = "Cash in Hand (1010)";
+        if (method !== 'CASH') {
+            if (bankId && bankText && bankText.indexOf('--') === -1) {
+                debitAccount = bankText.trim() + " (1020)";
+            } else {
+                debitAccount = "Bank Account (1020)";
+            }
+        }
+        var creditAccount = "Accounts Receivable - Staff (1130)";
+        var discountAccount = "Discount Allowed (6280)";
+
+        var html = '';
+
+        // 1. Cash / Bank Debit
+        if (amount > 0) {
+            var amountFormatted = '₦' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            html += '<tr>' +
+                '<td class="pl-2 py-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + debitAccount + '"><span class="font-weight-bold text-dark">' + debitAccount + '</span></td>' +
+                '<td class="text-right text-success font-weight-bold py-1">' + amountFormatted + '</td>' +
+                '<td class="text-right text-muted pr-2 py-1">-</td>' +
+                '</tr>';
+        }
+
+        // 2. Discount Debit
+        if (discount > 0) {
+            var discountFormatted = '₦' + discount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            html += '<tr>' +
+                '<td class="pl-2 py-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + discountAccount + '"><span class="font-weight-bold text-dark">' + discountAccount + '</span></td>' +
+                '<td class="text-right text-success font-weight-bold py-1">' + discountFormatted + '</td>' +
+                '<td class="text-right text-muted pr-2 py-1">-</td>' +
+                '</tr>';
+        }
+
+        // 3. Accounts Receivable Credit
+        if (totalSettled > 0) {
+            var totalFormatted = '₦' + totalSettled.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            html += '<tr>' +
+                '<td class="pl-2 py-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + creditAccount + '"><span class="font-weight-bold text-dark">' + creditAccount + '</span></td>' +
+                '<td class="text-right text-muted py-1">-</td>' +
+                '<td class="text-right text-danger pr-2 font-weight-bold py-1">' + totalFormatted + '</td>' +
+                '</tr>';
+        }
+
+        $tbody.html(html);
+        
+        var totalFormatted = '₦' + totalSettled.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        $debitTotal.text(totalFormatted);
+        $creditTotal.text(totalFormatted);
+    }
 
     // Settle bills AJAX submission
     $('#settleForm').on('submit', function(e) {
@@ -878,6 +1181,18 @@ $(document).ready(function() {
                 alert('An error occurred.');
             }
         });
+    });
+    // Toggle journal entry preview
+    $(document).on('click', '.toggle-journal-btn', function() {
+        var targetId = $(this).data('target');
+        var target = $('#' + targetId);
+        if (target.hasClass('d-none')) {
+            target.removeClass('d-none');
+            $(this).html('<i class="mdi mdi-book-open-page-variant mr-1"></i> Hide Journal Entry').removeClass('btn-outline-secondary').addClass('btn-secondary');
+        } else {
+            target.addClass('d-none');
+            $(this).html('<i class="mdi mdi-book-open-page-variant mr-1"></i> Show Journal Entry').removeClass('btn-secondary').addClass('btn-outline-secondary');
+        }
     });
 });
 </script>

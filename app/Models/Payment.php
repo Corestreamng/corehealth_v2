@@ -46,6 +46,11 @@ class Payment extends Model implements Auditable
 
     public function product_or_service_request()
     {
-        return $this->hasMany(ProductOrServiceRequest::class, 'payment_id', 'id');;
+        return $this->hasMany(ProductOrServiceRequest::class, 'payment_id', 'id');
+    }
+
+    public function journalEntry()
+    {
+        return $this->belongsTo(Accounting\JournalEntry::class, 'journal_entry_id');
     }
 }
