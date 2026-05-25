@@ -1133,6 +1133,7 @@ Route::middleware(['auth'])->prefix('clinical-reports')->name('clinical-reports.
 Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(function () {
     Route::get('/', [\App\Http\Controllers\AuditWorkbenchController::class, 'index'])->name('workbench');
     Route::post('/settle-bills', [\App\Http\Controllers\AuditWorkbenchController::class, 'settleBills'])->name('settle-bills');
+    Route::get('/settlement-breakdown/{payment_id}', [\App\Http\Controllers\AuditWorkbenchController::class, 'settlementBreakdown'])->name('settlement-breakdown');
     Route::post('/stamps', [\App\Http\Controllers\AuditWorkbenchController::class, 'stampPeriod'])->name('stamps.approve');
     Route::get('/stamps/history', [\App\Http\Controllers\AuditWorkbenchController::class, 'stampHistory'])->name('stamps.history');
     Route::get('/reports/{responsibility_key}', [\App\Http\Controllers\AuditWorkbenchController::class, 'showReport'])->name('reports.show');
