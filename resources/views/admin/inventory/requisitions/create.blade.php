@@ -312,7 +312,6 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     .product-card.out-of-stock {
-        opacity: 0.6;
         background: #f8f9fa;
     }
     .product-card .product-info {
@@ -831,8 +830,8 @@
                                 <div class="filter-group">
                                     <label>Show:</label>
                                     <select class="form-control form-control-sm" id="stock-filter">
+                                        <option value="all" selected>All Products</option>
                                         <option value="in-stock">In Stock Only</option>
-                                        <option value="all">All Products</option>
                                         <option value="low">Low Stock</option>
                                     </select>
                                 </div>
@@ -982,6 +981,10 @@ $(function() {
     var cartItems = {}; // { productId: { name, code, qty, available } }
     var productsData = []; // All products from source store
     var adminOverride = false; // true when lane-override-toggle is checked
+    var currentPage = 1;
+    var isAllLoaded = false;
+    var isLoadingProducts = false;
+    var dbTotalProducts = 0;
 
     // ── Destination store: initialise from governance controls ───────────────
     // Blade renders #dest-store-grid with card(s). The governance-resolved card
@@ -1231,18 +1234,42 @@ $(function() {
     }
 
     // Load products from source store
-    function loadSourceProducts() {
+    function loadSourceProducts(resetList = false) {
+        if (isLoadingProducts) return;
+        
         var $grid = $('#product-grid');
-        $grid.html('<div class="loading-overlay"><div class="spinner"></div></div>');
+        
+        if (resetList) {
+            currentPage = 1;
+            isAllLoaded = false;
+            productsData = [];
+            $grid.html('<div class="loading-overlay"><div class="spinner"></div></div>');
+        } else if (isAllLoaded) {
+            return;
+        }
+
+        isLoadingProducts = true;
+        
+        var searchVal = $('#product-search').val() || '';
+        var categoryId = $('#category-filter').val() || '';
+        var stockFilter = $('#stock-filter').val() || '';
 
         $.get('{{ route("inventory.purchase-orders.search-products") }}', {
-            search: '',
+            search: searchVal,
             store_id: sourceStoreId,
-            limit: 500
-        }).done(function(data) {
-            // Response is a flat array of products
+            category_id: categoryId,
+            stock_filter: stockFilter,
+            page: currentPage,
+            limit: 50
+        }).done(function(data, textStatus, jqXHR) {
+            dbTotalProducts = parseInt(jqXHR.getResponseHeader('X-Total-Count')) || 0;
             var products = Array.isArray(data) ? data : (data.results || data.data || []);
-            productsData = products.map(function(p) {
+            
+            if (products.length < 50) {
+                isAllLoaded = true;
+            }
+
+            var mapped = products.map(function(p) {
                 return {
                     id: p.id,
                     name: p.product_name || p.text,
@@ -1255,9 +1282,30 @@ $(function() {
                     allow_decimal_qty: p.allow_decimal_qty || false
                 };
             });
+
+            if (resetList) {
+                productsData = mapped;
+                $grid.empty();
+            } else {
+                // Merge without duplicates
+                mapped.forEach(function(item) {
+                    var exists = productsData.some(function(existing) {
+                        return existing.id === item.id;
+                    });
+                    if (!exists) {
+                        productsData.push(item);
+                    }
+                });
+            }
+
             renderProductGrid(productsData);
+            currentPage++;
+            isLoadingProducts = false;
         }).fail(function() {
-            $grid.html('<div class="text-center text-danger py-5">Failed to load products</div>');
+            if (resetList) {
+                $grid.html('<div class="text-center text-danger py-5">Failed to load products</div>');
+            }
+            isLoadingProducts = false;
         });
     }
 
@@ -1273,11 +1321,11 @@ $(function() {
                 (p.code || '').toLowerCase().indexOf(search) === -1) return false;
             if (category && p.category_id != category) return false;
             if (stockFilter === 'in-stock' && p.source_qty <= 0) return false;
-            if (stockFilter === 'low' && p.source_qty> 10) return false;
+            if (stockFilter === 'low' && p.source_qty > 10) return false;
             return true;
         });
 
-        $('#product-count').text(filtered.length + ' products');
+        $('#product-count').text(dbTotalProducts + ' products');
 
         if (filtered.length === 0) {
             $grid.html('<div class="text-center text-muted py-5"><i class="mdi mdi-package-variant-closed mdi-48px"></i><p>No products found</p></div>');
@@ -1291,37 +1339,79 @@ $(function() {
             var stockClass = outOfStock ? 'out' : (p.source_qty < 10 ? 'low' : 'good');
             var typeBadge = {drug: '<span class="badge" style="background:#d4edda;color:#155724;font-size:0.65rem;">Drug</span>', consumable: '<span class="badge" style="background:#fff3cd;color:#856404;font-size:0.65rem;">Cons.</span>', utility: '<span class="badge" style="background:#d1ecf1;color:#0c5460;font-size:0.65rem;">Util.</span>'}[p.product_type] || '';
             var unitLabel = p.base_unit_name || 'Piece';
+            var stockText = outOfStock ? 'Unavailable' : (p.source_qty + ' ' + unitLabel);
 
             html += '<div class="product-card ' + (outOfStock ? 'out-of-stock' : '') + '" data-product-id="' + p.id + '">';
             html += '  <div class="product-info">';
             html += '    <div class="product-name">' + escapeHtml(p.name) + ' ' + typeBadge + '</div>';
             html += '    <div class="product-code">' + escapeHtml(p.code || 'No code') + '</div>';
             html += '    <div class="stock-levels">';
-            html += '      <span class="stock-badge ' + stockClass + '"><i class="mdi mdi-store"></i> ' + p.source_qty + ' ' + unitLabel + '</span>';
+            html += '      <span class="stock-badge ' + stockClass + '"><i class="mdi mdi-store"></i> ' + stockText + '</span>';
+            if (outOfStock) {
+                html += '      <div class="text-muted mt-1" style="font-size: 0.75rem; line-height: 1.25; width: 100%;"><i class="mdi mdi-information-outline"></i> No stock available at source store. You can still include this item in your requisition.</div>';
+            }
             html += '    </div>';
             html += '  </div>';
             html += '  <div class="add-actions">';
-            if (!outOfStock) {
-                var cartPkg = inCart && cartItems[p.id].packaging_id ? cartItems[p.id].packaging_id : '';
-                var defMax = p.source_qty;
-                if (inCart && cartItems[p.id].packaging_base_qty> 1) defMax = Math.floor(p.source_qty / cartItems[p.id].packaging_base_qty);
-                html += '    <input type="number" class="qty-mini-input" value="' + (inCart ? cartItems[p.id].qty : 1) + '" min="1" max="' + defMax + '" data-product-id="' + p.id + '">';
-                if (p.packagings && p.packagings.length> 0) {
-                    html += '    <select class="pkg-select" data-product-id="' + p.id + '">';
-                    html += '      <option value="" data-base-qty="1">' + escapeHtml(unitLabel) + '</option>';
-                    p.packagings.forEach(function(pkg) {
-                        var sel = (String(pkg.id) === String(cartPkg)) ? ' selected' : '';
-                        html += '      <option value="' + pkg.id + '" data-base-qty="' + pkg.base_unit_qty + '"' + sel + '>' + escapeHtml(pkg.name) + ' (' + parseFloat(pkg.base_unit_qty) + ')</option>';
-                    });
-                    html += '    </select>';
+            
+            var cartPkg = inCart && cartItems[p.id].packaging_id ? cartItems[p.id].packaging_id : '';
+            var defaultPkgId = '';
+            if (p.packagings && p.packagings.length > 0) {
+                var defDisp = p.packagings.find(function(pkg) { return pkg.is_default_dispense; });
+                if (defDisp) {
+                    defaultPkgId = defDisp.id;
                 }
-                html += '    <span class="base-equiv-label" data-product-id="' + p.id + '"></span>';
-                html += '    <button type="button" class="btn btn-sm ' + (inCart ? 'btn-success' : 'btn-primary') + ' btn-add-item" data-product-id="' + p.id + '" data-name="' + escapeHtml(p.name) + '" data-code="' + escapeHtml(p.code || '') + '" data-available="' + p.source_qty + '" data-base-unit="' + escapeHtml(unitLabel) + '">';
-                html += '      <i class="mdi ' + (inCart ? 'mdi-check' : 'mdi-plus') + '"></i> ' + (inCart ? 'Update' : 'Add');
-                html += '    </button>';
-            } else {
-                html += '    <span class="text-muted small">Out of stock</span>';
             }
+            var selectedPkg = inCart ? cartPkg : defaultPkgId;
+            var baseSel = (selectedPkg === '') ? ' selected' : '';
+
+            var maxAttr = '';
+            var baseQtyPerUnit = 1;
+            if (!outOfStock) {
+                var defMax = p.source_qty;
+                if (inCart) {
+                    baseQtyPerUnit = cartItems[p.id].packaging_base_qty || 1;
+                } else if (selectedPkg !== '') {
+                    var defaultPkg = p.packagings.find(function(pkg) { return String(pkg.id) === String(selectedPkg); });
+                    if (defaultPkg) {
+                        baseQtyPerUnit = parseFloat(defaultPkg.base_unit_qty) || 1;
+                    }
+                }
+                if (baseQtyPerUnit > 1) {
+                    defMax = Math.floor(p.source_qty / baseQtyPerUnit);
+                }
+                maxAttr = ' max="' + (defMax > 0 ? defMax : 1) + '"';
+            } else if (selectedPkg !== '' && p.packagings) {
+                var defaultPkg = p.packagings.find(function(pkg) { return String(pkg.id) === String(selectedPkg); });
+                if (defaultPkg) {
+                    baseQtyPerUnit = parseFloat(defaultPkg.base_unit_qty) || 1;
+                }
+            }
+            
+            var qtyValue = inCart ? cartItems[p.id].qty : 1;
+            html += '    <input type="number" class="qty-mini-input" value="' + qtyValue + '" min="1"' + maxAttr + ' data-product-id="' + p.id + '">';
+            
+            html += '    <select class="pkg-select" data-product-id="' + p.id + '">';
+            html += '      <option value="" data-base-qty="1"' + baseSel + '>' + escapeHtml(unitLabel) + '</option>';
+            if (p.packagings && p.packagings.length > 0) {
+                p.packagings.forEach(function(pkg) {
+                    var sel = (String(pkg.id) === String(selectedPkg)) ? ' selected' : '';
+                    html += '      <option value="' + pkg.id + '" data-base-qty="' + pkg.base_unit_qty + '"' + sel + '>' + escapeHtml(pkg.name) + ' (' + parseFloat(pkg.base_unit_qty) + ')</option>';
+                });
+            }
+            html += '    </select>';
+
+            var equivText = '';
+            var equivStyle = 'display: none;';
+            if (baseQtyPerUnit > 1 && qtyValue > 0) {
+                equivText = '= ' + (qtyValue * baseQtyPerUnit) + ' ' + unitLabel;
+                equivStyle = '';
+            }
+            html += '    <span class="base-equiv-label" data-product-id="' + p.id + '" style="' + equivStyle + '">' + escapeHtml(equivText) + '</span>';
+            html += '    <button type="button" class="btn btn-sm ' + (inCart ? 'btn-success' : 'btn-primary') + ' btn-add-item" data-product-id="' + p.id + '" data-name="' + escapeHtml(p.name) + '" data-code="' + escapeHtml(p.code || '') + '" data-available="' + p.source_qty + '" data-base-unit="' + escapeHtml(unitLabel) + '">';
+            html += '      <i class="mdi ' + (inCart ? 'mdi-check' : 'mdi-plus') + '"></i> ' + (inCart ? 'Update' : 'Add');
+            html += '    </button>';
+            
             html += '  </div>';
             html += '</div>';
         });
@@ -1334,12 +1424,20 @@ $(function() {
     $('#product-search').on('input', function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(function() {
-            renderProductGrid(productsData);
+            loadSourceProducts(true);
         }, 300);
     });
 
     $('#category-filter, #stock-filter').on('change', function() {
-        renderProductGrid(productsData);
+        loadSourceProducts(true);
+    });
+
+    // Infinite Scroll
+    $('#product-grid').on('scroll', function() {
+        var $grid = $(this);
+        if ($grid.scrollTop() + $grid.innerHeight() >= $grid[0].scrollHeight - 50) {
+            loadSourceProducts(false);
+        }
     });
 
     // Packaging select change - update max qty and show base equivalence
@@ -1349,12 +1447,19 @@ $(function() {
         var product = productsData.find(function(pp) { return pp.id == productId; });
         var $card = $(this).closest('.product-card');
         var $qtyInput = $card.find('.qty-mini-input');
-        var maxPkgUnits = Math.floor((product ? product.source_qty : 9999) / baseQtyPerUnit);
-        $qtyInput.attr('max', maxPkgUnits);
-        if (parseInt($qtyInput.val())> maxPkgUnits) $qtyInput.val(maxPkgUnits || 1);
+        var isOutOfStock = product ? (product.source_qty <= 0) : false;
+        
+        if (!isOutOfStock) {
+            var maxPkgUnits = Math.floor((product ? product.source_qty : 9999) / baseQtyPerUnit);
+            $qtyInput.attr('max', maxPkgUnits);
+            if (parseInt($qtyInput.val()) > maxPkgUnits) $qtyInput.val(maxPkgUnits || 1);
+        } else {
+            $qtyInput.removeAttr('max');
+        }
+        
         var qty = parseInt($qtyInput.val()) || 0;
         var $equiv = $card.find('.base-equiv-label');
-        if (baseQtyPerUnit> 1 && qty> 0) {
+        if (baseQtyPerUnit > 1 && qty > 0) {
             $equiv.text('= ' + parseFloat((qty * baseQtyPerUnit).toFixed(4)) + ' ' + (product ? product.base_unit_name : 'units'));
         } else {
             $equiv.text('');
@@ -1383,7 +1488,7 @@ $(function() {
         var packagingName = ($pkgSelect.length && $pkgSelect.val()) ? $pkgSelect.find(':selected').text().split(' (')[0] : '';
         var baseQty = qty * packagingBaseQty;
 
-        if (baseQty> available) {
+        if (available > 0 && baseQty > available) {
             toastr.error('Quantity exceeds available stock (' + available + ' ' + baseUnitName + ')');
             return;
         }
@@ -1470,11 +1575,14 @@ $(function() {
         var pkgBase = parseFloat($(this).data('pkg-base')) || 1;
 
         if (cartItems[productId]) {
-            var maxPkgQty = pkgBase> 1 ? Math.floor(cartItems[productId].available / pkgBase) : cartItems[productId].available;
-            if (newQty> maxPkgQty) {
-                newQty = maxPkgQty;
-                $(this).val(newQty);
-                toastr.warning('Maximum available: ' + maxPkgQty + (cartItems[productId].packaging_name ? ' ' + cartItems[productId].packaging_name : ''));
+            var isAvail = cartItems[productId].available > 0;
+            if (isAvail) {
+                var maxPkgQty = pkgBase > 1 ? Math.floor(cartItems[productId].available / pkgBase) : cartItems[productId].available;
+                if (newQty > maxPkgQty) {
+                    newQty = maxPkgQty;
+                    $(this).val(newQty);
+                    toastr.warning('Maximum available: ' + maxPkgQty + (cartItems[productId].packaging_name ? ' ' + cartItems[productId].packaging_name : ''));
+                }
             }
             if (newQty < 1) {
                 newQty = 1;
