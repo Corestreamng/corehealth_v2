@@ -5,6 +5,7 @@ namespace App\Observers\Accounting;
 use App\Models\Payment;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\AccountGroup;
 use App\Models\Accounting\JournalEntry;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\App;
@@ -416,35 +417,79 @@ class PaymentObserver
 
         $description = $this->buildDescription($payment);
 
-        $lines = [
-            [
-                'account_id' => $debitAccount->id,
-                'debit_amount' => $payment->total,
-                'credit_amount' => 0,
-                'description' => $this->buildLineDescription($payment, 'debit'),
-                // METADATA
-                'product_id' => $metadata['product_id'],
-                'service_id' => $metadata['service_id'],
-                'product_category_id' => $metadata['product_category_id'],
-                'service_category_id' => $metadata['service_category_id'],
-                'hmo_id' => $metadata['hmo_id'],
-                'patient_id' => $payment->patient_id,
-                'category' => $payment->payment_type ?? 'general',
-            ],
-            [
-                'account_id' => $creditAccount->id,
-                'debit_amount' => 0,
-                'credit_amount' => $payment->total,
-                'description' => $this->buildLineDescription($payment, 'credit'),
-                // METADATA
-                'product_id' => $metadata['product_id'],
-                'service_id' => $metadata['service_id'],
-                'product_category_id' => $metadata['product_category_id'],
-                'service_category_id' => $metadata['service_category_id'],
-                'hmo_id' => $metadata['hmo_id'],
-                'patient_id' => $payment->patient_id,
-                'category' => $payment->payment_type ?? 'general',
-            ]
+        $lines = [];
+
+        // 1. Debit Cash/Bank for the actual amount paid
+        $lines[] = [
+            'account_id' => $debitAccount->id,
+            'debit_amount' => $payment->total,
+            'credit_amount' => 0,
+            'description' => $this->buildLineDescription($payment, 'debit'),
+            // METADATA
+            'product_id' => $metadata['product_id'],
+            'service_id' => $metadata['service_id'],
+            'product_category_id' => $metadata['product_category_id'],
+            'service_category_id' => $metadata['service_category_id'],
+            'hmo_id' => $metadata['hmo_id'],
+            'patient_id' => $payment->patient_id,
+            'category' => $payment->payment_type ?? 'general',
+        ];
+
+        // 2. Debit Discount Allowed if discount exists
+        if (floatval($payment->total_discount) > 0) {
+            $discountAccount = Account::where('code', '6280')->first();
+            if (!$discountAccount) {
+                $group = AccountGroup::where('code', '53')->first(); // Administrative Expenses
+                if ($group) {
+                    $discountAccount = Account::create([
+                        'account_group_id' => $group->id,
+                        'code' => '6280',
+                        'name' => 'Discount Allowed',
+                        'description' => 'Discounts allowed on customer/staff settlements',
+                        'is_active' => true,
+                        'is_system' => true,
+                        'is_bank_account' => false,
+                    ]);
+                }
+            }
+
+            if ($discountAccount) {
+                $lines[] = [
+                    'account_id' => $discountAccount->id,
+                    'debit_amount' => floatval($payment->total_discount),
+                    'credit_amount' => 0,
+                    'description' => 'Discount allowed on staff bill settlement',
+                    // METADATA
+                    'product_id' => $metadata['product_id'],
+                    'service_id' => $metadata['service_id'],
+                    'product_category_id' => $metadata['product_category_id'],
+                    'service_category_id' => $metadata['service_category_id'],
+                    'hmo_id' => $metadata['hmo_id'],
+                    'patient_id' => $payment->patient_id,
+                    'category' => $payment->payment_type ?? 'general',
+                ];
+            }
+        }
+
+        // 3. Credit Accounts Receivable - Staff for total settled amount (Paid + Discount)
+        $creditAmount = $payment->total;
+        if ($payment->payment_type === 'STAFF_BILL_SETTLEMENT') {
+            $creditAmount = $payment->total + floatval($payment->total_discount);
+        }
+
+        $lines[] = [
+            'account_id' => $creditAccount->id,
+            'debit_amount' => 0,
+            'credit_amount' => $creditAmount,
+            'description' => $this->buildLineDescription($payment, 'credit'),
+            // METADATA
+            'product_id' => $metadata['product_id'],
+            'service_id' => $metadata['service_id'],
+            'product_category_id' => $metadata['product_category_id'],
+            'service_category_id' => $metadata['service_category_id'],
+            'hmo_id' => $metadata['hmo_id'],
+            'patient_id' => $payment->patient_id,
+            'category' => $payment->payment_type ?? 'general',
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(
@@ -545,7 +590,7 @@ class PaymentObserver
         return match (strtolower($payment->payment_method ?? 'cash')) {
             'cash' => '1010', // Cash in Hand
             'bank_transfer', 'bank', 'transfer' => '1020', // Bank Account
-            'card', 'pos' => '1020', // Bank Account (card payments settle to bank)
+            'card', 'pos', 'mobile' => '1020', // Bank Account (card payments settle to bank)
             default => '1010' // Default to Cash
         };
     }

@@ -504,6 +504,7 @@
                                     <th>Aging</th>
                                     <th>Days</th>
                                     <th class="text-right">Outstanding Amount</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -537,10 +538,24 @@
                                     <td class="text-right">
                                         <strong class="text-warning">₦{{ number_format($item['amount'], 2) }}</strong>
                                     </td>
+                                    <td>
+                                        @if(Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin', 'ACCOUNTS', 'accounts', 'AUDITOR', 'auditor']))
+                                            <button type="button" class="btn btn-xs btn-primary settle-single-bill-btn"
+                                                data-id="{{ $item['id'] }}"
+                                                data-staff-id="{{ $item['staff_id'] }}"
+                                                data-staff-name="{{ $item['name'] }}"
+                                                data-reference="{{ $item['reference'] }}"
+                                                data-amount="{{ $item['amount'] }}">
+                                                Settle
+                                            </button>
+                                        @else
+                                            <span class="text-muted small">No access</span>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">
+                                    <td colspan="7" class="text-center py-4 text-muted">
                                         <i class="mdi mdi-check-circle mdi-48px text-success"></i>
                                         <p class="mb-0 mt-2">No staff receivables found</p>
                                     </td>
@@ -548,6 +563,101 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Settle Staff Bill Modal --}}
+            <div class="modal fade" id="settleSingleBillModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title font-weight-bold"><i class="mdi mdi-cash-register mr-1"></i> Settle Staff Receivable</h5>
+                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form id="settleForm">
+                            @csrf
+                            <input type="hidden" name="staff_id" id="settle_staff_id">
+                            <input type="hidden" name="bill_ids[]" id="settle_bill_id">
+
+                            <div class="modal-body">
+                                <div class="mb-3 p-3 bg-light rounded border border-primary-light">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="small text-muted font-weight-bold">Responsible Staff</div>
+                                            <div class="h6 font-weight-bold text-dark mb-0" id="settle_staff_name">Staff Name</div>
+                                        </div>
+                                        <div class="col-md-3 border-left">
+                                            <div class="small text-muted font-weight-bold">Patient Details</div>
+                                            <div class="small text-dark font-weight-bold mb-0" id="settle_reference">Patient Details</div>
+                                        </div>
+                                        <div class="col-md-3 border-left">
+                                            <div class="small text-muted font-weight-bold">Outstanding Bill</div>
+                                            <div class="h5 font-weight-bold text-warning mb-0" id="settle_staff_balance">₦0.00</div>
+                                        </div>
+                                        <div class="col-md-3 border-left">
+                                            <div class="small text-muted font-weight-bold">Remaining Balance</div>
+                                            <div class="h5 font-weight-bold text-success mb-0" id="settle_remaining_balance">₦0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info py-2 px-3 mb-3 small" style="border-left: 4px solid #17a2b8; font-size: 0.82rem;">
+                                    <i class="mdi mdi-information-outline mr-1 text-info"></i>
+                                    <strong>Settlement Allocation Note:</strong> The outstanding balance will be cleared by the sum of your <strong>Amount Paid</strong> and any <strong>Discount Allowed</strong>. The remaining balance represents what stays outstanding on the staff ledger. Overpayments are automatically capped.
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Payment Method <span class="text-danger">*</span></label>
+                                            <select name="payment_method" id="settle_payment_method" class="form-control" required>
+                                                <option value="CASH">CASH</option>
+                                                <option value="POS">POS CARD</option>
+                                                <option value="TRANSFER">BANK TRANSFER</option>
+                                                <option value="MOBILE">MOBILE MONEY</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group mb-3" id="settle_bank_group" style="display: none;">
+                                            <label class="form-label font-weight-bold">Receiving Bank Account <span class="text-danger">*</span></label>
+                                            <select name="bank_id" id="settle_bank_id" class="form-control">
+                                                <option value="">-- Select Hospital Bank --</option>
+                                                @foreach($activeBanks ?? [] as $bank)
+                                                    <option value="{{ $bank->id }}">{{ $bank->name }} ({{ $bank->account_number }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold">Amount Paid (₦) <span class="text-danger">*</span></label>
+                                            <input type="number" step="0.01" name="amount_paid" id="settle_amount_paid" class="form-control font-weight-bold text-success" min="0.01" required>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-weight-bold text-danger">Discount Allowed (₦)</label>
+                                            <input type="number" step="0.01" name="discount_amount" id="settle_discount_amount" class="form-control font-weight-bold" min="0" value="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        @include('accounting.partials.journal-entry-preview', [
+                                            'title' => 'Journal Entry Preview',
+                                            'description' => 'Live preview of the GL journal entry generated upon settlement',
+                                            'bodyId' => 'settleJePreviewBody',
+                                            'debitTotalId' => 'settleJeTotalDebit',
+                                            'creditTotalId' => 'settleJeTotalCredit',
+                                            'class' => 'shadow-sm border'
+                                        ])
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary font-weight-bold">Clear Outstanding Bill</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -604,6 +714,152 @@ $(document).ready(function() {
     $('.expandable-row').on('click', function() {
         var $icon = $(this).find('.expand-icon');
         $icon.toggleClass('mdi-chevron-right mdi-chevron-down');
+    });
+
+    // Settle button click handler
+    $(document).on('click', '.settle-single-bill-btn', function() {
+        var billId = $(this).data('id');
+        var staffId = $(this).data('staff-id');
+        var staffName = $(this).data('staff-name');
+        var reference = $(this).data('reference');
+        var amount = $(this).data('amount');
+
+        $('#settle_bill_id').val(billId);
+        $('#settle_staff_id').val(staffId);
+        $('#settle_staff_name').text(staffName);
+        $('#settle_reference').text(reference);
+        $('#settle_staff_balance').text('₦' + parseFloat(amount).toFixed(2));
+        $('#settle_amount_paid').val(parseFloat(amount).toFixed(2));
+        $('#settle_discount_amount').val('0.00');
+
+        $('#settleSingleBillModal').data('raw-balance', parseFloat(amount));
+        $('#settleSingleBillModal').modal('show');
+        updateJournalEntryPreview();
+    });
+
+    // Payment method switch bank visibility
+    $('#settle_payment_method').on('change', function() {
+        if ($(this).val() === 'CASH') {
+            $('#settle_bank_group').hide().find('select').prop('required', false);
+        } else {
+            $('#settle_bank_group').show().find('select').prop('required', true);
+        }
+        updateJournalEntryPreview();
+    });
+
+    $('#settle_bank_id').on('change', function() {
+        updateJournalEntryPreview();
+    });
+
+    $('#settle_amount_paid').on('input keyup change', function() {
+        updateJournalEntryPreview();
+    });
+
+    $('#settle_discount_amount').on('input keyup change', function() {
+        updateJournalEntryPreview();
+    });
+
+    function updateJournalEntryPreview() {
+        var amount = parseFloat($('#settle_amount_paid').val()) || 0;
+        var discount = parseFloat($('#settle_discount_amount').val()) || 0;
+        var method = $('#settle_payment_method').val();
+        var bankText = $('#settle_bank_id option:selected').text();
+        var bankId = $('#settle_bank_id').val();
+
+        var $tbody = $('#settleJePreviewBody');
+        var $debitTotal = $('#settleJeTotalDebit');
+        var $creditTotal = $('#settleJeTotalCredit');
+
+        var rawBalance = parseFloat($('#settleSingleBillModal').data('raw-balance')) || 0;
+        var totalSettled = amount + discount;
+
+        // Calculate remaining balance dynamically
+        var remaining = Math.max(0, rawBalance - totalSettled);
+        var remainingFormatted = '₦' + remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        $('#settle_remaining_balance').text(remainingFormatted);
+        if (remaining <= 0) {
+            $('#settle_remaining_balance').removeClass('text-warning').addClass('text-success');
+        } else {
+            $('#settle_remaining_balance').removeClass('text-success').addClass('text-warning');
+        }
+
+        if (totalSettled <= 0) {
+            $tbody.html('<tr><td colspan="3" class="text-center text-muted py-2"><i class="mdi mdi-information-outline mr-1"></i>Enter a valid amount or discount to see preview</td></tr>');
+            $debitTotal.text('₦0.00');
+            $creditTotal.text('₦0.00');
+            return;
+        }
+
+        var debitAccount = "Cash in Hand (1010)";
+        if (method !== 'CASH') {
+            if (bankId && bankText && bankText.indexOf('--') === -1) {
+                debitAccount = bankText.trim() + " (1020)";
+            } else {
+                debitAccount = "Bank Account (1020)";
+            }
+        }
+        var creditAccount = "Accounts Receivable - Staff (1130)";
+        var discountAccount = "Discount Allowed (6280)";
+
+        var html = '';
+
+        // 1. Cash / Bank Debit
+        if (amount > 0) {
+            var amountFormatted = '₦' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            html += '<tr>' +
+                '<td class="pl-2 py-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + debitAccount + '"><span class="font-weight-bold text-dark">' + debitAccount + '</span></td>' +
+                '<td class="text-right text-success font-weight-bold py-1">' + amountFormatted + '</td>' +
+                '<td class="text-right text-muted pr-2 py-1">-</td>' +
+                '</tr>';
+        }
+
+        // 2. Discount Debit
+        if (discount > 0) {
+            var discountFormatted = '₦' + discount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            html += '<tr>' +
+                '<td class="pl-2 py-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + discountAccount + '"><span class="font-weight-bold text-dark">' + discountAccount + '</span></td>' +
+                '<td class="text-right text-success font-weight-bold py-1">' + discountFormatted + '</td>' +
+                '<td class="text-right text-muted pr-2 py-1">-</td>' +
+                '</tr>';
+        }
+
+        // 3. Accounts Receivable Credit
+        if (totalSettled > 0) {
+            var totalFormatted = '₦' + totalSettled.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            html += '<tr>' +
+                '<td class="pl-2 py-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + creditAccount + '"><span class="font-weight-bold text-dark">' + creditAccount + '</span></td>' +
+                '<td class="text-right text-muted py-1">-</td>' +
+                '<td class="text-right text-danger pr-2 font-weight-bold py-1">' + totalFormatted + '</td>' +
+                '</tr>';
+        }
+
+        $tbody.html(html);
+        
+        var totalFormatted = '₦' + totalSettled.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        $debitTotal.text(totalFormatted);
+        $creditTotal.text(totalFormatted);
+    }
+
+    // AJAX form submit
+    $('#settleForm').on('submit', function(e) {
+        e.preventDefault();
+        var btn = $(this).find('button[type="submit"]');
+        btn.prop('disabled', true).text('Settling...');
+
+        $.ajax({
+            url: "{{ route('audit.settle-bills') }}",
+            method: "POST",
+            data: $(this).serialize(),
+            success: function(res) {
+                $('#settleSingleBillModal').modal('hide');
+                alert(res.message);
+                window.location.reload();
+            },
+            error: function(err) {
+                btn.prop('disabled', false).text('Clear Outstanding Bill');
+                alert(err.responseJSON ? err.responseJSON.message : 'An error occurred.');
+            }
+        });
     });
 });
 </script>
