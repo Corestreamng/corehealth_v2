@@ -331,9 +331,9 @@ class AdmissionRequestController extends Controller
                 'bed_assigned_by' => Auth::id()
             ]);
             $bed = Bed::where('id', $request->bed_id)->first();
-            $bed->update([
-                'occupant_id' => $admit_req->patient_id
-            ]);
+            if ($bed) {
+                $bed->assignPatient($admit_req->patient_id);
+            }
             $bed = Bed::where('id', $request->bed_id)->first();
             $admit_req = AdmissionRequest::where('id', $request->assign_bed_req_id)->first();
             $admit_req->update([
@@ -392,9 +392,10 @@ class AdmissionRequestController extends Controller
             $bill_req->save();
 
             //release bed after billing
-            Bed::where('id', $admit_req->bed_id)->update([
-                'occupant_id' => null
-            ]);
+            $bedToRelease = Bed::find($admit_req->bed_id);
+            if ($bedToRelease) {
+                $bedToRelease->release();
+            }
 
             $admit_req = AdmissionRequest::where('id', $request->assign_bed_req_id)->first();
             $admit_req->update([
@@ -455,9 +456,10 @@ class AdmissionRequestController extends Controller
                 'discharged_by' => Auth::id(),
                 'discharge_date' => date('Y-m-d H:i:s'),
             ]);
-            Bed::where('id', $req->bed_id)->update([
-                'occupant_id' => null
-            ]);
+            $bedToRelease = Bed::find($req->bed_id);
+            if ($bedToRelease) {
+                $bedToRelease->release();
+            }
             DB::commit();
             return back()->withMessage('Patient Discharged')->withMessageType('success');
         } catch (\Exception $e) {
@@ -582,10 +584,10 @@ class AdmissionRequestController extends Controller
 
             // If bed is assigned, update bed occupant
             if ($request->bed_id) {
-                Bed::where('id', $request->bed_id)->update([
-                    'occupant_id' => $request->patient_id,
-                    'status' => 'occupied'
-                ]);
+                $bed = Bed::find($request->bed_id);
+                if ($bed) {
+                    $bed->assignPatient($request->patient_id);
+                }
                 $admissionRequest->update([
                     'bed_assign_date' => now(),
                     'bed_assigned_by' => Auth::id()

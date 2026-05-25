@@ -3508,11 +3508,18 @@
                                             <option value="POS">POS/Card</option>
                                             <option value="TRANSFER">Bank Transfer</option>
                                             <option value="MOBILE">Mobile Money</option>
+                                            <option value="BILL_TO_STAFF">Bill to Staff</option>
                                             <option value="ACCOUNT" id="account-payment-option" style="display: none;">Pay from Account Balance</option>
                                         </select>
                                         <small class="text-muted" id="account-payment-note" style="display: none;">
                                             <i class="mdi mdi-information"></i> Payment will be deducted from account balance
                                         </small>
+                                    </div>
+                                    <div class="staff-selection-section" id="staff-selection-section" style="display: none;">
+                                        <label><i class="mdi mdi-account-card-outline"></i> Select Staff to Bill</label>
+                                        <select class="form-control select2" id="payment-staff-id" style="width: 100%;">
+                                            <option value="">-- Select Staff --</option>
+                                        </select>
                                     </div>
                                     <div class="bank-selection-section" id="bank-selection-section" style="display: none;">
                                         <label><i class="mdi mdi-bank"></i> Select Bank</label>
@@ -4277,6 +4284,7 @@ $(document).ready(function() {
     loadUserPreferences();
     createVitalTooltip();
     loadBanks(); // Load available banks for payment
+    loadStaffList(); // Load active staff members for billing
 
     // Auto-select patient from URL query parameter (e.g., from Patient list workbench button)
     const urlParams = new URLSearchParams(window.location.search);
@@ -4369,12 +4377,19 @@ function initializeEventListeners() {
         if (method === 'ACCOUNT') {
             $('#account-payment-note').show();
             $('#bank-selection-section').hide();
+            $('#staff-selection-section').hide();
         } else if (['POS', 'TRANSFER', 'MOBILE'].includes(method)) {
             $('#account-payment-note').hide();
             $('#bank-selection-section').show();
+            $('#staff-selection-section').hide();
+        } else if (method === 'BILL_TO_STAFF') {
+            $('#account-payment-note').hide();
+            $('#bank-selection-section').hide();
+            $('#staff-selection-section').show();
         } else {
             $('#account-payment-note').hide();
             $('#bank-selection-section').hide();
+            $('#staff-selection-section').hide();
         }
     });
 
@@ -4510,6 +4525,48 @@ function populateBankDropdowns() {
         $paymentBank.append(option);
         $transactionBank.append(option);
     });
+}
+
+// Global staff cache
+let activeStaffList = [];
+
+function loadStaffList() {
+    if (activeStaffList.length > 0) {
+        return; // Already loaded
+    }
+
+    $.ajax({
+        url: '/billing-workbench/staff-list',
+        method: 'GET',
+        success: function(response) {
+            if (response) {
+                activeStaffList = response;
+                populateStaffDropdown();
+            }
+        },
+        error: function() {
+            console.error('Failed to load staff list');
+        }
+    });
+}
+
+function populateStaffDropdown() {
+    const $paymentStaff = $('#payment-staff-id');
+    $paymentStaff.find('option:not(:first)').remove();
+
+    activeStaffList.forEach(staff => {
+        const option = `<option value="${staff.id}">${staff.text}</option>`;
+        $paymentStaff.append(option);
+    });
+
+    // Initialize Select2 if it exists
+    if ($.fn.select2) {
+        $paymentStaff.select2({
+            dropdownParent: $('#paymentModal'),
+            placeholder: '-- Select Staff --',
+            allowClear: true
+        });
+    }
 }
 
 function generateReferenceNumber() {
@@ -6199,13 +6256,22 @@ function processPayment() {
         return;
     }
 
+    // Validate staff selection
+    if (paymentType === 'BILL_TO_STAFF') {
+        const staffId = $('#payment-staff-id').val();
+        if (!staffId) {
+            toastr.warning('Please select a staff member to bill');
+            return;
+        }
+    }
+
     // Validate account balance payment (Credit facility: allow negative balance with warning)
     if (paymentType === 'ACCOUNT') {
         const balanceAfter = currentAccountBalance - totalPayable;
 
-        if (totalPayable> currentAccountBalance) {
+        if (totalPayable > currentAccountBalance) {
             // Show warning for credit/negative balance
-            const warningMsg = currentAccountBalance>= 0
+            const warningMsg = currentAccountBalance >= 0
                 ? `This payment of ₦${totalPayable.toLocaleString()} exceeds the available balance of ₦${currentAccountBalance.toLocaleString()}.\n\nBalance after payment: ₦${balanceAfter.toLocaleString()} (CREDIT/DEBIT)\n\nDo you want to proceed with credit facility?`
                 : `Current balance is already ₦${currentAccountBalance.toLocaleString()} (debit).\n\nThis payment will increase the debit to ₦${balanceAfter.toLocaleString()}.\n\nDo you want to proceed?`;
 
@@ -6234,6 +6300,7 @@ function processPayment() {
             payment_type: paymentType,
             payment_method: paymentType,
             bank_id: bankId || null,
+            staff_user_id: paymentType === 'BILL_TO_STAFF' ? $('#payment-staff-id').val() : null,
             reference_no: referenceNo,
             items: items
         },

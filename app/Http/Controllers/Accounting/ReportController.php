@@ -327,7 +327,7 @@ class ReportController extends Controller
         $request->validate([
             'as_of_date' => 'nullable|date',
             'hmo_id' => 'nullable|integer|exists:hmos,id',
-            'receivable_type' => 'nullable|in:all,patient_overdrafts,hmo_claims,gl_receivables',
+            'receivable_type' => 'nullable|in:all,patient_overdrafts,hmo_claims,gl_receivables,staff_receivables',
             'min_amount' => 'nullable|numeric|min:0',
         ]);
 
