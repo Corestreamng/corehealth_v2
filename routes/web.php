@@ -517,7 +517,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/billing-workbench/account-transaction', [\App\Http\Controllers\BillingWorkbenchController::class, 'processAccountTransaction'])->name('billing.account-transaction');
         Route::post('/billing-workbench/patient/{id}/generate-statement', [\App\Http\Controllers\BillingWorkbenchController::class, 'generateStatement'])->name('billing.generate-statement');
         Route::get('/billing-workbench/print-deposit-receipt/{id}', [\App\Http\Controllers\BillingWorkbenchController::class, 'printDepositReceipt'])->name('billing.print-deposit-receipt');
-
+        Route::get('/billing-workbench/staff-list', [\App\Http\Controllers\BillingWorkbenchController::class, 'getStaffList'])->name('billing.staff-list');
 
         // Shared Admission Module Routes
         Route::get('/admission-module/patient/{id}/admissions', [\App\Http\Controllers\AdmissionModuleController::class, 'getPatientAdmissions'])->name('admission-module.patient-admissions');
@@ -1129,5 +1129,12 @@ Route::middleware(['auth'])->prefix('clinical-reports')->name('clinical-reports.
     Route::get('/occupancy', [\App\Http\Controllers\ClinicalReportsController::class, 'getOccupancy'])->name('occupancy');
 });
 
-
+// Internal Audit Workbench routes
+Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\AuditWorkbenchController::class, 'index'])->name('workbench');
+    Route::post('/settle-bills', [\App\Http\Controllers\AuditWorkbenchController::class, 'settleBills'])->name('settle-bills');
+    Route::post('/stamps', [\App\Http\Controllers\AuditWorkbenchController::class, 'stampPeriod'])->name('stamps.approve');
+    Route::get('/stamps/history', [\App\Http\Controllers\AuditWorkbenchController::class, 'stampHistory'])->name('stamps.history');
+    Route::get('/reports/{responsibility_key}', [\App\Http\Controllers\AuditWorkbenchController::class, 'showReport'])->name('reports.show');
+});
 

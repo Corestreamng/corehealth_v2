@@ -1400,6 +1400,21 @@
             @endcanany
             @endhasanyrole
 
+            {{-- ========================================
+                 INTERNAL AUDIT SECTION
+                 ======================================== --}}
+            @if(Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) || Auth::user()->hasRole('AUDITOR'))
+            <li class="pt-2 pb-1">
+                <span class="nav-item-head">Internal Audit</span>
+            </li>
+            <li class="nav-item {{ request()->routeIs('audit.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="/audit-workbench" id="sidebar-audit-workbench">
+                    <i class="mdi mdi-shield-check-outline menu-icon"></i>
+                    <span class="menu-title">Audit Workbench</span>
+                </a>
+            </li>
+            @endif
+
         </div>
 
         <!-- Bottom User Profile Section -->

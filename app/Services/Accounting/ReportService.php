@@ -473,6 +473,16 @@ class ReportService
             $agingBuckets['current'] += $item['balance'];
         }
 
+        // ========================================
+        // 4. Staff Receivables (Staff Billed outstanding balances)
+        // ========================================
+        $staffReceivables = $this->getStaffReceivables($asOf, $filters);
+        $categories['staff_receivables'] = $staffReceivables;
+
+        foreach ($staffReceivables['details'] as $item) {
+            $agingBuckets[$item['aging_bucket']] += $item['amount'];
+        }
+
         // Calculate grand totals
         $grandTotal = array_sum($agingBuckets);
 
@@ -485,6 +495,7 @@ class ReportService
                 'patient_overdrafts' => $patientOverdrafts['total'],
                 'hmo_claims' => $hmoClaims['total'],
                 'gl_receivables' => $glReceivables['total'],
+                'staff_receivables' => $staffReceivables['total'],
             ],
             // Legacy format for backward compatibility
             'details' => $this->flattenReceivablesDetails($categories),
@@ -673,6 +684,64 @@ class ReportService
         return [
             'label' => 'GL Accounts Receivable',
             'description' => 'General ledger receivables accounts',
+            'total' => $total,
+            'count' => count($details),
+            'details' => $details,
+        ];
+    }
+
+    /**
+     * Get staff receivables aged list
+     */
+    protected function getStaffReceivables(\Carbon\Carbon $asOf, array $filters = []): array
+    {
+        $query = \App\Models\StaffBill::with(['patient', 'staffUser.staff_profile'])
+            ->where('outstanding_amount', '>', 0)
+            ->where('created_at', '<=', $asOf);
+
+        if (!empty($filters['min_amount'])) {
+            $query->where('outstanding_amount', '>=', $filters['min_amount']);
+        }
+
+        $bills = $query->get();
+        $details = [];
+        $total = 0;
+
+        foreach ($bills as $bill) {
+            $daysOld = $bill->created_at->diffInDays($asOf);
+
+            $bucket = 'current';
+            if ($daysOld > 90) {
+                $bucket = 'over_90';
+            } elseif ($daysOld > 60) {
+                $bucket = '61_90';
+            } elseif ($daysOld > 30) {
+                $bucket = '31_60';
+            } elseif ($daysOld >= 1) {
+                $bucket = '1_30';
+            }
+
+            $amount = floatval($bill->outstanding_amount);
+            $total += $amount;
+
+            $staffName = $bill->staffUser ? trim($bill->staffUser->surname . ' ' . $bill->staffUser->firstname . ' ' . $bill->staffUser->othername) : 'Unknown Staff';
+            $empCode = $bill->staffUser?->staff_profile?->employee_id ?? 'N/A';
+
+            $details[] = [
+                'id' => $bill->id,
+                'name' => $staffName . ' (Code: ' . $empCode . ')',
+                'reference' => 'Patient: ' . ($bill->patient?->fullname ?? 'N/A') . ' | Ref: ' . ($bill->checkoutPayment?->reference_no ?? 'N/A'),
+                'amount' => $amount,
+                'date' => $bill->created_at->format('Y-m-d'),
+                'days_old' => $daysOld,
+                'aging_bucket' => $bucket,
+                'type' => 'Staff Bill'
+            ];
+        }
+
+        return [
+            'label' => 'Staff Receivables',
+            'description' => 'Staff billed receivables outstanding balances',
             'total' => $total,
             'count' => count($details),
             'details' => $details,

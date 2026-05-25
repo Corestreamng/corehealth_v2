@@ -525,6 +525,11 @@ class PaymentObserver
             return '1025'; // Cheques Receivable
         }
 
+        // If payment method is BILL_TO_STAFF, debit Accounts Receivable - Staff
+        if ($payment->payment_method === 'BILL_TO_STAFF') {
+            return '1130';
+        }
+
         // If bank_id is set, use that bank's GL account
         if ($payment->bank_id) {
             $bank = $payment->bank;
@@ -550,6 +555,11 @@ class PaymentObserver
      */
     protected function getCreditAccountCode(Payment $payment): string
     {
+        // If this is a staff bill settlement, credit Accounts Receivable - Staff
+        if ($payment->payment_type === 'STAFF_BILL_SETTLEMENT') {
+            return '1130';
+        }
+
         // If this is an invoice payment, credit Accounts Receivable
         if ($payment->invoice_id) {
             return '1200'; // Accounts Receivable
@@ -579,6 +589,30 @@ class PaymentObserver
 
         if ($payment->reference_no) {
             $parts[] = "Ref: {$payment->reference_no}";
+        }
+
+        // Handle BILL_TO_STAFF description enrichment
+        if ($payment->payment_method === 'BILL_TO_STAFF') {
+            $staffBill = \App\Models\StaffBill::where('payment_id', $payment->id)->with('staffUser.staff_profile')->first();
+            if ($staffBill && $staffBill->staffUser) {
+                $staff = $staffBill->staffUser;
+                $profile = $staff->staff_profile;
+                $empCode = $profile ? $profile->employee_id : 'N/A';
+                $staffName = trim($staff->surname . ' ' . $staff->firstname . ' ' . $staff->othername);
+                $parts[] = "Billed to Staff: {$staffName} (Code: {$empCode})";
+            }
+        }
+
+        // Handle STAFF_BILL_SETTLEMENT description enrichment
+        if ($payment->payment_type === 'STAFF_BILL_SETTLEMENT') {
+            $staffBill = \App\Models\StaffBill::where('settlement_payment_id', $payment->id)->with('staffUser.staff_profile')->first();
+            if ($staffBill && $staffBill->staffUser) {
+                $staff = $staffBill->staffUser;
+                $profile = $staff->staff_profile;
+                $empCode = $profile ? $profile->employee_id : 'N/A';
+                $staffName = trim($staff->surname . ' ' . $staff->firstname . ' ' . $staff->othername);
+                $parts[] = "Staff Bill Settlement for: {$staffName} (Code: {$empCode})";
+            }
         }
 
         if ($payment->patient_id && $payment->patient) {
@@ -619,14 +653,38 @@ class PaymentObserver
     protected function buildLineDescription(Payment $payment, string $side): string
     {
         if ($side === 'debit') {
-            $desc = "Payment via " . ($payment->payment_method ?? 'Unknown');
-            if ($payment->bank) {
-                $desc .= " - " . ($payment->bank->bank_name ?? $payment->bank->name ?? 'Bank');
+            if ($payment->payment_method === 'BILL_TO_STAFF') {
+                $desc = "Debit Staff Receivable";
+                $staffBill = \App\Models\StaffBill::where('payment_id', $payment->id)->with('staffUser.staff_profile')->first();
+                if ($staffBill && $staffBill->staffUser) {
+                    $staff = $staffBill->staffUser;
+                    $profile = $staff->staff_profile;
+                    $empCode = $profile ? $profile->employee_id : 'N/A';
+                    $staffName = trim($staff->surname . ' ' . $staff->firstname . ' ' . $staff->othername);
+                    $desc .= " - {$staffName} ({$empCode})";
+                }
+            } else {
+                $desc = "Payment via " . ($payment->payment_method ?? 'Unknown');
+                if ($payment->bank) {
+                    $desc .= " - " . ($payment->bank->bank_name ?? $payment->bank->name ?? 'Bank');
+                }
             }
         } else {
-            $desc = $payment->invoice_id ? 'Reduce Accounts Receivable' : 'Revenue recognized';
-            if ($payment->patient) {
-                $desc .= " - " . ($payment->patient->fullname ?? $payment->patient->full_name ?? 'Patient');
+            if ($payment->payment_type === 'STAFF_BILL_SETTLEMENT') {
+                $desc = "Credit Staff Receivable";
+                $staffBill = \App\Models\StaffBill::where('settlement_payment_id', $payment->id)->with('staffUser.staff_profile')->first();
+                if ($staffBill && $staffBill->staffUser) {
+                    $staff = $staffBill->staffUser;
+                    $profile = $staff->staff_profile;
+                    $empCode = $profile ? $profile->employee_id : 'N/A';
+                    $staffName = trim($staff->surname . ' ' . $staff->firstname . ' ' . $staff->othername);
+                    $desc .= " - {$staffName} ({$empCode})";
+                }
+            } else {
+                $desc = $payment->invoice_id ? 'Reduce Accounts Receivable' : 'Revenue recognized';
+                if ($payment->patient) {
+                    $desc .= " - " . ($payment->patient->fullname ?? $payment->patient->full_name ?? 'Patient');
+                }
             }
         }
 

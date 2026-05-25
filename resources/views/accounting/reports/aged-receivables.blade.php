@@ -89,6 +89,7 @@
                             <option value="patient_overdrafts" {{ ($filters['receivable_type'] ?? '') == 'patient_overdrafts' ? 'selected' : '' }}>Patient Overdrafts</option>
                             <option value="hmo_claims" {{ ($filters['receivable_type'] ?? '') == 'hmo_claims' ? 'selected' : '' }}>HMO Claims</option>
                             <option value="gl_receivables" {{ ($filters['receivable_type'] ?? '') == 'gl_receivables' ? 'selected' : '' }}>GL Receivables</option>
+                            <option value="staff_receivables" {{ ($filters['receivable_type'] ?? '') == 'staff_receivables' ? 'selected' : '' }}>Staff Receivables</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -180,7 +181,7 @@
 
     {{-- Category Summary Cards --}}
     <div class="row mb-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="category-card border-left-danger">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -193,7 +194,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="category-card border-left-purple">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -206,7 +207,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="category-card border-left-info">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -215,6 +216,19 @@
                     </div>
                     <div class="text-right">
                         <h5 class="mb-0 text-info">₦{{ number_format($summary['gl_receivables'] ?? 0, 2) }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="category-card border-left-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6><i class="mdi mdi-account-supervisor mr-1"></i> Staff Receivables</h6>
+                        <small class="text-muted">{{ $categories['staff_receivables']['count'] ?? 0 }} active bills</small>
+                    </div>
+                    <div class="text-right">
+                        <h5 class="mb-0 text-warning">₦{{ number_format($summary['staff_receivables'] ?? 0, 2) }}</h5>
                     </div>
                 </div>
             </div>
@@ -241,6 +255,12 @@
                     <a class="nav-link" id="gl-tab" data-bs-toggle="tab" href="#glReceivables" role="tab">
                         <i class="mdi mdi-book-open-page-variant mr-1"></i> GL Accounts
                         <span class="badge bg-info ms-1">{{ $categories['gl_receivables']['count'] ?? 0 }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="staff-tab" data-bs-toggle="tab" href="#staffReceivables" role="tab">
+                        <i class="mdi mdi-account-supervisor mr-1"></i> Staff Receivables
+                        <span class="badge bg-warning ms-1">{{ $categories['staff_receivables']['count'] ?? 0 }}</span>
                     </a>
                 </li>
             </ul>
@@ -464,6 +484,72 @@
                         </table>
                     </div>
                 </div>
+
+                {{-- Staff Receivables Tab --}}
+                <div class="tab-pane fade" id="staffReceivables" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <p class="text-muted mb-0">
+                            <i class="mdi mdi-information-outline mr-1"></i>
+                            {{ $categories['staff_receivables']['description'] ?? 'Staff billed receivables outstanding balances' }}
+                        </p>
+                        <span class="badge bg-light text-dark">Total: ₦{{ number_format($categories['staff_receivables']['total'] ?? 0, 2) }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="staffTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Staff Name & Code</th>
+                                    <th>Reference Details</th>
+                                    <th>Aging</th>
+                                    <th>Days</th>
+                                    <th class="text-right">Outstanding Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($categories['staff_receivables']['details'] ?? [] as $item)
+                                <tr>
+                                    <td>{{ $item['date'] }}</td>
+                                    <td><strong>{{ $item['name'] }}</strong></td>
+                                    <td><span class="text-muted small">{{ $item['reference'] }}</span></td>
+                                    <td>
+                                        @php
+                                            $agingClass = match($item['aging_bucket']) {
+                                                'current' => 'aging-current',
+                                                '1_30' => 'aging-1-30',
+                                                '31_60' => 'aging-31-60',
+                                                '61_90' => 'aging-61-90',
+                                                'over_90' => 'aging-over-90',
+                                                default => 'aging-current'
+                                            };
+                                            $agingLabel = match($item['aging_bucket']) {
+                                                'current' => 'Current',
+                                                '1_30' => '1-30 Days',
+                                                '31_60' => '31-60 Days',
+                                                '61_90' => '61-90 Days',
+                                                'over_90' => '90+ Days',
+                                                default => 'Current'
+                                            };
+                                        @endphp
+                                        <span class="aging-badge {{ $agingClass }}">{{ $agingLabel }}</span>
+                                    </td>
+                                    <td>{{ $item['days_old'] }} d</td>
+                                    <td class="text-right">
+                                        <strong class="text-warning">₦{{ number_format($item['amount'], 2) }}</strong>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="mdi mdi-check-circle mdi-48px text-success"></i>
+                                        <p class="mb-0 mt-2">No staff receivables found</p>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -476,7 +562,7 @@
 $(document).ready(function() {
     // Initialize DataTables only if there's actual data (not just the empty state row)
     var patientRows = $('#patientTable tbody tr:not(:has(.text-center))');
-    if (patientRows.length> 0) {
+    if (patientRows.length > 0) {
         $('#patientTable').DataTable({
             dom: 'Bfrtip',
             pageLength: 25,
@@ -491,13 +577,25 @@ $(document).ready(function() {
     }
 
     var glRows = $('#glTable tbody tr:not(:has(.text-center))');
-    if (glRows.length> 0) {
+    if (glRows.length > 0) {
         $('#glTable').DataTable({
             dom: 'Bfrtip',
             pageLength: 25,
             order: [[2, 'desc']],
             language: {
                 emptyTable: "No GL receivables found"
+            }
+        });
+    }
+
+    var staffRows = $('#staffTable tbody tr:not(:has(.text-center))');
+    if (staffRows.length > 0) {
+        $('#staffTable').DataTable({
+            dom: 'Bfrtip',
+            pageLength: 25,
+            order: [[5, 'desc']],
+            language: {
+                emptyTable: "No staff receivables found"
             }
         });
     }
