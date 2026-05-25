@@ -112,7 +112,7 @@ class StoreLanePolicy extends Model implements Auditable
             ['central',         'pharmacy_hub',         true,  'none',    'Central → Pharmacy Hub (standard replenishment)'],
             ['central',         'pharmacy_satellite',   true,  'none',    'Central → Pharmacy Satellite (direct replenishment)'],
             ['central',         'department',           true,  'none',    'Central → Department Store (standard replenishment)'],
-            ['central',         'ward',                 true,  'manager', 'Central → Ward Store (requires manager approval)'],
+            ['central',         'ward',                 true,  'none',    'Central → Ward Store (standard replenishment, no approval required)'],
             ['pharmacy_hub',    'pharmacy_satellite',   true,  'none',    'Hub → Satellite (standard satellite replenishment)'],
             ['pharmacy_hub',    'ward',                 false, 'none',    'Hub → Ward (disabled by default — enable if needed)'],
             // All other pairs are denied by default (no row = denied)
