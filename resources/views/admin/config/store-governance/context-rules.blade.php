@@ -365,8 +365,7 @@
                             <label class="form-label small fw-semibold">User</label>
                             <select class="form-select form-select-sm" id="testUserId">
                                 <option value="">— select user —</option>
-                                {{-- P0 BUG FIX: $u->firstname (not $u->first_name) --}}
-                                @foreach(\App\Models\User::orderBy('surname')->get() as $u)
+                                @foreach($testUsers as $u)
                                 <option value="{{ $u->id }}">{{ $u->surname }} {{ $u->firstname }}</option>
                                 @endforeach
                             </select>

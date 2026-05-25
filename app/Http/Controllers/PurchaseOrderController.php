@@ -451,6 +451,10 @@ class PurchaseOrderController extends Controller
         $search = $request->get('q', $request->get('search', ''));
         $storeId = $request->get('store_id');
         $limit = $request->get('limit', 50); // Allow higher limit for grid view
+        $categoryId = $request->get('category_id');
+        $stockFilter = $request->get('stock_filter');
+        $page = intval($request->get('page', 1));
+        $offset = ($page - 1) * $limit;
 
         $query = Product::with(['price', 'category', 'packagings'])
             ->where('status', true);
@@ -462,7 +466,28 @@ class PurchaseOrderController extends Controller
             });
         }
 
-        $products = $query->limit($limit)
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($storeId && $stockFilter === 'in-stock') {
+            $query->whereHas('stockBatches', function ($q) use ($storeId) {
+                $q->where('store_id', $storeId)
+                  ->active()
+                  ->where('current_qty', '>', 0);
+            });
+        } elseif ($storeId && $stockFilter === 'low') {
+            $query->whereHas('stockBatches', function ($q) use ($storeId) {
+                $q->where('store_id', $storeId)
+                  ->active()
+                  ->where('current_qty', '>', 0)
+                  ->where('current_qty', '<=', 10);
+            });
+        }
+
+        $total = (clone $query)->count();
+
+        $products = $query->offset($offset)->limit($limit)
             ->get()
             ->map(function($p) use ($storeId) {
                 // Get stock for specific store if provided
@@ -494,12 +519,13 @@ class PurchaseOrderController extends Controller
                             'units_in_parent' => $pkg->units_in_parent,
                             'base_unit_qty' => $pkg->base_unit_qty,
                             'is_default_purchase' => $pkg->is_default_purchase,
+                            'is_default_dispense' => $pkg->is_default_dispense,
                         ];
                     })->values(),
                 ];
             });
 
-        return response()->json($products);
+        return response()->json($products)->header('X-Total-Count', $total);
     }
 
     /**

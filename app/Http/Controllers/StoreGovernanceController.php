@@ -49,12 +49,12 @@ class StoreGovernanceController extends Controller
 
         $wards       = \App\Models\Ward::orderBy('name')->get();
         $departments = \App\Models\Department::orderBy('name')->get();
-        // Use actual DB role names (UPPERCASE, from Spatie cache).
-        // PHARMACIST covers pharmacy manager duties, STORE covers store keeper,
-        // NURSE covers head nurse duties — no separate roles exist in the system.
         $managers    = \App\Models\User::whereHas('roles', fn ($q) => $q->whereIn('name', [
             'ADMIN', 'SUPERADMIN', 'super-admin', 'PHARMACIST', 'STORE', 'NURSE',
-        ]))->orderBy('surname')->get();
+        ]))
+        ->select('id', 'surname', 'firstname')
+        ->orderBy('surname')
+        ->get();
 
         $distributionRoles = Store::DISTRIBUTION_ROLES;
 
@@ -237,9 +237,16 @@ class StoreGovernanceController extends Controller
             fn ($q) => $q->where('name', 'stores.candidate-all')
         )->pluck('name');
 
+        // Only fetch staff users (is_admin != 19) and only retrieve required fields to avoid memory exhaustion
+        $testUsers = \App\Models\User::where('is_admin', '!=', 19)
+            ->where('status', 1)
+            ->select('id', 'surname', 'firstname')
+            ->orderBy('surname')
+            ->get();
+
         return view('admin.config.store-governance.context-rules', compact(
             'roleRules', 'deptRules', 'bucketRules', 'fallbackRule', 'stores', 'departments',
-            'spatieRoles', 'rolesWithCandidateAll'
+            'spatieRoles', 'rolesWithCandidateAll', 'testUsers'
         ));
     }
 
