@@ -466,6 +466,7 @@ Route::group(['middleware' => ['auth']], function () {
 
             // Consent Management
             Route::patch('{procedure}/consent', [\App\Http\Controllers\PatientProcedureController::class, 'updateConsent'])->name('consent.update');
+            Route::post('{procedure}/consent/sign', [\App\Http\Controllers\PatientProcedureController::class, 'signConsent'])->name('consent.sign');
 
             // Attachments Management
             Route::post('{procedure}/attachments', [\App\Http\Controllers\PatientProcedureController::class, 'uploadAttachment'])->name('attachments.store');
@@ -516,6 +517,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/billing-workbench/account-transaction', [\App\Http\Controllers\BillingWorkbenchController::class, 'processAccountTransaction'])->name('billing.account-transaction');
         Route::post('/billing-workbench/patient/{id}/generate-statement', [\App\Http\Controllers\BillingWorkbenchController::class, 'generateStatement'])->name('billing.generate-statement');
         Route::get('/billing-workbench/print-deposit-receipt/{id}', [\App\Http\Controllers\BillingWorkbenchController::class, 'printDepositReceipt'])->name('billing.print-deposit-receipt');
+
 
         // Shared Admission Module Routes
         Route::get('/admission-module/patient/{id}/admissions', [\App\Http\Controllers\AdmissionModuleController::class, 'getPatientAdmissions'])->name('admission-module.patient-admissions');
@@ -1126,3 +1128,6 @@ Route::middleware(['auth'])->prefix('clinical-reports')->name('clinical-reports.
     Route::get('/vaccinations', [\App\Http\Controllers\ClinicalReportsController::class, 'getVaccinations'])->name('vaccinations');
     Route::get('/occupancy', [\App\Http\Controllers\ClinicalReportsController::class, 'getOccupancy'])->name('occupancy');
 });
+
+
+

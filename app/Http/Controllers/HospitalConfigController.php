@@ -117,6 +117,7 @@ class HospitalConfigController extends Controller
             'nurse_self_approve_lab_result' => 'boolean',
             'doctor_self_approve_imaging_result' => 'boolean',
             'nurse_self_approve_imaging_result' => 'boolean',
+            'consent_template' => 'nullable|string',
         ]);
 
         $config = ApplicationStatu::first();
