@@ -1437,7 +1437,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fa fa-print mr-2"></i>Print Procedure Report</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <p class="text-muted small mb-3">Select what to include in the printed report:</p>
@@ -1466,7 +1466,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="executePrint()">
                     <i class="fa fa-print mr-1"></i>Print
                 </button>
@@ -1481,7 +1481,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fa fa-calendar-plus mr-2"></i>Schedule Procedure</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="scheduleProcedureForm">
@@ -1500,7 +1500,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="btn-submit-schedule">
                     <i class="fa fa-calendar-check mr-1"></i>Confirm Schedule
                 </button>
@@ -1515,7 +1515,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fa fa-user-plus mr-2"></i>Add Team Member</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="addTeamForm">
@@ -1551,7 +1551,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" form="addTeamForm" class="btn btn-primary">
                     <i class="fa fa-user-plus mr-1"></i>Add Member
                 </button>
@@ -1566,7 +1566,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="noteModalTitle"><i class="fa fa-sticky-note mr-2"></i>Add Procedure Note</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="addNoteForm">
@@ -1592,7 +1592,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" form="addNoteForm" class="btn btn-primary" id="noteSubmitBtn">
                     <i class="fa fa-save mr-1"></i>Save Note
                 </button>
@@ -1607,7 +1607,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addItemModalTitle"><i class="fa fa-clipboard-list mr-2"></i>Add Item</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <form id="addItemForm">
@@ -1655,7 +1655,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" form="addItemForm" class="btn btn-primary">
                     <i class="fa fa-plus mr-1"></i>Add
                 </button>
@@ -1670,7 +1670,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="fa fa-ban mr-2"></i>Cancel Procedure</h5>
-                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close text-white" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
@@ -1689,7 +1689,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Keep Procedure</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Procedure</button>
                 <button type="submit" form="cancelProcedureForm" class="btn btn-danger">
                     <i class="fa fa-ban mr-1"></i>Cancel Procedure
                 </button>
@@ -1730,7 +1730,7 @@
                         <small class="text-muted">Procedure: {{ $procedureName }} &bull; Patient: {{ $patientName }}</small>
                     </div>
                 </div>
-                <button type="button" class="close" data-dismiss="modal" style="font-size: 1.75rem; font-weight: 300;"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal" style="font-size: 1.75rem; font-weight: 300;"><span>&times;</span></button>
             </div>
             
             <div class="modal-body" style="padding: 0; display: flex; flex: 1; min-height: 0; overflow: hidden; background: #f8f9fa;">
@@ -1829,7 +1829,7 @@
             </div>
             
             <div class="modal-footer bg-light" style="border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px; padding: 1rem 1.5rem;">
-                <button type="button" class="btn btn-secondary px-4 py-2" data-dismiss="modal" style="border-radius: 6px; font-weight: 600;">Cancel</button>
+                <button type="button" class="btn btn-secondary px-4 py-2" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 600;">Cancel</button>
                 <button type="button" class="btn btn-primary px-4 py-2" id="submit-digital-signature-btn" onclick="submitDigitalConsent()" style="border-radius: 6px; font-weight: 600; background: var(--proc-primary); border-color: var(--proc-primary);">
                     <i class="fa fa-check mr-2"></i>Sign & Obtain Consent
                 </button>
@@ -1844,14 +1844,14 @@
         <div class="modal-content">
             <div class="modal-header" id="confirmActionHeader">
                 <h5 class="modal-title" id="confirmActionTitle">Confirm</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <p id="confirmActionMessage" class="mb-1">Are you sure?</p>
                 <p id="confirmActionSub" class="text-muted small mb-0"></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
             </div>
         </div>
