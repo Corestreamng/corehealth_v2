@@ -28,7 +28,25 @@
                 <div class="row">
                     <!-- General Settings Card -->
                     <div class="col-lg-8">
-                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-pills mb-4 p-2 bg-white rounded shadow-sm" id="configTabs" role="tablist" style="border: 1px solid #e9ecef; display: flex; gap: 8px;">
+                            <li class="nav-item" style="flex: 1; text-align: center; list-style: none;">
+                                <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general-settings" role="tab" style="font-weight: 600; border-radius: 8px; padding: 10px 15px; display: block; text-decoration: none; transition: all 0.2s;">
+                                    <i class="mdi mdi-cog-outline mr-1"></i> System Configuration
+                                </a>
+                            </li>
+                            <li class="nav-item" style="flex: 1; text-align: center; list-style: none;">
+                                <a class="nav-link" id="consent-tab" data-toggle="tab" href="#consent-template" role="tab" style="font-weight: 600; border-radius: 8px; padding: 10px 15px; display: block; text-decoration: none; transition: all 0.2s;">
+                                    <i class="mdi mdi-clipboard-text-outline mr-1"></i> Procedure Consent Template
+                                </a>
+                            </li>
+                        </ul>
+
+                        <!-- Tab content -->
+                        <div class="tab-content" id="configTabsContent">
+                            <!-- General Configuration Tab -->
+                            <div class="tab-pane fade show active" id="general-settings" role="tabpanel" aria-labelledby="general-tab">
+                                <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-cog-outline mr-2" style="color: var(--primary-color);"></i>
@@ -886,13 +904,48 @@
                                             <small class="text-muted d-block">Compress database backups (.sql.gz) to save disk space. Requires gzip on server.</small>
                                         </div>
                                         <label class="toggle-switch">
-                                            <input type="checkbox" name="backup_compression" value="1" {{ $config->backup_compression ? 'checked' : '' }}>
-                                            <span class="toggle-slider"></span>
-                                        </label>
+                                             <input type="checkbox" name="backup_compression" value="1" {{ $config->backup_compression ? 'checked' : '' }}>
+                                             <span class="toggle-slider"></span>
+                                         </label>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                            </div> {{-- End of #general-settings --}}
+
+                            <!-- Procedure Consent Template Tab -->
+                            <div class="tab-pane fade" id="consent-template" role="tabpanel" aria-labelledby="consent-tab">
+                                <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                    <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                        <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                            <i class="mdi mdi-clipboard-text-outline mr-2" style="color: var(--primary-color);"></i>
+                                            Procedure Consent Template
+                                        </h5>
+                                    </div>
+                                    <div class="card-body" style="padding: 2rem;">
+                                        <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                                            <i class="mdi mdi-information-outline text-info mr-1"></i> Design the default clinical/surgical consent template below. Placeholders will be filled dynamically with real patient and procedure details when signing.
+                                        </p>
+                                        
+                                        <div class="alert alert-info border-0 mb-4" style="border-radius: 8px; font-size: 0.85rem; line-height: 1.5; background: #e8f4fd; color: #1d68a7; padding: 1.25rem;">
+                                            <strong class="d-block mb-1"><i class="mdi mdi-help-circle-outline"></i> Available Placeholders:</strong>
+                                            <ul class="mb-0 pl-3">
+                                                <li><code>{patient_name}</code> - Full name of the patient</li>
+                                                <li><code>{procedure_name}</code> - Name of the procedure service</li>
+                                                <li><code>{hospital_name}</code> - Hospital config name</li>
+                                                <li><code>{doctor_name}</code> - Chief surgeon or doctor in charge</li>
+                                                <li><code>{date}</code> - Form execution/signing date</li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label" style="font-weight: 600; color: #495057;">HTML Consent Template</label>
+                                            <textarea class="form-control" name="consent_template" id="consent_template_editor" rows="18" style="border-radius: 8px; font-family: monospace; font-size: 0.9rem; line-height: 1.6; padding: 1rem;">{{ old('consent_template', $config->consent_template) }}</textarea>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> {{-- End of #configTabsContent --}}
 
                         <!-- Save Button -->
                         <button type="submit" class="btn btn-block" style="background: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 0.875rem; font-weight: 600; transition: all 0.2s;">
@@ -978,5 +1031,55 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
+
+    /* Custom Config Tabs */
+    #configTabs .nav-link {
+        color: #495057;
+        background-color: #f8f9fa;
+        border: 1px solid transparent;
+    }
+    #configTabs .nav-link.active {
+        color: #fff !important;
+        background-color: var(--primary-color) !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+    }
+    #configTabs .nav-link:hover:not(.active) {
+        background-color: #e9ecef;
+        color: #1a1a1a;
+    }
 </style>
 @endsection
+
+@push('scripts')
+<script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        if (typeof ClassicEditor !== 'undefined') {
+            ClassicEditor.create(document.querySelector('#consent_template_editor'), {
+                toolbar: {
+                    items: [
+                        'undo', 'redo',
+                        '|', 'heading',
+                        '|', 'bold', 'italic',
+                        '|', 'link', 'insertTable',
+                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent',
+                        '|', 'blockQuote'
+                    ]
+                }
+            }).catch(function(err) {
+                console.error('Consent template editor init failed:', err);
+            });
+        }
+    });
+</script>
+<style>
+    #consent-template .ck-editor__editable_inline {
+        min-height: 450px !important;
+        font-family: 'Georgia', serif;
+        font-size: 1.05rem;
+        line-height: 1.7;
+        padding: 1.5rem !important;
+        border-radius: 0 0 8px 8px !important;
+    }
+</style>
+@endpush

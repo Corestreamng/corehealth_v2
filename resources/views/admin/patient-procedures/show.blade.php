@@ -473,13 +473,23 @@
                         <span class="cs-detail">— {{ $procedure->consent_notes }}</span>
                     @endif
                     @if(!$isCompleted)
-                        @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
-                        <div class="cs-action">
-                            <button class="btn btn-sm {{ $consentNeedsAction ? 'btn-warning' : 'btn-outline-secondary' }}" onclick="openConsentModal()">
-                                <i class="fa fa-clipboard-check mr-1"></i>{{ $consentNeedsAction ? 'Record Consent' : 'Change' }}
-                            </button>
-                        </div>
-                        @endhasanyrole
+                        @if($cs === 'obtained')
+                            @hasanyrole('SUPERADMIN|ADMIN')
+                            <div class="cs-action">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="openConsentModal()">
+                                    <i class="fa fa-clipboard-check mr-1"></i>Change
+                                </button>
+                            </div>
+                            @endhasanyrole
+                        @else
+                            @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
+                            <div class="cs-action">
+                                <button class="btn btn-sm {{ $consentNeedsAction ? 'btn-warning' : 'btn-outline-secondary' }}" onclick="openConsentModal()">
+                                    <i class="fa fa-clipboard-check mr-1"></i>{{ $consentNeedsAction ? 'Record Consent' : 'Change' }}
+                                </button>
+                            </div>
+                            @endhasanyrole
+                        @endif
                     @endif
                 </div>
             @else
@@ -1006,11 +1016,19 @@
                         <div class="section-card-header">
                             <h5><i class="fa fa-clipboard-check"></i> Consent Documentation</h5>
                             @if(!$isCompleted && !$isCancelled)
-                                @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
-                                <button class="btn btn-sm {{ $consentNeedsAction ? 'btn-primary' : 'btn-outline-secondary' }}" onclick="openConsentModal()">
-                                    <i class="fa fa-{{ $cs ? 'sync' : 'clipboard-check' }} mr-1"></i>{{ $cs ? 'Change Status' : 'Record Consent' }}
-                                </button>
-                                @endhasanyrole
+                                @if($cs === 'obtained')
+                                    @hasanyrole('SUPERADMIN|ADMIN')
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="openConsentModal()">
+                                        <i class="fa fa-sync mr-1"></i>Change Status
+                                    </button>
+                                    @endhasanyrole
+                                @else
+                                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
+                                    <button class="btn btn-sm {{ $consentNeedsAction ? 'btn-primary' : 'btn-outline-secondary' }}" onclick="openConsentModal()">
+                                        <i class="fa fa-{{ $cs ? 'sync' : 'clipboard-check' }} mr-1"></i>{{ $cs ? 'Change Status' : 'Record Consent' }}
+                                    </button>
+                                    @endhasanyrole
+                                @endif
                             @endif
                         </div>
                         <div class="section-card-body">
@@ -1042,6 +1060,22 @@
                                         </div>
                                         @endif
                                     </div>
+
+                                    @php
+                                        $consentAttachment = $procedure->attachments->where('label', 'Signed Informed Consent Form')->first();
+                                    @endphp
+                                    @if($consentAttachment)
+                                        <div class="mt-3 pt-3 border-top d-flex align-items-center justify-content-between" style="border-top-color: rgba(0,0,0,0.08) !important;">
+                                            <span style="font-size: 0.9rem; color: #495057;">
+                                                <i class="fa fa-file-pdf text-danger mr-2 fa-lg"></i>
+                                                <strong>Signed Consent Form PDF:</strong> 
+                                                <span class="text-muted" style="font-size: 0.85rem; font-family: monospace;">{{ $consentAttachment->original_name }}</span>
+                                            </span>
+                                            <a href="{{ route('patient-procedures.attachments.download', [$procedure->id, $consentAttachment->id]) }}" class="btn btn-sm btn-success text-white px-3" style="border-radius: 6px; font-weight: 600; background-color: #28a745; border-color: #28a745;">
+                                                <i class="fa fa-download mr-1"></i>Download PDF
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                             @else
                                 <div class="consent-big-card cs-danger">
@@ -1159,8 +1193,14 @@
                                         </div>
                                         <div class="d-flex flex-shrink-0" style="gap:4px;">
                                             <a href="{{ route('patient-procedures.attachments.download', [$procedure->id, $att->id]) }}" class="btn btn-sm btn-outline-primary" title="Download"><i class="fa fa-download"></i></a>
-                                            @if(auth()->id() === $att->uploaded_by || auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'DOCTOR']))
-                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment({{ $att->id }})" title="Delete"><i class="fa fa-trash"></i></button>
+                                            @if($att->label === 'Signed Informed Consent Form')
+                                                @hasanyrole('SUPERADMIN|ADMIN')
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment({{ $att->id }})" title="Delete"><i class="fa fa-trash"></i></button>
+                                                @endhasanyrole
+                                            @else
+                                                @if(auth()->id() === $att->uploaded_by || auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'DOCTOR']))
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAttachment({{ $att->id }})" title="Delete"><i class="fa fa-trash"></i></button>
+                                                @endif
                                             @endif
                                         </div>
                                     </div>
@@ -1239,9 +1279,11 @@
                             <i class="fa fa-check-circle mr-1"></i>Procedure completed.
                             @if($procedure->actual_end_time)on {{ $procedure->actual_end_time->format('d M Y H:i') }}@endif
                         </div>
+                        @hasanyrole('SUPERADMIN|ADMIN')
                         <button class="btn btn-outline-warning btn-block mb-2" onclick="confirmAction('in_progress', 'Reopen Procedure', 'Reopen this completed procedure?', 'Status will go back to In Progress.', 'warning', 'redo')">
                             <i class="fa fa-redo"></i> Reopen Procedure
                         </button>
+                        @endhasanyrole
                     @endif
                 </div>
             </div>
@@ -1360,7 +1402,7 @@
             </div>
 
             {{-- Cancel Danger Zone --}}
-            @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
+            @hasanyrole('SUPERADMIN|ADMIN')
             @if(!$isCancelled && !$isCompleted)
             <div class="danger-zone">
                 <button class="danger-zone-toggle" onclick="toggleDangerZone()">
@@ -1657,49 +1699,139 @@
 </div>
 
 {{-- Consent Modal --}}
-<div class="modal fade" id="consentModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fa fa-clipboard-check mr-2"></i>Record Consent</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+@php
+    $sett = appsettings();
+    $rawTemplate = $sett->consent_template ?? '';
+    
+    // Parse placeholders
+    $chiefSurgeon = $procedure->teamMembers->where('role', 'chief_surgeon')->first();
+    $doctorName = $chiefSurgeon && $chiefSurgeon->user ? $chiefSurgeon->user->name : (optional($procedure->requestedByUser)->name ?? auth()->user()->name);
+    $patientName = $pt ? userfullname($pt->user_id) : 'Unknown Patient';
+    $procedureName = optional($procedure->service)->service_name ?? 'Procedure';
+    $hospitalName = $sett->site_name ?? 'Hospital';
+    $currentDate = now()->format('d M Y');
+
+    $parsedTemplate = str_replace(
+        ['{patient_name}', '{procedure_name}', '{hospital_name}', '{doctor_name}', '{date}'],
+        [$patientName, $procedureName, $hospitalName, $doctorName, $currentDate],
+        $rawTemplate
+    );
+@endphp
+<div class="modal fade" id="consentModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document" style="max-width: 95%; width: 95%; height: calc(100vh - 3rem); margin: 1.5rem auto;">
+        <div class="modal-content" style="height: 100%; border: none; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column;">
+            <div class="modal-header bg-light" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0; padding: 1.25rem 1.5rem;">
+                <div class="d-flex align-items-center">
+                    <div style="background: rgba(0, 102, 204, 0.1); width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                        <i class="fa fa-file-signature text-primary fa-lg" style="color: var(--proc-primary);"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" style="font-weight: 700; color: #1a1a1a;">Patient Informed Consent Portal</h5>
+                        <small class="text-muted">Procedure: {{ $procedureName }} &bull; Patient: {{ $patientName }}</small>
+                    </div>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" style="font-size: 1.75rem; font-weight: 300;"><span>&times;</span></button>
             </div>
-            <div class="modal-body">
-                <p class="text-muted small mb-3">Select the consent status for this procedure:</p>
-                <form id="consentForm" method="POST" action="{{ route('patient-procedures.consent.update', $procedure->id) }}">
-                    @csrf
-                    @method('PATCH')
-                    <input type="hidden" id="consent_status_value" name="consent_status" value="{{ $procedure->consent_status }}">
-                    <div class="consent-option-grid mb-3">
-                        @php
-                            $consentOpts = [
-                                'obtained'     => ['label'=>'Consent Obtained','sub'=>'Patient/guardian agreed','icon'=>'fa-check-circle','color'=>'#28a745'],
-                                'pending'      => ['label'=>'Pending','sub'=>'Consent being obtained','icon'=>'fa-clock','color'=>'#fd7e14'],
-                                'waived'       => ['label'=>'Waived','sub'=>'Patient declined consent','icon'=>'fa-minus-circle','color'=>'#ffc107'],
-                                'not_required' => ['label'=>'Not Required','sub'=>'Consent not applicable','icon'=>'fa-ban','color'=>'#6c757d'],
-                            ];
-                        @endphp
-                        @foreach($consentOpts as $optKey => $opt)
-                            <div class="consent-option-btn {{ $procedure->consent_status === $optKey ? 'selected-'.$optKey : '' }}"
-                                 onclick="selectConsentOption('{{ $optKey }}')" id="consent-opt-{{ $optKey }}">
-                                <i class="fa {{ $opt['icon'] }} fa-lg" style="color:{{ $opt['color'] }};"></i>
-                                <div>
-                                    <span class="opt-label">{{ $opt['label'] }}</span>
-                                    <span class="opt-sub">{{ $opt['sub'] }}</span>
+            
+            <div class="modal-body" style="padding: 0; display: flex; flex: 1; min-height: 0; overflow: hidden; background: #f8f9fa;">
+                <div class="container-fluid h-100" style="padding: 0;">
+                    <div class="row h-100 no-gutters">
+                        <!-- Left Panel: Consent Document -->
+                        <div class="col-md-7 h-100 d-flex flex-column bg-white" style="border-right: 1px solid #dee2e6; overflow: hidden;">
+                            <div class="px-4 py-3 bg-light border-bottom d-flex align-items-center justify-content-between">
+                                <span style="font-weight: 600; color: #495057;"><i class="fa fa-edit mr-2 text-muted"></i>1. Edit Consent Document Content</span>
+                                <span class="badge badge-primary bg-primary text-white px-2 py-1" style="font-size: 0.8rem; border-radius: 4px;">WYSIWYG Editable</span>
+                            </div>
+                            <div class="flex-1 p-3" style="overflow-y: auto; background: #fff;">
+                                <div style="max-width: 850px; margin: 0 auto; min-height: 100%;">
+                                    <textarea id="consent_template_editor_modal" style="width: 100%; min-height: 400px; display: none;">{!! $parsedTemplate !!}</textarea>
+                                    <style>
+                                        #consentModal .ck-editor__editable_inline {
+                                            min-height: 450px !important;
+                                            max-height: calc(100vh - 220px) !important;
+                                            font-family: 'Georgia', serif;
+                                            font-size: 1.05rem;
+                                            line-height: 1.7;
+                                            padding: 1.5rem !important;
+                                        }
+                                    </style>
                                 </div>
                             </div>
-                        @endforeach
+                        </div>
+                        
+                        <!-- Right Panel: Signature Capture & Details -->
+                        <div class="col-md-5 h-100 d-flex flex-column bg-light" style="overflow-y: auto;">
+                            <div class="p-4 flex-1">
+                                <!-- Step 1: Signee Details -->
+                                <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px;">
+                                    <div class="card-body">
+                                        <h6 class="mb-3" style="font-weight: 700; color: #333;"><i class="fa fa-user-check mr-2 text-primary"></i> 1. Signee Identification</h6>
+                                        <div class="form-group mb-3">
+                                            <label class="form-label" style="font-weight: 600; color: #495057;">Signee Printed Name *</label>
+                                            <input type="text" class="form-control" id="signee_name" placeholder="Type name of the person signing..." style="border-radius: 6px; padding: 0.75rem;" value="{{ $patientName }}">
+                                            <small class="text-muted">Typically the patient, or a parent/legal guardian if patient is a minor.</small>
+                                        </div>
+                                        
+                                        <div class="form-group mb-0">
+                                            <label class="form-label" style="font-weight: 600; color: #495057;">Relationship to Patient *</label>
+                                            <select class="form-control" id="signee_relationship" style="border-radius: 6px; height: auto; padding: 0.75rem;">
+                                                <option value="Self">Self (Patient)</option>
+                                                <option value="Parent">Parent</option>
+                                                <option value="Guardian">Guardian</option>
+                                                <option value="Spouse">Spouse</option>
+                                                <option value="Next of Kin">Next of Kin / Relative</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 2: Signature Drawing Pad -->
+                                <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px;">
+                                    <div class="card-body">
+                                        <h6 class="mb-3" style="font-weight: 700; color: #333; display: flex; justify-content: space-between; align-items: center;">
+                                            <span><i class="fa fa-signature mr-2 text-primary"></i> 2. Digital Signature</span>
+                                            <span class="badge badge-secondary" style="font-size: 0.75rem;">Interactive Canvas</span>
+                                        </h6>
+                                        
+                                        <!-- Interactive Canvas Container -->
+                                        <div class="signature-canvas-wrapper border mb-3 position-relative" style="border-radius: 8px; background: #fafafa; overflow: hidden; height: 180px;">
+                                            <canvas id="signatureCanvas" style="width: 100%; height: 100%; display: block; cursor: crosshair;"></canvas>
+                                            <div id="canvasPlaceholderText" class="position-absolute d-flex flex-column align-items-center justify-content-center text-muted" style="top:0; left:0; right:0; bottom:0; pointer-events:none; font-size: 0.85rem;">
+                                                <i class="fa fa-mouse-pointer fa-lg mb-2"></i>
+                                                <span>Draw signature here using mouse or touch</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Actions Grid -->
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSignatureCanvas()" style="border-radius: 6px; padding: 6px 12px;">
+                                                <i class="fa fa-eraser mr-1"></i> Clear Drawing
+                                            </button>
+                                            
+                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="generateCursiveSignature()" style="border-radius: 6px; padding: 6px 12px;">
+                                                <i class="fa fa-magic mr-1"></i> Stylized Cursive Signature
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 3: Consent Notes -->
+                                <div class="card border-0 shadow-sm" style="border-radius: 8px;">
+                                    <div class="card-body">
+                                        <h6 class="mb-3" style="font-weight: 700; color: #333;"><i class="fa fa-sticky-note mr-2 text-primary"></i> 3. Clinical Consent Notes <small class="text-muted">(Optional)</small></h6>
+                                        <textarea class="form-control" id="signature_notes" rows="3" placeholder="Enter any specific notes, witnesses, verbal agreement statements, or extenuating conditions..." style="border-radius: 6px;"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="consent_notes">Notes / Reason <small class="text-muted">(optional)</small></label>
-                        <textarea class="form-control" id="consent_notes" name="consent_notes" rows="2" placeholder="Additional consent notes…">{{ $procedure->consent_notes }}</textarea>
-                    </div>
-                </form>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="save-consent-btn" onclick="executeConsentUpdate()">
-                    <i class="fa fa-save mr-1"></i>Save Consent
+            
+            <div class="modal-footer bg-light" style="border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px; padding: 1rem 1.5rem;">
+                <button type="button" class="btn btn-secondary px-4 py-2" data-dismiss="modal" style="border-radius: 6px; font-weight: 600;">Cancel</button>
+                <button type="button" class="btn btn-primary px-4 py-2" id="submit-digital-signature-btn" onclick="submitDigitalConsent()" style="border-radius: 6px; font-weight: 600; background: var(--proc-primary); border-color: var(--proc-primary);">
+                    <i class="fa fa-check mr-2"></i>Sign & Obtain Consent
                 </button>
             </div>
         </div>
@@ -1738,7 +1870,7 @@
 @include("admin.partials.invest_res_view_imaging_js")
 <script src="{{ asset('assets/js/chosen.jquery.min.js') }}"></script>
 {{-- CKEditor --}}
-<script src="{{ asset('js/ckeditor5/ckeditor.js') }}"></script>
+<script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 
 {{-- BillingKit Config — must be emitted before billing-shared.js --}}
 @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE|SURGERY')
@@ -2520,37 +2652,235 @@ function openConsentModal() {
     $("#consentModal").modal("show");
 }
 
-function selectConsentOption(optionKey) {
-    document.querySelectorAll('.consent-option-btn').forEach(function(el) {
-        el.className = 'consent-option-btn';
+let canvas, ctx;
+let isDrawing = false;
+let hasDrawnSignature = false;
+let lastX = 0;
+let lastY = 0;
+
+function initSignatureCanvas() {
+    canvas = document.getElementById('signatureCanvas');
+    if (!canvas) return;
+    
+    ctx = canvas.getContext('2d');
+    
+    // Reset sizes properly based on CSS layout
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    // High-resolution canvas scaling
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    
+    // Elegant drawing styles for realistic ink flow
+    ctx.strokeStyle = '#1a568c'; // Deep navy blue clinical ink
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Mouse drawing event listeners
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    
+    // Mobile touch drawing event listeners
+    canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        startDrawing({
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
     });
-    const el = document.getElementById('consent-opt-' + optionKey);
-    if (el) el.classList.add('selected-' + optionKey);
-    $('#consent_status_value').val(optionKey);
+    
+    canvas.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        draw({
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+    });
+    
+    canvas.addEventListener('touchend', stopDrawing);
 }
 
-function executeConsentUpdate() {
-    const status = $('#consent_status_value').val();
-    if (!status) { toastr.warning('Please select a consent status.'); return; }
-    const btn = $('#save-consent-btn');
-    btn.prop('disabled', true).html('<i class="fa fa-spin fa-spinner mr-1"></i>Saving…');
+function startDrawing(e) {
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    
+    // Hide visual placeholder overlay
+    const placeholder = document.getElementById('canvasPlaceholderText');
+    if (placeholder) placeholder.style.display = 'none';
+    
+    // Calculate accurate coordinate relative to client canvas bounds
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    lastX = x;
+    lastY = y;
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    
+    lastX = x;
+    lastY = y;
+    hasDrawnSignature = true;
+}
+
+function stopDrawing() {
+    isDrawing = false;
+}
+
+function clearSignatureCanvas() {
+    if (!canvas) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const placeholder = document.getElementById('canvasPlaceholderText');
+    if (placeholder) placeholder.style.display = 'flex';
+    hasDrawnSignature = false;
+}
+
+function generateCursiveSignature() {
+    const nameInput = document.getElementById('signee_name').value.trim();
+    if (!nameInput) {
+        toastr.warning('Please enter a signee name first to generate a cursive signature.');
+        return;
+    }
+    
+    clearSignatureCanvas();
+    
+    // Hide visual placeholder overlay
+    const placeholder = document.getElementById('canvasPlaceholderText');
+    if (placeholder) placeholder.style.display = 'none';
+    
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const logicalWidth = canvas.width / devicePixelRatio;
+    const logicalHeight = canvas.height / devicePixelRatio;
+    
+    ctx.strokeStyle = '#1d68a7'; // Premium clinic blue ink
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Write elegant cursive text
+    ctx.font = 'italic 32px "Brush Script MT", "Lucida Handwriting", "Zapfino", "cursive"';
+    ctx.fillStyle = '#1d68a7';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    const words = nameInput.split(' ');
+    let signatureText = nameInput;
+    if (words.length > 1) {
+        signatureText = words[0] + ' ' + words[words.length - 1];
+    }
+    
+    ctx.fillText(signatureText, logicalWidth / 2, logicalHeight / 2 - 10);
+    
+    // Add cursive swash line
+    ctx.beginPath();
+    ctx.moveTo(logicalWidth / 2 - 90, logicalHeight / 2 + 15);
+    ctx.quadraticCurveTo(logicalWidth / 2, logicalHeight / 2 + 28, logicalWidth / 2 + 100, logicalHeight / 2 + 12);
+    ctx.stroke();
+    
+    hasDrawnSignature = true;
+}
+
+let consentEditorInstance = null;
+
+function createConsentEditor() {
+    if (typeof ClassicEditor === 'undefined') return;
+    
+    ClassicEditor.create(document.querySelector('#consent_template_editor_modal'), {
+        toolbar: ['heading','|','bold','italic','bulletedList','numberedList','|','blockQuote','|','undo','redo']
+    }).then(function(editor) {
+        consentEditorInstance = editor;
+    }).catch(function(err) { console.error(err); });
+}
+
+// Bootstrap modal show hook to initialize canvas safely after rendering
+$('#consentModal').on('shown.bs.modal', function () {
+    initSignatureCanvas();
+    hasDrawnSignature = false;
+    
+    if (consentEditorInstance) {
+        try { consentEditorInstance.destroy().then(createConsentEditor); }
+        catch(e) { createConsentEditor(); }
+    } else {
+        createConsentEditor();
+    }
+});
+
+// Clean up CKEditor on modal close
+$('#consentModal').on('hidden.bs.modal', function () {
+    if (consentEditorInstance) {
+        try {
+            consentEditorInstance.destroy().then(function() {
+                consentEditorInstance = null;
+            });
+        } catch(e) {
+            consentEditorInstance = null;
+        }
+    }
+});
+
+function submitDigitalConsent() {
+    const signeeName = $('#signee_name').val().trim();
+    const relationship = $('#signee_relationship').val();
+    const notes = $('#signature_notes').val().trim();
+    
+    if (!signeeName) {
+        toastr.warning('Please enter the signee printed name.');
+        return;
+    }
+    
+    if (!hasDrawnSignature) {
+        toastr.warning('Please sign on the signature canvas before proceeding.');
+        return;
+    }
+    
+    const consentText = consentEditorInstance ? consentEditorInstance.getData() : $('#consent_template_editor_modal').val();
+    const signatureDataUrl = canvas.toDataURL('image/png');
+    const btn = $('#submit-digital-signature-btn');
+    
+    btn.prop('disabled', true).html('<i class="fa fa-spin fa-spinner mr-2"></i>Generating Branded PDF…');
+    
     $.ajax({
-        url: '/patient-procedures/' + procedureId + '/consent',
+        url: '/patient-procedures/' + procedureId + '/consent/sign',
         method: 'POST',
         data: {
-            consent_status: status,
-            consent_notes: $('#consent_notes').val(),
-            _method: 'PATCH',
-            _token: $('meta[name="csrf-token"]').attr('content'),
+            signee_name: signeeName,
+            relationship: relationship,
+            notes: notes,
+            consent_text: consentText,
+            signature: signatureDataUrl,
+            _token: $('meta[name="csrf-token"]').attr('content')
         },
-        success: function() {
+        success: function(response) {
+            if (consentEditorInstance) {
+                try { consentEditorInstance.destroy(); consentEditorInstance = null; } catch(e){}
+            }
             $('#consentModal').modal('hide');
-            toastr.success('Consent status updated.');
+            toastr.success('Digital consent signed and branded PDF created successfully!');
             location.reload();
         },
         error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Error updating consent.');
-            btn.prop('disabled', false).html('<i class="fa fa-save mr-1"></i>Save Consent');
+            toastr.error(xhr.responseJSON?.message || 'Error signing digital consent.');
+            btn.prop('disabled', false).html('<i class="fa fa-check mr-2"></i>Sign & Obtain Consent');
         }
     });
 }
