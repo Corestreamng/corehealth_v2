@@ -61,4 +61,14 @@ class StaffBill extends Model
     {
         return $this->belongsTo(Payment::class, 'settlement_payment_id');
     }
+
+    /**
+     * Get all settlement payments associated with the staff bill.
+     */
+    public function payments()
+    {
+        return $this->belongsToMany(Payment::class, 'staff_bill_payment_allocations', 'staff_bill_id', 'payment_id')
+            ->withPivot('amount_allocated', 'discount_allocated')
+            ->withTimestamps();
+    }
 }

@@ -371,79 +371,90 @@
                                                 <td class="text-right font-weight-bold">₦{{ number_format($bill->total_amount, 2) }}</td>
                                                 <td class="text-right font-weight-bold @if($bill->outstanding_amount > 0) text-warning @else text-success @endif">
                                                     ₦{{ number_format($bill->outstanding_amount, 2) }}
-                                                </td>
-                                                <td>
-                                                    @if($bill->status == 'settled')
+                                                                                        <td>
+                                                    @if($bill->status == 'paid' || $bill->status == 'settled' || floatval($bill->outstanding_amount) <= 0)
                                                         <span class="badge bg-success text-white">Fully Settled</span>
-                                                    @elseif($bill->status == 'partial')
+                                                    @elseif($bill->payments->isNotEmpty() && floatval($bill->outstanding_amount) > 0)
                                                         <span class="badge bg-warning text-dark">Partially Cleared</span>
                                                     @else
                                                         <span class="badge bg-danger text-white">Pending</span>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($bill->status == 'settled' || $bill->status == 'partial')
-                                                        <div class="small p-2 bg-light rounded border" style="min-width: 250px;">
-                                                            <div><strong>Cleared At:</strong> {{ $bill->settled_at ? $bill->settled_at->format('Y-m-d H:i') : ($bill->updated_at ? $bill->updated_at->format('Y-m-d H:i') : 'N/A') }}</div>
-                                                            <div><strong>Cleared Amount:</strong> ₦{{ number_format(floatval($bill->total_amount) - floatval($bill->outstanding_amount), 2) }}</div>
-                                                            <div><strong>Method:</strong> <span class="badge bg-info text-white">{{ $bill->settlementPayment?->payment_method ?? 'N/A' }}</span></div>
-                                                            @if($bill->settlementPayment?->bank)
-                                                                <div><strong>Bank:</strong> {{ $bill->settlementPayment->bank->name }}</div>
-                                                            @endif
-                                                            @if($bill->settlementPayment?->reference_no)
-                                                                <div><strong>Receipt Ref:</strong> <code>{{ $bill->settlementPayment->reference_no }}</code></div>
-                                                            @endif
-
-                                                            @if($bill->settlement_payment_id)
-                                                                <button type="button" class="btn btn-xs btn-outline-primary show-breakdown-btn d-flex align-items-center gap-1 mt-2 font-weight-bold" 
-                                                                    data-payment-id="{{ $bill->settlement_payment_id }}">
-                                                                    <i class="mdi mdi-receipt-text-check mr-1"></i> View Breakdown
-                                                                </button>
-                                                            @endif
-
-                                                            @if($bill->settlementPayment?->journalEntry)
-                                                                <div class="mt-2 pt-2 border-top">
-                                                                    <button type="button" class="btn btn-xs btn-outline-secondary d-flex align-items-center gap-1 toggle-journal-btn" data-target="journal-entry-{{ $bill->id }}" style="font-size: 0.7rem; padding: 2px 5px;">
-                                                                        <i class="mdi mdi-book-open-page-variant mr-1"></i> Show Journal Entry
-                                                                    </button>
-                                                                    <div id="journal-entry-{{ $bill->id }}" class="mt-2 d-none p-2 bg-white rounded border">
-                                                                        <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
-                                                                            <span class="small font-weight-bold text-dark" style="font-size: 0.7rem;">Entry #: {{ $bill->settlementPayment->journalEntry->entry_number }}</span>
-                                                                            <span class="badge bg-{{ $bill->settlementPayment->journalEntry->status === 'posted' ? 'success' : 'warning' }} text-white text-uppercase" style="font-size:0.6rem;">
-                                                                                {{ $bill->settlementPayment->journalEntry->status }}
-                                                                            </span>
-                                                                        </div>
-                                                                        <table class="table table-xs table-bordered mb-0" style="font-size: 0.65rem; width: 100%;">
-                                                                            <thead class="bg-light">
-                                                                                <tr>
-                                                                                    <th>Account</th>
-                                                                                    <th class="text-right">Dr</th>
-                                                                                    <th class="text-right">Cr</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                @foreach($bill->settlementPayment->journalEntry->lines as $line)
-                                                                                    <tr>
-                                                                                        <td>
-                                                                                            <span class="font-weight-bold text-dark">{{ $line->account?->code }}</span><br>
-                                                                                            <span class="text-muted" style="font-size:0.6rem;">{{ $line->account?->name }}</span>
-                                                                                        </td>
-                                                                                        <td class="text-right text-success">{{ $line->debit > 0 ? '₦' . number_format($line->debit, 2) : '-' }}</td>
-                                                                                        <td class="text-right text-danger">{{ $line->credit > 0 ? '₦' . number_format($line->credit, 2) : '-' }}</td>
-                                                                                    </tr>
-                                                                                @endforeach
-                                                                            </tbody>
-                                                                            <tfoot class="font-weight-bold bg-light" style="font-size:0.65rem;">
-                                                                                <tr>
-                                                                                    <td>Total</td>
-                                                                                    <td class="text-right text-success">₦{{ number_format($bill->settlementPayment->journalEntry->lines->sum('debit'), 2) }}</td>
-                                                                                    <td class="text-right text-danger">₦{{ number_format($bill->settlementPayment->journalEntry->lines->sum('credit'), 2) }}</td>
-                                                                                </tr>
-                                                                            </tfoot>
-                                                                        </table>
+                                                    @if($bill->payments->isNotEmpty())
+                                                        <div class="small p-2 bg-light rounded border d-flex flex-column gap-3" style="min-width: 280px; max-width: 400px;">
+                                                            @foreach($bill->payments as $payment)
+                                                                <div class="p-2 bg-white rounded border shadow-xs @if(!$loop->last) mb-2 @endif">
+                                                                    <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                                                                        <span class="badge bg-info text-white font-weight-black" style="font-size: 0.65rem;">Payment #{{ $loop->iteration }}</span>
+                                                                        <span class="small text-muted font-weight-bold" style="font-size: 0.7rem;">{{ $payment->created_at->format('Y-m-d H:i') }}</span>
                                                                     </div>
+                                                                    <div class="mb-1"><strong>Amount Cleared:</strong> <span class="text-success font-weight-black">₦{{ number_format(floatval($payment->pivot->amount_allocated), 2) }}</span></div>
+                                                                    @if(floatval($payment->pivot->discount_allocated) > 0)
+                                                                        <div class="mb-1"><strong>Discount Portion:</strong> <span class="text-danger font-weight-bold">₦{{ number_format(floatval($payment->pivot->discount_allocated), 2) }}</span></div>
+                                                                    @endif
+                                                                    <div class="mb-1"><strong>Method:</strong> <span class="badge bg-secondary text-white font-weight-bold text-uppercase" style="font-size:0.6rem;">{{ $payment->payment_method }}</span></div>
+                                                                    @if($payment->bank)
+                                                                        <div class="mb-1 text-truncate"><strong>Bank:</strong> <span class="text-muted" style="font-size: 0.75rem;">{{ $payment->bank->name }}</span></div>
+                                                                    @endif
+                                                                    @if($payment->reference_no)
+                                                                        <div class="mb-2"><strong>Receipt Ref:</strong> <code>{{ $payment->reference_no }}</code></div>
+                                                                    @endif
+
+                                                                    <div class="d-flex flex-wrap gap-1 align-items-center mt-2">
+                                                                        <button type="button" class="btn btn-xs btn-outline-primary show-breakdown-btn d-flex align-items-center font-weight-bold" 
+                                                                            data-payment-id="{{ $payment->id }}" style="font-size: 0.65rem; padding: 2px 5px;">
+                                                                            <i class="mdi mdi-receipt-text-check mr-1"></i> View Breakdown
+                                                                        </button>
+
+                                                                        @if($payment->journalEntry)
+                                                                            <button type="button" class="btn btn-xs btn-outline-secondary d-flex align-items-center toggle-journal-btn ml-1" 
+                                                                                data-target="journal-entry-{{ $bill->id }}-{{ $payment->id }}" style="font-size: 0.65rem; padding: 2px 5px;">
+                                                                                <i class="mdi mdi-book-open-page-variant mr-1"></i> GL Journal
+                                                                            </button>
+                                                                        @endif
+                                                                    </div>
+
+                                                                    @if($payment->journalEntry)
+                                                                        <div id="journal-entry-{{ $bill->id }}-{{ $payment->id }}" class="mt-2 d-none p-2 bg-light rounded border">
+                                                                            <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                                                                <span class="small font-weight-bold text-dark" style="font-size: 0.65rem;">Entry: {{ $payment->journalEntry->entry_number }}</span>
+                                                                                <span class="badge bg-{{ $payment->journalEntry->status === 'posted' ? 'success' : 'warning' }} text-white text-uppercase" style="font-size:0.55rem;">
+                                                                                    {{ $payment->journalEntry->status }}
+                                                                                </span>
+                                                                            </div>
+                                                                            <table class="table table-xs table-bordered mb-0" style="font-size: 0.6rem; width: 100%;">
+                                                                                <thead class="bg-white">
+                                                                                    <tr>
+                                                                                        <th>Account</th>
+                                                                                        <th class="text-right">Dr</th>
+                                                                                        <th class="text-right">Cr</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    @foreach($payment->journalEntry->lines as $line)
+                                                                                        <tr>
+                                                                                            <td class="text-truncate" style="max-width: 90px;">
+                                                                                                <span class="font-weight-bold text-dark">{{ $line->account?->code }}</span><br>
+                                                                                                <span class="text-muted" style="font-size:0.55rem;">{{ $line->account?->name }}</span>
+                                                                                            </td>
+                                                                                            <td class="text-right text-success">{{ $line->debit > 0 ? '₦' . number_format($line->debit, 2) : '-' }}</td>
+                                                                                            <td class="text-right text-danger">{{ $line->credit > 0 ? '₦' . number_format($line->credit, 2) : '-' }}</td>
+                                                                                        </tr>
+                                                                                    @endforeach
+                                                                                </tbody>
+                                                                                <tfoot class="font-weight-bold bg-white" style="font-size:0.6rem;">
+                                                                                    <tr>
+                                                                                        <td>Total</td>
+                                                                                        <td class="text-right text-success">₦{{ number_format($payment->journalEntry->lines->sum('debit'), 2) }}</td>
+                                                                                        <td class="text-right text-danger">₦{{ number_format($payment->journalEntry->lines->sum('credit'), 2) }}</td>
+                                                                                    </tr>
+                                                                                </tfoot>
+                                                                            </table>
+                                                                        </div>
+                                                                    @endif
                                                                 </div>
-                                                            @endif
+                                                            @endforeach
                                                         </div>
                                                     @else
                                                         <span class="text-muted small">No settlement breakdown available.</span>
