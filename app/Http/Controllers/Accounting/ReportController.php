@@ -358,7 +358,8 @@ class ReportController extends Controller
             }
         }
 
-        return view('accounting.reports.aged-receivables', compact('report', 'asOfDate', 'fiscalPeriods', 'hmos', 'filters'));
+        $activeBanks = \App\Models\Bank::active()->get();
+        return view('accounting.reports.aged-receivables', compact('report', 'asOfDate', 'fiscalPeriods', 'hmos', 'filters', 'activeBanks'));
     }
 
     /**

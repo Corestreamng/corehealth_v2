@@ -695,7 +695,7 @@ class ReportService
      */
     protected function getStaffReceivables(\Carbon\Carbon $asOf, array $filters = []): array
     {
-        $query = \App\Models\StaffBill::with(['patient', 'staffUser.staff_profile'])
+        $query = \App\Models\StaffBill::with(['patient.user', 'staffUser.staff_profile', 'checkoutPayment'])
             ->where('outstanding_amount', '>', 0)
             ->where('created_at', '<=', $asOf);
 
@@ -726,11 +726,15 @@ class ReportService
 
             $staffName = $bill->staffUser ? trim($bill->staffUser->surname . ' ' . $bill->staffUser->firstname . ' ' . $bill->staffUser->othername) : 'Unknown Staff';
             $empCode = $bill->staffUser?->staff_profile?->employee_id ?? 'N/A';
+            $patientName = $bill->patient && $bill->patient->user 
+                ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername) 
+                : 'N/A';
 
             $details[] = [
                 'id' => $bill->id,
+                'staff_id' => $bill->staff_user_id,
                 'name' => $staffName . ' (Code: ' . $empCode . ')',
-                'reference' => 'Patient: ' . ($bill->patient?->fullname ?? 'N/A') . ' | Ref: ' . ($bill->checkoutPayment?->reference_no ?? 'N/A'),
+                'reference' => 'Patient: ' . $patientName . ' | Ref: ' . ($bill->checkoutPayment?->reference_no ?? 'N/A'),
                 'amount' => $amount,
                 'date' => $bill->created_at->format('Y-m-d'),
                 'days_old' => $daysOld,

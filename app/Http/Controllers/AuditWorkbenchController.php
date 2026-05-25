@@ -83,13 +83,17 @@ class AuditWorkbenchController extends Controller
                 $q->where('outstanding_amount', '>', 0);
             })
             ->with(['staffBills' => function ($q) {
-                $q->where('outstanding_amount', '>', 0)->with('patient');
+                $q->where('outstanding_amount', '>', 0)->with(['patient.user', 'checkoutPayment']);
             }, 'staff_profile'])
             ->get()
             ->map(function ($user) {
                 $user->total_outstanding = $user->staffBills->sum('outstanding_amount');
                 return $user;
             });
+
+        $allStaffBills = StaffBill::with(['patient.user', 'staffUser.staff_profile', 'checkoutPayment', 'settlementPayment.bank', 'settlementPayment.journalEntry.lines.account'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         $activeBanks = Bank::active()->get();
 
@@ -209,7 +213,7 @@ class AuditWorkbenchController extends Controller
 
         return view('admin.audit.workbench', compact(
             'startDate', 'endDate',
-            'staffWithBills', 'activeBanks', 'stamps',
+            'staffWithBills', 'allStaffBills', 'activeBanks', 'stamps',
             'cashierSummary', 'hmoClaims', 'payrollBreakdown',
             'consultingQueues', 'inpatientCount', 'occupiedBedsCount', 'totalBedsCount',
             'theatreBundles', 'morgueCount', 'labStoresRequisitions',
@@ -223,7 +227,7 @@ class AuditWorkbenchController extends Controller
      */
     public function settleBills(Request $request)
     {
-        if (!auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) && !auth()->user()->hasRole('AUDITOR')) {
+        if (!auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin', 'ACCOUNTS', 'accounts', 'AUDITOR', 'auditor'])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -231,9 +235,10 @@ class AuditWorkbenchController extends Controller
             'staff_id' => 'required|exists:users,id',
             'bill_ids' => 'required|array',
             'bill_ids.*' => 'exists:staff_bills,id',
-            'payment_method' => 'required|in:CASH,POS,TRANSFER',
-            'bank_id' => 'required_if:payment_method,POS,TRANSFER|nullable|exists:banks,id',
+            'payment_method' => 'required|in:CASH,POS,TRANSFER,MOBILE',
+            'bank_id' => 'required_if:payment_method,POS,TRANSFER,MOBILE|nullable|exists:banks,id',
             'amount_paid' => 'required|numeric|min:0.01',
+            'discount_amount' => 'nullable|numeric|min:0',
         ]);
 
         $staffId = $request->staff_id;
@@ -241,6 +246,7 @@ class AuditWorkbenchController extends Controller
         $paymentMethod = $request->payment_method;
         $bankId = $request->bank_id;
         $amountPaid = floatval($request->amount_paid);
+        $discountAmount = floatval($request->discount_amount ?? 0);
 
         $staff = User::findOrFail($staffId);
         $bills = StaffBill::whereIn('id', $billIds)
@@ -254,7 +260,7 @@ class AuditWorkbenchController extends Controller
         }
 
         // Create the clearing payment transaction in database
-        $payment = DB::transaction(function() use ($bills, $staff, $paymentMethod, $bankId, $amountPaid) {
+        $payment = DB::transaction(function() use ($bills, $staff, $paymentMethod, $bankId, $amountPaid, $discountAmount) {
             $ref = 'SETTL-' . strtoupper(uniqid());
             $patients = $bills->map(fn($b) => $b->patient?->fullname ?? 'N/A')->unique()->implode(', ');
 
@@ -263,33 +269,46 @@ class AuditWorkbenchController extends Controller
                 'payment_method' => $paymentMethod,
                 'bank_id' => $bankId,
                 'total' => $amountPaid,
+                'total_discount' => $discountAmount,
                 'reference_no' => $ref,
                 'status' => 'settled',
                 'user_id' => auth()->id(),
-                'notes' => 'Settlement of Staff Bills for patients: ' . $patients,
+                'notes' => 'Settlement of Staff Bills for patients: ' . $patients . ($discountAmount > 0 ? " (with discount of ₦" . number_format($discountAmount, 2) . ")" : ""),
             ]);
 
             // Allocate amount sequentially across selected bills
             $remainingPayment = $amountPaid;
+            $remainingDiscount = $discountAmount;
+
             foreach ($bills as $bill) {
-                if ($remainingPayment <= 0) {
+                if ($remainingPayment <= 0 && $remainingDiscount <= 0) {
                     break;
                 }
 
-                $allocated = min($remainingPayment, floatval($bill->outstanding_amount));
-                $bill->outstanding_amount = floatval($bill->outstanding_amount) - $allocated;
-                $bill->settled_amount = floatval($bill->settled_amount) + $allocated;
+                $outstanding = floatval($bill->outstanding_amount);
                 
+                // Max we can allocate to this bill is its outstanding amount
+                $allocatedDiscount = min($remainingDiscount, $outstanding);
+                $remainingForPayment = $outstanding - $allocatedDiscount;
+                $allocatedPayment = min($remainingPayment, $remainingForPayment);
+
+                $totalAllocated = $allocatedDiscount + $allocatedPayment;
+
+                $bill->outstanding_amount = $outstanding - $totalAllocated;
+                $bill->discount_amount = floatval($bill->discount_amount) + $allocatedDiscount;
+
                 if ($bill->outstanding_amount <= 0) {
-                    $bill->status = 'settled';
+                    $bill->status = 'paid';
+                    $bill->settled_at = now();
                 } else {
-                    $bill->status = 'partial';
+                    $bill->status = 'pending';
                 }
-                
+
                 $bill->settlement_payment_id = $payment->id;
                 $bill->save();
 
-                $remainingPayment -= $allocated;
+                $remainingDiscount -= $allocatedDiscount;
+                $remainingPayment -= $allocatedPayment;
             }
 
             return $payment;
