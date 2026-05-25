@@ -91,7 +91,13 @@ class AuditWorkbenchController extends Controller
                 return $user;
             });
 
-        $allStaffBills = StaffBill::with(['patient.user', 'staffUser.staff_profile', 'checkoutPayment', 'settlementPayment.bank', 'settlementPayment.journalEntry.lines.account'])
+        $allStaffBills = StaffBill::with([
+                'patient.user',
+                'staffUser.staff_profile',
+                'checkoutPayment',
+                'payments.bank',
+                'payments.journalEntry.lines.account'
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -306,6 +312,15 @@ class AuditWorkbenchController extends Controller
 
                 $bill->settlement_payment_id = $payment->id;
                 $bill->save();
+
+                DB::table('staff_bill_payment_allocations')->insert([
+                    'staff_bill_id'      => $bill->id,
+                    'payment_id'        => $payment->id,
+                    'amount_allocated'   => $allocatedPayment,
+                    'discount_allocated' => $allocatedDiscount,
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ]);
 
                 $remainingDiscount -= $allocatedDiscount;
                 $remainingPayment -= $allocatedPayment;
@@ -543,9 +558,13 @@ class AuditWorkbenchController extends Controller
     {
         $payment = \App\Models\Payment::with(['bank', 'user'])->findOrFail($paymentId);
 
-        // Fetch all staff bills settled in this payment transaction
-        $bills = \App\Models\StaffBill::where('settlement_payment_id', $paymentId)
-            ->with(['patient.user', 'checkoutPayment'])
+        // Fetch all staff bills allocated in this payment transaction
+        $bills = \App\Models\StaffBill::whereHas('payments', function ($q) use ($paymentId) {
+                $q->where('payments.id', $paymentId);
+            })
+            ->with(['patient.user', 'checkoutPayment', 'payments' => function ($q) use ($paymentId) {
+                $q->where('payments.id', $paymentId);
+            }])
             ->get();
 
         // Map the bills details beautifully
@@ -554,8 +573,9 @@ class AuditWorkbenchController extends Controller
                 ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername) 
                 : ($bill->patient?->fullname ?? 'N/A');
 
-            $allocatedDiscount = floatval($bill->discount_amount);
-            $allocatedPaid = floatval($bill->total_amount) - floatval($bill->outstanding_amount) - $allocatedDiscount;
+            $allocationPivot = $bill->payments->first()?->pivot;
+            $allocatedPaid = $allocationPivot ? floatval($allocationPivot->amount_allocated) : 0.00;
+            $allocatedDiscount = $allocationPivot ? floatval($allocationPivot->discount_allocated) : 0.00;
 
             return [
                 'id' => $bill->id,
@@ -564,7 +584,7 @@ class AuditWorkbenchController extends Controller
                 'file_no' => $bill->patient?->file_no ?? 'N/A',
                 'reference' => $bill->checkoutPayment?->reference_no ?? 'N/A',
                 'original_amount' => floatval($bill->total_amount),
-                'allocated_paid' => max(0, $allocatedPaid),
+                'allocated_paid' => $allocatedPaid,
                 'allocated_discount' => $allocatedDiscount,
                 'remaining_balance' => floatval($bill->outstanding_amount),
                 'status' => $bill->status
