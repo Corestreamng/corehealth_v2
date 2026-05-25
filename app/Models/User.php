@@ -117,4 +117,12 @@ class User extends Authenticatable implements Auditable
     {
         return $this->belongsToMany(ChatConversation::class, 'chat_participants', 'user_id', 'conversation_id');
     }
+
+    /**
+     * Get all staff bills associated with this user.
+     */
+    public function staffBills()
+    {
+        return $this->hasMany(StaffBill::class, 'staff_user_id');
+    }
 }

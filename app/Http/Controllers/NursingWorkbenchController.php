@@ -4716,9 +4716,7 @@ class NursingWorkbenchController extends Controller{
             if ($admission->bed_id) {
                 $oldBed = Bed::find($admission->bed_id);
                 if ($oldBed) {
-                    $oldBed->bed_status = 'available';
-                    $oldBed->occupant_id = null;
-                    $oldBed->save();
+                    $oldBed->release();
                 }
             }
 
@@ -4734,9 +4732,7 @@ class NursingWorkbenchController extends Controller{
             }
             $admission->save();
 
-            $newBed->bed_status = 'occupied';
-            $newBed->occupant_id = $admission->patient_id;
-            $newBed->save();
+            $newBed->assignPatient($admission->patient_id);
 
             DB::commit();
 
@@ -4783,8 +4779,7 @@ class NursingWorkbenchController extends Controller{
             $admission->admission_status = 'admitted';
             $admission->save();
 
-            $bed->bed_status = 'occupied';
-            $bed->save();
+            $bed->assignPatient($admission->patient_id);
 
             DB::commit();
 
@@ -4966,9 +4961,7 @@ class NursingWorkbenchController extends Controller{
 
             // Release bed
             if ($admission->bed) {
-                $admission->bed->bed_status = 'available';
-                $admission->bed->occupant_id = null;
-                $admission->bed->save();
+                $admission->bed->release();
             }
 
             // Mark as discharged

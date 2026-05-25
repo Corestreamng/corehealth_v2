@@ -504,7 +504,7 @@ class EmergencyIntakeController extends Controller
         // Assign bed if provided
         if ($request->bed_id) {
             $bed = Bed::find($request->bed_id);
-            if ($bed && $bed->bed_status === 'available') {
+            if ($bed && $bed->status == 1 && !$bed->occupant_id && (in_array($bed->bed_status, ['available', null]) || $bed->bed_status === Bed::STATUS_AVAILABLE)) {
                 $admission->bed_id = $bed->id;
                 $admission->admission_status = 'admitted';
                 $bed->assignPatient($patient->id);
@@ -676,7 +676,7 @@ class EmergencyIntakeController extends Controller
     {
         // Get beds from emergency wards
         $beds = Bed::with('wardRelation')
-            ->where('bed_status', 'available')
+            ->available()
             ->whereHas('wardRelation', function ($q) {
                 $q->where('type', 'emergency')
                   ->where('is_active', true);
@@ -696,7 +696,7 @@ class EmergencyIntakeController extends Controller
         // If no emergency ward beds, also include general available beds
         if ($beds->isEmpty()) {
             $beds = Bed::with('wardRelation')
-                ->where('bed_status', 'available')
+                ->available()
                 ->whereHas('wardRelation', function ($q) {
                     $q->where('is_active', true);
                 })

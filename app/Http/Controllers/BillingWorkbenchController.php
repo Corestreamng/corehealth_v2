@@ -30,6 +30,32 @@ class BillingWorkbenchController extends Controller
     }
 
     /**
+     * Get active staff list for checkout selection
+     */
+    public function getStaffList()
+    {
+        $staff = \App\Models\User::whereHas('staff_profile')
+            ->where('status', '>', 0)
+            ->with('staff_profile')
+            ->get()
+            ->map(function ($user) {
+                $profile = $user->staff_profile;
+                $empId = $profile ? $profile->employee_id : '';
+                $name = trim($user->surname . ' ' . $user->firstname . ' ' . $user->othername);
+                return [
+                    'id' => $user->id,
+                    'name' => $name,
+                    'employee_id' => $empId,
+                    'text' => $name . ($empId ? ' (Code: ' . $empId . ')' : '')
+                ];
+            })
+            ->sortBy('name')
+            ->values();
+
+        return response()->json($staff);
+    }
+
+    /**
      * Search for patients (autocomplete)
      */
     public function searchPatients(Request $request)
@@ -655,6 +681,7 @@ class BillingWorkbenchController extends Controller
             'payment_type' => 'required|string',
             'payment_method' => 'nullable|string',
             'bank_id' => 'nullable|integer|exists:banks,id',
+            'staff_user_id' => 'nullable|integer|exists:users,id',
             'reference_no' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|integer',
@@ -803,6 +830,19 @@ class BillingWorkbenchController extends Controller
                 'user_id' => Auth::id(),
                 'patient_id' => $patient->id,
             ]);
+
+            // Create Staff Bill if payment method is BILL_TO_STAFF
+            if (($data['payment_method'] ?? null) === 'BILL_TO_STAFF') {
+                \App\Models\StaffBill::create([
+                    'patient_id' => $patient->id,
+                    'staff_user_id' => $data['staff_user_id'],
+                    'payment_id' => $payment->id,
+                    'total_amount' => $total,
+                    'discount_amount' => $totalDiscount,
+                    'outstanding_amount' => $total,
+                    'status' => 'pending',
+                ]);
+            }
 
             // Mark items as paid
             ProductOrServiceRequest::whereIn('id', $ids)
