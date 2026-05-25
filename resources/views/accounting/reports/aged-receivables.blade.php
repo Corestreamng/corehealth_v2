@@ -736,7 +736,7 @@
                     <div class="modal-content">
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title font-weight-bold"><i class="mdi mdi-cash-register mr-1"></i> Settle Staff Receivable</h5>
-                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -817,7 +817,7 @@
                                 </div>
                             </div>
                             <div class="modal-footer bg-light">
-                                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-primary font-weight-bold">Clear Outstanding Bill</button>
                             </div>
                         </form>
@@ -837,7 +837,7 @@
                     <i class="mdi mdi-receipt-text-check mdi-24px mr-2"></i>
                     <span>Settlement Transaction Breakdown</span>
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -907,7 +907,7 @@
                 </div>
             </div>
             <div class="modal-footer bg-white py-3 border-top-0">
-                <button type="button" class="btn btn-secondary px-4 font-weight-bold" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary px-4 font-weight-bold" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
