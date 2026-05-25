@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * PatientProcedureController
@@ -1666,6 +1667,117 @@ HTML;
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating consent: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle digital consent signature and PDF generation.
+     */
+    public function signConsent(Request $request, Procedure $procedure)
+    {
+        $request->validate([
+            'signee_name'  => 'required|string|max:150',
+            'relationship' => 'required|string|max:100',
+            'notes'        => 'nullable|string|max:1000',
+            'consent_text' => 'nullable|string',
+            'signature'    => 'required|string', // Base64 png data URL
+        ]);
+
+        try {
+            $procedure->load([
+                'service.price',
+                'procedureDefinition.procedureCategory',
+                'requestedByUser',
+                'billedByUser',
+                'preNotesBy',
+                'postNotesBy',
+                'cancelledByUser',
+                'consentMarkedBy',
+                'patient.user',
+                'patient.hmo',
+                'encounter',
+                'teamMembers.user',
+            ]);
+
+            $consentText = $request->consent_text;
+            $sett = appsettings();
+            $procedureName = optional($procedure->service)->service_name ?? 'Procedure';
+
+            if (empty($consentText)) {
+                $rawTemplate = $sett->consent_template ?? '';
+                
+                // Parse placeholders fallback
+                $chiefSurgeon = $procedure->teamMembers->where('role', 'chief_surgeon')->first();
+                $doctorName = $chiefSurgeon && $chiefSurgeon->user ? $chiefSurgeon->user->name : (optional($procedure->requestedByUser)->name ?? Auth::user()->name);
+                $patientName = $procedure->patient ? userfullname($procedure->patient->user_id) : 'Unknown Patient';
+                $procedureName = optional($procedure->service)->service_name ?? 'Procedure';
+                $hospitalName = $sett->site_name ?? 'Hospital';
+                $currentDate = now()->format('d M Y');
+
+                $consentText = str_replace(
+                    ['{patient_name}', '{procedure_name}', '{hospital_name}', '{doctor_name}', '{date}'],
+                    [$patientName, $procedureName, $hospitalName, $doctorName, $currentDate],
+                    $rawTemplate
+                );
+            }
+
+            // Generate branded PDF
+            $pdf = Pdf::loadView('admin.patient-procedures.consent_pdf', [
+                'procedure'    => $procedure,
+                'consentText'  => $consentText,
+                'signeeName'   => $request->signee_name,
+                'relationship' => $request->relationship,
+                'notes'        => $request->notes,
+                'signature'    => $request->signature,
+                'date'         => now()->format('d M Y H:i'),
+                'sett'         => $sett,
+            ]);
+
+            $pdfContent = $pdf->output();
+            $uuid = Str::uuid()->toString();
+            $filePath = "procedure-attachments/{$procedure->id}/{$uuid}.pdf";
+
+            // Save PDF to storage
+            Storage::disk('local')->put($filePath, $pdfContent);
+
+            // Create ProcedureAttachment log
+            $rawPatientName = $procedure->patient ? userfullname($procedure->patient->user_id) : 'Unknown Patient';
+            $fileNo = $procedure->patient->file_no ?? 'N/A';
+            
+            $cleanPatientName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $rawPatientName);
+            $cleanFileNo = preg_replace('/[^A-Za-z0-9_\-]/', '_', $fileNo);
+            $cleanProcedureName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $procedureName);
+
+            $filename = "Informed_Consent_{$cleanPatientName}_{$cleanFileNo}_{$cleanProcedureName}.pdf";
+
+            $attachment = ProcedureAttachment::create([
+                'procedure_id'  => $procedure->id,
+                'uploaded_by'   => Auth::id(),
+                'file_path'     => $filePath,
+                'original_name' => $filename,
+                'file_size'     => strlen($pdfContent),
+                'mime_type'     => 'application/pdf',
+                'label'         => 'Signed Informed Consent Form',
+            ]);
+
+            // Update procedure consent status
+            $procedure->consent_status    = 'obtained';
+            $procedure->consent_notes     = "Digitally signed by " . $request->signee_name . " (" . $request->relationship . ")";
+            $procedure->consent_marked_by = Auth::id();
+            $procedure->consent_marked_at = now();
+            $procedure->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Consent signed and PDF document created successfully.',
+                'attachment_id' => $attachment->id,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating signature consent document: ' . $e->getMessage(),
             ], 500);
         }
     }

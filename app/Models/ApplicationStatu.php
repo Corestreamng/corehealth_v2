@@ -92,6 +92,7 @@ class ApplicationStatu extends Model implements Auditable
         'slow_query_log_path',
         'slow_query_log_offset',
         'last_slow_query_check',
+        'consent_template',
     ];
 
     /**
