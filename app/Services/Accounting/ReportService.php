@@ -431,7 +431,7 @@ class ReportService
      */
     public function getAgedReceivables(string $asOfDate, array $filters = []): array
     {
-        $asOf = Carbon::parse($asOfDate);
+        $asOf = Carbon::parse($asOfDate)->endOfDay();
 
         $agingBuckets = [
             'current' => 0,
@@ -778,7 +778,7 @@ class ReportService
      */
     public function getAgedPayables(string $asOfDate, array $filters = []): array
     {
-        $asOf = Carbon::parse($asOfDate);
+        $asOf = Carbon::parse($asOfDate)->endOfDay();
 
         $agingBuckets = [
             'current' => 0,
