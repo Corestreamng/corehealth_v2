@@ -278,12 +278,8 @@
 @endsection
 
 @section('scripts')
-<script>
-(function () {
-    const SAVE_URL = id => `/inventory/config/store-governance/stores/${id}`;
-    const CSRF     = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-
-    const STORE_DATA = @json($stores->keyBy('id')->map(fn($s) => [
+@php
+    $storeData = $stores->keyBy('id')->map(fn($s) => [
         'id'                             => $s->id,
         'store_name'                     => $s->store_name,
         'distribution_role'              => $s->distribution_role,
@@ -293,7 +289,14 @@
         'manager_id'                     => $s->manager_id,
         'allows_direct_patient_dispense' => $s->allows_direct_patient_dispense ? 1 : 0,
         'requires_shift_context'         => $s->requires_shift_context ? 1 : 0,
-    ]));
+    ]);
+@endphp
+<script>
+(function () {
+    const SAVE_URL = id => `/inventory/config/store-governance/stores/${id}`;
+    const CSRF     = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+    const STORE_DATA = @json($storeData);
 
     let pendingSaveStore = null;
     let pendingSaveData  = null;
