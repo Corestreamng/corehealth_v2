@@ -535,4 +535,55 @@ class AuditWorkbenchController extends Controller
             'startDate', 'endDate', 'stamp', 'kpis', 'headers', 'rows', 'chart'
         ));
     }
+
+    /**
+     * Display a JSON breakdown of all staff bills settled by a specific payment transaction.
+     */
+    public function settlementBreakdown($paymentId)
+    {
+        $payment = \App\Models\Payment::with(['bank', 'user'])->findOrFail($paymentId);
+
+        // Fetch all staff bills settled in this payment transaction
+        $bills = \App\Models\StaffBill::where('settlement_payment_id', $paymentId)
+            ->with(['patient.user', 'checkoutPayment'])
+            ->get();
+
+        // Map the bills details beautifully
+        $billsData = $bills->map(function ($bill) {
+            $patientName = $bill->patient && $bill->patient->user 
+                ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername) 
+                : ($bill->patient?->fullname ?? 'N/A');
+
+            $allocatedDiscount = floatval($bill->discount_amount);
+            $allocatedPaid = floatval($bill->total_amount) - floatval($bill->outstanding_amount) - $allocatedDiscount;
+
+            return [
+                'id' => $bill->id,
+                'incurred_date' => $bill->created_at->format('Y-m-d H:i'),
+                'patient_name' => $patientName,
+                'file_no' => $bill->patient?->file_no ?? 'N/A',
+                'reference' => $bill->checkoutPayment?->reference_no ?? 'N/A',
+                'original_amount' => floatval($bill->total_amount),
+                'allocated_paid' => max(0, $allocatedPaid),
+                'allocated_discount' => $allocatedDiscount,
+                'remaining_balance' => floatval($bill->outstanding_amount),
+                'status' => $bill->status
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'payment' => [
+                'id' => $payment->id,
+                'reference_no' => $payment->reference_no,
+                'payment_method' => $payment->payment_method,
+                'bank_name' => $payment->bank?->name ?? 'N/A',
+                'total_paid' => floatval($payment->total),
+                'total_discount' => floatval($payment->total_discount),
+                'settled_at' => $payment->created_at->format('Y-m-d H:i'),
+                'settled_by' => $payment->user ? trim($payment->user->surname . ' ' . $payment->user->firstname) : 'System Admin'
+            ],
+            'bills' => $billsData
+        ]);
+    }
 }

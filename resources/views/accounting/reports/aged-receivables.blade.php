@@ -487,84 +487,229 @@
 
                 {{-- Staff Receivables Tab --}}
                 <div class="tab-pane fade" id="staffReceivables" role="tabpanel">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <p class="text-muted mb-0">
-                            <i class="mdi mdi-information-outline mr-1"></i>
-                            {{ $categories['staff_receivables']['description'] ?? 'Staff billed receivables outstanding balances' }}
-                        </p>
-                        <span class="badge bg-light text-dark">Total: ₦{{ number_format($categories['staff_receivables']['total'] ?? 0, 2) }}</span>
+                    <ul class="nav nav-pills mb-4" id="staffSubTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active font-weight-bold" id="staff-outstanding-tab" data-toggle="pill" href="#staff-outstanding" role="tab">
+                                <i class="mdi mdi-format-list-bulleted mr-1"></i> Outstanding staff receivables
+                            </a>
+                        </li>
+                        <li class="nav-item ml-2">
+                            <a class="nav-link font-weight-bold" id="staff-history-tab" data-toggle="pill" href="#staff-history" role="tab">
+                                <i class="mdi mdi-history mr-1"></i> Clearance & Settlement History
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="staffSubTabsContent">
+                        <!-- Sub-tab 1: Outstanding -->
+                        <div class="tab-pane fade show active" id="staff-outstanding" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="text-muted mb-0">
+                                    <i class="mdi mdi-information-outline mr-1"></i>
+                                    {{ $categories['staff_receivables']['description'] ?? 'Staff billed receivables outstanding balances' }}
+                                </p>
+                                <span class="badge bg-light text-dark">Total: ₦{{ number_format($categories['staff_receivables']['total'] ?? 0, 2) }}</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="staffTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Staff Name & Code</th>
+                                            <th>Reference Details</th>
+                                            <th>Aging</th>
+                                            <th>Days</th>
+                                            <th class="text-right">Outstanding Amount</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($categories['staff_receivables']['details'] ?? [] as $item)
+                                        <tr>
+                                            <td>{{ $item['date'] }}</td>
+                                            <td><strong>{{ $item['name'] }}</strong></td>
+                                            <td><span class="text-muted small">{{ $item['reference'] }}</span></td>
+                                            <td>
+                                                @php
+                                                    $agingClass = match($item['aging_bucket']) {
+                                                        'current' => 'aging-current',
+                                                        '1_30' => 'aging-1-30',
+                                                        '31_60' => 'aging-31-60',
+                                                        '61_90' => 'aging-61-90',
+                                                        'over_90' => 'aging-over-90',
+                                                        default => 'aging-current'
+                                                    };
+                                                    $agingLabel = match($item['aging_bucket']) {
+                                                        'current' => 'Current',
+                                                        '1_30' => '1-30 Days',
+                                                        '31_60' => '31-60 Days',
+                                                        '61_90' => '61-90 Days',
+                                                        'over_90' => '90+ Days',
+                                                        default => 'Current'
+                                                    };
+                                                @endphp
+                                                <span class="aging-badge {{ $agingClass }}">{{ $agingLabel }}</span>
+                                            </td>
+                                            <td>{{ $item['days_old'] }} d</td>
+                                            <td class="text-right">
+                                                <strong class="text-warning">₦{{ number_format($item['amount'], 2) }}</strong>
+                                            </td>
+                                            <td>
+                                                @if(Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin', 'ACCOUNTS', 'accounts', 'AUDITOR', 'auditor']))
+                                                    <button type="button" class="btn btn-xs btn-primary settle-single-bill-btn"
+                                                        data-id="{{ $item['id'] }}"
+                                                        data-staff-id="{{ $item['staff_id'] }}"
+                                                        data-staff-name="{{ $item['name'] }}"
+                                                        data-reference="{{ $item['reference'] }}"
+                                                        data-amount="{{ $item['amount'] }}">
+                                                        Settle
+                                                    </button>
+                                                @else
+                                                    <span class="text-muted small">No access</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4 text-muted">
+                                                <i class="mdi mdi-check-circle mdi-48px text-success"></i>
+                                                <p class="mb-0 mt-2">No staff receivables found</p>
+                                            </td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Sub-tab 2: History -->
+                        <div class="tab-pane fade" id="staff-history" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered table-striped" id="staffBillsHistoryTable" style="width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Incurred Date</th>
+                                            <th>Staff Member</th>
+                                            <th>Patient Name</th>
+                                            <th>Ref Details</th>
+                                            <th class="text-right">Original Amt</th>
+                                            <th class="text-right">Outstanding</th>
+                                            <th>Status</th>
+                                            <th>Settlement Details / Breakdown</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($allStaffBills ?? [] as $bill)
+                                            @php
+                                                $staffName = $bill->staffUser 
+                                                    ? trim($bill->staffUser->surname . ' ' . $bill->staffUser->firstname . ' ' . $bill->staffUser->othername) 
+                                                    : 'Unknown Staff';
+                                                $empCode = $bill->staffUser?->staff_profile?->employee_id ?? 'N/A';
+                                                
+                                                $patientName = $bill->patient && $bill->patient->user 
+                                                    ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername) 
+                                                    : ($bill->patient?->fullname ?? 'N/A');
+                                                $fileNo = $bill->patient?->file_no ?? 'N/A';
+                                            @endphp
+                                            <tr>
+                                                <td><span class="small text-muted">{{ $bill->created_at->format('Y-m-d H:i') }}</span></td>
+                                                <td>
+                                                    <strong>{{ $staffName }}</strong><br>
+                                                    <code class="small">{{ $empCode }}</code>
+                                                </td>
+                                                <td>
+                                                    <strong>{{ $patientName }}</strong><br>
+                                                    <code class="small">File: {{ $fileNo }}</code>
+                                                </td>
+                                                <td>
+                                                    <span class="small text-muted">Ref: {{ $bill->checkoutPayment?->reference_no ?? 'N/A' }}</span>
+                                                </td>
+                                                <td class="text-right font-weight-bold">₦{{ number_format($bill->total_amount, 2) }}</td>
+                                                <td class="text-right font-weight-bold @if($bill->outstanding_amount > 0) text-warning @else text-success @endif">
+                                                    ₦{{ number_format($bill->outstanding_amount, 2) }}
+                                                </td>
+                                                <td>
+                                                    @if($bill->status == 'settled' || $bill->status == 'paid')
+                                                        <span class="badge bg-success text-white">Fully Settled</span>
+                                                    @elseif($bill->status == 'partial')
+                                                        <span class="badge bg-warning text-dark">Partially Cleared</span>
+                                                    @else
+                                                        <span class="badge bg-danger text-white">Pending</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($bill->status == 'settled' || $bill->status == 'paid' || $bill->status == 'partial')
+                                                        <div class="small p-2 bg-light rounded border" style="min-width: 250px;">
+                                                            <div><strong>Cleared At:</strong> {{ $bill->settled_at ? $bill->settled_at->format('Y-m-d H:i') : ($bill->updated_at ? $bill->updated_at->format('Y-m-d H:i') : 'N/A') }}</div>
+                                                            <div><strong>Cleared Amount:</strong> ₦{{ number_format(floatval($bill->total_amount) - floatval($bill->outstanding_amount), 2) }}</div>
+                                                            <div><strong>Method:</strong> <span class="badge bg-info text-white">{{ $bill->settlementPayment?->payment_method ?? 'N/A' }}</span></div>
+                                                            @if($bill->settlementPayment?->bank)
+                                                                <div><strong>Bank:</strong> {{ $bill->settlementPayment->bank->name }}</div>
+                                                            @endif
+                                                            @if($bill->settlementPayment?->reference_no)
+                                                                <div><strong>Receipt Ref:</strong> <code>{{ $bill->settlementPayment->reference_no }}</code></div>
+                                                            @endif
+
+                                                            @if($bill->settlement_payment_id)
+                                                                <button type="button" class="btn btn-xs btn-outline-primary show-breakdown-btn d-flex align-items-center gap-1 mt-2 font-weight-bold" 
+                                                                    data-payment-id="{{ $bill->settlement_payment_id }}">
+                                                                    <i class="mdi mdi-receipt-text-check mr-1"></i> View Breakdown
+                                                                </button>
+                                                            @endif
+
+                                                            @if($bill->settlementPayment?->journalEntry)
+                                                                <div class="mt-2 pt-2 border-top">
+                                                                    <button type="button" class="btn btn-xs btn-outline-secondary d-flex align-items-center gap-1 toggle-journal-btn" data-target="journal-entry-aged-{{ $bill->id }}" style="font-size: 0.7rem; padding: 2px 5px;">
+                                                                        <i class="mdi mdi-book-open-page-variant mr-1"></i> Show Journal Entry
+                                                                    </button>
+                                                                    <div id="journal-entry-aged-{{ $bill->id }}" class="mt-2 d-none p-2 bg-white rounded border">
+                                                                        <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                                                            <span class="small font-weight-bold text-dark" style="font-size: 0.7rem;">Entry #: {{ $bill->settlementPayment->journalEntry->entry_number }}</span>
+                                                                            <span class="badge bg-{{ $bill->settlementPayment->journalEntry->status === 'posted' ? 'success' : 'warning' }} text-white text-uppercase" style="font-size:0.6rem;">
+                                                                                {{ $bill->settlementPayment->journalEntry->status }}
+                                                                            </span>
+                                                                        </div>
+                                                                        <table class="table table-xs table-bordered mb-0" style="font-size: 0.65rem; width: 100%;">
+                                                                            <thead class="bg-light">
+                                                                                <tr>
+                                                                                    <th>Account</th>
+                                                                                    <th class="text-right">Dr</th>
+                                                                                    <th class="text-right">Cr</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                @foreach($bill->settlementPayment->journalEntry->lines as $line)
+                                                                                    <tr>
+                                                                                        <td>
+                                                                                            <span class="d-inline-block text-truncate" style="max-width: 120px;" title="{{ $line->account->name }}">
+                                                                                                {{ $line->account->name }}
+                                                                                            </span>
+                                                                                        </td>
+                                                                                        <td class="text-right">{{ $line->debit > 0 ? number_format($line->debit, 2) : '-' }}</td>
+                                                                                        <td class="text-right">{{ $line->credit > 0 ? number_format($line->credit, 2) : '-' }}</td>
+                                                                                    </tr>
+                                                                                @endforeach
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted small">No settlement yet</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4 text-muted">No staff bills history found</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="staffTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Staff Name & Code</th>
-                                    <th>Reference Details</th>
-                                    <th>Aging</th>
-                                    <th>Days</th>
-                                    <th class="text-right">Outstanding Amount</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($categories['staff_receivables']['details'] ?? [] as $item)
-                                <tr>
-                                    <td>{{ $item['date'] }}</td>
-                                    <td><strong>{{ $item['name'] }}</strong></td>
-                                    <td><span class="text-muted small">{{ $item['reference'] }}</span></td>
-                                    <td>
-                                        @php
-                                            $agingClass = match($item['aging_bucket']) {
-                                                'current' => 'aging-current',
-                                                '1_30' => 'aging-1-30',
-                                                '31_60' => 'aging-31-60',
-                                                '61_90' => 'aging-61-90',
-                                                'over_90' => 'aging-over-90',
-                                                default => 'aging-current'
-                                            };
-                                            $agingLabel = match($item['aging_bucket']) {
-                                                'current' => 'Current',
-                                                '1_30' => '1-30 Days',
-                                                '31_60' => '31-60 Days',
-                                                '61_90' => '61-90 Days',
-                                                'over_90' => '90+ Days',
-                                                default => 'Current'
-                                            };
-                                        @endphp
-                                        <span class="aging-badge {{ $agingClass }}">{{ $agingLabel }}</span>
-                                    </td>
-                                    <td>{{ $item['days_old'] }} d</td>
-                                    <td class="text-right">
-                                        <strong class="text-warning">₦{{ number_format($item['amount'], 2) }}</strong>
-                                    </td>
-                                    <td>
-                                        @if(Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin', 'ACCOUNTS', 'accounts', 'AUDITOR', 'auditor']))
-                                            <button type="button" class="btn btn-xs btn-primary settle-single-bill-btn"
-                                                data-id="{{ $item['id'] }}"
-                                                data-staff-id="{{ $item['staff_id'] }}"
-                                                data-staff-name="{{ $item['name'] }}"
-                                                data-reference="{{ $item['reference'] }}"
-                                                data-amount="{{ $item['amount'] }}">
-                                                Settle
-                                            </button>
-                                        @else
-                                            <span class="text-muted small">No access</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="mdi mdi-check-circle mdi-48px text-success"></i>
-                                        <p class="mb-0 mt-2">No staff receivables found</p>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
 
             {{-- Settle Staff Bill Modal --}}
@@ -660,6 +805,91 @@
                         </form>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Settlement Breakdown Modal --}}
+<div class="modal fade" id="settlementBreakdownModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-info text-white py-3">
+                <h5 class="modal-title font-weight-bold d-flex align-items-center">
+                    <i class="mdi mdi-receipt-text-check mdi-24px mr-2"></i>
+                    <span>Settlement Transaction Breakdown</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <!-- Receipt Master Info Card -->
+                <div class="card border-0 shadow-sm mb-4 rounded">
+                    <div class="card-body p-3">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-muted small font-weight-bold text-uppercase">Receipt Reference</div>
+                                <div class="h5 font-weight-black text-primary mb-0" id="breakdown_ref">N/A</div>
+                            </div>
+                            <div class="col-md-3 border-left-dashed">
+                                <div class="text-muted small font-weight-bold text-uppercase">Payment Method</div>
+                                <div class="h6 font-weight-bold text-dark mb-0">
+                                    <span id="breakdown_method" class="badge bg-info text-white">CASH</span>
+                                    <span id="breakdown_bank" class="text-muted small ml-1"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 border-left-dashed">
+                                <div class="text-muted small font-weight-bold text-uppercase">Total Cash Cleared</div>
+                                <div class="h5 font-weight-bold text-success mb-0" id="breakdown_total_paid">₦0.00</div>
+                            </div>
+                            <div class="col-md-3 border-left-dashed">
+                                <div class="text-muted small font-weight-bold text-uppercase">Total Discount Allowed</div>
+                                <div class="h5 font-weight-bold text-danger mb-0" id="breakdown_total_discount">₦0.00</div>
+                            </div>
+                        </div>
+                        <div class="row mt-3 pt-3 border-top small text-muted">
+                            <div class="col-md-6">
+                                <i class="mdi mdi-calendar-clock mr-1"></i> <strong>Settlement Date:</strong> <span id="breakdown_date">N/A</span>
+                            </div>
+                            <div class="col-md-6 text-md-right">
+                                <i class="mdi mdi-account-tie mr-1"></i> <strong>Processed By:</strong> <span id="breakdown_processed_by">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allocation Details Table -->
+                <div class="card border-0 shadow-sm rounded">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h6 class="mb-0 text-dark font-weight-bold">
+                            <i class="mdi mdi-format-list-bulleted mr-1 text-info"></i>
+                            Allocated Staff Receivables Breakdown
+                        </h6>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="breakdown_bills_table">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="py-3 px-4">Incurred Date</th>
+                                    <th class="py-3">Patient Details</th>
+                                    <th class="py-3">Invoice Ref</th>
+                                    <th class="py-3 text-right">Original Bill</th>
+                                    <th class="py-3 text-right text-success">Cash Allocated</th>
+                                    <th class="py-3 text-right text-danger">Discount Allocated</th>
+                                    <th class="py-3 text-right">Remaining Balance</th>
+                                    <th class="py-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="breakdown_bills_tbody">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-white py-3 border-top-0">
+                <button type="button" class="btn btn-secondary px-4 font-weight-bold" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -858,6 +1088,81 @@ $(document).ready(function() {
             error: function(err) {
                 btn.prop('disabled', false).text('Clear Outstanding Bill');
                 alert(err.responseJSON ? err.responseJSON.message : 'An error occurred.');
+            }
+        });
+    });
+
+    // Initialize staff bills history table DataTable
+    var historyRows = $('#staffBillsHistoryTable tbody tr:not(:has(.text-center))');
+    if (historyRows.length > 0) {
+        $('#staffBillsHistoryTable').DataTable({
+            pageLength: 25,
+            order: [[0, 'desc']],
+            language: {
+                emptyTable: "No staff bills history found"
+            }
+        });
+    }
+
+    // Toggle journal entries inline listener
+    $(document).on('click', '.toggle-journal-btn', function() {
+        var target = $(this).data('target');
+        $('#' + target).toggleClass('d-none');
+    });
+
+    // Fetch and display breakdown details in #settlementBreakdownModal
+    $(document).on('click', '.show-breakdown-btn', function() {
+        var paymentId = $(this).data('payment-id');
+        if (!paymentId) return;
+
+        var $tbody = $('#breakdown_bills_tbody');
+        $tbody.html('<tr><td colspan="8" class="text-center py-4 text-muted"><i class="mdi mdi-loading mdi-spin mr-1"></i>Loading settlement breakdown...</td></tr>');
+        $('#settlementBreakdownModal').modal('show');
+
+        $.ajax({
+            url: "/audit-workbench/settlement-breakdown/" + paymentId,
+            method: "GET",
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+                    var p = response.payment;
+                    $('#breakdown_ref').text(p.reference_no || ('Payment #' + p.id));
+                    $('#breakdown_method').text(p.payment_method);
+                    $('#breakdown_bank').text(p.payment_method !== 'CASH' ? (' - ' + p.bank_name) : '');
+                    $('#breakdown_total_paid').text('₦' + p.total_paid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                    $('#breakdown_total_discount').text('₦' + p.total_discount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                    $('#breakdown_date').text(p.settled_at);
+                    $('#breakdown_processed_by').text(p.settled_by);
+
+                    $tbody.empty();
+                    response.bills.forEach(function(bill) {
+                        var statusBadge = '';
+                        if (bill.status === 'paid' || bill.status === 'settled') {
+                            statusBadge = '<span class="badge bg-success text-white">Fully Settled</span>';
+                        } else if (bill.status === 'partial') {
+                            statusBadge = '<span class="badge bg-warning text-dark">Partially Cleared</span>';
+                        } else {
+                            statusBadge = '<span class="badge bg-danger text-white">Pending</span>';
+                        }
+
+                        var row = $('<tr>' +
+                            '<td class="py-3 px-4"><span class="small text-muted">' + bill.incurred_date + '</span></td>' +
+                            '<td><strong>' + bill.patient_name + '</strong><br><code class="small text-muted">File: ' + bill.file_no + '</code></td>' +
+                            '<td><code class="small text-dark">' + bill.reference + '</code></td>' +
+                            '<td class="text-right font-weight-bold">₦' + bill.original_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+                            '<td class="text-right text-success font-weight-bold">₦' + bill.allocated_paid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+                            '<td class="text-right text-danger font-weight-bold">₦' + bill.allocated_discount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+                            '<td class="text-right font-weight-bold text-secondary">₦' + bill.remaining_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+                            '<td class="text-center">' + statusBadge + '</td>' +
+                            '</tr>');
+                        $tbody.append(row);
+                    });
+                } else {
+                    $tbody.html('<tr><td colspan="8" class="text-center text-danger py-4"><i class="mdi mdi-alert-circle mr-1"></i>Failed to load breakdown details.</td></tr>');
+                }
+            },
+            error: function() {
+                $tbody.html('<tr><td colspan="8" class="text-center text-danger py-4"><i class="mdi mdi-alert-circle mr-1"></i>Error connecting to server.</td></tr>');
             }
         });
     });

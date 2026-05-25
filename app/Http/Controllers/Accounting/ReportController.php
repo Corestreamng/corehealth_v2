@@ -359,7 +359,11 @@ class ReportController extends Controller
         }
 
         $activeBanks = \App\Models\Bank::active()->get();
-        return view('accounting.reports.aged-receivables', compact('report', 'asOfDate', 'fiscalPeriods', 'hmos', 'filters', 'activeBanks'));
+        $allStaffBills = \App\Models\StaffBill::with(['patient.user', 'staffUser.staff_profile', 'checkoutPayment', 'settlementPayment.bank', 'settlementPayment.journalEntry.lines.account'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('accounting.reports.aged-receivables', compact('report', 'asOfDate', 'fiscalPeriods', 'hmos', 'filters', 'activeBanks', 'allStaffBills'));
     }
 
     /**
