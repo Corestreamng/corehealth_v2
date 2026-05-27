@@ -199,14 +199,23 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="cost_price">Cost Price (per unit)</label>
+                                    <label for="cost_price">Cost Price (per packaging unit)</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">₦</span>
                                         </div>
                                         <input type="number" name="cost_price" id="cost_price"
                                             class="form-control"
-                                            value="{{ old('cost_price', 0) }}" step="0.01" min="0">
+                                            value="{{ old('cost_price', 0) }}" step="0.01" min="0"
+                                            oninput="updateManualBatchCostPreview()">
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="mdi mdi-information-outline"></i>
+                                        Enter cost per <strong>selected packaging unit</strong>. The system automatically converts to base-unit cost for storage.
+                                    </small>
+                                    <div id="manual-batch-cost-preview" class="mt-1" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:6px 10px; font-size:0.8rem;">
+                                        <i class="mdi mdi-calculator text-success mr-1"></i>
+                                        <span id="manual-batch-cost-preview-text"></span>
                                     </div>
                                 </div>
                             </div>
@@ -407,8 +416,36 @@
             updateBatchBaseEquiv();
         }
 
-        $('#batch_packaging').on('change', handlePackagingChange);
+        $('#batch_packaging').on('change', function() {
+            handlePackagingChange();
+            updateManualBatchCostPreview();
+        });
         $('#quantity').on('change input', updateBatchBaseEquiv);
+
+        /**
+         * Live preview of base-unit cost calculation for manual batch form.
+         */
+        window.updateManualBatchCostPreview = function() {
+            var cost = parseFloat($('#cost_price').val()) || 0;
+            var factor = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
+            var pkgName = $('#batch_packaging').find(':selected').text().trim() || 'Base Unit';
+            var $preview = $('#manual-batch-cost-preview');
+            var $text = $('#manual-batch-cost-preview-text');
+
+            if (cost > 0 && factor > 1) {
+                var baseUnitCost = (cost / factor).toFixed(4);
+                $text.html(
+                    '₦' + cost.toLocaleString() + ' per <strong>' + pkgName + '</strong> ÷ ' + factor + ' = ' +
+                    '<strong>₦' + parseFloat(baseUnitCost).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:4}) + '</strong> per base unit (saved in DB)'
+                );
+                $preview.show();
+            } else if (cost > 0) {
+                $text.html('₦' + cost.toLocaleString(undefined, {minimumFractionDigits:2}) + ' per base unit — stored as-is');
+                $preview.show();
+            } else {
+                $preview.hide();
+            }
+        };
 
         // Convert to base units before form submission
         $('form').on('submit', function() {

@@ -944,6 +944,8 @@ class ImportExportController extends Controller
                                 $storeQty = $storeStock->current_quantity;
                                 $unbatchedQty = max(0, $storeQty - $existingBatchQty);
                                 if ($unbatchedQty > 0) {
+                                    // Fall back to product buy price if cost_price is 0
+                                    $batchCost = $costPrice > 0 ? $costPrice : (Price::where('product_id', $productId)->value('pr_buy_price') ?? 0);
                                     StockBatch::create([
                                         'product_id' => $productId,
                                         'store_id' => $storeId,
@@ -952,7 +954,7 @@ class ImportExportController extends Controller
                                         'initial_qty' => $unbatchedQty,
                                         'current_qty' => $unbatchedQty,
                                         'sold_qty' => 0,
-                                        'cost_price' => $costPrice,
+                                        'cost_price' => $batchCost,
                                         'received_date' => now(),
                                         'source' => 'manual',
                                         'is_active' => true,
@@ -1030,6 +1032,8 @@ class ImportExportController extends Controller
 
                                 // Create a StockBatch so batch-aware dispensing works
                                 if ($initialQty > 0) {
+                                    // Fall back to product buy price if cost_price is 0
+                                    $batchCost = $costPrice > 0 ? $costPrice : (Price::where('product_id', $product->id)->value('pr_buy_price') ?? 0);
                                     StockBatch::create([
                                         'product_id' => $product->id,
                                         'store_id' => $storeId,
@@ -1038,7 +1042,7 @@ class ImportExportController extends Controller
                                         'initial_qty' => $initialQty,
                                         'current_qty' => $initialQty,
                                         'sold_qty' => 0,
-                                        'cost_price' => $costPrice,
+                                        'cost_price' => $batchCost,
                                         'received_date' => now(),
                                         'source' => 'manual',
                                         'is_active' => true,

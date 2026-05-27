@@ -510,12 +510,23 @@ class StoreWorkbenchController extends Controller
         ]);
 
         try {
+            // Convert packaging-level cost to base-unit cost
+            // The user enters cost per packaging unit (e.g. cost per Box of 100 tablets).
+            // We divide by base_unit_qty to get cost per single base unit (e.g. per Tablet).
+            $costPrice = $request->cost_price ?? 0;
+            if ($request->packaging_id && $costPrice > 0) {
+                $packaging = \App\Models\ProductPackaging::find($request->packaging_id);
+                if ($packaging && $packaging->base_unit_qty > 1) {
+                    $costPrice = $costPrice / $packaging->base_unit_qty;
+                }
+            }
+
             $batch = $this->stockService->createBatch([
                 'product_id' => $request->product_id,
                 'store_id' => $request->store_id,
                 'supplier_id' => $request->supplier_id,
                 'qty' => $request->quantity,
-                'cost_price' => $request->cost_price ?? 0,
+                'cost_price' => $costPrice,
                 'expiry_date' => $request->expiry_date,
                 'batch_name' => $request->batch_name,
                 'batch_number' => $request->batch_number,
