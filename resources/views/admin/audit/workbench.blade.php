@@ -224,7 +224,7 @@
                 <div class="glass-panel">
                     <h4 class="text-dark mb-3">Auditor Workspace Overview</h4>
                     <p class="text-muted">Welcome to the Internal Audit workbench. This system aggregates clinical, financial, and operational EMR data points automatically into 33 core auditor worksheets. Toggle active worksheets using the settings drawer and apply period stamps once satisfied.</p>
-                    
+
                     <div class="row mt-4">
                         <div class="col-md-6 mb-3">
                             <div class="card h-100 bg-white border p-3">
@@ -345,13 +345,13 @@
                                     <tbody>
                                         @forelse($allStaffBills as $bill)
                                             @php
-                                                $staffName = $bill->staffUser 
-                                                    ? trim($bill->staffUser->surname . ' ' . $bill->staffUser->firstname . ' ' . $bill->staffUser->othername) 
+                                                $staffName = $bill->staffUser
+                                                    ? trim($bill->staffUser->surname . ' ' . $bill->staffUser->firstname . ' ' . $bill->staffUser->othername)
                                                     : 'Unknown Staff';
                                                 $empCode = $bill->staffUser?->staff_profile?->employee_id ?? 'N/A';
-                                                
-                                                $patientName = $bill->patient && $bill->patient->user 
-                                                    ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername) 
+
+                                                $patientName = $bill->patient && $bill->patient->user
+                                                    ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername)
                                                     : ($bill->patient?->fullname ?? 'N/A');
                                                 $fileNo = $bill->patient?->file_no ?? 'N/A';
                                             @endphp
@@ -402,13 +402,13 @@
                                                                     @endif
 
                                                                     <div class="d-flex flex-wrap gap-1 align-items-center mt-2">
-                                                                        <button type="button" class="btn btn-xs btn-outline-primary show-breakdown-btn d-flex align-items-center font-weight-bold" 
+                                                                        <button type="button" class="btn btn-xs btn-outline-primary show-breakdown-btn d-flex align-items-center font-weight-bold"
                                                                             data-payment-id="{{ $payment->id }}" style="font-size: 0.65rem; padding: 2px 5px;">
                                                                             <i class="mdi mdi-receipt-text-check mr-1"></i> View Breakdown
                                                                         </button>
 
                                                                         @if($payment->journalEntry)
-                                                                            <button type="button" class="btn btn-xs btn-outline-secondary d-flex align-items-center toggle-journal-btn ml-1" 
+                                                                            <button type="button" class="btn btn-xs btn-outline-secondary d-flex align-items-center toggle-journal-btn ml-1"
                                                                                 data-target="journal-entry-{{ $bill->id }}-{{ $payment->id }}" style="font-size: 0.65rem; padding: 2px 5px;">
                                                                                 <i class="mdi mdi-book-open-page-variant mr-1"></i> GL Journal
                                                                             </button>
@@ -477,7 +477,7 @@
             {{-- Panel: Module 1 Financials --}}
             <div class="audit-panel d-none" id="tab-module-financials">
                 <div class="glass-panel d-flex flex-column gap-4">
-                    
+
                     {{-- Worksheet: cash_reconciliation --}}
                     <div class="responsibility-section card bg-white p-3" id="sheet-cash_reconciliation" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -488,7 +488,7 @@
                             </div>
                         </div>
                         <p class="text-muted small">Monitors daily cashier collections, txn volume, and payment method distribution across CASH and Bank/POS.</p>
-                        
+
                         <div class="table-responsive mt-2">
                             <table class="table table-striped table-bordered table-sm">
                                 <thead>
@@ -531,7 +531,7 @@
                             </div>
                         </div>
                         <p class="text-muted small">Tracks claims matching and payable variance values for NHIS, NHIA, SHIS, and PLASCHEMA schemes.</p>
-                        
+
                         <div class="table-responsive mt-2">
                             <table class="table table-striped table-bordered table-sm">
                                 <thead>
@@ -570,7 +570,7 @@
                             </div>
                         </div>
                         <p class="text-muted small">Verifies active EMR staff salaries grouped by Department and Category (midwifery school excluded).</p>
-                        
+
                         <div class="table-responsive mt-2">
                             <table class="table table-striped table-bordered table-sm">
                                 <thead>
@@ -601,13 +601,133 @@
                         </div>
                     </div>
 
+                    {{-- Worksheet: revenue_leakage --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-revenue_leakage" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-chart-line text-info"></i> Daily Invoice Audits & Revenue Leakage</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'revenue_leakage') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="revenue_leakage">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits daily invoices to detect unbilled services and revenue leakage points.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: expense_vouchers --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-expense_vouchers" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-receipt text-danger"></i> Expense Vouchers & Operational Spend</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'expense_vouchers') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="expense_vouchers">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Monitors operational expenses and validates voucher approvals for compliance.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: refund_claims --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-refund_claims" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-cash-refund text-success"></i> Patient Refunds & Adjustments Control</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'refund_claims') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="refund_claims">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Tracks refund requests, credits, and account adjustments for patient reconciliation.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: discount_authorization --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-discount_authorization" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-percent text-warning"></i> Discount Approvals & Special Fee Waivers</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'discount_authorization') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="discount_authorization">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits discount approvals and fee waiver authorizations for policy compliance.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: debt_aging --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-debt_aging" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-history text-secondary"></i> Debt Recovery & Aged Receivables Control</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'debt_aging') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="debt_aging">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Monitors aged receivables and debt collection performance metrics.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: bank_statement_match --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-bank_statement_match" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-bank text-primary"></i> Daily Bank Statement Match & Deposits</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'bank_statement_match') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="bank_statement_match">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Reconciles daily deposits with bank statements for cash flow accuracy.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: petty_cash --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-petty_cash" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-wallet text-teal"></i> Petty Cash Disbursements & Voucher Auditing</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'petty_cash') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="petty_cash">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Validates petty cash transactions and supporting vouchers for authorization.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: statutory_deductions --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-statutory_deductions" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-file-check text-success"></i> Statutory Deductions & Pension Compliance</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'statutory_deductions') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="statutory_deductions">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits statutory payroll deductions and pension contributions for compliance.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
             {{-- Panel: Module 2 Clinical --}}
             <div class="audit-panel d-none" id="tab-module-clinical">
                 <div class="glass-panel d-flex flex-column gap-4">
-                    
+
                     {{-- Worksheet: consulting_queues --}}
                     <div class="responsibility-section card bg-white p-3" id="sheet-consulting_queues" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -618,7 +738,7 @@
                             </div>
                         </div>
                         <p class="text-muted small">Tracks active doctor bookings, consulting list wait-times, and encounter completion statuses.</p>
-                        
+
                         <div class="row mt-2">
                             @forelse($consultingQueues as $qRow)
                                 <div class="col-md-3 mb-2">
@@ -643,7 +763,7 @@
                             </div>
                         </div>
                         <p class="text-muted small">Calculates active EMR ward bed occupancies and inpatient admission listings.</p>
-                        
+
                         <div class="row mt-2">
                             <div class="col-md-6 mb-2">
                                 <div class="bg-light p-2 rounded text-center border">
@@ -673,7 +793,7 @@
                             </div>
                         </div>
                         <p class="text-muted small">Verifies theatre procedure items marked as bundled to prevent separate billing leakages.</p>
-                        
+
                         <div class="bg-light p-3 rounded border d-flex justify-content-between align-items-center mt-2">
                             <span class="text-muted">Total active procedure items configured with <code>is_bundled = true</code></span>
                             <span class="h4 font-weight-bold text-danger mb-0">{{ $theatreBundles }} Items</span>
@@ -690,10 +810,115 @@
                             </div>
                         </div>
                         <p class="text-muted small">Audits morgue entry counts and release flags linked to the morgue ledger.</p>
-                        
+
                         <div class="bg-light p-3 rounded border d-flex justify-content-between align-items-center mt-2">
                             <span class="text-muted">Total decedent profiles currently inside morgue records</span>
                             <span class="h4 font-weight-bold text-dark mb-0">{{ $morgueCount }} Decedents</span>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: clinical_notes_audit --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-clinical_notes_audit" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-note-check-outline text-info"></i> Clinical Notes Completion & Vital Signs Logs</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'clinical_notes_audit') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="clinical_notes_audit">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits clinical notes completeness and vital signs capture frequency.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: maternity_deliveries --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-maternity_deliveries" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-home-heart text-danger"></i> Maternity Admissions & Delivery Outcomes</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'maternity_deliveries') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="maternity_deliveries">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Tracks maternity admissions and delivery outcomes documentation.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: prescription_fills --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-prescription_fills" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-pill text-warning"></i> Pharmacy Prescriptions vs Fills Matching</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'prescription_fills') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="prescription_fills">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Reconciles prescription orders with pharmacy fulfillment records.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: treatment_plans --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-treatment_plans" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-clipboard-check-outline text-teal"></i> Doctor Treatment Plans & Ward Execution</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'treatment_plans') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="treatment_plans">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Verifies doctor-ordered treatment plans execution in ward settings.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: nursing_vitals --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-nursing_vitals" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-heart-pulse text-danger"></i> Nursing Vitals Capture & Frequency Audit</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'nursing_vitals') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="nursing_vitals">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits nursing vital signs capture frequency and documentation completeness.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: discharge_clearance --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-discharge_clearance" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-exit-run text-info"></i> Inpatient Discharge Clearance & Billing Audits</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'discharge_clearance') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="discharge_clearance">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Validates discharge clearances and final billing for inpatient stays.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: emergency_triage --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-emergency_triage" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-ambulance text-warning"></i> Emergency Intake & Triage Level Governance</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'emergency_triage') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="emergency_triage">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits emergency intake workflows and triage level assignments.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
                         </div>
                     </div>
 
@@ -703,7 +928,7 @@
             {{-- Panel: Module 3 Inventory --}}
             <div class="audit-panel d-none" id="tab-module-inventory">
                 <div class="glass-panel d-flex flex-column gap-4">
-                    
+
                     {{-- Worksheet: store_governance --}}
                     <div class="responsibility-section card bg-white p-3" id="sheet-store_governance" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -714,7 +939,7 @@
                             </div>
                         </div>
                         <p class="text-muted small">Audit and verify store catalog lane permissions to enforce strict distribution rules.</p>
-                        
+
                         <div class="bg-light p-3 rounded border mt-2">
                             <div class="text-dark small">EMR inventory resolution uses localized role defaults, department overrides, and fallback actions. Check details in the Store Governance page.</div>
                         </div>
@@ -730,7 +955,7 @@
                             </div>
                         </div>
                         <p class="text-muted small">Cross-checks store requisitions to lab/radiology stores against billed items and completed results.</p>
-                        
+
                         <div class="row mt-2">
                             <div class="col-md-4 mb-2">
                                 <div class="bg-light p-2 rounded text-center border">
@@ -750,6 +975,141 @@
                                     <div class="h5 font-weight-bold text-info mb-0">{{ $imagingServiceCount }} Scans</div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: stock_variance --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-stock_variance" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-check-circle-outline text-success"></i> Stock Count Variance & Catalog Adjustments</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'stock_variance') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="stock_variance">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits physical stock count variances and inventory adjustments.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: purchase_price_var --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-purchase_price_var" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-currency-usd text-info"></i> PO Purchase Price Variations</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'purchase_price_var') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="purchase_price_var">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Tracks purchase order price variations and cost anomalies.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: dispensing_errors --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-dispensing_errors" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-package-check text-danger"></i> FIFO Dispensing Controls & Expiry Checks</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'dispensing_errors') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="dispensing_errors">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Validates FIFO compliance and expiry date monitoring in dispensing.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: damaged_goods --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-damaged_goods" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-alert-box-outline text-warning"></i> Damaged Goods & Write-off Approvals</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'damaged_goods') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="damaged_goods">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Tracks damaged inventory and authorized write-off requests.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: consignment_audit --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-consignment_audit" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-file-document-check-outline text-info"></i> Consignment Stock Audits & Vendor Logs</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'consignment_audit') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="consignment_audit">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits consignment inventory and vendor reconciliation records.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: min_max_reorder --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-min_max_reorder" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-chart-line-variant text-success"></i> Min-Max Thresholds & Reorder Triggers</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'min_max_reorder') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="min_max_reorder">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Verifies min-max inventory thresholds and reorder point compliance.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: supplier_invoice --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-supplier_invoice" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-invoice-list-outline text-secondary"></i> Supplier Invoices vs PO Delivery Receipts</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'supplier_invoice') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="supplier_invoice">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Reconciles supplier invoices with purchase orders and delivery receipts.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: pharmacy_returns --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-pharmacy_returns" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-package-remove text-danger"></i> Pharmacy Product Returns & Shelf Restocking</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'pharmacy_returns') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="pharmacy_returns">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Tracks pharmacy product returns and restocking processes.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: procurement_contracts --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-procurement_contracts" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-handshake text-primary"></i> Procurement Contracts & Vendor Price Locks</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'procurement_contracts') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="procurement_contracts">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits procurement contracts and vendor price agreement compliance.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Worksheet content loading...</div>
                         </div>
                     </div>
 
@@ -884,7 +1244,7 @@
         <button type="button" class="btn-close" id="closeDrawerBtn"></button>
     </div>
     <p class="text-muted small">Toggle which of the 33 worksheets are displayed in your Internal Audit dashboard panels.</p>
-    
+
     <div style="flex: 1; overflow-y: auto;" class="d-flex flex-column gap-2 mt-2">
         @foreach($responsibilities as $moduleKey => $list)
             <div class="mt-2">

@@ -110,32 +110,76 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered table-sm" id="auditDataTable">
-                                <thead>
-                                    <tr>
-                                        @foreach($headers as $header)
-                                            <th>{{ $header }}</th>
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($rows as $row)
+                        @if(isset($tabbedData) && count($tabbedData) > 0)
+                            <ul class="nav nav-tabs mb-3" id="auditReportTabs" role="tablist">
+                                @foreach($tabbedData as $tabId => $tabInfo)
+                                    <li class="nav-item" role="presentation">
+                                        <a class="nav-link {{ $loop->first ? 'active' : '' }}" id="{{ $tabId }}-tab" data-toggle="tab" href="#{{ $tabId }}" role="tab" aria-controls="{{ $tabId }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}">
+                                            {{ $tabInfo['label'] }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <div class="tab-content" id="auditReportTabContent">
+                                @foreach($tabbedData as $tabId => $tabInfo)
+                                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $tabId }}" role="tabpanel" aria-labelledby="{{ $tabId }}-tab">
+                                        <div class="table-responsive mt-2">
+                                            <table class="table table-striped table-bordered table-sm audit-datatable" id="auditDataTable_{{ $tabId }}">
+                                                <thead>
+                                                    <tr>
+                                                        @foreach($tabInfo['headers'] as $header)
+                                                            <th>{{ $header }}</th>
+                                                        @endforeach
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($tabInfo['rows'] as $row)
+                                                        <tr>
+                                                            @foreach($row as $cell)
+                                                                <td>{!! $cell !!}</td>
+                                                            @endforeach
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="{{ count($tabInfo['headers']) }}" class="text-center py-4 text-muted">
+                                                                No records found for the active dates range in this tab.
+                                                            </td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered table-sm" id="auditDataTable">
+                                    <thead>
                                         <tr>
-                                            @foreach($row as $cell)
-                                                <td>{!! $cell !!}</td>
+                                            @foreach($headers as $header)
+                                                <th>{{ $header }}</th>
                                             @endforeach
                                         </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="{{ count($headers) }}" class="text-center py-4 text-muted">
-                                                No logs captured for the active dates range.
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($rows as $row)
+                                            <tr>
+                                                @foreach($row as $cell)
+                                                    <td>{!! $cell !!}</td>
+                                                @endforeach
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="{{ count($headers) }}" class="text-center py-4 text-muted">
+                                                    No logs captured for the active dates range.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -222,12 +222,16 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="batch-field">
-                                                <label>Unit Cost (₦{{ number_format($item->unit_cost, 2) }})</label>
+                                                <label>Unit Cost per pkg (₦{{ number_format($item->unit_cost, 2) }})</label>
                                                 <input type="number"
                                                     class="form-control form-control-sm cost-price"
                                                     step="0.01"
                                                     value="{{ $item->unit_cost }}"
                                                     data-item-id="{{ $item->id }}">
+                                                <small class="text-muted" style="font-size:0.7rem;">
+                                                    <i class="mdi mdi-information-outline"></i>
+                                                    Cost per selected packaging unit. Base-unit cost is auto-calculated on receipt.
+                                                </small>
                                             </div>
                                         </div>
                                         <div class="col-md-3">

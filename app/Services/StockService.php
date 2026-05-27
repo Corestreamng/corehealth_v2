@@ -168,6 +168,13 @@ class StockService
             $batchNumber = $data['batch_number'] ?? 'BATCH-' . now()->format('YmdHis') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
             $batchName = $data['batch_name'] ?? $batchNumber . '-' . now()->format('YmdHis');
 
+            // Resolve cost price: use provided value, fall back to product's buy price
+            $costPrice = $data['cost_price'] ?? 0;
+            if ($costPrice <= 0) {
+                $price = \App\Models\Price::where('product_id', $data['product_id'])->first();
+                $costPrice = (float) ($price->pr_buy_price ?? 0);
+            }
+
             $batch = StockBatch::create([
                 'product_id' => $data['product_id'],
                 'store_id' => $data['store_id'],
@@ -177,7 +184,7 @@ class StockService
                 'initial_qty' => $data['qty'],
                 'current_qty' => $data['qty'],
                 'sold_qty' => 0,
-                'cost_price' => $data['cost_price'] ?? 0,
+                'cost_price' => $costPrice,
                 'expiry_date' => $data['expiry_date'] ?? null,
                 'received_date' => $data['received_date'] ?? now(),
                 'source' => $data['source'] ?? StockBatch::SOURCE_MANUAL,
