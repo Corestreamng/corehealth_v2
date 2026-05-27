@@ -1212,8 +1212,12 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="small font-weight-bold">Cost Price (₦) <span class="text-danger">*</span></label>
-                                    <input type="number" name="cost_price" id="batch-cost-price" class="form-control" step="0.01" min="0" required style="border-radius:8px;" placeholder="0.00 — enter 0 for donations">
-                                    <small class="text-muted" style="display:block;">₦ per base unit. Defaults to product buy price.</small>
+                                    <input type="number" name="cost_price" id="batch-cost-price" class="form-control" step="0.01" min="0" required style="border-radius:8px;" placeholder="0.00 — enter 0 for donations" oninput="updateBatchCostPreview()">
+                                    <small class="text-muted" style="display:block;">Enter cost per <strong>selected packaging unit</strong>. The system converts this to a base-unit cost for storage.</small>
+                                    <div id="batch-cost-preview" class="mt-1" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:6px 10px; font-size:0.78rem;">
+                                        <i class="mdi mdi-calculator text-success mr-1"></i>
+                                        <span id="batch-cost-preview-text"></span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -3018,6 +3022,36 @@
                     $('#batch-qty-hint').text(`= ${baseQty} ${baseUnit}`);
                 } else {
                     $('#batch-qty-hint').text('');
+                }
+                updateBatchCostPreview();
+            };
+
+            /**
+             * Shows a real-time preview of how the entered cost per packaging unit
+             * will be converted to a base-unit cost for database storage.
+             * Formula: base_unit_cost = cost_entered / packaging.base_unit_qty
+             */
+            window.updateBatchCostPreview = function() {
+                var costEntered = parseFloat($('#batch-cost-price').val()) || 0;
+                var $pkg = $('#batch-packaging option:selected');
+                var factor = parseFloat($pkg.data('qty')) || 1;
+                var pkgName = $pkg.text().trim() || 'Base Unit';
+                var baseUnit = $('#batch-product option:selected').data('base-unit') || 'unit';
+                var $preview = $('#batch-cost-preview');
+                var $previewText = $('#batch-cost-preview-text');
+
+                if (costEntered > 0 && factor > 1) {
+                    var baseUnitCost = (costEntered / factor).toFixed(4);
+                    $previewText.html(
+                        '₦' + parseFloat(costEntered).toLocaleString() + ' per <strong>' + pkgName + '</strong> (' + factor + ' ' + baseUnit + 's) → ' +
+                        '<strong>₦' + parseFloat(baseUnitCost).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4}) + '</strong> per ' + baseUnit + ' (saved in DB)'
+                    );
+                    $preview.show();
+                } else if (costEntered > 0) {
+                    $previewText.html('₦' + parseFloat(costEntered).toLocaleString(undefined, {minimumFractionDigits: 2}) + ' per ' + baseUnit + ' — stored as-is (base unit selected)');
+                    $preview.show();
+                } else {
+                    $preview.hide();
                 }
             };
 

@@ -19,6 +19,8 @@ class Store extends Model implements Auditable
     public const ROLE_PHARMACY_SATELLITE    = 'pharmacy_satellite';
     public const ROLE_DEPARTMENT            = 'department';
     public const ROLE_WARD                  = 'ward';
+    public const ROLE_LAB                   = 'lab';
+    public const ROLE_IMAGING               = 'imaging';
     public const ROLE_OTHER                 = 'other';
 
     public const DISTRIBUTION_ROLES = [
@@ -27,6 +29,8 @@ class Store extends Model implements Auditable
         self::ROLE_PHARMACY_SATELLITE,
         self::ROLE_DEPARTMENT,
         self::ROLE_WARD,
+        self::ROLE_LAB,
+        self::ROLE_IMAGING,
         self::ROLE_OTHER,
     ];
 
@@ -37,6 +41,8 @@ class Store extends Model implements Auditable
         self::ROLE_PHARMACY_SATELLITE => 'Pharmacy Satellite',
         self::ROLE_DEPARTMENT         => 'Department Store',
         self::ROLE_WARD               => 'Ward Store',
+        self::ROLE_LAB                => 'Laboratory Store',
+        self::ROLE_IMAGING            => 'Imaging / Radiology Store',
         self::ROLE_OTHER              => 'Other',
     ];
 
@@ -368,6 +374,8 @@ class Store extends Model implements Auditable
             self::ROLE_PHARMACY_SATELLITE   => 'Pharmacy Satellite',
             self::ROLE_DEPARTMENT           => 'Department Store',
             self::ROLE_WARD                 => 'Ward Store',
+            self::ROLE_LAB                  => 'Laboratory Store',
+            self::ROLE_IMAGING              => 'Imaging / Radiology Store',
             default                         => 'Store',
         };
     }

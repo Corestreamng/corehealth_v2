@@ -266,6 +266,17 @@ class PurchaseOrderService
 
                 $actualCost = $receiveData['actual_cost'] ?? $item->unit_cost;
 
+                // Convert packaging-level cost to base-unit cost
+                // The user enters cost per packaging unit (e.g. cost per Box).
+                // We divide by base_unit_qty to get cost per single base unit (e.g. per Tablet).
+                $packagingId = $receiveData['received_packaging_id'] ?? $item->packaging_id;
+                if ($packagingId) {
+                    $packaging = \App\Models\ProductPackaging::find($packagingId);
+                    if ($packaging && $packaging->base_unit_qty > 1) {
+                        $actualCost = $actualCost / $packaging->base_unit_qty;
+                    }
+                }
+
                 // Create stock batch
                 $batch = $this->stockService->createBatch([
                     'product_id' => $item->product_id,
