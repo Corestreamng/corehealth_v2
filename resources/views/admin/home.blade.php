@@ -151,6 +151,15 @@
             ];
         }
 
+        if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'AUDITOR'])) {
+            $roleTabs['audit'] = [
+                'name' => 'Audit',
+                'icon' => 'mdi-shield-check',
+                'color' => 'danger',
+                'partial' => 'admin.dashboards.tabs.audit-tab'
+            ];
+        }
+
         $roleTabs['ess'] = [
             'name' => 'My Portal',
             'icon' => 'mdi-account-circle',
@@ -1308,6 +1317,86 @@ $(document).ready(function () {
         });
     }
 
+    function loadEnhancedAudit() {
+        $.get("{{ route('dashboard.data.audit') }}", function(d) {
+            // KPI stats
+            if (d.summary) {
+                $('#audit-stat-revenue').text(fmt(d.summary.revenue_today));
+                $('#audit-stat-admissions').text(d.summary.active_admissions);
+                $('#audit-stat-requisitions').text(d.summary.pending_requisitions);
+                $('#audit-stat-diagnostics').text(d.summary.diagnostic_orders);
+                
+                $('#audit-stat-discounts').text(fmt(d.summary.system_discounts_today));
+                $('#audit-stat-refunds').text(fmt(d.summary.refunds_today));
+            }
+
+            // Recent Activity
+            if (d.recentActivity) {
+                var tb = $('#audit-activity-body');
+                var th = $('#audit-activity-head');
+                tb.empty();
+                th.html('<tr><th>Time</th><th>User</th><th>Event</th><th>Module</th></tr>');
+                
+                if (d.recentActivity.length === 0) {
+                    tb.append('<tr><td colspan="4" class="text-center text-muted py-3">No recent system logs.</td></tr>');
+                } else {
+                    d.recentActivity.forEach(function(l) {
+                        tb.append(`
+                            <tr>
+                                <td><span class="text-muted" title="${l.full_time}">${l.time}</span></td>
+                                <td><i class="mdi mdi-account-circle text-muted me-1"></i>${l.user}</td>
+                                <td>${badgeHtml(l.event, l.event_color)}</td>
+                                <td><span class="badge bg-light text-dark border border-secondary">${l.module}</span></td>
+                            </tr>
+                        `);
+                    });
+                }
+            }
+
+            // Chart
+            if (d.revenueTrend && d.revenueTrend.length > 0) {
+                var labels = d.revenueTrend.map(x => x.date);
+                var values = d.revenueTrend.map(x => x.total);
+                
+                var ctx = document.getElementById('auditRevenueTrendChart');
+                if (ctx) {
+                    if (window.auditRevChart) window.auditRevChart.destroy();
+                    window.auditRevChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Revenue',
+                                data: values,
+                                borderColor: '#059669',
+                                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#fff',
+                                pointBorderColor: '#059669',
+                                pointBorderWidth: 2,
+                                pointRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { 
+                                    beginAtZero: true, 
+                                    grid: { borderDash: [2,4], color: '#f3f4f6' },
+                                    ticks: { callback: function(val) { return '₦' + (val/1000) + 'k'; } }
+                                },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                }
+            }
+        }).fail(function() {});
+    }
+
     // ========================================
     // Tab Loader
     // ========================================
@@ -1374,6 +1463,9 @@ $(document).ready(function () {
                 break;
             case 'accounts':
                 loadEnhancedAccounts();
+                break;
+            case 'audit':
+                loadEnhancedAudit();
                 break;
         }
     }

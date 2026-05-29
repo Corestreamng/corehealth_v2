@@ -18,6 +18,7 @@ use App\Services\Dashboard\ChildHealthDashboardService;
 use App\Services\Dashboard\HrDashboardService;
 use App\Services\Dashboard\TheatreDashboardService;
 use App\Services\Dashboard\ImagingDashboardService;
+use App\Services\Dashboard\AuditDashboardService;
 use Illuminate\Http\Request;
 
 class DashboardDataController extends Controller
@@ -281,6 +282,16 @@ class DashboardDataController extends Controller
                 $request->input('limit', 20),
                 $request->only(['user_id', 'event', 'module', 'date_from', 'date_to'])
             ),
+        ]);
+    }
+
+    public function auditData()
+    {
+        $svc = new AuditDashboardService();
+        return response()->json([
+            'summary' => $svc->getSummaryStats(),
+            'revenueTrend' => $svc->getRevenueTrend(),
+            'recentActivity' => $svc->getRecentAuditLogs()
         ]);
     }
 }

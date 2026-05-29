@@ -1055,6 +1055,7 @@ Route::prefix('dashboard/data')->group(function () {
     Route::get('/hmo', [App\Http\Controllers\DashboardDataController::class, 'hmoData'])->name('dashboard.data.hmo');
     Route::get('/accounts', [App\Http\Controllers\DashboardDataController::class, 'accountsData'])->name('dashboard.data.accounts');
     Route::get('/audit-log', [App\Http\Controllers\DashboardDataController::class, 'auditLog'])->name('dashboard.data.audit-log');
+    Route::get('/audit', [App\Http\Controllers\DashboardDataController::class, 'auditData'])->name('dashboard.data.audit');
 });
 
 Route::get('/accounts', [App\Http\Controllers\Account\accountsController::class, 'index']);
