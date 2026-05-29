@@ -291,26 +291,54 @@ class ReceptionWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
-        $today = Carbon::today();
+        // ── Performance: Range queries and conditional aggregation ──
+        $todayStart = Carbon::today();
+        $todayEnd = Carbon::tomorrow();
+
+        $activeStatusesStr = implode(',', QueueStatus::ACTIVE);
+
+        $queueCounts = \Illuminate\Support\Facades\DB::table('doctor_queues')
+            ->where('created_at', '>=', $todayStart)
+            ->where('created_at', '<', $todayEnd)
+            ->selectRaw("
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as waiting,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as vitals_pending,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as in_consultation,
+                SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN priority = 'emergency' AND status IN ({$activeStatusesStr}) THEN 1 ELSE 0 END) as emergency,
+                COUNT(*) as total_today
+            ", [
+                QueueStatus::WAITING,
+                QueueStatus::VITALS_PENDING,
+                QueueStatus::IN_CONSULTATION,
+                QueueStatus::COMPLETED
+            ])->first();
+
+        // HMO pending validation with DB Join (removes expensive whereHas)
+        $hmoPendingCount = \Illuminate\Support\Facades\DB::table('product_or_service_requests as posr')
+            ->join('users as u', 'posr.user_id', '=', 'u.id')
+            ->join('patients as p', 'u.id', '=', 'p.user_id')
+            ->whereNotNull('p.hmo_id')
+            ->whereNotNull('posr.coverage_mode')
+            ->where('posr.validation_status', 'pending')
+            ->whereIn('posr.coverage_mode', ['primary', 'secondary'])
+            ->where('posr.claims_amount', '>', 0)
+            ->where('posr.reception_validated', 0)
+            ->count();
 
         $counts = [
-            'waiting' => DoctorQueue::where('status', QueueStatus::WAITING)->whereDate('created_at', $today)->count(),
-            'vitals_pending' => DoctorQueue::where('status', QueueStatus::VITALS_PENDING)->whereDate('created_at', $today)->count(),
-            'in_consultation' => DoctorQueue::where('status', QueueStatus::IN_CONSULTATION)->whereDate('created_at', $today)->count(),
-            'completed' => DoctorQueue::where('status', QueueStatus::COMPLETED)->whereDate('created_at', $today)->count(),
-            'total_today' => DoctorQueue::whereDate('created_at', $today)->count(),
+            'waiting' => (int) ($queueCounts->waiting ?? 0),
+            'vitals_pending' => (int) ($queueCounts->vitals_pending ?? 0),
+            'in_consultation' => (int) ($queueCounts->in_consultation ?? 0),
+            'completed' => (int) ($queueCounts->completed ?? 0),
+            'total_today' => (int) ($queueCounts->total_today ?? 0),
+            'emergency' => (int) ($queueCounts->emergency ?? 0),
             'admitted' => AdmissionRequest::where('discharged', 0)->count(),
-            'emergency' => DoctorQueue::where('priority', 'emergency')->whereDate('created_at', $today)->whereIn('status', QueueStatus::ACTIVE)->count(),
-            'scheduled' => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::SCHEDULED)->count(),
-            'hmo_pending_validation' => ProductOrServiceRequest::whereHas('user.patient_profile', function ($q) {
-                    $q->whereNotNull('hmo_id');
-                })
-                ->whereNotNull('coverage_mode')
-                ->where('validation_status', 'pending')
-                ->whereIn('coverage_mode', ['primary', 'secondary'])
-                ->where('claims_amount', '>', 0)
-                ->where('reception_validated', 0)
+            'scheduled' => DoctorAppointment::where('appointment_date', '>=', $todayStart)
+                ->where('appointment_date', '<', $todayEnd)
+                ->where('status', QueueStatus::SCHEDULED)
                 ->count(),
+            'hmo_pending_validation' => $hmoPendingCount,
         ];
 
         return response()->json($counts);

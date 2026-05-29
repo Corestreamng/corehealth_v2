@@ -808,9 +808,23 @@ class PharmacyWorkbenchController extends Controller
             }
         }
 
-        $items = $query->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($pr) {
+        $records = $query->orderBy('created_at', 'desc')->get();
+
+        // ── Performance: Batch stock lookup for all products ──
+        $productIds = $records->pluck('product.id')->filter()->unique()->values();
+        $batchStocks = collect();
+        if ($productIds->isNotEmpty()) {
+            // Get all stocks for all required products in one query, joined with stores
+            $batchStocks = \App\Models\StockBatch::whereIn('product_id', $productIds)
+                ->where('current_qty', '>', 0)
+                ->join('stores', 'stock_batches.store_id', '=', 'stores.id')
+                ->selectRaw('stock_batches.product_id, stock_batches.store_id, stores.store_name, SUM(stock_batches.current_qty) as total_qty')
+                ->groupBy('stock_batches.product_id', 'stock_batches.store_id', 'stores.store_name')
+                ->get()
+                ->groupBy('product_id');
+        }
+
+        $items = $records->map(function ($pr) use ($batchStocks) {
                 $basePrice = optional(optional($pr->product)->price)->current_sale_price ?? 0;
                 $posr = $pr->productOrServiceRequest;
                 $payment = optional($posr)->payment;
@@ -829,25 +843,18 @@ class PharmacyWorkbenchController extends Controller
                     $statusLabel = 'Ready to Dispense';
                 }
 
-                // Get stock information from StockBatch (source of truth)
+                // Get stock information from pre-loaded batches
                 $globalStock = 0;
                 $storeStocks = [];
-                if ($pr->product) {
-                    // Get stock from StockBatch grouped by store (like searchProducts does)
-                    $storeStockData = StockBatch::where('product_id', $pr->product->id)
-                        ->where('current_qty', '>', 0)
-                        ->selectRaw('store_id, SUM(current_qty) as total_qty')
-                        ->groupBy('store_id')
-                        ->orderByDesc('total_qty')
-                        ->get();
-
-                    foreach ($storeStockData as $batch) {
-                        $store = Store::find($batch->store_id);
+                if ($pr->product && $batchStocks->has($pr->product->id)) {
+                    $productStocks = $batchStocks->get($pr->product->id);
+                    
+                    foreach ($productStocks as $batch) {
                         $qty = (int) $batch->total_qty;
                         $globalStock += $qty;
                         $storeStocks[] = [
                             'store_id' => $batch->store_id,
-                            'store_name' => $store ? $store->store_name : 'Unknown Store',
+                            'store_name' => $batch->store_name,
                             'quantity' => $qty
                         ];
                     }

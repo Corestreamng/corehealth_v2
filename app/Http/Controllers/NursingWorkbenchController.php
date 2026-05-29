@@ -60,50 +60,52 @@ class NursingWorkbenchController extends Controller{
         $this->queueStatusService = $queueStatusService;
     }
 
-    /**
-     * Get patients with medication due (for medication-due queue).
-    */
     public function getMedicationDueQueue(Request $request)
     {
-        // Find all admitted patients with overdue or due medications
+        // Find all admitted patients
         $admissions = AdmissionRequest::with(['patient.user', 'bed'])
             ->where('discharged', 0)
             ->whereNotNull('bed_id')
             ->get();
 
-        $results = $admissions->map(function ($admission) {
+        $patientIds = $admissions->pluck('patient_id')->filter()->unique()->values();
+        $now = Carbon::now();
+
+        // ── Performance: Batch-load active schedules for ALL patients ──
+        $allSchedules = collect();
+        if ($patientIds->isNotEmpty()) {
+            $allSchedules = MedicationSchedule::whereIn('patient_id', $patientIds)
+                ->whereDoesntHave('administrations', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->get()
+                ->groupBy('patient_id');
+        }
+
+        $results = $admissions->map(function ($admission) use ($allSchedules, $now) {
             $patient = $admission->patient;
+            
+            // Get this patient's active schedules
+            $patientSchedules = $allSchedules->get($patient->id, collect());
 
-            // Get overdue medications (scheduled_time < now, not administered)
-            $overdueMeds = MedicationSchedule::where('patient_id', $patient->id)
-                ->where('scheduled_time', '<', Carbon::now())
-                ->whereDoesntHave('administrations', function ($q) {
-                    $q->whereNull('deleted_at');
-                })
-                ->get();
+            // In-memory filters
+            $dueMeds = $patientSchedules->filter(function($med) use ($now) {
+                return Carbon::parse($med->scheduled_time)->lte($now);
+            });
 
-            // Get due medications (scheduled_time <= now, not administered)
-            $dueMeds = MedicationSchedule::where('patient_id', $patient->id)
-                ->where('scheduled_time', '<=', Carbon::now())
-                ->whereDoesntHave('administrations', function ($q) {
-                    $q->whereNull('deleted_at');
-                })
-                ->get();
+            $overdueMeds = $patientSchedules->filter(function($med) use ($now) {
+                return Carbon::parse($med->scheduled_time)->lt($now);
+            });
 
-            // Get next upcoming medication
-            $nextMed = MedicationSchedule::where('patient_id', $patient->id)
-                ->where('scheduled_time', '>', Carbon::now())
-                ->whereDoesntHave('administrations', function ($q) {
-                    $q->whereNull('deleted_at');
-                })
-                ->orderBy('scheduled_time', 'asc')
-                ->first();
+            $nextMed = $patientSchedules->filter(function($med) use ($now) {
+                return Carbon::parse($med->scheduled_time)->gt($now);
+            })->sortBy('scheduled_time')->first();
 
             if ($overdueMeds->count() > 0 || $dueMeds->count() > 0) {
                 // Get the earliest overdue time
                 $earliestOverdue = $overdueMeds->sortBy('scheduled_time')->first();
                 $overdueMinutes = $earliestOverdue
-                    ? Carbon::parse($earliestOverdue->scheduled_time)->diffInMinutes(Carbon::now())
+                    ? Carbon::parse($earliestOverdue->scheduled_time)->diffInMinutes($now)
                     : 0;
 
                 $wardName = 'N/A';
@@ -321,7 +323,52 @@ class NursingWorkbenchController extends Controller{
 
         $admissions = $query->get();
 
-        $results = $admissions->map(function ($admission) {
+        // ── Performance: Batch-load medications & vitals for ALL patients ──
+        // This replaces the N+1 pattern that ran 3 queries per patient.
+        $patientIds = $admissions->pluck('patient.id')->filter()->unique()->values();
+        $now = Carbon::now();
+        $todayStart = Carbon::today();
+
+        // One query: pending medication counts per patient (today, past due, not administered)
+        $pendingMedCounts = collect();
+        $overdueMedCounts = collect();
+        if ($patientIds->isNotEmpty()) {
+            $pendingMedCounts = MedicationSchedule::whereIn('patient_id', $patientIds)
+                ->where('scheduled_time', '>=', $todayStart)
+                ->where('scheduled_time', '<=', $now)
+                ->whereDoesntHave('administrations', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->selectRaw('patient_id, COUNT(*) as cnt')
+                ->groupBy('patient_id')
+                ->pluck('cnt', 'patient_id');
+
+            // One query: overdue medication counts per patient
+            $overdueMedCounts = MedicationSchedule::whereIn('patient_id', $patientIds)
+                ->where('scheduled_time', '<', $now)
+                ->whereDoesntHave('administrations', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->selectRaw('patient_id, COUNT(*) as cnt')
+                ->groupBy('patient_id')
+                ->pluck('cnt', 'patient_id');
+        }
+
+        // One query: latest vital sign per patient (using MAX id subquery)
+        $latestVitals = collect();
+        if ($patientIds->isNotEmpty()) {
+            $latestVitals = VitalSign::whereIn('patient_id', $patientIds)
+                ->whereIn('id', function ($q) use ($patientIds) {
+                    $q->selectRaw('MAX(id)')
+                      ->from('vital_signs')
+                      ->whereIn('patient_id', $patientIds)
+                      ->groupBy('patient_id');
+                })
+                ->get()
+                ->keyBy('patient_id');
+        }
+
+        $results = $admissions->map(function ($admission) use ($pendingMedCounts, $overdueMedCounts, $latestVitals) {
             $patient = $admission->patient;
 
             // Calculate days admitted
@@ -329,27 +376,12 @@ class NursingWorkbenchController extends Controller{
                 ? Carbon::parse($admission->bed_assign_date)->diffInDays(Carbon::now())
                 : 0;
 
-            // Get pending medications for today
-            $pendingMeds = MedicationSchedule::where('patient_id', $patient->id)
-                ->whereDate('scheduled_time', Carbon::today())
-                ->where('scheduled_time', '<=', Carbon::now())
-                ->whereDoesntHave('administrations', function ($q) {
-                    $q->whereNull('deleted_at');
-                })
-                ->count();
+            // Batch-loaded: pending & overdue medication counts (hash lookup instead of DB query)
+            $pendingMeds = $pendingMedCounts->get($patient->id, 0);
+            $overdueMeds = $overdueMedCounts->get($patient->id, 0);
 
-            // Get overdue medications (past due but not administered)
-            $overdueMeds = MedicationSchedule::where('patient_id', $patient->id)
-                ->where('scheduled_time', '<', Carbon::now())
-                ->whereDoesntHave('administrations', function ($q) {
-                    $q->whereNull('deleted_at');
-                })
-                ->count();
-
-            // Check if vitals are due (no vitals in last 4 hours)
-            $lastVital = VitalSign::where('patient_id', $patient->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            // Batch-loaded: latest vital sign (hash lookup instead of DB query)
+            $lastVital = $latestVitals->get($patient->id);
             $vitalsDue = !$lastVital || Carbon::parse($lastVital->created_at)->diffInHours(Carbon::now()) >= 4;
             $lastVitalTime = $lastVital ? Carbon::parse($lastVital->created_at)->diffForHumans() : 'Never';
 
@@ -460,20 +492,21 @@ class NursingWorkbenchController extends Controller{
      */
     public function getQueueCounts()
     {
-        // Admitted patients count (with bed assigned)
-        $admittedCount = AdmissionRequest::where('discharged', 0)
-            ->whereNotNull('bed_id')
-            ->count();
+        // ── Performance: Single aggregate query for all AdmissionRequest counts ──
+        $admissionCounts = AdmissionRequest::where('discharged', 0)
+            ->selectRaw("
+                SUM(CASE WHEN bed_id IS NOT NULL THEN 1 ELSE 0 END) as admitted,
+                SUM(CASE WHEN bed_id IS NULL THEN 1 ELSE 0 END) as bed_requests,
+                SUM(CASE WHEN admission_status = 'discharge_requested' THEN 1 ELSE 0 END) as discharge_requests,
+                SUM(CASE WHEN bed_id IS NOT NULL AND priority = 'critical' THEN 1 ELSE 0 END) as critical,
+                SUM(CASE WHEN priority = 'emergency' THEN 1 ELSE 0 END) as emergency
+            ")->first();
 
-        // Bed requests count (admitted but no bed yet)
-        $bedRequestsCount = AdmissionRequest::where('discharged', 0)
-            ->whereNull('bed_id')
-            ->count();
-
-        // Discharge requests count (waiting for nurse to process discharge checklist)
-        $dischargeRequestsCount = AdmissionRequest::where('admission_status', 'discharge_requested')
-            ->where('discharged', 0)
-            ->count();
+        $admittedCount = (int) ($admissionCounts->admitted ?? 0);
+        $bedRequestsCount = (int) ($admissionCounts->bed_requests ?? 0);
+        $dischargeRequestsCount = (int) ($admissionCounts->discharge_requests ?? 0);
+        $criticalCount = (int) ($admissionCounts->critical ?? 0);
+        $emergencyCount = (int) ($admissionCounts->emergency ?? 0);
 
         // Patients with overdue medications
         $overdueMedsCount = MedicationSchedule::where('scheduled_time', '<', Carbon::now())
@@ -484,19 +517,12 @@ class NursingWorkbenchController extends Controller{
             ->count('patient_id');
 
         // Vitals queue (patients in doctor queue with vitals not taken)
-        $vitalsQueueCount = DoctorQueue::whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])
-            ->whereDate('created_at', Carbon::today())
-            ->count();
-
-        // Critical patients (based on priority)
-        $criticalCount = AdmissionRequest::where('discharged', 0)
-            ->whereNotNull('bed_id')
-            ->where('priority', 'critical')
-            ->count();
-
-        // Emergency queue count (priority = emergency and not discharged)
-        $emergencyCount = AdmissionRequest::where('priority', 'emergency')
-            ->where('discharged', 0)
+        // Performance: Use range query instead of whereDate
+        $today = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+        $vitalsQueueCount = DoctorQueue::whereIn('status', [\App\Enums\QueueStatus::WAITING, \App\Enums\QueueStatus::VITALS_PENDING])
+            ->where('created_at', '>=', $today)
+            ->where('created_at', '<', $tomorrow)
             ->count();
 
         // Deceased queue count (needs last office)
