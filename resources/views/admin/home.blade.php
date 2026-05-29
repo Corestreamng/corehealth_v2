@@ -1398,22 +1398,30 @@ $(document).ready(function () {
     }
 
     // ========================================
-    // Tab Loader
+    // Tab Loader (Performance-optimized)
     // ========================================
-    function loadTabData(tabName) {
-        console.log("Loading dashboard data for tab:", tabName);
+    // Track which tabs have been loaded to avoid redundant re-fetches.
+    // Legacy duplicate fetchers (fetchReceptionistStats, fetchBillerStats,
+    // fetchNursingStats, fetchLabStats, fetchDoctorStats, fetchHmoStats,
+    // fetchAdminStats) have been REMOVED — the enhanced loaders already
+    // fetch all the same data from the cached dashboard endpoints.
+    var _tabsLoaded = {};
+
+    function loadTabData(tabName, forceRefresh) {
+        if (!forceRefresh && _tabsLoaded[tabName]) {
+            return; // Already loaded, skip
+        }
+        _tabsLoaded[tabName] = true;
+
         switch(tabName) {
             case 'receptionist':
-                fetchReceptionistStats();
                 loadEnhancedReception();
                 renderRegistrationsChart();
                 break;
             case 'biller':
-                fetchBillerStats();
                 loadEnhancedBilling();
                 break;
             case 'admin':
-                fetchAdminStats();
                 renderRevenueChart('adminRevenueChart');
                 renderRegistrationsChart();
                 break;
@@ -1442,23 +1450,19 @@ $(document).ready(function () {
                 loadEnhancedTheatre();
                 break;
             case 'nursing':
-                fetchNursingStats();
                 loadEnhancedNursing();
                 break;
             case 'lab':
-                fetchLabStats();
                 loadEnhancedLab();
                 break;
             case 'imaging':
                 loadEnhancedImaging();
                 break;
             case 'doctor':
-                fetchDoctorStats();
                 loadEnhancedDoctor();
                 renderDoctorCharts();
                 break;
             case 'hmo':
-                fetchHmoStats();
                 loadEnhancedHmo();
                 break;
             case 'accounts':
@@ -1477,12 +1481,10 @@ $(document).ready(function () {
         var $activeBtn = $('#dashboardTabs .nav-link.active');
         if ($activeBtn.length) {
             var tab = $activeBtn.attr('id').replace('-tab', '');
-            console.log("Initializing with active tab:", tab);
             loadTabData(tab);
         } else {
             var firstKey = '{{ $firstTabKey ?? "" }}';
             if (firstKey) {
-                console.log("No active tab found, falling back to:", firstKey);
                 loadTabData(firstKey);
             }
         }
@@ -1493,17 +1495,17 @@ $(document).ready(function () {
     // Event delegation for tab clicks (more robust)
     $(document).on('shown.bs.tab', 'button[data-bs-toggle="pill"]', function (e) {
         var targetTab = $(e.target).attr('id').replace('-tab', '');
-        console.log("Tab switched to:", targetTab);
         loadTabData(targetTab);
     });
 
-    // Auto-refresh every 60 seconds
+    // Auto-refresh every 5 minutes (server caches data for 3 min anyway).
+    // Force-refresh bypasses the _tabsLoaded guard.
     setInterval(function() {
         var $activeBtn = $('#dashboardTabs .nav-link.active');
         if ($activeBtn.length) {
-            loadTabData($activeBtn.attr('id').replace('-tab', ''));
+            loadTabData($activeBtn.attr('id').replace('-tab', ''), true);
         }
-    }, 60000);
+    }, 300000);
 });
 </script>
 @endsection

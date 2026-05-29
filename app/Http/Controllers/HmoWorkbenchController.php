@@ -1245,64 +1245,40 @@ class HmoWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
-        // Base query for HMO patients
-        $baseQuery = function() {
-            return ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                $q->whereNotNull('hmo_id');
-            });
-        };
+        // ── Performance: Single query with conditional aggregation ──
+        $todayStr = Carbon::today()->toDateString();
+        $fourHoursAgo = Carbon::now()->subHours(4)->toDateTimeString();
+
+        $agg = \Illuminate\Support\Facades\DB::table('product_or_service_requests as posr')
+            ->join('users as u', 'posr.user_id', '=', 'u.id')
+            ->join('patients as p', 'u.id', '=', 'p.user_id')
+            ->whereNotNull('p.hmo_id')
+            ->where('posr.claims_amount', '>', 0)
+            ->selectRaw("
+                SUM(CASE WHEN posr.validation_status = 'pending' AND posr.coverage_mode IN ('primary', 'secondary') THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN posr.coverage_mode = 'express' THEN 1 ELSE 0 END) as express,
+                SUM(CASE WHEN posr.validation_status = 'approved' THEN 1 ELSE 0 END) as approved,
+                SUM(CASE WHEN posr.validation_status = 'rejected' THEN 1 ELSE 0 END) as rejected,
+                SUM(CASE WHEN posr.validation_status = 'awaiting_code' THEN 1 ELSE 0 END) as awaiting_code,
+                SUM(CASE WHEN posr.payment_id IS NOT NULL THEN 1 ELSE 0 END) as claims,
+                COUNT(*) as `all`,
+                SUM(CASE WHEN posr.validation_status = 'approved' AND DATE(posr.validated_at) = ? THEN 1 ELSE 0 END) as approved_today,
+                SUM(CASE WHEN posr.validation_status = 'rejected' AND DATE(posr.validated_at) = ? THEN 1 ELSE 0 END) as rejected_today,
+                SUM(CASE WHEN posr.validation_status = 'pending' AND posr.coverage_mode IN ('primary', 'secondary') AND posr.created_at < ? THEN 1 ELSE 0 END) as overdue
+            ", [$todayStr, $todayStr, $fourHoursAgo])
+            ->first();
 
         $counts = [
-            'pending' => $baseQuery()
-                ->where('validation_status', 'pending')
-                ->whereIn('coverage_mode', ['primary', 'secondary'])
-                ->where('claims_amount', '>', 0)
-                ->count(),
-
-            'express' => $baseQuery()
-                ->where('coverage_mode', 'express')
-                ->count(),
-
-            'approved' => $baseQuery()
-                ->where('validation_status', 'approved')
-                ->where('claims_amount', '>', 0)
-                ->count(),
-
-            'rejected' => $baseQuery()
-                ->where('validation_status', 'rejected')
-                ->where('claims_amount', '>', 0)
-                ->count(),
-
-            'awaiting_code' => $baseQuery()
-                ->where('validation_status', 'awaiting_code')
-                ->where('claims_amount', '>', 0)
-                ->count(),
-
-            'claims' => $baseQuery()
-                ->whereNotNull('payment_id')
-                ->where('claims_amount', '>', 0)
-                ->count(),
-
-            'all' => $baseQuery()
-                ->where('claims_amount', '>', 0)
-                ->count(),
-
-            'approved_today' => $baseQuery()
-                ->where('validation_status', 'approved')
-                ->whereDate('validated_at', today())
-                ->count(),
-
-            'rejected_today' => $baseQuery()
-                ->where('validation_status', 'rejected')
-                ->whereDate('validated_at', today())
-                ->count(),
-
-            'overdue' => $baseQuery()
-                ->where('validation_status', 'pending')
-                ->whereIn('coverage_mode', ['primary', 'secondary'])
-                ->where('created_at', '<', Carbon::now()->subHours(4))
-                ->count(),
-
+            'pending' => (int) ($agg->pending ?? 0),
+            'express' => (int) ($agg->express ?? 0),
+            'approved' => (int) ($agg->approved ?? 0),
+            'rejected' => (int) ($agg->rejected ?? 0),
+            'awaiting_code' => (int) ($agg->awaiting_code ?? 0),
+            'claims' => (int) ($agg->claims ?? 0),
+            'all' => (int) ($agg->all ?? 0),
+            'approved_today' => (int) ($agg->approved_today ?? 0),
+            'rejected_today' => (int) ($agg->rejected_today ?? 0),
+            'overdue' => (int) ($agg->overdue ?? 0),
             'emergency' => $this->getEmergencyHmoCount(),
         ];
 
@@ -1342,45 +1318,36 @@ class HmoWorkbenchController extends Controller
         $today = today();
         $thisMonth = now()->startOfMonth();
 
+        // ── Performance: Single aggregate query for totals ──
+        $todayStr = $today->toDateString();
+        $thisMonthStr = $thisMonth->toDateTimeString();
+
+        $agg = \Illuminate\Support\Facades\DB::table('product_or_service_requests as posr')
+            ->join('users as u', 'posr.user_id', '=', 'u.id')
+            ->join('patients as p', 'u.id', '=', 'p.user_id')
+            ->whereNotNull('p.hmo_id')
+            ->selectRaw("
+                SUM(CASE WHEN posr.validation_status IN ('pending', 'awaiting_code') AND posr.coverage_mode IS NOT NULL AND posr.is_bundle_item = 0 THEN posr.claims_amount ELSE 0 END) as pending_claims_total,
+                SUM(CASE WHEN posr.validation_status = 'approved' AND DATE(posr.validated_at) = ? THEN posr.claims_amount ELSE 0 END) as approved_today_total,
+                SUM(CASE WHEN posr.validation_status = 'rejected' AND DATE(posr.validated_at) = ? THEN posr.claims_amount ELSE 0 END) as rejected_today_total,
+                SUM(CASE WHEN posr.validation_status = 'approved' AND posr.validated_at >= ? THEN posr.claims_amount ELSE 0 END) as monthly_claims_total
+            ", [$todayStr, $todayStr, $thisMonthStr])
+            ->first();
+
         $summary = [
-            'pending_claims_total' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
-                ->whereIn('validation_status', ['pending', 'awaiting_code'])
-                ->whereNotNull('coverage_mode')
-        ->where('is_bundle_item', false)
-                ->sum('claims_amount'),
+            'pending_claims_total' => (float) ($agg->pending_claims_total ?? 0),
+            'approved_today_total' => (float) ($agg->approved_today_total ?? 0),
+            'rejected_today_total' => (float) ($agg->rejected_today_total ?? 0),
+            'monthly_claims_total' => (float) ($agg->monthly_claims_total ?? 0),
 
-            'approved_today_total' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
-                ->where('validation_status', 'approved')
-                ->whereDate('validated_at', $today)
-                ->sum('claims_amount'),
-
-            'rejected_today_total' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
-                ->where('validation_status', 'rejected')
-                ->whereDate('validated_at', $today)
-                ->sum('claims_amount'),
-
-            'monthly_claims_total' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
-                ->where('validation_status', 'approved')
-                ->where('validated_at', '>=', $thisMonth)
-                ->sum('claims_amount'),
-
-            'monthly_by_hmo' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
-                ->where('validation_status', 'approved')
-                ->where('validated_at', '>=', $thisMonth)
-                ->join('users', 'product_or_service_requests.user_id', '=', 'users.id')
+            'monthly_by_hmo' => \Illuminate\Support\Facades\DB::table('product_or_service_requests as posr')
+                ->join('users', 'posr.user_id', '=', 'users.id')
                 ->join('patients', 'users.id', '=', 'patients.user_id')
                 ->join('hmos', 'patients.hmo_id', '=', 'hmos.id')
-                ->select('hmos.name as hmo_name', DB::raw('SUM(claims_amount) as total'))
+                ->whereNotNull('patients.hmo_id')
+                ->where('posr.validation_status', 'approved')
+                ->where('posr.validated_at', '>=', $thisMonth)
+                ->select('hmos.name as hmo_name', \Illuminate\Support\Facades\DB::raw('SUM(posr.claims_amount) as total'))
                 ->groupBy('hmos.id', 'hmos.name')
                 ->orderByDesc('total')
                 ->limit(10)
