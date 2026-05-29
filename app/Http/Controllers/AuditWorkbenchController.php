@@ -45,42 +45,25 @@ class AuditWorkbenchController extends Controller
 {
     public static $responsibilities = [
         'financial' => [
-            'cash_reconciliation' => 'Cash Book & Daily Cashier Collections',
-            'hmo_claims_nhis' => 'HMO Claims Matching & Remittances',
-            'payroll_dept' => 'Payroll Department Reconciliations',
-            'revenue_leakage' => 'Daily Invoice Audits & Revenue Leakage',
-            'expense_vouchers' => 'Expense Vouchers & Operational Spend',
-            'refund_claims' => 'Patient Refunds & Adjustments Control',
-            'discount_authorization' => 'Discount Approvals & Special Fee Waivers',
-            'debt_aging' => 'Debt Recovery & Aged Receivables Control',
-            'bank_statement_match' => 'Daily Bank Statement Match & Deposits',
-            'petty_cash' => 'Petty Cash Disbursements & Voucher Auditing',
-            'statutory_deductions' => 'Statutory Deductions & Pension Compliance'
+            'cash_and_billing_audit' => 'Cash Book & Billing Reconciliations',
+            'bank_reconciliation' => 'Bank Statements & POS Reconciliations',
+            'hmo_nhis_verification' => 'HMO/NHIS Claims & Capitation',
+            'discounts_refunds_debt' => 'Discounts, Refunds & Debt Recovery',
+            'payroll_expenses_ledger' => 'Payroll, Deductions & Expenses'
         ],
         'clinical' => [
-            'consulting_queues' => 'Consulting Queue & Doctor Bookings',
-            'inpatient_stays' => 'Inpatient Stays & Daily Bed Occupancy',
-            'theatre_bundles' => 'Theatre Procedure & Consumable Bundles',
-            'morgue_releases' => 'Morgue collections & Decedent Releases',
-            'clinical_notes_audit' => 'Clinical Notes Completion & Vital Signs Logs',
-            'maternity_deliveries' => 'Maternity Admissions & Delivery Outcomes',
-            'prescription_fills' => 'Pharmacy Prescriptions vs Fills Matching',
-            'treatment_plans' => 'Doctor Treatment Plans & Ward Execution',
-            'nursing_vitals' => 'Nursing Vitals Capture & Frequency Audit',
-            'discharge_clearance' => 'Inpatient Discharge Clearance & Billing Audits',
-            'emergency_triage' => 'Emergency Intake & Triage Level Governance'
+            'consulting_clinics_flow' => 'Consulting Clinics & Patient Flow',
+            'inpatient_ward_income' => 'Ward Income & Discharge Clearance',
+            'theatre_bundles_audit' => 'Theatre Bundles & Procedure Revenue',
+            'maternity_morgue_audit' => 'Maternity Enrollments & Mortuary Register'
+        ],
+        'diagnostics_pharmacy' => [
+            'lab_imaging_register' => 'Lab/Imaging Register & Reagent Usage',
+            'pharmacy_prescriptions' => 'Pharmacy Prescriptions, Returns & Damages'
         ],
         'inventory' => [
-            'stock_variance' => 'Stock Count Variance & Catalog Adjustments',
-            'purchase_price_var' => 'PO Purchase Price Variations',
-            'store_governance' => 'Store Role Governance & Lane Policies',
-            'dispensing_errors' => 'FIFO Dispensing Controls & Expiry Checks',
-            'requisition_fulfill' => 'Store Requisitions vs Full Fulfillments',
-            'damaged_goods' => 'Damaged Goods & Write-off Approvals',
-            'min_max_reorder' => 'Min-Max Thresholds & Reorder Triggers',
-            'supplier_invoice' => 'Supplier Invoices vs PO Delivery Receipts',
-            'pharmacy_returns' => 'Pharmacy Product Returns & Shelf Restocking',
-            'procurement_contracts' => 'Procurement Contracts & Vendor Price Locks'
+            'central_store_stock_check' => 'Central Store Stock & PO Price Variance',
+            'departmental_ward_stores' => 'Departmental/Ward Stock & Requisitions'
         ]
     ];
 
@@ -129,7 +112,7 @@ class AuditWorkbenchController extends Controller
             ->get()
             ->groupBy('responsibility_key');
 
-        // 3. Module Calculations for all 33 worksheets
+        // 3. Module Calculations for all 13 worksheets
         
         // A. Cashier Performance
         $cashierSummary = DB::table('payments')
@@ -445,402 +428,120 @@ class AuditWorkbenchController extends Controller
         $tabbedData = [];
 
         switch ($responsibility_key) {
-            case 'cash_reconciliation':
-                $payments = \App\Models\Payment::with(['patient.user', 'staff_user', 'bank'])
+
+
+            case 'cash_and_billing_audit':
+                // 1. Unified Receipts (Payments + Patient Deposits)
+                $payments = \App\Models\Payment::with(['patient.user', 'staff_user'])
                     ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
+                    ->get();
+                
+                $deposits = \App\Models\Accounting\PatientDeposit::with(['patient.user', 'receiver'])
+                    ->whereBetween('deposit_date', [$startDate, $endDate])
                     ->get();
 
-                $grossTotal = $payments->sum('total');
-                $cashTotal = $payments->where('payment_method', 'CASH')->sum('total');
-                $bankTotal = $payments->whereIn('payment_method', ['POS', 'TRANSFER', 'BANK_TRANSFER'])->sum('total');
+                $receipts = collect();
+                $grossPayments = 0;
+                $grossDeposits = 0;
+                $regFees = 0;
 
-                $kpis = [
-                    ['label' => 'Gross collections', 'value' => '₦' . number_format($grossTotal, 2), 'class' => 'text-success'],
-                    ['label' => 'Cash Collections', 'value' => '₦' . number_format($cashTotal, 2), 'class' => 'text-info'],
-                    ['label' => 'Bank/POS Collections', 'value' => '₦' . number_format($bankTotal, 2), 'class' => 'text-purple']
-                ];
-
-                $headers = ['Reference No', 'Cashier', 'Patient', 'Payment Type', 'Method', 'Bank Name', 'Total Amount', 'Date'];
                 foreach ($payments as $p) {
-                    $rows[] = [
-                        $p->reference_no ?? 'N/A',
-                        $p->staff_user ? trim($p->staff_user->surname . ' ' . $p->staff_user->firstname) : 'System',
-                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'Walk-in',
-                        ucfirst(str_replace('_', ' ', $p->payment_type ?? 'N/A')),
-                        $p->payment_method ?? 'N/A',
-                        $p->bank ? $p->bank->name : 'N/A',
-                        '₦' . number_format($p->total, 2),
-                        $p->created_at->format('Y-m-d H:i')
-                    ];
-                }
-                break;
-
-            case 'hmo_claims_nhis':
-                $claims = \App\Models\ProductOrServiceRequest::with(['user', 'hmo.scheme'])
-                    ->whereNotNull('hmo_id')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $remittances = \App\Models\HmoRemittance::with(['hmo.scheme'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $kpis = [
-                    ['label' => 'Total Scheme Claims', 'value' => '₦' . number_format($claims->sum('claims_amount'), 2), 'class' => 'text-purple'],
-                    ['label' => 'Total Remitted', 'value' => '₦' . number_format($remittances->sum('amount'), 2), 'class' => 'text-success'],
-                    ['label' => 'Claims Count', 'value' => $claims->count() . ' Claims', 'class' => 'text-info']
-                ];
-
-                $claimsRows = [];
-                foreach ($claims as $c) {
-                    $claimsRows[] = [
-                        $c->id,
-                        $c->user ? trim($c->user->surname . ' ' . $c->user->firstname) : 'N/A',
-                        $c->hmo ? $c->hmo->name : 'N/A',
-                        $c->hmo && $c->hmo->scheme ? $c->hmo->scheme->name : 'N/A',
-                        '₦' . number_format($c->claims_amount, 2),
-                        '₦' . number_format($c->payable_amount, 2),
-                        $c->created_at->format('Y-m-d H:i')
-                    ];
+                    $grossPayments += $p->total;
+                    if ($p->payment_type === 'REGISTRATION') {
+                        $regFees += $p->total;
+                    }
+                    $receipts->push([
+                        'id' => 'PAY-'.$p->id,
+                        'reference' => $p->reference_no ?? 'N/A',
+                        'cashier' => $p->staff_user ? trim($p->staff_user->surname . ' ' . $p->staff_user->firstname) : 'System',
+                        'patient' => $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'Walk-in',
+                        'type' => ucfirst(str_replace('_', ' ', $p->payment_type ?? 'N/A')),
+                        'method' => $p->payment_method ?? 'N/A',
+                        'amount' => $p->total,
+                        'date' => $p->created_at->format('Y-m-d H:i'),
+                        'datetime' => $p->created_at
+                    ]);
                 }
 
-                $remittanceRows = [];
-                foreach ($remittances as $r) {
-                    $remittanceRows[] = [
-                        $r->reference_number ?? 'N/A',
-                        $r->hmo ? $r->hmo->name : 'N/A',
-                        $r->hmo && $r->hmo->scheme ? $r->hmo->scheme->name : 'N/A',
-                        '₦' . number_format($r->amount, 2),
-                        $r->payment_method ?? 'N/A',
-                        $r->payment_date ? $r->payment_date->format('Y-m-d') : 'N/A'
+                foreach ($deposits as $d) {
+                    $grossDeposits += $d->amount;
+                    $receipts->push([
+                        'id' => 'DEP-'.$d->id,
+                        'reference' => $d->deposit_number ?? 'N/A',
+                        'cashier' => $d->receiver ? trim($d->receiver->surname . ' ' . $d->receiver->firstname) : 'System',
+                        'patient' => $d->patient && $d->patient->user ? trim($d->patient->user->surname . ' ' . $d->patient->user->firstname) : 'N/A',
+                        'type' => 'Account Deposit',
+                        'method' => $d->payment_method ?? 'N/A',
+                        'amount' => $d->amount,
+                        'date' => $d->deposit_date->format('Y-m-d H:i'),
+                        'datetime' => $d->deposit_date
+                    ]);
+                }
+
+                $receipts = $receipts->sortByDesc('datetime');
+
+                $receiptRows = [];
+                foreach ($receipts as $r) {
+                    $receiptRows[] = [
+                        $r['reference'],
+                        $r['cashier'],
+                        $r['patient'],
+                        $r['type'],
+                        $r['method'],
+                        '₦' . number_format($r['amount'], 2),
+                        $r['date']
                     ];
                 }
 
-                $tabbedData = [
-                    'hmo_claims' => [
-                        'label' => 'HMO Claims (Scheme Grouped)',
-                        'headers' => ['Request ID', 'Patient', 'HMO', 'HMO Scheme', 'Claims Amount', 'Payable Amount', 'Date'],
-                        'rows' => $claimsRows
-                    ],
-                    'hmo_remittances' => [
-                        'label' => 'HMO Remittances',
-                        'headers' => ['Reference No', 'HMO', 'HMO Scheme', 'Amount Received', 'Payment Method', 'Date Received'],
-                        'rows' => $remittanceRows
-                    ]
-                ];
-                break;
-
-            case 'payroll_dept':
-                $batches = \App\Models\HR\PayrollBatch::with(['createdBy', 'approvedBy'])
+                // 2. Revenue Leakage (Unpaid Private Services)
+                $leakageRequests = \App\Models\ProductOrServiceRequest::with(['user', 'product', 'service'])
                     ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
+                    ->whereNull('payment_id')
+                    ->whereNull('invoice_id')
+                    ->whereRaw('NOT ((payable_amount IS NULL OR payable_amount = 0) AND (claims_amount > 0 AND validation_status = ?))', ['approved'])
+                    ->where(function($q) {
+                        $q->whereNull('hmo_id')->orWhere('hmo_id', 1)->orWhere('coverage_mode', 'cash');
+                    })
                     ->get();
-
-                $deductions = \App\Models\Accounting\StatutoryRemittance::with(['payHead', 'bank'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $kpis = [
-                    ['label' => 'Net Salaries Paid', 'value' => '₦' . number_format($batches->where('status', 'paid')->sum('total_net'), 2), 'class' => 'text-success'],
-                    ['label' => 'Deductions Remitted', 'value' => '₦' . number_format($deductions->where('status', 'paid')->sum('amount'), 2), 'class' => 'text-info'],
-                    ['label' => 'Processed Batches', 'value' => $batches->count() . ' Batches', 'class' => 'text-purple']
-                ];
-
-                $batchRows = [];
-                foreach ($batches as $b) {
-                    $batchRows[] = [
-                        $b->batch_number ?? 'N/A',
-                        $b->name ?? 'N/A',
-                        $b->total_staff ?? 0,
-                        '₦' . number_format($b->total_gross ?? 0, 2),
-                        '₦' . number_format($b->total_deductions ?? 0, 2),
-                        '₦' . number_format($b->total_net ?? 0, 2),
-                        ucfirst($b->status),
-                        $b->approved_at ? $b->approved_at->format('Y-m-d') : 'N/A'
-                    ];
-                }
-
-                $deductionRows = [];
-                foreach ($deductions as $d) {
-                    $deductionRows[] = [
-                        $d->reference_number ?? 'N/A',
-                        $d->payHead ? $d->payHead->name : 'N/A',
-                        $d->payee_name ?? 'N/A',
-                        '₦' . number_format($d->amount, 2),
-                        $d->bank ? $d->bank->name : 'N/A',
-                        ucfirst($d->status),
-                        $d->remittance_date ? $d->remittance_date->format('Y-m-d') : 'N/A'
-                    ];
-                }
-
-                $tabbedData = [
-                    'payroll_batches' => [
-                        'label' => 'Payroll Batches',
-                        'headers' => ['Batch No', 'Name', 'Total Staff', 'Gross Salary', 'Deductions', 'Net Paid', 'Status', 'Date Approved'],
-                        'rows' => $batchRows
-                    ],
-                    'statutory_deductions' => [
-                        'label' => 'Statutory Deductions Remitted',
-                        'headers' => ['Reference No', 'Deduction Type', 'Payee Name', 'Amount', 'Bank Account', 'Status', 'Remittance Date'],
-                        'rows' => $deductionRows
-                    ]
-                ];
-                break;
-
-            case 'revenue_leakage':
-                $allRequests = \App\Models\ProductOrServiceRequest::with(['user', 'staff', 'payment', 'product', 'service', 'hmo'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
-
-                $leakageRequests = $allRequests->filter(function($r) {
-                    $isPrivateUnpaid = ($r->coverage_mode === 'PRIVATE' || empty($r->hmo_id)) && empty($r->payment_id) && empty($r->staff_user_id) && $r->payable_amount > 0;
-                    $hasPriceVariance = ($r->amount - ($r->payable_amount + $r->claims_amount + $r->discount)) > 0.01;
-                    return $isPrivateUnpaid || $hasPriceVariance;
-                });
-
-                $unpaidPrivateSum = $leakageRequests->filter(fn($r) => empty($r->payment_id))->sum('payable_amount');
-                $priceVarianceSum = $leakageRequests->sum(fn($r) => max(0, $r->amount - ($r->payable_amount + $r->claims_amount + $r->discount)));
-
-                $kpis = [
-                    ['label' => 'Unpaid Private Requests', 'value' => '₦' . number_format($unpaidPrivateSum, 2), 'class' => 'text-danger'],
-                    ['label' => 'Price Adjustments/Variance', 'value' => '₦' . number_format($priceVarianceSum, 2), 'class' => 'text-warning'],
-                    ['label' => 'Total Audited Leakage', 'value' => '₦' . number_format($unpaidPrivateSum + $priceVarianceSum, 2), 'class' => 'text-dark font-weight-bold']
-                ];
-
-                $headers = ['Request ID', 'Patient', 'Service/Product', 'Original Price', 'Payable Amount', 'Discount', 'Claims', 'Leakage/Variance', 'Date'];
+                
+                $leakageRows = [];
+                $leakageTotal = 0;
                 foreach ($leakageRequests as $r) {
-                    $variance = max(0, $r->amount - ($r->payable_amount + $r->claims_amount + $r->discount));
-                    $leakageVal = empty($r->payment_id) ? $r->payable_amount : 0;
-                    $totalLeakage = $leakageVal + $variance;
-
-                    $rows[] = [
+                    $amt = $r->payable_amount > 0 ? $r->payable_amount : $r->amount;
+                    $leakageTotal += $amt;
+                    $leakageRows[] = [
                         $r->id,
                         $r->user ? trim($r->user->surname . ' ' . $r->user->firstname) : 'N/A',
                         $r->product ? $r->product->name : ($r->service ? $r->service->name : 'N/A'),
                         '₦' . number_format($r->amount, 2),
-                        '₦' . number_format($r->payable_amount, 2),
-                        '₦' . number_format($r->discount, 2),
-                        '₦' . number_format($r->claims_amount, 2),
-                        '<span class="text-danger font-weight-bold">₦' . number_format($totalLeakage, 2) . '</span>',
+                        '₦' . number_format($r->discount ?? 0, 2),
+                        '<span class="text-danger font-weight-bold">₦' . number_format($amt, 2) . '</span>',
                         $r->created_at->format('Y-m-d H:i')
                     ];
                 }
-                break;
-
-            case 'expense_vouchers':
-                $expenses = \App\Models\Expense::with(['supplier', 'store', 'bank', 'recorder'])
-                    ->whereBetween('expense_date', [$startDate, $endDate])
-                    ->orderBy('expense_date', 'desc')
-                    ->get();
-
-                $approvedTotal = $expenses->where('status', 'approved')->sum('amount');
-                $pendingTotal = $expenses->where('status', 'pending')->sum('amount');
 
                 $kpis = [
-                    ['label' => 'Approved Expenses', 'value' => '₦' . number_format($approvedTotal, 2), 'class' => 'text-success'],
-                    ['label' => 'Pending Expenses', 'value' => '₦' . number_format($pendingTotal, 2), 'class' => 'text-warning'],
-                    ['label' => 'Total Operational Spend', 'value' => '₦' . number_format($expenses->sum('amount'), 2), 'class' => 'text-info']
+                    ['label' => 'Gross Collections (Payments)', 'value' => '₦' . number_format($grossPayments, 2), 'class' => 'text-success'],
+                    ['label' => 'Total Account Deposits', 'value' => '₦' . number_format($grossDeposits, 2), 'class' => 'text-info'],
+                    ['label' => 'Registration Fees', 'value' => '₦' . number_format($regFees, 2), 'class' => 'text-primary'],
+                    ['label' => 'Unbilled Value (Leakage)', 'value' => '₦' . number_format($leakageTotal, 2), 'class' => 'text-danger']
                 ];
-
-                $headers = ['Expense No', 'Title', 'Category', 'Amount', 'Supplier/Vendor', 'Method', 'Status', 'Date'];
-                foreach ($expenses as $e) {
-                    $rows[] = [
-                        $e->expense_number ?? 'N/A',
-                        $e->title ?? 'N/A',
-                        ucfirst(str_replace('_', ' ', $e->category ?? 'N/A')),
-                        '₦' . number_format($e->amount, 2),
-                        $e->supplier ? $e->supplier->name : 'N/A',
-                        ucfirst($e->payment_method ?? 'N/A'),
-                        '<span class="badge badge-' . ($e->status === 'approved' ? 'success' : ($e->status === 'pending' ? 'warning' : 'danger')) . '">' . ucfirst($e->status) . '</span>',
-                        $e->expense_date ? $e->expense_date->format('Y-m-d') : 'N/A'
-                    ];
-                }
-                break;
-
-            case 'refund_claims':
-                $refundedDeposits = \App\Models\Accounting\PatientDeposit::with(['patient', 'refunder'])
-                    ->where(fn($q) => $q->where('status', 'refunded')->orWhere('refunded_amount', '>', 0))
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $creditNotes = \App\Models\Accounting\CreditNote::with(['patient', 'createdBy'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $kpis = [
-                    ['label' => 'Deposits Refunded', 'value' => '₦' . number_format($refundedDeposits->sum('refunded_amount'), 2), 'class' => 'text-warning'],
-                    ['label' => 'Credit Notes Value', 'value' => '₦' . number_format($creditNotes->sum('amount'), 2), 'class' => 'text-danger'],
-                    ['label' => 'Total Adjustments', 'value' => '₦' . number_format($refundedDeposits->sum('refunded_amount') + $creditNotes->sum('amount'), 2), 'class' => 'text-dark']
-                ];
-
-                $depositRows = [];
-                foreach ($refundedDeposits as $d) {
-                    $depositRows[] = [
-                        $d->deposit_number ?? 'N/A',
-                        $d->patient ? trim($d->patient->surname . ' ' . $d->patient->firstname) : 'N/A',
-                        '₦' . number_format($d->amount, 2),
-                        '₦' . number_format($d->refunded_amount, 2),
-                        $d->refund_reason ?? 'N/A',
-                        $d->refunder ? trim($d->refunder->surname . ' ' . $d->refunder->firstname) : 'System',
-                        $d->refunded_at ? $d->refunded_at->format('Y-m-d H:i') : 'N/A'
-                    ];
-                }
-
-                $creditNoteRows = [];
-                foreach ($creditNotes as $c) {
-                    $creditNoteRows[] = [
-                        $c->credit_note_number ?? 'N/A',
-                        $c->patient ? trim($c->patient->surname . ' ' . $c->patient->firstname) : 'N/A',
-                        '₦' . number_format($c->amount, 2),
-                        $c->reason ?? 'N/A',
-                        ucfirst($c->status),
-                        $c->createdBy ? trim($c->createdBy->surname . ' ' . $c->createdBy->firstname) : 'System',
-                        $c->created_at->format('Y-m-d H:i')
-                    ];
-                }
 
                 $tabbedData = [
-                    'refunded_deposits' => [
-                        'label' => 'Refunded Patient Deposits',
-                        'headers' => ['Deposit No', 'Patient', 'Original Deposit', 'Refunded Amount', 'Reason', 'Refunded By', 'Refunded Date'],
-                        'rows' => $depositRows
+                    'unified_receipts' => [
+                        'label' => 'Unified Daily Receipts',
+                        'headers' => ['Reference No', 'Cashier', 'Patient', 'Type', 'Method', 'Amount', 'Date'],
+                        'rows' => $receiptRows
                     ],
-                    'credit_notes' => [
-                        'label' => 'Credit Notes Issued',
-                        'headers' => ['Credit Note No', 'Customer/Patient', 'Credit Note Amount', 'Reason', 'Status', 'Prepared By', 'Date Issued'],
-                        'rows' => $creditNoteRows
+                    'revenue_leakage' => [
+                        'label' => 'Unbilled Self/Private Services (Leakage)',
+                        'headers' => ['Req ID', 'Patient', 'Item', 'Original Price', 'Discount', 'Leakage Value', 'Date'],
+                        'rows' => $leakageRows
                     ]
                 ];
                 break;
 
-            case 'discount_authorization':
-                $checkoutDiscounts = \App\Models\Payment::with(['patient.user', 'staff_user'])
-                    ->where('total_discount', '>', 0)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $staffSettlements = \App\Models\StaffBill::with(['patient.user', 'staffUser'])
-                    ->where('discount_amount', '>', 0)
-                    ->whereBetween('updated_at', [$startDate, $endDate])
-                    ->orderBy('updated_at', 'desc')
-                    ->get();
-
-                $kpis = [
-                    ['label' => 'Checkout Discounts', 'value' => '₦' . number_format($checkoutDiscounts->sum('total_discount'), 2), 'class' => 'text-info'],
-                    ['label' => 'Staff Settlement Discounts', 'value' => '₦' . number_format($staffSettlements->sum('discount_amount'), 2), 'class' => 'text-purple'],
-                    ['label' => 'Total Waivers Applied', 'value' => '₦' . number_format($checkoutDiscounts->sum('total_discount') + $staffSettlements->sum('discount_amount'), 2), 'class' => 'text-success']
-                ];
-
-                $checkoutRows = [];
-                foreach ($checkoutDiscounts as $p) {
-                    $checkoutRows[] = [
-                        $p->reference_no ?? 'N/A',
-                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'Walk-in',
-                        $p->staff_user ? trim($p->staff_user->surname . ' ' . $p->staff_user->firstname) : 'System',
-                        '₦' . number_format($p->total + $p->total_discount, 2),
-                        '₦' . number_format($p->total_discount, 2),
-                        '₦' . number_format($p->total, 2),
-                        $p->created_at->format('Y-m-d H:i')
-                    ];
-                }
-
-                $staffRows = [];
-                foreach ($staffSettlements as $s) {
-                    $staffRows[] = [
-                        $s->id,
-                        $s->staffUser ? trim($s->staffUser->surname . ' ' . $s->staffUser->firstname) : 'N/A',
-                        $s->patient && $s->patient->user ? trim($s->patient->user->surname . ' ' . $s->patient->user->firstname) : 'N/A',
-                        '₦' . number_format($s->amount ?? 0, 2),
-                        '₦' . number_format($s->discount_amount, 2),
-                        '₦' . number_format($s->outstanding_amount, 2),
-                        $s->updated_at->format('Y-m-d H:i')
-                    ];
-                }
-
-                $tabbedData = [
-                    'checkout_discounts' => [
-                        'label' => 'Billing Checkout Discounts',
-                        'headers' => ['Reference No', 'Patient', 'Cashier', 'Gross Amount', 'Discount Applied', 'Net Amount', 'Date'],
-                        'rows' => $checkoutRows
-                    ],
-                    'staff_settlements' => [
-                        'label' => 'Staff Bills Settlement Waivers',
-                        'headers' => ['Staff Bill ID', 'Staff Member', 'Patient Name', 'Original Amount', 'Settlement Discount', 'Outstanding Remaining', 'Date Settled'],
-                        'rows' => $staffRows
-                    ]
-                ];
-                break;
-
-            case 'debt_aging':
-                $patientReceivables = \App\Models\ProductOrServiceRequest::with(['user', 'product', 'service'])
-                    ->where('coverage_mode', 'PRIVATE')
-                    ->whereNull('payment_id')
-                    ->whereNull('staff_user_id')
-                    ->where('payable_amount', '>', 0)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $outstandingStaff = \App\Models\StaffBill::with(['patient.user', 'staffUser'])
-                    ->where('outstanding_amount', '>', 0)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $kpis = [
-                    ['label' => 'Unpaid Private Bills', 'value' => '₦' . number_format($patientReceivables->sum('payable_amount'), 2), 'class' => 'text-danger'],
-                    ['label' => 'Outstanding Staff Debt', 'value' => '₦' . number_format($outstandingStaff->sum('outstanding_amount'), 2), 'class' => 'text-warning'],
-                    ['label' => 'Total Receivables Audited', 'value' => '₦' . number_format($patientReceivables->sum('payable_amount') + $outstandingStaff->sum('outstanding_amount'), 2), 'class' => 'text-dark font-weight-bold']
-                ];
-
-                $patientRows = [];
-                foreach ($patientReceivables as $c) {
-                    $patientRows[] = [
-                        $c->user ? trim($c->user->surname . ' ' . $c->user->firstname) : 'N/A',
-                        $c->user ? ($c->user->file_no ?? 'N/A') : 'N/A',
-                        $c->user ? ($c->user->phone ?? 'N/A') : 'N/A',
-                        $c->product ? $c->product->name : ($c->service ? $c->service->name : 'N/A'),
-                        '₦' . number_format($c->amount, 2),
-                        '₦' . number_format($c->payable_amount, 2),
-                        $c->created_at->format('Y-m-d H:i')
-                    ];
-                }
-
-                $staffRows = [];
-                foreach ($outstandingStaff as $s) {
-                    $staffRows[] = [
-                        $s->id,
-                        $s->staffUser ? trim($s->staffUser->surname . ' ' . $s->staffUser->firstname) : 'N/A',
-                        $s->patient && $s->patient->user ? trim($s->patient->user->surname . ' ' . $s->patient->user->firstname) : 'N/A',
-                        '₦' . number_format($s->amount ?? 0, 2),
-                        '₦' . number_format($s->outstanding_amount, 2),
-                        ucfirst($s->status ?? 'pending'),
-                        $s->created_at->format('Y-m-d H:i')
-                    ];
-                }
-
-                $tabbedData = [
-                    'patient_receivables' => [
-                        'label' => 'Aged Patient Receivables',
-                        'headers' => ['Patient Name', 'File No', 'Phone', 'Requested Item', 'Original Price', 'Outstanding Balance', 'Date'],
-                        'rows' => $patientRows
-                    ],
-                    'staff_debts' => [
-                        'label' => 'Aged Staff Bills',
-                        'headers' => ['Bill ID', 'Staff Member', 'Patient Name', 'Total Incurred', 'Outstanding Amount', 'Status', 'Date'],
-                        'rows' => $staffRows
-                    ]
-                ];
-                break;
-
-            case 'bank_statement_match':
+            case 'bank_reconciliation':
                 $reconciliations = \App\Models\Accounting\BankReconciliation::with(['bank', 'preparedBy', 'fiscalPeriod'])
                     ->whereBetween('statement_date', [$startDate, $endDate])
                     ->orderBy('statement_date', 'desc')
@@ -853,7 +554,7 @@ class AuditWorkbenchController extends Controller
                     ->get();
 
                 $kpis = [
-                    ['label' => 'Bank POS Collections', 'value' => '₦' . number_format($bankDeposits->sum('total'), 2), 'class' => 'text-success'],
+                    ['label' => 'Bank/POS Collections', 'value' => '₦' . number_format($bankDeposits->sum('total'), 2), 'class' => 'text-success'],
                     ['label' => 'Audited Variance', 'value' => '₦' . number_format($reconciliations->sum('variance'), 2), 'class' => 'text-danger'],
                     ['label' => 'Reconciled Statements', 'value' => $reconciliations->where('status', 'finalized')->count() . ' Finalized', 'class' => 'text-info']
                 ];
@@ -898,986 +599,804 @@ class AuditWorkbenchController extends Controller
                 ];
                 break;
 
-            case 'petty_cash':
-                $transactions = \App\Models\Accounting\PettyCashTransaction::with(['fund', 'requester', 'approver'])
-                    ->where('transaction_type', 'disbursement')
-                    ->whereBetween('transaction_date', [$startDate, $endDate])
-                    ->orderBy('transaction_date', 'desc')
-                    ->get();
-
-                $approvedTotal = $transactions->where('status', 'approved')->sum('amount') + $transactions->where('status', 'disbursed')->sum('amount');
-
-                $kpis = [
-                    ['label' => 'Audited Disbursements', 'value' => '₦' . number_format($transactions->sum('amount'), 2), 'class' => 'text-info'],
-                    ['label' => 'Approved/Disbursed', 'value' => '₦' . number_format($approvedTotal, 2), 'class' => 'text-success'],
-                    ['label' => 'Pending Disbursements', 'value' => '₦' . number_format($transactions->where('status', 'pending')->sum('amount'), 2), 'class' => 'text-warning']
-                ];
-
-                $headers = ['Voucher No', 'Payee Name', 'Payee Type', 'Fund Name', 'Category', 'Amount', 'Status', 'Requested By', 'Date'];
-                foreach ($transactions as $t) {
-                    $rows[] = [
-                        $t->voucher_number ?? 'N/A',
-                        $t->payee_name ?? 'N/A',
-                        ucfirst($t->payee_type ?? 'N/A'),
-                        $t->fund ? $t->fund->name : 'N/A',
-                        ucfirst(str_replace('_', ' ', $t->expense_category ?? 'N/A')),
-                        '₦' . number_format($t->amount, 2),
-                        '<span class="badge badge-' . ($t->status === 'disbursed' ? 'success' : ($t->status === 'approved' ? 'info' : 'warning')) . '">' . ucfirst($t->status) . '</span>',
-                        $t->requester ? trim($t->requester->surname . ' ' . $t->requester->firstname) : 'System',
-                        $t->transaction_date ? $t->transaction_date->format('Y-m-d') : 'N/A'
-                    ];
-                }
-                break;
-
-            case 'statutory_deductions':
-                $remittances = \App\Models\Accounting\StatutoryRemittance::with(['payHead', 'bank'])
-                    ->whereBetween('period_from', [$startDate, $endDate])
-                    ->orderBy('period_from', 'desc')
-                    ->get();
-
-                $kpis = [
-                    ['label' => 'Total Remittances Processed', 'value' => '₦' . number_format($remittances->sum('amount'), 2), 'class' => 'text-info'],
-                    ['label' => 'Paid Statutory Remittances', 'value' => '₦' . number_format($remittances->where('status', 'paid')->sum('amount'), 2), 'class' => 'text-success'],
-                    ['label' => 'Overdue Deductions Count', 'value' => $remittances->where('status', 'pending')->count() . ' Pending', 'class' => 'text-danger']
-                ];
-
-                $headers = ['Reference No', 'Deduction Type', 'Payee Body', 'Payment Method', 'Amount', 'Status', 'Remittance Date'];
-                foreach ($remittances as $d) {
-                    $rows[] = [
-                        $d->reference_number ?? 'N/A',
-                        $d->payHead ? $d->payHead->name : 'N/A',
-                        $d->payee_name ?? 'N/A',
-                        ucfirst(str_replace('_', ' ', $d->payment_method ?? 'N/A')),
-                        '₦' . number_format($d->amount, 2),
-                        '<span class="badge badge-' . ($d->status === 'paid' ? 'success' : 'warning') . '">' . ucfirst($d->status) . '</span>',
-                        $d->remittance_date ? $d->remittance_date->format('Y-m-d') : 'N/A'
-                    ];
-                }
-                break;
-
-
-            case 'consulting_queues':
-                $queues = DoctorQueue::with(['patient.user', 'patient.hmo', 'clinic', 'doctor.user'])
+            case 'hmo_nhis_verification':
+                $claims = \App\Models\ProductOrServiceRequest::with(['user', 'hmo.scheme', 'product', 'service'])
+                    ->whereNotNull('hmo_id')
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->orderBy('created_at', 'desc')
                     ->get();
 
-                $appointments = DoctorAppointment::with(['patient.user', 'clinic', 'doctor.user'])
+                $remittances = \App\Models\HmoRemittance::with(['hmo.scheme'])
                     ->whereBetween('created_at', [$startDate, $endDate])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $kpis = [
+                    ['label' => 'Total HMO Claims Value', 'value' => '₦' . number_format($claims->sum('claims_amount'), 2), 'class' => 'text-purple'],
+                    ['label' => 'Capitation / Remitted', 'value' => '₦' . number_format($remittances->sum('amount'), 2), 'class' => 'text-success'],
+                    ['label' => 'Claims Count', 'value' => $claims->count() . ' Claims', 'class' => 'text-info']
+                ];
+
+                $claimsRows = [];
+                foreach ($claims as $c) {
+                    $claimsRows[] = [
+                        $c->id,
+                        $c->user ? trim($c->user->surname . ' ' . $c->user->firstname) : 'N/A',
+                        $c->hmo ? $c->hmo->name : 'N/A',
+                        $c->product ? ('Drug: '.$c->product->name) : ($c->service ? ('Service: '.$c->service->name) : 'N/A'),
+                        '₦' . number_format($c->claims_amount, 2),
+                        ucfirst($c->validation_status ?? 'pending'),
+                        $c->created_at->format('Y-m-d H:i')
+                    ];
+                }
+
+                $remittanceRows = [];
+                foreach ($remittances as $r) {
+                    $remittanceRows[] = [
+                        $r->reference_number ?? 'N/A',
+                        $r->hmo ? $r->hmo->name : 'N/A',
+                        $r->hmo && $r->hmo->scheme ? $r->hmo->scheme->name : 'N/A',
+                        '₦' . number_format($r->amount, 2),
+                        $r->payment_method ?? 'N/A',
+                        $r->payment_date ? $r->payment_date->format('Y-m-d') : 'N/A'
+                    ];
+                }
+
+                $tabbedData = [
+                    'hmo_claims' => [
+                        'label' => 'HMO Services Billed',
+                        'headers' => ['Request ID', 'Patient', 'HMO', 'Item', 'Claims Amount', 'Validation', 'Date'],
+                        'rows' => $claimsRows
+                    ],
+                    'hmo_remittances' => [
+                        'label' => 'Capitation & Remittances',
+                        'headers' => ['Reference No', 'HMO', 'HMO Scheme', 'Amount Received', 'Payment Method', 'Date Received'],
+                        'rows' => $remittanceRows
+                    ]
+                ];
+                break;
+
+            case 'discounts_refunds_debt':
+                $checkoutDiscounts = \App\Models\Payment::with(['patient.user', 'staff_user'])
+                    ->where('total_discount', '>', 0)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $staffDebts = \App\Models\StaffBill::with(['patient.user', 'staffUser'])
+                    ->where('outstanding_amount', '>', 0)
+                    ->get(); // Debt is cumulative, not just within range
+
+                $refundedDeposits = \App\Models\Accounting\PatientDeposit::with(['patient', 'refunder'])
+                    ->where(fn($q) => $q->where('status', 'refunded')->orWhere('refunded_amount', '>', 0))
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $kpis = [
+                    ['label' => 'Checkout Waivers', 'value' => '₦' . number_format($checkoutDiscounts->sum('total_discount'), 2), 'class' => 'text-info'],
+                    ['label' => 'Staff/Company Debt', 'value' => '₦' . number_format($staffDebts->sum('outstanding_amount'), 2), 'class' => 'text-danger'],
+                    ['label' => 'Patient Refunds', 'value' => '₦' . number_format($refundedDeposits->sum('refunded_amount'), 2), 'class' => 'text-warning']
+                ];
+
+                $checkoutRows = [];
+                foreach ($checkoutDiscounts as $p) {
+                    $checkoutRows[] = [
+                        $p->reference_no ?? 'N/A',
+                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'Walk-in',
+                        $p->staff_user ? trim($p->staff_user->surname . ' ' . $p->staff_user->firstname) : 'System',
+                        '₦' . number_format($p->total + $p->total_discount, 2),
+                        '₦' . number_format($p->total_discount, 2),
+                        $p->created_at->format('Y-m-d H:i')
+                    ];
+                }
+
+                $staffRows = [];
+                foreach ($staffDebts as $s) {
+                    $staffRows[] = [
+                        $s->id,
+                        $s->staffUser ? trim($s->staffUser->surname . ' ' . $s->staffUser->firstname) : 'N/A',
+                        $s->patient && $s->patient->user ? trim($s->patient->user->surname . ' ' . $s->patient->user->firstname) : 'N/A',
+                        '₦' . number_format($s->amount ?? 0, 2),
+                        '₦' . number_format($s->outstanding_amount, 2),
+                        $s->created_at->format('Y-m-d H:i')
+                    ];
+                }
+                
+                $depositRows = [];
+                foreach ($refundedDeposits as $d) {
+                    $depositRows[] = [
+                        $d->deposit_number ?? 'N/A',
+                        $d->patient ? trim($d->patient->surname . ' ' . $d->patient->firstname) : 'N/A',
+                        '₦' . number_format($d->amount, 2),
+                        '₦' . number_format($d->refunded_amount, 2),
+                        $d->refund_reason ?? 'N/A',
+                        $d->refunded_at ? $d->refunded_at->format('Y-m-d H:i') : 'N/A'
+                    ];
+                }
+
+                $tabbedData = [
+                    'checkout_discounts' => [
+                        'label' => 'Checkout Waivers',
+                        'headers' => ['Reference No', 'Patient', 'Cashier', 'Gross Amount', 'Discount Applied', 'Date'],
+                        'rows' => $checkoutRows
+                    ],
+                    'staff_debts' => [
+                        'label' => 'Staff/Company Debt',
+                        'headers' => ['Bill ID', 'Staff Member', 'Patient Name', 'Total Incurred', 'Outstanding Amount', 'Date'],
+                        'rows' => $staffRows
+                    ],
+                    'refunded_deposits' => [
+                        'label' => 'Refunded Deposits',
+                        'headers' => ['Deposit No', 'Patient', 'Original Deposit', 'Refunded Amount', 'Reason', 'Refunded Date'],
+                        'rows' => $depositRows
+                    ]
+                ];
+                break;
+
+            case 'payroll_expenses_ledger':
+                $batches = \App\Models\HR\PayrollBatch::with(['createdBy', 'approvedBy'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $deductions = \App\Models\Accounting\StatutoryRemittance::with(['payHead', 'bank'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $expenses = \App\Models\Expense::with(['supplier', 'store', 'bank', 'recorder'])
+                    ->whereBetween('expense_date', [$startDate, $endDate])
+                    ->orderBy('expense_date', 'desc')
+                    ->get();
+                    
+                $pettyCash = \App\Models\Accounting\PettyCashTransaction::with(['fund'])
+                    ->whereBetween('transaction_date', [$startDate, $endDate])
+                    ->orderBy('transaction_date', 'desc')
+                    ->get();
+
+                $kpis = [
+                    ['label' => 'Net Salaries Paid', 'value' => '₦' . number_format($batches->where('status', 'paid')->sum('total_net'), 2), 'class' => 'text-success'],
+                    ['label' => 'Statutory Deductions', 'value' => '₦' . number_format($deductions->where('status', 'paid')->sum('amount'), 2), 'class' => 'text-info'],
+                    ['label' => 'Operational Expenses', 'value' => '₦' . number_format($expenses->sum('amount'), 2), 'class' => 'text-warning'],
+                    ['label' => 'Petty Cash Disbursed', 'value' => '₦' . number_format($pettyCash->where('transaction_type', 'disbursement')->sum('amount'), 2), 'class' => 'text-purple']
+                ];
+
+                $batchRows = [];
+                foreach ($batches as $b) {
+                    $batchRows[] = [
+                        $b->batch_number ?? 'N/A',
+                        $b->name ?? 'N/A',
+                        $b->total_staff ?? 0,
+                        '₦' . number_format($b->total_gross ?? 0, 2),
+                        '₦' . number_format($b->total_net ?? 0, 2),
+                        ucfirst($b->status),
+                        $b->approved_at ? $b->approved_at->format('Y-m-d') : 'N/A'
+                    ];
+                }
+
+                $deductionRows = [];
+                foreach ($deductions as $d) {
+                    $deductionRows[] = [
+                        $d->reference_number ?? 'N/A',
+                        $d->payHead ? $d->payHead->name : 'N/A',
+                        '₦' . number_format($d->amount, 2),
+                        ucfirst($d->status),
+                        $d->remittance_date ? $d->remittance_date->format('Y-m-d') : 'N/A'
+                    ];
+                }
+                
+                $expenseRows = [];
+                foreach ($expenses as $e) {
+                    $expenseRows[] = [
+                        $e->expense_number ?? 'N/A',
+                        ucfirst(str_replace('_', ' ', $e->category ?? 'N/A')),
+                        '₦' . number_format($e->amount, 2),
+                        $e->supplier ? $e->supplier->name : 'N/A',
+                        '<span class="badge badge-' . ($e->status === 'approved' ? 'success' : 'warning') . '">' . ucfirst($e->status) . '</span>',
+                        $e->expense_date ? $e->expense_date->format('Y-m-d') : 'N/A'
+                    ];
+                }
+
+                $tabbedData = [
+                    'payroll_batches' => [
+                        'label' => 'Payroll Batches',
+                        'headers' => ['Batch No', 'Name', 'Total Staff', 'Gross Salary', 'Net Paid', 'Status', 'Date Approved'],
+                        'rows' => $batchRows
+                    ],
+                    'statutory_deductions' => [
+                        'label' => 'Statutory Deductions',
+                        'headers' => ['Reference No', 'Deduction Type', 'Amount', 'Status', 'Remittance Date'],
+                        'rows' => $deductionRows
+                    ],
+                    'operational_expenses' => [
+                        'label' => 'Operational Expenses',
+                        'headers' => ['Expense No', 'Category', 'Amount', 'Supplier', 'Status', 'Date'],
+                        'rows' => $expenseRows
+                    ]
+                ];
+                break;
+
+
+
+            case 'consulting_clinics_flow':
+                $queues = \App\Models\DoctorQueue::with(['patient.user', 'clinic', 'doctor.user'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                    
+                $appointments = \App\Models\DoctorAppointment::with(['patient.user', 'doctor.user'])
+                    ->whereBetween('appointment_date', [$startDate, $endDate])
                     ->orderBy('appointment_date', 'desc')
                     ->get();
 
-                $waiting = $queues->where('status', QueueStatus::WAITING)->count();
-                $inConsult = $queues->where('status', QueueStatus::IN_CONSULTATION)->count();
-                $completed = $queues->where('status', QueueStatus::COMPLETED)->count();
-                $noShow = $appointments->where('status', QueueStatus::NO_SHOW)->count();
-
-                $kpis = [
-                    ['label' => 'Total Queue Entries', 'value' => $queues->count(), 'class' => 'text-primary'],
-                    ['label' => 'Completed Consultations', 'value' => $completed, 'class' => 'text-success'],
-                    ['label' => 'Currently Waiting', 'value' => $waiting, 'class' => 'text-warning'],
-                    ['label' => 'No-Shows', 'value' => $noShow, 'class' => 'text-danger'],
-                ];
+                // To find unbilled consultations: Completed queues without linked payment/invoice?
+                // Depending on the logic, usually we check ProductOrServiceRequest for consultation items.
+                // We will just do a rough matching using the patient and date.
 
                 $queueRows = [];
                 foreach ($queues as $q) {
                     $queueRows[] = [
-                        $q->id,
-                        $q->patient ? userfullname($q->patient->user_id) : 'N/A',
-                        $q->patient->file_no ?? 'N/A',
-                        $q->clinic->name ?? 'N/A',
-                        $q->doctor ? userfullname($q->doctor->user_id) : 'Any',
-                        QueueStatus::label($q->status),
-                        ucfirst($q->priority ?? 'routine'),
-                        $q->source ?? 'walk_in',
-                        $q->created_at->format('Y-m-d H:i'),
+                        $q->patient && $q->patient->user ? trim($q->patient->user->surname . ' ' . $q->patient->user->firstname) : 'N/A',
+                        $q->clinic ? $q->clinic->clinic_name : 'N/A',
+                        ($q->doctor && $q->doctor->user) ? trim($q->doctor->user->surname . ' ' . $q->doctor->user->firstname) : 'N/A',
+                        \App\Enums\QueueStatus::badge($q->status),
+                        $q->priority ?? 'N/A',
+                        $q->created_at->format('Y-m-d H:i')
                     ];
                 }
 
                 $apptRows = [];
                 foreach ($appointments as $a) {
                     $apptRows[] = [
-                        $a->id,
-                        $a->patient ? userfullname($a->patient->user_id) : 'N/A',
-                        $a->patient->file_no ?? 'N/A',
-                        $a->clinic->name ?? 'N/A',
-                        $a->doctor ? userfullname($a->doctor->user_id) : 'Any',
-                        QueueStatus::label($a->status),
-                        ucfirst($a->appointment_type ?? 'scheduled'),
-                        $a->appointment_date ? $a->appointment_date->format('Y-m-d') : 'N/A',
-                        $a->start_time ? Carbon::parse($a->start_time)->format('h:i A') : 'N/A',
+                        $a->patient && $a->patient->user ? trim($a->patient->user->surname . ' ' . $a->patient->user->firstname) : 'N/A',
+                        ($a->doctor && $a->doctor->user) ? trim($a->doctor->user->surname . ' ' . $a->doctor->user->firstname) : 'N/A',
+                        ucfirst($a->status ?? 'pending'),
+                        $a->appointment_date ? $a->appointment_date->format('Y-m-d H:i') : 'N/A'
                     ];
                 }
 
+                $kpis = [
+                    ['label' => 'Total Queued', 'value' => $queues->count(), 'class' => 'text-primary'],
+                    ['label' => 'Completed Consults', 'value' => $queues->where('status', \App\Enums\QueueStatus::COMPLETED)->count(), 'class' => 'text-success'],
+                    ['label' => 'No-Shows / Missed', 'value' => $queues->where('status', \App\Enums\QueueStatus::NO_SHOW)->count(), 'class' => 'text-danger'],
+                    ['label' => 'Total Appointments', 'value' => $appointments->count(), 'class' => 'text-info']
+                ];
+
                 $tabbedData = [
-                    'doctor_queues' => [
-                        'label' => 'Doctor Queue Entries',
-                        'headers' => ['Queue ID', 'Patient', 'File No', 'Clinic', 'Doctor', 'Status', 'Priority', 'Source', 'Created'],
+                    'consulting_queue' => [
+                        'label' => 'Consulting Queue',
+                        'headers' => ['Patient', 'Clinic', 'Assigned Doctor', 'Status', 'Priority', 'Queued At'],
                         'rows' => $queueRows
                     ],
                     'appointments' => [
-                        'label' => 'Appointments',
-                        'headers' => ['Appt ID', 'Patient', 'File No', 'Clinic', 'Doctor', 'Status', 'Type', 'Date', 'Time'],
+                        'label' => 'Appointments Register',
+                        'headers' => ['Patient', 'Doctor', 'Status', 'Appointment Date'],
                         'rows' => $apptRows
                     ]
                 ];
                 break;
 
-            case 'inpatient_stays':
-                $admissions = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed.wardRelation', 'doctor'])
+            case 'inpatient_ward_income':
+                $admissions = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->orderBy('created_at', 'desc')
                     ->get();
+                
+                // Active Admissions across time (not just within range)
+                $activeAdmissions = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
+                    ->where('discharged', 0)
+                    ->get();
 
-                $currentlyAdmitted = AdmissionRequest::where('discharged', 0)->count();
-                $dischargedInRange = $admissions->where('discharged', 1)->count();
-                $emergencyAdmissions = $admissions->where('priority', 'emergency')->count();
-                $avgStay = $admissions->where('discharged', 1)->avg(function($a) {
-                    return $a->days_admitted ?? 0;
-                });
-
+                // Ward Income (from Payments linked to active wards) - approximating by using the patient's active ward
+                $wardPayments = \App\Models\Payment::with(['patient.user'])
+                    ->whereIn('patient_id', function($query) {
+                        $query->select('patient_id')
+                              ->from('admission_requests')
+                              ->where('discharged', 0);
+                    })
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get();
+                
                 $kpis = [
-                    ['label' => 'Total Admissions (Period)', 'value' => $admissions->count(), 'class' => 'text-primary'],
-                    ['label' => 'Currently Admitted', 'value' => $currentlyAdmitted, 'class' => 'text-danger'],
-                    ['label' => 'Discharged (Period)', 'value' => $dischargedInRange, 'class' => 'text-success'],
-                    ['label' => 'Emergency Admissions', 'value' => $emergencyAdmissions, 'class' => 'text-warning'],
+                    ['label' => 'Active Admissions', 'value' => $activeAdmissions->count(), 'class' => 'text-primary'],
+                    ['label' => 'Discharges (Period)', 'value' => $admissions->where('discharged', 1)->count(), 'class' => 'text-success'],
+                    ['label' => 'Pending Clearance', 'value' => $activeAdmissions->where('discharge_requested', 1)->count(), 'class' => 'text-warning'],
+                    ['label' => 'Est. Ward Income', 'value' => '₦' . number_format($wardPayments->sum('total'), 2), 'class' => 'text-info']
                 ];
 
-                $headers = ['Admission ID', 'Patient', 'File No', 'HMO', 'Ward/Bed', 'Workflow Status', 'Priority', 'Doctor', 'Days Admitted', 'Date'];
-                foreach ($admissions as $a) {
-                    $ward = $a->bed && $a->bed->wardRelation ? $a->bed->wardRelation->name : 'N/A';
-                    $bed = $a->bed ? $a->bed->name : 'Unassigned';
-                    $rows[] = [
-                        $a->id,
-                        $a->patient ? userfullname($a->patient->user_id) : 'N/A',
-                        $a->patient->file_no ?? 'N/A',
-                        $a->patient && $a->patient->hmo ? $a->patient->hmo->name : 'Private',
-                        $ward . ' / ' . $bed,
-                        $a->workflow_status_label ?? ucfirst(str_replace('_', ' ', $a->admission_status ?? 'N/A')),
-                        ucfirst($a->priority ?? 'routine'),
-                        $a->doctor_id ? userfullname($a->doctor_id) : 'N/A',
-                        $a->days_admitted ?? 0,
-                        $a->created_at->format('Y-m-d H:i'),
+                $activeRows = [];
+                foreach ($activeAdmissions as $a) {
+                    $activeRows[] = [
+                        $a->patient && $a->patient->user ? trim($a->patient->user->surname . ' ' . $a->patient->user->firstname) : 'N/A',
+                        ($a->bed && $a->bed->wardRelation) ? $a->bed->wardRelation->name : ($a->preferredWard ? $a->preferredWard->name : 'N/A'),
+                        $a->bed ? $a->bed->bed_name : 'N/A',
+                        $a->discharge_requested ? '<span class="badge badge-warning">Clearance Pending</span>' : '<span class="badge badge-success">Admitted</span>',
+                        $a->created_at->format('Y-m-d H:i')
                     ];
                 }
+
+                $paymentRows = [];
+                foreach ($wardPayments as $p) {
+                    // Try to fetch patient's active admission at payment time
+                    $paymentRows[] = [
+                        $p->reference_no ?? 'N/A',
+                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'N/A',
+                        '₦' . number_format($p->total, 2),
+                        $p->payment_method ?? 'N/A',
+                        $p->created_at->format('Y-m-d H:i')
+                    ];
+                }
+
+                $tabbedData = [
+                    'active_admissions' => [
+                        'label' => 'Active Admissions & Clearances',
+                        'headers' => ['Patient', 'Ward', 'Bed', 'Status', 'Admitted At'],
+                        'rows' => $activeRows
+                    ],
+                    'ward_income' => [
+                        'label' => 'Ward Income (Payments During Admission)',
+                        'headers' => ['Reference', 'Patient', 'Amount', 'Method', 'Payment Date'],
+                        'rows' => $paymentRows
+                    ]
+                ];
                 break;
 
-            case 'theatre_bundles':
-                $procedures = Procedure::with(['patient.user', 'service', 'requestedByUser', 'encounter'])
+            case 'theatre_bundles_audit':
+                $procedures = \App\Models\Procedure::with(['patient.user', 'service', 'requestedByUser'])
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->orderBy('created_at', 'desc')
                     ->get();
-
-                $requested = $procedures->where('procedure_status', 'requested')->count();
-                $scheduled = $procedures->where('procedure_status', 'scheduled')->count();
-                $inProgress = $procedures->where('procedure_status', 'in_progress')->count();
-                $completedProcs = $procedures->where('procedure_status', 'completed')->count();
-                $cancelled = $procedures->where('procedure_status', 'cancelled')->count();
-                $bundledItems = ProcedureItem::where('is_bundled', true)
-                    ->whereBetween('created_at', [$startDate, $endDate])->count();
+                
+                $procedureItems = \App\Models\ProcedureItem::with(['procedure.patient.user', 'productRequest.product', 'labServiceRequest.service', 'imagingServiceRequest.service'])
+                    ->where('is_bundled', 1)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get();
 
                 $kpis = [
                     ['label' => 'Total Procedures', 'value' => $procedures->count(), 'class' => 'text-primary'],
-                    ['label' => 'Completed', 'value' => $completedProcs, 'class' => 'text-success'],
-                    ['label' => 'Scheduled/In-Progress', 'value' => ($scheduled + $inProgress), 'class' => 'text-info'],
-                    ['label' => 'Bundled Items', 'value' => $bundledItems, 'class' => 'text-purple'],
+                    ['label' => 'Completed Procedures', 'value' => $procedures->where('status', 'completed')->count(), 'class' => 'text-success'],
+                    ['label' => 'Bundled Items Used', 'value' => $procedureItems->sum('qty'), 'class' => 'text-warning'],
+                    ['label' => 'Scheduled Procedures', 'value' => $procedures->where('status', 'scheduled')->count(), 'class' => 'text-info']
                 ];
 
-                $headers = ['Procedure ID', 'Patient', 'Service', 'Status', 'Priority', 'Outcome', 'Requested By', 'Scheduled Date', 'Duration (min)', 'Created'];
+                $procRows = [];
                 foreach ($procedures as $p) {
-                    $duration = $p->actual_start_time && $p->actual_end_time
-                        ? $p->actual_start_time->diffInMinutes($p->actual_end_time) : 'N/A';
-                    $rows[] = [
-                        $p->id,
-                        $p->patient ? userfullname($p->patient->user_id) : 'N/A',
+                    $procRows[] = [
+                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'N/A',
                         $p->service ? $p->service->service_name : 'N/A',
-                        Procedure::STATUSES[$p->procedure_status] ?? ucfirst($p->procedure_status ?? 'N/A'),
-                        ucfirst($p->priority ?? 'routine'),
-                        $p->outcome ? (Procedure::OUTCOMES[$p->outcome] ?? ucfirst($p->outcome)) : 'Pending',
                         $p->requestedByUser ? trim($p->requestedByUser->surname . ' ' . $p->requestedByUser->firstname) : 'N/A',
-                        $p->scheduled_date ? $p->scheduled_date->format('Y-m-d') : 'N/A',
-                        $duration,
-                        $p->created_at->format('Y-m-d H:i'),
+                        '<span class="badge badge-primary">' . ucfirst($p->status) . '</span>',
+                        $p->scheduled_date ? $p->scheduled_date->format('Y-m-d H:i') : 'N/A'
                     ];
                 }
+
+                $itemRows = [];
+                foreach ($procedureItems as $item) {
+                    $itemRows[] = [
+                        $item->procedure && $item->procedure->patient && $item->procedure->patient->user ? trim($item->procedure->patient->user->surname . ' ' . $item->procedure->patient->user->firstname) : 'N/A',
+                        $item->name ?? 'N/A',
+                        $item->qty,
+                        $item->created_at->format('Y-m-d H:i')
+                    ];
+                }
+
+                $tabbedData = [
+                    'procedure_register' => [
+                        'label' => 'Theatre Procedure Register',
+                        'headers' => ['Patient', 'Procedure', 'Surgeon/Doctor', 'Status', 'Scheduled Date'],
+                        'rows' => $procRows
+                    ],
+                    'bundled_consumables' => [
+                        'label' => 'Bundled Consumables Consumption',
+                        'headers' => ['Patient', 'Consumable Item', 'Quantity Used', 'Usage Date'],
+                        'rows' => $itemRows
+                    ]
+                ];
                 break;
 
-
-            case 'morgue_releases':
-                $morgueAdmissions = MorgueAdmission::with(['patient.user', 'deathRecord'])
-                    ->whereBetween('arrival_time', [$startDate, $endDate])
-                    ->orderBy('arrival_time', 'desc')
+            case 'maternity_morgue_audit':
+                $enrollments = \App\Models\MaternityEnrollment::with(['patient.user'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
                     ->get();
 
-                $stored = $morgueAdmissions->where('status', 'stored')->count();
-                $released = $morgueAdmissions->where('status', 'released')->count();
-                $avgStayHrs = $morgueAdmissions->where('status', 'released')
-                    ->filter(fn($a) => $a->release_time)
-                    ->avg(fn($a) => Carbon::parse($a->arrival_time)->diffInHours($a->release_time));
-                $avgStayDays = $avgStayHrs ? round($avgStayHrs / 24, 1) : 0;
+                $deliveries = \App\Models\DeliveryRecord::with(['patient.user'])
+                    ->whereBetween('delivery_date', [$startDate, $endDate])
+                    ->get();
+                    
+                $morgue = \App\Models\MorgueAdmission::with(['patient.user'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get();
 
                 $kpis = [
-                    ['label' => 'Total Morgue Admissions', 'value' => $morgueAdmissions->count(), 'class' => 'text-primary'],
-                    ['label' => 'Currently Stored', 'value' => $stored, 'class' => 'text-danger'],
-                    ['label' => 'Released (Period)', 'value' => $released, 'class' => 'text-success'],
-                    ['label' => 'Avg Stay (Days)', 'value' => $avgStayDays . ' days', 'class' => 'text-info'],
+                    ['label' => 'New ANC Enrollments', 'value' => $enrollments->count(), 'class' => 'text-primary'],
+                    ['label' => 'Total Deliveries', 'value' => $deliveries->count(), 'class' => 'text-success'],
+                    ['label' => 'Morgue Admissions', 'value' => $morgue->count(), 'class' => 'text-dark']
                 ];
 
-                $headers = ['Body Code', 'Patient', 'File No', 'Death Type', 'Fridge/Tray', 'Status', 'Admitted', 'Released', 'Days'];
-                foreach ($morgueAdmissions as $m) {
-                    $stay = $m->release_time
-                        ? Carbon::parse($m->arrival_time)->diffInDays($m->release_time)
-                        : Carbon::parse($m->arrival_time)->diffInDays(now());
-                    $rows[] = [
-                        $m->body_code ?? 'N/A',
-                        $m->patient ? userfullname($m->patient->user_id) : 'N/A',
-                        $m->patient->file_no ?? 'N/A',
-                        optional($m->deathRecord)->death_type ?? 'N/A',
-                        trim(($m->fridge_number ?? '') . '/' . ($m->tray_number ?? '')),
-                        ucfirst($m->status),
-                        Carbon::parse($m->arrival_time)->format('Y-m-d H:i'),
-                        $m->release_time ? Carbon::parse($m->release_time)->format('Y-m-d H:i') : 'Still Stored',
-                        $stay,
+                $deliveryRows = [];
+                foreach ($deliveries as $d) {
+                    $deliveryRows[] = [
+                        $d->patient && $d->patient->user ? trim($d->patient->user->surname . ' ' . $d->patient->user->firstname) : 'N/A',
+                        $d->delivery_mode ?? 'N/A',
+                        $d->outcome ?? 'N/A',
+                        $d->delivery_date ? $d->delivery_date->format('Y-m-d H:i') : 'N/A'
                     ];
                 }
+
+                $morgueRows = [];
+                foreach ($morgue as $m) {
+                    $morgueRows[] = [
+                        $m->patient && $m->patient->user ? trim($m->patient->user->surname . ' ' . $m->patient->user->firstname) : ($m->decedent_name ?? 'Unknown'),
+                        $m->admission_date ? $m->admission_date->format('Y-m-d H:i') : 'N/A',
+                        $m->release_date ? $m->release_date->format('Y-m-d H:i') : 'Pending',
+                        $m->status ?? 'N/A'
+                    ];
+                }
+
+                $tabbedData = [
+                    'maternity_deliveries' => [
+                        'label' => 'Maternity Deliveries',
+                        'headers' => ['Patient', 'Delivery Mode', 'Outcome', 'Delivery Date'],
+                        'rows' => $deliveryRows
+                    ],
+                    'mortuary_register' => [
+                        'label' => 'Mortuary Register',
+                        'headers' => ['Decedent Name', 'Admission Date', 'Release Date', 'Status'],
+                        'rows' => $morgueRows
+                    ]
+                ];
                 break;
 
-            case 'clinical_notes_audit':
-                $encounters = Encounter::with(['patient.user', 'doctor'])
+
+
+            case 'lab_imaging_register':
+                $labRequests = \App\Models\LabServiceRequest::with(['patient.user', 'service'])
                     ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
+                    ->get();
+                    
+                $imagingRequests = \App\Models\ImagingServiceRequest::with(['patient.user', 'service'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
                     ->get();
 
-                $withNotes = $encounters->filter(fn($e) => !empty($e->presenting_complaint) || !empty($e->examination_notes) || !empty($e->assessment))->count();
-                $withoutNotes = $encounters->count() - $withNotes;
-                $completionRate = $encounters->count() > 0 ? round(($withNotes / $encounters->count()) * 100, 1) : 0;
+                // Reagent usage (from stores with lab/imaging roles)
+                $labStores = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_LAB)->pluck('id');
+                $imagingStores = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_IMAGING)->pluck('id');
+                $diagnosticStoreIds = $labStores->merge($imagingStores);
+
+                $reagentUsage = \App\Models\StockBatchTransaction::with(['stockBatch.product', 'stockBatch.store', 'performer'])
+                    ->whereHas('stockBatch', function($q) use ($diagnosticStoreIds) {
+                        $q->whereIn('store_id', $diagnosticStoreIds);
+                    })
+                    ->where('type', \App\Models\StockBatchTransaction::TYPE_OUT)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get();
 
                 $kpis = [
-                    ['label' => 'Total Encounters', 'value' => $encounters->count(), 'class' => 'text-primary'],
-                    ['label' => 'With Clinical Notes', 'value' => $withNotes, 'class' => 'text-success'],
-                    ['label' => 'Missing Notes', 'value' => $withoutNotes, 'class' => 'text-danger'],
-                    ['label' => 'Completion Rate', 'value' => $completionRate . '%', 'class' => 'text-info'],
+                    ['label' => 'Total Lab Requests', 'value' => $labRequests->count(), 'class' => 'text-primary'],
+                    ['label' => 'Total Imaging Requests', 'value' => $imagingRequests->count(), 'class' => 'text-info'],
+                    ['label' => 'Reagents/Consumables Used', 'value' => $reagentUsage->sum('quantity'), 'class' => 'text-warning']
                 ];
 
-                $headers = ['Encounter ID', 'Patient', 'File No', 'Doctor', 'Has Complaint', 'Has Exam Notes', 'Has Assessment', 'Visit Reason', 'Date'];
-                foreach ($encounters as $e) {
-                    $rows[] = [
-                        $e->id,
-                        $e->patient ? userfullname($e->patient->user_id) : 'N/A',
-                        $e->patient->file_no ?? 'N/A',
-                        $e->doctor ? userfullname($e->doctor->id) : 'N/A',
-                        !empty($e->presenting_complaint) ? '✓ Yes' : '✗ No',
-                        !empty($e->examination_notes) ? '✓ Yes' : '✗ No',
-                        !empty($e->assessment) ? '✓ Yes' : '✗ No',
-                        \Illuminate\Support\Str::limit($e->reasons_for_encounter ?? 'N/A', 50),
-                        $e->created_at->format('Y-m-d H:i'),
+                $diagnosticRows = [];
+                foreach ($labRequests as $l) {
+                    $diagnosticRows[] = [
+                        $l->patient && $l->patient->user ? trim($l->patient->user->surname . ' ' . $l->patient->user->firstname) : 'N/A',
+                        'Lab: ' . ($l->service ? $l->service->service_name : 'N/A'),
+                        ucfirst($l->status ?? 'pending'),
+                        $l->approval_status ? ucfirst($l->approval_status) : 'N/A (Optional)',
+                        $l->created_at->format('Y-m-d H:i')
                     ];
                 }
-                break;
+                foreach ($imagingRequests as $i) {
+                    $diagnosticRows[] = [
+                        $i->patient && $i->patient->user ? trim($i->patient->user->surname . ' ' . $i->patient->user->firstname) : 'N/A',
+                        'Imaging: ' . ($i->service ? $i->service->service_name : 'N/A'),
+                        ucfirst($i->status ?? 'pending'),
+                        $i->approval_status ? ucfirst($i->approval_status) : 'N/A (Optional)',
+                        $i->created_at->format('Y-m-d H:i')
+                    ];
+                }
 
-            case 'maternity_deliveries':
-                $enrollments = MaternityEnrollment::with(['patient.user', 'enrolledBy', 'deliveryRecord'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                $usageRows = [];
+                foreach ($reagentUsage as $r) {
+                    $usageRows[] = [
+                        ($r->stockBatch && $r->stockBatch->product) ? $r->stockBatch->product->product_name : 'N/A',
+                        ($r->stockBatch && $r->stockBatch->store) ? $r->stockBatch->store->store_name : 'N/A',
+                        $r->qty,
+                        $r->performer ? trim($r->performer->surname . ' ' . $r->performer->firstname) : 'System',
+                        $r->notes ?? 'N/A',
+                        $r->created_at->format('Y-m-d H:i')
+                    ];
+                }
 
-                $active = $enrollments->where('status', 'active')->count();
-                $postnatal = $enrollments->where('status', 'postnatal')->count();
-                $completedMat = $enrollments->where('status', 'completed')->count();
-                $withDelivery = $enrollments->filter(fn($e) => $e->deliveryRecord)->count();
-
-                $kpis = [
-                    ['label' => 'Total Enrollments', 'value' => $enrollments->count(), 'class' => 'text-primary'],
-                    ['label' => 'Active Pregnancies', 'value' => $active, 'class' => 'text-warning'],
-                    ['label' => 'Deliveries Recorded', 'value' => $withDelivery, 'class' => 'text-success'],
-                    ['label' => 'Postnatal/Completed', 'value' => ($postnatal + $completedMat), 'class' => 'text-info'],
+                $tabbedData = [
+                    'diagnostics_register' => [
+                        'label' => 'Lab & Imaging Register',
+                        'headers' => ['Patient', 'Test/Scan', 'Processing Status', 'Approval Status', 'Requested At'],
+                        'rows' => $diagnosticRows
+                    ],
+                    'reagent_usage' => [
+                        'label' => 'Reagents & Consumables Usage',
+                        'headers' => ['Product', 'Diagnostic Store', 'Quantity Dispensed', 'Dispensed By', 'Notes', 'Date'],
+                        'rows' => $usageRows
+                    ]
                 ];
-
-                $headers = ['Enrollment ID', 'Patient', 'File No', 'Entry Point', 'Status', 'EDD', 'Delivery Mode', 'Outcome', 'Enrolled By', 'Date'];
-                foreach ($enrollments as $en) {
-                    $dr = $en->deliveryRecord;
-                    $rows[] = [
-                        $en->id,
-                        $en->patient ? userfullname($en->patient->user_id) : 'N/A',
-                        $en->patient->file_no ?? 'N/A',
-                        ucfirst($en->entry_point ?? 'N/A'),
-                        ucfirst($en->status),
-                        $en->edd ? Carbon::parse($en->edd)->format('Y-m-d') : 'N/A',
-                        $dr ? ucfirst(str_replace('_', ' ', $dr->delivery_mode ?? 'N/A')) : 'Not Yet',
-                        $dr ? ucfirst(str_replace('_', ' ', $dr->delivery_outcome ?? 'N/A')) : 'Pending',
-                        $en->enrolledBy ? trim($en->enrolledBy->surname . ' ' . $en->enrolledBy->firstname) : 'N/A',
-                        $en->created_at->format('Y-m-d H:i'),
-                    ];
-                }
                 break;
 
-            case 'prescription_fills':
-                $prescriptions = ProductRequest::with(['product', 'patient.user', 'doctor', 'dispenser'])
+            case 'pharmacy_prescriptions':
+                $pharmacyStores = \App\Models\Store::whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE])->pluck('id');
+
+                $prescriptions = \App\Models\ProductRequest::with(['patient.user', 'product'])
                     ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
+                    ->get();
+                
+                $returns = \App\Models\StoreRequisitionReturn::with(['product', 'sourceStore', 'creator'])
+                    ->whereIn('source_store_id', $pharmacyStores)
+                    ->whereBetween('created_at', [$startDate, $endDate])
                     ->get();
 
-                $requested = $prescriptions->where('status', 1)->count();
-                $billed = $prescriptions->where('status', 2)->count();
-                $dispensed = $prescriptions->where('status', 3)->count();
-                $fillRate = $prescriptions->count() > 0 ? round(($dispensed / $prescriptions->count()) * 100, 1) : 0;
+                $damages = \App\Models\StoreDamage::with(['product', 'store', 'creator'])
+                    ->whereIn('store_id', $pharmacyStores)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get();
 
                 $kpis = [
                     ['label' => 'Total Prescriptions', 'value' => $prescriptions->count(), 'class' => 'text-primary'],
-                    ['label' => 'Pending Billing', 'value' => $requested, 'class' => 'text-warning'],
-                    ['label' => 'Awaiting Dispense', 'value' => $billed, 'class' => 'text-info'],
-                    ['label' => 'Dispensed (Fill Rate: ' . $fillRate . '%)', 'value' => $dispensed, 'class' => 'text-success'],
+                    ['label' => 'Dispensed', 'value' => $prescriptions->where('status', 'dispensed')->count(), 'class' => 'text-success'],
+                    ['label' => 'Pharmacy Returns', 'value' => $returns->count(), 'class' => 'text-info'],
+                    ['label' => 'Damaged/Expired (Qty)', 'value' => $damages->sum('quantity'), 'class' => 'text-danger']
                 ];
 
-                $headers = ['Rx ID', 'Patient', 'File No', 'Product', 'Qty', 'Dose', 'Status', 'Prescribed By', 'Dispensed By', 'Date'];
-                $statusLabels = [0 => 'Dismissed', 1 => 'Pending Billing', 2 => 'Awaiting Dispense', 3 => 'Dispensed'];
-                foreach ($prescriptions as $rx) {
-                    $rows[] = [
-                        $rx->id,
-                        $rx->patient ? userfullname($rx->patient->user_id) : 'N/A',
-                        $rx->patient->file_no ?? 'N/A',
-                        optional($rx->product)->product_name ?? 'N/A',
-                        $rx->qty ?? 1,
-                        $rx->dose ?? 'N/A',
-                        $statusLabels[$rx->status] ?? 'Unknown',
-                        $rx->doctor_id ? userfullname($rx->doctor_id) : 'N/A',
-                        $rx->dispensed_by ? userfullname($rx->dispensed_by) : 'Not Dispensed',
-                        $rx->created_at->format('Y-m-d H:i'),
-                    ];
-                }
-                break;
-
-            case 'treatment_plans':
-                $labRequests = LabServiceRequest::with(['patient.user', 'service', 'doctor', 'approver'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $imagingRequests = ImagingServiceRequest::with(['patient.user', 'service', 'doctor', 'approver'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $labStatusLabels = [1 => 'Pending Billing', 2 => 'Sample Collection', 3 => 'Processing', 4 => 'Completed', 5 => 'Pending Approval', 6 => 'Rejected'];
-                $imgStatusLabels = [1 => 'Pending Billing', 2 => 'Ready', 3 => 'Processing', 4 => 'Completed', 5 => 'Pending Approval', 6 => 'Rejected'];
-
-                $kpis = [
-                    ['label' => 'Lab Requests', 'value' => $labRequests->count(), 'class' => 'text-primary'],
-                    ['label' => 'Lab Completed', 'value' => $labRequests->where('status', 4)->count(), 'class' => 'text-success'],
-                    ['label' => 'Imaging Requests', 'value' => $imagingRequests->count(), 'class' => 'text-info'],
-                    ['label' => 'Pending Approval (Lab+Img)', 'value' => $labRequests->where('status', 5)->count() + $imagingRequests->where('status', 5)->count(), 'class' => 'text-warning'],
-                ];
-
-                $labRows = [];
-                foreach ($labRequests as $l) {
-                    $labRows[] = [
-                        $l->id,
-                        $l->patient ? userfullname($l->patient->user_id) : 'N/A',
-                        $l->patient->file_no ?? 'N/A',
-                        $l->service ? $l->service->service_name : 'N/A',
-                        $labStatusLabels[$l->status] ?? 'Unknown',
-                        $l->sample_taken ? '✓ Yes' : '✗ No',
-                        $l->doctor_id ? userfullname($l->doctor_id) : 'N/A',
-                        $l->approved_by ? userfullname($l->approved_by) : 'N/A',
-                        $l->created_at->format('Y-m-d H:i'),
+                $rxRows = [];
+                foreach ($prescriptions as $p) {
+                    $rxRows[] = [
+                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'N/A',
+                        $p->product ? $p->product->product_name : 'N/A',
+                        $p->qty,
+                        ucfirst($p->status ?? 'pending'),
+                        $p->created_at->format('Y-m-d H:i')
                     ];
                 }
 
-                $imgRows = [];
-                foreach ($imagingRequests as $i) {
-                    $imgRows[] = [
-                        $i->id,
-                        $i->patient ? userfullname($i->patient->user_id) : 'N/A',
-                        $i->patient->file_no ?? 'N/A',
-                        $i->service ? $i->service->service_name : 'N/A',
-                        $imgStatusLabels[$i->status] ?? 'Unknown',
-                        $i->result ? '✓ Yes' : '✗ No',
-                        $i->doctor_id ? userfullname($i->doctor_id) : 'N/A',
-                        $i->approved_by ? userfullname($i->approved_by) : 'N/A',
-                        $i->created_at->format('Y-m-d H:i'),
+                $returnRows = [];
+                foreach ($returns as $r) {
+                    $returnRows[] = [
+                        $r->product ? $r->product->product_name : 'N/A',
+                        $r->sourceStore ? $r->sourceStore->store_name : 'N/A',
+                        $r->qty_returned,
+                        $r->return_reason ?? 'N/A',
+                        $r->creator ? trim($r->creator->surname . ' ' . $r->creator->firstname) : 'N/A',
+                        $r->created_at->format('Y-m-d H:i')
+                    ];
+                }
+                
+                $damageRows = [];
+                foreach ($damages as $d) {
+                    $damageRows[] = [
+                        $d->product ? $d->product->product_name : 'N/A',
+                        $d->store ? $d->store->store_name : 'N/A',
+                        $d->qty_damaged,
+                        ucfirst($d->damage_type ?? 'N/A'),
+                        $d->notes ?? 'N/A',
+                        $d->created_at->format('Y-m-d H:i')
                     ];
                 }
 
                 $tabbedData = [
-                    'lab_requests' => [
-                        'label' => 'Laboratory Requests',
-                        'headers' => ['Req ID', 'Patient', 'File No', 'Test', 'Status', 'Sample Taken', 'Ordered By', 'Approved By', 'Date'],
-                        'rows' => $labRows
+                    'prescription_workflow' => [
+                        'label' => 'Prescription Workflow',
+                        'headers' => ['Patient', 'Product', 'Quantity', 'Status', 'Requested At'],
+                        'rows' => $rxRows
                     ],
-                    'imaging_requests' => [
-                        'label' => 'Imaging/Radiology Requests',
-                        'headers' => ['Req ID', 'Patient', 'File No', 'Study', 'Status', 'Has Result', 'Ordered By', 'Approved By', 'Date'],
-                        'rows' => $imgRows
-                    ]
-                ];
-                break;
-
-            case 'nursing_vitals':
-                $vitals = VitalSign::with(['patient.user'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $totalVitals = $vitals->count();
-                $uniquePatients = $vitals->pluck('patient_id')->unique()->count();
-                $fromEmergency = $vitals->where('source', 'emergency_intake')->count();
-                $avgPerPatient = $uniquePatients > 0 ? round($totalVitals / $uniquePatients, 1) : 0;
-
-                $kpis = [
-                    ['label' => 'Total Vitals Recorded', 'value' => $totalVitals, 'class' => 'text-primary'],
-                    ['label' => 'Unique Patients', 'value' => $uniquePatients, 'class' => 'text-info'],
-                    ['label' => 'Emergency Intake Vitals', 'value' => $fromEmergency, 'class' => 'text-danger'],
-                    ['label' => 'Avg Vitals per Patient', 'value' => $avgPerPatient, 'class' => 'text-success'],
-                ];
-
-                $headers = ['Vital ID', 'Patient', 'File No', 'BP', 'HR', 'Temp (°C)', 'SpO2 (%)', 'RR', 'Pain', 'Taken By', 'Source', 'Date'];
-                foreach ($vitals as $v) {
-                    $rows[] = [
-                        $v->id,
-                        $v->patient ? userfullname($v->patient->user_id) : 'N/A',
-                        $v->patient->file_no ?? 'N/A',
-                        $v->blood_pressure ?? 'N/A',
-                        $v->heart_rate ?? 'N/A',
-                        $v->temp ?? 'N/A',
-                        $v->spo2 ?? 'N/A',
-                        $v->resp_rate ?? 'N/A',
-                        $v->pain_score ?? 'N/A',
-                        $v->taken_by ? userfullname($v->taken_by) : 'N/A',
-                        $v->source ?? 'manual',
-                        $v->created_at->format('Y-m-d H:i'),
-                    ];
-                }
-                break;
-
-            case 'discharge_clearance':
-                $discharges = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed.wardRelation', 'doctor', 'discharger'])
-                    ->where('discharged', 1)
-                    ->whereBetween('updated_at', [$startDate, $endDate])
-                    ->orderBy('updated_at', 'desc')
-                    ->get();
-
-                $pendingDischarges = AdmissionRequest::with(['patient.user', 'patient.hmo'])
-                    ->where('discharged', 0)
-                    ->where(function($q) {
-                        $q->where('admission_status', 'discharge_requested')
-                          ->orWhere('admission_status', 'discharge_checklist');
-                    })
-                    ->get();
-
-                $kpis = [
-                    ['label' => 'Completed Discharges', 'value' => $discharges->count(), 'class' => 'text-success'],
-                    ['label' => 'Pending Discharge Clearance', 'value' => $pendingDischarges->count(), 'class' => 'text-warning'],
-                    ['label' => 'Avg Length of Stay', 'value' => round($discharges->avg(fn($d) => $d->days_admitted ?? 0), 1) . ' days', 'class' => 'text-info'],
-                ];
-
-                $dischargedRows = [];
-                foreach ($discharges as $d) {
-                    $dischargedRows[] = [
-                        $d->id,
-                        $d->patient ? userfullname($d->patient->user_id) : 'N/A',
-                        $d->patient->file_no ?? 'N/A',
-                        $d->patient && $d->patient->hmo ? $d->patient->hmo->name : 'Private',
-                        $d->days_admitted ?? 0,
-                        $d->discharger ? userfullname($d->discharged_by) : 'N/A',
-                        $d->updated_at->format('Y-m-d H:i'),
-                    ];
-                }
-
-                $pendingRows = [];
-                foreach ($pendingDischarges as $p) {
-                    $pendingRows[] = [
-                        $p->id,
-                        $p->patient ? userfullname($p->patient->user_id) : 'N/A',
-                        $p->patient->file_no ?? 'N/A',
-                        $p->patient && $p->patient->hmo ? $p->patient->hmo->name : 'Private',
-                        ucfirst(str_replace('_', ' ', $p->admission_status)),
-                        $p->days_admitted ?? 0,
-                        $p->created_at->format('Y-m-d H:i'),
-                    ];
-                }
-
-                $tabbedData = [
-                    'completed_discharges' => [
-                        'label' => 'Completed Discharges',
-                        'headers' => ['Admission ID', 'Patient', 'File No', 'HMO', 'Days Stayed', 'Discharged By', 'Discharged On'],
-                        'rows' => $dischargedRows
+                    'pharmacy_returns' => [
+                        'label' => 'Pharmacy Returns',
+                        'headers' => ['Product', 'Store', 'Quantity', 'Reason', 'Returned By', 'Date'],
+                        'rows' => $returnRows
                     ],
-                    'pending_discharges' => [
-                        'label' => 'Pending Discharge Clearance',
-                        'headers' => ['Admission ID', 'Patient', 'File No', 'HMO', 'Workflow Stage', 'Days Admitted', 'Admitted On'],
-                        'rows' => $pendingRows
+                    'pharmacy_damages' => [
+                        'label' => 'Damages & Expiries',
+                        'headers' => ['Product', 'Store', 'Quantity', 'Type', 'Notes', 'Date'],
+                        'rows' => $damageRows
                     ]
                 ];
                 break;
 
-            case 'emergency_triage':
-                $emergencyQueues = DoctorQueue::with(['patient.user', 'patient.hmo', 'clinic'])
-                    ->where('source', 'emergency_intake')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
 
-                $emergencyAdmissions = AdmissionRequest::with(['patient.user', 'bed.wardRelation'])
-                    ->where('priority', 'emergency')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
 
+            case 'central_store_stock_check':
+                $mainStoreId = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_CENTRAL)->value('id');
+
+                // Re-use store stock base query
+                $stockQuery = \App\Models\StoreStock::with(['product.category', 'product.price', 'product.packagings'])
+                    ->where('store_id', $mainStoreId);
+                
+                // Allow Dual-Axis Filtering from Request if passed (mocking here for auditor view)
+                if ($request->filled('product_type')) {
+                    $stockQuery->whereHas('product', fn($q) => $q->where('product_type', $request->product_type));
+                }
+                if ($request->filled('category_id')) {
+                    $stockQuery->whereHas('product', fn($q) => $q->where('category_id', $request->category_id));
+                }
+
+                $stocks = $stockQuery->get();
+
+                // PO Price Variance
+                $poItems = \App\Models\PurchaseOrderItem::with(['purchaseOrder.supplier', 'product.price'])
+                    ->whereHas('purchaseOrder', function($q) use ($startDate, $endDate) {
+                        $q->whereBetween('created_at', [$startDate, $endDate])
+                          ->whereIn('status', ['received', 'partially_received']);
+                    })->get();
+
+                // Manual Batch Price Variance (Source Manual)
+                $manualBatches = \App\Models\StockBatch::with(['product.price', 'store', 'creator'])
+                    ->where('source', \App\Models\StockBatch::SOURCE_MANUAL)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get();
+                    
                 $kpis = [
-                    ['label' => 'Emergency Intakes', 'value' => $emergencyQueues->count(), 'class' => 'text-danger'],
-                    ['label' => 'Emergency Admissions', 'value' => $emergencyAdmissions->count(), 'class' => 'text-warning'],
-                    ['label' => 'Queue Completed', 'value' => $emergencyQueues->where('status', QueueStatus::COMPLETED)->count(), 'class' => 'text-success'],
-                    ['label' => 'Currently Active', 'value' => $emergencyQueues->filter(fn($q) => in_array($q->status, QueueStatus::ACTIVE))->count(), 'class' => 'text-info'],
+                    ['label' => 'Total Stock Value', 'value' => '₦' . number_format($stocks->sum(fn($s) => $s->quantity * optional(optional($s->product)->price)->initial_buy_price), 2), 'class' => 'text-primary'],
+                    ['label' => 'Below Reorder', 'value' => $stocks->filter(fn($s) => $s->quantity <= optional($s->product)->reorder_alert)->count(), 'class' => 'text-danger'],
+                    ['label' => 'PO Deliveries', 'value' => $poItems->count(), 'class' => 'text-success'],
+                    ['label' => 'Manual Batches', 'value' => $manualBatches->count(), 'class' => 'text-warning']
                 ];
 
-                $triageRows = [];
-                foreach ($emergencyQueues as $eq) {
-                    $triageRows[] = [
-                        $eq->id,
-                        $eq->patient ? userfullname($eq->patient->user_id) : 'N/A',
-                        $eq->patient->file_no ?? 'N/A',
-                        $eq->patient && $eq->patient->hmo ? $eq->patient->hmo->name : 'Private',
-                        $eq->clinic->name ?? 'N/A',
-                        QueueStatus::label($eq->status),
-                        \Illuminate\Support\Str::limit($eq->triage_note ?? 'N/A', 60),
-                        $eq->created_at->format('Y-m-d H:i'),
+                $stockRows = [];
+                foreach ($stocks as $s) {
+                    $stockRows[] = [
+                        $s->product ? $s->product->product_name : 'N/A',
+                        $s->product ? ucfirst($s->product->product_type) : 'N/A',
+                        $s->product && $s->product->category ? $s->product->category->category_name : 'N/A',
+                        $s->quantity,
+                        $s->product ? $s->product->reorder_alert : 'N/A',
+                        '₦' . number_format(optional(optional($s->product)->price)->initial_buy_price ?? 0, 2)
                     ];
                 }
 
-                $emAdmRows = [];
-                foreach ($emergencyAdmissions as $ea) {
-                    $emAdmRows[] = [
-                        $ea->id,
-                        $ea->patient ? userfullname($ea->patient->user_id) : 'N/A',
-                        $ea->patient->file_no ?? 'N/A',
-                        $ea->bed && $ea->bed->wardRelation ? $ea->bed->wardRelation->name : 'N/A',
-                        $ea->bed ? $ea->bed->name : 'Unassigned',
-                        ucfirst(str_replace('_', ' ', $ea->admission_status ?? 'N/A')),
-                        $ea->days_admitted ?? 0,
-                        $ea->created_at->format('Y-m-d H:i'),
+                $poRows = [];
+                foreach ($poItems as $pi) {
+                    $sysCost = optional(optional($pi->product)->price)->initial_buy_price ?? 0;
+                    $actualCost = $pi->base_unit_cost ?? 0; // Using base unit cost from PO receive normalization
+                    $variance = $actualCost - $sysCost;
+                    
+                    $poRows[] = [
+                        $pi->purchaseOrder ? $pi->purchaseOrder->po_number : 'N/A',
+                        $pi->product ? $pi->product->product_name : 'N/A',
+                        '₦' . number_format($sysCost, 2),
+                        '₦' . number_format($actualCost, 2),
+                        '<span class="'.($variance > 0 ? 'text-danger' : ($variance < 0 ? 'text-success' : '')).' font-weight-bold">₦' . number_format($variance, 2) . '</span>',
+                        $pi->purchaseOrder && $pi->purchaseOrder->supplier ? $pi->purchaseOrder->supplier->name : 'N/A'
+                    ];
+                }
+
+                $manualRows = [];
+                foreach ($manualBatches as $mb) {
+                    $sysCost = optional(optional($mb->product)->price)->initial_buy_price ?? 0;
+                    $actualCost = $mb->cost_price ?? 0;
+                    $variance = $actualCost - $sysCost;
+                    
+                    $manualRows[] = [
+                        $mb->batch_number ?? 'N/A',
+                        $mb->product ? $mb->product->product_name : 'N/A',
+                        $mb->store ? $mb->store->store_name : 'N/A',
+                        '₦' . number_format($sysCost, 2),
+                        '₦' . number_format($actualCost, 2),
+                        '<span class="'.($variance > 0 ? 'text-danger' : ($variance < 0 ? 'text-success' : '')).' font-weight-bold">₦' . number_format($variance, 2) . '</span>',
+                        $mb->creator ? trim($mb->creator->surname . ' ' . $mb->creator->firstname) : 'System'
                     ];
                 }
 
                 $tabbedData = [
-                    'emergency_triage' => [
-                        'label' => 'Emergency Triage Queue',
-                        'headers' => ['Queue ID', 'Patient', 'File No', 'HMO', 'Clinic', 'Status', 'Triage Note', 'Intake Time'],
-                        'rows' => $triageRows
+                    'central_stock_overview' => [
+                        'label' => 'Central Store Stock (Filtered)',
+                        'headers' => ['Product', 'Classification', 'Category', 'Current Qty', 'Reorder Level', 'Sys Buy Price'],
+                        'rows' => $stockRows
                     ],
-                    'emergency_admissions' => [
-                        'label' => 'Emergency Ward Admissions',
-                        'headers' => ['Admission ID', 'Patient', 'File No', 'Ward', 'Bed', 'Workflow Status', 'Days', 'Admitted'],
-                        'rows' => $emAdmRows
-                    ]
-                ];
-                break;
-
-
-            // ── Inventory Submodules ─────────────────────────────────────
-
-            case 'stock_variance':
-                $adjustments = StockBatchTransaction::where('type', 'adjustment')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->with(['stockBatch.product', 'stockBatch.store', 'performer'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $positiveAdj = $adjustments->filter(fn($t) => str_starts_with($t->notes ?? '', 'Positive'));
-                $negativeAdj = $adjustments->filter(fn($t) => !str_starts_with($t->notes ?? '', 'Positive'));
-                $netVariance = $positiveAdj->sum('qty') - $negativeAdj->sum('qty');
-
-                $kpis = [
-                    ['label' => 'Total Adjustments', 'value' => $adjustments->count(), 'class' => 'text-info'],
-                    ['label' => 'Positive Adjustments', 'value' => $positiveAdj->sum('qty') . ' units', 'class' => 'text-success'],
-                    ['label' => 'Negative Adjustments', 'value' => $negativeAdj->sum('qty') . ' units', 'class' => 'text-danger'],
-                    ['label' => 'Net Variance', 'value' => ($netVariance >= 0 ? '+' : '') . $netVariance . ' units', 'class' => $netVariance >= 0 ? 'text-success' : 'text-danger'],
-                ];
-
-                $adjRows = [];
-                foreach ($adjustments as $t) {
-                    $adjRows[] = [
-                        $t->id,
-                        $t->stockBatch?->product?->product_name ?? 'N/A',
-                        $t->stockBatch?->store?->store_name ?? 'N/A',
-                        $t->stockBatch?->store?->distribution_role ?? '—',
-                        $t->stockBatch?->batch_number ?? 'N/A',
-                        str_starts_with($t->notes ?? '', 'Positive') ? '+' . $t->qty : '-' . $t->qty,
-                        $t->balance_after,
-                        $t->performer?->name ?? 'System',
-                        \Illuminate\Support\Str::limit($t->notes ?? '', 60),
-                        $t->created_at->format('Y-m-d H:i'),
-                    ];
-                }
-
-                $tabbedData = [
-                    'adjustments' => [
-                        'label' => 'Stock Adjustments (Tally Card Source)',
-                        'headers' => ['Txn ID', 'Product', 'Store', 'Store Role', 'Batch', 'Qty Change', 'Balance After', 'By', 'Notes', 'Date'],
-                        'rows' => $adjRows
-                    ]
-                ];
-                break;
-
-            case 'purchase_price_var':
-                $poItems = PurchaseOrderItem::whereNotNull('actual_unit_cost')
-                    ->whereColumn('actual_unit_cost', '!=', 'unit_cost')
-                    ->whereHas('purchaseOrder', fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
-                    ->with(['purchaseOrder.supplier', 'purchaseOrder.targetStore', 'product'])
-                    ->get();
-
-                $totalOverSpend = $poItems->sum(fn($i) => max(0, ($i->actual_unit_cost - $i->unit_cost) * $i->received_qty));
-                $totalUnderSpend = $poItems->sum(fn($i) => max(0, ($i->unit_cost - $i->actual_unit_cost) * $i->received_qty));
-
-                $kpis = [
-                    ['label' => 'Items with Price Variance', 'value' => $poItems->count(), 'class' => 'text-warning'],
-                    ['label' => 'Total Over-Spend', 'value' => '₦' . number_format($totalOverSpend, 2), 'class' => 'text-danger'],
-                    ['label' => 'Total Under-Spend', 'value' => '₦' . number_format($totalUnderSpend, 2), 'class' => 'text-success'],
-                ];
-
-                $headers = ['PO Number', 'Supplier', 'Product', 'Ordered Cost', 'Actual Cost', 'Variance', 'Qty Received', 'Total Variance', 'Date'];
-                foreach ($poItems as $i) {
-                    $variance = $i->actual_unit_cost - $i->unit_cost;
-                    $rows[] = [
-                        $i->purchaseOrder?->po_number ?? 'N/A',
-                        $i->purchaseOrder?->supplier?->company_name ?? 'N/A',
-                        $i->product?->product_name ?? 'N/A',
-                        '₦' . number_format($i->unit_cost, 2),
-                        '₦' . number_format($i->actual_unit_cost, 2),
-                        ($variance >= 0 ? '+₦' : '-₦') . number_format(abs($variance), 2),
-                        $i->received_qty,
-                        '₦' . number_format($variance * $i->received_qty, 2),
-                        $i->purchaseOrder?->created_at?->format('Y-m-d') ?? 'N/A',
-                    ];
-                }
-                break;
-
-            case 'store_governance':
-                $stores = Store::with(['manager', 'ward', 'department', 'parentStore'])
-                    ->orderBy('store_name')->get();
-                $lanePolicies = StoreLanePolicy::orderBy('source_role')->get();
-
-                $roleBreakdown = $stores->groupBy('distribution_role');
-                $noRoleCount = $stores->where('distribution_role', null)->count() + $stores->where('distribution_role', 'other')->count();
-
-                $kpis = [
-                    ['label' => 'Total Stores', 'value' => $stores->count(), 'class' => 'text-info'],
-                    ['label' => 'Lane Policies', 'value' => $lanePolicies->count(), 'class' => 'text-purple'],
-                    ['label' => 'Without Specific Role', 'value' => $noRoleCount, 'class' => $noRoleCount > 0 ? 'text-warning' : 'text-success'],
-                    ['label' => 'Roles Defined', 'value' => $roleBreakdown->keys()->filter(fn($r) => $r && $r !== 'other')->count(), 'class' => 'text-success'],
-                ];
-
-                $storeRows = [];
-                foreach ($stores as $s) {
-                    $storeRows[] = [
-                        $s->id, $s->store_name, $s->code ?? '—', $s->store_type ?? '—',
-                        Store::ROLE_LABELS[$s->distribution_role] ?? $s->distribution_role ?? 'Unset',
-                        $s->allows_direct_patient_dispense ? 'Yes' : 'No',
-                        $s->manager?->name ?? '—',
-                        $s->ward?->name ?? $s->department?->name ?? '—',
-                    ];
-                }
-                $laneRows = [];
-                foreach ($lanePolicies as $lp) {
-                    $laneRows[] = [
-                        Store::ROLE_LABELS[$lp->source_role] ?? $lp->source_role,
-                        Store::ROLE_LABELS[$lp->destination_role] ?? $lp->destination_role,
-                        $lp->allowed ? 'Allowed' : 'Blocked',
-                        ucfirst($lp->requires_approval_level),
-                        $lp->notes ?? '—',
-                    ];
-                }
-
-                $tabbedData = [
-                    'store_catalog' => [
-                        'label' => 'Store Role Catalog',
-                        'headers' => ['ID', 'Store', 'Code', 'Type', 'Governance Role', 'Direct Dispense', 'Manager', 'Ward/Dept'],
-                        'rows' => $storeRows
+                    'po_price_variance' => [
+                        'label' => 'PO Price Variance',
+                        'headers' => ['PO Number', 'Product', 'System Cost', 'Actual Received Cost', 'Variance', 'Supplier'],
+                        'rows' => $poRows
                     ],
-                    'lane_policies' => [
-                        'label' => 'Lane Transfer Policies',
-                        'headers' => ['Source Role', 'Destination Role', 'Status', 'Approval Level', 'Notes'],
-                        'rows' => $laneRows
+                    'manual_batch_variance' => [
+                        'label' => 'Manual Batch Price Variance',
+                        'headers' => ['Batch No', 'Product', 'Store', 'System Cost', 'Entered Cost', 'Variance', 'Added By'],
+                        'rows' => $manualRows
                     ]
                 ];
                 break;
 
-            case 'dispensing_errors':
-                $expiredBatches = StockBatch::where('is_active', true)
-                    ->where('current_qty', '>', 0)
-                    ->whereNotNull('expiry_date')
-                    ->where('expiry_date', '<', now())
-                    ->with(['product', 'store'])
-                    ->get();
-
-                $expiringSoon = StockBatch::where('is_active', true)
-                    ->where('current_qty', '>', 0)
-                    ->whereNotNull('expiry_date')
-                    ->whereBetween('expiry_date', [now(), now()->addDays(30)])
-                    ->with(['product', 'store'])
-                    ->get();
-
-                $expiredValue = $expiredBatches->sum(fn($b) => $b->current_qty * $b->cost_price);
-                $expiringValue = $expiringSoon->sum(fn($b) => $b->current_qty * $b->cost_price);
-
-                $kpis = [
-                    ['label' => 'Expired Batches', 'value' => $expiredBatches->count(), 'class' => 'text-danger'],
-                    ['label' => 'Expired Value at Risk', 'value' => '₦' . number_format($expiredValue, 2), 'class' => 'text-danger'],
-                    ['label' => 'Expiring in 30 Days', 'value' => $expiringSoon->count(), 'class' => 'text-warning'],
-                    ['label' => 'Expiring Value', 'value' => '₦' . number_format($expiringValue, 2), 'class' => 'text-warning'],
-                ];
-
-                $expRows = [];
-                foreach ($expiredBatches as $b) {
-                    $expRows[] = [
-                        $b->batch_number, $b->product?->product_name ?? 'N/A', $b->store?->store_name ?? 'N/A',
-                        $b->store?->distribution_role ?? '—', $b->current_qty,
-                        '₦' . number_format($b->cost_price, 2), '₦' . number_format($b->current_qty * $b->cost_price, 2),
-                        $b->expiry_date?->format('Y-m-d') ?? '—',
-                        now()->diffInDays($b->expiry_date) . ' days ago',
-                    ];
+            case 'departmental_ward_stores':
+                // User can select a specific store via request. If none, we take all non-main.
+                $storeId = $request->get('store_id');
+                $storeQuery = \App\Models\Store::where('distribution_role', '!=', \App\Models\Store::ROLE_CENTRAL);
+                if ($storeId) {
+                    $storeQuery->where('id', $storeId);
                 }
-                $soonRows = [];
-                foreach ($expiringSoon as $b) {
-                    $soonRows[] = [
-                        $b->batch_number, $b->product?->product_name ?? 'N/A', $b->store?->store_name ?? 'N/A',
-                        $b->store?->distribution_role ?? '—', $b->current_qty,
-                        '₦' . number_format($b->cost_price, 2), '₦' . number_format($b->current_qty * $b->cost_price, 2),
-                        $b->expiry_date?->format('Y-m-d') ?? '—',
-                        now()->diffInDays($b->expiry_date) . ' days left',
-                    ];
+                $decentralizedStoreIds = $storeQuery->pluck('id');
+
+                $stockQuery = \App\Models\StoreStock::with(['product.category', 'product.price', 'store'])
+                    ->whereIn('store_id', $decentralizedStoreIds);
+                
+                if ($request->filled('product_type')) {
+                    $stockQuery->whereHas('product', fn($q) => $q->where('product_type', $request->product_type));
                 }
+                if ($request->filled('category_id')) {
+                    $stockQuery->whereHas('product', fn($q) => $q->where('category_id', $request->category_id));
+                }
+                $stocks = $stockQuery->get();
 
-                $tabbedData = [
-                    'expired' => ['label' => 'Expired Batches (Active Stock)', 'headers' => ['Batch', 'Product', 'Store', 'Role', 'Qty', 'Unit Cost', 'Total Value', 'Expiry', 'Elapsed'], 'rows' => $expRows],
-                    'expiring_soon' => ['label' => 'Expiring Within 30 Days', 'headers' => ['Batch', 'Product', 'Store', 'Role', 'Qty', 'Unit Cost', 'Total Value', 'Expiry', 'Time Left'], 'rows' => $soonRows],
-                ];
-                break;
-
-            case 'requisition_fulfill':
-                $requisitions = StoreRequisition::with(['fromStore', 'toStore', 'requester', 'approver', 'fulfiller', 'items.product'])
+                $requisitions = \App\Models\StoreRequisition::with(['toStore', 'fromStore', 'items.product', 'requester'])
+                    ->whereIn('to_store_id', $decentralizedStoreIds)
                     ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
+                    ->get();
+                    
+                $damages = \App\Models\StoreDamage::with(['product', 'store', 'creator'])
+                    ->whereIn('store_id', $decentralizedStoreIds)
+                    ->whereBetween('created_at', [$startDate, $endDate])
                     ->get();
 
-                $fulfilled = $requisitions->where('status', 'fulfilled');
-                $pending = $requisitions->whereIn('status', ['pending', 'approved', 'partial']);
-                $avgFulfillDays = $fulfilled->avg(fn($r) => $r->fulfilled_at && $r->created_at ? $r->created_at->diffInDays($r->fulfilled_at) : 0);
-
                 $kpis = [
-                    ['label' => 'Total Requisitions', 'value' => $requisitions->count(), 'class' => 'text-info'],
-                    ['label' => 'Fulfilled', 'value' => $fulfilled->count(), 'class' => 'text-success'],
-                    ['label' => 'Pending/Partial', 'value' => $pending->count(), 'class' => 'text-warning'],
-                    ['label' => 'Avg Fulfillment (days)', 'value' => round($avgFulfillDays ?? 0, 1), 'class' => 'text-purple'],
+                    ['label' => 'Decentralized Stock Value', 'value' => '₦' . number_format($stocks->sum(fn($s) => $s->quantity * optional(optional($s->product)->price)->initial_buy_price), 2), 'class' => 'text-primary'],
+                    ['label' => 'Requisitions Made', 'value' => $requisitions->count(), 'class' => 'text-info'],
+                    ['label' => 'Damaged/Expired (Qty)', 'value' => $damages->sum('quantity'), 'class' => 'text-danger']
                 ];
+
+                $stockRows = [];
+                foreach ($stocks as $s) {
+                    $stockRows[] = [
+                        $s->store ? $s->store->store_name : 'N/A',
+                        $s->product ? $s->product->product_name : 'N/A',
+                        $s->product ? ucfirst($s->product->product_type) : 'N/A',
+                        $s->product && $s->product->category ? $s->product->category->category_name : 'N/A',
+                        $s->quantity,
+                        '₦' . number_format(optional(optional($s->product)->price)->initial_buy_price ?? 0, 2)
+                    ];
+                }
 
                 $reqRows = [];
                 foreach ($requisitions as $r) {
                     $reqRows[] = [
-                        $r->requisition_number, $r->fromStore?->store_name ?? 'N/A', $r->toStore?->store_name ?? 'N/A',
-                        $r->toStore?->distribution_role ?? '—',
-                        ucfirst($r->status), $r->items->count() . ' items',
-                        $r->requester?->name ?? 'N/A', $r->fulfiller?->name ?? '—',
-                        $r->created_at->format('Y-m-d'), $r->fulfilled_at?->format('Y-m-d') ?? '—',
+                        $r->requisition_number ?? 'N/A',
+                        $r->toStore ? $r->toStore->store_name : 'N/A',
+                        $r->fromStore ? $r->fromStore->store_name : 'Main Store',
+                        $r->items ? $r->items->count() : 0,
+                        ucfirst($r->status),
+                        $r->requester ? trim($r->requester->surname . ' ' . $r->requester->firstname) : 'N/A',
+                        $r->created_at->format('Y-m-d H:i')
                     ];
                 }
-                $tabbedData = [
-                    'requisitions' => ['label' => 'Store Requisitions', 'headers' => ['Req #', 'From Store', 'To Store', 'Role', 'Status', 'Items', 'Requested By', 'Fulfilled By', 'Created', 'Fulfilled'], 'rows' => $reqRows],
-                ];
-                break;
 
-            case 'damaged_goods':
-                $damages = StoreDamage::with(['product', 'store', 'creator', 'approver'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $pendingDmg = $damages->where('status', 'pending');
-                $approvedDmg = $damages->whereIn('status', ['approved', 'written_off']);
-                $totalWriteOff = $approvedDmg->sum('total_value');
-
-                $kpis = [
-                    ['label' => 'Total Damage Reports', 'value' => $damages->count(), 'class' => 'text-info'],
-                    ['label' => 'Pending Approval', 'value' => $pendingDmg->count(), 'class' => 'text-warning'],
-                    ['label' => 'Approved/Written Off', 'value' => $approvedDmg->count(), 'class' => 'text-success'],
-                    ['label' => 'Total Write-off Value', 'value' => '₦' . number_format($totalWriteOff, 2), 'class' => 'text-danger'],
-                ];
-
-                $dmgRows = [];
+                $damageRows = [];
                 foreach ($damages as $d) {
-                    $dmgRows[] = [
-                        $d->id, $d->product?->product_name ?? 'N/A', $d->store?->store_name ?? 'N/A',
-                        $d->store?->distribution_role ?? '—', ucfirst($d->damage_type ?? 'N/A'),
-                        $d->qty_damaged, '₦' . number_format($d->unit_cost, 2), '₦' . number_format($d->total_value, 2),
-                        ucfirst($d->status), $d->creator?->name ?? 'N/A',
-                        $d->discovered_date?->format('Y-m-d') ?? $d->created_at->format('Y-m-d'),
+                    $damageRows[] = [
+                        $d->product ? $d->product->product_name : 'N/A',
+                        $d->store ? $d->store->store_name : 'N/A',
+                        $d->qty_damaged,
+                        ucfirst($d->damage_type ?? 'N/A'),
+                        $d->notes ?? 'N/A',
+                        $d->created_at->format('Y-m-d H:i')
                     ];
                 }
-                $tabbedData = [
-                    'damages' => ['label' => 'Damage Reports', 'headers' => ['ID', 'Product', 'Store', 'Role', 'Type', 'Qty', 'Unit Cost', 'Total Value', 'Status', 'Reported By', 'Date'], 'rows' => $dmgRows],
-                ];
-                break;
-
-            case 'min_max_reorder':
-                $belowReorder = StoreStock::where('is_active', true)
-                    ->whereRaw('current_quantity <= reorder_level')
-                    ->where('reorder_level', '>', 0)
-                    ->with(['product', 'store'])
-                    ->get();
-
-                $outOfStock = StoreStock::where('is_active', true)
-                    ->where('current_quantity', '<=', 0)
-                    ->with(['product', 'store'])
-                    ->get();
-
-                $totalProducts = StoreStock::where('is_active', true)->count();
-                $coveragePct = $totalProducts > 0 ? round((($totalProducts - $belowReorder->count()) / $totalProducts) * 100, 1) : 100;
-
-                $kpis = [
-                    ['label' => 'Below Reorder Level', 'value' => $belowReorder->count(), 'class' => 'text-warning'],
-                    ['label' => 'Out of Stock', 'value' => $outOfStock->count(), 'class' => 'text-danger'],
-                    ['label' => 'Stock Coverage', 'value' => $coveragePct . '%', 'class' => $coveragePct >= 80 ? 'text-success' : 'text-warning'],
-                    ['label' => 'Total Tracked Items', 'value' => $totalProducts, 'class' => 'text-info'],
-                ];
-
-                $reorderRows = [];
-                foreach ($belowReorder->where('current_quantity', '>', 0)->take(200) as $ss) {
-                    $reorderRows[] = [
-                        $ss->product?->product_name ?? 'N/A', $ss->product?->product_code ?? '—',
-                        $ss->store?->store_name ?? 'N/A', $ss->store?->distribution_role ?? '—',
-                        $ss->current_quantity, $ss->reorder_level,
-                        $ss->reorder_level - $ss->current_quantity,
-                    ];
-                }
-                $oosRows = [];
-                foreach ($outOfStock->take(200) as $ss) {
-                    $oosRows[] = [
-                        $ss->product?->product_name ?? 'N/A', $ss->product?->product_code ?? '—',
-                        $ss->store?->store_name ?? 'N/A', $ss->store?->distribution_role ?? '—',
-                        0, $ss->reorder_level,
-                    ];
-                }
-                $tabbedData = [
-                    'below_reorder' => ['label' => 'Below Reorder Level', 'headers' => ['Product', 'Code', 'Store', 'Role', 'Current Qty', 'Reorder Level', 'Deficit'], 'rows' => $reorderRows],
-                    'out_of_stock' => ['label' => 'Out of Stock', 'headers' => ['Product', 'Code', 'Store', 'Role', 'Qty', 'Reorder Level'], 'rows' => $oosRows],
-                ];
-                break;
-
-            case 'supplier_invoice':
-                $pos = PurchaseOrder::with(['supplier', 'targetStore', 'items.product', 'payments'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $receivedPOs = $pos->whereIn('status', ['received', 'partial', 'partially_received']);
-                $totalDelivered = $receivedPOs->sum('total_amount');
-                $totalPaid = $receivedPOs->sum(fn($po) => $po->payments->sum('amount'));
-                $totalOutstanding = $totalDelivered - $totalPaid;
-
-                $kpis = [
-                    ['label' => 'Total POs', 'value' => $pos->count(), 'class' => 'text-info'],
-                    ['label' => 'Delivered Value', 'value' => '₦' . number_format($totalDelivered, 2), 'class' => 'text-purple'],
-                    ['label' => 'Paid', 'value' => '₦' . number_format($totalPaid, 2), 'class' => 'text-success'],
-                    ['label' => 'Outstanding', 'value' => '₦' . number_format($totalOutstanding, 2), 'class' => $totalOutstanding > 0 ? 'text-danger' : 'text-success'],
-                ];
-
-                $poRows = [];
-                foreach ($pos as $po) {
-                    $paid = $po->payments->sum('amount');
-                    $poRows[] = [
-                        $po->po_number, $po->supplier?->company_name ?? 'N/A', $po->targetStore?->store_name ?? 'N/A',
-                        ucfirst(str_replace('_', ' ', $po->status)),
-                        $po->items->count() . ' items',
-                        '₦' . number_format($po->total_amount, 2), '₦' . number_format($paid, 2),
-                        '₦' . number_format($po->total_amount - $paid, 2),
-                        ucfirst($po->payment_status ?? 'unpaid'),
-                        $po->created_at->format('Y-m-d'),
-                    ];
-                }
-                $tabbedData = [
-                    'po_fulfillment' => ['label' => 'PO Fulfillment & Payment', 'headers' => ['PO #', 'Supplier', 'Store', 'Status', 'Items', 'Total Amount', 'Paid', 'Balance', 'Pay Status', 'Date'], 'rows' => $poRows],
-                ];
-                break;
-
-            case 'pharmacy_returns':
-                $reqReturns = StoreRequisitionReturn::with(['product', 'sourceStore', 'destinationStore'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $poReturns = PurchaseOrderReturn::with(['product', 'purchaseOrder.supplier'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $kpis = [
-                    ['label' => 'Requisition Returns', 'value' => $reqReturns->count(), 'class' => 'text-info'],
-                    ['label' => 'PO Returns', 'value' => $poReturns->count(), 'class' => 'text-warning'],
-                    ['label' => 'Total Returns', 'value' => $reqReturns->count() + $poReturns->count(), 'class' => 'text-purple'],
-                ];
-
-                $rrRows = [];
-                foreach ($reqReturns as $r) {
-                    $rrRows[] = [
-                        $r->return_number ?? $r->id, $r->product?->product_name ?? 'N/A',
-                        $r->sourceStore?->store_name ?? 'N/A', $r->destinationStore?->store_name ?? 'N/A',
-                        $r->qty_returned ?? 0, ucfirst($r->status), $r->reason ?? '—', $r->created_at->format('Y-m-d'),
-                    ];
-                }
-                $prRows = [];
-                foreach ($poReturns as $r) {
-                    $prRows[] = [
-                        $r->return_number ?? $r->id, $r->product?->product_name ?? 'N/A',
-                        $r->purchaseOrder?->supplier?->company_name ?? 'N/A', $r->purchaseOrder?->po_number ?? 'N/A',
-                        $r->qty_returned ?? 0, ucfirst($r->status), $r->reason ?? '—', $r->created_at->format('Y-m-d'),
-                    ];
-                }
-                $tabbedData = [
-                    'req_returns' => ['label' => 'Requisition Returns', 'headers' => ['Return #', 'Product', 'From Store', 'To Store', 'Qty', 'Status', 'Reason', 'Date'], 'rows' => $rrRows],
-                    'po_returns' => ['label' => 'PO / Supplier Returns', 'headers' => ['Return #', 'Product', 'Supplier', 'PO #', 'Qty', 'Status', 'Reason', 'Date'], 'rows' => $prRows],
-                ];
-                break;
-
-            case 'procurement_contracts':
-                $supplierSpend = PurchaseOrder::whereIn('status', ['received', 'partial', 'partially_received'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->with('supplier')
-                    ->get()
-                    ->groupBy('supplier_id');
-
-                $totalSupplierSpend = $supplierSpend->sum(fn($group) => $group->sum('total_amount'));
-
-                $kpis = [
-                    ['label' => 'Active Suppliers', 'value' => $supplierSpend->count(), 'class' => 'text-info'],
-                    ['label' => 'Total Procurement Spend', 'value' => '₦' . number_format($totalSupplierSpend, 2), 'class' => 'text-purple'],
-                    ['label' => 'Total POs Delivered', 'value' => $supplierSpend->sum(fn($g) => $g->count()), 'class' => 'text-success'],
-                ];
-
-                $spendRows = [];
-                foreach ($supplierSpend as $supplierId => $poGroup) {
-                    $supplier = $poGroup->first()->supplier;
-                    $spendRows[] = [
-                        $supplier?->company_name ?? 'Unknown', $poGroup->count(),
-                        '₦' . number_format($poGroup->sum('total_amount'), 2),
-                        '₦' . number_format($poGroup->avg('total_amount'), 2),
-                        $poGroup->min('created_at')?->format('Y-m-d') ?? '—',
-                        $poGroup->max('created_at')?->format('Y-m-d') ?? '—',
-                    ];
-                }
-                usort($spendRows, fn($a, $b) => $b[1] <=> $a[1]);
 
                 $tabbedData = [
-                    'supplier_spend' => ['label' => 'Supplier Spend Analysis', 'headers' => ['Supplier', 'PO Count', 'Total Spend', 'Avg PO Value', 'First PO', 'Last PO'], 'rows' => $spendRows],
+                    'ward_stock_overview' => [
+                        'label' => 'Ward/Dept Stock Overview',
+                        'headers' => ['Store', 'Product', 'Classification', 'Category', 'Current Qty', 'Sys Buy Price'],
+                        'rows' => $stockRows
+                    ],
+                    'requisition_fulfillment' => [
+                        'label' => 'Requisition Fulfillment',
+                        'headers' => ['Req Number', 'Requesting Store', 'Supplying Store', 'Items Count', 'Status', 'Requested By', 'Date'],
+                        'rows' => $reqRows
+                    ],
+                    'departmental_damages' => [
+                        'label' => 'Departmental Damages',
+                        'headers' => ['Product', 'Store', 'Quantity', 'Type', 'Notes', 'Date'],
+                        'rows' => $damageRows
+                    ]
                 ];
                 break;
 
-            default:
-                $kpis = [
-                    ['label' => 'Status', 'value' => 'Not Yet Implemented', 'class' => 'text-muted'],
-                    ['label' => 'Worksheet Stamp', 'value' => $stamp ? 'APPROVED' : 'PENDING', 'class' => $stamp ? 'text-success' : 'text-warning']
-                ];
-                $headers = ['Info'];
-                $rows = [['This audit submodule is coming soon.']];
-                break;
         }
 
         // Populate chart time series dynamically based on date interval
