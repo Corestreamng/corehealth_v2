@@ -87,12 +87,22 @@ class LabWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
-        $billingCount = LabServiceRequest::where('status', 1)->count();
-        $sampleCount = LabServiceRequest::where('status', 2)->count();
-        $resultCount = LabServiceRequest::where('status', 3)->count();
-        $completedCount = LabServiceRequest::where('status', 4)->count();
-        $emergencyCount = LabServiceRequest::where('priority', 'emergency')->whereIn('status', [1, 2, 3])->count();
-        $approvalCount = LabServiceRequest::whereIn('status', [5, 6])->count();
+        // ── Performance: Single aggregate query for all queue counts ──
+        $counts = LabServiceRequest::selectRaw("
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as billing,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as sample,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as results,
+            SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN status IN (5, 6) THEN 1 ELSE 0 END) as approval,
+            SUM(CASE WHEN priority = 'emergency' AND status IN (1, 2, 3) THEN 1 ELSE 0 END) as emergency
+        ")->first();
+
+        $billingCount = (int) ($counts->billing ?? 0);
+        $sampleCount = (int) ($counts->sample ?? 0);
+        $resultCount = (int) ($counts->results ?? 0);
+        $completedCount = (int) ($counts->completed ?? 0);
+        $emergencyCount = (int) ($counts->emergency ?? 0);
+        $approvalCount = (int) ($counts->approval ?? 0);
 
         return response()->json([
             'billing' => $billingCount,

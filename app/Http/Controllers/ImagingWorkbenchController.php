@@ -88,10 +88,18 @@ class ImagingWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
-        $billingCount = ImagingServiceRequest::where('status', 1)->count();
-        $resultCount = ImagingServiceRequest::where('status', 2)->count();
-        $emergencyCount = ImagingServiceRequest::where('priority', 'emergency')->whereIn('status', [1, 2])->count();
-        $approvalCount = ImagingServiceRequest::whereIn('status', [5, 6])->count();
+        // ── Performance: Single aggregate query for all queue counts ──
+        $counts = ImagingServiceRequest::selectRaw("
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as billing,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as results,
+            SUM(CASE WHEN status IN (5, 6) THEN 1 ELSE 0 END) as approval,
+            SUM(CASE WHEN priority = 'emergency' AND status IN (1, 2) THEN 1 ELSE 0 END) as emergency
+        ")->first();
+
+        $billingCount = (int) ($counts->billing ?? 0);
+        $resultCount = (int) ($counts->results ?? 0);
+        $emergencyCount = (int) ($counts->emergency ?? 0);
+        $approvalCount = (int) ($counts->approval ?? 0);
 
         return response()->json([
             'billing' => $billingCount,
