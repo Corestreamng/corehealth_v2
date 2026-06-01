@@ -323,6 +323,86 @@ function renderPrescCard(row, type) {
         cardClass += ' border-success';
     }
 
+    // Adaptation banner
+    let adaptationBanner = '';
+    if (row.adapted_from_product_name) {
+        adaptationBanner = `
+            <div class="mt-2 p-2 rounded border" style="background-color: #e0f7fa; border-color: #4dd0e1; border-left: 4px solid #00acc1; font-size: 0.85rem;">
+                <div class="fw-semibold" style="color: #006064;">
+                    <i class="mdi mdi-swap-horizontal text-info"></i> Drug Adapted
+                </div>
+                <div class="text-muted" style="font-size: 0.8rem;">
+                    <strong>Original:</strong> [${row.adapted_from_product_code || ''}] ${row.adapted_from_product_name}
+                </div>
+                ${row.adaptation_note ? `<div style="color: #004d40;"><strong>Note:</strong> ${row.adaptation_note}</div>` : ''}
+                <div class="text-muted mt-1" style="font-size: 0.75rem; border-top: 1px dashed rgba(0, 96, 100, 0.2); padding-top: 4px;">
+                    <i class="mdi mdi-account-edit"></i> Adapted by: ${row.adapted_by_name || 'Pharmacist'} at ${row.adapted_at}
+                </div>
+            </div>
+        `;
+    }
+
+    // Quantity adjustment banner
+    let qtyAdjustmentBanner = '';
+    if (row.qty_adjusted_from !== null && row.qty_adjusted_from !== undefined && row.qty_adjusted_from !== '') {
+        qtyAdjustmentBanner = `
+            <div class="mt-2 p-2 rounded border" style="background-color: #fffde7; border-color: #fff176; border-left: 4px solid #fbc02d; font-size: 0.85rem;">
+                <div class="fw-semibold" style="color: #f57f17;">
+                    <i class="mdi mdi-counter text-warning"></i> Quantity Adjusted
+                </div>
+                <div class="text-muted" style="font-size: 0.8rem;">
+                    <strong>Original Qty:</strong> ${row.qty_adjusted_from} &rarr; <strong>New Qty:</strong> ${qty}
+                </div>
+                ${row.qty_adjustment_reason ? `<div style="color: #f57f17;"><strong>Reason:</strong> ${row.qty_adjustment_reason}</div>` : ''}
+                <div class="text-muted mt-1" style="font-size: 0.75rem; border-top: 1px dashed rgba(245, 127, 23, 0.2); padding-top: 4px;">
+                    <i class="mdi mdi-account-edit"></i> Adjusted by: ${row.qty_adjusted_by_name || 'Pharmacist'} at ${row.qty_adjusted_at}
+                </div>
+            </div>
+        `;
+    }
+
+    // Stock information (if available in row)
+    let stockInfo = '';
+    if (row.global_stock !== undefined && row.global_stock !== null) {
+        const globalStock = parseInt(row.global_stock) || 0;
+        const storeStocks = row.store_stocks || [];
+        if (type === 'dispense' || type === 'pending' || type === 'billing') {
+            let stockClass, stockIcon, stockBadge;
+            if (globalStock <= 0) {
+                stockClass = 'text-danger';
+                stockIcon = 'mdi-alert-circle';
+                stockBadge = '<span class="badge bg-danger ms-2"><i class="mdi mdi-alert-circle"></i> Out of Stock</span>';
+            } else if (globalStock < qty) {
+                stockClass = 'text-danger';
+                stockIcon = 'mdi-alert-circle';
+                stockBadge = `<span class="badge bg-danger ms-2"><i class="mdi mdi-alert"></i> Insufficient (need ${qty})</span>`;
+            } else if (globalStock <= 5 || globalStock < qty * 2) {
+                stockClass = 'text-warning';
+                stockIcon = 'mdi-alert';
+                stockBadge = '<span class="badge bg-warning text-dark ms-2"><i class="mdi mdi-alert-outline"></i> Low Stock</span>';
+            } else {
+                stockClass = 'text-success';
+                stockIcon = 'mdi-check-circle';
+                stockBadge = '';
+            }
+            stockInfo = `
+                <div class="presc-card-stock small mt-2 p-2 bg-light rounded" style="font-size: 0.85rem;">
+                    <div class="${stockClass}">
+                        <i class="mdi ${stockIcon}"></i> <strong>Stock:</strong> ${globalStock} available
+                        ${stockBadge}
+                    </div>
+            `;
+            if (storeStocks.length > 0) {
+                stockInfo += '<div class="mt-1" style="font-size: 0.78rem;"><strong>By Store:</strong></div>';
+                storeStocks.forEach(function(ss) {
+                    const storeClass = ss.quantity >= qty ? 'text-success' : 'text-warning';
+                    stockInfo += `<div class="${storeClass}" style="font-size: 0.78rem;"><i class="mdi mdi-store"></i> ${ss.store_name}: ${ss.quantity}</div>`;
+                });
+            }
+            stockInfo += '</div>';
+        }
+    }
+
     return `
         <div class="${cardClass}" data-id="${row.id}" data-product-id="${row.product_id || ''}" style="${type === 'pending' ? 'border-left: 4px solid #ffc107;' : (type === 'dispense' ? 'border-left: 4px solid #28a745;' : '')}">
             <div class="presc-card-header">
@@ -340,6 +420,9 @@ function renderPrescCard(row, type) {
                 <div><strong>Dose/Freq:</strong> ${dose}</div>
                 <div><strong>Qty:</strong> ${qty}</div>
                 ${hmoInfo}
+                ${adaptationBanner}
+                ${qtyAdjustmentBanner}
+                ${stockInfo}
             </div>
             ${metaInfo}
         </div>

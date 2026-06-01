@@ -158,7 +158,10 @@ class PharmacyWorkbenchController extends Controller
      */
     public function prescBillList($patientId)
     {
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service'])
+        $items = ProductRequest::with([
+            'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service',
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+        ])
             ->where('status', 1)
             ->where('patient_id', $patientId)
             ->orderBy('created_at', 'DESC')
@@ -172,8 +175,6 @@ class PharmacyWorkbenchController extends Controller
             $previews = HmoHelper::batchPreviewTariffs($patient->hmo_id, $productIds);
             $tariffMap = $previews['products'];
         }
-
-        // dd($patient->hmo_id, $tariffMap);
 
         // Precompute per-item tariff totals for unbilled rows so the billing-tab UI
         // can show accurate estimate badges before ProductOrServiceRequest is created.
@@ -307,6 +308,67 @@ class PharmacyWorkbenchController extends Controller
             ->addColumn('price_override_at', function ($item) {
                 return $item->price_override_at ? date('M j, Y h:i A', strtotime($item->price_override_at)) : null;
             })
+            ->addColumn('global_stock', function ($item) {
+                if (!$item->product_id) return 0;
+                // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
+                return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->whereHas('store', function ($q) {
+                        $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+                    })
+                    ->sum('current_qty');
+            })
+            ->addColumn('store_stocks', function ($item) {
+                if (!$item->product_id) return [];
+                // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
+                $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->whereHas('store', function ($q) {
+                        $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+                    })
+                    ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                    ->groupBy('store_id')
+                    ->orderByDesc('total_qty')
+                    ->get();
+
+                $storeStocks = [];
+                foreach ($storeStockData as $batch) {
+                    $store = \App\Models\Store::find($batch->store_id);
+                    $storeStocks[] = [
+                        'store_id' => $batch->store_id,
+                        'store_name' => $store ? $store->store_name : 'Unknown Store',
+                        'quantity' => (int) $batch->total_qty
+                    ];
+                }
+                return $storeStocks;
+            })
+            ->addColumn('adapted_from_product_name', function ($item) {
+                return optional($item->adaptedFromProduct)->product_name;
+            })
+            ->addColumn('adapted_from_product_code', function ($item) {
+                return optional($item->adaptedFromProduct)->product_code;
+            })
+            ->addColumn('adaptation_note', function ($item) {
+                return $item->adaptation_note;
+            })
+            ->addColumn('adapted_at', function ($item) {
+                return $item->adapted_at ? $item->adapted_at->format('M j, Y h:i A') : null;
+            })
+            ->addColumn('adapted_by_name', function ($item) {
+                return $item->adapted_by ? userfullname($item->adapted_by) : null;
+            })
+            ->addColumn('qty_adjusted_from', function ($item) {
+                return $item->qty_adjusted_from;
+            })
+            ->addColumn('qty_adjustment_reason', function ($item) {
+                return $item->qty_adjustment_reason;
+            })
+            ->addColumn('qty_adjusted_at', function ($item) {
+                return $item->qty_adjusted_at ? $item->qty_adjusted_at->format('M j, Y h:i A') : null;
+            })
+            ->addColumn('qty_adjusted_by_name', function ($item) {
+                return $item->qty_adjusted_by ? userfullname($item->qty_adjusted_by) : null;
+            })
             ->make(true);
     }
 
@@ -316,7 +378,10 @@ class PharmacyWorkbenchController extends Controller
      */
     public function prescDispenseList($patientId)
     {
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service'])
+        $items = ProductRequest::with([
+            'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service',
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+        ])
             ->where('status', 2)
             ->where('patient_id', $patientId)
             ->orderBy('created_at', 'DESC')
@@ -400,6 +465,99 @@ class PharmacyWorkbenchController extends Controller
                 $str .= '</small>';
                 return $str;
             })
+            ->addColumn('product_name', function ($item) {
+                return optional($item->product)->product_name ?? 'Unknown';
+            })
+            ->addColumn('product_code', function ($item) {
+                return optional($item->product)->product_code ?? '';
+            })
+            ->addColumn('price', function ($item) {
+                return optional(optional($item->product)->price)->current_sale_price ?? 0;
+            })
+            ->addColumn('payable_amount', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
+            })
+            ->addColumn('claims_amount', function ($item) {
+                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            })
+            ->addColumn('coverage_mode', function ($item) {
+                return optional($item->productOrServiceRequest)->coverage_mode ?? 'none';
+            })
+            ->addColumn('is_paid', function ($item) {
+                return optional(optional($item->productOrServiceRequest)->payment)->payment_status === 'paid';
+            })
+            ->addColumn('is_validated', function ($item) {
+                return optional($item->productOrServiceRequest)->validation_status === 'validated';
+            })
+            ->addColumn('can_dispense', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                if (!$posr) return true;
+                $isPaid = optional($posr->payment)->payment_status === 'paid';
+                $isValidated = $posr->validation_status === 'validated';
+                return $isPaid || $isValidated;
+            })
+            ->addColumn('global_stock', function ($item) {
+                if (!$item->product_id) return 0;
+                // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
+                return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->whereHas('store', function ($q) {
+                        $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+                    })
+                    ->sum('current_qty');
+            })
+            ->addColumn('store_stocks', function ($item) {
+                if (!$item->product_id) return [];
+                // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
+                $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->whereHas('store', function ($q) {
+                        $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+                    })
+                    ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                    ->groupBy('store_id')
+                    ->orderByDesc('total_qty')
+                    ->get();
+
+                $storeStocks = [];
+                foreach ($storeStockData as $batch) {
+                    $store = \App\Models\Store::find($batch->store_id);
+                    $storeStocks[] = [
+                        'store_id' => $batch->store_id,
+                        'store_name' => $store ? $store->store_name : 'Unknown Store',
+                        'quantity' => (int) $batch->total_qty
+                    ];
+                }
+                return $storeStocks;
+            })
+            ->addColumn('adapted_from_product_name', function ($item) {
+                return optional($item->adaptedFromProduct)->product_name;
+            })
+            ->addColumn('adapted_from_product_code', function ($item) {
+                return optional($item->adaptedFromProduct)->product_code;
+            })
+            ->addColumn('adaptation_note', function ($item) {
+                return $item->adaptation_note;
+            })
+            ->addColumn('adapted_at', function ($item) {
+                return $item->adapted_at ? $item->adapted_at->format('M j, Y h:i A') : null;
+            })
+            ->addColumn('adapted_by_name', function ($item) {
+                return $item->adapted_by ? userfullname($item->adapted_by) : null;
+            })
+            ->addColumn('qty_adjusted_from', function ($item) {
+                return $item->qty_adjusted_from;
+            })
+            ->addColumn('qty_adjustment_reason', function ($item) {
+                return $item->qty_adjustment_reason;
+            })
+            ->addColumn('qty_adjusted_at', function ($item) {
+                return $item->qty_adjusted_at ? $item->qty_adjusted_at->format('M j, Y h:i A') : null;
+            })
+            ->addColumn('qty_adjusted_by_name', function ($item) {
+                return $item->qty_adjusted_by ? userfullname($item->qty_adjusted_by) : null;
+            })
             ->rawColumns(['select', 'dose', 'created_at'])
             ->make(true);
     }
@@ -409,7 +567,10 @@ class PharmacyWorkbenchController extends Controller
      */
     public function prescHistoryList($patientId)
     {
-        $items = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser', 'dispensedFromBatch', 'dispensedFromStore'])
+        $items = ProductRequest::with([
+            'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser', 'dispensedFromBatch', 'dispensedFromStore',
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+        ])
             ->where('status', 3)
             ->where('patient_id', $patientId)
             ->where(function ($query) {
@@ -519,6 +680,79 @@ class PharmacyWorkbenchController extends Controller
                 $str .= '<b>Dispensed By:</b> ' . ($item->dispensed_by ? userfullname($item->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($item->dispense_date)) . ')' : "N/A") . '<br>';
                 $str .= '</small>';
                 return $str;
+            })
+            ->addColumn('price', function ($item) {
+                return optional(optional($item->product)->price)->current_sale_price ?? 0;
+            })
+            ->addColumn('coverage_mode', function ($item) {
+                return optional($item->productOrServiceRequest)->coverage_mode ?? 'none';
+            })
+            ->addColumn('is_validated', function ($item) {
+                return optional($item->productOrServiceRequest)->validation_status === 'validated';
+            })
+            ->addColumn('can_dispense', function ($item) {
+                return true;
+            })
+            ->addColumn('global_stock', function ($item) {
+                if (!$item->product_id) return 0;
+                // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
+                return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->whereHas('store', function ($q) {
+                        $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+                    })
+                    ->sum('current_qty');
+            })
+            ->addColumn('store_stocks', function ($item) {
+                if (!$item->product_id) return [];
+                // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
+                $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->whereHas('store', function ($q) {
+                        $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+                    })
+                    ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                    ->groupBy('store_id')
+                    ->orderByDesc('total_qty')
+                    ->get();
+
+                $storeStocks = [];
+                foreach ($storeStockData as $batch) {
+                    $store = \App\Models\Store::find($batch->store_id);
+                    $storeStocks[] = [
+                        'store_id' => $batch->store_id,
+                        'store_name' => $store ? $store->store_name : 'Unknown Store',
+                        'quantity' => (int) $batch->total_qty
+                    ];
+                }
+                return $storeStocks;
+            })
+            ->addColumn('adapted_from_product_name', function ($item) {
+                return optional($item->adaptedFromProduct)->product_name;
+            })
+            ->addColumn('adapted_from_product_code', function ($item) {
+                return optional($item->adaptedFromProduct)->product_code;
+            })
+            ->addColumn('adaptation_note', function ($item) {
+                return $item->adaptation_note;
+            })
+            ->addColumn('adapted_at', function ($item) {
+                return $item->adapted_at ? $item->adapted_at->format('M j, Y h:i A') : null;
+            })
+            ->addColumn('adapted_by_name', function ($item) {
+                return $item->adapted_by ? userfullname($item->adapted_by) : null;
+            })
+            ->addColumn('qty_adjusted_from', function ($item) {
+                return $item->qty_adjusted_from;
+            })
+            ->addColumn('qty_adjustment_reason', function ($item) {
+                return $item->qty_adjustment_reason;
+            })
+            ->addColumn('qty_adjusted_at', function ($item) {
+                return $item->qty_adjusted_at ? $item->qty_adjusted_at->format('M j, Y h:i A') : null;
+            })
+            ->addColumn('qty_adjusted_by_name', function ($item) {
+                return $item->qty_adjusted_by ? userfullname($item->qty_adjusted_by) : null;
             })
             ->rawColumns(['dose', 'created_at'])
             ->make(true);
@@ -749,7 +983,10 @@ class PharmacyWorkbenchController extends Controller
                 'doctor',
                 'biller',
             'productOrServiceRequest.payment',
-            'productOrServiceRequest.parent.payment'
+            'productOrServiceRequest.parent.payment',
+            'adaptedFromProduct',
+            'adapter',
+            'qtyAdjuster'
             ])
             ->where('patient_id', $patientId)
             ->where(function ($subQuery) {
@@ -818,6 +1055,7 @@ class PharmacyWorkbenchController extends Controller
             $batchStocks = \App\Models\StockBatch::whereIn('product_id', $productIds)
                 ->where('current_qty', '>', 0)
                 ->join('stores', 'stock_batches.store_id', '=', 'stores.id')
+                ->whereIn('stores.distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE])
                 ->selectRaw('stock_batches.product_id, stock_batches.store_id, stores.store_name, SUM(stock_batches.current_qty) as total_qty')
                 ->groupBy('stock_batches.product_id', 'stock_batches.store_id', 'stores.store_name')
                 ->get()
@@ -885,6 +1123,15 @@ class PharmacyWorkbenchController extends Controller
                     'created_at' => $pr->created_at->format('Y-m-d H:i'),
                     'global_stock' => $globalStock,
                     'store_stocks' => $storeStocks,
+                    'adapted_from_product_name' => optional($pr->adaptedFromProduct)->product_name,
+                    'adapted_from_product_code' => optional($pr->adaptedFromProduct)->product_code,
+                    'adaptation_note' => $pr->adaptation_note,
+                    'adapted_at' => $pr->adapted_at ? $pr->adapted_at->format('M j, Y h:i A') : null,
+                    'adapted_by_name' => $pr->adapted_by ? userfullname($pr->adapted_by) : null,
+                    'qty_adjusted_from' => $pr->qty_adjusted_from,
+                    'qty_adjustment_reason' => $pr->qty_adjustment_reason,
+                    'qty_adjusted_at' => $pr->qty_adjusted_at ? $pr->qty_adjusted_at->format('M j, Y h:i A') : null,
+                    'qty_adjusted_by_name' => $pr->qty_adjusted_by ? userfullname($pr->qty_adjusted_by) : null,
                 ];
             });
 
@@ -1581,9 +1828,12 @@ class PharmacyWorkbenchController extends Controller
                     }
                 }
 
-                // Get top 5 stores with stock for this product
+                // Get top 5 stores with stock for this product (filtered by Hub & Satellite stores)
                 $storeStocks = \App\Models\StockBatch::where('product_id', $product->id)
                     ->where('current_qty', '>', 0)
+                    ->whereHas('store', function ($q) {
+                        $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+                    })
                     ->selectRaw('store_id, SUM(current_qty) as total_qty')
                     ->groupBy('store_id')
                     ->orderByDesc('total_qty')
@@ -1598,7 +1848,7 @@ class PharmacyWorkbenchController extends Controller
                         ];
                     });
 
-                // Calculate global stock from all stores
+                // Calculate global stock from pharmacy stores
                 $globalStock = $storeStocks->sum('quantity');
 
                 return [
