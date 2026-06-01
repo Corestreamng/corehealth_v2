@@ -48,21 +48,44 @@
             <div class="col-lg-4 mb-3">
                 <div class="card h-100 bg-white shadow-sm border-0 p-3">
                     <h6 class="text-dark font-weight-bold mb-3"><i class="mdi mdi-filter-variant"></i> Advanced Filters</h6>
-                    <form method="GET" action="{{ route('audit.reports.show', $responsibility_key) }}" class="d-flex flex-column gap-2">
+                    <form method="GET" id="filterForm" action="{{ route('audit.reports.show', $responsibility_key) }}" class="d-flex flex-column gap-2">
                         <div>
-                            <label class="form-label small text-muted">Start Date</label>
+                            <label class="form-label small text-muted font-weight-bold">Start Date</label>
                             <input type="date" name="start_date" class="form-control" value="{{ $startDate->format('Y-m-d') }}">
                         </div>
                         <div>
-                            <label class="form-label small text-muted">End Date</label>
+                            <label class="form-label small text-muted font-weight-bold">End Date</label>
                             <input type="date" name="end_date" class="form-control" value="{{ $endDate->format('Y-m-d') }}">
                         </div>
+                        
+                        {{-- Context-Aware Filters --}}
+                        @if(isset($filters) && count($filters) > 0)
+                            @foreach($filters as $filter)
+                                <div>
+                                    <label class="form-label small text-muted font-weight-bold mb-1">{{ $filter['label'] }}</label>
+                                    @if($filter['type'] === 'select')
+                                        <select name="{{ $filter['name'] }}" class="form-control form-select-sm">
+                                            <option value="">All {{ $filter['label'] }}s</option>
+                                            @foreach($filter['options'] as $val => $lbl)
+                                                <option value="{{ $val }}" {{ (string)$filter['value'] === (string)$val ? 'selected' : '' }}>{{ $lbl }}</option>
+                                            @endforeach
+                                        </select>
+                                    @elseif($filter['type'] === 'number')
+                                        <input type="number" step="any" name="{{ $filter['name'] }}" class="form-control form-control-sm" value="{{ $filter['value'] }}" placeholder="Min/Max/Value">
+                                    @else
+                                        <input type="text" name="{{ $filter['name'] }}" class="form-control form-control-sm" value="{{ $filter['value'] }}">
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
+                        
                         <button type="submit" class="btn btn-primary mt-2 w-100">
                             <i class="mdi mdi-refresh"></i> Update Worksheet
                         </button>
                     </form>
                 </div>
             </div>
+
 
             {{-- Dynamic KPIs --}}
             <div class="col-lg-8 mb-3">
@@ -133,19 +156,7 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @forelse($tabInfo['rows'] as $row)
-                                                        <tr>
-                                                            @foreach($row as $cell)
-                                                                <td>{!! $cell !!}</td>
-                                                            @endforeach
-                                                        </tr>
-                                                    @empty
-                                                        <tr>
-                                                            <td colspan="{{ count($tabInfo['headers']) }}" class="text-center py-4 text-muted">
-                                                                No records found for the active dates range in this tab.
-                                                            </td>
-                                                        </tr>
-                                                    @endforelse
+                                                    {{-- Dynamically loaded via server-side DataTable AJAX --}}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -154,7 +165,7 @@
                             </div>
                         @else
                             <div class="table-responsive">
-                                <table class="table table-striped table-bordered table-sm" id="auditDataTable">
+                                <table class="table table-striped table-bordered table-sm audit-datatable" id="auditDataTable_default">
                                     <thead>
                                         <tr>
                                             @foreach($headers as $header)
@@ -163,19 +174,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($rows as $row)
-                                            <tr>
-                                                @foreach($row as $cell)
-                                                    <td>{!! $cell !!}</td>
-                                                @endforeach
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="{{ count($headers) }}" class="text-center py-4 text-muted">
-                                                    No logs captured for the active dates range.
-                                                </td>
-                                            </tr>
-                                        @endforelse
+                                        {{-- Dynamically loaded via server-side DataTable AJAX --}}
                                     </tbody>
                                 </table>
                             </div>
@@ -223,6 +222,8 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{-- Explicitly load dynamic server-side DataTables JS --}}
+<script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 <script>
 $(document).ready(function() {
     // 1. Initializing Chart.js
@@ -273,7 +274,37 @@ $(document).ready(function() {
         }
     });
 
-    // 2. Stamping Period Action
+    // 2. Initialize Rich Server-Side DataTables Dynamically
+    $('.audit-datatable').each(function() {
+        var $table = $(this);
+        var tableId = $table.attr('id');
+        var tabId = tableId.replace('auditDataTable_', '');
+
+        $table.DataTable({
+            processing: true,
+            serverSide: true,
+            pageLength: 25,
+            ajax: {
+                url: window.location.href,
+                data: function(d) {
+                    d.datatable_tab = tabId;
+                    // Attach all filter inputs from the card form
+                    $('#filterForm').serializeArray().forEach(function(item) {
+                        d[item.name] = item.value;
+                    });
+                }
+            },
+            // Maps arrays directly to the respective column index dynamically
+            columns: $table.find('thead th').map(function(idx) {
+                return { data: idx, orderable: true, searchable: true };
+            }).get(),
+            language: {
+                processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
+            }
+        });
+    });
+
+    // 3. Stamping Period Action
     $('#stampThisPeriodBtn').on('click', function() {
         $('#stampModal').modal('show');
     });
