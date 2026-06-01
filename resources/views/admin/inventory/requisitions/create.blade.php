@@ -570,7 +570,7 @@
             </a>
             @endhasanyrole
         </div>
-        <form id="requisition-form" method="POST" action="{{ route('inventory.requisitions.store') }}">
+        <form id="requisition-form" method="POST" action="{{ route('inventory.requisitions.store') }}" novalidate>
             @csrf
             <input type="hidden" name="from_store_id" id="from_store_id">
             <input type="hidden" name="to_store_id" id="to_store_id">
@@ -1537,6 +1537,7 @@ $(function() {
         for (var id in cartItems) {
             var item = cartItems[id];
             var cartMax = item.packaging_base_qty> 1 ? Math.floor(item.available / item.packaging_base_qty) : item.available;
+            var maxAttr = item.available > 0 ? ' max="' + (cartMax > 0 ? cartMax : 1) + '"' : '';
             var pkgLabel = item.packaging_name ? (' <small class="text-info">' + escapeHtml(item.packaging_name) + '</small>') : '';
             var equivLabel = (item.packaging_name && item.base_qty) ? ('<br><small class="text-muted">= ' + parseFloat(Number(item.base_qty).toFixed(4)) + ' ' + escapeHtml(item.base_unit_name || 'units') + '</small>') : '';
             html += '<div class="cart-item" data-product-id="' + id + '">';
@@ -1546,7 +1547,7 @@ $(function() {
             html += '  </div>';
             html += '  <div class="item-qty">';
             html += '    <div class="d-flex align-items-center">';
-            html += '      <input type="number" class="qty-mini-input cart-qty-input" value="' + item.qty + '" min="1" max="' + cartMax + '" data-product-id="' + id + '" data-pkg-base="' + (item.packaging_base_qty || 1) + '">';
+            html += '      <input type="number" class="qty-mini-input cart-qty-input" value="' + item.qty + '" min="1"' + maxAttr + ' data-product-id="' + id + '" data-pkg-base="' + (item.packaging_base_qty || 1) + '">';
             html += '      ' + pkgLabel;
             html += '      <span class="remove-btn ml-1" data-product-id="' + id + '"><i class="mdi mdi-delete"></i></span>';
             html += '    </div>';
