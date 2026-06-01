@@ -59,7 +59,8 @@ class AuditWorkbenchController extends Controller
             'maternity_morgue_audit' => 'Maternity Enrollments & Mortuary Register'
         ],
         'diagnostics_pharmacy' => [
-            'lab_imaging_register' => 'Lab/Imaging Register & Reagent Usage',
+            'laboratory_register' => 'Laboratory Register & Reagent Usage',
+            'imaging_register' => 'Imaging Register & Consumables Usage',
             'pharmacy_prescriptions' => 'Pharmacy Prescriptions, Returns & Damages'
         ],
         'inventory' => [
@@ -130,23 +131,28 @@ class AuditWorkbenchController extends Controller
             ->get()
             ->map(function ($row) {
                 $cashier = User::find($row->user_id);
-                $row->cashier_name = $cashier ? trim($cashier->surname . ' ' . $cashier->firstname) : 'Unknown Cashier';
+                $row->cashier_name = $cashier ? $this->formatStaffNameThree($cashier) : 'Unknown Cashier';
                 return $row;
             });
 
         // B. HMO claims nhis matching
         $hmoClaims = DB::table('product_or_service_requests as posr')
             ->join('hmos', 'posr.hmo_id', '=', 'hmos.id')
+            ->join('hmo_schemes as hs', 'hmos.hmo_scheme_id', '=', 'hs.id')
             ->select('hmos.name as hmo_name',
                 DB::raw('COUNT(*) as claim_count'),
                 DB::raw('SUM(posr.payable_amount) as total_payable'),
                 DB::raw('SUM(posr.claims_amount) as total_claim')
             )
             ->where(function($q) {
-                $q->where('hmos.name', 'LIKE', '%NHIS%')
-                  ->orWhere('hmos.name', 'LIKE', '%NHIA%')
-                  ->orWhere('hmos.name', 'LIKE', '%SHIS%')
-                  ->orWhere('hmos.name', 'LIKE', '%PLASCHEMA%');
+                $q->where('hs.name', 'LIKE', '%NHIS%')
+                  ->orWhere('hs.name', 'LIKE', '%NHIA%')
+                  ->orWhere('hs.name', 'LIKE', '%SHIS%')
+                  ->orWhere('hs.name', 'LIKE', '%PLASCHEMA%')
+                  ->orWhere('hs.code', 'LIKE', '%NHIS%')
+                  ->orWhere('hs.code', 'LIKE', '%NHIA%')
+                  ->orWhere('hs.code', 'LIKE', '%SHIS%')
+                  ->orWhere('hs.code', 'LIKE', '%PLASCHEMA%');
             })
             ->whereBetween('posr.created_at', [$startDate, $endDate])
             ->groupBy('hmos.name')
@@ -438,6 +444,7 @@ class AuditWorkbenchController extends Controller
         $hmoOptions = [];
         $storeOptions = [];
         $categoryOptions = [];
+        $bankOptions = [];
 
         $responsibility_key = trim($responsibility_key);
 
@@ -448,11 +455,28 @@ class AuditWorkbenchController extends Controller
             }
         }
         
+        if ($responsibility_key === 'bank_reconciliation') {
+            $banks = \App\Models\Bank::select('id', 'name')->orderBy('name')->get();
+            foreach ($banks as $b) {
+                $bankOptions[$b->id] = $b->name;
+            }
+        }
+        
+        if ($responsibility_key === 'hmo_nhis_verification') {
+            $hmos = \App\Models\Hmo::select('id', 'name')->orderBy('name')->get();
+            foreach ($hmos as $h) {
+                $hmoOptions[$h->id] = $h->name;
+            }
+        }
+
         if ($responsibility_key === 'consulting_clinics_flow') {
             $clinics = \App\Models\Clinic::select('id', 'name')->orderBy('name')->get();
             foreach ($clinics as $c) {
                 $clinicOptions[$c->id] = $c->name;
             }
+        }
+
+        if ($responsibility_key === 'consulting_clinics_flow' || $responsibility_key === 'theatre_bundles_audit') {
             $doctors = User::select('id', 'surname', 'firstname')->orderBy('surname')->get();
             foreach ($doctors as $d) {
                 $doctorOptions[$d->id] = trim($d->surname . ' ' . $d->firstname);
@@ -466,15 +490,29 @@ class AuditWorkbenchController extends Controller
             }
         }
         
-        if ($responsibility_key === 'hmo_nhis_verification') {
-            $hmos = \App\Models\Hmo::select('id', 'name')->orderBy('name')->get();
-            foreach ($hmos as $h) {
-                $hmoOptions[$h->id] = $h->name;
+        if ($responsibility_key === 'pharmacy_prescriptions') {
+            $pStores = \App\Models\Store::whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE])->get();
+            foreach ($pStores as $s) {
+                $storeOptions[$s->id] = $s->store_name;
             }
         }
-        
+
+        if ($responsibility_key === 'laboratory_register') {
+            $labStores = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_LAB)->get();
+            foreach ($labStores as $s) {
+                $storeOptions[$s->id] = $s->store_name;
+            }
+        }
+
+        if ($responsibility_key === 'imaging_register') {
+            $imgStores = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_IMAGING)->get();
+            foreach ($imgStores as $s) {
+                $storeOptions[$s->id] = $s->store_name;
+            }
+        }
+
         if ($responsibility_key === 'central_store_stock_check' || $responsibility_key === 'departmental_ward_stores') {
-            $stores = Store::select('id', 'store_name')->orderBy('store_name')->get();
+            $stores = Store::where('distribution_role', '!=', \App\Models\Store::ROLE_CENTRAL)->select('id', 'store_name')->orderBy('store_name')->get();
             foreach ($stores as $s) {
                 $storeOptions[$s->id] = $s->store_name;
             }
@@ -601,10 +639,14 @@ class AuditWorkbenchController extends Controller
                         'payments.payment_method',
                         'payments.total',
                         'payments.created_at',
+                        'payments.patient_id',
                         'cashier_user.surname as cashier_surname',
                         'cashier_user.firstname as cashier_firstname',
+                        'cashier_user.othername as cashier_othername',
                         'patient_user.surname as patient_surname',
-                        'patient_user.firstname as patient_firstname'
+                        'patient_user.firstname as patient_firstname',
+                        'patient_user.othername as patient_othername',
+                        'patients.file_no as patient_file_no'
                     ])
                     ->orderBy('payments.created_at', 'desc')
                     ->limit(1000)
@@ -616,10 +658,14 @@ class AuditWorkbenchController extends Controller
                         'patient_deposits.payment_method',
                         'patient_deposits.amount',
                         'patient_deposits.deposit_date',
+                        'patient_deposits.patient_id',
                         'receiver_user.surname as receiver_surname',
                         'receiver_user.firstname as receiver_firstname',
+                        'receiver_user.othername as receiver_othername',
                         'patient_user.surname as patient_surname',
-                        'patient_user.firstname as patient_firstname'
+                        'patient_user.firstname as patient_firstname',
+                        'patient_user.othername as patient_othername',
+                        'patients.file_no as patient_file_no'
                     ])
                     ->orderBy('patient_deposits.deposit_date', 'desc')
                     ->limit(1000)
@@ -629,8 +675,8 @@ class AuditWorkbenchController extends Controller
                 foreach ($paymentsQuery as $p) {
                     $receipts->push([
                         'reference' => $p->reference_no ?? 'N/A',
-                        'cashier' => ($p->cashier_surname || $p->cashier_firstname) ? trim($p->cashier_surname . ' ' . $p->cashier_firstname) : 'System',
-                        'patient' => ($p->patient_surname || $p->patient_firstname) ? trim($p->patient_surname . ' ' . $p->patient_firstname) : 'Walk-in',
+                        'cashier' => $this->formatStaffRawName($p->cashier_surname, $p->cashier_firstname, $p->cashier_othername),
+                        'patient' => $this->formatPatientNameLink($p->patient_id, $p->patient_surname, $p->patient_firstname, $p->patient_othername, $p->patient_file_no),
                         'type' => ucfirst(str_replace('_', ' ', $p->payment_type ?? 'N/A')),
                         'method' => $p->payment_method ?? 'N/A',
                         'amount' => $p->total,
@@ -642,8 +688,8 @@ class AuditWorkbenchController extends Controller
                 foreach ($depositsQuery as $d) {
                     $receipts->push([
                         'reference' => $d->deposit_number ?? 'N/A',
-                        'cashier' => ($d->receiver_surname || $d->receiver_firstname) ? trim($d->receiver_surname . ' ' . $d->receiver_firstname) : 'System',
-                        'patient' => ($d->patient_surname || $d->patient_firstname) ? trim($d->patient_surname . ' ' . $d->patient_firstname) : 'N/A',
+                        'cashier' => $this->formatStaffRawName($d->receiver_surname, $d->receiver_firstname, $d->receiver_othername),
+                        'patient' => $this->formatPatientNameLink($d->patient_id, $d->patient_surname, $d->patient_firstname, $d->patient_othername, $d->patient_file_no),
                         'type' => 'Account Deposit',
                         'method' => $d->payment_method ?? 'N/A',
                         'amount' => $d->amount,
@@ -669,7 +715,8 @@ class AuditWorkbenchController extends Controller
 
                 // 3. Memory-Efficient Raw DB Query for Revenue Leakage (Limit 1,000 records)
                 $leakageQuery = DB::table('product_or_service_requests as posr')
-                    ->leftJoin('users as u', 'posr.user_id', '=', 'u.id')
+                    ->leftJoin('patients as pt', 'posr.patient_id', '=', 'pt.id')
+                    ->leftJoin('users as u', 'pt.user_id', '=', 'u.id')
                     ->leftJoin('products as pr', 'posr.product_id', '=', 'pr.id')
                     ->leftJoin('services as sv', 'posr.service_id', '=', 'sv.id')
                     ->whereBetween('posr.created_at', [$startDate, $endDate])
@@ -685,8 +732,11 @@ class AuditWorkbenchController extends Controller
                         'posr.amount',
                         'posr.discount',
                         'posr.created_at',
+                        'posr.patient_id',
                         'u.surname as user_surname',
                         'u.firstname as user_firstname',
+                        'u.othername as user_othername',
+                        'pt.file_no as patient_file_no',
                         'pr.product_name as product_name',
                         'sv.service_name as service_name'
                     ])
@@ -698,7 +748,7 @@ class AuditWorkbenchController extends Controller
                 foreach ($leakageQuery as $r) {
                     $amt = $r->payable_amount > 0 ? $r->payable_amount : $r->amount;
                     $itemName = $r->product_name ?: ($r->service_name ?: 'N/A');
-                    $patientName = ($r->user_surname || $r->user_firstname) ? trim($r->user_surname . ' ' . $r->user_firstname) : 'N/A';
+                    $patientName = $this->formatPatientNameLink($r->patient_id, $r->user_surname, $r->user_firstname, $r->user_othername, $r->patient_file_no);
                     
                     $leakageRows[] = [
                         $r->id,
@@ -733,16 +783,65 @@ class AuditWorkbenchController extends Controller
                 break;
 
             case 'bank_reconciliation':
-                $reconciliations = \App\Models\Accounting\BankReconciliation::with(['bank', 'preparedBy', 'fiscalPeriod'])
-                    ->whereBetween('statement_date', [$startDate, $endDate])
-                    ->orderBy('statement_date', 'desc')
-                    ->get();
+                $filters = [
+                    [
+                        'name' => 'bank_id',
+                        'label' => 'Bank Account',
+                        'type' => 'select',
+                        'options' => $bankOptions,
+                        'value' => $request->get('bank_id')
+                    ],
+                    [
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'type' => 'select',
+                        'options' => ['draft' => 'Draft', 'finalized' => 'Finalized'],
+                        'value' => $request->get('status')
+                    ],
+                    [
+                        'name' => 'min_amount',
+                        'label' => 'Min Amount',
+                        'type' => 'number',
+                        'value' => $request->get('min_amount')
+                    ],
+                    [
+                        'name' => 'payment_method',
+                        'label' => 'Payment Method',
+                        'type' => 'select',
+                        'options' => ['POS' => 'POS', 'TRANSFER' => 'Bank Transfer', 'BANK_TRANSFER' => 'Bank Transfer'],
+                        'value' => $request->get('payment_method')
+                    ]
+                ];
 
-                $bankDeposits = \App\Models\Payment::with(['patient.user', 'staff_user', 'bank'])
+                $bankId = $request->get('bank_id');
+                $status = $request->get('status');
+                $minAmount = $request->get('min_amount');
+                $method = $request->get('payment_method');
+
+                $reconciliationsQuery = \App\Models\Accounting\BankReconciliation::with(['bank', 'preparedBy', 'fiscalPeriod'])
+                    ->whereBetween('statement_date', [$startDate, $endDate]);
+
+                $bankDepositsQuery = \App\Models\Payment::with(['patient.user', 'staff_user', 'bank'])
                     ->whereIn('payment_method', ['POS', 'TRANSFER', 'BANK_TRANSFER'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($bankId) {
+                    $reconciliationsQuery->where('bank_id', $bankId);
+                    $bankDepositsQuery->where('bank_id', $bankId);
+                }
+                if ($status) {
+                    $reconciliationsQuery->where('status', $status);
+                }
+                if ($minAmount) {
+                    $reconciliationsQuery->where('statement_closing_balance', '>=', $minAmount);
+                    $bankDepositsQuery->where('total', '>=', $minAmount);
+                }
+                if ($method) {
+                    $bankDepositsQuery->where('payment_method', $method);
+                }
+
+                $reconciliations = $reconciliationsQuery->orderBy('statement_date', 'desc')->get();
+                $bankDeposits = $bankDepositsQuery->orderBy('created_at', 'desc')->get();
 
                 $kpis = [
                     ['label' => 'Bank/POS Collections', 'value' => '₦' . number_format($bankDeposits->sum('total'), 2), 'class' => 'text-success'],
@@ -769,8 +868,8 @@ class AuditWorkbenchController extends Controller
                     $depositRows[] = [
                         $p->reference_no ?? 'N/A',
                         $p->bank ? $p->bank->name : 'N/A',
-                        $p->staff_user ? trim($p->staff_user->surname . ' ' . $p->staff_user->firstname) : 'System',
-                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'Walk-in',
+                        $this->formatStaffNameThree($p->staff_user),
+                        $this->formatPatientModelLink($p->patient),
                         '₦' . number_format($p->total, 2),
                         $p->created_at->format('Y-m-d H:i')
                     ];
@@ -791,16 +890,65 @@ class AuditWorkbenchController extends Controller
                 break;
 
             case 'hmo_nhis_verification':
-                $claims = \App\Models\ProductOrServiceRequest::with(['user', 'hmo.scheme', 'product', 'service'])
-                    ->whereNotNull('hmo_id')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                $filters = [
+                    [
+                        'name' => 'hmo_id',
+                        'label' => 'HMO Scheme',
+                        'type' => 'select',
+                        'options' => $hmoOptions,
+                        'value' => $request->get('hmo_id')
+                    ],
+                    [
+                        'name' => 'validation_status',
+                        'label' => 'Validation Status',
+                        'type' => 'select',
+                        'options' => ['pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected'],
+                        'value' => $request->get('validation_status')
+                    ],
+                    [
+                        'name' => 'min_claims',
+                        'label' => 'Min Claims Value',
+                        'type' => 'number',
+                        'value' => $request->get('min_claims')
+                    ],
+                    [
+                        'name' => 'coverage_mode',
+                        'label' => 'Coverage Mode',
+                        'type' => 'select',
+                        'options' => ['hmo' => 'HMO Scheme', 'nhis' => 'NHIS Scheme'],
+                        'value' => $request->get('coverage_mode')
+                    ]
+                ];
 
-                $remittances = \App\Models\HmoRemittance::with(['hmo.scheme'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                $hmoId = $request->get('hmo_id');
+                $valStatus = $request->get('validation_status');
+                $minClaims = $request->get('min_claims');
+                $coverageMode = $request->get('coverage_mode');
+
+                $claimsQuery = \App\Models\ProductOrServiceRequest::with(['user', 'patient.user', 'hmo.scheme', 'product', 'service'])
+                    ->whereNotNull('hmo_id')
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                $remittancesQuery = \App\Models\HmoRemittance::with(['hmo.scheme'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($hmoId) {
+                    $claimsQuery->where('hmo_id', $hmoId);
+                    $remittancesQuery->where('hmo_id', $hmoId);
+                }
+                if ($valStatus) {
+                    $claimsQuery->where('validation_status', $valStatus);
+                }
+                if ($minClaims) {
+                    $claimsQuery->where('claims_amount', '>=', $minClaims);
+                    $remittancesQuery->where('amount', '>=', $minClaims);
+                }
+                if ($coverageMode) {
+                    $claimsQuery->where('coverage_mode', $coverageMode);
+                }
+
+                $claims = $claimsQuery->orderBy('created_at', 'desc')->get();
+                $remittances = $remittancesQuery->orderBy('created_at', 'desc')->get();
 
                 $kpis = [
                     ['label' => 'Total HMO Claims Value', 'value' => '₦' . number_format($claims->sum('claims_amount'), 2), 'class' => 'text-purple'],
@@ -812,9 +960,9 @@ class AuditWorkbenchController extends Controller
                 foreach ($claims as $c) {
                     $claimsRows[] = [
                         $c->id,
-                        $c->user ? trim($c->user->surname . ' ' . $c->user->firstname) : 'N/A',
+                        $this->formatPatientUserLink($c->user, $c->patient),
                         $c->hmo ? $c->hmo->name : 'N/A',
-                        $c->product ? ('Drug: '.$c->product->name) : ($c->service ? ('Service: '.$c->service->name) : 'N/A'),
+                        $c->product ? ('Drug: '.$c->product->product_name) : ($c->service ? ('Service: '.$c->service->service_name) : 'N/A'),
                         '₦' . number_format($c->claims_amount, 2),
                         ucfirst($c->validation_status ?? 'pending'),
                         $c->created_at->format('Y-m-d H:i')
@@ -848,21 +996,59 @@ class AuditWorkbenchController extends Controller
                 break;
 
             case 'discounts_refunds_debt':
-                $checkoutDiscounts = \App\Models\Payment::with(['patient.user', 'staff_user'])
+                $filters = [
+                    [
+                        'name' => 'cashier_id',
+                        'label' => 'Authorized By',
+                        'type' => 'select',
+                        'options' => $cashierOptions,
+                        'value' => $request->get('cashier_id')
+                    ],
+                    [
+                        'name' => 'min_amount',
+                        'label' => 'Min Amount',
+                        'type' => 'number',
+                        'value' => $request->get('min_amount')
+                    ],
+                    [
+                        'name' => 'refund_reason',
+                        'label' => 'Refund Reason',
+                        'type' => 'text',
+                        'value' => $request->get('refund_reason')
+                    ]
+                ];
+
+                $cashierId = $request->get('cashier_id');
+                $minWaiver = $request->get('min_amount');
+                $refundReason = $request->get('refund_reason');
+
+                $checkoutQuery = \App\Models\Payment::with(['patient.user', 'staff_user'])
                     ->where('total_discount', '>', 0)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
 
-                $staffDebts = \App\Models\StaffBill::with(['patient.user', 'staffUser'])
-                    ->where('outstanding_amount', '>', 0)
-                    ->get(); // Debt is cumulative, not just within range
+                $staffQuery = \App\Models\StaffBill::with(['patient.user', 'staffUser'])
+                    ->where('outstanding_amount', '>', 0);
 
-                $refundedDeposits = \App\Models\Accounting\PatientDeposit::with(['patient', 'refunder'])
+                $refundedQuery = \App\Models\Accounting\PatientDeposit::with(['patient', 'refunder'])
                     ->where(fn($q) => $q->where('status', 'refunded')->orWhere('refunded_amount', '>', 0))
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($cashierId) {
+                    $checkoutQuery->where('user_id', $cashierId);
+                    $staffQuery->where('user_id', $cashierId);
+                }
+                if ($minWaiver) {
+                    $checkoutQuery->where('total_discount', '>=', $minWaiver);
+                    $staffQuery->where('outstanding_amount', '>=', $minWaiver);
+                    $refundedQuery->where('refunded_amount', '>=', $minWaiver);
+                }
+                if ($refundReason) {
+                    $refundedQuery->where('refund_reason', 'LIKE', '%' . $refundReason . '%');
+                }
+
+                $checkoutDiscounts = $checkoutQuery->orderBy('created_at', 'desc')->get();
+                $staffDebts = $staffQuery->get();
+                $refundedDeposits = $refundedQuery->orderBy('created_at', 'desc')->get();
 
                 $kpis = [
                     ['label' => 'Checkout Waivers', 'value' => '₦' . number_format($checkoutDiscounts->sum('total_discount'), 2), 'class' => 'text-info'],
@@ -874,8 +1060,8 @@ class AuditWorkbenchController extends Controller
                 foreach ($checkoutDiscounts as $p) {
                     $checkoutRows[] = [
                         $p->reference_no ?? 'N/A',
-                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'Walk-in',
-                        $p->staff_user ? trim($p->staff_user->surname . ' ' . $p->staff_user->firstname) : 'System',
+                        $this->formatPatientModelLink($p->patient),
+                        $this->formatStaffNameThree($p->staff_user),
                         '₦' . number_format($p->total + $p->total_discount, 2),
                         '₦' . number_format($p->total_discount, 2),
                         $p->created_at->format('Y-m-d H:i')
@@ -886,8 +1072,8 @@ class AuditWorkbenchController extends Controller
                 foreach ($staffDebts as $s) {
                     $staffRows[] = [
                         $s->id,
-                        $s->staffUser ? trim($s->staffUser->surname . ' ' . $s->staffUser->firstname) : 'N/A',
-                        $s->patient && $s->patient->user ? trim($s->patient->user->surname . ' ' . $s->patient->user->firstname) : 'N/A',
+                        $this->formatStaffNameThree($s->staffUser),
+                        $this->formatPatientModelLink($s->patient),
                         '₦' . number_format($s->amount ?? 0, 2),
                         '₦' . number_format($s->outstanding_amount, 2),
                         $s->created_at->format('Y-m-d H:i')
@@ -898,7 +1084,7 @@ class AuditWorkbenchController extends Controller
                 foreach ($refundedDeposits as $d) {
                     $depositRows[] = [
                         $d->deposit_number ?? 'N/A',
-                        $d->patient ? trim($d->patient->surname . ' ' . $d->patient->firstname) : 'N/A',
+                        $this->formatPatientModelLink($d->patient),
                         '₦' . number_format($d->amount, 2),
                         '₦' . number_format($d->refunded_amount, 2),
                         $d->refund_reason ?? 'N/A',
@@ -926,25 +1112,64 @@ class AuditWorkbenchController extends Controller
                 break;
 
             case 'payroll_expenses_ledger':
-                $batches = \App\Models\HR\PayrollBatch::with(['createdBy', 'approvedBy'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                $filters = [
+                    [
+                        'name' => 'category',
+                        'label' => 'Expense Category',
+                        'type' => 'select',
+                        'options' => ['travel' => 'Travel & Transport', 'supplies' => 'Supplies & Logistics', 'utilities' => 'Utilities & Power', 'repairs' => 'Repairs & Maintenance', 'other' => 'Other Expenses'],
+                        'value' => $request->get('category')
+                    ],
+                    [
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'type' => 'select',
+                        'options' => ['pending' => 'Pending', 'approved' => 'Approved', 'paid' => 'Paid'],
+                        'value' => $request->get('status')
+                    ],
+                    [
+                        'name' => 'min_amount',
+                        'label' => 'Min Amount',
+                        'type' => 'number',
+                        'value' => $request->get('min_amount')
+                    ]
+                ];
 
-                $deductions = \App\Models\Accounting\StatutoryRemittance::with(['payHead', 'bank'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                $expenseCat = $request->get('category');
+                $expenseStatus = $request->get('status');
+                $minAmt = $request->get('min_amount');
 
-                $expenses = \App\Models\Expense::with(['supplier', 'store', 'bank', 'recorder'])
-                    ->whereBetween('expense_date', [$startDate, $endDate])
-                    ->orderBy('expense_date', 'desc')
-                    ->get();
-                    
-                $pettyCash = \App\Models\Accounting\PettyCashTransaction::with(['fund'])
-                    ->whereBetween('transaction_date', [$startDate, $endDate])
-                    ->orderBy('transaction_date', 'desc')
-                    ->get();
+                $batchesQuery = \App\Models\HR\PayrollBatch::with(['createdBy', 'approvedBy'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                $deductionsQuery = \App\Models\Accounting\StatutoryRemittance::with(['payHead', 'bank'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                $expensesQuery = \App\Models\Expense::with(['supplier', 'store', 'bank', 'recorder'])
+                    ->whereBetween('expense_date', [$startDate, $endDate]);
+
+                $pettyCashQuery = \App\Models\Accounting\PettyCashTransaction::with(['fund'])
+                    ->whereBetween('transaction_date', [$startDate, $endDate]);
+
+                if ($expenseCat) {
+                    $expensesQuery->where('category', $expenseCat);
+                }
+                if ($expenseStatus) {
+                    $expensesQuery->where('status', $expenseStatus);
+                    $batchesQuery->where('status', $expenseStatus);
+                    $deductionsQuery->where('status', $expenseStatus);
+                }
+                if ($minAmt) {
+                    $expensesQuery->where('amount', '>=', $minAmt);
+                    $batchesQuery->where('total_net', '>=', $minAmt);
+                    $deductionsQuery->where('amount', '>=', $minAmt);
+                    $pettyCashQuery->where('amount', '>=', $minAmt);
+                }
+
+                $batches = $batchesQuery->orderBy('created_at', 'desc')->get();
+                $deductions = $deductionsQuery->orderBy('created_at', 'desc')->get();
+                $expenses = $expensesQuery->orderBy('expense_date', 'desc')->get();
+                $pettyCash = $pettyCashQuery->orderBy('transaction_date', 'desc')->get();
 
                 $kpis = [
                     ['label' => 'Net Salaries Paid', 'value' => '₦' . number_format($batches->where('status', 'paid')->sum('total_net'), 2), 'class' => 'text-success'],
@@ -1011,26 +1236,72 @@ class AuditWorkbenchController extends Controller
 
 
             case 'consulting_clinics_flow':
-                $queues = \App\Models\DoctorQueue::with(['patient.user', 'clinic', 'doctor.user'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                    
-                $appointments = \App\Models\DoctorAppointment::with(['patient.user', 'doctor.user'])
-                    ->whereBetween('appointment_date', [$startDate, $endDate])
-                    ->orderBy('appointment_date', 'desc')
-                    ->get();
+                $filters = [
+                    [
+                        'name' => 'clinic_id',
+                        'label' => 'Clinic',
+                        'type' => 'select',
+                        'options' => $clinicOptions,
+                        'value' => $request->get('clinic_id')
+                    ],
+                    [
+                        'name' => 'doctor_id',
+                        'label' => 'Doctor',
+                        'type' => 'select',
+                        'options' => $doctorOptions,
+                        'value' => $request->get('doctor_id')
+                    ],
+                    [
+                        'name' => 'queue_status',
+                        'label' => 'Queue Status',
+                        'type' => 'select',
+                        'options' => ['queued' => 'Queued', 'active' => 'Active', 'completed' => 'Completed', 'no-show' => 'No Show'],
+                        'value' => $request->get('queue_status')
+                    ],
+                    [
+                        'name' => 'priority',
+                        'label' => 'Priority',
+                        'type' => 'select',
+                        'options' => ['normal' => 'Normal', 'emergency' => 'Emergency', 'vip' => 'VIP'],
+                        'value' => $request->get('priority')
+                    ]
+                ];
 
-                // To find unbilled consultations: Completed queues without linked payment/invoice?
-                // Depending on the logic, usually we check ProductOrServiceRequest for consultation items.
-                // We will just do a rough matching using the patient and date.
+                $clinicId = $request->get('clinic_id');
+                $doctorId = $request->get('doctor_id');
+                $queueStatus = $request->get('queue_status');
+                $priority = $request->get('priority');
+
+                $queuesQuery = \App\Models\DoctorQueue::with(['patient.user', 'clinic', 'doctor.user'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                $appointmentsQuery = \App\Models\DoctorAppointment::with(['patient.user', 'doctor.user'])
+                    ->whereBetween('appointment_date', [$startDate, $endDate]);
+
+                if ($clinicId) {
+                    $queuesQuery->where('clinic_id', $clinicId);
+                    $appointmentsQuery->where('clinic_id', $clinicId);
+                }
+                if ($doctorId) {
+                    $queuesQuery->where('doctor_id', $doctorId);
+                    $appointmentsQuery->where('doctor_id', $doctorId);
+                }
+                if ($queueStatus) {
+                    $queuesQuery->where('status', $queueStatus);
+                }
+                if ($priority) {
+                    $queuesQuery->where('priority', $priority);
+                }
+
+                $queues = $queuesQuery->orderBy('created_at', 'desc')->get();
+                $appointments = $appointmentsQuery->orderBy('appointment_date', 'desc')->get();
 
                 $queueRows = [];
                 foreach ($queues as $q) {
                     $queueRows[] = [
-                        $q->patient && $q->patient->user ? trim($q->patient->user->surname . ' ' . $q->patient->user->firstname) : 'N/A',
-                        $q->clinic ? $q->clinic->clinic_name : 'N/A',
-                        ($q->doctor && $q->doctor->user) ? trim($q->doctor->user->surname . ' ' . $q->doctor->user->firstname) : 'N/A',
+                        $this->formatPatientModelLink($q->patient),
+                        $q->clinic ? ($q->clinic->name ?? $q->clinic->clinic_name) : 'N/A',
+                        ($q->doctor && $q->doctor->user) ? $this->formatStaffNameThree($q->doctor->user) : 'N/A',
                         \App\Enums\QueueStatus::badge($q->status),
                         $q->priority ?? 'N/A',
                         $q->created_at->format('Y-m-d H:i')
@@ -1040,8 +1311,8 @@ class AuditWorkbenchController extends Controller
                 $apptRows = [];
                 foreach ($appointments as $a) {
                     $apptRows[] = [
-                        $a->patient && $a->patient->user ? trim($a->patient->user->surname . ' ' . $a->patient->user->firstname) : 'N/A',
-                        ($a->doctor && $a->doctor->user) ? trim($a->doctor->user->surname . ' ' . $a->doctor->user->firstname) : 'N/A',
+                        $this->formatPatientModelLink($a->patient),
+                        ($a->doctor && $a->doctor->user) ? $this->formatStaffNameThree($a->doctor->user) : 'N/A',
                         ucfirst($a->status ?? 'pending'),
                         $a->appointment_date ? $a->appointment_date->format('Y-m-d H:i') : 'N/A'
                     ];
@@ -1069,25 +1340,90 @@ class AuditWorkbenchController extends Controller
                 break;
 
             case 'inpatient_ward_income':
-                $admissions = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                
-                // Active Admissions across time (not just within range)
-                $activeAdmissions = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
-                    ->where('discharged', 0)
-                    ->get();
+                $filters = [
+                    [
+                        'name' => 'ward_id',
+                        'label' => 'Ward',
+                        'type' => 'select',
+                        'options' => $wardOptions,
+                        'value' => $request->get('ward_id')
+                    ],
+                    [
+                        'name' => 'admission_status',
+                        'label' => 'Admission Status',
+                        'type' => 'select',
+                        'options' => ['admitted' => 'Currently Admitted', 'discharge_pending' => 'Clearance Pending', 'discharged' => 'Discharged'],
+                        'value' => $request->get('admission_status')
+                    ],
+                    [
+                        'name' => 'min_amount',
+                        'label' => 'Min Income Value',
+                        'type' => 'number',
+                        'value' => $request->get('min_amount')
+                    ],
+                    [
+                        'name' => 'bed_type',
+                        'label' => 'Bed Type',
+                        'type' => 'select',
+                        'options' => ['regular' => 'Regular', 'icu' => 'ICU', 'private' => 'Private'],
+                        'value' => $request->get('bed_type')
+                    ]
+                ];
 
-                // Ward Income (from Payments linked to active wards) - approximating by using the patient's active ward
-                $wardPayments = \App\Models\Payment::with(['patient.user'])
-                    ->whereIn('patient_id', function($query) {
+                $wardId = $request->get('ward_id');
+                $admStatus = $request->get('admission_status');
+                $minAmt = $request->get('min_amount');
+                $bedType = $request->get('bed_type');
+
+                $admissionsQuery = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                $activeAdmissionsQuery = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation']);
+
+                if ($admStatus === 'discharged') {
+                    $activeAdmissionsQuery->where('discharged', 1);
+                } elseif ($admStatus === 'discharge_pending') {
+                    $activeAdmissionsQuery->where('discharged', 0)->where('discharge_requested', 1);
+                } elseif ($admStatus === 'admitted') {
+                    $activeAdmissionsQuery->where('discharged', 0);
+                } else {
+                    $activeAdmissionsQuery->where('discharged', 0);
+                }
+
+                if ($wardId) {
+                    $activeAdmissionsQuery->where(function($q) use ($wardId) {
+                        $q->where('preferred_ward_id', $wardId)
+                          ->orWhereHas('bed.wardRelation', fn($bq) => $bq->where('id', $wardId));
+                    });
+                    $admissionsQuery->where(function($q) use ($wardId) {
+                        $q->where('preferred_ward_id', $wardId)
+                          ->orWhereHas('bed.wardRelation', fn($bq) => $bq->where('id', $wardId));
+                    });
+                }
+                if ($bedType) {
+                    $activeAdmissionsQuery->whereHas('bed', fn($bq) => $bq->where('bed_type', $bedType));
+                    $admissionsQuery->whereHas('bed', fn($bq) => $bq->where('bed_type', $bedType));
+                }
+
+                $activeAdmissions = $activeAdmissionsQuery->get();
+                $admissions = $admissionsQuery->get();
+
+                $wardPaymentsQuery = \App\Models\Payment::with(['patient.user'])
+                    ->whereIn('patient_id', function($query) use ($wardId) {
                         $query->select('patient_id')
                               ->from('admission_requests')
                               ->where('discharged', 0);
+                        if ($wardId) {
+                            $query->where('preferred_ward_id', $wardId);
+                        }
                     })
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($minAmt) {
+                    $wardPaymentsQuery->where('total', '>=', $minAmt);
+                }
+
+                $wardPayments = $wardPaymentsQuery->get();
                 
                 $kpis = [
                     ['label' => 'Active Admissions', 'value' => $activeAdmissions->count(), 'class' => 'text-primary'],
@@ -1099,7 +1435,7 @@ class AuditWorkbenchController extends Controller
                 $activeRows = [];
                 foreach ($activeAdmissions as $a) {
                     $activeRows[] = [
-                        $a->patient && $a->patient->user ? trim($a->patient->user->surname . ' ' . $a->patient->user->firstname) : 'N/A',
+                        $this->formatPatientModelLink($a->patient),
                         ($a->bed && $a->bed->wardRelation) ? $a->bed->wardRelation->name : ($a->preferredWard ? $a->preferredWard->name : 'N/A'),
                         $a->bed ? $a->bed->bed_name : 'N/A',
                         $a->discharge_requested ? '<span class="badge badge-warning">Clearance Pending</span>' : '<span class="badge badge-success">Admitted</span>',
@@ -1109,10 +1445,9 @@ class AuditWorkbenchController extends Controller
 
                 $paymentRows = [];
                 foreach ($wardPayments as $p) {
-                    // Try to fetch patient's active admission at payment time
                     $paymentRows[] = [
                         $p->reference_no ?? 'N/A',
-                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'N/A',
+                        $this->formatPatientModelLink($p->patient),
                         '₦' . number_format($p->total, 2),
                         $p->payment_method ?? 'N/A',
                         $p->created_at->format('Y-m-d H:i')
@@ -1134,15 +1469,54 @@ class AuditWorkbenchController extends Controller
                 break;
 
             case 'theatre_bundles_audit':
-                $procedures = \App\Models\Procedure::with(['patient.user', 'service', 'requestedByUser'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                
-                $procedureItems = \App\Models\ProcedureItem::with(['procedure.patient.user', 'productRequest.product', 'labServiceRequest.service', 'imagingServiceRequest.service'])
+                $filters = [
+                    [
+                        'name' => 'surgeon_id',
+                        'label' => 'Surgeon / Doctor',
+                        'type' => 'select',
+                        'options' => $doctorOptions,
+                        'value' => $request->get('surgeon_id')
+                    ],
+                    [
+                        'name' => 'procedure_status',
+                        'label' => 'Procedure Status',
+                        'type' => 'select',
+                        'options' => ['scheduled' => 'Scheduled', 'completed' => 'Completed', 'cancelled' => 'Cancelled'],
+                        'value' => $request->get('procedure_status')
+                    ],
+                    [
+                        'name' => 'min_qty',
+                        'label' => 'Min Consumables Qty',
+                        'type' => 'number',
+                        'value' => $request->get('min_qty')
+                    ]
+                ];
+
+                $surgeonId = $request->get('surgeon_id');
+                $procStatus = $request->get('procedure_status');
+                $minQty = $request->get('min_qty');
+
+                $proceduresQuery = \App\Models\Procedure::with(['patient.user', 'service', 'requestedByUser'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                $procedureItemsQuery = \App\Models\ProcedureItem::with(['procedure.patient.user', 'productRequest.product', 'labServiceRequest.service', 'imagingServiceRequest.service'])
                     ->where('is_bundled', 1)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($surgeonId) {
+                    $proceduresQuery->where('requested_by', $surgeonId);
+                    $procedureItemsQuery->whereHas('procedure', fn($pq) => $pq->where('requested_by', $surgeonId));
+                }
+                if ($procStatus) {
+                    $proceduresQuery->where('status', $procStatus);
+                    $procedureItemsQuery->whereHas('procedure', fn($pq) => $pq->where('status', $procStatus));
+                }
+                if ($minQty) {
+                    $procedureItemsQuery->where('qty', '>=', $minQty);
+                }
+
+                $procedures = $proceduresQuery->orderBy('created_at', 'desc')->get();
+                $procedureItems = $procedureItemsQuery->get();
 
                 $kpis = [
                     ['label' => 'Total Procedures', 'value' => $procedures->count(), 'class' => 'text-primary'],
@@ -1154,9 +1528,9 @@ class AuditWorkbenchController extends Controller
                 $procRows = [];
                 foreach ($procedures as $p) {
                     $procRows[] = [
-                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'N/A',
+                        $this->formatPatientModelLink($p->patient),
                         $p->service ? $p->service->service_name : 'N/A',
-                        $p->requestedByUser ? trim($p->requestedByUser->surname . ' ' . $p->requestedByUser->firstname) : 'N/A',
+                        $this->formatStaffNameThree($p->requestedByUser),
                         '<span class="badge badge-primary">' . ucfirst($p->status) . '</span>',
                         $p->scheduled_date ? $p->scheduled_date->format('Y-m-d H:i') : 'N/A'
                     ];
@@ -1165,7 +1539,7 @@ class AuditWorkbenchController extends Controller
                 $itemRows = [];
                 foreach ($procedureItems as $item) {
                     $itemRows[] = [
-                        $item->procedure && $item->procedure->patient && $item->procedure->patient->user ? trim($item->procedure->patient->user->surname . ' ' . $item->procedure->patient->user->firstname) : 'N/A',
+                        $this->formatPatientModelLink($item->procedure ? $item->procedure->patient : null),
                         $item->name ?? 'N/A',
                         $item->qty,
                         $item->created_at->format('Y-m-d H:i')
@@ -1187,17 +1561,56 @@ class AuditWorkbenchController extends Controller
                 break;
 
             case 'maternity_morgue_audit':
+                $filters = [
+                    [
+                        'name' => 'delivery_mode',
+                        'label' => 'Delivery Mode',
+                        'type' => 'select',
+                        'options' => ['spontaneous' => 'Spontaneous Vaginal Delivery', 'caesarean' => 'Caesarean Section', 'assisted' => 'Assisted (Forceps/Vacuum)'],
+                        'value' => $request->get('delivery_mode')
+                    ],
+                    [
+                        'name' => 'morgue_status',
+                        'label' => 'Morgue Status',
+                        'type' => 'select',
+                        'options' => ['admitted' => 'Currently Admitted', 'released' => 'Released'],
+                        'value' => $request->get('morgue_status')
+                    ],
+                    [
+                        'name' => 'delivery_outcome',
+                        'label' => 'Delivery Outcome',
+                        'type' => 'select',
+                        'options' => ['live_birth' => 'Live Birth', 'still_birth' => 'Still Birth'],
+                        'value' => $request->get('delivery_outcome')
+                    ]
+                ];
+
+                $deliveryMode = $request->get('delivery_mode');
+                $morgueStatus = $request->get('morgue_status');
+                $outcome = $request->get('delivery_outcome');
+
                 $enrollments = \App\Models\MaternityEnrollment::with(['patient.user'])
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->get();
 
-                $deliveries = \App\Models\DeliveryRecord::with(['patient.user'])
-                    ->whereBetween('delivery_date', [$startDate, $endDate])
-                    ->get();
-                    
-                $morgue = \App\Models\MorgueAdmission::with(['patient.user'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                $deliveriesQuery = \App\Models\DeliveryRecord::with(['patient.user'])
+                    ->whereBetween('delivery_date', [$startDate, $endDate]);
+
+                $morgueQuery = \App\Models\MorgueAdmission::with(['patient.user'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($deliveryMode) {
+                    $deliveriesQuery->where('delivery_mode', $deliveryMode);
+                }
+                if ($morgueStatus) {
+                    $morgueQuery->where('status', $morgueStatus);
+                }
+                if ($outcome) {
+                    $deliveriesQuery->where('outcome', $outcome);
+                }
+
+                $deliveries = $deliveriesQuery->get();
+                $morgue = $morgueQuery->get();
 
                 $kpis = [
                     ['label' => 'New ANC Enrollments', 'value' => $enrollments->count(), 'class' => 'text-primary'],
@@ -1208,7 +1621,7 @@ class AuditWorkbenchController extends Controller
                 $deliveryRows = [];
                 foreach ($deliveries as $d) {
                     $deliveryRows[] = [
-                        $d->patient && $d->patient->user ? trim($d->patient->user->surname . ' ' . $d->patient->user->firstname) : 'N/A',
+                        $this->formatPatientModelLink($d->patient),
                         $d->delivery_mode ?? 'N/A',
                         $d->outcome ?? 'N/A',
                         $d->delivery_date ? $d->delivery_date->format('Y-m-d H:i') : 'N/A'
@@ -1218,7 +1631,7 @@ class AuditWorkbenchController extends Controller
                 $morgueRows = [];
                 foreach ($morgue as $m) {
                     $morgueRows[] = [
-                        $m->patient && $m->patient->user ? trim($m->patient->user->surname . ' ' . $m->patient->user->firstname) : ($m->decedent_name ?? 'Unknown'),
+                        $m->patient ? $this->formatPatientModelLink($m->patient) : ($m->decedent_name ?? 'Unknown'),
                         $m->admission_date ? $m->admission_date->format('Y-m-d H:i') : 'N/A',
                         $m->release_date ? $m->release_date->format('Y-m-d H:i') : 'Pending',
                         $m->status ?? 'N/A'
@@ -1239,52 +1652,188 @@ class AuditWorkbenchController extends Controller
                 ];
                 break;
 
+            case 'laboratory_register':
+                $labStatusOptions = [
+                    '1' => 'Awaiting Billing',
+                    '2' => 'Awaiting Sample Collection',
+                    '3' => 'Awaiting Results',
+                    '4' => 'Completed'
+                ];
+                if (appsettings('lab_results_require_approval')) {
+                    $labStatusOptions['5'] = 'Pending Approval';
+                    $labStatusOptions['6'] = 'Rejected';
+                }
 
+                $filters = [
+                    [
+                        'name' => 'processing_status',
+                        'label' => 'Processing Status',
+                        'type' => 'select',
+                        'options' => array_merge(['all' => 'All Statuses'], $labStatusOptions),
+                        'value' => $request->get('processing_status')
+                    ],
+                    [
+                        'name' => 'reagent_store_id',
+                        'label' => 'Laboratory Store',
+                        'type' => 'select',
+                        'options' => $storeOptions,
+                        'value' => $request->get('reagent_store_id')
+                    ]
+                ];
 
-            case 'lab_imaging_register':
-                $labRequests = \App\Models\LabServiceRequest::with(['patient.user', 'service'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
-                    
-                $imagingRequests = \App\Models\ImagingServiceRequest::with(['patient.user', 'service'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                $procStatus = $request->get('processing_status');
+                $reagentStoreId = $request->get('reagent_store_id');
 
-                // Reagent usage (from stores with lab/imaging roles)
+                $labRequestsQuery = \App\Models\LabServiceRequest::with(['patient.user', 'service'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($procStatus && $procStatus !== 'all') {
+                    $labRequestsQuery->where('status', $procStatus);
+                }
+
+                $labRequests = $labRequestsQuery->orderBy('created_at', 'desc')->get();
+
                 $labStores = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_LAB)->pluck('id');
-                $imagingStores = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_IMAGING)->pluck('id');
-                $diagnosticStoreIds = $labStores->merge($imagingStores);
-
-                $reagentUsage = \App\Models\StockBatchTransaction::with(['stockBatch.product', 'stockBatch.store', 'performer'])
-                    ->whereHas('stockBatch', function($q) use ($diagnosticStoreIds) {
-                        $q->whereIn('store_id', $diagnosticStoreIds);
-                    })
+                $reagentUsageQuery = \App\Models\StockBatchTransaction::with(['stockBatch.product', 'stockBatch.store', 'performer'])
                     ->where('type', \App\Models\StockBatchTransaction::TYPE_OUT)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($reagentStoreId) {
+                    $reagentUsageQuery->whereHas('stockBatch', fn($q) => $q->where('store_id', $reagentStoreId));
+                } else {
+                    $reagentUsageQuery->whereHas('stockBatch', fn($q) => $q->whereIn('store_id', $labStores));
+                }
+
+                $reagentUsage = $reagentUsageQuery->orderBy('created_at', 'desc')->get();
 
                 $kpis = [
                     ['label' => 'Total Lab Requests', 'value' => $labRequests->count(), 'class' => 'text-primary'],
-                    ['label' => 'Total Imaging Requests', 'value' => $imagingRequests->count(), 'class' => 'text-info'],
-                    ['label' => 'Reagents/Consumables Used', 'value' => $reagentUsage->sum('quantity'), 'class' => 'text-warning']
+                    ['label' => 'Completed Tests', 'value' => $labRequests->where('status', 4)->count(), 'class' => 'text-success'],
+                    ['label' => 'Reagents Used', 'value' => $reagentUsage->sum('qty'), 'class' => 'text-warning']
+                ];
+
+                $statusMapping = [
+                    1 => '<span class="badge badge-warning">Awaiting Billing</span>',
+                    2 => '<span class="badge badge-info">Awaiting Sample</span>',
+                    3 => '<span class="badge badge-primary">Awaiting Results</span>',
+                    4 => '<span class="badge badge-success">Completed</span>',
+                    5 => '<span class="badge badge-dark">Pending Approval</span>',
+                    6 => '<span class="badge badge-danger">Rejected</span>'
                 ];
 
                 $diagnosticRows = [];
                 foreach ($labRequests as $l) {
                     $diagnosticRows[] = [
-                        $l->patient && $l->patient->user ? trim($l->patient->user->surname . ' ' . $l->patient->user->firstname) : 'N/A',
-                        'Lab: ' . ($l->service ? $l->service->service_name : 'N/A'),
-                        ucfirst($l->status ?? 'pending'),
-                        $l->approval_status ? ucfirst($l->approval_status) : 'N/A (Optional)',
+                        $this->formatPatientModelLink($l->patient),
+                        $l->service ? $l->service->service_name : 'N/A',
+                        $statusMapping[$l->status] ?? ucfirst($l->status ?? 'pending'),
+                        $l->approval_status ? ucfirst($l->approval_status) : 'N/A',
                         $l->created_at->format('Y-m-d H:i')
                     ];
                 }
+
+                $usageRows = [];
+                foreach ($reagentUsage as $r) {
+                    $usageRows[] = [
+                        ($r->stockBatch && $r->stockBatch->product) ? $r->stockBatch->product->product_name : 'N/A',
+                        ($r->stockBatch && $r->stockBatch->store) ? $r->stockBatch->store->store_name : 'N/A',
+                        $r->qty,
+                        $this->formatStaffNameThree($r->performer),
+                        $r->notes ?? 'N/A',
+                        $r->created_at->format('Y-m-d H:i')
+                    ];
+                }
+
+                $tabbedData = [
+                    'laboratory_register' => [
+                        'label' => 'Laboratory Register',
+                        'headers' => ['Patient', 'Test', 'Processing Status', 'Approval Status', 'Requested At'],
+                        'rows' => $diagnosticRows
+                    ],
+                    'reagent_usage' => [
+                        'label' => 'Reagents Usage',
+                        'headers' => ['Product', 'Laboratory Store', 'Quantity Dispensed', 'Dispensed By', 'Notes', 'Date'],
+                        'rows' => $usageRows
+                    ]
+                ];
+                break;
+
+            case 'imaging_register':
+                $imgStatusOptions = [
+                    '1' => 'Awaiting Billing',
+                    '2' => 'Awaiting Results',
+                    '4' => 'Completed',
+                    '0' => 'Dismissed'
+                ];
+                if (appsettings('imaging_results_require_approval')) {
+                    $imgStatusOptions['5'] = 'Pending Approval';
+                    $imgStatusOptions['6'] = 'Rejected';
+                }
+
+                $filters = [
+                    [
+                        'name' => 'processing_status',
+                        'label' => 'Processing Status',
+                        'type' => 'select',
+                        'options' => array_merge(['all' => 'All Statuses'], $imgStatusOptions),
+                        'value' => $request->get('processing_status')
+                    ],
+                    [
+                        'name' => 'consumable_store_id',
+                        'label' => 'Imaging Store',
+                        'type' => 'select',
+                        'options' => $storeOptions,
+                        'value' => $request->get('consumable_store_id')
+                    ]
+                ];
+
+                $procStatus = $request->get('processing_status');
+                $consumableStoreId = $request->get('consumable_store_id');
+
+                $imagingRequestsQuery = \App\Models\ImagingServiceRequest::with(['patient.user', 'service'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($procStatus && $procStatus !== 'all') {
+                    $imagingRequestsQuery->where('status', $procStatus);
+                }
+
+                $imagingRequests = $imagingRequestsQuery->orderBy('created_at', 'desc')->get();
+
+                $imagingStores = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_IMAGING)->pluck('id');
+                $usageQuery = \App\Models\StockBatchTransaction::with(['stockBatch.product', 'stockBatch.store', 'performer'])
+                    ->where('type', \App\Models\StockBatchTransaction::TYPE_OUT)
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($consumableStoreId) {
+                    $usageQuery->whereHas('stockBatch', fn($q) => $q->where('store_id', $consumableStoreId));
+                } else {
+                    $usageQuery->whereHas('stockBatch', fn($q) => $q->whereIn('store_id', $imagingStores));
+                }
+
+                $reagentUsage = $usageQuery->orderBy('created_at', 'desc')->get();
+
+                $kpis = [
+                    ['label' => 'Total Imaging Requests', 'value' => $imagingRequests->count(), 'class' => 'text-primary'],
+                    ['label' => 'Completed Scans', 'value' => $imagingRequests->where('status', 4)->count(), 'class' => 'text-success'],
+                    ['label' => 'Consumables Used', 'value' => $reagentUsage->sum('qty'), 'class' => 'text-warning']
+                ];
+
+                $statusMapping = [
+                    1 => '<span class="badge badge-warning">Awaiting Billing</span>',
+                    2 => '<span class="badge badge-info">Awaiting Results</span>',
+                    4 => '<span class="badge badge-success">Completed</span>',
+                    5 => '<span class="badge badge-dark">Pending Approval</span>',
+                    6 => '<span class="badge badge-danger">Rejected</span>',
+                    0 => '<span class="badge badge-secondary">Dismissed</span>'
+                ];
+
+                $diagnosticRows = [];
                 foreach ($imagingRequests as $i) {
                     $diagnosticRows[] = [
-                        $i->patient && $i->patient->user ? trim($i->patient->user->surname . ' ' . $i->patient->user->firstname) : 'N/A',
-                        'Imaging: ' . ($i->service ? $i->service->service_name : 'N/A'),
-                        ucfirst($i->status ?? 'pending'),
-                        $i->approval_status ? ucfirst($i->approval_status) : 'N/A (Optional)',
+                        $this->formatPatientModelLink($i->patient),
+                        $i->service ? $i->service->service_name : 'N/A',
+                        $statusMapping[$i->status] ?? ucfirst($i->status ?? 'pending'),
+                        $i->approval_status ? ucfirst($i->approval_status) : 'N/A',
                         $i->created_at->format('Y-m-d H:i')
                     ];
                 }
@@ -1295,54 +1844,96 @@ class AuditWorkbenchController extends Controller
                         ($r->stockBatch && $r->stockBatch->product) ? $r->stockBatch->product->product_name : 'N/A',
                         ($r->stockBatch && $r->stockBatch->store) ? $r->stockBatch->store->store_name : 'N/A',
                         $r->qty,
-                        $r->performer ? trim($r->performer->surname . ' ' . $r->performer->firstname) : 'System',
+                        $this->formatStaffNameThree($r->performer),
                         $r->notes ?? 'N/A',
                         $r->created_at->format('Y-m-d H:i')
                     ];
                 }
 
                 $tabbedData = [
-                    'diagnostics_register' => [
-                        'label' => 'Lab & Imaging Register',
-                        'headers' => ['Patient', 'Test/Scan', 'Processing Status', 'Approval Status', 'Requested At'],
+                    'imaging_register' => [
+                        'label' => 'Imaging Register',
+                        'headers' => ['Patient', 'Scan', 'Processing Status', 'Approval Status', 'Requested At'],
                         'rows' => $diagnosticRows
                     ],
-                    'reagent_usage' => [
-                        'label' => 'Reagents & Consumables Usage',
-                        'headers' => ['Product', 'Diagnostic Store', 'Quantity Dispensed', 'Dispensed By', 'Notes', 'Date'],
+                    'consumables_usage' => [
+                        'label' => 'Consumables Usage',
+                        'headers' => ['Product', 'Imaging Store', 'Quantity Dispensed', 'Dispensed By', 'Notes', 'Date'],
                         'rows' => $usageRows
                     ]
                 ];
                 break;
 
             case 'pharmacy_prescriptions':
+                $filters = [
+                    [
+                        'name' => 'pharmacy_store_id',
+                        'label' => 'Pharmacy Store',
+                        'type' => 'select',
+                        'options' => $storeOptions,
+                        'value' => $request->get('pharmacy_store_id')
+                    ],
+                    [
+                        'name' => 'prescription_status',
+                        'label' => 'Prescription Status',
+                        'type' => 'select',
+                        'options' => ['pending' => 'Pending', 'dispensed' => 'Dispensed', 'cancelled' => 'Cancelled'],
+                        'value' => $request->get('prescription_status')
+                    ],
+                    [
+                        'name' => 'damage_type',
+                        'label' => 'Damage Type',
+                        'type' => 'select',
+                        'options' => ['expired' => 'Expired', 'damaged' => 'Damaged', 'lost' => 'Lost', 'stolen' => 'Stolen'],
+                        'value' => $request->get('damage_type')
+                    ]
+                ];
+
+                $pharmStoreId = $request->get('pharmacy_store_id');
+                $rxStatus = $request->get('prescription_status');
+                $damageType = $request->get('damage_type');
+
                 $pharmacyStores = \App\Models\Store::whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE])->pluck('id');
 
-                $prescriptions = \App\Models\ProductRequest::with(['patient.user', 'product'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
-                
-                $returns = \App\Models\StoreRequisitionReturn::with(['product', 'sourceStore', 'creator'])
-                    ->whereIn('source_store_id', $pharmacyStores)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                $prescriptionsQuery = \App\Models\ProductRequest::with(['patient.user', 'product'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
 
-                $damages = \App\Models\StoreDamage::with(['product', 'store', 'creator'])
-                    ->whereIn('store_id', $pharmacyStores)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                $returnsQuery = \App\Models\StoreRequisitionReturn::with(['product', 'sourceStore', 'creator'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                $damagesQuery = \App\Models\StoreDamage::with(['product', 'store', 'creator'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($pharmStoreId) {
+                    $returnsQuery->where('source_store_id', $pharmStoreId);
+                    $damagesQuery->where('store_id', $pharmStoreId);
+                } else {
+                    $returnsQuery->whereIn('source_store_id', $pharmacyStores);
+                    $damagesQuery->whereIn('store_id', $pharmacyStores);
+                }
+
+                if ($rxStatus) {
+                    $prescriptionsQuery->where('status', $rxStatus);
+                }
+                if ($damageType) {
+                    $damagesQuery->where('damage_type', $damageType);
+                }
+
+                $prescriptions = $prescriptionsQuery->get();
+                $returns = $returnsQuery->get();
+                $damages = $damagesQuery->get();
 
                 $kpis = [
                     ['label' => 'Total Prescriptions', 'value' => $prescriptions->count(), 'class' => 'text-primary'],
                     ['label' => 'Dispensed', 'value' => $prescriptions->where('status', 'dispensed')->count(), 'class' => 'text-success'],
                     ['label' => 'Pharmacy Returns', 'value' => $returns->count(), 'class' => 'text-info'],
-                    ['label' => 'Damaged/Expired (Qty)', 'value' => $damages->sum('quantity'), 'class' => 'text-danger']
+                    ['label' => 'Damaged/Expired (Qty)', 'value' => $damages->sum('qty_damaged'), 'class' => 'text-danger']
                 ];
 
                 $rxRows = [];
                 foreach ($prescriptions as $p) {
                     $rxRows[] = [
-                        $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'N/A',
+                        $this->formatPatientModelLink($p->patient),
                         $p->product ? $p->product->product_name : 'N/A',
                         $p->qty,
                         ucfirst($p->status ?? 'pending'),
@@ -1357,7 +1948,7 @@ class AuditWorkbenchController extends Controller
                         $r->sourceStore ? $r->sourceStore->store_name : 'N/A',
                         $r->qty_returned,
                         $r->return_reason ?? 'N/A',
-                        $r->creator ? trim($r->creator->surname . ' ' . $r->creator->firstname) : 'N/A',
+                        $this->formatStaffNameThree($r->creator),
                         $r->created_at->format('Y-m-d H:i')
                     ];
                 }
@@ -1396,34 +1987,80 @@ class AuditWorkbenchController extends Controller
 
 
             case 'central_store_stock_check':
+                $filters = [
+                    [
+                        'name' => 'product_type',
+                        'label' => 'Product Type',
+                        'type' => 'select',
+                        'options' => ['drug' => 'Drugs', 'consumable' => 'Consumables', 'reagent' => 'Reagents', 'equipment' => 'Equipment'],
+                        'value' => $request->get('product_type')
+                    ],
+                    [
+                        'name' => 'category_id',
+                        'label' => 'Category',
+                        'type' => 'select',
+                        'options' => $categoryOptions,
+                        'value' => $request->get('category_id')
+                    ],
+                    [
+                        'name' => 'stock_level',
+                        'label' => 'Stock Status',
+                        'type' => 'select',
+                        'options' => ['all' => 'All Stocks', 'low' => 'Below Reorder Alert', 'out' => 'Out of Stock'],
+                        'value' => $request->get('stock_level')
+                    ],
+                    [
+                        'name' => 'min_qty',
+                        'label' => 'Min Quantity',
+                        'type' => 'number',
+                        'value' => $request->get('min_qty')
+                    ]
+                ];
+
+                $prodType = $request->get('product_type');
+                $catId = $request->get('category_id');
+                $stockLvl = $request->get('stock_level');
+                $minQty = $request->get('min_qty');
+
                 $mainStoreId = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_CENTRAL)->value('id');
 
-                // Re-use store stock base query
                 $stockQuery = \App\Models\StoreStock::with(['product.category', 'product.price', 'product.packagings'])
                     ->where('store_id', $mainStoreId);
                 
-                // Allow Dual-Axis Filtering from Request if passed (mocking here for auditor view)
-                if ($request->filled('product_type')) {
-                    $stockQuery->whereHas('product', fn($q) => $q->where('product_type', $request->product_type));
-                }
-                if ($request->filled('category_id')) {
-                    $stockQuery->whereHas('product', fn($q) => $q->where('category_id', $request->category_id));
-                }
-
-                $stocks = $stockQuery->get();
-
-                // PO Price Variance
-                $poItems = \App\Models\PurchaseOrderItem::with(['purchaseOrder.supplier', 'product.price'])
+                $poItemsQuery = \App\Models\PurchaseOrderItem::with(['purchaseOrder.supplier', 'product.price'])
                     ->whereHas('purchaseOrder', function($q) use ($startDate, $endDate) {
                         $q->whereBetween('created_at', [$startDate, $endDate])
                           ->whereIn('status', ['received', 'partially_received']);
-                    })->get();
+                    });
 
-                // Manual Batch Price Variance (Source Manual)
-                $manualBatches = \App\Models\StockBatch::with(['product.price', 'store', 'creator'])
+                $manualBatchesQuery = \App\Models\StockBatch::with(['product.price', 'store', 'creator'])
                     ->where('source', \App\Models\StockBatch::SOURCE_MANUAL)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($prodType) {
+                    $stockQuery->whereHas('product', fn($q) => $q->where('product_type', $prodType));
+                    $poItemsQuery->whereHas('product', fn($q) => $q->where('product_type', $prodType));
+                    $manualBatchesQuery->whereHas('product', fn($q) => $q->where('product_type', $prodType));
+                }
+                if ($catId) {
+                    $stockQuery->whereHas('product', fn($q) => $q->where('category_id', $catId));
+                    $poItemsQuery->whereHas('product', fn($q) => $q->where('category_id', $catId));
+                    $manualBatchesQuery->whereHas('product', fn($q) => $q->where('category_id', $catId));
+                }
+                if ($minQty) {
+                    $stockQuery->where('quantity', '>=', $minQty);
+                    $poItemsQuery->where('qty', '>=', $minQty);
+                    $manualBatchesQuery->where('qty', '>=', $minQty);
+                }
+                if ($stockLvl === 'low') {
+                    $stockQuery->whereRaw('quantity <= (select reorder_alert from products where products.id = store_stocks.product_id)');
+                } elseif ($stockLvl === 'out') {
+                    $stockQuery->where('quantity', '<=', 0);
+                }
+
+                $stocks = $stockQuery->get();
+                $poItems = $poItemsQuery->get();
+                $manualBatches = $manualBatchesQuery->get();
                     
                 $kpis = [
                     ['label' => 'Total Stock Value', 'value' => '₦' . number_format($stocks->sum(fn($s) => $s->quantity * optional(optional($s->product)->price)->initial_buy_price), 2), 'class' => 'text-primary'],
@@ -1447,7 +2084,7 @@ class AuditWorkbenchController extends Controller
                 $poRows = [];
                 foreach ($poItems as $pi) {
                     $sysCost = optional(optional($pi->product)->price)->initial_buy_price ?? 0;
-                    $actualCost = $pi->base_unit_cost ?? 0; // Using base unit cost from PO receive normalization
+                    $actualCost = $pi->base_unit_cost ?? 0;
                     $variance = $actualCost - $sysCost;
                     
                     $poRows[] = [
@@ -1473,7 +2110,7 @@ class AuditWorkbenchController extends Controller
                         '₦' . number_format($sysCost, 2),
                         '₦' . number_format($actualCost, 2),
                         '<span class="'.($variance > 0 ? 'text-danger' : ($variance < 0 ? 'text-success' : '')).' font-weight-bold">₦' . number_format($variance, 2) . '</span>',
-                        $mb->creator ? trim($mb->creator->surname . ' ' . $mb->creator->firstname) : 'System'
+                        $this->formatStaffNameThree($mb->creator)
                     ];
                 }
 
@@ -1497,8 +2134,34 @@ class AuditWorkbenchController extends Controller
                 break;
 
             case 'departmental_ward_stores':
-                // User can select a specific store via request. If none, we take all non-main.
+                $filters = [
+                    [
+                        'name' => 'store_id',
+                        'label' => 'Departmental Store',
+                        'type' => 'select',
+                        'options' => $storeOptions,
+                        'value' => $request->get('store_id')
+                    ],
+                    [
+                        'name' => 'product_type',
+                        'label' => 'Product Type',
+                        'type' => 'select',
+                        'options' => ['drug' => 'Drugs', 'consumable' => 'Consumables', 'reagent' => 'Reagents', 'equipment' => 'Equipment'],
+                        'value' => $request->get('product_type')
+                    ],
+                    [
+                        'name' => 'category_id',
+                        'label' => 'Category',
+                        'type' => 'select',
+                        'options' => $categoryOptions,
+                        'value' => $request->get('category_id')
+                    ]
+                ];
+
                 $storeId = $request->get('store_id');
+                $prodType = $request->get('product_type');
+                $catId = $request->get('category_id');
+
                 $storeQuery = \App\Models\Store::where('distribution_role', '!=', \App\Models\Store::ROLE_CENTRAL);
                 if ($storeId) {
                     $storeQuery->where('id', $storeId);
@@ -1508,28 +2171,33 @@ class AuditWorkbenchController extends Controller
                 $stockQuery = \App\Models\StoreStock::with(['product.category', 'product.price', 'store'])
                     ->whereIn('store_id', $decentralizedStoreIds);
                 
-                if ($request->filled('product_type')) {
-                    $stockQuery->whereHas('product', fn($q) => $q->where('product_type', $request->product_type));
-                }
-                if ($request->filled('category_id')) {
-                    $stockQuery->whereHas('product', fn($q) => $q->where('category_id', $request->category_id));
-                }
-                $stocks = $stockQuery->get();
-
-                $requisitions = \App\Models\StoreRequisition::with(['toStore', 'fromStore', 'items.product', 'requester'])
+                $requisitionsQuery = \App\Models\StoreRequisition::with(['toStore', 'fromStore', 'items.product', 'requester'])
                     ->whereIn('to_store_id', $decentralizedStoreIds)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
                     
-                $damages = \App\Models\StoreDamage::with(['product', 'store', 'creator'])
+                $damagesQuery = \App\Models\StoreDamage::with(['product', 'store', 'creator'])
                     ->whereIn('store_id', $decentralizedStoreIds)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->get();
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($prodType) {
+                    $stockQuery->whereHas('product', fn($q) => $q->where('product_type', $prodType));
+                    $requisitionsQuery->whereHas('items.product', fn($q) => $q->where('product_type', $prodType));
+                    $damagesQuery->whereHas('product', fn($q) => $q->where('product_type', $prodType));
+                }
+                if ($catId) {
+                    $stockQuery->whereHas('product', fn($q) => $q->where('category_id', $catId));
+                    $requisitionsQuery->whereHas('items.product', fn($q) => $q->where('category_id', $catId));
+                    $damagesQuery->whereHas('product', fn($q) => $q->where('category_id', $catId));
+                }
+
+                $stocks = $stockQuery->get();
+                $requisitions = $requisitionsQuery->get();
+                $damages = $damagesQuery->get();
 
                 $kpis = [
                     ['label' => 'Decentralized Stock Value', 'value' => '₦' . number_format($stocks->sum(fn($s) => $s->quantity * optional(optional($s->product)->price)->initial_buy_price), 2), 'class' => 'text-primary'],
                     ['label' => 'Requisitions Made', 'value' => $requisitions->count(), 'class' => 'text-info'],
-                    ['label' => 'Damaged/Expired (Qty)', 'value' => $damages->sum('quantity'), 'class' => 'text-danger']
+                    ['label' => 'Damaged/Expired (Qty)', 'value' => $damages->sum('qty_damaged'), 'class' => 'text-danger']
                 ];
 
                 $stockRows = [];
@@ -1552,7 +2220,7 @@ class AuditWorkbenchController extends Controller
                         $r->fromStore ? $r->fromStore->store_name : 'Main Store',
                         $r->items ? $r->items->count() : 0,
                         ucfirst($r->status),
-                        $r->requester ? trim($r->requester->surname . ' ' . $r->requester->firstname) : 'N/A',
+                        $this->formatStaffNameThree($r->requester),
                         $r->created_at->format('Y-m-d H:i')
                     ];
                 }
@@ -1685,6 +2353,16 @@ class AuditWorkbenchController extends Controller
                 break;
             case 'treatment_plans':
                 $modelClass = LabServiceRequest::class;
+                $sumField = 'id';
+                $useCount = true;
+                break;
+            case 'laboratory_register':
+                $modelClass = \App\Models\LabServiceRequest::class;
+                $sumField = 'id';
+                $useCount = true;
+                break;
+            case 'imaging_register':
+                $modelClass = \App\Models\ImagingServiceRequest::class;
                 $sumField = 'id';
                 $useCount = true;
                 break;
@@ -1822,9 +2500,7 @@ class AuditWorkbenchController extends Controller
 
         // Map the bills details beautifully
         $billsData = $bills->map(function ($bill) {
-            $patientName = $bill->patient && $bill->patient->user 
-                ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername) 
-                : ($bill->patient?->fullname ?? 'N/A');
+            $patientName = $this->formatPatientModelLink($bill->patient);
 
             $allocationPivot = $bill->payments->first()?->pivot;
             $allocatedPaid = $allocationPivot ? floatval($allocationPivot->amount_allocated) : 0.00;
@@ -1854,9 +2530,72 @@ class AuditWorkbenchController extends Controller
                 'total_paid' => floatval($payment->total),
                 'total_discount' => floatval($payment->total_discount),
                 'settled_at' => $payment->created_at->format('Y-m-d H:i'),
-                'settled_by' => $payment->staff_user ? trim($payment->staff_user->surname . ' ' . $payment->staff_user->firstname) : 'System Admin'
+                'settled_by' => $this->formatStaffNameThree($payment->staff_user)
             ],
             'bills' => $billsData
         ]);
+    }
+
+    private function formatPatientNameLink($patientId, $surname, $firstname, $othername, $fileNo) {
+        $names = [];
+        if (!empty($surname)) $names[] = trim($surname);
+        if (!empty($firstname)) $names[] = trim($firstname);
+        if (!empty($othername)) $names[] = trim($othername);
+        $fullName = count($names) > 0 ? implode(' ', $names) : '';
+        
+        if (empty($fullName)) {
+            return 'Walk-in';
+        }
+        
+        $label = $fullName;
+        if (!empty($fileNo)) {
+            $label .= ' (' . $fileNo . ')';
+        }
+        
+        if ($patientId) {
+            return '<a href="' . route('patient.show', $patientId) . '" class="text-primary font-weight-bold" target="_blank">' . $label . '</a>';
+        }
+        
+        return $label;
+    }
+
+    private function formatPatientModelLink($patient) {
+        if (!$patient) return 'Walk-in';
+        $user = $patient->user ?? null;
+        $surname = $user ? $user->surname : ($patient->surname ?? '');
+        $firstname = $user ? $user->firstname : ($patient->firstname ?? '');
+        $othername = $user ? $user->othername : ($patient->othername ?? '');
+        $fileNo = $patient->file_no ?? '';
+        $patientId = $patient->id ?? null;
+        
+        return $this->formatPatientNameLink($patientId, $surname, $firstname, $othername, $fileNo);
+    }
+
+    private function formatPatientUserLink($user, $patient = null) {
+        if (!$user && !$patient) return 'Walk-in';
+        $surname = $user ? $user->surname : ($patient ? $patient->surname : '');
+        $firstname = $user ? $user->firstname : ($patient ? $patient->firstname : '');
+        $othername = $user ? $user->othername : ($patient ? $patient->othername : '');
+        $fileNo = $patient ? $patient->file_no : '';
+        $patientId = $patient ? $patient->id : null;
+        
+        return $this->formatPatientNameLink($patientId, $surname, $firstname, $othername, $fileNo);
+    }
+
+    private function formatStaffNameThree($user) {
+        if (!$user) return 'System';
+        $names = [];
+        if (!empty($user->surname)) $names[] = trim($user->surname);
+        if (!empty($user->firstname)) $names[] = trim($user->firstname);
+        if (!empty($user->othername)) $names[] = trim($user->othername);
+        return count($names) > 0 ? implode(' ', $names) : 'System';
+    }
+
+    private function formatStaffRawName($surname, $firstname, $othername = null) {
+        $names = [];
+        if (!empty($surname)) $names[] = trim($surname);
+        if (!empty($firstname)) $names[] = trim($firstname);
+        if (!empty($othername)) $names[] = trim($othername);
+        return count($names) > 0 ? implode(' ', $names) : 'System';
     }
 }

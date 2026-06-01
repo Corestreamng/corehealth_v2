@@ -630,18 +630,33 @@
             <div class="audit-panel d-none" id="tab-module-diagnostics">
                 <div class="glass-panel d-flex flex-column gap-4">
 
-                    {{-- Worksheet: lab_imaging_register --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-lab_imaging_register" style="border: 1px solid var(--audit-border);">
+                    {{-- Worksheet: laboratory_register --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-laboratory_register" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-microscope text-primary"></i> Lab/Imaging Register & Reagent Usage</h5>
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-microscope text-primary"></i> Laboratory Register & Reagent Usage</h5>
                             <div class="d-flex gap-1">
-                                <a href="{{ route('audit.reports.show', 'lab_imaging_register') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
-                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="lab_imaging_register">Stamp Worksheet</button>
+                                <a href="{{ route('audit.reports.show', 'laboratory_register') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="laboratory_register">Stamp Worksheet</button>
                             </div>
                         </div>
-                        <p class="text-muted small">Audits diagnostic tests vs billing, and tracks lab reagent consumption via Store Roles.</p>
+                        <p class="text-muted small">Audits laboratory tests vs billing, and tracks reagent consumption using Lab store distribution roles.</p>
                         <div class="bg-light p-3 rounded border mt-2">
-                            <div class="text-muted small">Click Details to view Diagnostics Register and Reagent Usage.</div>
+                            <div class="text-muted small">Click Details to view Laboratory Register and Reagent Usage.</div>
+                        </div>
+                    </div>
+
+                    {{-- Worksheet: imaging_register --}}
+                    <div class="responsibility-section card bg-white p-3" id="sheet-imaging_register" style="border: 1px solid var(--audit-border);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-image-filter-black-white text-info"></i> Imaging Register & Consumables Usage</h5>
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('audit.reports.show', 'imaging_register') }}" class="btn btn-xs btn-primary"><i class="mdi mdi-eye"></i> Details</a>
+                                <button type="button" class="btn btn-xs btn-outline-primary stamp-sheet-btn" data-key="imaging_register">Stamp Worksheet</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Audits imaging scans vs billing, and tracks films and consumables consumption via Imaging store roles.</p>
+                        <div class="bg-light p-3 rounded border mt-2">
+                            <div class="text-muted small">Click Details to view Imaging Register and Consumables Usage.</div>
                         </div>
                     </div>
 
