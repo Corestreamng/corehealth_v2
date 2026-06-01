@@ -40,6 +40,7 @@ use App\Enums\QueueStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Yajra\DataTables\Facades\DataTables;
 
 class AuditWorkbenchController extends Controller
 {
@@ -102,6 +103,7 @@ class AuditWorkbenchController extends Controller
                 'payments.journalEntry.lines.account'
             ])
             ->orderBy('created_at', 'desc')
+            ->limit(150)
             ->get();
 
         $activeBanks = Bank::active()->get();
@@ -426,59 +428,231 @@ class AuditWorkbenchController extends Controller
             'datasets' => []
         ];
         $tabbedData = [];
+        $filters = [];
+
+        // Selective high-performance lookup loading based on active worksheet
+        $cashierOptions = [];
+        $clinicOptions = [];
+        $doctorOptions = [];
+        $wardOptions = [];
+        $hmoOptions = [];
+        $storeOptions = [];
+        $categoryOptions = [];
+
+        $responsibility_key = trim($responsibility_key);
+
+        if ($responsibility_key === 'cash_and_billing_audit' || $responsibility_key === 'discounts_refunds_debt') {
+            $cashiers = User::select('id', 'surname', 'firstname')->orderBy('surname')->get();
+            foreach ($cashiers as $c) {
+                $cashierOptions[$c->id] = trim($c->surname . ' ' . $c->firstname);
+            }
+        }
+        
+        if ($responsibility_key === 'consulting_clinics_flow') {
+            $clinics = \App\Models\Clinic::select('id', 'name')->orderBy('name')->get();
+            foreach ($clinics as $c) {
+                $clinicOptions[$c->id] = $c->name;
+            }
+            $doctors = User::select('id', 'surname', 'firstname')->orderBy('surname')->get();
+            foreach ($doctors as $d) {
+                $doctorOptions[$d->id] = trim($d->surname . ' ' . $d->firstname);
+            }
+        }
+        
+        if ($responsibility_key === 'inpatient_ward_income') {
+            $wards = \App\Models\Ward::select('id', 'name')->orderBy('name')->get();
+            foreach ($wards as $w) {
+                $wardOptions[$w->id] = $w->name;
+            }
+        }
+        
+        if ($responsibility_key === 'hmo_nhis_verification') {
+            $hmos = \App\Models\Hmo::select('id', 'name')->orderBy('name')->get();
+            foreach ($hmos as $h) {
+                $hmoOptions[$h->id] = $h->name;
+            }
+        }
+        
+        if ($responsibility_key === 'central_store_stock_check' || $responsibility_key === 'departmental_ward_stores') {
+            $stores = Store::select('id', 'store_name')->orderBy('store_name')->get();
+            foreach ($stores as $s) {
+                $storeOptions[$s->id] = $s->store_name;
+            }
+            $categories = \App\Models\ProductCategory::select('id', 'category_name')->orderBy('category_name')->get();
+            foreach ($categories as $cat) {
+                $categoryOptions[$cat->id] = $cat->category_name;
+            }
+        }
 
         switch ($responsibility_key) {
 
 
             case 'cash_and_billing_audit':
-                // 1. Unified Receipts (Payments + Patient Deposits)
-                $payments = \App\Models\Payment::with(['patient.user', 'staff_user'])
+                // 0. Set up Context-Aware Filters
+                $filters = [
+                    [
+                        'name' => 'payment_method',
+                        'label' => 'Payment Method',
+                        'type' => 'select',
+                        'options' => ['CASH' => 'Cash', 'POS' => 'POS', 'TRANSFER' => 'Bank Transfer', 'CHEQUE' => 'Cheque'],
+                        'value' => $request->get('payment_method')
+                    ],
+                    [
+                        'name' => 'cashier_id',
+                        'label' => 'Cashier',
+                        'type' => 'select',
+                        'options' => $cashierOptions,
+                        'value' => $request->get('cashier_id')
+                    ],
+                    [
+                        'name' => 'min_amount',
+                        'label' => 'Min Amount',
+                        'type' => 'number',
+                        'value' => $request->get('min_amount')
+                    ],
+                    [
+                        'name' => 'max_amount',
+                        'label' => 'Max Amount',
+                        'type' => 'number',
+                        'value' => $request->get('max_amount')
+                    ]
+                ];
+
+                $method = $request->get('payment_method');
+                $cashierId = $request->get('cashier_id');
+                $minAmount = $request->get('min_amount');
+                $maxAmount = $request->get('max_amount');
+
+                // 1. Database-Level Sums for KPIs (Filtered, Extremely Fast)
+                $kpiPayments = DB::table('payments')->whereBetween('created_at', [$startDate, $endDate]);
+                $kpiDeposits = DB::table('patient_deposits')->whereBetween('deposit_date', [$startDate, $endDate]);
+
+                if ($method) {
+                    $kpiPayments->where('payment_method', $method);
+                    $kpiDeposits->where('payment_method', $method);
+                }
+                if ($cashierId) {
+                    $kpiPayments->where('user_id', $cashierId);
+                    $kpiDeposits->where('received_by', $cashierId);
+                }
+                if ($minAmount) {
+                    $kpiPayments->where('total', '>=', $minAmount);
+                    $kpiDeposits->where('amount', '>=', $minAmount);
+                }
+                if ($maxAmount) {
+                    $kpiPayments->where('total', '<=', $maxAmount);
+                    $kpiDeposits->where('amount', '<=', $maxAmount);
+                }
+
+                $paymentsStats = $kpiPayments->selectRaw("
+                        SUM(total) as gross_payments,
+                        SUM(CASE WHEN payment_type = 'REGISTRATION' THEN total ELSE 0 END) as reg_fees
+                    ")->first();
+                $grossPayments = $paymentsStats->gross_payments ?? 0;
+                $regFees = $paymentsStats->reg_fees ?? 0;
+                $grossDeposits = $kpiDeposits->sum('amount');
+
+                $leakageStats = DB::table('product_or_service_requests')
                     ->whereBetween('created_at', [$startDate, $endDate])
+                    ->whereNull('payment_id')
+                    ->whereNull('invoice_id')
+                    ->whereRaw('NOT ((payable_amount IS NULL OR payable_amount = 0) AND (claims_amount > 0 AND validation_status = ?))', ['approved'])
+                    ->where(function($q) {
+                        $q->whereNull('hmo_id')->orWhere('hmo_id', 1)->orWhere('coverage_mode', 'cash');
+                    })
+                    ->selectRaw("SUM(CASE WHEN payable_amount > 0 THEN payable_amount ELSE amount END) as total_leakage")
+                    ->first();
+                $leakageTotal = $leakageStats->total_leakage ?? 0;
+
+                // 2. Memory-Efficient Raw DB Queries for detailed ledger tables (Filtered)
+                $paymentsQueryBuilder = DB::table('payments')
+                    ->leftJoin('patients', 'payments.patient_id', '=', 'patients.id')
+                    ->leftJoin('users as patient_user', 'patients.user_id', '=', 'patient_user.id')
+                    ->leftJoin('users as cashier_user', 'payments.user_id', '=', 'cashier_user.id')
+                    ->whereBetween('payments.created_at', [$startDate, $endDate]);
+
+                $depositsQueryBuilder = DB::table('patient_deposits')
+                    ->leftJoin('patients', 'patient_deposits.patient_id', '=', 'patients.id')
+                    ->leftJoin('users as patient_user', 'patients.user_id', '=', 'patient_user.id')
+                    ->leftJoin('users as receiver_user', 'patient_deposits.received_by', '=', 'receiver_user.id')
+                    ->whereBetween('patient_deposits.deposit_date', [$startDate, $endDate]);
+
+                if ($method) {
+                    $paymentsQueryBuilder->where('payments.payment_method', $method);
+                    $depositsQueryBuilder->where('patient_deposits.payment_method', $method);
+                }
+                if ($cashierId) {
+                    $paymentsQueryBuilder->where('payments.user_id', $cashierId);
+                    $depositsQueryBuilder->where('patient_deposits.received_by', $cashierId);
+                }
+                if ($minAmount) {
+                    $paymentsQueryBuilder->where('payments.total', '>=', $minAmount);
+                    $depositsQueryBuilder->where('patient_deposits.amount', '>=', $minAmount);
+                }
+                if ($maxAmount) {
+                    $paymentsQueryBuilder->where('payments.total', '<=', $maxAmount);
+                    $depositsQueryBuilder->where('patient_deposits.amount', '<=', $maxAmount);
+                }
+
+                $paymentsQuery = $paymentsQueryBuilder->select([
+                        'payments.id',
+                        'payments.reference_no',
+                        'payments.payment_type',
+                        'payments.payment_method',
+                        'payments.total',
+                        'payments.created_at',
+                        'cashier_user.surname as cashier_surname',
+                        'cashier_user.firstname as cashier_firstname',
+                        'patient_user.surname as patient_surname',
+                        'patient_user.firstname as patient_firstname'
+                    ])
+                    ->orderBy('payments.created_at', 'desc')
+                    ->limit(1000)
                     ->get();
-                
-                $deposits = \App\Models\Accounting\PatientDeposit::with(['patient.user', 'receiver'])
-                    ->whereBetween('deposit_date', [$startDate, $endDate])
+
+                $depositsQuery = $depositsQueryBuilder->select([
+                        'patient_deposits.id',
+                        'patient_deposits.deposit_number',
+                        'patient_deposits.payment_method',
+                        'patient_deposits.amount',
+                        'patient_deposits.deposit_date',
+                        'receiver_user.surname as receiver_surname',
+                        'receiver_user.firstname as receiver_firstname',
+                        'patient_user.surname as patient_surname',
+                        'patient_user.firstname as patient_firstname'
+                    ])
+                    ->orderBy('patient_deposits.deposit_date', 'desc')
+                    ->limit(1000)
                     ->get();
 
                 $receipts = collect();
-                $grossPayments = 0;
-                $grossDeposits = 0;
-                $regFees = 0;
-
-                foreach ($payments as $p) {
-                    $grossPayments += $p->total;
-                    if ($p->payment_type === 'REGISTRATION') {
-                        $regFees += $p->total;
-                    }
+                foreach ($paymentsQuery as $p) {
                     $receipts->push([
-                        'id' => 'PAY-'.$p->id,
                         'reference' => $p->reference_no ?? 'N/A',
-                        'cashier' => $p->staff_user ? trim($p->staff_user->surname . ' ' . $p->staff_user->firstname) : 'System',
-                        'patient' => $p->patient && $p->patient->user ? trim($p->patient->user->surname . ' ' . $p->patient->user->firstname) : 'Walk-in',
+                        'cashier' => ($p->cashier_surname || $p->cashier_firstname) ? trim($p->cashier_surname . ' ' . $p->cashier_firstname) : 'System',
+                        'patient' => ($p->patient_surname || $p->patient_firstname) ? trim($p->patient_surname . ' ' . $p->patient_firstname) : 'Walk-in',
                         'type' => ucfirst(str_replace('_', ' ', $p->payment_type ?? 'N/A')),
                         'method' => $p->payment_method ?? 'N/A',
                         'amount' => $p->total,
-                        'date' => $p->created_at->format('Y-m-d H:i'),
+                        'date' => Carbon::parse($p->created_at)->format('Y-m-d H:i'),
                         'datetime' => $p->created_at
                     ]);
                 }
 
-                foreach ($deposits as $d) {
-                    $grossDeposits += $d->amount;
+                foreach ($depositsQuery as $d) {
                     $receipts->push([
-                        'id' => 'DEP-'.$d->id,
                         'reference' => $d->deposit_number ?? 'N/A',
-                        'cashier' => $d->receiver ? trim($d->receiver->surname . ' ' . $d->receiver->firstname) : 'System',
-                        'patient' => $d->patient && $d->patient->user ? trim($d->patient->user->surname . ' ' . $d->patient->user->firstname) : 'N/A',
+                        'cashier' => ($d->receiver_surname || $d->receiver_firstname) ? trim($d->receiver_surname . ' ' . $d->receiver_firstname) : 'System',
+                        'patient' => ($d->patient_surname || $d->patient_firstname) ? trim($d->patient_surname . ' ' . $d->patient_firstname) : 'N/A',
                         'type' => 'Account Deposit',
                         'method' => $d->payment_method ?? 'N/A',
                         'amount' => $d->amount,
-                        'date' => $d->deposit_date->format('Y-m-d H:i'),
+                        'date' => Carbon::parse($d->deposit_date)->format('Y-m-d H:i'),
                         'datetime' => $d->deposit_date
                     ]);
                 }
 
-                $receipts = $receipts->sortByDesc('datetime');
+                $receipts = $receipts->sortByDesc('datetime')->take(1000);
 
                 $receiptRows = [];
                 foreach ($receipts as $r) {
@@ -493,30 +667,47 @@ class AuditWorkbenchController extends Controller
                     ];
                 }
 
-                // 2. Revenue Leakage (Unpaid Private Services)
-                $leakageRequests = \App\Models\ProductOrServiceRequest::with(['user', 'product', 'service'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->whereNull('payment_id')
-                    ->whereNull('invoice_id')
-                    ->whereRaw('NOT ((payable_amount IS NULL OR payable_amount = 0) AND (claims_amount > 0 AND validation_status = ?))', ['approved'])
+                // 3. Memory-Efficient Raw DB Query for Revenue Leakage (Limit 1,000 records)
+                $leakageQuery = DB::table('product_or_service_requests as posr')
+                    ->leftJoin('users as u', 'posr.user_id', '=', 'u.id')
+                    ->leftJoin('products as pr', 'posr.product_id', '=', 'pr.id')
+                    ->leftJoin('services as sv', 'posr.service_id', '=', 'sv.id')
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->whereNull('posr.payment_id')
+                    ->whereNull('posr.invoice_id')
+                    ->whereRaw('NOT ((posr.payable_amount IS NULL OR posr.payable_amount = 0) AND (posr.claims_amount > 0 AND posr.validation_status = ?))', ['approved'])
                     ->where(function($q) {
-                        $q->whereNull('hmo_id')->orWhere('hmo_id', 1)->orWhere('coverage_mode', 'cash');
+                        $q->whereNull('posr.hmo_id')->orWhere('posr.hmo_id', 1)->orWhere('posr.coverage_mode', 'cash');
                     })
+                    ->select([
+                        'posr.id',
+                        'posr.payable_amount',
+                        'posr.amount',
+                        'posr.discount',
+                        'posr.created_at',
+                        'u.surname as user_surname',
+                        'u.firstname as user_firstname',
+                        'pr.product_name as product_name',
+                        'sv.service_name as service_name'
+                    ])
+                    ->orderBy('posr.created_at', 'desc')
+                    ->limit(1000)
                     ->get();
                 
                 $leakageRows = [];
-                $leakageTotal = 0;
-                foreach ($leakageRequests as $r) {
+                foreach ($leakageQuery as $r) {
                     $amt = $r->payable_amount > 0 ? $r->payable_amount : $r->amount;
-                    $leakageTotal += $amt;
+                    $itemName = $r->product_name ?: ($r->service_name ?: 'N/A');
+                    $patientName = ($r->user_surname || $r->user_firstname) ? trim($r->user_surname . ' ' . $r->user_firstname) : 'N/A';
+                    
                     $leakageRows[] = [
                         $r->id,
-                        $r->user ? trim($r->user->surname . ' ' . $r->user->firstname) : 'N/A',
-                        $r->product ? $r->product->name : ($r->service ? $r->service->name : 'N/A'),
+                        $patientName,
+                        $itemName,
                         '₦' . number_format($r->amount, 2),
                         '₦' . number_format($r->discount ?? 0, 2),
                         '<span class="text-danger font-weight-bold">₦' . number_format($amt, 2) . '</span>',
-                        $r->created_at->format('Y-m-d H:i')
+                        Carbon::parse($r->created_at)->format('Y-m-d H:i')
                     ];
                 }
 
@@ -529,12 +720,12 @@ class AuditWorkbenchController extends Controller
 
                 $tabbedData = [
                     'unified_receipts' => [
-                        'label' => 'Unified Daily Receipts',
+                        'label' => 'Unified Daily Receipts (Showing recent 1,000)',
                         'headers' => ['Reference No', 'Cashier', 'Patient', 'Type', 'Method', 'Amount', 'Date'],
                         'rows' => $receiptRows
                     ],
                     'revenue_leakage' => [
-                        'label' => 'Unbilled Self/Private Services (Leakage)',
+                        'label' => 'Unbilled Self/Private Services (Showing recent 1,000)',
                         'headers' => ['Req ID', 'Patient', 'Item', 'Original Price', 'Discount', 'Leakage Value', 'Date'],
                         'rows' => $leakageRows
                     ]
@@ -1599,9 +1790,17 @@ class AuditWorkbenchController extends Controller
             'datasets' => $chartDatasets
         ];
 
+        if ($request->ajax()) {
+            $tab = $request->get('datatable_tab', 'default');
+            if (isset($tabbedData) && isset($tabbedData[$tab])) {
+                return DataTables::of($tabbedData[$tab]['rows'])->escapeColumns([])->make(true);
+            }
+            return DataTables::of($rows)->escapeColumns([])->make(true);
+        }
+
         return view('admin.audit.reports.show', compact(
             'responsibility_key', 'categoryLabel', 'reportLabel',
-            'startDate', 'endDate', 'stamp', 'kpis', 'headers', 'rows', 'chart', 'tabbedData'
+            'startDate', 'endDate', 'stamp', 'kpis', 'headers', 'rows', 'chart', 'tabbedData', 'filters'
         ));
     }
 
