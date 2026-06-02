@@ -42,11 +42,10 @@
             </div>
         </div>
 
-        {{-- Interactive Filter & Stats Bar --}}
-        <div class="row mb-4">
-            {{-- Search & Date Filters --}}
-            <div class="col-lg-4 mb-3">
-                <div class="card h-100 bg-white shadow-sm border-0 p-3">
+        <div class="row">
+            {{-- Left Sidebar: Advanced Filters --}}
+            <div class="col-lg-3 mb-4">
+                <div class="card bg-white shadow-sm border-0 p-3 sticky-top" style="top: 20px; z-index: 100;">
                     <h6 class="text-dark font-weight-bold mb-3"><i class="mdi mdi-filter-variant"></i> Advanced Filters</h6>
                     <form method="GET" id="filterForm" action="{{ route('audit.reports.show', $responsibility_key) }}" class="d-flex flex-column gap-2">
                         <div>
@@ -87,11 +86,12 @@
             </div>
 
 
-            {{-- Dynamic KPIs --}}
-            <div class="col-lg-8 mb-3">
-                <div class="row h-100">
+            {{-- Right Main Content Area --}}
+            <div class="col-lg-9">
+                {{-- Dynamic KPIs --}}
+                <div class="row mb-4">
                     @foreach($kpis as $kpi)
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 col-sm-6 mb-3">
                             <div class="card h-100 bg-white shadow-sm border-0 p-3 d-flex flex-column justify-content-between">
                                 <span class="text-muted small text-uppercase font-weight-bold">{{ $kpi['label'] }}</span>
                                 <h3 class="font-weight-bold my-2 {{ $kpi['class'] ?? 'text-dark' }}">{{ $kpi['value'] }}</h3>
@@ -100,13 +100,9 @@
                         </div>
                     @endforeach
                 </div>
-            </div>
-        </div>
 
-        {{-- Graphical Analytics Panel --}}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card bg-white shadow-sm border-0">
+                {{-- Graphical Analytics Panel --}}
+                <div class="card bg-white shadow-sm border-0 mb-4">
                     <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 text-dark font-weight-bold"><i class="mdi mdi-chart-line text-indigo"></i> Graphical Analysis & Daily Trends</h5>
                         <span class="badge bg-light text-muted">Chart.js Visualization</span>
@@ -117,17 +113,13 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        {{-- Real DataTable Section --}}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card bg-white shadow-sm border-0">
+                {{-- Real DataTable Section --}}
+                <div class="card bg-white shadow-sm border-0 mb-4">
                     <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 text-dark font-weight-bold"><i class="mdi mdi-database-outline"></i> Detailed Transaction Ledger</h5>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-xs btn-outline-success" onclick="window.print()">
+                            <button type="button" class="btn btn-xs btn-outline-success" data-toggle="modal" data-bs-toggle="modal" data-target="#printReportModal" data-bs-target="#printReportModal">
                                 <i class="mdi mdi-printer"></i> Print Report
                             </button>
                         </div>
@@ -147,7 +139,7 @@
                                 @foreach($tabbedData as $tabId => $tabInfo)
                                     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $tabId }}" role="tabpanel" aria-labelledby="{{ $tabId }}-tab">
                                         <div class="table-responsive mt-2">
-                                            <table class="table table-striped table-bordered table-sm audit-datatable" id="auditDataTable_{{ $tabId }}">
+                                            <table class="table table-striped table-bordered table-sm audit-datatable w-100" id="auditDataTable_{{ $tabId }}" style="width: 100%;">
                                                 <thead>
                                                     <tr>
                                                         @foreach($tabInfo['headers'] as $header)
@@ -165,7 +157,7 @@
                             </div>
                         @else
                             <div class="table-responsive">
-                                <table class="table table-striped table-bordered table-sm audit-datatable" id="auditDataTable_default">
+                                <table class="table table-striped table-bordered table-sm audit-datatable w-100" id="auditDataTable_default" style="width: 100%;">
                                     <thead>
                                         <tr>
                                             @foreach($headers as $header)
@@ -181,8 +173,8 @@
                         @endif
                     </div>
                 </div>
-            </div>
-        </div>
+            </div> {{-- End Right Main Content --}}
+        </div> {{-- End Outer Layout Row --}}
 
     </div>
 </div>
@@ -214,6 +206,66 @@
                 <div class="modal-footer bg-white border-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-indigo text-white" style="background: #4f46e5;">Apply Approval Stamp</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Print Modal --}}
+<div class="modal fade" id="printReportModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title text-dark">Print Audit Report</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('audit.reports.print', $responsibility_key) }}" method="GET" target="_blank">
+                <input type="hidden" name="start_date" value="{{ request('start_date', $startDate->format('Y-m-d')) }}">
+                <input type="hidden" name="end_date" value="{{ request('end_date', $endDate->format('Y-m-d')) }}">
+                @if(isset($filters) && count($filters) > 0)
+                    @foreach($filters as $filter)
+                        <input type="hidden" name="{{ $filter['name'] }}" value="{{ $filter['value'] }}">
+                    @endforeach
+                @endif
+
+                <div class="modal-body d-flex flex-column gap-3">
+                    <div class="bg-light p-2 rounded border mb-3">
+                        <div class="text-muted small">Select the sections you want to include in the printed report.</div>
+                    </div>
+                    
+                    @if(isset($tabbedData) && count($tabbedData) > 0)
+                        <div class="form-group">
+                            <label class="font-weight-bold d-block mb-2">Report Sections to Print</label>
+                            @foreach($tabbedData as $tabId => $tabInfo)
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="tabs[]" value="{{ $tabId }}" id="print_tab_{{ $tabId }}" checked>
+                                    <label class="form-check-label" for="print_tab_{{ $tabId }}">
+                                        {{ $tabInfo['label'] }}
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="alert alert-info py-2 small">
+                            This report consists of a single combined dataset.
+                        </div>
+                    @endif
+
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold d-block mb-1">Max Rows per Section</label>
+                        <select name="max_rows" class="form-control form-select-sm">
+                            <option value="-1">All Rows (Default)</option>
+                            <option value="50">50 Rows</option>
+                            <option value="100">100 Rows</option>
+                            <option value="500">500 Rows</option>
+                            <option value="1000">1,000 Rows</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success"><i class="mdi mdi-printer"></i> Generate Print View</button>
                 </div>
             </form>
         </div>
@@ -304,6 +356,11 @@ $(document).ready(function() {
                 processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
             }
         });
+    });
+
+    // Recalculate columns width when a tab is shown to fix width issue in hidden tabs
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
     });
 
     // 3. Stamping Period Action
