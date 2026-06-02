@@ -165,7 +165,7 @@ class AuditReportService
     /**
      * Get Query for Staff Settlement payments matching filters
      */
-    public function getSettlementsQuery(Carbon $startDate, Carbon $endDate, array $filters)
+    public function getSettlementsQuery(Carbon $startDate, Carbon $endDate, array $filters, $withAllocations = false)
     {
         // If type filter is set and it's not settlement/all, return null
         if (!empty($filters['item_type']) && $filters['item_type'] !== 'settlement') {
@@ -179,9 +179,19 @@ class AuditReportService
         }
 
         $query = DB::table('payments')
-            ->leftJoin('users as cashier_user', 'payments.user_id', '=', 'cashier_user.id')
-            ->leftJoin('users as patient_user', 'payments.patient_id', '=', 'patient_user.id') // staff bills point to user
-            ->where('payments.payment_type', 'STAFF_BILL_SETTLEMENT')
+            ->leftJoin('users as cashier_user', 'payments.user_id', '=', 'cashier_user.id');
+
+        if ($withAllocations) {
+            $query->leftJoin('staff_bill_payment_allocations as sbpa', 'payments.id', '=', 'sbpa.payment_id')
+                ->leftJoin('staff_bills as sb', 'sbpa.staff_bill_id', '=', 'sb.id')
+                ->leftJoin('patients as pt', 'sb.patient_id', '=', 'pt.id')
+                ->leftJoin('users as patient_user', 'pt.user_id', '=', 'patient_user.id')
+                ->leftJoin('payments as orig_pay', 'sb.payment_id', '=', 'orig_pay.id');
+        } else {
+            $query->leftJoin('users as patient_user', 'payments.patient_id', '=', 'patient_user.id');
+        }
+
+        $query->where('payments.payment_type', 'STAFF_BILL_SETTLEMENT')
             ->whereBetween('payments.created_at', [$startDate, $endDate]);
 
         return $this->applyPaymentFilters($query, $filters);
