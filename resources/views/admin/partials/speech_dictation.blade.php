@@ -4,6 +4,7 @@
     $showLangSelect = $showLangSelect ?? true;
     $editorType = $editorType ?? 'textarea';
     $defaultLang = $defaultLang ?? 'en-US';
+    $hosColor = appsettings('hos_color') ?? '#0066cc';
 @endphp
 
 <div class="speech-dictation-wrapper d-inline-flex flex-column {{ $class ?? '' }}" id="speech-wrapper-{{ $uniqueId }}">
@@ -43,21 +44,51 @@
         <strong>AI Assistant Notice:</strong> Offline Speech Dictation is active. Note formatting, templates, and clinical recommendation features are currently in active beta development and not fully complete.
     </div>
 
-    {{-- Live Preview Speech Bubble --}}
-    <div id="speech-preview-bubble-{{ $uniqueId }}" 
-         class="d-none mt-2 p-2 border rounded-3 shadow-sm speech-preview-bubble-kit" 
-         style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-color: rgba(0, 123, 255, 0.12) !important;">
-        <div class="d-flex align-items-center gap-2">
-            <div class="speech-wave-indicator d-flex align-items-center gap-1">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
+    {{-- Fullscreen Overlay --}}
+    <div id="speech-overlay-{{ $uniqueId }}" class="speech-overlay-fullscreen d-none" style="--hos-color: {{ $hosColor }};">
+        {{-- Muted Header Info --}}
+        <div class="speech-overlay-header">
+            <div class="speech-header-left">ENCOUNTER • DICTATION</div>
+            <div class="speech-header-center">CLINICAL AUDIO CAPTURE</div>
+        </div>
+        
+        <div class="speech-overlay-content">
+            {{-- Real-time Audio Waveform --}}
+            <div class="speech-audio-wave">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
             </div>
-            <small id="speech-preview-text-{{ $uniqueId }}" class="text-muted text-wrap font-monospace" style="font-size: 0.8rem;">
-                Listening...
-            </small>
+            
+            <div id="speech-history-text-{{ $uniqueId }}" class="speech-overlay-history d-none"></div>
+            
+            {{-- Floating Capsule Control Bar --}}
+            <div class="speech-capsule-bar">
+                <div class="capsule-left">
+                    <span class="speech-sparkle-icon"><i class="fa fa-magic"></i></span>
+                    <div id="speech-preview-text-{{ $uniqueId }}" class="speech-overlay-text">
+                        Listening...
+                    </div>
+                </div>
+                <div class="capsule-right">
+                    <span class="status-dot"></span>
+                    <button type="button" id="btn-stop-overlay-{{ $uniqueId }}" class="btn-capsule-stop" title="Stop Dictation">
+                        <i class="fa fa-stop"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -222,6 +253,232 @@
     0% { transform: scaleY(0.6); }
     100% { transform: scaleY(2.2); }
 }
+
+/* Fullscreen Overlay Styling (Sleek Theme & Ambient Glow) */
+.speech-overlay-fullscreen {
+    /* Light Mode (Default) Theme Variables */
+    --overlay-bg: #f8fafc;
+    --overlay-bg-gradient: radial-gradient(circle at 50% 110%, color-mix(in srgb, var(--hos-color) 20%, transparent) 0%, transparent 60%), #f8fafc;
+    --header-text-color: rgba(0, 0, 0, 0.45);
+    --wave-bar-bg: #2d3748;
+    --wave-bar-opacity: 0.2;
+    --capsule-bg: rgba(255, 255, 255, 0.85);
+    --capsule-border: 1px solid rgba(0, 0, 0, 0.08);
+    --capsule-shadow: 0 20px 40px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --text-color: #1a202c;
+    --history-bg: rgba(255, 255, 255, 0.7);
+    --history-border: 1px solid rgba(0, 0, 0, 0.06);
+    --history-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    --history-text-color: #2d3748;
+    --btn-stop-bg: rgba(0, 0, 0, 0.04);
+    --btn-stop-border: 1px solid rgba(0, 0, 0, 0.08);
+    --btn-stop-color: #1a202c;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--overlay-bg);
+    background: var(--overlay-bg-gradient);
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3rem 0;
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+}
+
+/* Dark Mode Theme Variables */
+body.dark-mode .speech-overlay-fullscreen {
+    --overlay-bg: #0a0c10;
+    --overlay-bg-gradient: radial-gradient(circle at 50% 110%, color-mix(in srgb, var(--hos-color) 25%, transparent) 0%, transparent 60%), #0a0c10;
+    --header-text-color: rgba(255, 255, 255, 0.4);
+    --wave-bar-bg: #ffffff;
+    --wave-bar-opacity: 0.65;
+    --capsule-bg: rgba(20, 22, 28, 0.85);
+    --capsule-border: 1px solid rgba(255, 255, 255, 0.08);
+    --capsule-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --text-color: #ffffff;
+    --history-bg: rgba(255, 255, 255, 0.02);
+    --history-border: 1px solid rgba(255, 255, 255, 0.05);
+    --history-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    --history-text-color: rgba(255, 255, 255, 0.7);
+    --btn-stop-bg: rgba(255, 255, 255, 0.05);
+    --btn-stop-border: 1px solid rgba(255, 255, 255, 0.1);
+    --btn-stop-color: #ffffff;
+}
+
+.speech-overlay-fullscreen:not(.d-none) {
+    opacity: 1;
+}
+
+.speech-overlay-header {
+    width: 90%;
+    max-width: 800px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--header-text-color);
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    font-family: monospace;
+}
+
+.speech-overlay-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3.5rem;
+    max-width: 800px;
+    width: 90%;
+    flex-grow: 1;
+    margin-bottom: 2rem;
+}
+
+/* Audio Waveform */
+.speech-audio-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 150px;
+}
+.wave-bar {
+    width: 6px;
+    height: 15px;
+    background: var(--wave-bar-bg);
+    border-radius: 5px;
+    transition: height 0.05s ease;
+    opacity: var(--wave-bar-opacity);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+.wave-bar:nth-child(even) {
+    background: var(--hos-color, #0d6efd);
+    opacity: 0.9;
+    box-shadow: 0 0 15px color-mix(in srgb, var(--hos-color, #0d6efd) 50%, transparent);
+}
+
+/* Floating Capsule Control Bar */
+.speech-capsule-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 650px;
+    background: var(--capsule-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: var(--capsule-border);
+    border-radius: 40px;
+    padding: 12px 24px;
+    box-shadow: var(--capsule-shadow);
+}
+
+.capsule-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.speech-sparkle-icon {
+    font-size: 1.3rem;
+    color: var(--hos-color, #0d6efd);
+    filter: drop-shadow(0 0 8px var(--hos-color, #0d6efd));
+    animation: sparkleGlow 2s infinite alternate;
+}
+
+@keyframes sparkleGlow {
+    0% { transform: scale(1); filter: drop-shadow(0 0 5px var(--hos-color, #0d6efd)); }
+    100% { transform: scale(1.15); filter: drop-shadow(0 0 15px var(--hos-color, #0d6efd)); }
+}
+
+.speech-overlay-text {
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow-x: auto;
+    text-align: left;
+    margin: 0;
+    scrollbar-width: none;
+}
+.speech-overlay-text::-webkit-scrollbar {
+    display: none;
+}
+
+.capsule-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--hos-color, #0d6efd);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--hos-color, #0d6efd);
+    animation: statusPulse 1.5s infinite alternate;
+}
+
+@keyframes statusPulse {
+    0% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+.btn-capsule-stop {
+    background: var(--btn-stop-bg);
+    color: var(--btn-stop-color);
+    border: var(--btn-stop-border);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-capsule-stop:hover {
+    background: #ff5858;
+    border-color: #ff5858;
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 88, 88, 0.4);
+    transform: translateY(-1px);
+}
+
+.speech-overlay-history {
+    font-size: 1.15rem;
+    color: var(--history-text-color);
+    text-align: left;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 20px 25px;
+    background: var(--history-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: var(--history-border);
+    box-shadow: var(--history-shadow);
+    border-radius: 20px;
+    margin-bottom: -1rem;
+    line-height: 1.6;
+    border-left: 5px solid var(--hos-color, #0d6efd);
+}
+.speech-overlay-history span {
+    display: inline;
+}
 </style>
 
 <script>
@@ -237,8 +494,10 @@ document.addEventListener('DOMContentLoaded', function() {
             buttonSelector: '#btn-voice-dictate-{{ $uniqueId }}',
             formatButtonSelector: '#btn-manual-format-{{ $uniqueId }}',
             targetSelector: '#{{ $targetId }}',
-            previewBubbleSelector: '#speech-preview-bubble-{{ $uniqueId }}',
+            previewBubbleSelector: '#speech-overlay-{{ $uniqueId }}',
+            overlayStopBtnSelector: '#btn-stop-overlay-{{ $uniqueId }}',
             previewTextSelector: '#speech-preview-text-{{ $uniqueId }}',
+            historyTextSelector: '#speech-history-text-{{ $uniqueId }}',
             langSelectSelector: '#select-speech-lang-{{ $uniqueId }}',
             editorType: '{{ $editorType }}',
             defaultLang: '{{ $defaultLang }}',

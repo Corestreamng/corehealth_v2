@@ -79,7 +79,9 @@ class SpeechDictationKit {
         this.button = document.querySelector(options.buttonSelector);
         this.target = document.querySelector(options.targetSelector);
         this.previewBubble = document.querySelector(options.previewBubbleSelector);
+        this.overlayStopBtn = document.querySelector(options.overlayStopBtnSelector);
         this.previewText = document.querySelector(options.previewTextSelector);
+        this.historyText = document.querySelector(options.historyTextSelector);
         this.langSelect = document.querySelector(options.langSelectSelector);
         this.formatButton = document.querySelector(options.formatButtonSelector);
 
@@ -92,6 +94,12 @@ class SpeechDictationKit {
         this.ignoreNextStart = false;
         this.isFirstInsertOfSession = true; // reset each time start() is called
         this.scribe = new RetextScribe();
+
+        // Voice visualization properties
+        this.audioContext = null;
+        this.audioAnalyser = null;
+        this.audioStream = null;
+        this.audioAnimId = null;
 
         if (!this.button || !this.target) {
             console.error('SpeechDictationKit: Button or target element not found.');
@@ -138,6 +146,14 @@ class SpeechDictationKit {
             e.preventDefault();
             this.toggleDictation();
         });
+
+        // Overlay Stop Button Click
+        if (this.overlayStopBtn) {
+            this.overlayStopBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.stop();
+            });
+        }
 
         // Manual Polish Note Click
         if (this.formatButton) {
@@ -196,6 +212,7 @@ class SpeechDictationKit {
             // Render Live Preview
             if (interimTranscript && this.previewText) {
                 this.previewText.innerHTML = `<em>${interimTranscript}</em>`;
+                this.previewText.scrollLeft = this.previewText.scrollWidth;
                 if (this.previewBubble) this.previewBubble.classList.remove('d-none');
             }
 
@@ -206,6 +223,14 @@ class SpeechDictationKit {
                 const formattedText = this.formatSpeech(cleanedText);
 
                 if (formattedText) {
+                    if (this.historyText) {
+                        this.historyText.classList.remove('d-none');
+                        const span = document.createElement('span');
+                        span.textContent = formattedText + ' ';
+                        this.historyText.appendChild(span);
+                        this.historyText.scrollTop = this.historyText.scrollHeight;
+                    }
+                    
                     this.insertText(formattedText);
                     if (this.onResultCallback) {
                         this.onResultCallback(formattedText);
@@ -215,6 +240,7 @@ class SpeechDictationKit {
                 // Clear active preview
                 if (this.previewText) {
                     this.previewText.textContent = 'Listening...';
+                    this.previewText.scrollLeft = 0;
                 }
             }
         };
@@ -232,6 +258,13 @@ class SpeechDictationKit {
         if (this.recognition && !this.isListening) {
             this.recognition.lang = this.getLanguage();
             this.isFirstInsertOfSession = true; // new session — next insert goes to new paragraph
+            
+            // Clear history for new dictation session
+            if (this.historyText) {
+                this.historyText.innerHTML = '';
+                this.historyText.classList.add('d-none');
+            }
+
             this.updateUI('connecting');
             try {
                 this.recognition.start();
@@ -263,6 +296,9 @@ class SpeechDictationKit {
             if (this.previewText) {
                 this.previewText.textContent = 'Listening...';
             }
+            
+            // Activate voice volume responsiveness
+            this.startVoiceVisualizer();
         } else if (state === 'connecting') {
             this.button.className = 'btn btn-speech-kit btn-speech-connecting d-flex align-items-center gap-2';
             this.button.innerHTML = '<span class="speech-mic-icon-wrapper"><i class="fa fa-spinner fa-spin"></i></span> Connecting...';
@@ -274,6 +310,87 @@ class SpeechDictationKit {
             if (this.previewBubble) {
                 this.previewBubble.classList.add('d-none');
             }
+            
+            // Shutdown visualizer and reset sizes
+            this.stopVoiceVisualizer();
+        }
+    }
+
+    async startVoiceVisualizer() {
+        this.stopVoiceVisualizer(); // Safety cleanup first
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.audioStream = stream;
+
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContextClass();
+            this.audioAnalyser = this.audioContext.createAnalyser();
+            this.audioAnalyser.fftSize = 64; // small buffer for volume monitoring
+
+            const source = this.audioContext.createMediaStreamSource(stream);
+            source.connect(this.audioAnalyser);
+
+            const bufferLength = this.audioAnalyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            const waveBars = this.previewBubble ? this.previewBubble.querySelectorAll('.wave-bar') : [];
+
+            const draw = () => {
+                if (!this.audioContext || !this.isListening) return;
+                this.audioAnimId = requestAnimationFrame(draw);
+
+                this.audioAnalyser.getByteFrequencyData(dataArray);
+
+                if (waveBars.length > 0) {
+                    const step = Math.floor(bufferLength / waveBars.length);
+                    waveBars.forEach((bar, index) => {
+                        const val = dataArray[index * step] || 0;
+                        // Map frequency amplitude (0-255) to height (15px - 140px)
+                        const height = Math.max(15, (val / 255) * 130);
+                        bar.style.height = `${height}px`;
+                    });
+                }
+            };
+
+            draw();
+        } catch (e) {
+            console.warn('Speech Voice Visualizer failed to start:', e);
+        }
+    }
+
+    stopVoiceVisualizer() {
+        if (this.audioAnimId) {
+            cancelAnimationFrame(this.audioAnimId);
+            this.audioAnimId = null;
+        }
+
+        if (this.audioContext) {
+            try {
+                if (this.audioContext.state !== 'closed') {
+                    this.audioContext.close();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            this.audioContext = null;
+        }
+
+        if (this.audioStream) {
+            try {
+                this.audioStream.getTracks().forEach(track => track.stop());
+            } catch (e) {
+                console.error(e);
+            }
+            this.audioStream = null;
+        }
+        
+        // Reset element styles back to CSS defaults
+        if (this.previewBubble) {
+            const waveBars = this.previewBubble.querySelectorAll('.wave-bar');
+            waveBars.forEach(bar => {
+                bar.style.height = '';
+            });
         }
     }
 
