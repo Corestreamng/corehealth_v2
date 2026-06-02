@@ -83,13 +83,14 @@ class AuditWorkbenchController extends Controller
         $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date)->endOfDay() : now()->endOfDay();
 
         // 1. Staff Receivables Data
-        $staffWithBills = User::whereHas('staff_profile')
+        $staffWithBills = User::where('is_admin', '!=', 19)
+            ->whereHas('staff')
             ->whereHas('staffBills', function ($q) {
                 $q->where('outstanding_amount', '>', 0);
             })
             ->with(['staffBills' => function ($q) {
                 $q->where('outstanding_amount', '>', 0)->with(['patient.user', 'checkoutPayment']);
-            }, 'staff_profile'])
+            }, 'staff'])
             ->get()
             ->map(function ($user) {
                 $user->total_outstanding = $user->staffBills->sum('outstanding_amount');
@@ -98,7 +99,7 @@ class AuditWorkbenchController extends Controller
 
         $allStaffBills = StaffBill::with([
                 'patient.user',
-                'staffUser.staff_profile',
+                'staffUser.staff',
                 'checkoutPayment',
                 'payments.bank',
                 'payments.journalEntry.lines.account'
@@ -449,10 +450,12 @@ class AuditWorkbenchController extends Controller
         $responsibility_key = trim($responsibility_key);
 
         if ($responsibility_key === 'cash_and_billing_audit' || $responsibility_key === 'discounts_refunds_debt') {
-            $cashiers = User::select('id', 'surname', 'firstname')->orderBy('surname')->get();
+            // Use raw DB query instead of Eloquent to avoid Model hydration memory overhead
+            $cashiers = DB::table('users')->select('id', 'surname', 'firstname')->orderBy('surname')->get();
             foreach ($cashiers as $c) {
                 $cashierOptions[$c->id] = trim($c->surname . ' ' . $c->firstname);
             }
+            unset($cashiers);
         }
         
         if ($responsibility_key === 'bank_reconciliation') {
@@ -602,164 +605,171 @@ class AuditWorkbenchController extends Controller
                     ->first();
                 $leakageTotal = $leakageStats->total_leakage ?? 0;
 
-                // 2. Memory-Efficient Raw DB Queries for detailed ledger tables (Filtered)
-                $paymentsQueryBuilder = DB::table('payments')
-                    ->leftJoin('patients', 'payments.patient_id', '=', 'patients.id')
-                    ->leftJoin('users as patient_user', 'patients.user_id', '=', 'patient_user.id')
-                    ->leftJoin('users as cashier_user', 'payments.user_id', '=', 'cashier_user.id')
-                    ->whereBetween('payments.created_at', [$startDate, $endDate]);
-
-                $depositsQueryBuilder = DB::table('patient_deposits')
-                    ->leftJoin('patients', 'patient_deposits.patient_id', '=', 'patients.id')
-                    ->leftJoin('users as patient_user', 'patients.user_id', '=', 'patient_user.id')
-                    ->leftJoin('users as receiver_user', 'patient_deposits.received_by', '=', 'receiver_user.id')
-                    ->whereBetween('patient_deposits.deposit_date', [$startDate, $endDate]);
-
-                if ($method) {
-                    $paymentsQueryBuilder->where('payments.payment_method', $method);
-                    $depositsQueryBuilder->where('patient_deposits.payment_method', $method);
-                }
-                if ($cashierId) {
-                    $paymentsQueryBuilder->where('payments.user_id', $cashierId);
-                    $depositsQueryBuilder->where('patient_deposits.received_by', $cashierId);
-                }
-                if ($minAmount) {
-                    $paymentsQueryBuilder->where('payments.total', '>=', $minAmount);
-                    $depositsQueryBuilder->where('patient_deposits.amount', '>=', $minAmount);
-                }
-                if ($maxAmount) {
-                    $paymentsQueryBuilder->where('payments.total', '<=', $maxAmount);
-                    $depositsQueryBuilder->where('patient_deposits.amount', '<=', $maxAmount);
-                }
-
-                $paymentsQuery = $paymentsQueryBuilder->select([
-                        'payments.id',
-                        'payments.reference_no',
-                        'payments.payment_type',
-                        'payments.payment_method',
-                        'payments.total',
-                        'payments.created_at',
-                        'payments.patient_id',
-                        'cashier_user.surname as cashier_surname',
-                        'cashier_user.firstname as cashier_firstname',
-                        'cashier_user.othername as cashier_othername',
-                        'patient_user.surname as patient_surname',
-                        'patient_user.firstname as patient_firstname',
-                        'patient_user.othername as patient_othername',
-                        'patients.file_no as patient_file_no'
-                    ])
-                    ->orderBy('payments.created_at', 'desc')
-                    ->limit(1000)
-                    ->get();
-
-                $depositsQuery = $depositsQueryBuilder->select([
-                        'patient_deposits.id',
-                        'patient_deposits.deposit_number',
-                        'patient_deposits.payment_method',
-                        'patient_deposits.amount',
-                        'patient_deposits.deposit_date',
-                        'patient_deposits.patient_id',
-                        'receiver_user.surname as receiver_surname',
-                        'receiver_user.firstname as receiver_firstname',
-                        'receiver_user.othername as receiver_othername',
-                        'patient_user.surname as patient_surname',
-                        'patient_user.firstname as patient_firstname',
-                        'patient_user.othername as patient_othername',
-                        'patients.file_no as patient_file_no'
-                    ])
-                    ->orderBy('patient_deposits.deposit_date', 'desc')
-                    ->limit(1000)
-                    ->get();
-
-                $receipts = collect();
-                foreach ($paymentsQuery as $p) {
-                    $receipts->push([
-                        'reference' => $p->reference_no ?? 'N/A',
-                        'cashier' => $this->formatStaffRawName($p->cashier_surname, $p->cashier_firstname, $p->cashier_othername),
-                        'patient' => $this->formatPatientNameLink($p->patient_id, $p->patient_surname, $p->patient_firstname, $p->patient_othername, $p->patient_file_no),
-                        'type' => ucfirst(str_replace('_', ' ', $p->payment_type ?? 'N/A')),
-                        'method' => $p->payment_method ?? 'N/A',
-                        'amount' => $p->total,
-                        'date' => Carbon::parse($p->created_at)->format('Y-m-d H:i'),
-                        'datetime' => $p->created_at
-                    ]);
-                }
-
-                foreach ($depositsQuery as $d) {
-                    $receipts->push([
-                        'reference' => $d->deposit_number ?? 'N/A',
-                        'cashier' => $this->formatStaffRawName($d->receiver_surname, $d->receiver_firstname, $d->receiver_othername),
-                        'patient' => $this->formatPatientNameLink($d->patient_id, $d->patient_surname, $d->patient_firstname, $d->patient_othername, $d->patient_file_no),
-                        'type' => 'Account Deposit',
-                        'method' => $d->payment_method ?? 'N/A',
-                        'amount' => $d->amount,
-                        'date' => Carbon::parse($d->deposit_date)->format('Y-m-d H:i'),
-                        'datetime' => $d->deposit_date
-                    ]);
-                }
-
-                $receipts = $receipts->sortByDesc('datetime')->take(1000);
-
+                // 2. Row data is ONLY needed for AJAX (DataTables server-side) requests.
+                //    The initial page load only renders KPIs + tab headers; <tbody> is empty.
+                //    Deferring row-building to AJAX saves ~60MB on the initial page load.
                 $receiptRows = [];
-                foreach ($receipts as $r) {
-                    $receiptRows[] = [
-                        $r['reference'],
-                        $r['cashier'],
-                        $r['patient'],
-                        $r['type'],
-                        $r['method'],
-                        '₦' . number_format($r['amount'], 2),
-                        $r['date']
-                    ];
-                }
-
-                // 3. Memory-Efficient Raw DB Query for Revenue Leakage (Limit 1,000 records)
-                $leakageQuery = DB::table('product_or_service_requests as posr')
-                    ->leftJoin('patients as pt', 'posr.patient_id', '=', 'pt.id')
-                    ->leftJoin('users as u', 'pt.user_id', '=', 'u.id')
-                    ->leftJoin('products as pr', 'posr.product_id', '=', 'pr.id')
-                    ->leftJoin('services as sv', 'posr.service_id', '=', 'sv.id')
-                    ->whereBetween('posr.created_at', [$startDate, $endDate])
-                    ->whereNull('posr.payment_id')
-                    ->whereNull('posr.invoice_id')
-                    ->whereRaw('NOT ((posr.payable_amount IS NULL OR posr.payable_amount = 0) AND (posr.claims_amount > 0 AND posr.validation_status = ?))', ['approved'])
-                    ->where(function($q) {
-                        $q->whereNull('posr.hmo_id')->orWhere('posr.hmo_id', 1)->orWhere('posr.coverage_mode', 'cash');
-                    })
-                    ->select([
-                        'posr.id',
-                        'posr.payable_amount',
-                        'posr.amount',
-                        'posr.discount',
-                        'posr.created_at',
-                        'posr.patient_id',
-                        'u.surname as user_surname',
-                        'u.firstname as user_firstname',
-                        'u.othername as user_othername',
-                        'pt.file_no as patient_file_no',
-                        'pr.product_name as product_name',
-                        'sv.service_name as service_name'
-                    ])
-                    ->orderBy('posr.created_at', 'desc')
-                    ->limit(1000)
-                    ->get();
-                
                 $leakageRows = [];
-                foreach ($leakageQuery as $r) {
-                    $amt = $r->payable_amount > 0 ? $r->payable_amount : $r->amount;
-                    $itemName = $r->product_name ?: ($r->service_name ?: 'N/A');
-                    $patientName = $this->formatPatientNameLink($r->patient_id, $r->user_surname, $r->user_firstname, $r->user_othername, $r->patient_file_no);
-                    
-                    $leakageRows[] = [
-                        $r->id,
-                        $patientName,
-                        $itemName,
-                        '₦' . number_format($r->amount, 2),
-                        '₦' . number_format($r->discount ?? 0, 2),
-                        '<span class="text-danger font-weight-bold">₦' . number_format($amt, 2) . '</span>',
-                        Carbon::parse($r->created_at)->format('Y-m-d H:i')
-                    ];
-                }
+
+                if ($request->ajax()) {
+                    $paymentsQueryBuilder = DB::table('payments')
+                        ->leftJoin('patients', 'payments.patient_id', '=', 'patients.id')
+                        ->leftJoin('users as patient_user', 'patients.user_id', '=', 'patient_user.id')
+                        ->leftJoin('users as cashier_user', 'payments.user_id', '=', 'cashier_user.id')
+                        ->whereBetween('payments.created_at', [$startDate, $endDate]);
+
+                    $depositsQueryBuilder = DB::table('patient_deposits')
+                        ->leftJoin('patients', 'patient_deposits.patient_id', '=', 'patients.id')
+                        ->leftJoin('users as patient_user', 'patients.user_id', '=', 'patient_user.id')
+                        ->leftJoin('users as receiver_user', 'patient_deposits.received_by', '=', 'receiver_user.id')
+                        ->whereBetween('patient_deposits.deposit_date', [$startDate, $endDate]);
+
+                    if ($method) {
+                        $paymentsQueryBuilder->where('payments.payment_method', $method);
+                        $depositsQueryBuilder->where('patient_deposits.payment_method', $method);
+                    }
+                    if ($cashierId) {
+                        $paymentsQueryBuilder->where('payments.user_id', $cashierId);
+                        $depositsQueryBuilder->where('patient_deposits.received_by', $cashierId);
+                    }
+                    if ($minAmount) {
+                        $paymentsQueryBuilder->where('payments.total', '>=', $minAmount);
+                        $depositsQueryBuilder->where('patient_deposits.amount', '>=', $minAmount);
+                    }
+                    if ($maxAmount) {
+                        $paymentsQueryBuilder->where('payments.total', '<=', $maxAmount);
+                        $depositsQueryBuilder->where('patient_deposits.amount', '<=', $maxAmount);
+                    }
+
+                    $paymentsQuery = $paymentsQueryBuilder->select([
+                            'payments.id',
+                            'payments.reference_no',
+                            'payments.payment_type',
+                            'payments.payment_method',
+                            'payments.total',
+                            'payments.created_at',
+                            'payments.patient_id',
+                            'cashier_user.surname as cashier_surname',
+                            'cashier_user.firstname as cashier_firstname',
+                            'cashier_user.othername as cashier_othername',
+                            'patient_user.surname as patient_surname',
+                            'patient_user.firstname as patient_firstname',
+                            'patient_user.othername as patient_othername',
+                            'patients.file_no as patient_file_no'
+                        ])
+                        ->orderBy('payments.created_at', 'desc')
+                        ->limit(500)
+                        ->get();
+
+                    $depositsQuery = $depositsQueryBuilder->select([
+                            'patient_deposits.id',
+                            'patient_deposits.deposit_number',
+                            'patient_deposits.payment_method',
+                            'patient_deposits.amount',
+                            'patient_deposits.deposit_date',
+                            'patient_deposits.patient_id',
+                            'receiver_user.surname as receiver_surname',
+                            'receiver_user.firstname as receiver_firstname',
+                            'receiver_user.othername as receiver_othername',
+                            'patient_user.surname as patient_surname',
+                            'patient_user.firstname as patient_firstname',
+                            'patient_user.othername as patient_othername',
+                            'patients.file_no as patient_file_no'
+                        ])
+                        ->orderBy('patient_deposits.deposit_date', 'desc')
+                        ->limit(500)
+                        ->get();
+
+                    $receipts = collect();
+                    foreach ($paymentsQuery as $p) {
+                        $receipts->push([
+                            'reference' => $p->reference_no ?? 'N/A',
+                            'cashier' => $this->formatStaffRawName($p->cashier_surname, $p->cashier_firstname, $p->cashier_othername),
+                            'patient' => $this->formatPatientNameLink($p->patient_id, $p->patient_surname, $p->patient_firstname, $p->patient_othername, $p->patient_file_no),
+                            'type' => ucfirst(str_replace('_', ' ', $p->payment_type ?? 'N/A')),
+                            'method' => $p->payment_method ?? 'N/A',
+                            'amount' => $p->total,
+                            'date' => Carbon::parse($p->created_at)->format('Y-m-d H:i'),
+                            'datetime' => $p->created_at
+                        ]);
+                    }
+
+                    foreach ($depositsQuery as $d) {
+                        $receipts->push([
+                            'reference' => $d->deposit_number ?? 'N/A',
+                            'cashier' => $this->formatStaffRawName($d->receiver_surname, $d->receiver_firstname, $d->receiver_othername),
+                            'patient' => $this->formatPatientNameLink($d->patient_id, $d->patient_surname, $d->patient_firstname, $d->patient_othername, $d->patient_file_no),
+                            'type' => 'Account Deposit',
+                            'method' => $d->payment_method ?? 'N/A',
+                            'amount' => $d->amount,
+                            'date' => Carbon::parse($d->deposit_date)->format('Y-m-d H:i'),
+                            'datetime' => $d->deposit_date
+                        ]);
+                    }
+
+                    $receipts = $receipts->sortByDesc('datetime')->take(500);
+
+                    foreach ($receipts as $r) {
+                        $receiptRows[] = [
+                            $r['reference'],
+                            $r['cashier'],
+                            $r['patient'],
+                            $r['type'],
+                            $r['method'],
+                            '₦' . number_format($r['amount'], 2),
+                            $r['date']
+                        ];
+                    }
+                    unset($paymentsQuery, $depositsQuery, $receipts);
+
+                    // Revenue Leakage rows
+                    $leakageQuery = DB::table('product_or_service_requests as posr')
+                        ->leftJoin('patients as pt', 'posr.patient_id', '=', 'pt.id')
+                        ->leftJoin('users as u', 'pt.user_id', '=', 'u.id')
+                        ->leftJoin('products as pr', 'posr.product_id', '=', 'pr.id')
+                        ->leftJoin('services as sv', 'posr.service_id', '=', 'sv.id')
+                        ->whereBetween('posr.created_at', [$startDate, $endDate])
+                        ->whereNull('posr.payment_id')
+                        ->whereNull('posr.invoice_id')
+                        ->whereRaw('NOT ((posr.payable_amount IS NULL OR posr.payable_amount = 0) AND (posr.claims_amount > 0 AND posr.validation_status = ?))', ['approved'])
+                        ->where(function($q) {
+                            $q->whereNull('posr.hmo_id')->orWhere('posr.hmo_id', 1)->orWhere('posr.coverage_mode', 'cash');
+                        })
+                        ->select([
+                            'posr.id',
+                            'posr.payable_amount',
+                            'posr.amount',
+                            'posr.discount',
+                            'posr.created_at',
+                            'posr.patient_id',
+                            'u.surname as user_surname',
+                            'u.firstname as user_firstname',
+                            'u.othername as user_othername',
+                            'pt.file_no as patient_file_no',
+                            'pr.product_name as product_name',
+                            'sv.service_name as service_name'
+                        ])
+                        ->orderBy('posr.created_at', 'desc')
+                        ->limit(500)
+                        ->get();
+
+                    foreach ($leakageQuery as $r) {
+                        $amt = $r->payable_amount > 0 ? $r->payable_amount : $r->amount;
+                        $itemName = $r->product_name ?: ($r->service_name ?: 'N/A');
+                        $patientName = $this->formatPatientNameLink($r->patient_id, $r->user_surname, $r->user_firstname, $r->user_othername, $r->patient_file_no);
+
+                        $leakageRows[] = [
+                            $r->id,
+                            $patientName,
+                            $itemName,
+                            '₦' . number_format($r->amount, 2),
+                            '₦' . number_format($r->discount ?? 0, 2),
+                            '<span class="text-danger font-weight-bold">₦' . number_format($amt, 2) . '</span>',
+                            Carbon::parse($r->created_at)->format('Y-m-d H:i')
+                        ];
+                    }
+                    unset($leakageQuery);
+                } // end if ($request->ajax())
 
                 $kpis = [
                     ['label' => 'Gross Collections (Payments)', 'value' => '₦' . number_format($grossPayments, 2), 'class' => 'text-success'],
@@ -770,12 +780,12 @@ class AuditWorkbenchController extends Controller
 
                 $tabbedData = [
                     'unified_receipts' => [
-                        'label' => 'Unified Daily Receipts (Showing recent 1,000)',
+                        'label' => 'Unified Daily Receipts (Showing recent 500)',
                         'headers' => ['Reference No', 'Cashier', 'Patient', 'Type', 'Method', 'Amount', 'Date'],
                         'rows' => $receiptRows
                     ],
                     'revenue_leakage' => [
-                        'label' => 'Unbilled Self/Private Services (Showing recent 1,000)',
+                        'label' => 'Unbilled Self/Private Services (Showing recent 500)',
                         'headers' => ['Req ID', 'Patient', 'Item', 'Original Price', 'Discount', 'Leakage Value', 'Date'],
                         'rows' => $leakageRows
                     ]
@@ -1035,7 +1045,7 @@ class AuditWorkbenchController extends Controller
 
                 if ($cashierId) {
                     $checkoutQuery->where('user_id', $cashierId);
-                    $staffQuery->where('user_id', $cashierId);
+                    $staffQuery->where('staff_user_id', $cashierId);
                 }
                 if ($minWaiver) {
                     $checkoutQuery->where('total_discount', '>=', $minWaiver);
@@ -1074,7 +1084,7 @@ class AuditWorkbenchController extends Controller
                         $s->id,
                         $this->formatStaffNameThree($s->staffUser),
                         $this->formatPatientModelLink($s->patient),
-                        '₦' . number_format($s->amount ?? 0, 2),
+                        '₦' . number_format($s->total_amount ?? 0, 2),
                         '₦' . number_format($s->outstanding_amount, 2),
                         $s->created_at->format('Y-m-d H:i')
                     ];
@@ -2537,6 +2547,12 @@ class AuditWorkbenchController extends Controller
     }
 
     private function formatPatientNameLink($patientId, $surname, $firstname, $othername, $fileNo) {
+        // Cache the route URL pattern once to avoid thousands of route() calls (memory optimisation)
+        static $routePrefix = null;
+        if ($routePrefix === null) {
+            $routePrefix = route('patient.show', '__PATIENT_ID__');
+        }
+
         $names = [];
         if (!empty($surname)) $names[] = trim($surname);
         if (!empty($firstname)) $names[] = trim($firstname);
@@ -2553,10 +2569,11 @@ class AuditWorkbenchController extends Controller
         }
         
         if ($patientId) {
-            return '<a href="' . route('patient.show', $patientId) . '" class="text-primary font-weight-bold" target="_blank">' . $label . '</a>';
+            $url = str_replace('__PATIENT_ID__', $patientId, $routePrefix);
+            return '<a href="' . $url . '" class="text-primary font-weight-bold" target="_blank">' . e($label) . '</a>';
         }
         
-        return $label;
+        return e($label);
     }
 
     private function formatPatientModelLink($patient) {
