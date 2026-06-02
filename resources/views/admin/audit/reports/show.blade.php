@@ -280,10 +280,12 @@ $(document).ready(function() {
         var tableId = $table.attr('id');
         var tabId = tableId.replace('auditDataTable_', '');
 
+        var colCount = $table.find('thead th').length;
         $table.DataTable({
             processing: true,
             serverSide: true,
             pageLength: 25,
+            order: [[ colCount - 1, 'desc' ]], // Sort by last column (date) descending — latest first
             ajax: {
                 url: window.location.href,
                 data: function(d) {
