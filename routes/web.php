@@ -1138,5 +1138,6 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::post('/stamps', [\App\Http\Controllers\AuditWorkbenchController::class, 'stampPeriod'])->name('stamps.approve');
     Route::get('/stamps/history', [\App\Http\Controllers\AuditWorkbenchController::class, 'stampHistory'])->name('stamps.history');
     Route::get('/reports/{responsibility_key}', [\App\Http\Controllers\AuditWorkbenchController::class, 'showReport'])->name('reports.show');
+    Route::get('/reports/{responsibility_key}/print', [\App\Http\Controllers\AuditWorkbenchController::class, 'printReport'])->name('reports.print');
 });
 
