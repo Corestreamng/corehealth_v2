@@ -39,6 +39,8 @@ class ApplicationStatu extends Model implements Auditable
         'result_edit_duration',
         'timezone',
         'goonline',
+        'chat_enabled',
+        'group_chat_enabled',
         'requirediagnosis',
         'enable_twakto',
         'dhis_api_url',
