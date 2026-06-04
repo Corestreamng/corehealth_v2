@@ -21,6 +21,9 @@ class ChatMessageObserver
     {
         // We only clean up group chats
         if ($chatMessage->conversation && $chatMessage->conversation->is_group) {
+            if (!(appsettings('group_chat_enabled') ?? true)) {
+                return;
+            }
             $this->cleanupOldMessages($chatMessage->conversation_id);
         }
     }

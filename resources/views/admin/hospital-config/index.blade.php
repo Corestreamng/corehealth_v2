@@ -468,8 +468,42 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                            </div> {{-- End of #general-settings --}}
 
+                            <!-- Procedure Consent Template Tab -->
+                            <div class="tab-pane fade" id="consent-template" role="tabpanel" aria-labelledby="consent-tab">
+                                <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                    <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                        <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                            <i class="mdi mdi-clipboard-text-outline mr-2" style="color: var(--primary-color);"></i>
+                                            Procedure Consent Template
+                                        </h5>
+                                    </div>
+                                    <div class="card-body" style="padding: 2rem;">
+                                        <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                                            <i class="mdi mdi-information-outline text-info mr-1"></i> Design the default clinical/surgical consent template below. Placeholders will be filled dynamically with real patient and procedure details when signing.
+                                        </p>
+                                        
+                                        <div class="alert alert-info border-0 mb-4" style="border-radius: 8px; font-size: 0.85rem; line-height: 1.5; background: #e8f4fd; color: #1d68a7; padding: 1.25rem;">
+                                            <strong class="d-block mb-1"><i class="mdi mdi-help-circle-outline"></i> Available Placeholders:</strong>
+                                            <ul class="mb-0 pl-3">
+                                                <li><code>{patient_name}</code> - Full name of the patient</li>
+                                                <li><code>{procedure_name}</code> - Name of the procedure service</li>
+                                                <li><code>{hospital_name}</code> - Hospital config name</li>
+                                                <li><code>{doctor_name}</code> - Chief surgeon or doctor in charge</li>
+                                                <li><code>{date}</code> - Form execution/signing date</li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label" style="font-weight: 600; color: #495057;">HTML Consent Template</label>
+                                            <textarea class="form-control" name="consent_template" id="consent_template_editor" rows="18" style="border-radius: 8px; font-family: monospace; font-size: 0.9rem; line-height: 1.6; padding: 1rem;">{{ old('consent_template', $config->consent_template) }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> {{-- End of #configTabsContent --}}
+                    </div> <!-- End col-lg-8 -->
                     <!-- Branding & System Settings -->
                     <div class="col-lg-4">
                         <!-- Branding Card -->
@@ -531,6 +565,36 @@
                                 </h5>
                             </div>
                             <div class="card-body" style="padding: 2rem;">
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="chat_enabled" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Chat Enabled
+                                            </label>
+                                            <small class="text-muted d-block">Enable the system-wide chat widget and messenger</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="chat_enabled" value="1" {{ $config->chat_enabled ?? true ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="group_chat_enabled" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Group Chat Enabled
+                                            </label>
+                                            <small class="text-muted d-block">Allow group conversations (disable to reduce database load)</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="group_chat_enabled" value="1" {{ $config->group_chat_enabled ?? true ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <div class="mb-3">
                                     <div class="custom-control custom-switch">
                                         <input type="hidden" name="active" value="0">
@@ -911,41 +975,6 @@
                                  </div>
                              </div>
                          </div>
-                            </div> {{-- End of #general-settings --}}
-
-                            <!-- Procedure Consent Template Tab -->
-                            <div class="tab-pane fade" id="consent-template" role="tabpanel" aria-labelledby="consent-tab">
-                                <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                                    <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
-                                        <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
-                                            <i class="mdi mdi-clipboard-text-outline mr-2" style="color: var(--primary-color);"></i>
-                                            Procedure Consent Template
-                                        </h5>
-                                    </div>
-                                    <div class="card-body" style="padding: 2rem;">
-                                        <p class="text-muted mb-3" style="font-size: 0.9rem;">
-                                            <i class="mdi mdi-information-outline text-info mr-1"></i> Design the default clinical/surgical consent template below. Placeholders will be filled dynamically with real patient and procedure details when signing.
-                                        </p>
-                                        
-                                        <div class="alert alert-info border-0 mb-4" style="border-radius: 8px; font-size: 0.85rem; line-height: 1.5; background: #e8f4fd; color: #1d68a7; padding: 1.25rem;">
-                                            <strong class="d-block mb-1"><i class="mdi mdi-help-circle-outline"></i> Available Placeholders:</strong>
-                                            <ul class="mb-0 pl-3">
-                                                <li><code>{patient_name}</code> - Full name of the patient</li>
-                                                <li><code>{procedure_name}</code> - Name of the procedure service</li>
-                                                <li><code>{hospital_name}</code> - Hospital config name</li>
-                                                <li><code>{doctor_name}</code> - Chief surgeon or doctor in charge</li>
-                                                <li><code>{date}</code> - Form execution/signing date</li>
-                                            </ul>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label class="form-label" style="font-weight: 600; color: #495057;">HTML Consent Template</label>
-                                            <textarea class="form-control" name="consent_template" id="consent_template_editor" rows="18" style="border-radius: 8px; font-family: monospace; font-size: 0.9rem; line-height: 1.6; padding: 1rem;">{{ old('consent_template', $config->consent_template) }}</textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> {{-- End of #configTabsContent --}}
 
                         <!-- Save Button -->
                         <button type="submit" class="btn btn-block" style="background: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 0.875rem; font-weight: 600; transition: all 0.2s;">
