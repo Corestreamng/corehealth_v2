@@ -19,7 +19,7 @@ class BillingDashboardService
             $baseQuery = DB::table('product_or_service_requests as posr')
                 ->join('patients as p', 'posr.user_id', '=', 'p.id')
                 ->whereNull('posr.payment_id')
-                ->whereDate('posr.created_at', $today);
+                ->whereBetween('posr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()]);
 
             $allUnpaid = (clone $baseQuery)->count();
 
@@ -48,7 +48,7 @@ class BillingDashboardService
         $today = Carbon::today();
 
         $methods = DB::table('payments')
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->selectRaw("COALESCE(payment_type, 'Cash') as method, COUNT(*) as total, SUM(total) as amount")
             ->groupBy('payment_type')
             ->get();
@@ -76,7 +76,7 @@ class BillingDashboardService
             ->leftJoin('users as u', 'pay.user_id', '=', 'u.id')
             ->leftJoin('patients as pt', 'pay.patient_id', '=', 'pt.id')
             ->leftJoin('users as pu', 'pt.user_id', '=', 'pu.id')
-            ->whereDate('pay.created_at', $today)
+            ->whereBetween('pay.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->select(
                 'pay.id',
                 'pay.patient_id',
@@ -124,8 +124,8 @@ class BillingDashboardService
         $yesterday = Carbon::yesterday();
         $insights = [];
 
-        $todayRevenue = DB::table('payments')->whereDate('created_at', $today)->sum('total');
-        $yesterdayRevenue = DB::table('payments')->whereDate('created_at', $yesterday)->sum('total');
+        $todayRevenue = DB::table('payments')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->sum('total');
+        $yesterdayRevenue = DB::table('payments')->whereBetween('created_at', [$yesterday->copy()->startOfDay(), $yesterday->copy()->endOfDay()])->sum('total');
 
         if ($todayRevenue > 0) {
             $insights[] = [
@@ -165,7 +165,7 @@ class BillingDashboardService
         }
 
         // Average transaction value
-        $avgTransaction = DB::table('payments')->whereDate('created_at', $today)->avg('total');
+        $avgTransaction = DB::table('payments')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->avg('total');
         if ($avgTransaction) {
             $insights[] = [
                 'type' => 'info', 'severity' => 'info', 'icon' => 'mdi-calculator',

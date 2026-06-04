@@ -19,22 +19,22 @@ class ImagingDashboardService
             // Imaging queues
             $billing = DB::table('imaging_service_requests')
                 ->where('status', 0)
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
 
             $ongoing = DB::table('imaging_service_requests')
                 ->whereIn('status', [1, 2])
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
 
             $results = DB::table('imaging_service_requests')
                 ->where('status', 3)
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
 
             $completedToday = DB::table('imaging_service_requests')
                 ->where('status', 4)
-                ->whereDate('updated_at', $today)
+                ->whereBetween('updated_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
 
             return [
@@ -57,8 +57,8 @@ class ImagingDashboardService
     {
         $today = Carbon::today();
         return [
-            'pending' => DB::table('imaging_service_requests')->whereIn('status', [0, 1, 2, 3])->whereDate('created_at', $today)->count(),
-            'completed' => DB::table('imaging_service_requests')->where('status', 4)->whereDate('updated_at', $today)->count(),
+            'pending' => DB::table('imaging_service_requests')->whereIn('status', [0, 1, 2, 3])->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
+            'completed' => DB::table('imaging_service_requests')->where('status', 4)->whereBetween('updated_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
             'scans_this_month' => DB::table('imaging_service_requests')
                 ->where('status', 4)
                 ->whereMonth('updated_at', now()->month)
@@ -152,7 +152,7 @@ class ImagingDashboardService
             ];
         }
 
-        $completedToday = DB::table('imaging_service_requests')->where('status', 4)->whereDate('updated_at', $today)->count();
+        $completedToday = DB::table('imaging_service_requests')->where('status', 4)->whereBetween('updated_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
         $insights[] = [
             'type' => 'stat', 'severity' => 'success', 'icon' => 'mdi-check-circle',
             'title' => 'Completed Today',

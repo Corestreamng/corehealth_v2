@@ -19,7 +19,7 @@ class AccountsDashboardService
 
         return Cache::remember('dashboard.accounts.summary', 60, function () use ($today, $monthStart, $yearStart) {
             return [
-                'revenue_today' => DB::table('payments')->whereDate('created_at', $today)->sum('total'),
+                'revenue_today' => DB::table('payments')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->sum('total'),
                 'revenue_month' => DB::table('payments')->where('created_at', '>=', $monthStart)->sum('total'),
                 'revenue_year' => DB::table('payments')->where('created_at', '>=', $yearStart)->sum('total'),
                 'outstanding' => DB::table('product_or_service_requests')->whereNull('payment_id')->sum('payable_amount'),
@@ -30,8 +30,8 @@ class AccountsDashboardService
                     ->where('posr.validation_status', 'approved')
                     ->whereNull('posr.payment_id')
                     ->sum('posr.claims_amount'),
-                'payments_today' => DB::table('payments')->whereDate('created_at', $today)->count(),
-                'patients_billed_today' => DB::table('product_or_service_requests')->whereDate('created_at', $today)->distinct('user_id')->count('user_id'),
+                'payments_today' => DB::table('payments')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
+                'patients_billed_today' => DB::table('product_or_service_requests')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->distinct('user_id')->count('user_id'),
             ];
         });
     }
@@ -154,11 +154,11 @@ class AccountsDashboardService
         }
 
         if (!empty($filters['date_from'])) {
-            $query->whereDate('a.created_at', '>=', $filters['date_from']);
+            $query->where('a.created_at', '>=', \Carbon\Carbon::parse($filters['date_from'])->startOfDay());
         }
 
         if (!empty($filters['date_to'])) {
-            $query->whereDate('a.created_at', '<=', $filters['date_to']);
+            $query->where('a.created_at', '<=', \Carbon\Carbon::parse($filters['date_to'])->endOfDay());
         }
 
         return $query->limit($limit)
@@ -214,8 +214,8 @@ class AccountsDashboardService
         $yesterday = Carbon::yesterday();
         $insights = [];
 
-        $todayRevenue = DB::table('payments')->whereDate('created_at', $today)->sum('total');
-        $yesterdayRevenue = DB::table('payments')->whereDate('created_at', $yesterday)->sum('total');
+        $todayRevenue = DB::table('payments')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->sum('total');
+        $yesterdayRevenue = DB::table('payments')->whereBetween('created_at', [$yesterday->copy()->startOfDay(), $yesterday->copy()->endOfDay()])->sum('total');
 
         if ($yesterdayRevenue > 0) {
             $change = round((($todayRevenue - $yesterdayRevenue) / $yesterdayRevenue) * 100);

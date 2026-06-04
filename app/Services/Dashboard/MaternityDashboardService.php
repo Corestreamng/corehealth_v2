@@ -19,9 +19,9 @@ class MaternityDashboardService
     {
         return [
             'active' => MaternityEnrollment::where('status', MaternityEnrollment::STATUS_ACTIVE)->count(),
-            'anc' => AncVisit::whereDate('visit_date', Carbon::today())->count(),
-            'deliveries' => DeliveryRecord::whereDate('delivery_date', Carbon::today())->count(),
-            'pnc' => PostnatalVisit::whereDate('visit_date', Carbon::today())->count(),
+            'anc' => AncVisit::whereBetween('visit_date', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count(),
+            'deliveries' => DeliveryRecord::whereBetween('delivery_date', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count(),
+            'pnc' => PostnatalVisit::whereBetween('visit_date', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count(),
         ];
     }
 
@@ -33,11 +33,11 @@ class MaternityDashboardService
         return Cache::remember('dashboard.maternity.queues', 30, function () {
             $activeEnrollments = MaternityEnrollment::where('status', MaternityEnrollment::STATUS_ACTIVE)->count();
             $postnatalCare = MaternityEnrollment::where('status', MaternityEnrollment::STATUS_POSTNATAL)->count();
-            $ancToday = AncVisit::whereDate('visit_date', Carbon::today())->count();
+            $ancToday = AncVisit::whereBetween('visit_date', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count();
             $dueSoon = MaternityEnrollment::where('status', MaternityEnrollment::STATUS_ACTIVE)
                 ->whereBetween('edd', [now(), now()->addDays(7)])
                 ->count();
-            $recentDeliveries = DeliveryRecord::whereDate('delivery_date', Carbon::today())->count();
+            $recentDeliveries = DeliveryRecord::whereBetween('delivery_date', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count();
 
             return [
                 ['name' => 'Active ANC', 'filter' => 'active', 'icon' => 'mdi-human-pregnant', 'color' => 'primary',
@@ -93,14 +93,14 @@ class MaternityDashboardService
 
         // Enrollments
         $enrollments = MaternityEnrollment::with(['patient'])
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
         
         // Deliveries
         $deliveries = DeliveryRecord::with(['enrollment.patient'])
-            ->whereDate('delivery_date', $today)
+            ->whereBetween('delivery_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->orderByDesc('delivery_date')
             ->limit(5)
             ->get();
@@ -161,7 +161,7 @@ class MaternityDashboardService
         // Note: Assuming there's a scheduled_date or similar. Let's check AncVisit.
         
         // EDD alerts
-        $dueToday = MaternityEnrollment::where('status', 'active')->whereDate('edd', Carbon::today())->count();
+        $dueToday = MaternityEnrollment::where('status', 'active')->whereBetween('edd', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count();
         if ($dueToday > 0) {
             $insights[] = [
                 'type' => 'info', 'severity' => 'primary', 'icon' => 'mdi-baby-carriage',
