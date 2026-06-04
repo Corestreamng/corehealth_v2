@@ -18,13 +18,13 @@ class ReceptionDashboardService
         return Cache::remember('dashboard.reception.queues', 30, function () use ($today) {
             return [
                 ['name' => 'Waiting', 'filter' => 'waiting', 'icon' => 'mdi-clock-outline', 'color' => 'warning',
-                 'count' => DB::table('doctor_queues')->where('status', 1)->whereDate('created_at', $today)->count()],
+                 'count' => DB::table('doctor_queues')->where('status', 1)->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count()],
 
                 ['name' => 'Vitals Pending', 'filter' => 'vitals', 'icon' => 'mdi-heart-pulse', 'color' => 'info',
-                 'count' => DB::table('doctor_queues')->where('status', 2)->whereDate('created_at', $today)->count()],
+                 'count' => DB::table('doctor_queues')->where('status', 2)->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count()],
 
                 ['name' => 'In Consultation', 'filter' => 'consultation', 'icon' => 'mdi-doctor', 'color' => 'success',
-                 'count' => DB::table('doctor_queues')->where('status', 3)->whereDate('created_at', $today)->count()],
+                 'count' => DB::table('doctor_queues')->where('status', 3)->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count()],
 
                 ['name' => 'Admitted', 'filter' => 'admitted', 'icon' => 'mdi-bed', 'color' => 'danger',
                  'count' => DB::table('admission_requests')->where('discharged', 0)->count()],
@@ -43,7 +43,7 @@ class ReceptionDashboardService
             ->join('patients as p', 'dq.patient_id', '=', 'p.id')
             ->join('users as u', 'p.user_id', '=', 'u.id')
             ->leftJoin('clinics as c', 'dq.clinic_id', '=', 'c.id')
-            ->whereDate('dq.created_at', $today)
+            ->whereBetween('dq.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->select(
                 'dq.id',
                 'dq.patient_id',
@@ -75,7 +75,7 @@ class ReceptionDashboardService
         $today = Carbon::today();
 
         $data = DB::table('doctor_queues')
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
             ->groupByRaw('HOUR(created_at)')
             ->orderBy('hour')
@@ -101,15 +101,15 @@ class ReceptionDashboardService
     {
         $today = Carbon::today();
 
-        $newPatients = DB::table('patients')->whereDate('created_at', $today)->count();
+        $newPatients = DB::table('patients')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
 
         $hmoToday = DB::table('doctor_queues as dq')
             ->join('patients as p', 'dq.patient_id', '=', 'p.id')
-            ->whereDate('dq.created_at', $today)
+            ->whereBetween('dq.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->whereNotNull('p.hmo_id')
             ->count();
 
-        $totalToday = DB::table('doctor_queues')->whereDate('created_at', $today)->count();
+        $totalToday = DB::table('doctor_queues')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
         $returning = max(0, $totalToday - $newPatients);
 
         return [
@@ -128,8 +128,8 @@ class ReceptionDashboardService
         $yesterday = Carbon::yesterday();
         $insights = [];
 
-        $todayCount = DB::table('doctor_queues')->whereDate('created_at', $today)->count();
-        $yesterdayCount = DB::table('doctor_queues')->whereDate('created_at', $yesterday)->count();
+        $todayCount = DB::table('doctor_queues')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
+        $yesterdayCount = DB::table('doctor_queues')->whereBetween('created_at', [$yesterday->copy()->startOfDay(), $yesterday->copy()->endOfDay()])->count();
 
         if ($yesterdayCount > 0) {
             $change = round((($todayCount - $yesterdayCount) / $yesterdayCount) * 100);
@@ -151,7 +151,7 @@ class ReceptionDashboardService
         // Waiting too long
         $longWaiters = DB::table('doctor_queues')
             ->where('status', 1)
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->where('created_at', '<', now()->subMinutes(30))
             ->count();
 
@@ -164,7 +164,7 @@ class ReceptionDashboardService
         }
 
         // New registrations today
-        $newToday = DB::table('patients')->whereDate('created_at', $today)->count();
+        $newToday = DB::table('patients')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
         if ($newToday > 0) {
             $insights[] = [
                 'type' => 'stat', 'severity' => 'success', 'icon' => 'mdi-account-plus',

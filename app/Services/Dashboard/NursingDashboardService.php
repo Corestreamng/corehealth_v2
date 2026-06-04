@@ -15,7 +15,7 @@ class NursingDashboardService
     {
         $today = Carbon::today();
         return [
-            'vitals_queue' => DB::table('vital_signs')->whereDate('created_at', $today)->where('status', 0)->count(),
+            'vitals_queue' => DB::table('vital_signs')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->where('status', 0)->count(),
             'bed_requests' => DB::table('admission_requests')->where('discharged', 0)->whereNull('bed_id')->count(),
             'medication_due' => 0, // Placeholder
             'admitted' => DB::table('admission_requests')->where('discharged', 0)->whereNotNull('bed_id')->count(),
@@ -33,7 +33,7 @@ class NursingDashboardService
             $admitted = DB::table('admission_requests')->where('discharged', 0)->count();
 
             $vitalsQueue = DB::table('vital_signs')
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('status', 0)
                 ->count();
 
@@ -48,7 +48,7 @@ class NursingDashboardService
 
             $medicationDue = DB::table('medication_schedules as ms')
                 ->leftJoin('medication_administrations as ma', 'ms.id', '=', 'ma.schedule_id')
-                ->whereDate('ms.scheduled_time', $today)
+                ->whereBetween('ms.scheduled_time', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->whereNull('ma.id')
                 ->count();
 
@@ -115,7 +115,7 @@ class NursingDashboardService
         $vitals = DB::table('vital_signs as vs')
             ->join('patients as p', 'vs.patient_id', '=', 'p.id')
             ->join('users as u', 'p.user_id', '=', 'u.id')
-            ->whereDate('vs.created_at', $today)
+            ->whereBetween('vs.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->where('vs.status', 1)
             ->select(
                 'vs.id',
@@ -133,7 +133,7 @@ class NursingDashboardService
             ->join('medication_schedules as ms', 'ma.schedule_id', '=', 'ms.id')
             ->join('patients as p', 'ms.patient_id', '=', 'p.id')
             ->join('users as u', 'p.user_id', '=', 'u.id')
-            ->whereDate('ma.created_at', $today)
+            ->whereBetween('ma.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->select(
                 'ma.id',
                 'ms.patient_id',
@@ -180,7 +180,7 @@ class NursingDashboardService
         // Overdue medications
         $overdue = DB::table('medication_schedules as ms')
             ->leftJoin('medication_administrations as ma', 'ms.id', '=', 'ma.schedule_id')
-            ->whereDate('ms.scheduled_time', $today)
+            ->whereBetween('ms.scheduled_time', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->where('ms.scheduled_time', '<', now())
             ->whereNull('ma.id')
             ->count();
@@ -209,7 +209,7 @@ class NursingDashboardService
 
         // Vitals recorded today
         $vitalsToday = DB::table('vital_signs')
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->where('status', 1)
             ->count();
 

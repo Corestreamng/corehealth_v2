@@ -20,16 +20,16 @@ class AuditDashboardService
             $imagingCategoryId = appsettings('imaging_category_id', 6);
             
             return [
-                'revenue_today' => DB::table('payments')->whereDate('created_at', $today)->sum('total'),
+                'revenue_today' => DB::table('payments')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->sum('total'),
                 'active_admissions' => DB::table('admission_requests')->where('status', 1)->count(), // 1 = admitted
                 'pending_requisitions' => DB::table('store_requisitions')->whereIn('status', ['pending', 'partial'])->count(),
                 'diagnostic_orders' => DB::table('product_or_service_requests as posr')
                     ->join('services as s', 'posr.service_id', '=', 's.id')
                     ->whereIn('s.category_id', [$labCategoryId, $imagingCategoryId])
-                    ->whereDate('posr.created_at', $today)
+                    ->whereBetween('posr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                     ->count(),
-                'system_discounts_today' => DB::table('payments')->whereDate('created_at', $today)->sum('total_discount'),
-                'refunds_today' => DB::table('credit_notes')->whereDate('created_at', $today)->sum('amount'),
+                'system_discounts_today' => DB::table('payments')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->sum('total_discount'),
+                'refunds_today' => DB::table('credit_notes')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->sum('amount'),
             ];
         });
     }
