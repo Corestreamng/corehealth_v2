@@ -42,6 +42,11 @@ class ChatController extends Controller
             });
         }
 
+        // Check group chat setting
+        if (!(appsettings('group_chat_enabled') ?? true)) {
+            $query->where('is_group', false);
+        }
+
         // Search Logic
         if ($searchQuery) {
             $query->where(function($q) use ($searchQuery, $userId) {
@@ -237,6 +242,11 @@ class ChatController extends Controller
             return response()->json(['error' => 'Message cannot be empty'], 422);
         }
 
+        $isGroup = ChatConversation::where('id', $request->conversation_id)->value('is_group');
+        if ($isGroup && !(appsettings('group_chat_enabled') ?? true)) {
+            return response()->json(['error' => 'Group messaging is disabled'], 403);
+        }
+
         DB::beginTransaction();
         try {
             $message = ChatMessage::create([
@@ -337,6 +347,10 @@ class ChatController extends Controller
 
         if (count($userIds) < 2) {
             return response()->json(['error' => 'At least 2 participants required'], 422);
+        }
+
+        if (count($userIds) > 2 && !(appsettings('group_chat_enabled') ?? true)) {
+            return response()->json(['error' => 'Group messaging is disabled'], 403);
         }
 
         // Check for existing 1-on-1 conversation

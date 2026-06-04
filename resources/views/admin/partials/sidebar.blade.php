@@ -33,6 +33,7 @@
                     <span class="menu-title">Profile</span>
                 </a>
             </li>
+            @if(appsettings('chat_enabled') ?? true)
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('chat.index') }}" target="_blank" id="sidebar-global-messenger">
                     <i class="mdi mdi-message-text-outline menu-icon"></i>
@@ -40,6 +41,7 @@
                     @include('messenger.unread-count')
                 </a>
             </li>
+            @endif
             <li class="nav-item {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}" id="sidebar-global-requisitions">
                     <i class="mdi mdi-swap-horizontal menu-icon"></i>

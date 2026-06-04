@@ -2081,7 +2081,9 @@ rgba(255, 255, 255, 0.7) !important;
     </style>
 
     <!-- Chat Styles -->
+    @if(appsettings('chat_enabled') ?? true)
     <link rel="stylesheet" href="{{ asset('css/chat-styles.css') }}">
+    @endif
 
     <!-- Page-specific styles -->
     @yield('style')
@@ -2180,7 +2182,9 @@ rgba(255, 255, 255, 0.7) !important;
     </script>
 
     <!-- Chat Core JS - Must load before page scripts -->
+    @if(appsettings('chat_enabled') ?? true)
     <script src="{{ asset('js/chat-core.js') }}?v={{ time() }}"></script>
+    @endif
 
     {{-- <script src="admin/assets/vendors/chart.js/Chart.min.js"></script> --}}
     @yield('scripts')
@@ -2356,7 +2360,9 @@ rgba(255, 255, 255, 0.7) !important;
     <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
     <!-- End Toastr JS -->
 
+    @if(appsettings('chat_enabled') ?? true)
     @include('admin.partials.chat-widget')
+    @endif
 
 </body>
 

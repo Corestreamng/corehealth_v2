@@ -105,6 +105,8 @@ class HospitalConfigController extends Controller
 
             // Feature Flags
             'goonline' => 'boolean',
+            'chat_enabled' => 'boolean',
+            'group_chat_enabled' => 'boolean',
             'requirediagnosis' => 'boolean',
             'enable_twakto' => 'boolean',
             'lab_results_require_approval' => 'boolean',
@@ -129,6 +131,8 @@ class HospitalConfigController extends Controller
         // Handle Checkboxes
         $validated['notification_sound'] = $request->has('notification_sound');
         $validated['goonline'] = $request->has('goonline');
+        $validated['chat_enabled'] = $request->has('chat_enabled');
+        $validated['group_chat_enabled'] = $request->has('group_chat_enabled');
         $validated['requirediagnosis'] = $request->has('requirediagnosis');
         $validated['enable_twakto'] = $request->has('enable_twakto');
         $validated['lab_results_require_approval'] = $request->has('lab_results_require_approval');
