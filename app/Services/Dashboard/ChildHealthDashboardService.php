@@ -19,11 +19,11 @@ class ChildHealthDashboardService
         $today = Carbon::today();
         return [
             'today' => PatientImmunizationSchedule::whereIn('status', ['pending', 'due'])
-                ->whereDate('scheduled_date', $today)
+                ->whereBetween('scheduled_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count(),
             'overdue' => PatientImmunizationSchedule::where('status', 'overdue')
                 ->count(),
-            'growth' => ChildGrowthRecord::whereDate('created_at', $today)->count(),
+            'growth' => ChildGrowthRecord::whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
             'new' => \App\Models\Patient::where('dob', '>=', now()->subYears(18))
                 ->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
@@ -39,10 +39,10 @@ class ChildHealthDashboardService
         return Cache::remember('dashboard.child_health.queues', 30, function () {
             $today = Carbon::today();
             $immunizationsDue = PatientImmunizationSchedule::whereIn('status', ['pending', 'due'])
-                ->whereDate('due_date', $today)
+                ->whereBetween('due_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
             
-            $growthVisits = ChildGrowthRecord::whereDate('created_at', $today)->count();
+            $growthVisits = ChildGrowthRecord::whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
             
             $overdueImmunizations = PatientImmunizationSchedule::where('status', 'overdue')
                 ->count();
@@ -89,7 +89,7 @@ class ChildHealthDashboardService
         $today = Carbon::today();
 
         $schedules = PatientImmunizationSchedule::with(['patient.user', 'scheduleItem'])
-            ->whereDate('due_date', $today)
+            ->whereBetween('due_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->orderByDesc('due_date')
             ->limit(10)
             ->get();

@@ -110,13 +110,13 @@ class StoreDashboardService
 
         // Combine recent requisitions and POs for an activity feed
         $requisitions = StoreRequisition::with(['fromStore', 'toStore', 'requester'])
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
         
         $pos = PurchaseOrder::with(['supplier'])
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();

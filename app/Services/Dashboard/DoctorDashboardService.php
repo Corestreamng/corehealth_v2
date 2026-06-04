@@ -18,19 +18,19 @@ class DoctorDashboardService
 
         return Cache::remember("dashboard.doctor.queues.{$userId}", 30, function () use ($today, $userId, $staffId) {
             $myQueue = DB::table('doctor_queues')
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('staff_id', $staffId)
                 ->where('status', 1) // waiting
                 ->count();
 
             $inProgress = DB::table('encounters')
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('doctor_id', $userId)
                 ->whereNull('notes')
                 ->count();
 
             $completedToday = DB::table('encounters')
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('doctor_id', $userId)
                 ->whereNotNull('notes')
                 ->count();
@@ -70,7 +70,7 @@ class DoctorDashboardService
             })
             ->leftJoin('clinics as c', 'dq.clinic_id', '=', 'c.id')
             ->where('e.doctor_id', $userId)
-            ->whereDate('e.created_at', $today)
+            ->whereBetween('e.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->select(
                 'e.id',
                 'e.patient_id',
@@ -101,12 +101,12 @@ class DoctorDashboardService
 
         $todayCount = DB::table('encounters')
             ->where('doctor_id', $userId)
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->count();
 
         $yesterdayCount = DB::table('encounters')
             ->where('doctor_id', $userId)
-            ->whereDate('created_at', $yesterday)
+            ->whereBetween('created_at', [$yesterday->copy()->startOfDay(), $yesterday->copy()->endOfDay()])
             ->count();
 
         // Avg comparison

@@ -16,9 +16,9 @@ class TheatreDashboardService
     {
         $today = Carbon::today();
         return [
-            'scheduled' => Procedure::whereDate('scheduled_date', $today)->count(),
+            'scheduled' => Procedure::whereBetween('scheduled_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
             'ongoing' => Procedure::where('procedure_status', Procedure::STATUS_IN_PROGRESS)->count(),
-            'completed' => Procedure::where('procedure_status', Procedure::STATUS_COMPLETED)->whereDate('actual_end_time', $today)->count(),
+            'completed' => Procedure::where('procedure_status', Procedure::STATUS_COMPLETED)->whereBetween('actual_end_time', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
             'pending' => Procedure::where('procedure_status', Procedure::STATUS_SCHEDULED)->where('scheduled_date', '<=', now())->count(),
         ];
     }
@@ -30,10 +30,10 @@ class TheatreDashboardService
     {
         return Cache::remember('dashboard.theatre.queues', 30, function () {
             $today = Carbon::today();
-            $scheduledToday = Procedure::whereDate('scheduled_date', $today)->count();
+            $scheduledToday = Procedure::whereBetween('scheduled_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
             $pending = Procedure::where('procedure_status', Procedure::STATUS_SCHEDULED)->where('scheduled_date', '<=', now())->count();
             $ongoing = Procedure::where('procedure_status', Procedure::STATUS_IN_PROGRESS)->count();
-            $completedToday = Procedure::where('procedure_status', Procedure::STATUS_COMPLETED)->whereDate('actual_end_time', $today)->count();
+            $completedToday = Procedure::where('procedure_status', Procedure::STATUS_COMPLETED)->whereBetween('actual_end_time', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
 
             return [
                 ['name' => 'Scheduled Today', 'filter' => 'today', 'icon' => 'mdi-calendar-clock', 'color' => 'primary',
@@ -70,7 +70,7 @@ class TheatreDashboardService
         $today = Carbon::today();
 
         $procedures = Procedure::with(['patient.user', 'procedureDefinition'])
-            ->whereDate('scheduled_date', $today)
+            ->whereBetween('scheduled_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->orWhereDate('actual_end_time', $today)
             ->orderByDesc('updated_at')
             ->limit(10)

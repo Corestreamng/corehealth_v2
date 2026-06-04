@@ -16,11 +16,11 @@ class PharmacyDashboardService
         $today = Carbon::today();
         return [
             'queue' => DB::table('product_requests')
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('status', 1) // Requested
                 ->count(),
             'dispensed' => DB::table('product_requests')
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('status', 3) // Dispensed
                 ->count(),
             'products' => DB::table('products')->where('status', 1)->count(),
@@ -39,19 +39,19 @@ class PharmacyDashboardService
 
         return Cache::remember('dashboard.pharmacy.queues', 30, function () use ($today) {
             $allPending = DB::table('product_requests')
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->whereIn('status', [1, 2])
                 ->count();
 
             $unbilled = DB::table('product_requests')
-                ->whereDate('created_at', $today)
+                ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('status', 1)
                 ->count();
 
             // Ready to dispense: Billed (status 2) AND (Paid OR HMO Validated)
             $ready = DB::table('product_requests as pr')
                 ->leftJoin('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
-                ->whereDate('pr.created_at', $today)
+                ->whereBetween('pr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('pr.status', 2)
                 ->where(function($q) {
                     $q->whereNotNull('posr.payment_id')
@@ -61,7 +61,7 @@ class PharmacyDashboardService
 
             $hmo = DB::table('product_requests as pr')
                 ->join('patients as p', 'pr.patient_id', '=', 'p.id')
-                ->whereDate('pr.created_at', $today)
+                ->whereBetween('pr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->whereNotNull('p.hmo_id')
                 ->whereIn('pr.status', [1, 2])
                 ->count();
@@ -138,7 +138,7 @@ class PharmacyDashboardService
             ->join('patients as p', 'pr.patient_id', '=', 'p.id')
             ->join('users as u', 'p.user_id', '=', 'u.id')
             ->join('products as prod', 'pr.product_id', '=', 'prod.id')
-            ->whereDate('pr.created_at', $today)
+            ->whereBetween('pr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->select(
                 'pr.id',
                 'pr.patient_id',
@@ -197,7 +197,7 @@ class PharmacyDashboardService
 
         // Dispensed today
         $dispensedToday = DB::table('product_requests')
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->where('status', 3)
             ->count();
 
@@ -210,7 +210,7 @@ class PharmacyDashboardService
         // Top dispensed product today
         $topProduct = DB::table('product_requests as pr')
             ->join('products as prod', 'pr.product_id', '=', 'prod.id')
-            ->whereDate('pr.created_at', $today)
+            ->whereBetween('pr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->selectRaw('prod.product_name as name, COUNT(*) as cnt')
             ->groupBy('prod.product_name')
             ->orderByDesc('cnt')

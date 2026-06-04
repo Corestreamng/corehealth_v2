@@ -17,8 +17,8 @@ class LabDashboardService
         $labCategoryId = appsettings('investigation_category_id', 2);
 
         return [
-            'queue' => DB::table('lab_service_requests')->whereIn('status', [0, 2, 3])->whereDate('created_at', $today)->count(),
-            'completed' => DB::table('lab_service_requests')->where('status', 4)->whereDate('updated_at', $today)->count(),
+            'queue' => DB::table('lab_service_requests')->whereIn('status', [0, 2, 3])->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
+            'completed' => DB::table('lab_service_requests')->where('status', 4)->whereBetween('updated_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
             'tests_this_month' => DB::table('lab_service_requests')
                 ->where('status', 4)
                 ->whereMonth('updated_at', now()->month)
@@ -42,28 +42,28 @@ class LabDashboardService
                 ->join('services as s', 'lsr.service_id', '=', 's.id')
                 ->where('s.category_id', $labCategoryId)
                 ->where('lsr.status', 0) // awaiting billing
-                ->whereDate('lsr.created_at', $today)
+                ->whereBetween('lsr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
 
             $labSample = DB::table('lab_service_requests as lsr')
                 ->join('services as s', 'lsr.service_id', '=', 's.id')
                 ->where('s.category_id', $labCategoryId)
                 ->where('lsr.status', 2) // sample collection
-                ->whereDate('lsr.created_at', $today)
+                ->whereBetween('lsr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
 
             $labResults = DB::table('lab_service_requests as lsr')
                 ->join('services as s', 'lsr.service_id', '=', 's.id')
                 ->where('s.category_id', $labCategoryId)
                 ->where('lsr.status', 3) // result entry
-                ->whereDate('lsr.created_at', $today)
+                ->whereBetween('lsr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
 
             $labCompleted = DB::table('lab_service_requests as lsr')
                 ->join('services as s', 'lsr.service_id', '=', 's.id')
                 ->where('s.category_id', $labCategoryId)
                 ->where('lsr.status', 4) // completed
-                ->whereDate('lsr.updated_at', $today)
+                ->whereBetween('lsr.updated_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
 
             return [
@@ -182,7 +182,7 @@ class LabDashboardService
             ->join('services as s', 'lsr.service_id', '=', 's.id')
             ->where('s.category_id', $labCategoryId)
             ->where('lsr.status', 4)
-            ->whereDate('lsr.updated_at', $today)
+            ->whereBetween('lsr.updated_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->count();
 
         $insights[] = [

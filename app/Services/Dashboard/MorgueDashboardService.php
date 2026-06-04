@@ -16,8 +16,8 @@ class MorgueDashboardService
     {
         return [
             'occupants' => MorgueAdmission::where('status', 'stored')->count(),
-            'admissions' => MorgueAdmission::whereDate('arrival_time', Carbon::today())->count(),
-            'releases' => MorgueAdmission::whereDate('release_time', Carbon::today())->count(),
+            'admissions' => MorgueAdmission::whereBetween('arrival_time', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count(),
+            'releases' => MorgueAdmission::whereBetween('release_time', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count(),
             'pending' => MorgueAdmission::where('status', 'stored')
                 ->whereNotNull('release_time')
                 ->count(),
@@ -31,11 +31,11 @@ class MorgueDashboardService
     {
         return Cache::remember('dashboard.morgue.queues', 30, function () {
             $currentOccupants = MorgueAdmission::where('status', 'stored')->count();
-            $admissionsToday = MorgueAdmission::whereDate('arrival_time', Carbon::today())->count();
-            $releasesToday = MorgueAdmission::whereDate('release_time', Carbon::today())->count();
+            $admissionsToday = MorgueAdmission::whereBetween('arrival_time', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count();
+            $releasesToday = MorgueAdmission::whereBetween('release_time', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count();
             $pendingRelease = MorgueAdmission::where('status', 'stored')
                 ->whereNotNull('release_time')
-                ->whereDate('release_time', Carbon::today())
+                ->whereBetween('release_time', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])
                 ->count();
 
             return [
@@ -89,7 +89,7 @@ class MorgueDashboardService
         $today = Carbon::today();
 
         $admissions = MorgueAdmission::with(['patient', 'deathRecord'])
-            ->whereDate('arrival_time', $today)
+            ->whereBetween('arrival_time', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->orWhereDate('release_time', $today)
             ->orderByDesc('updated_at')
             ->limit(10)
