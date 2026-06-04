@@ -1322,23 +1322,35 @@ class HmoWorkbenchController extends Controller
         $todayStr = $today->toDateString();
         $thisMonthStr = $thisMonth->toDateTimeString();
 
-        $agg = \Illuminate\Support\Facades\DB::table('product_or_service_requests as posr')
-            ->join('users as u', 'posr.user_id', '=', 'u.id')
-            ->join('patients as p', 'u.id', '=', 'p.user_id')
-            ->whereNotNull('p.hmo_id')
-            ->selectRaw("
-                SUM(CASE WHEN posr.validation_status IN ('pending', 'awaiting_code') AND posr.coverage_mode IS NOT NULL AND posr.is_bundle_item = 0 THEN posr.claims_amount ELSE 0 END) as pending_claims_total,
-                SUM(CASE WHEN posr.validation_status = 'approved' AND DATE(posr.validated_at) = ? THEN posr.claims_amount ELSE 0 END) as approved_today_total,
-                SUM(CASE WHEN posr.validation_status = 'rejected' AND DATE(posr.validated_at) = ? THEN posr.claims_amount ELSE 0 END) as rejected_today_total,
-                SUM(CASE WHEN posr.validation_status = 'approved' AND posr.validated_at >= ? THEN posr.claims_amount ELSE 0 END) as monthly_claims_total
-            ", [$todayStr, $todayStr, $thisMonthStr])
-            ->first();
+        $pendingTotal = \Illuminate\Support\Facades\DB::table('product_or_service_requests')
+            ->whereNotNull('coverage_mode')
+            ->whereIn('validation_status', ['pending', 'awaiting_code'])
+            ->where('is_bundle_item', 0)
+            ->sum('claims_amount');
+
+        $approvedToday = \Illuminate\Support\Facades\DB::table('product_or_service_requests')
+            ->whereNotNull('coverage_mode')
+            ->where('validation_status', 'approved')
+            ->whereDate('validated_at', $todayStr)
+            ->sum('claims_amount');
+
+        $rejectedToday = \Illuminate\Support\Facades\DB::table('product_or_service_requests')
+            ->whereNotNull('coverage_mode')
+            ->where('validation_status', 'rejected')
+            ->whereDate('validated_at', $todayStr)
+            ->sum('claims_amount');
+
+        $monthlyApproved = \Illuminate\Support\Facades\DB::table('product_or_service_requests')
+            ->whereNotNull('coverage_mode')
+            ->where('validation_status', 'approved')
+            ->where('validated_at', '>=', $thisMonthStr)
+            ->sum('claims_amount');
 
         $summary = [
-            'pending_claims_total' => (float) ($agg->pending_claims_total ?? 0),
-            'approved_today_total' => (float) ($agg->approved_today_total ?? 0),
-            'rejected_today_total' => (float) ($agg->rejected_today_total ?? 0),
-            'monthly_claims_total' => (float) ($agg->monthly_claims_total ?? 0),
+            'pending_claims_total' => (float) $pendingTotal,
+            'approved_today_total' => (float) $approvedToday,
+            'rejected_today_total' => (float) $rejectedToday,
+            'monthly_claims_total' => (float) $monthlyApproved,
 
             'monthly_by_hmo' => \Illuminate\Support\Facades\DB::table('product_or_service_requests as posr')
                 ->join('users', 'posr.user_id', '=', 'users.id')

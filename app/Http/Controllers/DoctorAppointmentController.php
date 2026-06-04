@@ -1502,20 +1502,34 @@ class DoctorAppointmentController extends Controller
         $linkedQueueIds = $appts->pluck('doctor_queue_id')->filter()->toArray();
 
         // ── 2. Doctor Queue entries ────────────────────────────────────
-        $queues = DoctorQueue::with(['patient.user', 'patient.hmo', 'clinic'])
-            ->where(function ($q) use ($doc) {
-                $q->whereIn('clinic_id', $doc->all_clinic_ids)
-                  ->orWhere('staff_id', $doc->id);
-            })
+        $q1 = DoctorQueue::whereIn('clinic_id', $doc->all_clinic_ids)
             ->whereBetween('created_at', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay(),
             ])
-            ->whereNotIn('id', $linkedQueueIds)
-            ->whereNotIn('status', [QueueStatus::COMPLETED, QueueStatus::CANCELLED, QueueStatus::NO_SHOW])
+            ->whereNotIn('status', [QueueStatus::COMPLETED, QueueStatus::CANCELLED, QueueStatus::NO_SHOW]);
+
+        if (!empty($linkedQueueIds)) {
+            $q1->whereNotIn('id', $linkedQueueIds);
+        }
+
+        $q2 = DoctorQueue::where('staff_id', $doc->id)
+            ->whereBetween('created_at', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ])
+            ->whereNotIn('status', [QueueStatus::COMPLETED, QueueStatus::CANCELLED, QueueStatus::NO_SHOW]);
+
+        if (!empty($linkedQueueIds)) {
+            $q2->whereNotIn('id', $linkedQueueIds);
+        }
+
+        $queues = $q1->union($q2)
             ->orderByRaw("CASE IFNULL(priority,'routine') WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END ASC")
             ->orderBy('created_at', 'DESC')
             ->get();
+
+        $queues->load(['patient.user', 'patient.hmo', 'clinic']);
 
         // Batch-load service requests for HMO delivery checks
         $reqEntryIds = $queues->pluck('request_entry_id')->filter()->unique()->toArray();
