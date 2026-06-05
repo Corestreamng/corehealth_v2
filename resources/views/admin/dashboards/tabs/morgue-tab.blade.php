@@ -11,7 +11,7 @@
                             <i class="mdi mdi-emoticon-dead"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'Morgue Attendant' }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.welcome_back') }}, {{ Auth::user()->name ?? __('dashboard.tab_morgue') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-grave-stone me-1"></i> Morgue Management
+                        <i class="mdi mdi-grave-stone me-1"></i> {{ __('dashboard.morgue_management') }}
                     </div>
                 </div>
             </div>
@@ -36,9 +36,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e293b, #334155);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Current Occupants</p>
+                    <p class="dash-stat-label">{{ __('dashboard.current_occupants') }}</p>
                     <h2 class="dash-stat-value" id="morgue-stat-occupants">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-archive-outline me-1"></i>Currently stored</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-archive-outline me-1"></i>{{ __('dashboard.currently_stored') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-emoticon-dead"></i></div>
             </div>
@@ -48,9 +48,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Admissions Today</p>
+                    <p class="dash-stat-label">{{ __('dashboard.admissions_today') }}</p>
                     <h2 class="dash-stat-value" id="morgue-stat-admissions">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-login-variant me-1"></i>Bodies received</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-login-variant me-1"></i>{{ __('dashboard.bodies_received') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-login-variant"></i></div>
             </div>
@@ -60,9 +60,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Releases Today</p>
+                    <p class="dash-stat-label">{{ __('dashboard.releases_today') }}</p>
                     <h2 class="dash-stat-value" id="morgue-stat-releases">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-logout-variant me-1"></i>Bodies released</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-logout-variant me-1"></i>{{ __('dashboard.bodies_released') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-logout-variant"></i></div>
             </div>
@@ -72,9 +72,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #f59e0b);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Pending Release</p>
+                    <p class="dash-stat-label">{{ __('dashboard.pending_release') }}</p>
                     <h2 class="dash-stat-value" id="morgue-stat-pending">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>Awaiting pickup</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.awaiting_pickup') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-clock-outline"></i></div>
             </div>
@@ -94,8 +94,8 @@
                     <i class="mdi mdi-flash-circle text-dark"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Morgue Quick Actions</h5>
-                    <small class="text-muted">Operations & record management</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.morgue_quick_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.operations_record_management') }}</small>
                 </div>
             </div>
 
@@ -105,8 +105,8 @@
                     <a href="{{ route('morgue.workbench') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f8fafc, #f1f5f9); border-color: #e2e8f0;">
                             <i class="mdi mdi-desktop-mac-dashboard dash-shortcut-icon" style="color: #475569;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #475569;">Morgue Workbench</h6>
-                            <small style="color: #475569;">Main Operations</small>
+                            <h6 class="dash-shortcut-title" style="color: #475569;">{{ __('dashboard.morgue_workbench') }}</h6>
+                            <small style="color: #475569;">{{ __('dashboard.main_operations') }}</small>
                         </div>
                     </a>
                 </div>
@@ -117,8 +117,8 @@
                     <a href="{{ route('morgue.workbench', ['action' => 'admission']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f1f5f9, #e2e8f0); border-color: #cbd5e1;">
                             <i class="mdi mdi-login-variant dash-shortcut-icon" style="color: #334155;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #334155;">New Admission</h6>
-                            <small style="color: #334155;">Body Intake</small>
+                            <h6 class="dash-shortcut-title" style="color: #334155;">{{ __('dashboard.new_admission') }}</h6>
+                            <small style="color: #334155;">{{ __('dashboard.body_intake') }}</small>
                         </div>
                     </a>
                 </div>
@@ -129,8 +129,8 @@
                     <a href="{{ route('morgue.workbench', ['queue' => 'admitted']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f1f5f9, #e2e8f0); border-color: #cbd5e1;">
                             <i class="mdi mdi-archive-outline dash-shortcut-icon" style="color: #334155;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #334155;">Occupants List</h6>
-                            <small style="color: #334155;">Current Storage</small>
+                            <h6 class="dash-shortcut-title" style="color: #334155;">{{ __('dashboard.occupants_list') }}</h6>
+                            <small style="color: #334155;">{{ __('dashboard.current_storage') }}</small>
                         </div>
                     </a>
                 </div>
@@ -141,8 +141,8 @@
                     <a href="{{ route('death-records.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fef2f2, #fee2e2); border-color: #fecaca;">
                             <i class="mdi mdi-file-document-outline dash-shortcut-icon" style="color: #b91c1c;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #b91c1c;">Death Records</h6>
-                            <small style="color: #b91c1c;">Certificates</small>
+                            <h6 class="dash-shortcut-title" style="color: #b91c1c;">{{ __('dashboard.death_records') }}</h6>
+                            <small style="color: #b91c1c;">{{ __('dashboard.certificates') }}</small>
                         </div>
                     </a>
                 </div>
@@ -161,8 +161,8 @@
                     <i class="mdi mdi-chart-line text-secondary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Admission Trend</h5>
-                    <small class="text-muted">Monthly intake pattern</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.admission_trend') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.monthly_intake_pattern') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -177,8 +177,8 @@
                     <i class="mdi mdi-chart-donut text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Status Breakdown</h5>
-                    <small class="text-muted">Admitted vs Released</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.status_breakdown') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.admitted_vs_released') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -191,8 +191,8 @@
 {{-- Recent Activity --}}
 @include('admin.dashboards.components.mini-table', [
     'containerId' => 'morgue-activity',
-    'title' => 'Recent Morgue Activity',
-    'subtitle' => 'Latest admissions & releases today',
+    'title' => __('dashboard.recent_morgue_activity'),
+    'subtitle' => __('dashboard.latest_admissions_releases_today'),
     'icon' => 'mdi-history',
     'iconBg' => 'dark'
 ])

@@ -249,26 +249,26 @@
                     <span class="brand-initials">{{ substr(appsettings()->site_abbreviation ?? 'CH', 0, 2) }}</span>
                 @endif
             </div>
-            <h1>Welcome back to {{ appsettings()->site_abbreviation ?? 'CoreHealth' }}</h1>
-            <p>Secure, efficient healthcare management at your fingertips. Access your dashboard and continue providing excellent patient care.</p>
+            <h1>{{ __('auth.welcome_back_to') }} {{ appsettings()->site_abbreviation ?? 'CoreHealth' }}</h1>
+            <p>{{ __('auth.secure_efficient_management') }}</p>
         </div>
     </div>
 
     <div class="auth-right">
         <div class="auth-form-container">
             <div class="auth-form-header">
-                <h2>Sign In</h2>
-                <p>Enter your credentials to access your account</p>
+                <h2>{{ __('auth.sign_in') }}</h2>
+                <p>{{ __('auth.enter_credentials') }}</p>
             </div>
 
             <form method="POST" action="{{ route('login') }}">
                 @csrf
 
                 <div class="mb-3">
-                    <label for="email" class="form-label">{{ __('Email Address') }}</label>
+                    <label for="email" class="form-label">{{ __('auth.email_address') }}</label>
                     <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
                            name="email" value="{{ old('email') }}" required autocomplete="email" autofocus
-                           placeholder="Enter your email">
+                           placeholder="{{ __('auth.enter_your_email') }}">
 
                     @error('email')
                         <span class="invalid-feedback" role="alert">
@@ -278,10 +278,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="password" class="form-label">{{ __('Password') }}</label>
+                    <label for="password" class="form-label">{{ __('auth.password_label') }}</label>
                     <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
                            name="password" required autocomplete="current-password"
-                           placeholder="Enter your password">
+                           placeholder="{{ __('auth.enter_your_password') }}">
 
                     @error('password')
                         <span class="invalid-feedback" role="alert">
@@ -295,26 +295,26 @@
                         <input class="form-check-input" type="checkbox" name="remember" id="remember"
                                {{ old('remember') ? 'checked' : '' }}>
                         <label class="form-check-label" for="remember">
-                            {{ __('Remember Me') }}
+                            {{ __('auth.remember_me') }}
                         </label>
                     </div>
 
                     @if (Route::has('password.request'))
                         <a class="auth-link" href="{{ route('password.request') }}">
-                            {{ __('Forgot Password?') }}
+                            {{ __('auth.forgot_password') }}
                         </a>
                     @endif
                 </div>
 
                 <button type="submit" class="btn btn-auth-primary">
-                    {{ __('Sign In') }}
+                    {{ __('auth.sign_in') }}
                 </button>
 
                 @if (Route::has('register'))
                     <div class="text-center mt-4">
-                        <span class="text-muted">Don't have an account? </span>
+                        <span class="text-muted">{{ __('auth.no_account') }} </span>
                         <a class="auth-link" href="{{ route('register') }}">
-                            {{ __('Sign Up') }}
+                            {{ __('auth.sign_up') }}
                         </a>
                     </div>
                 @endif

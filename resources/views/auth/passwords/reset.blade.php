@@ -232,16 +232,16 @@
                     <span class="brand-initials">{{ substr(appsettings()->site_abbreviation ?? 'CH', 0, 2) }}</span>
                 @endif
             </div>
-            <h1>Create New Password</h1>
-            <p>Choose a strong password to secure your account. Make sure it's something you can remember but others can't guess.</p>
+            <h1>{{ __('auth.create_new_password_title') }}</h1>
+            <p>{{ __('auth.create_new_password_subtitle') }}</p>
         </div>
     </div>
 
     <div class="auth-right">
         <div class="auth-form-container">
             <div class="auth-form-header">
-                <h2>Reset Your Password</h2>
-                <p>Enter your new password below</p>
+                <h2>{{ __('auth.reset_your_password') }}</h2>
+                <p>{{ __('auth.enter_new_password_below') }}</p>
             </div>
 
             <form method="POST" action="{{ route('password.update') }}">
@@ -250,10 +250,10 @@
                 <input type="hidden" name="token" value="{{ $token }}">
 
                 <div class="mb-3">
-                    <label for="email" class="form-label">{{ __('Email Address') }}</label>
+                    <label for="email" class="form-label">{{ __('auth.email_address') }}</label>
                     <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
                            name="email" value="{{ $email ?? old('email') }}" required autocomplete="email" autofocus
-                           placeholder="Enter your email">
+                           placeholder="{{ __('auth.enter_your_email') }}">
 
                     @error('email')
                         <span class="invalid-feedback" role="alert">
@@ -263,10 +263,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="password" class="form-label">{{ __('New Password') }}</label>
+                    <label for="password" class="form-label">{{ __('auth.new_password') }}</label>
                     <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
                            name="password" required autocomplete="new-password"
-                           placeholder="Enter new password">
+                           placeholder="{{ __('auth.enter_new_password') }}">
 
                     @error('password')
                         <span class="invalid-feedback" role="alert">
@@ -276,19 +276,19 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="password-confirm" class="form-label">{{ __('Confirm Password') }}</label>
+                    <label for="password-confirm" class="form-label">{{ __('auth.confirm_password') }}</label>
                     <input id="password-confirm" type="password" class="form-control"
                            name="password_confirmation" required autocomplete="new-password"
-                           placeholder="Confirm new password">
+                           placeholder="{{ __('auth.confirm_new_password') }}">
                 </div>
 
                 <button type="submit" class="btn btn-auth-primary">
-                    {{ __('Reset Password') }}
+                    {{ __('auth.reset_password_button') }}
                 </button>
 
                 <div class="text-center mt-4">
                     <a class="auth-link" href="{{ route('login') }}">
-                        ← {{ __('Back to Login') }}
+                        ← {{ __('auth.back_to_login') }}
                     </a>
                 </div>
             </form>

@@ -11,7 +11,7 @@
                             <i class="mdi mdi-baby-face-outline"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome, {{ Auth::user()->name ?? 'Pediatric Nurse' }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.welcome') }}, {{ Auth::user()->name ?? __('dashboard.tab_child_health') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-needle me-1"></i> Child Health & Immunization
+                        <i class="mdi mdi-needle me-1"></i> {{ __('dashboard.child_health_immunization') }}
                     </div>
                 </div>
             </div>
@@ -36,9 +36,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #0284c7, #0ea5e9);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Immunizations Today</p>
+                    <p class="dash-stat-label">{{ __('dashboard.immunizations_today') }}</p>
                     <h2 class="dash-stat-value" id="child-stat-today">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-needle me-1"></i>Scheduled shots</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-needle me-1"></i>{{ __('dashboard.scheduled_shots') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-needle"></i></div>
             </div>
@@ -48,9 +48,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #be123c, #e11d48);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Overdue Shots</p>
+                    <p class="dash-stat-label">{{ __('dashboard.overdue_shots') }}</p>
                     <h2 class="dash-stat-value" id="child-stat-overdue">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-alert-circle-outline me-1"></i>Missed appointments</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-alert-circle-outline me-1"></i>{{ __('dashboard.missed_appointments') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-alert-circle-outline"></i></div>
             </div>
@@ -60,9 +60,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Growth Monitoring</p>
+                    <p class="dash-stat-label">{{ __('dashboard.growth_monitoring') }}</p>
                     <h2 class="dash-stat-value" id="child-stat-growth">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>Weight/Height checks</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>{{ __('dashboard.weight_height_checks') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-chart-line"></i></div>
             </div>
@@ -72,9 +72,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">New Enrolments</p>
+                    <p class="dash-stat-label">{{ __('dashboard.new_enrolments') }}</p>
                     <h2 class="dash-stat-value" id="child-stat-new">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-baby-face-outline me-1"></i>This month</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-baby-face-outline me-1"></i>{{ __('dashboard.this_month') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-baby-face-outline"></i></div>
             </div>
@@ -94,8 +94,8 @@
                     <i class="mdi mdi-flash-circle text-success"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Child Health Actions</h5>
-                    <small class="text-muted">Pediatric tools</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.child_health_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.pediatric_tools') }}</small>
                 </div>
             </div>
 
@@ -105,8 +105,8 @@
                     <a href="{{ route('immunization.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f0fdf4, #dcfce7); border-color: #bbf7d0;">
                             <i class="mdi mdi-needle dash-shortcut-icon" style="color: #15803d;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #15803d;">Immunization</h6>
-                            <small style="color: #15803d;">Administer</small>
+                            <h6 class="dash-shortcut-title" style="color: #15803d;">{{ __('dashboard.immunization') }}</h6>
+                            <small style="color: #15803d;">{{ __('dashboard.administer') }}</small>
                         </div>
                     </a>
                 </div>
@@ -117,8 +117,8 @@
                     <a href="{{ route('child-growth.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f0f9ff, #e0f2fe); border-color: #bae6fd;">
                             <i class="mdi mdi-chart-areaspline dash-shortcut-icon" style="color: #0369a1;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0369a1;">Growth Charts</h6>
-                            <small style="color: #0369a1;">Monitoring</small>
+                            <h6 class="dash-shortcut-title" style="color: #0369a1;">{{ __('dashboard.growth_charts') }}</h6>
+                            <small style="color: #0369a1;">{{ __('dashboard.monitoring') }}</small>
                         </div>
                     </a>
                 </div>
@@ -129,8 +129,8 @@
                     <a href="{{ route('patient.create', ['type' => 'child']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fff7ed, #ffedd5); border-color: #fed7aa;">
                             <i class="mdi mdi-account-plus-outline dash-shortcut-icon" style="color: #c2410c;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #c2410c;">New Born</h6>
-                            <small style="color: #c2410c;">Registration</small>
+                            <h6 class="dash-shortcut-title" style="color: #c2410c;">{{ __('dashboard.new_born') }}</h6>
+                            <small style="color: #c2410c;">{{ __('dashboard.registration') }}</small>
                         </div>
                     </a>
                 </div>
@@ -141,8 +141,8 @@
                     <a href="{{ route('nursing.workbench', ['queue' => 'pediatrics']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f5f3ff, #ede9fe); border-color: #ddd6fe;">
                             <i class="mdi mdi-hospital-box-outline dash-shortcut-icon" style="color: #5b21b6;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #5b21b6;">Pediatric Clinic</h6>
-                            <small style="color: #5b21b6;">Workbench</small>
+                            <h6 class="dash-shortcut-title" style="color: #5b21b6;">{{ __('dashboard.pediatric_clinic') }}</h6>
+                            <small style="color: #5b21b6;">{{ __('dashboard.workbench') }}</small>
                         </div>
                     </a>
                 </div>
@@ -160,8 +160,8 @@
                     <i class="mdi mdi-chart-donut text-success"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Schedule Status</h5>
-                    <small class="text-muted">Total vaccine schedule health</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.schedule_status') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.total_vaccine_schedule_health') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -172,8 +172,8 @@
     <div class="col-xl-8">
         @include('admin.dashboards.components.mini-table', [
             'containerId' => 'child-activity',
-            'title' => 'Recent Pediatric Activity',
-            'subtitle' => 'Latest immunizations & growth entries',
+            'title' => __('dashboard.recent_pediatric_activity'),
+            'subtitle' => __('dashboard.latest_immunizations_growth_entries'),
             'icon' => 'mdi-history',
             'iconBg' => 'success'
         ])

@@ -38,6 +38,8 @@ class ApplicationStatu extends Model implements Auditable
         'note_edit_window',
         'result_edit_duration',
         'timezone',
+        'language',
+        'currency_symbol',
         'goonline',
         'chat_enabled',
         'group_chat_enabled',
