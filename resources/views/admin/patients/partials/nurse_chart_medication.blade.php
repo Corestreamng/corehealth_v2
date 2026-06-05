@@ -99,7 +99,9 @@
                                 <option value="SC">SC</option>
                                 <option value="Topical">Topical</option>
                                 <option value="Rectal">Rectal</option>
-                                <option value="Other">Other</option>
+                                <option value="Inhalation">Inhalation</option>
+                                <option value="PV">PV (Per Vagina)</option>
+                                <option value="OTHERS">OTHERS</option>
                             </select>
                         </div>
 
@@ -202,7 +204,9 @@
                                 <option value="SC">SC</option>
                                 <option value="Topical">Topical</option>
                                 <option value="Rectal">Rectal</option>
-                                <option value="Other">Other</option>
+                                <option value="Inhalation">Inhalation</option>
+                                <option value="PV">PV (Per Vagina)</option>
+                                <option value="OTHERS">OTHERS</option>
                             </select>
                         </div>
                         <div class="mb-3">
