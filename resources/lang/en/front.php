@@ -13,8 +13,7 @@ return [
     'error_searching' => 'Error searching. Please try again.',
     'home' => 'Home',
     'login' => 'Login',
-    'only_one_kind_of_automation' => 'Only one kind of Automation!',
-    'your_new_smile' => 'Your New Smile',
+    'login_now' => 'Login Now',
     'hospital_management' => 'Hospital Management!',
     'begin_here' => 'Begin Here',
     'contact_info' => 'Contact Info',
@@ -28,10 +27,53 @@ return [
     'about_us' => 'About Us',
     'explore' => 'Explore',
     'blog_posts' => 'Blog Posts',
-    'privacy_policy' => 'Privacy policy',
+    'privacy_policy' => 'Privacy Policy',
     'contact_us' => 'Contact Us',
-    'license_and_uses' => 'License & uses',
+    'license_and_uses' => 'License & Uses',
     'hospital' => 'Hospital',
     'all_rights_reserved' => 'All rights reserved.',
     'a_product_of' => 'A Product of',
+
+    // Welcome page - Hero
+    'enterprise_healthcare' => 'Enterprise Healthcare Platform',
+    'hero_title_1' => 'Next-Generation',
+    'hero_title_2' => 'Hospital Automation',
+    'hero_subtitle' => 'A complete digital health ecosystem powering clinical workflows, diagnostics, pharmacy, billing, HR, and more — built for modern healthcare delivery.',
+    'go_to_dashboard' => 'Go to Dashboard',
+    'access_portal' => 'Access Staff Portal',
+    'learn_more' => 'Learn More',
+
+    // Welcome page - Stats
+    'clinical_modules' => 'Clinical Modules',
+    'languages_supported' => 'Languages',
+    'uptime' => 'System Uptime',
+    'hipaa_ready' => 'Compliance Ready',
+
+    // Welcome page - Features
+    'platform_capabilities' => 'Platform Capabilities',
+    'everything_you_need' => 'Everything Your Hospital Needs',
+    'features_subtitle' => 'Comprehensive modules designed to automate and streamline every department in your healthcare facility.',
+    'feat_clinical' => 'Clinical & Consultations',
+    'feat_clinical_desc' => 'EMR, clinical notes, prescriptions, referrals, and discharge management with real-time decision support.',
+    'feat_lab' => 'Laboratory & Diagnostics',
+    'feat_lab_desc' => 'Order tracking, result entry, specimen management, and automated reporting for medical laboratories.',
+    'feat_pharmacy' => 'Pharmacy & Dispensing',
+    'feat_pharmacy_desc' => 'End-to-end prescription management, inventory control, dispensing workflows, and controlled substance tracking.',
+    'feat_billing' => 'Billing & Revenue',
+    'feat_billing_desc' => 'Automated billing, multi-payment support, HMO claims processing, and detailed financial reporting.',
+    'feat_inventory' => 'Inventory & Supply Chain',
+    'feat_inventory_desc' => 'Procurement, stock management, purchase orders, supplier management, and real-time inventory tracking.',
+    'feat_hr' => 'HR & Payroll',
+    'feat_hr_desc' => 'Staff management, leave tracking, payroll processing, duty rosters, and employee self-service portal.',
+
+    // Welcome page - CTA
+    'cta_title' => 'Ready to Transform Your Healthcare Operations?',
+    'cta_subtitle' => 'Sign in to your staff portal to access the full suite of tools designed for your role.',
+
+    // Welcome page - Footer
+    'footer_tagline' => 'An enterprise healthcare automation platform built in partnership to digitize and streamline hospital operations across Nigeria and beyond.',
+    'staff_portal' => 'Staff Portal',
+    'support' => 'Support',
+    'powered_by' => 'Powered by',
+    'welcome_to' => 'Welcome to',
 ];
