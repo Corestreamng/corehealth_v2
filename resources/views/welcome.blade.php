@@ -32,12 +32,12 @@
                         </li> --}}
                         @auth
                             <li class="nav-item">
-                                <a class="nav-link active" aria-current="page" href="{{ route('home') }}">Home</a>
+                                <a class="nav-link active" aria-current="page" href="{{ route('home') }}">{{ __('front.home') }}</a>
                             </li>
                         @else
                             <li class="nav-item">
                                 <a class="nav-link active" aria-current="page" href="{{ route('login') }}"><i
-                                        class="fa fa-user-md"></i> Login</a>
+                                        class="fa fa-user-md"></i> {{ __('front.login') }}</a>
                             </li>
 
                             {{-- @if (Route::has('register'))
@@ -87,8 +87,8 @@
                 <div class="demo-inner-content">
                     <div class="container">
                         <div class="banner-info">
-                            <p class="mb-1">Only one kind of Automation!</p>
-                            <h3>Your New Smile</h3>
+                            <p class="mb-1">{{ __('front.only_one_kind_of_automation') }}</p>
+                            <h3>{{ __('front.your_new_smile') }}</h3>
                             <!-- <a class="btn btn-style btn-style-2 mt-sm-5 mt-4" href="appointment.html">Book Now</a>-->
                         </div>
                     </div>
@@ -104,8 +104,8 @@
         <div class="container py-md-5 py-sm-4 py-5">
             <div class="d-sm-flex align-items-center justify-content-between">
                 <div class="left-content-call">
-                    <p class="text-white mt-1">Hospital Mangement!</p>
-                    <h3 class="title-big">Begin Here </h3>
+                    <p class="text-white mt-1">{{ __('front.hospital_management') }}</p>
+                    <h3 class="title-big">{{ __('front.begin_here') }}</h3>
 
                 </div>
                 <div class="right-content-call mt-sm-0 mt-4">
@@ -126,34 +126,34 @@
             <div class="container pt-md-4">
                 <div class="row footer-top-29">
                     <div class="col-md-5 footer-list-29 pe-xl-5">
-                        <h6 class="footer-title-29">Contact Info </h6>
-                        <p class="mb-2 pe-xl-5">Address : Suite 7b, Korinjoh House, Yakubu Gowon way, Jos, Plateau
+                        <h6 class="footer-title-29">{{ __('front.contact_info') }}</h6>
+                        <p class="mb-2 pe-xl-5">{{ __('front.address') }} : Suite 7b, Korinjoh House, Yakubu Gowon way, Jos, Plateau
                             State.
                         </p>
-                        <p class="mb-2">Phone Number : <a href="tel:+2348160876560">+2348160876560</a></p>
-                        <p class="mb-2">Email : <a href="mailto:info@corestream.ng">info@corestream.ng</a></p>
+                        <p class="mb-2">{{ __('front.phone_number') }} : <a href="tel:+2348160876560">+2348160876560</a></p>
+                        <p class="mb-2">{{ __('front.email') }} : <a href="mailto:info@corestream.ng">info@corestream.ng</a></p>
                     </div>
                     <div class="col-md-2 col-4 footer-list-29 mt-md-0 mt-4">
                         <ul>
-                            <h6 class="footer-title-29">About</h6>
-                            <li><a href="#">Services</a></li>
-                            <li><a href="#">Special Offers</a></li>
-                            <li><a href="#">Orthodontics</a></li>
-                            <li><a href="#">About Us</a></li>
+                            <h6 class="footer-title-29">{{ __('front.about') }}</h6>
+                            <li><a href="#">{{ __('front.services') }}</a></li>
+                            <li><a href="#">{{ __('front.special_offers') }}</a></li>
+                            <li><a href="#">{{ __('front.orthodontics') }}</a></li>
+                            <li><a href="#">{{ __('front.about_us') }}</a></li>
                         </ul>
                     </div>
                     <div class="col-lg-3 col-md-3 col-4 ps-lg-5 ps-md-4 footer-list-29 mt-md-0 mt-4">
                         <ul>
-                            <h6 class="footer-title-29">Explore</h6>
-                            <li><a href="#blog">Blog Posts</a></li>
-                            <li><a href="#privacy">Privacy policy</a></li>
-                            <li><a href="#">Contact Us</a></li>
-                            <li><a href="#license">License & uses</a></li>
+                            <h6 class="footer-title-29">{{ __('front.explore') }}</h6>
+                            <li><a href="#blog">{{ __('front.blog_posts') }}</a></li>
+                            <li><a href="#privacy">{{ __('front.privacy_policy') }}</a></li>
+                            <li><a href="#">{{ __('front.contact_us') }}</a></li>
+                            <li><a href="#license">{{ __('front.license_and_uses') }}</a></li>
                         </ul>
                     </div>
                     <div class="col-lg-2 col-md-2 col-4 footer-list-29 mt-md-0 mt-4">
                         <ul>
-                            <h6 class="footer-title-29">Hopital</h6>
+                            <h6 class="footer-title-29">{{ __('front.hospital') }}</h6>
                             <!--<li><a href="#doctor">Dr. John Doe</a></li>
                             <li><a href="#doctor">Dr. Martin Ker</a></li>
                             <li><a href="#doctor">Dr. Alexander</a></li>
@@ -162,8 +162,8 @@
                     </div>
                 </div>
                 <!-- copyright -->
-                <p class="copy-footer-29 text-center pt-lg-2 mt-5 pb-2">© 2023 Corestream Nigeria. All rights reserved.
-                    A Product of
+                <p class="copy-footer-29 text-center pt-lg-2 mt-5 pb-2">© {{ date('Y') }} Corestream Nigeria. {{ __('front.all_rights_reserved') }}
+                    {{ __('front.a_product_of') }}
                     <a href="https://corestream.ng/" target="_blank">
                         CorestreamNG</a>
                 </p>
