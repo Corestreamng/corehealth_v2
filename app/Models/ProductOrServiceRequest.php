@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 
 use OwenIt\Auditing\Contracts\Auditable;
+
 class ProductOrServiceRequest extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
+    protected $fillable = [
         'type',
         'invoice_id',
         'user_id',
@@ -76,6 +77,11 @@ protected $fillable = [
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class, 'user_id', 'user_id');
     }
 
     public function staff()

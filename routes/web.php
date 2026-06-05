@@ -599,6 +599,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/pharmacy-workbench/reports/top-products', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getTopProducts'])->name('pharmacy.reports.top-products');
         Route::get('/pharmacy-workbench/reports/payment-methods', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPaymentMethodsBreakdown'])->name('pharmacy.reports.payment-methods');
         Route::get('/pharmacy-workbench/reports/export', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'exportReports'])->name('pharmacy.reports.export');
+        Route::get('/pharmacy-workbench/reports/executive-summary', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getExecutiveSummary'])->name('pharmacy.reports.executive-summary');
+        Route::get('/pharmacy-workbench/reports/executive-summary/print', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'printExecutiveSummary'])->name('pharmacy.reports.executive-summary.print');
 
         // Lab Workbench Routes
         Route::get('/lab-workbench', [\App\Http\Controllers\LabWorkbenchController::class, 'index'])->name('lab.workbench');

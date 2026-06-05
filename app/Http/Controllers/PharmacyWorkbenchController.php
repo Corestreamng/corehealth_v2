@@ -3791,4 +3791,290 @@ class PharmacyWorkbenchController extends Controller
             ], 500);
         }
     }
+    /**
+     * Get executive summary for pharmacy reports (JSON response)
+     */
+    public function getExecutiveSummary(Request $request)
+    {
+        $data = $this->fetchExecutiveSummaryData($request);
+        return response()->json($data);
+    }
+
+    /**
+     * Print detailed executive summary
+     */
+    public function printExecutiveSummary(Request $request)
+    {
+        $data = $this->fetchExecutiveSummaryData($request);
+        $data['appsettings'] = appsettings();
+        $data['pharmacist'] = userfullname(Auth::id());
+        $data['print_date'] = Carbon::now()->format('d M Y H:i');
+        
+        $data['filters'] = [
+            'date_from' => $request->date_from ? Carbon::parse($request->date_from)->format('d M Y') : 'Beginning',
+            'date_to' => $request->date_to ? Carbon::parse($request->date_to)->format('d M Y') : 'Today',
+            'store' => $request->store_id ? (\App\Models\Store::find($request->store_id)->store_name ?? 'All Hubs & Satellites') : 'All Hubs & Satellites'
+        ];
+
+        return view('admin.pharmacy.executive_summary_print', $data);
+    }
+
+    /**
+     * Core logic for fetching executive summary data
+     */
+    private function fetchExecutiveSummaryData(Request $request)
+    {
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->startOfDay() : null;
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to)->endOfDay() : null;
+        $storeId = $request->store_id;
+        $ageBracketsInput = $request->age_brackets;
+
+        $ageBrackets = [];
+        if ($ageBracketsInput) {
+            $parts = explode(',', $ageBracketsInput);
+            foreach ($parts as $part) {
+                $range = explode('-', $part);
+                if (count($range) == 2) {
+                    $ageBrackets[] = ['min' => (int)$range[0], 'max' => (int)$range[1], 'label' => trim($part)];
+                }
+            }
+        }
+        if (empty($ageBrackets)) {
+            $ageBrackets = [
+                ['min' => 0, 'max' => 12, 'label' => '0-12'],
+                ['min' => 13, 'max' => 19, 'label' => '13-19'],
+                ['min' => 20, 'max' => 35, 'label' => '20-35'],
+                ['min' => 36, 'max' => 50, 'label' => '36-50'],
+                ['min' => 51, 'max' => 65, 'label' => '51-65'],
+                ['min' => 66, 'max' => 150, 'label' => '65+'],
+            ];
+        }
+
+        // 1. Stock Valuation
+        $stockQuery = \App\Models\StockBatch::with('product.price')
+            ->where('current_qty', '>', 0)
+            ->whereHas('store', function($q) {
+                $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+            });
+        
+        if ($storeId) {
+            $stockQuery->where('store_id', $storeId);
+        }
+
+        $batches = $stockQuery->get();
+        $totalStockValue = 0;
+        foreach ($batches as $batch) {
+            $cost = $batch->cost_price;
+            if (empty($cost) || $cost <= 0) {
+                $price = $batch->product->price ?? null;
+                $cost = $price ? $price->pr_buy_price : 0;
+            }
+            $totalStockValue += ($batch->current_qty * $cost);
+        }
+
+        // Base query for dispensed items
+        $posrQuery = \App\Models\ProductOrServiceRequest::whereNotNull('dispensed_from_store_id')
+            ->whereHas('dispensedFromStore', function($q) {
+                $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+            });
+
+        if ($dateFrom) $posrQuery->where('order_date', '>=', $dateFrom);
+        if ($dateTo) $posrQuery->where('order_date', '<=', $dateTo);
+        if ($storeId) $posrQuery->where('dispensed_from_store_id', $storeId);
+
+        $posrRecords = $posrQuery->with(['dispensedFromStore', 'patient', 'hmo.scheme', 'encounter.queue.clinic'])->get();
+
+        // 1.5 Expenditure (Purchases)
+        $reqQuery = \App\Models\StoreRequisitionItem::with(['sourceBatch', 'product.price'])
+            ->where('status', 'fulfilled')
+            ->whereHas('requisition', function($q) use ($dateFrom, $dateTo, $storeId) {
+                $q->where('status', 'fulfilled');
+                if ($dateFrom) $q->where('fulfilled_at', '>=', $dateFrom);
+                if ($dateTo) $q->where('fulfilled_at', '<=', $dateTo);
+                $q->whereHas('toStore', function($q2) {
+                    $q2->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+                });
+                if ($storeId) $q->where('to_store_id', $storeId);
+            });
+            
+        $requisitions = $reqQuery->get();
+        $totalExpenditure = 0;
+        foreach ($requisitions as $reqItem) {
+            $cost = 0;
+            if ($reqItem->sourceBatch) {
+                $batch = $reqItem->sourceBatch;
+                if ($batch && $batch->cost_price > 0) {
+                    $cost = $batch->cost_price;
+                }
+            }
+            if ($cost <= 0) {
+                $price = $reqItem->product->price ?? null;
+                $cost = $price ? $price->pr_buy_price : 0;
+            }
+            $totalExpenditure += ($reqItem->fulfilled_qty * $cost);
+        }
+
+        // 2. Collections by Store (Deep nested logic)
+        $collectionsByStore = [];
+        $incomeByScheme = [];
+        $totalGoodsUsed = 0;
+        
+        foreach ($posrRecords as $record) {
+            $storeName = $record->dispensedFromStore->store_name ?? 'Unknown Store';
+            $cashAmount = (float)$record->payable_amount;
+            $claimsAmount = (float)$record->claims_amount;
+            $amount = $cashAmount + $claimsAmount;
+            
+            $totalGoodsUsed += $amount;
+            
+            $hmoId = $record->hmo_id;
+            $hmo = $record->hmo;
+            $schemeName = 'Self/Private';
+            $hmoName = 'Self/Private';
+
+            if ($hmoId && $hmoId != 1 && $hmo) {
+                $schemeName = $hmo->scheme->name ?? 'Unknown Scheme';
+                $hmoName = $hmo->name ?? 'Unknown HMO';
+            }
+
+            // Income by Scheme summary
+            if (!isset($incomeByScheme[$schemeName])) {
+                $incomeByScheme[$schemeName] = 0;
+            }
+            $incomeByScheme[$schemeName] += $amount;
+
+            if (!isset($collectionsByStore[$storeName])) {
+                $collectionsByStore[$storeName] = ['store_name' => $storeName, 'count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0, 'schemes' => []];
+            }
+            $collectionsByStore[$storeName]['count']++;
+            $collectionsByStore[$storeName]['value'] += $amount;
+            $collectionsByStore[$storeName]['cash'] += $cashAmount;
+            $collectionsByStore[$storeName]['claims'] += $claimsAmount;
+
+            if (!isset($collectionsByStore[$storeName]['schemes'][$schemeName])) {
+                $collectionsByStore[$storeName]['schemes'][$schemeName] = ['count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0, 'hmos' => []];
+            }
+            $collectionsByStore[$storeName]['schemes'][$schemeName]['count']++;
+            $collectionsByStore[$storeName]['schemes'][$schemeName]['value'] += $amount;
+            $collectionsByStore[$storeName]['schemes'][$schemeName]['cash'] += $cashAmount;
+            $collectionsByStore[$storeName]['schemes'][$schemeName]['claims'] += $claimsAmount;
+
+            if (!isset($collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName])) {
+                $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName] = ['count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0];
+            }
+            $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['count']++;
+            $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['value'] += $amount;
+            $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['cash'] += $cashAmount;
+            $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['claims'] += $claimsAmount;
+        }
+
+        // Demographics Data Preparation
+        $visitTypeCounts = ['Admitted' => 0, 'Out-Patient' => 0, 'Walk-in' => 0];
+        $patientClassBreakdown = [];
+        $genderBreakdown = [];
+        $ageBreakdown = [];
+
+        $addHmoData = function(&$breakdown, $key, $record) {
+            if (!isset($breakdown[$key])) {
+                $breakdown[$key] = ['count' => 0, 'schemes' => []];
+            }
+            $breakdown[$key]['count']++;
+
+            $hmoId = $record->hmo_id;
+            $hmo = $record->hmo;
+            $schemeName = 'Self/Private';
+            $hmoName = 'Self/Private';
+
+            if ($hmoId && $hmoId != 1 && $hmo) {
+                $schemeName = $hmo->scheme->name ?? 'Unknown Scheme';
+                $hmoName = $hmo->name ?? 'Unknown HMO';
+            }
+
+            if (!isset($breakdown[$key]['schemes'][$schemeName])) {
+                $breakdown[$key]['schemes'][$schemeName] = ['count' => 0, 'hmos' => []];
+            }
+            $breakdown[$key]['schemes'][$schemeName]['count']++;
+
+            if (!isset($breakdown[$key]['schemes'][$schemeName]['hmos'][$hmoName])) {
+                $breakdown[$key]['schemes'][$schemeName]['hmos'][$hmoName] = 0;
+            }
+            $breakdown[$key]['schemes'][$schemeName]['hmos'][$hmoName]++;
+        };
+
+        $processedPatients = [];
+        $patientsByScheme = [];
+
+        foreach ($posrRecords as $record) {
+            $patient = $record->patient;
+            if (!$patient) continue;
+            
+            $hmoId = $record->hmo_id;
+            $hmo = $record->hmo;
+            $schemeName = 'Self/Private';
+            if ($hmoId && $hmoId != 1 && $hmo) {
+                $schemeName = $hmo->scheme->name ?? 'Unknown Scheme';
+            }
+
+            // Only count patient demographics once per report run
+            if (isset($processedPatients[$patient->id])) continue;
+            $processedPatients[$patient->id] = true;
+            
+            $isAdmitted = $record->admission_request_id || ($record->encounter && $record->encounter->admission_request_id);
+            
+            if ($isAdmitted) {
+                $visitTypeCounts['Admitted']++;
+            } elseif ($record->encounter_id) {
+                $visitTypeCounts['Out-Patient']++;
+            } else {
+                $visitTypeCounts['Walk-in']++;
+            }
+
+            if (!isset($patientsByScheme[$schemeName])) {
+                $patientsByScheme[$schemeName] = 0;
+            }
+            $patientsByScheme[$schemeName]++;
+            
+            if ($isAdmitted) {
+                $addHmoData($patientClassBreakdown, 'Admitted', $record);
+            } elseif ($record->encounter_id) {
+                $addHmoData($patientClassBreakdown, 'Out-Patient', $record);
+            } else {
+                $addHmoData($patientClassBreakdown, 'Walk-in', $record);
+            }
+
+            $gender = $patient->gender ?? 'Unknown';
+            $addHmoData($genderBreakdown, $gender, $record);
+
+            $age = $patient->dob ? Carbon::parse($patient->dob)->age : null;
+            $ageLabel = 'Unknown';
+            if ($age !== null) {
+                foreach ($ageBrackets as $bracket) {
+                    if ($age >= $bracket['min'] && $age <= $bracket['max']) {
+                        $ageLabel = $bracket['label'];
+                        break;
+                    }
+                }
+            }
+            $addHmoData($ageBreakdown, $ageLabel, $record);
+        }
+
+        // Calculate Opening Stock
+        // Opening Stock = Closing Stock + Goods Used - Expenditure
+        $openingStock = $totalStockValue + $totalGoodsUsed - $totalExpenditure;
+
+        return [
+            'stock_valuation' => $totalStockValue,
+            'total_expenditure' => $totalExpenditure,
+            'total_goods_used' => $totalGoodsUsed,
+            'opening_stock' => $openingStock,
+            'income_by_scheme' => $incomeByScheme,
+            'patients_by_scheme' => $patientsByScheme,
+            'collections_by_store' => array_values($collectionsByStore),
+            'patients_attended_to' => $visitTypeCounts,
+            'patient_classifications' => $patientClassBreakdown,
+            'gender_distribution' => $genderBreakdown,
+            'age_distribution' => $ageBreakdown,
+            'age_brackets_used' => $ageBrackets
+        ];
+    }
 }
