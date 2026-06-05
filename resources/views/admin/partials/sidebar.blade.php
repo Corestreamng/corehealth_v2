@@ -24,20 +24,20 @@
             <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}" id="sidebar-global-dashboard">
                     <i class="mdi mdi-view-dashboard-outline menu-icon"></i>
-                    <span class="menu-title">Dashboard</span>
+                    <span class="menu-title">{{ __('sidebar.dashboard') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}" href="{{ route('hr.ess.my-profile') }}" id="sidebar-global-profile">
                     <i class="mdi mdi-account-circle menu-icon"></i>
-                    <span class="menu-title">Profile</span>
+                    <span class="menu-title">{{ __('sidebar.profile') }}</span>
                 </a>
             </li>
             @if(appsettings('chat_enabled') ?? true)
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('chat.index') }}" target="_blank" id="sidebar-global-messenger">
                     <i class="mdi mdi-message-text-outline menu-icon"></i>
-                    <span class="menu-title">Messenger</span>
+                    <span class="menu-title">{{ __('sidebar.messenger') }}</span>
                     @include('messenger.unread-count')
                 </a>
             </li>
@@ -45,7 +45,7 @@
             <li class="nav-item {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}" id="sidebar-global-requisitions">
                     <i class="mdi mdi-swap-horizontal menu-icon"></i>
-                    <span class="menu-title">Requisitions</span>
+                    <span class="menu-title">{{ __('sidebar.requisitions') }}</span>
                 </a>
             </li>
 
@@ -57,38 +57,38 @@
             @if(Auth::user()->staff_profile)
             @can('ess.access')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">My HR Portal</span>
+                <span class="nav-item-head">{{ __('sidebar.my_hr_portal') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('hr.ess.index') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hr.ess.index') ? 'active' : '' }}" href="{{ route('hr.ess.index') }}" id="sidebar-ess-dashboard">
                     <i class="mdi mdi-account-circle-outline menu-icon"></i>
-                    <span class="menu-title">ESS Dashboard</span>
+                    <span class="menu-title">{{ __('sidebar.ess_dashboard') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('hr.ess.my-leave') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hr.ess.my-leave') ? 'active' : '' }}" href="{{ route('hr.ess.my-leave') }}" id="sidebar-ess-my-leave">
                     <i class="mdi mdi-calendar-check menu-icon"></i>
-                    <span class="menu-title">My Leave</span>
+                    <span class="menu-title">{{ __('sidebar.my_leave') }}</span>
                 </a>
             </li>
             @can('ess.view-payslips')
             <li class="nav-item {{ request()->routeIs('hr.ess.my-payslips') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hr.ess.my-payslips') ? 'active' : '' }}" href="{{ route('hr.ess.my-payslips') }}" id="sidebar-ess-my-payslips">
                     <i class="mdi mdi-file-document-outline menu-icon"></i>
-                    <span class="menu-title">My Payslips</span>
+                    <span class="menu-title">{{ __('sidebar.my_payslips') }}</span>
                 </a>
             </li>
             @endcan
             <li class="nav-item {{ request()->routeIs('hr.ess.my-disciplinary') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hr.ess.my-disciplinary') ? 'active' : '' }}" href="{{ route('hr.ess.my-disciplinary') }}" id="sidebar-ess-my-disciplinary">
                     <i class="mdi mdi-alert-circle-outline menu-icon"></i>
-                    <span class="menu-title">My Disciplinary</span>
+                    <span class="menu-title">{{ __('sidebar.my_disciplinary') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}" href="{{ route('hr.ess.my-profile') }}" id="sidebar-ess-my-profile">
                     <i class="mdi mdi-account-edit-outline menu-icon"></i>
-                    <span class="menu-title">My Profile</span>
+                    <span class="menu-title">{{ __('sidebar.my_profile') }}</span>
                 </a>
             </li>
             @endcan
@@ -100,24 +100,24 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|RECEPTIONIST')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Health Records</span>
+                <span class="nav-item-head">{{ __('sidebar.health_records') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('reception.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('reception.workbench') ? 'active' : '' }}" href="{{ route('reception.workbench') }}" id="sidebar-receptionist-workbench">
                     <i class="mdi mdi-desktop-mac-dashboard menu-icon"></i>
-                    <span class="menu-title">Health Records Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.health_records_workbench') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" href="{{ route('allPrevEncounters') }}" id="sidebar-receptionist-encounters">
                     <i class="mdi mdi-stethoscope menu-icon"></i>
-                    <span class="menu-title">All Encounters</span>
+                    <span class="menu-title">{{ __('sidebar.all_encounters') }}</span>
                 </a>
             </li>
             <!-- <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('patient.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-patients" data-bs-target="#sidebar-receptionist-patients" aria-expanded="{{ request()->routeIs('patient.*') ? 'true' : 'false' }}" aria-controls="sidebar-receptionist-patients" id="sidebar-receptionist-patients-toggle">
                     <i class="mdi mdi-account-multiple-outline menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('patient.*') ? 'show' : '' }}" id="sidebar-receptionist-patients">
@@ -135,7 +135,7 @@
             <li class="nav-item {{ request()->routeIs('add-to-queue') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('add-to-queue') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-patient-lookup" data-bs-target="#sidebar-receptionist-patient-lookup" aria-expanded="{{ request()->routeIs('add-to-queue') ? 'true' : 'false' }}" aria-controls="sidebar-receptionist-patient-lookup" id="sidebar-receptionist-patient-lookup-toggle">
                     <i class="mdi mdi-account-search-outline menu-icon"></i>
-                    <span class="menu-title">Patient Lookup</span>
+                    <span class="menu-title">{{ __('sidebar.patient_lookup') }}</span>
                     <span class="badge badge-warning ml-2" style="font-size: 9px;">Old</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
@@ -152,7 +152,7 @@
             <li class="nav-item {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-admissions-old" data-bs-target="#sidebar-receptionist-admissions-old" aria-expanded="{{ request()->routeIs('admission-requests.*', 'beds.*') ? 'true' : 'false' }}" aria-controls="sidebar-receptionist-admissions-old" id="sidebar-receptionist-admissions-old-toggle">
                     <i class="mdi mdi-hotel menu-icon"></i>
-                    <span class="menu-title">Admissions</span>
+                    <span class="menu-title">{{ __('sidebar.admissions') }}</span>
                     <span class="badge badge-warning ml-2" style="font-size: 9px;">Old</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
@@ -172,17 +172,17 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-bookings-old" data-bs-target="#sidebar-receptionist-bookings-old" aria-expanded="false" aria-controls="sidebar-receptionist-bookings-old" id="sidebar-receptionist-bookings-old-toggle">
                     <i class="mdi mdi-calendar-check menu-icon"></i>
-                    <span class="menu-title">Bookings</span>
+                    <span class="menu-title">{{ __('sidebar.bookings') }}</span>
                     <span class="badge badge-warning ml-2" style="font-size: 9px;">Old</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-receptionist-bookings-old">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="#" id="sidebar-receptionist-booking-new-old">New Booking</a>
+                            <a class="nav-link" href="#" id="sidebar-receptionist-booking-new-old">{{ __('sidebar.new_booking') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" id="sidebar-receptionist-booking-calendar-old">View calender</a>
+                            <a class="nav-link" href="#" id="sidebar-receptionist-booking-calendar-old">{{ __('sidebar.view_calender') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -191,15 +191,14 @@
             <!-- <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-accounts" data-bs-target="#sidebar-receptionist-accounts" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'true' : 'false' }}" aria-controls="sidebar-receptionist-accounts" id="sidebar-receptionist-accounts-toggle">
                     <i class="mdi mdi-cash-multiple menu-icon"></i>
-                    <span class="menu-title">Accounts</span>
+                    <span class="menu-title">{{ __('sidebar.accounts') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'show' : '' }}" id="sidebar-receptionist-accounts">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('billing.workbench') ? 'active' : '' }}" href="{{ route('billing.workbench') }}" id="sidebar-receptionist-billing-workbench">
-                                <i class="mdi mdi-view-dashboard-outline"></i> Billing Workbench
-                            </a>
+                                <i class="mdi mdi-view-dashboard-outline"></i> {{ __('sidebar.billing_workbench') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('product-or-service-request.index') ? 'active' : '' }}" href="{{ route('product-or-service-request.index') }}" id="sidebar-receptionist-payment-requests">All Payment Requests</a>
@@ -213,7 +212,7 @@
             <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-consultations" data-bs-target="#sidebar-receptionist-consultations" aria-expanded="{{ request()->routeIs('allPrevEncounters') ? 'true' : 'false' }}" aria-controls="sidebar-receptionist-consultations" id="sidebar-receptionist-consultations-toggle">
                     <i class="mdi mdi-stethoscope menu-icon"></i>
-                    <span class="menu-title">Consultations</span>
+                    <span class="menu-title">{{ __('sidebar.consultations') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('allPrevEncounters') ? 'show' : '' }}" id="sidebar-receptionist-consultations">
@@ -231,18 +230,18 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS|BILLER')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Billing</span>
+                <span class="nav-item-head">{{ __('sidebar.billing') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('billing.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('billing.workbench') ? 'active' : '' }}" href="{{ route('billing.workbench') }}" id="sidebar-biller-workbench">
                     <i class="mdi mdi-cash-register menu-icon"></i>
-                    <span class="menu-title">Billing Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.billing_workbench') }}</span>
                 </a>
             </li>
             <!-- <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('patient.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-biller-patients" data-bs-target="#sidebar-biller-patients" aria-expanded="{{ request()->routeIs('patient.*') ? 'true' : 'false' }}" aria-controls="sidebar-biller-patients" id="sidebar-biller-patients-toggle">
                     <i class="mdi mdi-account-multiple-outline menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('patient.*') ? 'show' : '' }}" id="sidebar-biller-patients">
@@ -259,7 +258,7 @@
             <!-- <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-biller-accounts" data-bs-target="#sidebar-biller-accounts" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'true' : 'false' }}" aria-controls="sidebar-biller-accounts" id="sidebar-biller-accounts-toggle">
                     <i class="mdi mdi-cash-multiple menu-icon"></i>
-                    <span class="menu-title">Accounts</span>
+                    <span class="menu-title">{{ __('sidebar.accounts') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'show' : '' }}" id="sidebar-biller-accounts">
@@ -276,7 +275,7 @@
             <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-biller-consultations" data-bs-target="#sidebar-biller-consultations" aria-expanded="{{ request()->routeIs('allPrevEncounters') ? 'true' : 'false' }}" aria-controls="sidebar-biller-consultations" id="sidebar-biller-consultations-toggle">
                     <i class="mdi mdi-stethoscope menu-icon"></i>
-                    <span class="menu-title">Consultations</span>
+                    <span class="menu-title">{{ __('sidebar.consultations') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('allPrevEncounters') ? 'show' : '' }}" id="sidebar-biller-consultations">
@@ -294,19 +293,19 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|PHARMACIST')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Pharmacy</span>
+                <span class="nav-item-head">{{ __('sidebar.pharmacy') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('pharmacy.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('pharmacy.workbench') ? 'active' : '' }}" href="{{ route('pharmacy.workbench') }}" id="sidebar-pharmacist-workbench">
                     <i class="mdi mdi-pill menu-icon"></i>
-                    <span class="menu-title">Pharmacy Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.pharmacy_workbench') }}</span>
                 </a>
             </li>
             <!-- Pharmacy Queue - Old DataTable Approach
             <li class="nav-item {{ request()->routeIs('product-requests.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-requests.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-pharmacist-queue-old" data-bs-target="#sidebar-pharmacist-queue-old" aria-expanded="{{ request()->routeIs('product-requests.*') ? 'true' : 'false' }}" aria-controls="sidebar-pharmacist-queue-old" id="sidebar-pharmacist-queue-old-toggle">
                     <i class="mdi mdi-format-list-checks menu-icon"></i>
-                    <span class="menu-title">Queue</span>
+                    <span class="menu-title">{{ __('sidebar.queue') }}</span>
                     <span class="badge badge-warning ml-2" style="font-size: 9px;">Old</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
@@ -325,7 +324,7 @@
             <li class="nav-item {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-pharmacist-products" data-bs-target="#sidebar-pharmacist-products" aria-expanded="{{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'true' : 'false' }}" aria-controls="sidebar-pharmacist-products" id="sidebar-pharmacist-products-toggle">
                     <i class="mdi mdi-package-variant menu-icon"></i>
-                    <span class="menu-title">Product Management</span>
+                    <span class="menu-title">{{ __('sidebar.product_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'show' : '' }}" id="sidebar-pharmacist-products">
@@ -345,13 +344,13 @@
             <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-pharmacist-patients" data-bs-target="#sidebar-pharmacist-patients" aria-expanded="false" aria-controls="sidebar-pharmacist-patients" id="sidebar-pharmacist-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-pharmacist-patients">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-pharmacist-patient-all">All Patients</a>
+                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-pharmacist-patient-all">{{ __('sidebar.all_patients') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -363,18 +362,18 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|STORE')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Store / Inventory</span>
+                <span class="nav-item-head">{{ __('sidebar.store_inventory') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('inventory.store-workbench.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('inventory.store-workbench.*') ? 'active' : '' }}" href="{{ route('inventory.store-workbench.index') }}" id="sidebar-store-workbench">
                     <i class="mdi mdi-store menu-icon"></i>
-                    <span class="menu-title">Store Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.store_workbench') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-store-products" data-bs-target="#sidebar-store-products" aria-expanded="{{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'true' : 'false' }}" aria-controls="sidebar-store-products" id="sidebar-store-products-toggle">
                     <i class="mdi mdi-package-variant menu-icon"></i>
-                    <span class="menu-title">Product Management</span>
+                    <span class="menu-title">{{ __('sidebar.product_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'show' : '' }}" id="sidebar-store-products">
@@ -395,25 +394,22 @@
             <li class="nav-item {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-store-inventory" data-bs-target="#sidebar-store-inventory" aria-expanded="{{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*') ? 'true' : 'false' }}" aria-controls="sidebar-store-inventory" id="sidebar-store-inventory-toggle">
                     <i class="mdi mdi-clipboard-list-outline menu-icon"></i>
-                    <span class="menu-title">Inventory Operations</span>
+                    <span class="menu-title">{{ __('sidebar.inventory_operations') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*') ? 'show' : '' }}" id="sidebar-store-inventory">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.*') ? 'active' : '' }}" href="{{ route('inventory.purchase-orders.index') }}" id="sidebar-store-purchase-orders">
-                                <i class="mdi mdi-cart-arrow-down"></i> Purchase Orders
-                            </a>
+                                <i class="mdi mdi-cart-arrow-down"></i> {{ __('sidebar.purchase_orders') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}" id="sidebar-store-requisitions">
-                                <i class="mdi mdi-swap-horizontal"></i> Requisitions
-                            </a>
+                                <i class="mdi mdi-swap-horizontal"></i> {{ __('sidebar.requisitions') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.expenses.*') ? 'active' : '' }}" href="{{ route('inventory.expenses.index') }}" id="sidebar-store-expenses">
-                                <i class="mdi mdi-cash-minus"></i> Expenses
-                            </a>
+                                <i class="mdi mdi-cash-minus"></i> {{ __('sidebar.expenses') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -421,13 +417,13 @@
             <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-store-patients" data-bs-target="#sidebar-store-patients" aria-expanded="false" aria-controls="sidebar-store-patients" id="sidebar-store-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-store-patients">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-store-patient-all">All Patients</a>
+                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-store-patient-all">{{ __('sidebar.all_patients') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -437,7 +433,7 @@
             <li class="nav-item {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}" href="{{ route('inventory.config.store-governance.index') }}" id="sidebar-store-governance-view">
                     <i class="mdi mdi-store-cog menu-icon"></i>
-                    <span class="menu-title">Store Governance</span>
+                    <span class="menu-title">{{ __('sidebar.store_governance') }}</span>
                 </a>
             </li>
             @endhasrole
@@ -449,19 +445,19 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|NURSE')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Nursing</span>
+                <span class="nav-item-head">{{ __('sidebar.nursing') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('nursing-workbench.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('nursing-workbench.*') ? 'active' : '' }}" href="{{ route('nursing-workbench.index') }}" id="sidebar-nurse-workbench">
                     <i class="mdi mdi-heart-pulse menu-icon"></i>
-                    <span class="menu-title">Nursing Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.nursing_workbench') }}</span>
                 </a>
             </li>
             @hasanyrole('SUPERADMIN|ADMIN|MATERNITY')
             <li class="nav-item {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}" href="{{ route('maternity-workbench.index') }}" id="sidebar-nurse-maternity-workbench">
                     <i class="mdi mdi-mother-nurse menu-icon"></i>
-                    <span class="menu-title">Maternity Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.maternity_workbench') }}</span>
                 </a>
             </li>
             @endhasanyrole
@@ -469,7 +465,7 @@
             <li class="nav-item {{ request()->routeIs('surgery-workbench.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('surgery-workbench.*') ? 'active' : '' }}" href="{{ route('surgery-workbench.index') }}" id="sidebar-surgery-workbench">
                     <i class="mdi mdi-scalpel menu-icon"></i>
-                    <span class="menu-title">Surgery Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.surgery_workbench') }}</span>
                 </a>
             </li>
             @endhasanyrole
@@ -477,7 +473,7 @@
             <li class="nav-item {{ request()->routeIs('vitals.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('vitals.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-nurse-queue-old" data-bs-target="#sidebar-nurse-queue-old" aria-expanded="{{ request()->routeIs('vitals.*') ? 'true' : 'false' }}" aria-controls="sidebar-nurse-queue-old" id="sidebar-nurse-queue-old-toggle">
                     <i class="mdi mdi-clipboard-pulse-outline menu-icon"></i>
-                    <span class="menu-title">Queue</span>
+                    <span class="menu-title">{{ __('sidebar.queue') }}</span>
                     <span class="badge badge-warning ml-2" style="font-size: 9px;">Old</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
@@ -496,16 +492,16 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-nurse-admissions" data-bs-target="#sidebar-nurse-admissions" aria-expanded="false" aria-controls="sidebar-nurse-admissions" id="sidebar-nurse-admissions-toggle">
                     <i class="mdi mdi-hotel menu-icon"></i>
-                    <span class="menu-title">Admissions</span>
+                    <span class="menu-title">{{ __('sidebar.admissions') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-nurse-admissions">
                     <ul class="nav flex-column sub-menu">
                         <!-- <li class="nav-item">
-                            <a class="nav-link" href="{{ route('admission-requests.index') }}" id="sidebar-nurse-bed-requests">Bed Requests</a>
+                            <a class="nav-link" href="{{ route('admission-requests.index') }}" id="sidebar-nurse-bed-requests">{{ __('sidebar.bed_requests') }}</a>
                         </li> -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('beds.index') }}" id="sidebar-nurse-manage-beds">Manage Beds</a>
+                            <a class="nav-link" href="{{ route('beds.index') }}" id="sidebar-nurse-manage-beds">{{ __('sidebar.manage_beds') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -513,13 +509,13 @@
             <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-nurse-patients" data-bs-target="#sidebar-nurse-patients" aria-expanded="false" aria-controls="sidebar-nurse-patients" id="sidebar-nurse-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-nurse-patients">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-nurse-patient-all">All Patients</a>
+                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-nurse-patient-all">{{ __('sidebar.all_patients') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -528,14 +524,14 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-nurse-patient-lookup-old" data-bs-target="#sidebar-nurse-patient-lookup-old" aria-expanded="false" aria-controls="sidebar-nurse-patient-lookup-old" id="sidebar-nurse-patient-lookup-old-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Patient Lookup</span>
+                    <span class="menu-title">{{ __('sidebar.patient_lookup') }}</span>
                     <span class="badge badge-warning ml-2" style="font-size: 9px;">Old</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-nurse-patient-lookup-old">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('add-to-queue') }}" id="sidebar-nurse-patient-search-old">Search</a>
+                            <a class="nav-link" href="{{ route('add-to-queue') }}" id="sidebar-nurse-patient-search-old">{{ __('sidebar.search') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -548,18 +544,18 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|MORGUE')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Morgue</span>
+                <span class="nav-item-head">{{ __('sidebar.morgue') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('morgue.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('morgue.workbench') ? 'active' : '' }}" href="{{ route('morgue.workbench') }}" id="sidebar-morgue-workbench">
                     <i class="mdi mdi-emoticon-dead menu-icon"></i>
-                    <span class="menu-title">Morgue Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.morgue_workbench') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ (request()->routeIs('services.*') && request('category') == appsettings('morgue_category_id', 9)) ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('services.index', ['category' => appsettings('morgue_category_id', 9)]) }}" id="sidebar-morgue-services">
                     <i class="mdi mdi-medical-bag menu-icon"></i>
-                    <span class="menu-title">Morgue Services</span>
+                    <span class="menu-title">{{ __('sidebar.morgue_services') }}</span>
                 </a>
             </li>
             @endhasanyrole
@@ -569,12 +565,12 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|MATERNITY')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Maternity</span>
+                <span class="nav-item-head">{{ __('sidebar.maternity') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}" href="{{ route('maternity-workbench.index') }}" id="sidebar-maternity-workbench">
                     <i class="mdi mdi-mother-nurse menu-icon"></i>
-                    <span class="menu-title">Maternity Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.maternity_workbench') }}</span>
                 </a>
             </li>
             @endhasanyrole
@@ -584,33 +580,33 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|LAB SCIENTIST')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Medical Laboratory</span>
+                <span class="nav-item-head">{{ __('sidebar.medical_laboratory') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('lab.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('lab.workbench') ? 'active' : '' }}" href="{{ route('lab.workbench') }}" id="sidebar-lab-workbench">
                     <i class="mdi mdi-flask-outline menu-icon"></i>
-                    <span class="menu-title">Lab Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.lab_workbench') }}</span>
                 </a>
             </li>
 
             <li class="nav-item {{ request()->routeIs('services.index') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('services.index') ? 'active' : '' }}" href="{{ route('services.index', ['category' => appsettings('lab_category_id', 2)]) }}" id="sidebar-lab-workbench">
                     <i class="mdi mdi-flask-outline menu-icon"></i>
-                    <span class="menu-title">Lab Services</span>
+                    <span class="menu-title">{{ __('sidebar.lab_services') }}</span>
                 </a>
             </li>
             <!-- Med Lab Queue - Old DataTable Approach
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-lab-queue-old" data-bs-target="#sidebar-lab-queue-old" aria-expanded="false" aria-controls="sidebar-lab-queue-old" id="sidebar-lab-queue-old-toggle">
                     <i class="mdi mdi-test-tube menu-icon"></i>
-                    <span class="menu-title">Med Lab Queue</span>
+                    <span class="menu-title">{{ __('sidebar.med_lab_queue') }}</span>
                     <span class="badge badge-warning ml-2" style="font-size: 9px;">Old</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-lab-queue-old">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('service-requests.index') }}" id="sidebar-lab-queue-current-old">My Current Queue</a>
+                            <a class="nav-link" href="{{ route('service-requests.index') }}" id="sidebar-lab-queue-current-old">{{ __('sidebar.my_current_queue') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('service-requests.index', ['history' => true]) }}" id="sidebar-lab-queue-history-old">History</a>
@@ -622,16 +618,16 @@
             <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-lab-patients" data-bs-target="#sidebar-lab-patients" aria-expanded="false" aria-controls="sidebar-lab-patients" id="sidebar-lab-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-lab-patients">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-lab-patient-all">All Patients</a>
+                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-lab-patient-all">{{ __('sidebar.all_patients') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.create') }}" id="sidebar-lab-patient-new">New Registration</a>
+                            <a class="nav-link" href="{{ route('patient.create') }}" id="sidebar-lab-patient-new">{{ __('sidebar.new_registration') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -643,26 +639,26 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|RADIOLOGIST')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Imaging / Radiology</span>
+                <span class="nav-item-head">{{ __('sidebar.imaging_radiology') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('imaging.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('imaging.workbench') ? 'active' : '' }}" href="{{ route('imaging.workbench') }}" id="sidebar-radiology-workbench">
                     <i class="mdi mdi-radioactive menu-icon"></i>
-                    <span class="menu-title">Imaging Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.imaging_workbench') }}</span>
                 </a>
             </li>
             <!-- Imaging Queue - Old DataTable Approach
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-radiology-queue-old" data-bs-target="#sidebar-radiology-queue-old" aria-expanded="false" aria-controls="sidebar-radiology-queue-old" id="sidebar-radiology-queue-old-toggle">
                     <i class="mdi mdi-image-multiple menu-icon"></i>
-                    <span class="menu-title">Imaging Queue</span>
+                    <span class="menu-title">{{ __('sidebar.imaging_queue') }}</span>
                     <span class="badge badge-warning ml-2" style="font-size: 9px;">Old</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-radiology-queue-old">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('imaging-requests.index') }}" id="sidebar-radiology-queue-current-old">My Current Queue</a>
+                            <a class="nav-link" href="{{ route('imaging-requests.index') }}" id="sidebar-radiology-queue-current-old">{{ __('sidebar.my_current_queue') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('imaging-requests.index', ['history' => true]) }}" id="sidebar-radiology-queue-history-old">History</a>
@@ -674,13 +670,13 @@
             <li class="nav-item {{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-radiology-services" data-bs-target="#sidebar-radiology-services" aria-expanded="{{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'true' : 'false' }}" aria-controls="sidebar-radiology-services" id="sidebar-radiology-services-toggle">
                     <i class="mdi mdi-cog-outline menu-icon"></i>
-                    <span class="menu-title">Services Management</span>
+                    <span class="menu-title">{{ __('sidebar.services_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'show' : '' }}" id="sidebar-radiology-services">
                     <ul class="nav flex-column sub-menu">
                         <!-- <li class="nav-item">
-                            <a class="nav-link" href="{{ route('services-category.index') }}" id="sidebar-radiology-service-categories">Categories</a>
+                            <a class="nav-link" href="{{ route('services-category.index') }}" id="sidebar-radiology-service-categories">{{ __('sidebar.categories') }}</a>
                         </li> -->
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('services.index', ['category' => appsettings('imaging_category_id', 6)]) }}" id="sidebar-radiology-imaging-services">Imaging Services</a>
@@ -692,16 +688,16 @@
             <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-radiology-patients" data-bs-target="#sidebar-radiology-patients" aria-expanded="false" aria-controls="sidebar-radiology-patients" id="sidebar-radiology-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-radiology-patients">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-radiology-patient-all">All Patients</a>
+                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-radiology-patient-all">{{ __('sidebar.all_patients') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.create') }}" id="sidebar-radiology-patient-new">New Registration</a>
+                            <a class="nav-link" href="{{ route('patient.create') }}" id="sidebar-radiology-patient-new">{{ __('sidebar.new_registration') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -713,18 +709,18 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Doctors</span>
+                <span class="nav-item-head">{{ __('sidebar.doctors') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('encounters.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('encounters.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-doctor-consultations" data-bs-target="#sidebar-doctor-consultations" aria-expanded="{{ request()->routeIs('encounters.*') ? 'true' : 'false' }}" aria-controls="sidebar-doctor-consultations" id="sidebar-doctor-consultations-toggle">
                     <i class="mdi mdi-doctor menu-icon"></i>
-                    <span class="menu-title">Consultations</span>
+                    <span class="menu-title">{{ __('sidebar.consultations') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('encounters.*') ? 'show' : '' }}" id="sidebar-doctor-consultations">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('encounters.index') }}" id="sidebar-doctor-encounters">All Encounters</a>
+                            <a class="nav-link" href="{{ route('encounters.index') }}" id="sidebar-doctor-encounters">{{ __('sidebar.all_encounters') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -733,20 +729,20 @@
             <li class="nav-item {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('maternity-workbench.*') ? 'active' : '' }}" href="{{ route('maternity-workbench.index') }}" id="sidebar-doctor-maternity-workbench">
                     <i class="mdi mdi-mother-nurse menu-icon"></i>
-                    <span class="menu-title">Maternity Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.maternity_workbench') }}</span>
                 </a>
             </li>
             @endhasanyrole
             <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-doctor-patients" data-bs-target="#sidebar-doctor-patients" aria-expanded="false" aria-controls="sidebar-doctor-patients" id="sidebar-doctor-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-doctor-patients">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-doctor-patient-all">All Patients</a>
+                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-doctor-patient-all">{{ __('sidebar.all_patients') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -754,13 +750,13 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-doctor-patient-lookup" data-bs-target="#sidebar-doctor-patient-lookup" aria-expanded="false" aria-controls="sidebar-doctor-patient-lookup" id="sidebar-doctor-patient-lookup-toggle">
                     <i class="mdi mdi-account-search-outline menu-icon"></i>
-                    <span class="menu-title">Patient Lookup</span>
+                    <span class="menu-title">{{ __('sidebar.patient_lookup') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-doctor-patient-lookup">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('add-to-queue') }}" id="sidebar-doctor-patient-search">Search</a>
+                            <a class="nav-link" href="{{ route('add-to-queue') }}" id="sidebar-doctor-patient-search">{{ __('sidebar.search') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -772,30 +768,30 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|HMO Executive')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">HMO Executive</span>
+                <span class="nav-item-head">{{ __('sidebar.hmo_executive') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('hmo.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hmo.workbench') ? 'active' : '' }}" href="{{ route('hmo.workbench') }}" id="sidebar-hmo-workbench">
                     <i class="mdi mdi-hospital-building menu-icon"></i>
-                    <span class="menu-title">HMO Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.hmo_workbench') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('hmo.reports') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hmo.reports') ? 'active' : '' }}" href="{{ route('hmo.reports') }}" id="sidebar-hmo-reports">
                     <i class="mdi mdi-file-chart menu-icon"></i>
-                    <span class="menu-title">HMO Reports</span>
+                    <span class="menu-title">{{ __('sidebar.hmo_reports') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hmo-patients" data-bs-target="#sidebar-hmo-patients" aria-expanded="false" aria-controls="sidebar-hmo-patients" id="sidebar-hmo-patients-toggle">
                     <i class="mdi mdi-account-group menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-hmo-patients">
                     <ul class="nav flex-column sub-menu">
                         <!-- <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-hmo-patient-all">All Patients</a>
+                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-hmo-patient-all">{{ __('sidebar.all_patients') }}</a>
                         </li> -->
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index', ['hmo_only' => 1]) }}" id="sidebar-hmo-patient-hmo">HMO Patients</a>
@@ -814,7 +810,7 @@
             <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hmo-more-management" data-bs-target="#sidebar-hmo-more-management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'true' : 'false' }}" aria-controls="sidebar-hmo-more-management" id="sidebar-hmo-more-management-toggle">
                     <i class="mdi mdi-medical-bag menu-icon"></i>
-                    <span class="menu-title">More Management</span>
+                    <span class="menu-title">{{ __('sidebar.more_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'show' : '' }}" id="sidebar-hmo-more-management">
@@ -835,121 +831,100 @@
             {{-- Accountant Section --}}
             @hasanyrole('SUPERADMIN|ADMIN|super-admin|ACCOUNTS')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Accountant / Audit</span>
+                <span class="nav-item-head">{{ __('sidebar.accountant_audit') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('accounting.*', 'inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'active' : '' }}">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-accountant" data-bs-target="#sidebar-accountant" aria-expanded="{{ request()->routeIs('accounting.*', 'inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'true' : 'false' }}" aria-controls="sidebar-accountant">
                     <i class="mdi mdi-calculator menu-icon"></i>
-                    <span class="menu-title">Accounting</span>
+                    <span class="menu-title">{{ __('sidebar.accounting') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('accounting.*', 'inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'show' : '' }}" id="sidebar-accountant">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.dashboard') ? 'active' : '' }}" href="{{ route('accounting.dashboard') }}">
-                                <i class="mdi mdi-view-dashboard-outline"></i> Dashboard
-                            </a>
+                                <i class="mdi mdi-view-dashboard-outline"></i> {{ __('sidebar.dashboard') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.journal-entries.*') ? 'active' : '' }}" href="{{ route('accounting.journal-entries.index') }}">
-                                <i class="mdi mdi-book-open-page-variant"></i> Journal Entries
-                            </a>
+                                <i class="mdi mdi-book-open-page-variant"></i> {{ __('sidebar.journal_entries') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.chart-of-accounts.*') ? 'active' : '' }}" href="{{ route('accounting.chart-of-accounts.index') }}">
-                                <i class="mdi mdi-file-tree"></i> Chart of Accounts
-                            </a>
+                                <i class="mdi mdi-file-tree"></i> {{ __('sidebar.chart_of_accounts') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.reports.*') ? 'active' : '' }}" href="{{ route('accounting.reports.index') }}">
-                                <i class="mdi mdi-chart-bar"></i> Reports
-                            </a>
+                                <i class="mdi mdi-chart-bar"></i> {{ __('sidebar.reports') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.credit-notes.*') ? 'active' : '' }}" href="{{ route('accounting.credit-notes.index') }}">
-                                <i class="mdi mdi-file-document-outline"></i> Credit Notes
-                            </a>
+                                <i class="mdi mdi-file-document-outline"></i> {{ __('sidebar.credit_notes') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.periods') ? 'active' : '' }}" href="{{ route('accounting.periods') }}">
-                                <i class="mdi mdi-calendar-range"></i> Fiscal Periods
-                            </a>
+                                <i class="mdi mdi-calendar-range"></i> {{ __('sidebar.fiscal_periods') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.accounts-payable') ? 'active' : '' }}" href="{{ route('inventory.purchase-orders.accounts-payable') }}">
-                                <i class="mdi mdi-currency-ngn"></i> Accounts Payable
-                            </a>
+                                <i class="mdi mdi-currency-ngn"></i> {{ __('sidebar.accounts_payable') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.expenses.*') ? 'active' : '' }}" href="{{ route('inventory.expenses.index') }}">
-                                <i class="mdi mdi-cash-minus"></i> Expenses
-                            </a>
+                                <i class="mdi mdi-cash-minus"></i> {{ __('sidebar.expenses') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('banks.*') ? 'active' : '' }}" href="{{ route('banks.index') }}">
-                                <i class="mdi mdi-bank"></i> Banks
-                            </a>
+                                <i class="mdi mdi-bank"></i> {{ __('sidebar.banks') }}</a>
                         </li>
                         {{-- NEW ACCOUNTING MODULES --}}
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.petty-cash.*') ? 'active' : '' }}" href="{{ route('accounting.petty-cash.index') }}">
-                                <i class="mdi mdi-cash-register"></i> Petty Cash
-                            </a>
+                                <i class="mdi mdi-cash-register"></i> {{ __('sidebar.petty_cash') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.transfers.*') ? 'active' : '' }}" href="{{ route('accounting.transfers.index') }}">
-                                <i class="mdi mdi-bank-transfer"></i> Bank Transfers
-                            </a>
+                                <i class="mdi mdi-bank-transfer"></i> {{ __('sidebar.bank_transfers') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.bank-reconciliation.*') ? 'active' : '' }}" href="{{ route('accounting.bank-reconciliation.index') }}">
-                                <i class="mdi mdi-bank-check"></i> Bank Reconciliation
-                            </a>
+                                <i class="mdi mdi-bank-check"></i> {{ __('sidebar.bank_reconciliation') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.patient-deposits.*') ? 'active' : '' }}" href="{{ route('accounting.patient-deposits.index') }}">
-                                <i class="mdi mdi-account-cash"></i> Patient Deposits
-                            </a>
+                                <i class="mdi mdi-account-cash"></i> {{ __('sidebar.patient_deposits') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.fixed-assets.*') ? 'active' : '' }}" href="{{ route('accounting.fixed-assets.index') }}">
-                                <i class="mdi mdi-package-variant-closed"></i> Fixed Assets
-                            </a>
+                                <i class="mdi mdi-package-variant-closed"></i> {{ __('sidebar.fixed_assets') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.liabilities.*') ? 'active' : '' }}" href="{{ route('accounting.liabilities.index') }}">
-                                <i class="mdi mdi-credit-card-clock"></i> Liabilities
-                            </a>
+                                <i class="mdi mdi-credit-card-clock"></i> {{ __('sidebar.liabilities') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.leases.*') ? 'active' : '' }}" href="{{ route('accounting.leases.index') }}">
-                                <i class="mdi mdi-file-document-edit"></i> Leases (IFRS 16)
-                            </a>
+                                <i class="mdi mdi-file-document-edit"></i> {{ __('sidebar.leases_ifrs_16') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.cost-centers.*') ? 'active' : '' }}" href="{{ route('accounting.cost-centers.index') }}">
-                                <i class="mdi mdi-sitemap"></i> Cost Centers
-                            </a>
+                                <i class="mdi mdi-sitemap"></i> {{ __('sidebar.cost_centers') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.capex.*') ? 'active' : '' }}" href="{{ route('accounting.capex.index') }}">
-                                <i class="mdi mdi-office-building"></i> CAPEX Projects
-                            </a>
+                                <i class="mdi mdi-office-building"></i> {{ __('sidebar.capex_projects') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.budgets.*') ? 'active' : '' }}" href="{{ route('accounting.budgets.index') }}">
-                                <i class="mdi mdi-calculator-variant"></i> Budgets
-                            </a>
+                                <i class="mdi mdi-calculator-variant"></i> {{ __('sidebar.budgets') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.cash-flow-forecast.*') ? 'active' : '' }}" href="{{ route('accounting.cash-flow-forecast.index') }}">
-                                <i class="mdi mdi-chart-timeline-variant"></i> Cash Flow Forecast
-                            </a>
+                                <i class="mdi mdi-chart-timeline-variant"></i> {{ __('sidebar.cash_flow_forecast') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('accounting.kpi.*') ? 'active' : '' }}" href="{{ route('accounting.kpi.dashboard') }}">
-                                <i class="mdi mdi-gauge"></i> Financial KPIs
-                            </a>
+                                <i class="mdi mdi-gauge"></i> {{ __('sidebar.financial_kpis') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -961,13 +936,13 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|super-admin|HR MANAGER')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Human Resources</span>
+                <span class="nav-item-head">{{ __('sidebar.human_resources') }}</span>
             </li>
             @can('hr-workbench.access')
             <li class="nav-item {{ request()->routeIs('hr.workbench.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hr.workbench.*') ? 'active' : '' }}" href="{{ route('hr.workbench.index') }}" id="sidebar-hr-workbench">
                     <i class="mdi mdi-view-dashboard-outline menu-icon"></i>
-                    <span class="menu-title">HR Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.hr_workbench') }}</span>
                 </a>
             </li>
             @endcan
@@ -975,7 +950,7 @@
             <li class="nav-item {{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*', 'hr.leave-calendar.*') ? 'active' : '' }}">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-leave" data-bs-target="#sidebar-hr-leave" aria-expanded="{{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*', 'hr.leave-calendar.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-leave" id="sidebar-hr-leave-toggle">
                     <i class="mdi mdi-calendar-clock menu-icon"></i>
-                    <span class="menu-title">Leave Management</span>
+                    <span class="menu-title">{{ __('sidebar.leave_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*', 'hr.leave-calendar.*') ? 'show' : '' }}" id="sidebar-hr-leave">
@@ -983,8 +958,7 @@
                         @can('leave-request.view')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('hr.leave-calendar.*') ? 'active' : '' }}" href="{{ route('hr.leave-calendar.index') }}" id="sidebar-hr-leave-calendar">
-                                <i class="mdi mdi-calendar-month mr-1"></i> Leave Calendar
-                            </a>
+                                <i class="mdi mdi-calendar-month mr-1"></i> {{ __('sidebar.leave_calendar') }}</a>
                         </li>
                         @endcan
                         @can('leave-type.view')
@@ -1016,7 +990,7 @@
             <li class="nav-item {{ request()->routeIs('hr.disciplinary.*', 'hr.suspensions.*', 'hr.terminations.*') ? 'active' : '' }}">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-disciplinary" data-bs-target="#sidebar-hr-disciplinary" aria-expanded="{{ request()->routeIs('hr.disciplinary.*', 'hr.suspensions.*', 'hr.terminations.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-disciplinary" id="sidebar-hr-disciplinary-toggle">
                     <i class="mdi mdi-gavel menu-icon"></i>
-                    <span class="menu-title">Disciplinary</span>
+                    <span class="menu-title">{{ __('sidebar.disciplinary') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('hr.disciplinary.*', 'hr.suspensions.*', 'hr.terminations.*') ? 'show' : '' }}" id="sidebar-hr-disciplinary">
@@ -1050,7 +1024,7 @@
             <li class="nav-item {{ request()->routeIs('hr.pay-heads.*', 'hr.salary-profiles.*', 'hr.payroll.*') ? 'active' : '' }}">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-payroll" data-bs-target="#sidebar-hr-payroll" aria-expanded="{{ request()->routeIs('hr.pay-heads.*', 'hr.salary-profiles.*', 'hr.payroll.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-payroll" id="sidebar-hr-payroll-toggle">
                     <i class="mdi mdi-cash-multiple menu-icon"></i>
-                    <span class="menu-title">Payroll</span>
+                    <span class="menu-title">{{ __('sidebar.payroll') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('hr.pay-heads.*', 'hr.salary-profiles.*', 'hr.payroll.*') ? 'show' : '' }}" id="sidebar-hr-payroll">
@@ -1084,7 +1058,7 @@
             <li class="nav-item {{ request()->routeIs('hr.staff-registry.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hr.staff-registry.*') ? 'active' : '' }}" href="{{ route('hr.staff-registry.index') }}" id="sidebar-hr-staff-registry">
                     <i class="mdi mdi-clipboard-list-outline menu-icon"></i>
-                    <span class="menu-title">Staff Registry</span>
+                    <span class="menu-title">{{ __('sidebar.staff_registry') }}</span>
                 </a>
             </li>
             @endcan
@@ -1092,7 +1066,7 @@
             <li class="nav-item {{ request()->routeIs('hr.promotions.*', 'hr.qualifications.*', 'hr.trainings.*', 'hr.medical-exams.*', 'hr.follow-ups.*') ? 'active' : '' }}">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-tracking" data-bs-target="#sidebar-hr-tracking" aria-expanded="{{ request()->routeIs('hr.promotions.*', 'hr.qualifications.*', 'hr.trainings.*', 'hr.medical-exams.*', 'hr.follow-ups.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-tracking" id="sidebar-hr-tracking-toggle">
                     <i class="mdi mdi-account-clock-outline menu-icon"></i>
-                    <span class="menu-title">Staff Tracking</span>
+                    <span class="menu-title">{{ __('sidebar.staff_tracking') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('hr.promotions.*', 'hr.qualifications.*', 'hr.trainings.*', 'hr.medical-exams.*', 'hr.follow-ups.*') ? 'show' : '' }}" id="sidebar-hr-tracking">
@@ -1140,7 +1114,7 @@
             <li class="nav-item {{ request()->routeIs('hr.units.*', 'hr.cadres.*', 'hr.grade-levels.*') ? 'active' : '' }}">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-config" data-bs-target="#sidebar-hr-config" aria-expanded="{{ request()->routeIs('hr.units.*', 'hr.cadres.*', 'hr.grade-levels.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-config" id="sidebar-hr-config-toggle">
                     <i class="mdi mdi-cog-outline menu-icon"></i>
-                    <span class="menu-title">HR Configuration</span>
+                    <span class="menu-title">{{ __('sidebar.hr_configuration') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('hr.units.*', 'hr.cadres.*', 'hr.grade-levels.*') ? 'show' : '' }}" id="sidebar-hr-config">
@@ -1177,12 +1151,12 @@
                  ======================================== --}}
             @if(Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) || Auth::user()->hasRole('AUDITOR'))
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Internal Audit</span>
+                <span class="nav-item-head">{{ __('sidebar.internal_audit') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('audit.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('audit.*') ? 'active' : '' }}" href="/audit-workbench" id="sidebar-audit-workbench">
                     <i class="mdi mdi-shield-check-outline menu-icon"></i>
-                    <span class="menu-title">Audit Workbench</span>
+                    <span class="menu-title">{{ __('sidebar.audit_workbench') }}</span>
                 </a>
             </li>
             @endif
@@ -1191,12 +1165,12 @@
                  ======================================== --}}
             @hasanyrole('SUPERADMIN|ADMIN|super-admin')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Administration</span>
+                <span class="nav-item-head">{{ __('sidebar.administration') }}</span>
             </li>
             <li class="nav-item {{ request()->routeIs('roles.*', 'permissions.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('roles.*', 'permissions.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-access-control" data-bs-target="#sidebar-admin-access-control" aria-expanded="{{ request()->routeIs('roles.*', 'permissions.*') ? 'true' : 'false' }}" aria-controls="sidebar-admin-access-control" id="sidebar-admin-access-control-toggle">
                     <i class="mdi mdi-shield-account menu-icon"></i>
-                    <span class="menu-title">Access Control</span>
+                    <span class="menu-title">{{ __('sidebar.access_control') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('roles.*', 'permissions.*') ? 'show' : '' }}" id="sidebar-admin-access-control">
@@ -1213,43 +1187,40 @@
             <li class="nav-item {{ request()->routeIs('hospital-config.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hospital-config.*') ? 'active' : '' }}" href="{{ route('hospital-config.index') }}" id="sidebar-admin-hospital-config">
                     <i class="mdi mdi-cogs menu-icon"></i>
-                    <span class="menu-title">Hospital Config</span>
+                    <span class="menu-title">{{ __('sidebar.hospital_config') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('clinic-note-templates.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('clinic-note-templates.*') ? 'active' : '' }}" href="{{ route('clinic-note-templates.index') }}" id="sidebar-admin-note-templates">
                     <i class="mdi mdi-file-document-edit menu-icon"></i>
-                    <span class="menu-title">Note Templates</span>
+                    <span class="menu-title">{{ __('sidebar.note_templates') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('v1-result-templates.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('v1-result-templates.*') ? 'active' : '' }}" href="{{ route('v1-result-templates.index') }}" id="sidebar-admin-result-templates">
                     <i class="mdi mdi-flask-outline menu-icon"></i>
-                    <span class="menu-title">Result Templates</span>
+                    <span class="menu-title">{{ __('sidebar.result_templates') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-ward-bed-setup" data-bs-target="#sidebar-admin-ward-bed-setup" aria-expanded="{{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'true' : 'false' }}" aria-controls="sidebar-admin-ward-bed-setup" id="sidebar-admin-ward-bed-setup-toggle">
                     <i class="mdi mdi-hospital-building menu-icon"></i>
-                    <span class="menu-title">Ward & Bed Setup</span>
+                    <span class="menu-title">{{ __('sidebar.ward_bed_setup') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'show' : '' }}" id="sidebar-admin-ward-bed-setup">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('wards.*') ? 'active' : '' }}" href="{{ route('wards.index') }}" id="sidebar-admin-wards">
-                                <i class="mdi mdi-hospital-marker"></i> Wards
-                            </a>
+                                <i class="mdi mdi-hospital-marker"></i> {{ __('sidebar.wards') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('beds.*') ? 'active' : '' }}" href="{{ route('beds.index') }}" id="sidebar-admin-beds">
-                                <i class="mdi mdi-bed"></i> Beds
-                            </a>
+                                <i class="mdi mdi-bed"></i> {{ __('sidebar.beds') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('checklist-templates.*') ? 'active' : '' }}" href="{{ route('checklist-templates.index') }}" id="sidebar-admin-checklist-templates">
-                                <i class="mdi mdi-format-list-checks"></i> Checklist Templates
-                            </a>
+                                <i class="mdi mdi-format-list-checks"></i> {{ __('sidebar.checklist_templates') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -1257,19 +1228,19 @@
             <li class="nav-item {{ request()->routeIs('vaccine-schedule.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('vaccine-schedule.*') ? 'active' : '' }}" href="{{ route('vaccine-schedule.index') }}" id="sidebar-admin-vaccine-schedule">
                     <i class="mdi mdi-needle menu-icon"></i>
-                    <span class="menu-title">Vaccine Schedule</span>
+                    <span class="menu-title">{{ __('sidebar.vaccine_schedule') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('banks.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('banks.*') ? 'active' : '' }}" href="{{ route('banks.index') }}" id="sidebar-admin-bank-config">
                     <i class="mdi mdi-bank menu-icon"></i>
-                    <span class="menu-title">Bank Config</span>
+                    <span class="menu-title">{{ __('sidebar.bank_config') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-hmo-management" data-bs-target="#sidebar-admin-hmo-management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'true' : 'false' }}" aria-controls="sidebar-admin-hmo-management" id="sidebar-admin-hmo-management-toggle">
                     <i class="mdi mdi-medical-bag menu-icon"></i>
-                    <span class="menu-title">HMO Management</span>
+                    <span class="menu-title">{{ __('sidebar.hmo_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'show' : '' }}" id="sidebar-admin-hmo-management">
@@ -1287,80 +1258,80 @@
             <li class="nav-item {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('inventory.config.store-governance.*') ? 'active' : '' }}" href="{{ route('inventory.config.store-governance.index') }}" id="sidebar-admin-store-governance">
                     <i class="mdi mdi-store-cog menu-icon"></i>
-                    <span class="menu-title">Store Governance</span>
+                    <span class="menu-title">{{ __('sidebar.store_governance') }}</span>
                 </a>
             </li>
             @endcan
             <li class="nav-item {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}" href="{{ route('audit-logs.index') }}" id="sidebar-admin-audit-logs">
                     <i class="mdi mdi-history menu-icon"></i>
-                    <span class="menu-title">Audit Logs</span>
+                    <span class="menu-title">{{ __('sidebar.audit_logs') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('import-export.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('import-export.*') ? 'active' : '' }}" href="{{ route('import-export.index') }}" id="sidebar-admin-import-export">
                     <i class="mdi mdi-database-import-outline menu-icon"></i>
-                    <span class="menu-title">Data Import/Export</span>
+                    <span class="menu-title">{{ __('sidebar.data_import_export') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('backups.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('backups.*') ? 'active' : '' }}" href="{{ route('backups.index') }}" id="sidebar-admin-backups">
                     <i class="mdi mdi-database-lock menu-icon"></i>
-                    <span class="menu-title">Database Backups</span>
+                    <span class="menu-title">{{ __('sidebar.database_backups') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('admin.slow_queries.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('admin.slow_queries.*') ? 'active' : '' }}" href="{{ route('admin.slow_queries.index') }}" id="sidebar-admin-slow-queries">
                     <i class="mdi mdi-database-search menu-icon"></i>
-                    <span class="menu-title">Slow Query Monitor</span>
+                    <span class="menu-title">{{ __('sidebar.slow_query_monitor') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('staff.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('staff.*') ? 'active' : '' }}" href="{{ route('staff.index') }}" id="sidebar-admin-staff-management">
                     <i class="mdi mdi-account-group menu-icon"></i>
-                    <span class="menu-title">Staff Management</span>
+                    <span class="menu-title">{{ __('sidebar.staff_management') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('specializations.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('specializations.*') ? 'active' : '' }}" href="{{ route('specializations.index') }}" id="sidebar-admin-specializations">
                     <i class="mdi mdi-briefcase-outline menu-icon"></i>
-                    <span class="menu-title">Specializations</span>
+                    <span class="menu-title">{{ __('sidebar.specializations') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('clinics.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('clinics.*') ? 'active' : '' }}" href="{{ route('clinics.index') }}" id="sidebar-admin-clinics">
                     <i class="mdi mdi-hospital-building menu-icon"></i>
-                    <span class="menu-title">Clinics Management</span>
+                    <span class="menu-title">{{ __('sidebar.clinics_management') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('clinic-schedules.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('clinic-schedules.*') ? 'active' : '' }}" href="{{ route('clinic-schedules.index') }}" id="sidebar-admin-clinic-schedules">
                     <i class="mdi mdi-calendar-clock menu-icon"></i>
-                    <span class="menu-title">Clinic Schedules</span>
+                    <span class="menu-title">{{ __('sidebar.clinic_schedules') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('departments.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}" id="sidebar-admin-departments">
                     <i class="mdi mdi-office-building-outline menu-icon"></i>
-                    <span class="menu-title">Departments</span>
+                    <span class="menu-title">{{ __('sidebar.departments') }}</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" href="{{ route('allPrevEncounters') }}" id="sidebar-admin-encounters">
                     <i class="mdi mdi-stethoscope menu-icon"></i>
-                    <span class="menu-title">All Encounters</span>
+                    <span class="menu-title">{{ __('sidebar.all_encounters') }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-patients" data-bs-target="#sidebar-admin-patients" aria-expanded="false" aria-controls="sidebar-admin-patients" id="sidebar-admin-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Patients</span>
+                    <span class="menu-title">{{ __('sidebar.patients') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="sidebar-admin-patients">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-admin-patient-all">All Patients</a>
+                            <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-admin-patient-all">{{ __('sidebar.all_patients') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -1368,7 +1339,7 @@
             <li class="nav-item {{ request()->routeIs('transactions') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-finance" data-bs-target="#sidebar-admin-finance" aria-expanded="{{ request()->routeIs('transactions') ? 'true' : 'false' }}" aria-controls="sidebar-admin-finance" id="sidebar-admin-finance-toggle">
                     <i class="mdi mdi-chart-line menu-icon"></i>
-                    <span class="menu-title">Finance</span>
+                    <span class="menu-title">{{ __('sidebar.finance') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('transactions') ? 'show' : '' }}" id="sidebar-admin-finance">
@@ -1378,8 +1349,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.accounts-payable') ? 'active' : '' }}" href="{{ route('inventory.purchase-orders.accounts-payable') }}">
-                                <i class="mdi mdi-currency-ngn"></i> Accounts Payable
-                            </a>
+                                <i class="mdi mdi-currency-ngn"></i> {{ __('sidebar.accounts_payable') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -1387,16 +1357,16 @@
             <li class="nav-item {{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-store-services" data-bs-target="#sidebar-store-services" aria-expanded="{{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'true' : 'false' }}" aria-controls="sidebar-store-services" id="sidebar-store-services-toggle">
                     <i class="mdi mdi-cog-outline menu-icon"></i>
-                    <span class="menu-title">Services Management</span>
+                    <span class="menu-title">{{ __('sidebar.services_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('services-category.*', 'services.*', 'procedure-categories.*') ? 'show' : '' }}" id="sidebar-store-services">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('services.index') }}" id="sidebar-store-all-services">All Services</a>
+                            <a class="nav-link" href="{{ route('services.index') }}" id="sidebar-store-all-services">{{ __('sidebar.all_services') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('services-category.index') }}" id="sidebar-store-service-categories">Categories</a>
+                            <a class="nav-link" href="{{ route('services-category.index') }}" id="sidebar-store-service-categories">{{ __('sidebar.categories') }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('services.index', ['category' => appsettings('investigation_category_id', 2)]) }}" id="sidebar-store-medlab-services">Med Lab Services</a>
@@ -1410,7 +1380,7 @@
                         </li>
                         @endif
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('procedure-categories.index') }}" id="sidebar-store-procedure-categories">Procedure Categories</a>
+                            <a class="nav-link" href="{{ route('procedure-categories.index') }}" id="sidebar-store-procedure-categories">{{ __('sidebar.procedure_categories') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -1459,7 +1429,7 @@
                    style="background: rgba(255, 50, 50, 0.15); border: 1px solid rgba(255, 50, 50, 0.2); color: #ff6b6b; transition: all 0.3s;"
                    id="sidebar-bottom-logout">
                     <i class="mdi mdi-logout mr-2"></i>
-                    <span style="font-weight: 500;">Logout</span>
+                    <span style="font-weight: 500;">{{ __('sidebar.logout') }}</span>
                 </a>
             </div>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">

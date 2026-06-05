@@ -28,19 +28,19 @@
             </form>
         </li>
         <li class="pt-2 pb-1">
-            <span class="nav-item-head">Doctor</span>
+            <span class="nav-item-head">{{ __('sidebar.doctor') }}</span>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{{ route('doctor.dashboard') }}">
                 <i class="mdi mdi-compass-outline menu-icon"></i>
-                <span class="menu-title">Dashboard</span>
+                <span class="menu-title">{{ __('sidebar.dashboard') }}</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
                aria-controls="new_patient">
                 <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                <span class="menu-title">Procedures</span>
+                <span class="menu-title">{{ __('sidebar.procedures') }}</span>
                 <i class="menu-arrow"></i>
             </a>
 
@@ -49,7 +49,7 @@
             <a class="nav-link"  href="{{ route('doctor.consultations') }}" aria-expanded="false"
                aria-controls="returning_patient">
                 <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                <span class="menu-title">Consultations</span>
+                <span class="menu-title">{{ __('sidebar.consultations') }}</span>
 
             </a>
 
@@ -58,7 +58,7 @@
             <a class="nav-link" data-toggle="collapse" href="#admissions" aria-expanded="false"
                aria-controls="admissions">
                 <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                <span class="menu-title">Ward Rounds</span>
+                <span class="menu-title">{{ __('sidebar.ward_rounds') }}</span>
                 <i class="menu-arrow"></i>
             </a>
 
