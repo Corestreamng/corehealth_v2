@@ -11,7 +11,7 @@
                             <i class="mdi mdi-mother-nurse"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'Midwife' }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.welcome_back') }}, {{ Auth::user()->name ?? __('dashboard.tab_maternity') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-human-pregnant me-1"></i> Maternity & Antenatal Care
+                        <i class="mdi mdi-human-pregnant me-1"></i> {{ __('dashboard.maternity_antenatal_care') }}
                     </div>
                 </div>
             </div>
@@ -36,9 +36,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #be123c, #e11d48);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Active Enrolments</p>
+                    <p class="dash-stat-label">{{ __('dashboard.active_enrolments') }}</p>
                     <h2 class="dash-stat-value" id="mat-stat-active">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-account-multiple me-1"></i>Currently enrolled</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-account-multiple me-1"></i>{{ __('dashboard.currently_enrolled') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-mother-nurse"></i></div>
             </div>
@@ -48,9 +48,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">ANC Visits Today</p>
+                    <p class="dash-stat-label">{{ __('dashboard.anc_visits_today') }}</p>
                     <h2 class="dash-stat-value" id="mat-stat-anc">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>Antenatal care</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>{{ __('dashboard.antenatal_care') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-hospital-building"></i></div>
             </div>
@@ -60,9 +60,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Deliveries Today</p>
+                    <p class="dash-stat-label">{{ __('dashboard.deliveries_today') }}</p>
                     <h2 class="dash-stat-value" id="mat-stat-deliveries">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-baby-carriage me-1"></i>Births recorded</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-baby-carriage me-1"></i>{{ __('dashboard.births_recorded') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-baby-carriage"></i></div>
             </div>
@@ -72,9 +72,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Postnatal Care</p>
+                    <p class="dash-stat-label">{{ __('dashboard.postnatal_care') }}</p>
                     <h2 class="dash-stat-value" id="mat-stat-pnc">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>Follow-ups</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>{{ __('dashboard.follow_ups') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-human-female-boy"></i></div>
             </div>
@@ -94,8 +94,8 @@
                     <i class="mdi mdi-flash-circle text-danger"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Maternity Quick Actions</h5>
-                    <small class="text-muted">Workbench & clinical tools</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.maternity_quick_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.workbench_clinical_tools') }}</small>
                 </div>
             </div>
 
@@ -105,8 +105,8 @@
                     <a href="{{ route('maternity-workbench.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fdf4ff, #fae8ff); border-color: #f5d0fe;">
                             <i class="mdi mdi-desktop-mac-dashboard dash-shortcut-icon" style="color: #86198f;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #86198f;">Maternity Workbench</h6>
-                            <small style="color: #86198f;">Main Panel</small>
+                            <h6 class="dash-shortcut-title" style="color: #86198f;">{{ __('dashboard.maternity_workbench') }}</h6>
+                            <small style="color: #86198f;">{{ __('dashboard.main_panel') }}</small>
                         </div>
                     </a>
                 </div>
@@ -117,8 +117,8 @@
                     <a href="{{ route('maternity-enrollment.create') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f0fdfa, #ccfbf1); border-color: #99f6e4;">
                             <i class="mdi mdi-account-plus dash-shortcut-icon" style="color: #0d9488;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0d9488;">New Enrollment</h6>
-                            <small style="color: #0d9488;">ANC Booking</small>
+                            <h6 class="dash-shortcut-title" style="color: #0d9488;">{{ __('dashboard.new_enrollment') }}</h6>
+                            <small style="color: #0d9488;">{{ __('dashboard.anc_booking') }}</small>
                         </div>
                     </a>
                 </div>
@@ -129,8 +129,8 @@
                     <a href="{{ route('maternity-workbench.index', ['queue' => 'anc']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #eff6ff, #dbeafe); border-color: #bfdbfe;">
                             <i class="mdi mdi-calendar-heart dash-shortcut-icon" style="color: #1e40af;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #1e40af;">ANC Visits</h6>
-                            <small style="color: #1e40af;">Antenatal</small>
+                            <h6 class="dash-shortcut-title" style="color: #1e40af;">{{ __('dashboard.anc_visits') }}</h6>
+                            <small style="color: #1e40af;">{{ __('dashboard.antenatal') }}</small>
                         </div>
                     </a>
                 </div>
@@ -141,8 +141,8 @@
                     <a href="{{ route('maternity-workbench.index', ['queue' => 'delivery']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fff1f2, #ffe4e6); border-color: #fecdd3;">
                             <i class="mdi mdi-baby-carriage dash-shortcut-icon" style="color: #be123c;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #be123c;">Labor & Delivery</h6>
-                            <small style="color: #be123c;">Management</small>
+                            <h6 class="dash-shortcut-title" style="color: #be123c;">{{ __('dashboard.labor_delivery') }}</h6>
+                            <small style="color: #be123c;">{{ __('dashboard.management') }}</small>
                         </div>
                     </a>
                 </div>
@@ -161,8 +161,8 @@
                     <i class="mdi mdi-chart-line text-danger"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">ANC Enrollment Trend</h5>
-                    <small class="text-muted">Monthly new registrations</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.anc_enrollment_trend') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.monthly_new_registrations') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -177,8 +177,8 @@
                     <i class="mdi mdi-alert-circle-outline text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Risk Distribution</h5>
-                    <small class="text-muted">Active pregnancies risk profile</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.risk_distribution') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.active_pregnancies_risk_profile') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -191,8 +191,8 @@
 {{-- Recent Activity --}}
 @include('admin.dashboards.components.mini-table', [
     'containerId' => 'mat-activity',
-    'title' => 'Recent Maternity Activity',
-    'subtitle' => 'Latest enrollments & deliveries today',
+    'title' => __('dashboard.recent_maternity_activity'),
+    'subtitle' => __('dashboard.latest_enrollments_deliveries_today'),
     'icon' => 'mdi-history',
     'iconBg' => 'danger'
 ])

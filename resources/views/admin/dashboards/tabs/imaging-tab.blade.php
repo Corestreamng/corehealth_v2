@@ -11,7 +11,7 @@
                             <i class="mdi mdi-radiobox-marked"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'Radiologist' }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.welcome_back') }}, {{ Auth::user()->name ?? __('dashboard.tab_imaging') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-radiobox-marked me-1"></i> Radiology
+                        <i class="mdi mdi-radiobox-marked me-1"></i> {{ __('dashboard.radiology') }}
                     </div>
                 </div>
             </div>
@@ -33,9 +33,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #3730a3, #4f46e5);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Pending Scans</p>
+                    <p class="dash-stat-label">{{ __('dashboard.pending_scans') }}</p>
                     <h2 class="dash-stat-value" id="imaging-stat-pending">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>Today's queue</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.todays_queue') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-radiobox-marked"></i></div>
             </div>
@@ -46,9 +46,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #166534, #16a34a);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Completed Today</p>
+                    <p class="dash-stat-label">{{ __('dashboard.completed_today') }}</p>
                     <h2 class="dash-stat-value" id="imaging-stat-completed">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>Finalized scans</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>{{ __('dashboard.finalized_scans') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-check-circle"></i></div>
             </div>
@@ -59,9 +59,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e3a8a, #1d4ed8);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Monthly Volume</p>
+                    <p class="dash-stat-label">{{ __('dashboard.monthly_volume') }}</p>
                     <h2 class="dash-stat-value" id="imaging-stat-month">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>Current month</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>{{ __('dashboard.current_month') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-image-multiple"></i></div>
             </div>
@@ -72,9 +72,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #86198f, #a21caf);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Available Scans</p>
+                    <p class="dash-stat-label">{{ __('dashboard.available_scans') }}</p>
                     <h2 class="dash-stat-value" id="imaging-stat-services">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-format-list-bulleted me-1"></i>Catalog size</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-format-list-bulleted me-1"></i>{{ __('dashboard.catalog_size') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-format-list-bulleted"></i></div>
             </div>
@@ -97,8 +97,8 @@
                     <i class="mdi mdi-flash-circle text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Radiology Quick Actions</h5>
-                    <small class="text-muted">Imaging & scanning tools</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.radiology_quick_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.imaging_scanning_tools') }}</small>
                 </div>
             </div>
 
@@ -108,8 +108,8 @@
                     <a href="{{ route('imaging.workbench') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0e7ff, #c7d2fe); border-color: #a5b4fc;">
                             <i class="mdi mdi-radiobox-marked dash-shortcut-icon" style="color: #3730a3;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #3730a3;">Workbench</h6>
-                            <small style="color: #3730a3;">Imaging Queue</small>
+                            <h6 class="dash-shortcut-title" style="color: #3730a3;">{{ __('dashboard.workbench') }}</h6>
+                            <small style="color: #3730a3;">{{ __('dashboard.imaging_queue') }}</small>
                         </div>
                     </a>
                 </div>
@@ -120,8 +120,8 @@
                     <a href="{{ route('imaging.results') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dcfce7, #bbf7d0); border-color: #86efac;">
                             <i class="mdi mdi-image-search dash-shortcut-icon" style="color: #166534;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #166534;">Scans</h6>
-                            <small style="color: #166534;">View Results</small>
+                            <h6 class="dash-shortcut-title" style="color: #166534;">{{ __('dashboard.scans') }}</h6>
+                            <small style="color: #166534;">{{ __('dashboard.view_results') }}</small>
                         </div>
                     </a>
                 </div>
@@ -132,8 +132,8 @@
                     <a href="{{ route('patient.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fce7f3, #fbcfe8); border-color: #f9a8d4;">
                             <i class="mdi mdi-account-multiple dash-shortcut-icon" style="color: #be185d;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #be185d;">Patients</h6>
-                            <small style="color: #be185d;">Directory</small>
+                            <h6 class="dash-shortcut-title" style="color: #be185d;">{{ __('dashboard.patients') }}</h6>
+                            <small style="color: #be185d;">{{ __('dashboard.directory') }}</small>
                         </div>
                     </a>
                 </div>
@@ -152,8 +152,8 @@
                     <i class="mdi mdi-chart-line text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Imaging Request Trend</h5>
-                    <small class="text-muted">Daily scan volume</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.imaging_request_trend') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.daily_scan_volume') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -168,8 +168,8 @@
                     <i class="mdi mdi-chart-pie text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Scan Distribution</h5>
-                    <small class="text-muted">By service type</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.scan_distribution') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.by_service_type') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -182,8 +182,8 @@
 {{-- Recent Activity --}}
 @include('admin.dashboards.components.mini-table', [
     'containerId' => 'imaging-activity',
-    'title' => 'Recent Imaging Activity',
-    'subtitle' => 'Latest scan requests',
+    'title' => __('dashboard.recent_imaging_activity'),
+    'subtitle' => __('dashboard.latest_scan_requests'),
     'icon' => 'mdi-radiobox-marked',
     'iconBg' => 'primary'
 ])

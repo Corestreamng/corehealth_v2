@@ -11,7 +11,7 @@
                             <i class="mdi mdi-shield-check"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'HMO Manager' }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.welcome_back') }}, {{ Auth::user()->name ?? __('dashboard.tab_hmo') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-medical-bag me-1"></i> Claims & Insurance
+                        <i class="mdi mdi-medical-bag me-1"></i> {{ __('dashboard.claims_insurance') }}
                     </div>
                 </div>
             </div>
@@ -33,9 +33,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #2d1b4e, #7c3aed);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">HMO Patients</p>
+                    <p class="dash-stat-label">{{ __('dashboard.hmo_patients') }}</p>
                     <h2 class="dash-stat-value" id="hmo-stat-patients">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-account-group me-1"></i>Active enrollees</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-account-group me-1"></i>{{ __('dashboard.active_enrollees') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-account-group"></i></div>
             </div>
@@ -46,9 +46,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #92400e, #f59e0b);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Pending Claims</p>
+                    <p class="dash-stat-label">{{ __('dashboard.pending_claims') }}</p>
                     <h2 class="dash-stat-value" id="hmo-stat-pending-claims">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clipboard-alert me-1"></i>Awaiting review</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-clipboard-alert me-1"></i>{{ __('dashboard.awaiting_review') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-clipboard-alert"></i></div>
             </div>
@@ -59,9 +59,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #065f46, #10b981);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Approved Claims</p>
+                    <p class="dash-stat-label">{{ __('dashboard.approved_claims') }}</p>
                     <h2 class="dash-stat-value" id="hmo-stat-approved-claims">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>This month</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>{{ __('dashboard.this_month') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-check-circle"></i></div>
             </div>
@@ -72,9 +72,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #581c87, #a855f7);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Total HMOs</p>
+                    <p class="dash-stat-label">{{ __('dashboard.total_hmos') }}</p>
                     <h2 class="dash-stat-value" id="hmo-stat-total-hmos">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-hospital-building me-1"></i>Partner providers</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-hospital-building me-1"></i>{{ __('dashboard.partner_providers') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-hospital-building"></i></div>
             </div>
@@ -97,8 +97,8 @@
                     <i class="mdi mdi-flash-circle text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Quick Actions</h5>
-                    <small class="text-muted">Claims & insurance management</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.quick_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.claims_insurance_management') }}</small>
                 </div>
             </div>
 
@@ -108,8 +108,8 @@
                     <a href="{{ route('hmo.workbench', ['queue_filter' => 'pending']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f3e8ff, #e9d5ff); border-color: #d8b4fe;">
                             <i class="mdi mdi-shield-check dash-shortcut-icon" style="color: #6b21a8;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #6b21a8;">HMO</h6>
-                            <small style="color: #6b21a8;">Workbench</small>
+                            <h6 class="dash-shortcut-title" style="color: #6b21a8;">{{ __('dashboard.hmo') }}</h6>
+                            <small style="color: #6b21a8;">{{ __('dashboard.workbench') }}</small>
                         </div>
                     </a>
                 </div>
@@ -120,8 +120,8 @@
                     <a href="{{ route('hmo.reports') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dbeafe, #bfdbfe); border-color: #93c5fd;">
                             <i class="mdi mdi-chart-bar dash-shortcut-icon" style="color: #1e40af;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #1e40af;">Reports</h6>
-                            <small style="color: #1e40af;">Analytics</small>
+                            <h6 class="dash-shortcut-title" style="color: #1e40af;">{{ __('dashboard.reports') }}</h6>
+                            <small style="color: #1e40af;">{{ __('dashboard.analytics') }}</small>
                         </div>
                     </a>
                 </div>
@@ -132,8 +132,8 @@
                     <a href="{{ route('patient.index', ['hmo_only' => 1]) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dcfce7, #bbf7d0); border-color: #86efac;">
                             <i class="mdi mdi-account-multiple dash-shortcut-icon" style="color: #166534;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #166534;">HMO Patients</h6>
-                            <small style="color: #166534;">Enrollee list</small>
+                            <h6 class="dash-shortcut-title" style="color: #166534;">{{ __('dashboard.hmo_patients') }}</h6>
+                            <small style="color: #166534;">{{ __('dashboard.enrollee_list') }}</small>
                         </div>
                     </a>
                 </div>
@@ -144,8 +144,8 @@
                     <a href="{{ route('hmo.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fff7ed, #ffedd5); border-color: #fed7aa;">
                             <i class="mdi mdi-hospital-building dash-shortcut-icon" style="color: #c2410c;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #c2410c;">HMO List</h6>
-                            <small style="color: #c2410c;">All providers</small>
+                            <h6 class="dash-shortcut-title" style="color: #c2410c;">{{ __('dashboard.hmo_list') }}</h6>
+                            <small style="color: #c2410c;">{{ __('dashboard.all_providers') }}</small>
                         </div>
                     </a>
                 </div>
@@ -164,8 +164,8 @@
                     <i class="mdi mdi-chart-line text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Claims Trend</h5>
-                    <small class="text-muted">Monthly claims activity</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.claims_trend') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.monthly_claims_activity') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -180,8 +180,8 @@
                     <i class="mdi mdi-chart-pie text-success"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Provider Distribution</h5>
-                    <small class="text-muted">Patients by HMO provider</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.provider_distribution') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.patients_by_hmo_provider') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -194,8 +194,8 @@
 {{-- Recent Activity --}}
 @include('admin.dashboards.components.mini-table', [
     'containerId' => 'hmo-activity',
-    'title' => 'Recent HMO Activity',
-    'subtitle' => 'Latest claims and validations',
+    'title' => __('dashboard.recent_hmo_activity'),
+    'subtitle' => __('dashboard.latest_claims_validations'),
     'icon' => 'mdi-shield-check',
     'iconBg' => 'primary'
 ])

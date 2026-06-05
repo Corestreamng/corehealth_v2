@@ -11,7 +11,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'RECEPTIONIST'])) {
             $roleTabs['receptionist'] = [
-                'name' => 'Receptionist',
+                'name' => __('dashboard.tab_receptionist'),
                 'icon' => 'mdi-account-tie',
                 'color' => 'primary',
                 'partial' => 'admin.dashboards.tabs.receptionist-tab'
@@ -20,7 +20,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])) {
             $roleTabs['biller'] = [
-                'name' => 'Biller',
+                'name' => __('dashboard.tab_biller'),
                 'icon' => 'mdi-cash-multiple',
                 'color' => 'success',
                 'partial' => 'admin.dashboards.tabs.biller-tab'
@@ -29,14 +29,14 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN'])) {
             $roleTabs['admin'] = [
-                'name' => 'Administration',
+                'name' => __('dashboard.tab_admin'),
                 'icon' => 'mdi-shield-account',
                 'color' => 'dark',
                 'partial' => 'admin.dashboards.tabs.admin-tab'
             ];
             
             $roleTabs['hr'] = [
-                'name' => 'HR Ops',
+                'name' => __('dashboard.tab_hr'),
                 'icon' => 'mdi-account-group',
                 'color' => 'primary',
                 'partial' => 'admin.dashboards.tabs.hr-tab'
@@ -45,7 +45,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'PHARMACIST'])) {
             $roleTabs['pharmacy'] = [
-                'name' => 'Pharmacy',
+                'name' => __('dashboard.tab_pharmacy'),
                 'icon' => 'mdi-pill',
                 'color' => 'success',
                 'partial' => 'admin.dashboards.tabs.pharmacy-tab'
@@ -54,7 +54,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'STORE'])) {
             $roleTabs['store'] = [
-                'name' => 'Store/Inventory',
+                'name' => __('dashboard.tab_store'),
                 'icon' => 'mdi-store-warehouse',
                 'color' => 'warning',
                 'partial' => 'admin.dashboards.tabs.store-tab'
@@ -63,7 +63,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'MATERNITY'])) {
             $roleTabs['maternity'] = [
-                'name' => 'Maternity',
+                'name' => __('dashboard.tab_maternity'),
                 'icon' => 'mdi-mother-nurse',
                 'color' => 'danger',
                 'partial' => 'admin.dashboards.tabs.maternity-tab'
@@ -72,7 +72,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'MORGUE'])) {
             $roleTabs['morgue'] = [
-                'name' => 'Morgue',
+                'name' => __('dashboard.tab_morgue'),
                 'icon' => 'mdi-emoticon-dead',
                 'color' => 'dark',
                 'partial' => 'admin.dashboards.tabs.morgue-tab'
@@ -81,7 +81,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'NURSE'])) {
             $roleTabs['nursing'] = [
-                'name' => 'Nursing',
+                'name' => __('dashboard.tab_nursing'),
                 'icon' => 'mdi-heart-pulse',
                 'color' => 'danger',
                 'partial' => 'admin.dashboards.tabs.nursing-tab'
@@ -90,7 +90,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'NURSE', 'PED-NURSE'])) {
             $roleTabs['child_health'] = [
-                'name' => 'Child Health',
+                'name' => __('dashboard.tab_child_health'),
                 'icon' => 'mdi-baby-face-outline',
                 'color' => 'success',
                 'partial' => 'admin.dashboards.tabs.child-health-tab'
@@ -99,7 +99,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'LAB SCIENTIST'])) {
             $roleTabs['lab'] = [
-                'name' => 'Laboratory',
+                'name' => __('dashboard.tab_lab'),
                 'icon' => 'mdi-flask',
                 'color' => 'info',
                 'partial' => 'admin.dashboards.tabs.lab-tab'
@@ -108,7 +108,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'RADIOLOGIST'])) {
             $roleTabs['imaging'] = [
-                'name' => 'Radiology',
+                'name' => __('dashboard.tab_imaging'),
                 'icon' => 'mdi-radiobox-marked',
                 'color' => 'primary',
                 'partial' => 'admin.dashboards.tabs.imaging-tab'
@@ -117,7 +117,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'SURGEON', 'THEATRE-NURSE'])) {
             $roleTabs['theatre'] = [
-                'name' => 'Theatre',
+                'name' => __('dashboard.tab_theatre'),
                 'icon' => 'mdi-pulse',
                 'color' => 'danger',
                 'partial' => 'admin.dashboards.tabs.theatre-tab'
@@ -126,7 +126,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'DOCTOR'])) {
             $roleTabs['doctor'] = [
-                'name' => 'Doctor',
+                'name' => __('dashboard.tab_doctor'),
                 'icon' => 'mdi-stethoscope',
                 'color' => 'success',
                 'partial' => 'admin.dashboards.tabs.doctor-tab'
@@ -135,7 +135,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'HMO Executive'])) {
             $roleTabs['hmo'] = [
-                'name' => 'HMO Executive',
+                'name' => __('dashboard.tab_hmo'),
                 'icon' => 'mdi-medical-bag',
                 'color' => 'primary',
                 'partial' => 'admin.dashboards.tabs.hmo-tab'
@@ -144,7 +144,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])) {
             $roleTabs['accounts'] = [
-                'name' => 'Accounts',
+                'name' => __('dashboard.tab_accounts'),
                 'icon' => 'mdi-chart-areaspline',
                 'color' => 'dark',
                 'partial' => 'admin.dashboards.tabs.accounts-tab'
@@ -153,7 +153,7 @@
 
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'AUDITOR'])) {
             $roleTabs['audit'] = [
-                'name' => 'Audit',
+                'name' => __('dashboard.tab_audit'),
                 'icon' => 'mdi-shield-check',
                 'color' => 'danger',
                 'partial' => 'admin.dashboards.tabs.audit-tab'
@@ -161,7 +161,7 @@
         }
 
         $roleTabs['ess'] = [
-            'name' => 'My Portal',
+            'name' => __('dashboard.tab_my_portal'),
             'icon' => 'mdi-account-circle',
             'color' => 'info',
             'partial' => 'admin.dashboards.tabs.ess-tab'
@@ -218,7 +218,7 @@
             <div class="col-12">
                 <div class="alert alert-warning">
                     <i class="mdi mdi-alert-circle me-2"></i>
-                    No dashboard available for your role. Please contact your administrator.
+                    {{ __('dashboard.no_dashboard_available') }}
                 </div>
             </div>
         </div>

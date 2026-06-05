@@ -232,8 +232,8 @@
                     <span class="brand-initials">{{ substr(appsettings()->site_abbreviation ?? 'CH', 0, 2) }}</span>
                 @endif
             </div>
-            <h1>Verify Your Email</h1>
-            <p>We've sent a verification link to your email address. Click the link to verify your account and get started.</p>
+            <h1>{{ __('auth.verify_your_email') }}</h1>
+            <p>{{ __('auth.sent_verification_link') }}</p>
         </div>
     </div>
 
@@ -243,31 +243,31 @@
                 <div class="verify-icon">
                     ✉️
                 </div>
-                <h2>Check Your Email</h2>
+                <h2>{{ __('auth.check_your_email') }}</h2>
                 <p>{{ appsettings()->site_abbreviation ?? 'CoreHealth' }}</p>
             </div>
 
             @if (session('resent'))
                 <div class="alert alert-success" role="alert">
-                    {{ __('A fresh verification link has been sent to your email address.') }}
+                    {{ __('auth.fresh_verification_link_sent') }}
                 </div>
             @endif
 
             <div class="text-center mb-4" style="color: #6c757d; line-height: 1.6;">
-                {{ __('Before proceeding, please check your email for a verification link.') }}<br>
-                {{ __('If you did not receive the email') }}, you can request another one below.
+                {{ __('auth.before_proceeding_check_email') }}<br>
+                {{ __('auth.if_not_received') }}, {{ __('auth.request_another') }}
             </div>
 
             <form method="POST" action="{{ route('verification.resend') }}" class="text-center">
                 @csrf
                 <button type="submit" class="btn-auth-primary">
-                    {{ __('Resend Verification Email') }}
+                    {{ __('auth.resend_verification_email') }}
                 </button>
             </form>
 
             <div class="text-center mt-4">
                 <a class="auth-link" href="{{ route('login') }}">
-                    ← {{ __('Back to Login') }}
+                    ← {{ __('auth.back_to_login') }}
                 </a>
             </div>
         </div>

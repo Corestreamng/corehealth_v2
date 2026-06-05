@@ -232,26 +232,26 @@
                     <span class="brand-initials">{{ substr(appsettings()->site_abbreviation ?? 'CH', 0, 2) }}</span>
                 @endif
             </div>
-            <h1>Join {{ appsettings()->site_abbreviation ?? 'CoreHealth' }}</h1>
-            <p>Create your account and start managing healthcare operations efficiently. Join our growing community of healthcare professionals.</p>
+            <h1>{{ __('auth.join') }} {{ appsettings()->site_abbreviation ?? 'CoreHealth' }}</h1>
+            <p>{{ __('auth.create_account_start_managing') }}</p>
         </div>
     </div>
 
     <div class="auth-right">
         <div class="auth-form-container">
             <div class="auth-form-header">
-                <h2>Create Account</h2>
-                <p>Fill in your details to get started</p>
+                <h2>{{ __('auth.create_account') }}</h2>
+                <p>{{ __('auth.fill_in_details') }}</p>
             </div>
 
             <form method="POST" action="{{ route('register') }}">
                 @csrf
 
                 <div class="mb-3">
-                    <label for="surname" class="form-label">{{ __('Surname') }}</label>
+                    <label for="surname" class="form-label">{{ __('auth.surname') }}</label>
                     <input id="surname" type="text" class="form-control @error('surname') is-invalid @enderror"
                            name="surname" value="{{ old('surname') }}" required autocomplete="name" autofocus
-                           placeholder="Enter your surname">
+                           placeholder="{{ __('auth.enter_your_surname') }}">
 
                     @error('surname')
                         <span class="invalid-feedback" role="alert">
@@ -261,10 +261,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="firstname" class="form-label">{{ __('Firstname') }}</label>
+                    <label for="firstname" class="form-label">{{ __('auth.firstname') }}</label>
                     <input id="firstname" type="text" class="form-control @error('firstname') is-invalid @enderror"
                            name="firstname" value="{{ old('firstname') }}" required autocomplete="firstname"
-                           placeholder="Enter your firstname">
+                           placeholder="{{ __('auth.enter_your_firstname') }}">
 
                     @error('firstname')
                         <span class="invalid-feedback" role="alert">
@@ -274,10 +274,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="othername" class="form-label">{{ __('Other Name') }} (Optional)</label>
+                    <label for="othername" class="form-label">{{ __('auth.other_name') }} ({{ __('auth.optional') }})</label>
                     <input id="othername" type="text" class="form-control @error('othername') is-invalid @enderror"
                            name="othername" value="{{ old('othername') }}" autocomplete="othername"
-                           placeholder="Enter other names">
+                           placeholder="{{ __('auth.enter_other_names') }}">
 
                     @error('othername')
                         <span class="invalid-feedback" role="alert">
@@ -287,10 +287,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="email" class="form-label">{{ __('Email Address') }}</label>
+                    <label for="email" class="form-label">{{ __('auth.email_address') }}</label>
                     <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
                            name="email" value="{{ old('email') }}" required autocomplete="email"
-                           placeholder="Enter your email">
+                           placeholder="{{ __('auth.enter_your_email') }}">
 
                     @error('email')
                         <span class="invalid-feedback" role="alert">
@@ -300,10 +300,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="password" class="form-label">{{ __('Password') }}</label>
+                    <label for="password" class="form-label">{{ __('auth.password_label') }}</label>
                     <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
                            name="password" required autocomplete="new-password"
-                           placeholder="Create a strong password">
+                           placeholder="{{ __('auth.create_strong_password') }}">
 
                     @error('password')
                         <span class="invalid-feedback" role="alert">
@@ -313,20 +313,20 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="password-confirm" class="form-label">{{ __('Confirm Password') }}</label>
+                    <label for="password-confirm" class="form-label">{{ __('auth.confirm_password') }}</label>
                     <input id="password-confirm" type="password" class="form-control"
                            name="password_confirmation" required autocomplete="new-password"
-                           placeholder="Confirm your password">
+                           placeholder="{{ __('auth.confirm_your_password') }}">
                 </div>
 
                 <button type="submit" class="btn btn-auth-primary">
-                    {{ __('Create Account') }}
+                    {{ __('auth.create_account') }}
                 </button>
 
                 <div class="text-center mt-4">
-                    <span class="text-muted">Already have an account? </span>
+                    <span class="text-muted">{{ __('auth.already_have_account') }} </span>
                     <a class="auth-link" href="{{ route('login') }}">
-                        {{ __('Sign In') }}
+                        {{ __('auth.sign_in') }}
                     </a>
                 </div>
             </form>

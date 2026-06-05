@@ -232,26 +232,26 @@
                     <span class="brand-initials">{{ substr(appsettings()->site_abbreviation ?? 'CH', 0, 2) }}</span>
                 @endif
             </div>
-            <h1>Secure Access</h1>
-            <p>Your security is important to us. Please confirm your password to continue with this sensitive operation.</p>
+            <h1>{{ __('auth.secure_access') }}</h1>
+            <p>{{ __('auth.confirm_password_continue') }}</p>
         </div>
     </div>
 
     <div class="auth-right">
         <div class="auth-form-container">
             <div class="auth-form-header">
-                <h2>Confirm Password</h2>
-                <p>Please confirm your password before continuing</p>
+                <h2>{{ __('auth.confirm_password') }}</h2>
+                <p>{{ __('auth.confirm_password_before_continuing') }}</p>
             </div>
 
             <form method="POST" action="{{ route('password.confirm') }}">
                 @csrf
 
                 <div class="mb-3">
-                    <label for="password" class="form-label">{{ __('Password') }}</label>
+                    <label for="password" class="form-label">{{ __('auth.password_label') }}</label>
                     <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
                            name="password" required autocomplete="current-password"
-                           placeholder="Enter your password">
+                           placeholder="{{ __('auth.enter_your_password') }}">
 
                     @error('password')
                         <span class="invalid-feedback" role="alert">
@@ -261,13 +261,13 @@
                 </div>
 
                 <button type="submit" class="btn btn-auth-primary">
-                    {{ __('Confirm Password') }}
+                    {{ __('auth.confirm_password_button') }}
                 </button>
 
                 @if (Route::has('password.request'))
                     <div class="text-center mt-4">
                         <a class="auth-link" href="{{ route('password.request') }}">
-                            {{ __('Forgot Your Password?') }}
+                            {{ __('auth.forgot_password') }}
                         </a>
                     </div>
                 @endif
