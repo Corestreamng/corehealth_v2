@@ -11,7 +11,7 @@
                 <input type="text"
                        id="globalSearchInput"
                        class="form-control global-search-input"
-                       placeholder="Search pages, features, modules... (Ctrl+K)"
+                       placeholder="{{ __('front.search_placeholder') }}"
                        autocomplete="off">
                 <i class="mdi mdi-magnify global-search-icon"></i>
                 <kbd class="global-search-kbd d-none d-lg-inline">Ctrl+K</kbd>
@@ -19,15 +19,15 @@
                 <!-- Search Results Dropdown -->
                 <div id="globalSearchResults" class="global-search-results">
                     <div class="search-loading d-none">
-                        <i class="mdi mdi-loading mdi-spin"></i> Searching...
+                        <i class="mdi mdi-loading mdi-spin"></i> {{ __('front.searching') }}
                     </div>
                     <div class="search-results-list"></div>
                     <div class="search-no-results d-none">
                         <i class="mdi mdi-magnify-close"></i>
-                        <span>No results found</span>
+                        <span>{{ __('front.no_results_found') }}</span>
                     </div>
                     <a href="{{ route('search.index') }}" class="search-view-all d-none">
-                        <i class="mdi mdi-arrow-right-circle mr-1"></i> View all results
+                        <i class="mdi mdi-arrow-right-circle mr-1"></i> {{ __('front.view_all_results') }}
                     </a>
                 </div>
             </div>
@@ -72,12 +72,12 @@
 
                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" href="{{ route('hr.ess.my-profile') }}">
-                            <i class="mdi mdi-account-outline mr-2"></i> Profile
+                            <i class="mdi mdi-account-outline mr-2"></i> {{ __('front.profile') }}
                         </a>
                         <div class="dropdown-divider" style="margin: 4px 0;"></div>
                         <a class="dropdown-item" href="{{ route('logout') }}"
                             onclick="event.preventDefault(); document.getElementById('logout-form-navbar').submit();">
-                            <i class="mdi mdi-logout mr-2"></i> Sign out
+                            <i class="mdi mdi-logout mr-2"></i> {{ __('front.sign_out') }}
                         </a>
 
                         <form id="logout-form-navbar" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -286,7 +286,7 @@
             <input type="text"
                    id="mobileSearchInput"
                    class="form-control global-search-input flex-grow-1"
-                   placeholder="Search pages...">
+                   placeholder="{{ __('front.search_pages') }}">
             <button class="btn btn-light" id="closeMobileSearch">
                 <i class="mdi mdi-close"></i>
             </button>
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        mobileResults.innerHTML = '<div class="text-center text-muted py-3"><i class="mdi mdi-loading mdi-spin"></i> Searching...</div>';
+        mobileResults.innerHTML = '<div class="text-center text-muted py-3"><i class="mdi mdi-loading mdi-spin"></i> {{ __('front.searching') }}</div>';
 
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
@@ -456,10 +456,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         mobileResults.innerHTML = `
                             <div class="text-center text-muted py-3">
                                 <i class="mdi mdi-magnify-close d-block mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
-                                No results found
+                                {{ __('front.no_results_found') }}
                             </div>
                             <a href="/search?q=${encodeURIComponent(query)}" class="search-view-all" style="display: block; margin-top: 10px;">
-                                <i class="mdi mdi-magnify mr-1"></i> Search in full page
+                                <i class="mdi mdi-magnify mr-1"></i> {{ __('front.search_in_full_page') }}
                             </a>
                         `;
                         return;
@@ -477,12 +477,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </a>
                     `).join('') + `
                         <a href="/search?q=${encodeURIComponent(query)}" class="search-view-all" style="display: block;">
-                            <i class="mdi mdi-arrow-right-circle mr-1"></i> View all results
+                            <i class="mdi mdi-arrow-right-circle mr-1"></i> {{ __('front.view_all_results') }}
                         </a>
                     `;
                 })
                 .catch(err => {
-                    mobileResults.innerHTML = '<div class="text-center text-muted py-3">Error searching. Please try again.</div>';
+                    mobileResults.innerHTML = '<div class="text-center text-muted py-3">{{ __('front.error_searching') }}</div>';
                 });
         }, 300);
     });
