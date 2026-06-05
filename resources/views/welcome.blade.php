@@ -119,7 +119,7 @@
             @endif
             <div>
                 <span class="nav-hospital-name">{{ appsettings()->site_name ?? env('APP_NAME', 'CoreHealth') }}</span>
-                <div class="nav-powered"><strong style="color:var(--text-dark);">CoreHealth</strong> &nbsp;&bull;&nbsp; {{ __('front.powered_by') }} <img src="{{ asset('assets/images/corestream_logo.png') }}" alt="Corestream"> Corestream</div>
+                <div class="nav-powered"><strong style="color:var(--text-dark);">CoreHealth EMR</strong> &nbsp;&bull;&nbsp; {{ __('front.powered_by') }} <img src="{{ asset('assets/images/corestream_logo.png') }}" alt="Corestream"> Corestream</div>
             </div>
         </div>
         <div class="nav-links">
@@ -144,7 +144,7 @@
                 @endif
                 <div class="hero-hospital-meta">
                     <h2>{{ appsettings()->site_name ?? env('APP_NAME', 'CoreHealth') }}</h2>
-                    <p>CoreHealth &mdash; {{ __('front.enterprise_healthcare') }}</p>
+                    <p>CoreHealth EMR &mdash; {{ __('front.enterprise_healthcare') }}</p>
                 </div>
             </div>
             <h1>{{ __('front.welcome_to') }} <span>{{ appsettings()->site_name ?? env('APP_NAME', 'CoreHealth') }}</span></h1>
@@ -183,7 +183,7 @@
 <!-- FEATURES -->
 <section class="features">
     <div class="features-inner">
-        <div class="section-tag"><i class="fas fa-th-large"></i> CoreHealth {{ __('front.platform_capabilities') }}</div>
+        <div class="section-tag"><i class="fas fa-th-large"></i> CoreHealth EMR {{ __('front.platform_capabilities') }}</div>
         <h2 class="section-title">{{ __('front.everything_you_need') }}</h2>
         <p class="section-sub">{{ __('front.features_subtitle') }}</p>
         <div class="feat-grid">
@@ -223,7 +223,7 @@
                 </div>
                 <p>{{ appsettings()->description ?? __('front.footer_tagline') }}</p>
                 <div style="margin-top:12px;display:flex;align-items:center;gap:6px;font-size:0.8rem;color:#64748b;">
-                    <strong style="color:#cbd5e1;">CoreHealth</strong> &bull; {{ __('front.powered_by') }}
+                    <strong style="color:#cbd5e1;">CoreHealth EMR</strong> &bull; {{ __('front.powered_by') }}
                     <img src="{{ asset('assets/images/corestream_logo.png') }}" alt="Corestream" style="height:16px;filter:brightness(0) invert(1);opacity:0.5;">
                     <a href="https://corestream.ng/" target="_blank" style="color:#94a3b8;">Corestream NG</a>
                 </div>
