@@ -11,7 +11,7 @@
                             <i class="mdi mdi-account-circle"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Hello, {{ Auth::user()->name }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.hello') }}, {{ Auth::user()->name }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-shield-account me-1"></i> Staff Portal
+                        <i class="mdi mdi-shield-account me-1"></i> {{ __('dashboard.staff_portal') }}
                     </div>
                 </div>
             </div>
@@ -36,9 +36,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #0284c7, #0ea5e9);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Leave Balance</p>
+                    <p class="dash-stat-label">{{ __('dashboard.leave_balance') }}</p>
                     <h2 class="dash-stat-value" id="ess-stat-balance">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-wallet-membership me-1"></i>Days remaining</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-wallet-membership me-1"></i>{{ __('dashboard.days_remaining') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-wallet-membership"></i></div>
             </div>
@@ -48,9 +48,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #f59e0b);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Pending Requests</p>
+                    <p class="dash-stat-label">{{ __('dashboard.pending_requests') }}</p>
                     <h2 class="dash-stat-value" id="ess-stat-pending">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>Awaiting approval</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.awaiting_approval') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-clock-outline"></i></div>
             </div>
@@ -60,9 +60,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Upcoming Leave</p>
+                    <p class="dash-stat-label">{{ __('dashboard.upcoming_leave') }}</p>
                     <h2 class="dash-stat-value" id="ess-stat-upcoming">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>Approved trips</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>{{ __('dashboard.approved_trips') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-calendar-check"></i></div>
             </div>
@@ -72,9 +72,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #4f46e5, #6366f1);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Recent Payslip</p>
+                    <p class="dash-stat-label">{{ __('dashboard.recent_payslip') }}</p>
                     <h2 class="dash-stat-value" id="ess-stat-payslip">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-cash-multiple me-1"></i>Last generated</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-cash-multiple me-1"></i>{{ __('dashboard.last_generated') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-cash-multiple"></i></div>
             </div>
@@ -85,8 +85,8 @@
 {{-- Personal Stats --}}
 @include('admin.dashboards.components.queue-widget', [
     'containerId' => 'ess-queues',
-    'title' => 'My Request Summary',
-    'subtitle' => 'Personal HR pipeline',
+    'title' => __('dashboard.my_request_summary'),
+    'subtitle' => __('dashboard.personal_hr_pipeline'),
     'icon' => 'mdi-account-check',
     'iconColor' => 'primary'
 ])
@@ -100,8 +100,8 @@
                     <i class="mdi mdi-flash-circle text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">My Actions</h5>
-                    <small class="text-muted">Personal HR tools</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.my_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.personal_hr_tools') }}</small>
                 </div>
             </div>
 
@@ -111,8 +111,8 @@
                     <a href="{{ route('hr.ess.my-leave.request') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f0fdfa, #ccfbf1); border-color: #99f6e4;">
                             <i class="mdi mdi-calendar-plus dash-shortcut-icon" style="color: #0d9488;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0d9488;">Apply for Leave</h6>
-                            <small style="color: #0d9488;">Request time off</small>
+                            <h6 class="dash-shortcut-title" style="color: #0d9488;">{{ __('dashboard.apply_for_leave') }}</h6>
+                            <small style="color: #0d9488;">{{ __('dashboard.request_time_off') }}</small>
                         </div>
                     </a>
                 </div>
@@ -123,8 +123,8 @@
                     <a href="{{ route('hr.ess.my-payslips') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fefce8, #fef9c3); border-color: #fef08a;">
                             <i class="mdi mdi-cash-multiple dash-shortcut-icon" style="color: #a16207;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #a16207;">My Payslips</h6>
-                            <small style="color: #a16207;">Earnings</small>
+                            <h6 class="dash-shortcut-title" style="color: #a16207;">{{ __('dashboard.my_payslips') }}</h6>
+                            <small style="color: #a16207;">{{ __('dashboard.earnings') }}</small>
                         </div>
                     </a>
                 </div>
@@ -135,8 +135,8 @@
                     <a href="{{ route('hr.ess.my-profile') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #eff6ff, #dbeafe); border-color: #bfdbfe;">
                             <i class="mdi mdi-file-document-edit-outline dash-shortcut-icon" style="color: #1e40af;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #1e40af;">Edit Profile</h6>
-                            <small style="color: #1e40af;">Update Info</small>
+                            <h6 class="dash-shortcut-title" style="color: #1e40af;">{{ __('dashboard.edit_profile') }}</h6>
+                            <small style="color: #1e40af;">{{ __('dashboard.update_info') }}</small>
                         </div>
                     </a>
                 </div>
@@ -145,8 +145,8 @@
                     <a href="{{ route('hr.ess.my-profile') }}#password" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f5f3ff, #ede9fe); border-color: #ddd6fe;">
                             <i class="mdi mdi-lock-reset dash-shortcut-icon" style="color: #5b21b6;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #5b21b6;">Security</h6>
-                            <small style="color: #5b21b6;">Change Password</small>
+                            <h6 class="dash-shortcut-title" style="color: #5b21b6;">{{ __('dashboard.security') }}</h6>
+                            <small style="color: #5b21b6;">{{ __('dashboard.change_password') }}</small>
                         </div>
                     </a>
                 </div>
@@ -164,8 +164,8 @@
                     <i class="mdi mdi-chart-donut text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Leave Balance</h5>
-                    <small class="text-muted">Remaining days per type</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.leave_balance') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.remaining_days_per_type') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -176,8 +176,8 @@
     <div class="col-xl-8">
         @include('admin.dashboards.components.mini-table', [
             'containerId' => 'ess-activity',
-            'title' => 'My Recent Requests',
-            'subtitle' => 'Latest status updates',
+            'title' => __('dashboard.my_recent_requests'),
+            'subtitle' => __('dashboard.latest_status_updates'),
             'icon' => 'mdi-history',
             'iconBg' => 'info'
         ])

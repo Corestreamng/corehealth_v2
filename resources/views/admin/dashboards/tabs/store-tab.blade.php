@@ -11,7 +11,7 @@
                             <i class="mdi mdi-store-warehouse"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'Storekeeper' }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.welcome_back') }}, {{ Auth::user()->name ?? __('dashboard.tab_store') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-warehouse me-1"></i> Inventory & Store Operations
+                        <i class="mdi mdi-warehouse me-1"></i> {{ __('dashboard.inventory_store_operations') }}
                     </div>
                 </div>
             </div>
@@ -37,9 +37,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #9a3412, #c2410c);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Pending Requisitions</p>
+                    <p class="dash-stat-label">{{ __('dashboard.pending_requisitions') }}</p>
                     <h2 class="dash-stat-value" id="store-stat-pending-reqs">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-swap-horizontal me-1"></i>Internal requests</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-swap-horizontal me-1"></i>{{ __('dashboard.internal_requests') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-swap-horizontal"></i></div>
             </div>
@@ -49,9 +49,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Pending POs</p>
+                    <p class="dash-stat-label">{{ __('dashboard.pending_pos') }}</p>
                     <h2 class="dash-stat-value" id="store-stat-pending-pos">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-cart-arrow-down me-1"></i>Procurement</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-cart-arrow-down me-1"></i>{{ __('dashboard.procurement') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-cart-arrow-down"></i></div>
             </div>
@@ -61,9 +61,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Approved POs</p>
+                    <p class="dash-stat-label">{{ __('dashboard.approved_pos') }}</p>
                     <h2 class="dash-stat-value" id="store-stat-approved-pos">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>Awaiting delivery</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>{{ __('dashboard.awaiting_delivery') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-check-circle-outline"></i></div>
             </div>
@@ -73,9 +73,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">To Fulfill</p>
+                    <p class="dash-stat-label">{{ __('dashboard.to_fulfill') }}</p>
                     <h2 class="dash-stat-value" id="store-stat-fulfill">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-truck-delivery me-1"></i>Ready for dispatch</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-truck-delivery me-1"></i>{{ __('dashboard.ready_for_dispatch') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-truck-delivery"></i></div>
             </div>
@@ -95,8 +95,8 @@
                     <i class="mdi mdi-flash-circle text-warning"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Store Quick Actions</h5>
-                    <small class="text-muted">Inventory & supply chain tools</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.store_quick_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.inventory_supply_chain_tools') }}</small>
                 </div>
             </div>
 
@@ -106,8 +106,8 @@
                     <a href="{{ route('inventory.store-workbench.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fff7ed, #ffedd5); border-color: #fed7aa;">
                             <i class="mdi mdi-apps dash-shortcut-icon" style="color: #c2410c;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #c2410c;">Store Workbench</h6>
-                            <small style="color: #c2410c;">Main Operations</small>
+                            <h6 class="dash-shortcut-title" style="color: #c2410c;">{{ __('dashboard.store_workbench') }}</h6>
+                            <small style="color: #c2410c;">{{ __('dashboard.main_operations') }}</small>
                         </div>
                     </a>
                 </div>
@@ -118,8 +118,8 @@
                     <a href="{{ route('inventory.store-workbench.tally-card') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f0fdf4, #dcfce7); border-color: #bbf7d0;">
                             <i class="mdi mdi-table-large dash-shortcut-icon" style="color: #15803d;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #15803d;">Tally Card</h6>
-                            <small style="color: #15803d;">Stock Ledger</small>
+                            <h6 class="dash-shortcut-title" style="color: #15803d;">{{ __('dashboard.tally_card') }}</h6>
+                            <small style="color: #15803d;">{{ __('dashboard.stock_ledger') }}</small>
                         </div>
                     </a>
                 </div>
@@ -130,8 +130,8 @@
                     <a href="{{ route('inventory.requisitions.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0f2fe, #bae6fd); border-color: #7dd3fc;">
                             <i class="mdi mdi-swap-horizontal dash-shortcut-icon" style="color: #0369a1;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0369a1;">Requisitions</h6>
-                            <small style="color: #0369a1;">Internal Requests</small>
+                            <h6 class="dash-shortcut-title" style="color: #0369a1;">{{ __('dashboard.requisitions') }}</h6>
+                            <small style="color: #0369a1;">{{ __('dashboard.internal_requests_cap') }}</small>
                         </div>
                     </a>
                 </div>
@@ -142,8 +142,8 @@
                     <a href="{{ route('inventory.purchase-orders.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dcfce7, #bbf7d0); border-color: #86efac;">
                             <i class="mdi mdi-cart-arrow-down dash-shortcut-icon" style="color: #166534;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #166534;">Purchase Orders</h6>
-                            <small style="color: #166534;">Procurement</small>
+                            <h6 class="dash-shortcut-title" style="color: #166534;">{{ __('dashboard.purchase_orders') }}</h6>
+                            <small style="color: #166534;">{{ __('dashboard.procurement') }}</small>
                         </div>
                     </a>
                 </div>
@@ -154,8 +154,8 @@
                     <a href="{{ route('suppliers.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f3e8ff, #e9d5ff); border-color: #d8b4fe;">
                             <i class="mdi mdi-truck dash-shortcut-icon" style="color: #7e22ce;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #7e22ce;">Suppliers</h6>
-                            <small style="color: #7e22ce;">Vendors</small>
+                            <h6 class="dash-shortcut-title" style="color: #7e22ce;">{{ __('dashboard.suppliers') }}</h6>
+                            <small style="color: #7e22ce;">{{ __('dashboard.vendors') }}</small>
                         </div>
                     </a>
                 </div>
@@ -168,8 +168,8 @@
                     <a href="{{ route('products.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f0f9ff, #e0f2fe); border-color: #bae6fd;">
                             <i class="mdi mdi-package-variant dash-shortcut-icon" style="color: #0284c7;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0284c7;">Product Master</h6>
-                            <small style="color: #0284c7;">Catalog</small>
+                            <h6 class="dash-shortcut-title" style="color: #0284c7;">{{ __('dashboard.product_master') }}</h6>
+                            <small style="color: #0284c7;">{{ __('dashboard.catalog') }}</small>
                         </div>
                     </a>
                 </div>
@@ -180,8 +180,8 @@
                     <a href="{{ route('stores.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fdf2f8, #fce7f3); border-color: #fbcfe8;">
                             <i class="mdi mdi-store dash-shortcut-icon" style="color: #be185d;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #be185d;">Stores</h6>
-                            <small style="color: #be185d;">Locations</small>
+                            <h6 class="dash-shortcut-title" style="color: #be185d;">{{ __('dashboard.stores') }}</h6>
+                            <small style="color: #be185d;">{{ __('dashboard.locations') }}</small>
                         </div>
                     </a>
                 </div>
@@ -192,8 +192,8 @@
                     <a href="{{ Route::has('stock.index') ? route('stock.index') : route('inventory.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f0fdf4, #dcfce7); border-color: #bbf7d0;">
                             <i class="mdi mdi-archive-outline dash-shortcut-icon" style="color: #15803d;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #15803d;">Stock Control</h6>
-                            <small style="color: #15803d;">Inventory</small>
+                            <h6 class="dash-shortcut-title" style="color: #15803d;">{{ __('dashboard.stock_control') }}</h6>
+                            <small style="color: #15803d;">{{ __('dashboard.inventory') }}</small>
                         </div>
                     </a>
                 </div>
@@ -204,8 +204,8 @@
                     <a href="{{ route('import-export.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f8fafc, #f1f5f9); border-color: #e2e8f0;">
                             <i class="mdi mdi-file-import dash-shortcut-icon" style="color: #475569;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #475569;">Import/Export</h6>
-                            <small style="color: #475569;">Bulk Tools</small>
+                            <h6 class="dash-shortcut-title" style="color: #475569;">{{ __('dashboard.import_export') }}</h6>
+                            <small style="color: #475569;">{{ __('dashboard.bulk_tools') }}</small>
                         </div>
                     </a>
                 </div>
@@ -224,8 +224,8 @@
                     <i class="mdi mdi-chart-bell-curve-cumulative text-warning"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Requisition Trend</h5>
-                    <small class="text-muted">Daily internal stock requests</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.requisition_trend') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.daily_internal_stock_requests') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -240,8 +240,8 @@
                     <i class="mdi mdi-package-variant text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Inventory Health</h5>
-                    <small class="text-muted">Global stock levels</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.inventory_health') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.global_stock_levels') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -254,8 +254,8 @@
 {{-- Recent Activity --}}
 @include('admin.dashboards.components.mini-table', [
     'containerId' => 'store-activity',
-    'title' => 'Recent Store Activity',
-    'subtitle' => 'Latest requisitions & POs today',
+    'title' => __('dashboard.recent_store_activity'),
+    'subtitle' => __('dashboard.latest_requisitions_pos_today'),
     'icon' => 'mdi-history',
     'iconBg' => 'warning'
 ])

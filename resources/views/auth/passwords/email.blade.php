@@ -241,16 +241,16 @@
                     <span class="brand-initials">{{ substr(appsettings()->site_abbreviation ?? 'CH', 0, 2) }}</span>
                 @endif
             </div>
-            <h1>Forgot Your Password?</h1>
-            <p>No worries! Enter your email address and we'll send you a link to reset your password securely.</p>
+            <h1>{{ __('auth.forgot_password_title') }}</h1>
+            <p>{{ __('auth.forgot_password_subtitle') }}</p>
         </div>
     </div>
 
     <div class="auth-right">
         <div class="auth-form-container">
             <div class="auth-form-header">
-                <h2>Reset Password</h2>
-                <p>Enter your email to receive a reset link</p>
+                <h2>{{ __('auth.reset_password') }}</h2>
+                <p>{{ __('auth.enter_email_for_reset_link') }}</p>
             </div>
 
             @if (session('status'))
@@ -263,10 +263,10 @@
                 @csrf
 
                 <div class="mb-3">
-                    <label for="email" class="form-label">{{ __('Email Address') }}</label>
+                    <label for="email" class="form-label">{{ __('auth.email_address') }}</label>
                     <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
                            name="email" value="{{ old('email') }}" required autocomplete="email" autofocus
-                           placeholder="Enter your email">
+                           placeholder="{{ __('auth.enter_your_email') }}">
 
                     @error('email')
                         <span class="invalid-feedback" role="alert">
@@ -276,12 +276,12 @@
                 </div>
 
                 <button type="submit" class="btn btn-auth-primary">
-                    {{ __('Send Password Reset Link') }}
+                    {{ __('auth.send_password_reset_link') }}
                 </button>
 
                 <div class="text-center mt-4">
                     <a class="auth-link" href="{{ route('login') }}">
-                        ← {{ __('Back to Login') }}
+                        ← {{ __('auth.back_to_login') }}
                     </a>
                 </div>
             </form>

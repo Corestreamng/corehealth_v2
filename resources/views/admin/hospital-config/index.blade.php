@@ -254,6 +254,54 @@
                                         <small class="text-muted">Time to allow result editing</small>
                                     </div>
 
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Localization Settings Card -->
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-earth mr-2" style="color: var(--primary-color);"></i>
+                                    Localization Settings
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                                    <i class="mdi mdi-information-outline"></i> Configure global localization preferences for language, currency, and timezone.
+                                </p>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Language</label>
+                                        <select class="form-control" name="language" style="border-radius: 8px; padding: 0.75rem;">
+                                            @php
+                                                $languages = [
+                                                    'en' => 'English',
+                                                    'fr' => 'French (Français)',
+                                                    'nl' => 'Dutch (Nederlands)',
+                                                    'es' => 'Spanish (Español)',
+                                                    'pt' => 'Portuguese (Português)',
+                                                    'ar' => 'Arabic (العربية)',
+                                                    'zh' => 'Chinese (中文)'
+                                                ];
+                                                $currentLanguage = old('language', $config->language ?? 'en');
+                                            @endphp
+                                            @foreach($languages as $code => $label)
+                                                <option value="{{ $code }}" {{ $currentLanguage == $code ? 'selected' : '' }}>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">System display language</small>
+                                    </div>
+
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Currency Symbol</label>
+                                        <input type="text" class="form-control" name="currency_symbol"
+                                               value="{{ old('currency_symbol', $config->currency_symbol ?? '₦') }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                        <small class="text-muted">Global currency symbol (e.g., ₦, $, €, £)</small>
+                                    </div>
+
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label" style="font-weight: 600; color: #495057;">System Timezone</label>
                                         <select class="form-control" name="timezone" style="border-radius: 8px; padding: 0.75rem;">
@@ -278,7 +326,7 @@
                                                 <option value="{{ $tz }}" {{ $currentTimezone == $tz ? 'selected' : '' }}>{{ $label }}</option>
                                             @endforeach
                                         </select>
-                                        <small class="text-muted">Timezone for medication schedules & notifications</small>
+                                        <small class="text-muted">Timezone for schedules & timestamps</small>
                                     </div>
                                 </div>
                             </div>

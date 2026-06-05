@@ -11,7 +11,7 @@
                             <i class="mdi mdi-flask"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'Lab Scientist' }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.welcome_back') }}, {{ Auth::user()->name ?? __('dashboard.tab_lab') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-flask me-1"></i> Medical Laboratory
+                        <i class="mdi mdi-flask me-1"></i> {{ __('dashboard.medical_laboratory') }}
                     </div>
                 </div>
             </div>
@@ -33,9 +33,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #164e63, #0e7490);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Pending Tests</p>
+                    <p class="dash-stat-label">{{ __('dashboard.pending_tests') }}</p>
                     <h2 class="dash-stat-value" id="lab-stat-queue">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-flask me-1"></i>Current queue</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-flask me-1"></i>{{ __('dashboard.current_queue') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-flask"></i></div>
             </div>
@@ -46,9 +46,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #166534, #16a34a);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Completed Today</p>
+                    <p class="dash-stat-label">{{ __('dashboard.completed_today') }}</p>
                     <h2 class="dash-stat-value" id="lab-stat-completed">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>Finalized tests</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>{{ __('dashboard.finalized_tests') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-check-circle"></i></div>
             </div>
@@ -59,9 +59,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e3a8a, #1d4ed8);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Monthly Tests</p>
+                    <p class="dash-stat-label">{{ __('dashboard.monthly_tests') }}</p>
                     <h2 class="dash-stat-value" id="lab-stat-month">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>Current month</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>{{ __('dashboard.current_month') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-clipboard-text"></i></div>
             </div>
@@ -72,9 +72,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #86198f, #a21caf);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Available Tests</p>
+                    <p class="dash-stat-label">{{ __('dashboard.available_tests') }}</p>
                     <h2 class="dash-stat-value" id="lab-stat-services">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-format-list-bulleted me-1"></i>Catalog size</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-format-list-bulleted me-1"></i>{{ __('dashboard.catalog_size') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-format-list-bulleted"></i></div>
             </div>
@@ -97,8 +97,8 @@
                     <i class="mdi mdi-flash-circle text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Laboratory Quick Actions</h5>
-                    <small class="text-muted">Investigation & diagnostic tools</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.laboratory_quick_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.investigation_diagnostic_tools') }}</small>
                 </div>
             </div>
 
@@ -108,8 +108,8 @@
                     <a href="{{ route('lab.workbench') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #cffafe, #a5f3fc); border-color: #67e8f9;">
                             <i class="mdi mdi-flask dash-shortcut-icon" style="color: #0e7490;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0e7490;">Workbench</h6>
-                            <small style="color: #0e7490;">Lab Queue</small>
+                            <h6 class="dash-shortcut-title" style="color: #0e7490;">{{ __('dashboard.workbench') }}</h6>
+                            <small style="color: #0e7490;">{{ __('dashboard.lab_queue') }}</small>
                         </div>
                     </a>
                 </div>
@@ -120,8 +120,8 @@
                     <a href="{{ route('lab.results') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dcfce7, #bbf7d0); border-color: #86efac;">
                             <i class="mdi mdi-clipboard-check dash-shortcut-icon" style="color: #166534;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #166534;">Results</h6>
-                            <small style="color: #166534;">Completed</small>
+                            <h6 class="dash-shortcut-title" style="color: #166534;">{{ __('dashboard.results') }}</h6>
+                            <small style="color: #166534;">{{ __('dashboard.completed') }}</small>
                         </div>
                     </a>
                 </div>
@@ -132,8 +132,8 @@
                     <a href="{{ route('patient.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fce7f3, #fbcfe8); border-color: #f9a8d4;">
                             <i class="mdi mdi-account-multiple dash-shortcut-icon" style="color: #be185d;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #be185d;">Patients</h6>
-                            <small style="color: #be185d;">Directory</small>
+                            <h6 class="dash-shortcut-title" style="color: #be185d;">{{ __('dashboard.patients') }}</h6>
+                            <small style="color: #be185d;">{{ __('dashboard.directory') }}</small>
                         </div>
                     </a>
                 </div>
@@ -152,8 +152,8 @@
                     <i class="mdi mdi-chart-line text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Lab Requests Trend</h5>
-                    <small class="text-muted">Daily test volume</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.lab_requests_trend') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.daily_test_volume') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -168,8 +168,8 @@
                     <i class="mdi mdi-chart-pie text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Test Categories</h5>
-                    <small class="text-muted">By service type</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.test_categories') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.by_service_type') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -182,8 +182,8 @@
 {{-- Recent Activity --}}
 @include('admin.dashboards.components.mini-table', [
     'containerId' => 'lab-activity',
-    'title' => 'Recent Lab Activity',
-    'subtitle' => 'Latest test requests',
+    'title' => __('dashboard.recent_lab_activity'),
+    'subtitle' => __('dashboard.latest_test_requests'),
     'icon' => 'mdi-flask',
     'iconBg' => 'info'
 ])

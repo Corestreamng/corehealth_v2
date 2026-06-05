@@ -61,6 +61,8 @@ class HospitalConfigController extends Controller
             'note_edit_window' => 'nullable|integer|min:1',
             'result_edit_duration' => 'nullable|integer|min:1',
             'timezone' => 'nullable|string|max:50',
+            'language' => 'nullable|string|in:en,fr,nl,es,pt,ar,zh',
+            'currency_symbol' => 'nullable|string|max:10',
 
             // Integration Settings
             'client_id' => 'nullable|string',

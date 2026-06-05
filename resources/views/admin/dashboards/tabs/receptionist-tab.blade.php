@@ -11,7 +11,7 @@
                             <i class="mdi mdi-account-tie"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Welcome back, {{ Auth::user()->name ?? 'Receptionist' }}</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.welcome_back') }}, {{ Auth::user()->name ?? __('dashboard.tab_receptionist') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-desktop-mac-dashboard me-1"></i> Front Desk
+                        <i class="mdi mdi-desktop-mac-dashboard me-1"></i> {{ __('dashboard.front_desk') }}
                     </div>
                 </div>
             </div>
@@ -33,9 +33,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">New Patients</p>
+                    <p class="dash-stat-label">{{ __('dashboard.new_patients') }}</p>
                     <h2 class="dash-stat-value" id="recep-stat-new-patients">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>Registered today</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.registered_today') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-account-plus"></i></div>
             </div>
@@ -45,9 +45,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #6d28d9, #8b5cf6);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Returning Patients</p>
+                    <p class="dash-stat-label">{{ __('dashboard.returning_patients') }}</p>
                     <h2 class="dash-stat-value" id="recep-stat-returning-patients">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-account-check me-1"></i>Seen today</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-account-check me-1"></i>{{ __('dashboard.seen_today') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-account-check"></i></div>
             </div>
@@ -57,9 +57,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #0f766e, #14b8a6);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Admissions</p>
+                    <p class="dash-stat-label">{{ __('dashboard.admissions') }}</p>
                     <h2 class="dash-stat-value" id="recep-stat-admissions">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-hospital me-1"></i>Active today</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-hospital me-1"></i>{{ __('dashboard.active_today') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-hospital"></i></div>
             </div>
@@ -69,9 +69,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #c2410c, #ea580c);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Bookings</p>
+                    <p class="dash-stat-label">{{ __('dashboard.bookings') }}</p>
                     <h2 class="dash-stat-value" id="recep-stat-bookings">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>Scheduled today</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>{{ __('dashboard.scheduled_today') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-calendar-check"></i></div>
             </div>
@@ -94,8 +94,8 @@
                     <i class="mdi mdi-flash-circle text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Quick Actions</h5>
-                    <small class="text-muted">Front desk operations</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.quick_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.front_desk_operations') }}</small>
                 </div>
             </div>
             <div class="row g-3">
@@ -104,8 +104,8 @@
                     <a href="{{ route('reception.workbench', ['queue_filter' => 'waiting']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f3e8ff, #e9d5ff); border-color: #d8b4fe;">
                             <i class="mdi mdi-desktop-mac-dashboard dash-shortcut-icon" style="color: #6b21a8;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #6b21a8;">Workbench</h6>
-                            <small style="color: #6b21a8;">Main desk</small>
+                            <h6 class="dash-shortcut-title" style="color: #6b21a8;">{{ __('dashboard.workbench') }}</h6>
+                            <small style="color: #6b21a8;">{{ __('dashboard.main_desk') }}</small>
                         </div>
                     </a>
                 </div>
@@ -115,8 +115,8 @@
                     <a href="{{ route('patient.create') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dcfce7, #bbf7d0); border-color: #86efac;">
                             <i class="mdi mdi-account-plus dash-shortcut-icon" style="color: #166534;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #166534;">New Patient</h6>
-                            <small style="color: #166534;">Register</small>
+                            <h6 class="dash-shortcut-title" style="color: #166534;">{{ __('dashboard.new_patient') }}</h6>
+                            <small style="color: #166534;">{{ __('dashboard.register') }}</small>
                         </div>
                     </a>
                 </div>
@@ -126,8 +126,8 @@
                     <a href="{{ route('patient.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0f2fe, #bae6fd); border-color: #7dd3fc;">
                             <i class="mdi mdi-account-multiple dash-shortcut-icon" style="color: #0369a1;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0369a1;">All Patients</h6>
-                            <small style="color: #0369a1;">Directory</small>
+                            <h6 class="dash-shortcut-title" style="color: #0369a1;">{{ __('dashboard.all_patients') }}</h6>
+                            <small style="color: #0369a1;">{{ __('dashboard.directory') }}</small>
                         </div>
                     </a>
                 </div>
@@ -137,8 +137,8 @@
                     <a href="{{ route('billing.workbench', ['queue_filter' => 'all']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fff7ed, #ffedd5); border-color: #fed7aa;">
                             <i class="mdi mdi-cash-register dash-shortcut-icon" style="color: #c2410c;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #c2410c;">Billing</h6>
-                            <small style="color: #c2410c;">Payments</small>
+                            <h6 class="dash-shortcut-title" style="color: #c2410c;">{{ __('dashboard.billing') }}</h6>
+                            <small style="color: #c2410c;">{{ __('dashboard.payments') }}</small>
                         </div>
                     </a>
                 </div>
@@ -148,8 +148,8 @@
                     <a href="{{ route('appointments.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fef3c7, #fde68a); border-color: #fcd34d;">
                             <i class="mdi mdi-calendar-check dash-shortcut-icon" style="color: #b45309;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #b45309;">Appointments</h6>
-                            <small style="color: #b45309;">Schedule</small>
+                            <h6 class="dash-shortcut-title" style="color: #b45309;">{{ __('dashboard.appointments') }}</h6>
+                            <small style="color: #b45309;">{{ __('dashboard.schedule') }}</small>
                         </div>
                     </a>
                 </div>
@@ -159,8 +159,8 @@
                     <a href="{{ route('insurance.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f1f5f9, #e2e8f0); border-color: #cbd5e1;">
                             <i class="mdi mdi-shield-account dash-shortcut-icon" style="color: #334155;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #334155;">Insurance</h6>
-                            <small style="color: #334155;">Verification</small>
+                            <h6 class="dash-shortcut-title" style="color: #334155;">{{ __('dashboard.insurance') }}</h6>
+                            <small style="color: #334155;">{{ __('dashboard.verification') }}</small>
                         </div>
                     </a>
                 </div>
@@ -170,8 +170,8 @@
                     <a href="{{ route('emergency.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fee2e2, #fecaca); border-color: #fca5a5;">
                             <i class="mdi mdi-alert-octagon dash-shortcut-icon" style="color: #991b1b;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #991b1b;">Emergency</h6>
-                            <small style="color: #991b1b;">Triage</small>
+                            <h6 class="dash-shortcut-title" style="color: #991b1b;">{{ __('dashboard.emergency') }}</h6>
+                            <small style="color: #991b1b;">{{ __('dashboard.triage') }}</small>
                         </div>
                     </a>
                 </div>
@@ -190,8 +190,8 @@
                     <i class="mdi mdi-chart-bar text-warning"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Hourly Patient Flow</h5>
-                    <small class="text-muted">Today's arrival pattern</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.hourly_patient_flow') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.todays_arrival_pattern') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -206,8 +206,8 @@
                     <i class="mdi mdi-account-multiple-plus text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Patient Registrations</h5>
-                    <small class="text-muted">This month's trend</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.patient_registrations') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.this_months_trend') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -222,8 +222,8 @@
                     <i class="mdi mdi-chart-donut text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Patient Breakdown</h5>
-                    <small class="text-muted">New / Returning / HMO</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.patient_breakdown') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.new_returning_hmo') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -236,8 +236,8 @@
 {{-- Recent Activity --}}
 @include('admin.dashboards.components.mini-table', [
     'containerId' => 'recep-activity',
-    'title' => 'Recent Patient Activity',
-    'subtitle' => 'Latest queue entries today',
+    'title' => __('dashboard.recent_patient_activity'),
+    'subtitle' => __('dashboard.latest_queue_entries'),
     'icon' => 'mdi-history',
     'iconBg' => 'primary'
 ])

@@ -11,7 +11,7 @@
                             <i class="mdi mdi-chart-areaspline"></i>
                         </div>
                         <div>
-                            <h3 class="dash-welcome-title">Accounts & Audit</h3>
+                            <h3 class="dash-welcome-title">{{ __('dashboard.accounts_audit') }}</h3>
                             <div class="dash-welcome-sub">
                                 <i class="mdi mdi-calendar-clock me-2"></i>
                                 <span id="currentDateTime"></span>
@@ -19,7 +19,7 @@
                         </div>
                     </div>
                     <div class="dash-welcome-badge">
-                        <i class="mdi mdi-finance me-1"></i> Financial Intelligence
+                        <i class="mdi mdi-finance me-1"></i> {{ __('dashboard.financial_intelligence') }}
                     </div>
                 </div>
             </div>
@@ -33,9 +33,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #065f46, #059669);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Today's Revenue</p>
+                    <p class="dash-stat-label">{{ __('dashboard.todays_revenue') }}</p>
                     <h2 class="dash-stat-value" id="acct-stat-today-revenue">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>Real-time</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.real_time') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-cash-check"></i></div>
             </div>
@@ -45,9 +45,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Month Revenue</p>
+                    <p class="dash-stat-label">{{ __('dashboard.month_revenue') }}</p>
                     <h2 class="dash-stat-value" id="acct-stat-month-revenue">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-calendar me-1"></i>This month</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-calendar me-1"></i>{{ __('dashboard.this_month') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-chart-line"></i></div>
             </div>
@@ -57,9 +57,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #dc2626);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Outstanding</p>
+                    <p class="dash-stat-label">{{ __('dashboard.outstanding') }}</p>
                     <h2 class="dash-stat-value" id="acct-stat-outstanding">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-alert me-1"></i>Unpaid bills</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-alert me-1"></i>{{ __('dashboard.unpaid_bills') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-cash-clock"></i></div>
             </div>
@@ -69,9 +69,9 @@
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #a855f7);">
             <div class="dash-stat-body">
                 <div>
-                    <p class="dash-stat-label">Collection Rate</p>
+                    <p class="dash-stat-label">{{ __('dashboard.collection_rate') }}</p>
                     <h2 class="dash-stat-value" id="acct-stat-collection-rate">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-percent me-1"></i>This month</span>
+                    <span class="dash-stat-hint"><i class="mdi mdi-percent me-1"></i>{{ __('dashboard.this_month') }}</span>
                 </div>
                 <div class="dash-stat-icon"><i class="mdi mdi-percent"></i></div>
             </div>
@@ -91,8 +91,8 @@
                     <i class="mdi mdi-flash-circle text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Quick Actions</h5>
-                    <small class="text-muted">Financial management tools</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.quick_actions') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.financial_management_tools') }}</small>
                 </div>
             </div>
 
@@ -102,8 +102,8 @@
                     <a href="{{ route('billing.workbench', ['queue_filter' => 'all']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dbeafe, #bfdbfe); border-color: #93c5fd;">
                             <i class="mdi mdi-cash-register dash-shortcut-icon" style="color: #1e40af;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #1e40af;">Billing</h6>
-                            <small style="color: #1e40af;">Workbench</small>
+                            <h6 class="dash-shortcut-title" style="color: #1e40af;">{{ __('dashboard.billing') }}</h6>
+                            <small style="color: #1e40af;">{{ __('dashboard.workbench') }}</small>
                         </div>
                     </a>
                 </div>
@@ -114,8 +114,8 @@
                     <a href="{{ route('my-transactions') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dcfce7, #bbf7d0); border-color: #86efac;">
                             <i class="mdi mdi-receipt dash-shortcut-icon" style="color: #166534;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #166534;">Transactions</h6>
-                            <small style="color: #166534;">My Transactions</small>
+                            <h6 class="dash-shortcut-title" style="color: #166534;">{{ __('dashboard.transactions') }}</h6>
+                            <small style="color: #166534;">{{ __('dashboard.my_transactions') }}</small>
                         </div>
                     </a>
                 </div>
@@ -126,8 +126,8 @@
                     <a href="{{ route('transactions') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f3e8ff, #e9d5ff); border-color: #d8b4fe;">
                             <i class="mdi mdi-book-open-page-variant dash-shortcut-icon" style="color: #7e22ce;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #7e22ce;">All</h6>
-                            <small style="color: #7e22ce;">Transactions</small>
+                            <h6 class="dash-shortcut-title" style="color: #7e22ce;">{{ __('dashboard.all') }}</h6>
+                            <small style="color: #7e22ce;">{{ __('dashboard.transactions') }}</small>
                         </div>
                     </a>
                 </div>
@@ -138,8 +138,8 @@
                     <a href="{{ route('patient.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0f2fe, #bae6fd); border-color: #7dd3fc;">
                             <i class="mdi mdi-account-multiple dash-shortcut-icon" style="color: #0369a1;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #0369a1;">Patients</h6>
-                            <small style="color: #0369a1;">Directory</small>
+                            <h6 class="dash-shortcut-title" style="color: #0369a1;">{{ __('dashboard.patients') }}</h6>
+                            <small style="color: #0369a1;">{{ __('dashboard.directory') }}</small>
                         </div>
                     </a>
                 </div>
@@ -152,8 +152,8 @@
                     <a href="{{ route('hmo.workbench', ['queue_filter' => 'pending']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fff7ed, #ffedd5); border-color: #fed7aa;">
                             <i class="mdi mdi-shield-check dash-shortcut-icon" style="color: #c2410c;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #c2410c;">HMO</h6>
-                            <small style="color: #c2410c;">Workbench</small>
+                            <h6 class="dash-shortcut-title" style="color: #c2410c;">{{ __('dashboard.hmo') }}</h6>
+                            <small style="color: #c2410c;">{{ __('dashboard.workbench') }}</small>
                         </div>
                     </a>
                 </div>
@@ -164,8 +164,8 @@
                     <a href="{{ route('product-or-service-request.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fef3c7, #fde68a); border-color: #fcd34d;">
                             <i class="mdi mdi-file-document dash-shortcut-icon" style="color: #b45309;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #b45309;">Payment</h6>
-                            <small style="color: #b45309;">Requests</small>
+                            <h6 class="dash-shortcut-title" style="color: #b45309;">{{ __('dashboard.payment') }}</h6>
+                            <small style="color: #b45309;">{{ __('dashboard.requests') }}</small>
                         </div>
                     </a>
                 </div>
@@ -176,8 +176,8 @@
                     <a href="{{ route('audit-logs.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f1f5f9, #e2e8f0); border-color: #cbd5e1;">
                             <i class="mdi mdi-history dash-shortcut-icon" style="color: #475569;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #475569;">Audit</h6>
-                            <small style="color: #475569;">Logs</small>
+                            <h6 class="dash-shortcut-title" style="color: #475569;">{{ __('dashboard.audit') }}</h6>
+                            <small style="color: #475569;">{{ __('dashboard.logs') }}</small>
                         </div>
                     </a>
                 </div>
@@ -188,8 +188,8 @@
                     <a href="{{ route('general-ledger.index') }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fce7f3, #fbcfe8); border-color: #f9a8d4;">
                             <i class="mdi mdi-notebook dash-shortcut-icon" style="color: #be185d;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #be185d;">General</h6>
-                            <small style="color: #be185d;">Ledger</small>
+                            <h6 class="dash-shortcut-title" style="color: #be185d;">{{ __('dashboard.general') }}</h6>
+                            <small style="color: #be185d;">{{ __('dashboard.ledger') }}</small>
                         </div>
                     </a>
                 </div>
@@ -208,8 +208,8 @@
                     <i class="mdi mdi-chart-line text-success"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Revenue Trend</h5>
-                    <small class="text-muted">Monthly performance</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.revenue_trend') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.monthly_performance') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -224,8 +224,8 @@
                     <i class="mdi mdi-chart-donut text-primary"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Payment Methods</h5>
-                    <small class="text-muted">This month</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.payment_methods') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.this_month') }}</small>
                 </div>
             </div>
             <div class="dash-chart-body">
@@ -244,12 +244,12 @@
                     <i class="mdi mdi-clock-alert text-danger"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Outstanding Aging</h5>
-                    <small class="text-muted">Unpaid bills by age</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.outstanding_aging') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.unpaid_bills_by_age') }}</small>
                 </div>
             </div>
             <div id="acct-aging-bars">
-                <div class="text-center py-3 text-muted">Loading...</div>
+                <div class="text-center py-3 text-muted">{{ __('dashboard.loading') }}</div>
             </div>
         </div>
     </div>
@@ -260,12 +260,12 @@
                     <i class="mdi mdi-chart-bar text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Revenue by Department</h5>
-                    <small class="text-muted">This month</small>
+                    <h5 class="dash-section-title">{{ __('dashboard.revenue_by_department') }}</h5>
+                    <small class="text-muted">{{ __('dashboard.this_month') }}</small>
                 </div>
             </div>
             <div id="acct-dept-bars">
-                <div class="text-center py-3 text-muted">Loading...</div>
+                <div class="text-center py-3 text-muted">{{ __('dashboard.loading') }}</div>
             </div>
         </div>
     </div>
@@ -278,22 +278,22 @@
             <i class="mdi mdi-history text-dark"></i>
         </div>
         <div>
-            <h5 class="dash-section-title">Audit Trail</h5>
-            <small class="text-muted">Recent system activity</small>
+            <h5 class="dash-section-title">{{ __('dashboard.audit_trail') }}</h5>
+            <small class="text-muted">{{ __('dashboard.recent_system_activity') }}</small>
         </div>
     </div>
     <div class="table-responsive">
         <table class="table table-sm table-hover mb-0 dash-mini-table">
             <thead>
                 <tr>
-                    <th>Time</th>
-                    <th>User</th>
-                    <th>Event</th>
-                    <th>Module</th>
+                    <th>{{ __('dashboard.time') }}</th>
+                    <th>{{ __('dashboard.user') }}</th>
+                    <th>{{ __('dashboard.event') }}</th>
+                    <th>{{ __('dashboard.module') }}</th>
                 </tr>
             </thead>
             <tbody id="acct-audit-body">
-                <tr><td colspan="4" class="text-center text-muted py-3">Loading...</td></tr>
+                <tr><td colspan="4" class="text-center text-muted py-3">{{ __('dashboard.loading') }}</td></tr>
             </tbody>
         </table>
     </div>

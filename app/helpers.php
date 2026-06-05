@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
-$NAIRA_CODE = '₦';
 
 if (!function_exists('generateForm')) {
     function generateForm($formData)
@@ -108,9 +107,10 @@ if (!function_exists('randomDigits')) {
 }
 if (!function_exists('toMoney')) {
 
-    // Naira Symbol &#8358;
-    function toMoney($val, $symbol = '₦', $r = 2)
+    // Currency Symbol fallback
+    function toMoney($val, $symbol = null, $r = 2)
     {
+        $symbol = $symbol ?? appsettings('currency_symbol') ?? '₦';
         $n = $val;
         $c = is_float($n) ? 1 : number_format($n, $r);
         $d = '.';
@@ -128,8 +128,8 @@ if (!function_exists('formatMoney')) {
     // Number Format used by the System by Ghaji
     function formatMoney($money)
     {
-
-        $formatted = "₦" . number_format(sprintf('%0.2f', preg_replace("/[^0-9.]/", "", $money)), 2);
+        $symbol = appsettings('currency_symbol') ?? '₦';
+        $formatted = $symbol . number_format(sprintf('%0.2f', preg_replace("/[^0-9.]/", "", $money)), 2);
         return $money < 0 ? "({$formatted})" : "{$formatted}";
     }
 }
@@ -424,3 +424,5 @@ if (!function_exists('showFileNumber')) {
         return $getItem;
     }
 }
+
+$NAIRA_CODE = '₦';

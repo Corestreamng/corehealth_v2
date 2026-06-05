@@ -38,6 +38,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\DatabaseQueryTagger::class,
+            \App\Http\Middleware\LocalizationMiddleware::class,
         ],
 
         'api' => [
@@ -45,6 +46,7 @@ class Kernel extends HttpKernel
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\DatabaseQueryTagger::class,
+            \App\Http\Middleware\LocalizationMiddleware::class,
         ],
     ];
 
