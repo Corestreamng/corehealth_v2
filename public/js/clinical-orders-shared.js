@@ -232,6 +232,7 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                         '<option value="SC">SC</option><option value="SL">SL</option><option value="PR">PR</option>' +
                         '<option value="INH">INH (Inhaled)</option><option value="TOP">Topical</option>' +
                         '<option value="OPTH">Ophthalmic</option><option value="OT">Otic</option><option value="NGT">NGT</option>' +
+                        '<option value="PV">PV (Per Vagina)</option><option value="OTHERS">OTHERS</option>' +
                     '</select>' +
                 '</div>' +
             '</div>' +

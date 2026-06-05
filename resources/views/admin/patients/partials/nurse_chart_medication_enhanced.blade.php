@@ -787,7 +787,8 @@
                                 <option value="Topical">Topical</option>
                                 <option value="Rectal">Rectal</option>
                                 <option value="Inhalation">Inhalation</option>
-                                <option value="Other">Other</option>
+                                <option value="PV">PV (Per Vagina)</option>
+                                <option value="OTHERS">OTHERS</option>
                             </select>
                         </div>
 
@@ -954,7 +955,8 @@
                                 <option value="Topical">Topical</option>
                                 <option value="Rectal">Rectal</option>
                                 <option value="Inhalation">Inhalation</option>
-                                <option value="Other">Other</option>
+                                <option value="PV">PV (Per Vagina)</option>
+                                <option value="OTHERS">OTHERS</option>
                             </select>
                         </div>
 
@@ -1092,7 +1094,8 @@
                                 <option value="Topical">Topical</option>
                                 <option value="Rectal">Rectal</option>
                                 <option value="Inhalation">Inhalation</option>
-                                <option value="Other">Other</option>
+                                <option value="PV">PV (Per Vagina)</option>
+                                <option value="OTHERS">OTHERS</option>
                             </select>
                         </div>
 
@@ -1303,7 +1306,8 @@
                                     <option value="Topical">Topical</option>
                                     <option value="Rectal">Rectal</option>
                                     <option value="Inhalation">Inhalation</option>
-                                    <option value="Other">Other</option>
+                                    <option value="PV">PV (Per Vagina)</option>
+                                    <option value="OTHERS">OTHERS</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -1406,7 +1410,8 @@
                                     <option value="Topical">Topical</option>
                                     <option value="Rectal">Rectal</option>
                                     <option value="Inhalation">Inhalation</option>
-                                    <option value="Other">Other</option>
+                                    <option value="PV">PV (Per Vagina)</option>
+                                    <option value="OTHERS">OTHERS</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
