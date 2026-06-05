@@ -4299,6 +4299,10 @@
                                         <label class="form-label small"><i class="mdi mdi-cash-plus"></i> Max Amount</label>
                                         <input type="number" class="form-control form-control-sm" id="pharm-report-max-amount" name="max_amount" placeholder="999999">
                                     </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-account-group"></i> Age Brackets</label>
+                                        <input type="text" class="form-control form-control-sm" id="pharm-report-age-brackets" name="age_brackets" placeholder="e.g. 0-12,13-19,20-35" title="Comma separated ranges: 0-12,13-19...">
+                                    </div>
                                 </div>
                                 <div class="row mt-3">
                                     <div class="col-12 text-end">
@@ -4388,6 +4392,11 @@
                 <!-- Report Tabs -->
                 <ul class="nav nav-tabs nav-fill mb-3" id="pharmacy-report-tabs" role="tablist">
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pharm-executive-tab" data-bs-toggle="tab" data-bs-target="#pharm-executive-content" type="button" role="tab">
+                            <i class="mdi mdi-chart-box"></i> Executive Summary
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="pharm-overview-tab" data-bs-toggle="tab" data-bs-target="#pharm-overview-content" type="button" role="tab">
                             <i class="mdi mdi-view-dashboard"></i> Overview
                         </button>
@@ -4421,6 +4430,233 @@
 
                 <!-- Tab Content -->
                 <div class="tab-content" id="pharmacy-report-tab-content">
+                    
+                    <!-- Executive Summary Tab -->
+                    <div class="tab-pane fade" id="pharm-executive-content" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0 text-primary"><i class="mdi mdi-chart-box"></i> Executive Summary</h5>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2 d-none" id="btn-print-executive-summary"><i class="mdi mdi-printer"></i> Print Detailed Report</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-refresh-executive-summary"><i class="mdi mdi-refresh"></i> Refresh Data</button>
+                            </div>
+                        </div>
+
+                        <!-- Sub Navigation for Executive Summary -->
+                        <ul class="nav nav-pills mb-3 bg-light p-1 rounded" id="exec-sub-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="exec-summary-sub-tab" data-bs-toggle="pill" data-bs-target="#exec-summary-sub-content" type="button" role="tab">Summary</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="exec-detailed-sub-tab" data-bs-toggle="pill" data-bs-target="#exec-detailed-sub-content" type="button" role="tab">Detailed Drill-Down</button>
+                            </li>
+                        </ul>
+
+                        <div id="executive-summary-loader" class="text-center py-5 d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Aggregating executive summary data...</p>
+                        </div>
+                        
+                        <div id="executive-summary-container" class="tab-content">
+                            <!-- Summary Sub-Tab Content (Original implementation) -->
+                            <div class="tab-pane fade show active" id="exec-summary-sub-content" role="tabpanel">
+                            <!-- Stock Valuation & Overall Numbers -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <div class="card-modern h-100 bg-light border-primary">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted text-uppercase mb-2">Total Stock Valuation</h6>
+                                            <h3 class="text-primary fw-bold mb-0" id="exec-stock-value">₦0.00</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card-modern h-100 bg-light border-success">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted text-uppercase mb-2">Total Collections</h6>
+                                            <h3 class="text-success fw-bold mb-0" id="exec-collections-value">₦0.00</h3>
+                                            <small class="text-muted" id="exec-collections-count">0 items</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card-modern h-100 bg-light border-info">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted text-uppercase mb-2">Total Patients Attended</h6>
+                                            <h3 class="text-info fw-bold mb-0" id="exec-patients-count">0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-4">
+                                <!-- Demographics (Gender & Age) -->
+                                <div class="col-md-6">
+                                    <div class="card-modern h-100">
+                                        <div class="card-header py-2 bg-light">
+                                            <h6 class="mb-0"><i class="mdi mdi-account-group"></i> Demographics</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="nav nav-pills nav-sm mb-3" id="exec-demographics-tabs" role="tablist">
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#exec-gender-content" type="button" role="tab">Gender</button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#exec-age-content" type="button" role="tab">Age Brackets</button>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="exec-gender-content" role="tabpanel">
+                                                    <div class="accordion accordion-flush" id="accordion-exec-gender"></div>
+                                                </div>
+                                                <div class="tab-pane fade" id="exec-age-content" role="tabpanel">
+                                                    <div class="accordion accordion-flush" id="accordion-exec-age"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Classifications & Clinics -->
+                                <div class="col-md-6">
+                                    <div class="card-modern h-100">
+                                        <div class="card-header py-2 bg-light">
+                                            <h6 class="mb-0"><i class="mdi mdi-hospital-building"></i> Classifications</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="nav nav-pills nav-sm mb-3" id="exec-class-tabs" role="tablist">
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#exec-patient-class-content" type="button" role="tab">Visit Type</button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#exec-clinics-content" type="button" role="tab">Clinics</button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#exec-collections-store-content" type="button" role="tab">Collections by Store</button>
+                                                </li>
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div class="tab-pane fade show active" id="exec-patient-class-content" role="tabpanel">
+                                                    <div class="accordion accordion-flush" id="accordion-exec-class"></div>
+                                                </div>
+                                                <div class="tab-pane fade" id="exec-clinics-content" role="tabpanel">
+                                                    <ul class="list-group list-group-flush" id="exec-clinics-list"></ul>
+                                                </div>
+                                                <div class="tab-pane fade" id="exec-collections-store-content" role="tabpanel">
+                                                    <ul class="list-group list-group-flush" id="exec-collections-list"></ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Detailed Drill-Down Sub-Tab Content -->
+                            <div class="tab-pane fade" id="exec-detailed-sub-content" role="tabpanel">
+                                <div class="row g-4 mb-4">
+                                    <div class="col-12">
+                                        <div class="card-modern border-success">
+                                            <div class="card-header py-3 bg-light">
+                                                <h6 class="mb-0 text-success"><i class="mdi mdi-cash-register"></i> Financial Performance Summary</h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <table class="table table-bordered mb-0">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td class="bg-light fw-bold w-50">Opening Stock</td>
+                                                            <td class="text-end fw-bold" id="exec-det-opening-stock">₦0.00</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light fw-bold">Purchases (Expenditure)</td>
+                                                            <td class="text-end text-danger fw-bold" id="exec-det-purchases">₦0.00</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light fw-bold">Goods Available</td>
+                                                            <td class="text-end text-primary fw-bold" id="exec-det-goods-available">₦0.00</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light fw-bold">Goods Used (Income/Sales)</td>
+                                                            <td class="text-end text-success fw-bold" id="exec-det-goods-used">₦0.00</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light fw-bold">Closing Stock</td>
+                                                            <td class="text-end fw-bold" id="exec-det-closing-stock">₦0.00</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card-modern border-warning">
+                                            <div class="card-header py-3 bg-light">
+                                                <h6 class="mb-0 text-warning"><i class="mdi mdi-wallet"></i> Income by Scheme</h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <ul class="list-group list-group-flush" id="exec-det-income-scheme-list"></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card-modern border-secondary">
+                                            <div class="card-header py-3 bg-light">
+                                                <h6 class="mb-0 text-secondary"><i class="mdi mdi-account-group"></i> Total Patients Attended by Scheme</h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <ul class="list-group list-group-flush" id="exec-det-patients-scheme-list"></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-4">
+                                    <div class="col-12">
+                                        <div class="card-modern border-primary">
+                                            <div class="card-header py-3 bg-light d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0 text-primary"><i class="mdi mdi-cash-multiple"></i> Financial Breakdowns (Store &rarr; Scheme &rarr; HMO)</h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <div id="exec-detailed-financials" class="p-3"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="card-modern border-info">
+                                            <div class="card-header py-3 bg-light">
+                                                <h6 class="mb-0 text-info"><i class="mdi mdi-account-group"></i> Demographic Breakdowns (Category &rarr; Scheme &rarr; HMO)</h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <ul class="nav nav-tabs nav-fill bg-light m-0 border-bottom" id="exec-detailed-demo-tabs" role="tablist">
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link active py-3 border-0 fw-bold" data-bs-toggle="tab" data-bs-target="#exec-det-gender-content" type="button" role="tab">Gender</button>
+                                                    </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link py-3 border-0 fw-bold" data-bs-toggle="tab" data-bs-target="#exec-det-age-content" type="button" role="tab">Age Brackets</button>
+                                                    </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link py-3 border-0 fw-bold" data-bs-toggle="tab" data-bs-target="#exec-det-class-content" type="button" role="tab">Visit Type</button>
+                                                    </li>
+                                                </ul>
+                                                <div class="tab-content p-3">
+                                                    <div class="tab-pane fade show active" id="exec-det-gender-content" role="tabpanel">
+                                                        <div id="detailed-gender-container"></div>
+                                                    </div>
+                                                    <div class="tab-pane fade" id="exec-det-age-content" role="tabpanel">
+                                                        <div id="detailed-age-container"></div>
+                                                    </div>
+                                                    <div class="tab-pane fade" id="exec-det-class-content" role="tabpanel">
+                                                        <div id="detailed-class-container"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Overview Tab -->
                     <div class="tab-pane fade show active" id="pharm-overview-content" role="tabpanel">
@@ -14398,7 +14634,8 @@ function collectFilters() {
         category_id: $('#pharm-report-category').val(),
         patient_search: $('#pharm-report-patient').val(),
         min_amount: $('#pharm-report-min-amount').val(),
-        max_amount: $('#pharm-report-max-amount').val()
+        max_amount: $('#pharm-report-max-amount').val(),
+        age_brackets: $('#pharm-report-age-brackets').val()
     };
 }
 
@@ -14408,6 +14645,7 @@ function loadPharmacyReportsData() {
     loadTopProducts();
     loadPaymentMethods();
     refreshPharmacyDataTables();
+    loadExecutiveSummaryData();
 }
 
 // Load summary statistics
@@ -14512,6 +14750,308 @@ function getPaymentIcon(type) {
     };
     return icons[type] || 'mdi-cash-multiple';
 }
+
+// Load Executive Summary Data
+function loadExecutiveSummaryData() {
+    $('#executive-summary-loader').removeClass('d-none');
+    $('#executive-summary-container').addClass('d-none');
+
+    $.ajax({
+        url: '/pharmacy-workbench/reports/executive-summary',
+        method: 'GET',
+        data: pharmReportFilters,
+        success: function(data) {
+            $('#executive-summary-loader').addClass('d-none');
+            $('#executive-summary-container').removeClass('d-none');
+
+            // Top level cards
+            $('#exec-stock-value').text(formatCurrency(data.stock_valuation || 0));
+            
+            let totalCollectionsValue = 0;
+            let totalCollectionsCount = 0;
+            const $collectionsList = $('#exec-collections-list');
+            $collectionsList.empty();
+            
+            if (data.collections_by_store && data.collections_by_store.length) {
+                data.collections_by_store.forEach(c => {
+                    totalCollectionsValue += parseFloat(c.value || 0);
+                    totalCollectionsCount += parseInt(c.count || 0);
+                    $collectionsList.append(`
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="mdi mdi-store text-primary me-2"></i> ${escapeHtml(c.store_name)}
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-success">${formatCurrency(c.value)}</div>
+                                <small class="text-muted">${formatNumber(c.count)} items</small>
+                            </div>
+                        </li>
+                    `);
+                });
+            } else {
+                $collectionsList.html('<li class="list-group-item text-center text-muted">No collections recorded</li>');
+            }
+            
+            $('#exec-collections-value').text(formatCurrency(totalCollectionsValue));
+            $('#exec-collections-count').text(formatNumber(totalCollectionsCount) + ' items');
+
+            const totalPatients = (data.patients_attended_to?.walk_in || 0) + 
+                                  Object.values(data.patients_attended_to?.by_clinic || {}).reduce((a, b) => a + b, 0);
+            $('#exec-patients-count').text(formatNumber(totalPatients));
+
+            // Clinics List
+            const $clinicsList = $('#exec-clinics-list');
+            $clinicsList.empty();
+            if (data.patients_attended_to?.walk_in) {
+                $clinicsList.append(`
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><i class="mdi mdi-walk text-secondary me-2"></i> Walk-in</div>
+                        <span class="badge bg-secondary rounded-pill">${formatNumber(data.patients_attended_to.walk_in)}</span>
+                    </li>
+                `);
+            }
+            if (data.patients_attended_to?.by_clinic && Object.keys(data.patients_attended_to.by_clinic).length) {
+                Object.entries(data.patients_attended_to.by_clinic).forEach(([clinicName, count]) => {
+                    $clinicsList.append(`
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><i class="mdi mdi-hospital-building text-info me-2"></i> ${escapeHtml(clinicName)}</div>
+                            <span class="badge bg-info rounded-pill">${formatNumber(count)}</span>
+                        </li>
+                    `);
+                });
+            } else if (!$clinicsList.children().length) {
+                $clinicsList.html('<li class="list-group-item text-center text-muted">No clinic visits</li>');
+            }
+
+            // Accordions
+            renderHmoAccordion('#accordion-exec-gender', data.gender_distribution || {}, 'gender');
+            renderHmoAccordion('#accordion-exec-age', data.age_distribution || {}, 'age');
+            renderHmoAccordion('#accordion-exec-class', data.patient_classifications || {}, 'class');
+        },
+        error: function() {
+            $('#executive-summary-loader').addClass('d-none');
+            // Show error state gracefully
+        }
+    });
+}
+
+function renderHmoAccordion(containerSelector, dataObj, prefix) {
+    const $container = $(containerSelector);
+    $container.empty();
+
+    if (!Object.keys(dataObj).length) {
+        $container.html('<div class="p-3 text-center text-muted">No data available</div>');
+        return;
+    }
+
+    let index = 0;
+    for (const [categoryName, categoryData] of Object.entries(dataObj)) {
+        const catId = `heading-${prefix}-${index}`;
+        const collapseId = `collapse-${prefix}-${index}`;
+        
+        let schemesHtml = '';
+        if (categoryData.schemes && Object.keys(categoryData.schemes).length) {
+            schemesHtml += '<div class="ms-3 mt-2">';
+            for (const [schemeName, schemeData] of Object.entries(categoryData.schemes)) {
+                schemesHtml += `
+                    <div class="card border-0 mb-1">
+                        <div class="d-flex justify-content-between p-2 bg-light rounded align-items-center">
+                            <span class="fw-bold text-secondary"><i class="mdi mdi-shield-check-outline me-1"></i> ${escapeHtml(schemeName)}</span>
+                            <span class="badge bg-secondary">${formatNumber(schemeData.count)}</span>
+                        </div>
+                `;
+                
+                if (schemeData.hmos && Object.keys(schemeData.hmos).length) {
+                    schemesHtml += '<ul class="list-group list-group-flush ms-4 border-start border-2 border-light mb-2 mt-1">';
+                    for (const [hmoName, count] of Object.entries(schemeData.hmos)) {
+                        schemesHtml += `
+                            <li class="list-group-item border-0 py-1 ps-3 pe-2 bg-transparent d-flex justify-content-between align-items-center" style="font-size: 0.85rem;">
+                                <span class="text-muted">${escapeHtml(hmoName)}</span>
+                                <span class="badge bg-light text-dark border">${formatNumber(count)}</span>
+                            </li>
+                        `;
+                    }
+                    schemesHtml += '</ul>';
+                }
+                schemesHtml += '</div>';
+            }
+            schemesHtml += '</div>';
+        }
+
+        $container.append(`
+            <div class="accordion-item border mb-2 rounded">
+                <h2 class="accordion-header" id="${catId}">
+                    <button class="accordion-button collapsed py-2 px-3 bg-white text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                        <div class="d-flex justify-content-between align-items-center w-100 pe-3">
+                            <span class="fw-bold">${escapeHtml(categoryName)}</span>
+                            <span class="badge bg-primary rounded-pill">${formatNumber(categoryData.count)}</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${catId}" data-bs-parent="${containerSelector}">
+                    <div class="accordion-body p-2 pt-0">
+                        ${schemesHtml}
+                    </div>
+                </div>
+            </div>
+        `);
+        index++;
+    }
+}
+
+// Render deep financial breakdowns
+function renderDeepFinancials(containerSelector, collectionsData) {
+    const $container = $(containerSelector);
+    $container.empty();
+
+    if (!collectionsData || !collectionsData.length) {
+        $container.html('<div class="p-4 text-center text-muted">No financial data available</div>');
+        return;
+    }
+
+    let index = 0;
+    collectionsData.forEach(store => {
+        const storeId = `heading-fin-store-${index}`;
+        const collapseId = `collapse-fin-store-${index}`;
+
+        let schemesHtml = '';
+        if (store.schemes && Object.keys(store.schemes).length) {
+            schemesHtml += '<div class="ms-3 mt-2">';
+            for (const [schemeName, schemeData] of Object.entries(store.schemes)) {
+                schemesHtml += `
+                    <div class="card border-0 mb-2 shadow-sm">
+                        <div class="d-flex justify-content-between p-2 bg-light rounded align-items-center border-start border-4 border-info">
+                            <span class="fw-bold text-secondary"><i class="mdi mdi-shield-check-outline me-1"></i> ${escapeHtml(schemeName)}</span>
+                            <div class="text-end">
+                                <span class="fw-bold text-success me-2">${formatCurrency(schemeData.value)}</span>
+                                <span class="badge bg-secondary">${formatNumber(schemeData.count)} items</span>
+                            </div>
+                        </div>
+                `;
+                
+                if (schemeData.hmos && Object.keys(schemeData.hmos).length) {
+                    schemesHtml += '<ul class="list-group list-group-flush ms-4 border-start border-2 border-light mb-2 mt-1">';
+                    for (const [hmoName, hmoData] of Object.entries(schemeData.hmos)) {
+                        schemesHtml += `
+                            <li class="list-group-item border-0 py-2 ps-3 pe-2 bg-transparent d-flex justify-content-between align-items-center" style="font-size: 0.9rem;">
+                                <span class="text-muted"><i class="mdi mdi-hospital-building me-1"></i> ${escapeHtml(hmoName)}</span>
+                                <div class="text-end">
+                                    <span class="fw-bold text-success d-block" style="font-size: 0.85rem;">${formatCurrency(hmoData.value)}</span>
+                                    <small class="text-muted d-block">${formatNumber(hmoData.count)} items | Cash: ${formatCurrency(hmoData.cash)} | Claims: ${formatCurrency(hmoData.claims)}</small>
+                                </div>
+                            </li>
+                        `;
+                    }
+                    schemesHtml += '</ul>';
+                }
+                schemesHtml += '</div>';
+            }
+            schemesHtml += '</div>';
+        }
+
+        $container.append(`
+            <div class="accordion-item border border-primary mb-3 rounded overflow-hidden">
+                <h2 class="accordion-header" id="${storeId}">
+                    <button class="accordion-button collapsed py-3 px-3 bg-white text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                        <div class="d-flex justify-content-between align-items-center w-100 pe-3">
+                            <span class="fw-bold fs-5 text-primary"><i class="mdi mdi-store me-2"></i>${escapeHtml(store.store_name)}</span>
+                            <div class="text-end">
+                                <span class="fw-bold fs-5 text-success me-3">${formatCurrency(store.value)}</span>
+                                <span class="badge bg-primary rounded-pill px-3 py-2">${formatNumber(store.count)} items total</span>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+                <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${storeId}">
+                    <div class="accordion-body p-3 pt-0 bg-white">
+                        ${schemesHtml}
+                    </div>
+                </div>
+            </div>
+        `);
+        index++;
+    });
+}
+
+// Hook into existing success handler inside loadExecutiveSummaryData
+const originalLoadExecSummaryAjaxSuccess = function(data) {
+    // Populate detailed demographic renderers
+    renderHmoAccordion('#detailed-gender-container', data.gender_distribution || {}, 'det-gender');
+    renderHmoAccordion('#detailed-age-container', data.age_distribution || {}, 'det-age');
+    renderHmoAccordion('#detailed-class-container', data.patient_classifications || {}, 'det-class');
+
+    // Populate detailed financial renderer
+    renderDeepFinancials('#exec-detailed-financials', data.collections_by_store || []);
+
+    // Populate Financial Performance Summary
+    $('#exec-det-opening-stock').text(formatCurrency(data.opening_stock || 0));
+    $('#exec-det-purchases').text(formatCurrency(data.total_expenditure || 0));
+    $('#exec-det-goods-available').text(formatCurrency((data.opening_stock || 0) + (data.total_expenditure || 0)));
+    $('#exec-det-goods-used').text(formatCurrency(data.total_goods_used || 0));
+    $('#exec-det-closing-stock').text(formatCurrency(data.stock_valuation || 0));
+
+    // Populate Income by Scheme
+    const $incomeList = $('#exec-det-income-scheme-list');
+    $incomeList.empty();
+    if (data.income_by_scheme && Object.keys(data.income_by_scheme).length) {
+        for (const [schemeName, val] of Object.entries(data.income_by_scheme)) {
+            $incomeList.append(`
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="text-muted">${escapeHtml(schemeName)}</span>
+                    <span class="fw-bold text-success">${formatCurrency(val)}</span>
+                </li>
+            `);
+        }
+    } else {
+        $incomeList.html('<li class="list-group-item text-center text-muted">No data</li>');
+    }
+
+    // Populate Patients by Scheme
+    const $patList = $('#exec-det-patients-scheme-list');
+    $patList.empty();
+    if (data.patients_by_scheme && Object.keys(data.patients_by_scheme).length) {
+        for (const [schemeName, val] of Object.entries(data.patients_by_scheme)) {
+            $patList.append(`
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="text-muted">${escapeHtml(schemeName)}</span>
+                    <span class="badge bg-secondary rounded-pill">${formatNumber(val)}</span>
+                </li>
+            `);
+        }
+    } else {
+        $patList.html('<li class="list-group-item text-center text-muted">No data</li>');
+    }
+};
+
+$(document).on('click', '#btn-refresh-executive-summary', function() {
+    collectFilters();
+    loadExecutiveSummaryData();
+});
+
+// Intercept ajax call globally or we can just append to the end of loadExecutiveSummaryData
+// For simplicity, we hook it via ajaxComplete for the specific URL
+$(document).ajaxSuccess(function(event, xhr, settings) {
+    if (settings.url.indexOf('/pharmacy-workbench/reports/executive-summary') === 0 && !settings.url.includes('print')) {
+        originalLoadExecSummaryAjaxSuccess(xhr.responseJSON);
+    }
+});
+
+// Toggle Print button visibility based on active sub-tab
+$(document).on('shown.bs.tab', 'button[data-bs-toggle="pill"]', function (e) {
+    if (e.target.id === 'exec-detailed-sub-tab') {
+        $('#btn-print-executive-summary').removeClass('d-none');
+    } else {
+        $('#btn-print-executive-summary').addClass('d-none');
+    }
+});
+
+// Print functionality
+$(document).on('click', '#btn-print-executive-summary', function() {
+    collectFilters();
+    const printUrl = '/pharmacy-workbench/reports/executive-summary/print?' + $.param(pharmReportFilters);
+    const printWindow = window.open(printUrl, '_blank', 'width=1000,height=800');
+});
+
 
 // Initialize DataTables
 function initPharmacyReportsDataTables() {
