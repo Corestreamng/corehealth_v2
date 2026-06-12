@@ -76,12 +76,23 @@ class StoreRequisitionReturnController extends Controller
 
             $return = StoreRequisitionReturn::create($validated);
 
+            $autoApproved = false;
+            if (Auth::user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'STORE'])) {
+                $return->status = 'approved';
+                $return->approved_by = Auth::id();
+                $return->approved_at = now();
+                $return->approval_notes = 'Auto-approved via Context-Aware Returns';
+                $return->save(); // Triggers the updated observer
+                $autoApproved = true;
+            }
+
             DB::commit();
 
             return response()->json([
-                'success'   => true,
-                'message'   => 'Return recorded. Awaiting approval.',
-                'return_id' => $return->id,
+                'success'       => true,
+                'message'       => $autoApproved ? 'Return recorded and auto-approved.' : 'Return recorded. Awaiting approval.',
+                'return_id'     => $return->id,
+                'auto_approved' => $autoApproved,
             ]);
 
         } catch (\Exception $e) {

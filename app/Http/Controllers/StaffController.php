@@ -10,7 +10,7 @@ use App\Models\HR\Unit;
 use App\Models\Specialization;
 use App\Models\Staff;
 use App\Models\User;
-// use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB;
 use App\Models\UserCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -456,7 +456,14 @@ class StaffController extends Controller
         }
 
         if (!$request->email) {
-            $request->email = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . '@hms.com';
+            $baseEmail = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . '@hms.com';
+            $email = $baseEmail;
+            $count = 1;
+            while (User::where('email', $email)->exists()) {
+                $email = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . $count . '@hms.com';
+                $count++;
+            }
+            $request->merge(['email' => $email]);
         } else {
             $rules += [
                 'email' => 'email|min:6|max:150|unique:users,email',
@@ -534,40 +541,42 @@ class StaffController extends Controller
                 }
             }
 
-            $user = new User();
+            DB::beginTransaction();
+            try {
+                $user = new User();
 
-            if ($request->filename) {
-                $user->filename = ($filename) ? $filename : 'avatar.png';
-            } else {
-                $user->filename = 'avatar.png';
-            }
+                if ($request->filename) {
+                    $user->filename = ($filename) ? $filename : 'avatar.png';
+                } else {
+                    $user->filename = 'avatar.png';
+                }
 
-            if ($request->old_records) {
-                $user->old_records = ($filename_o) ? $filename_o : null;
-            } else {
-                $user->old_records = null;
-            }
+                if ($request->old_records) {
+                    $user->old_records = ($filename_o) ? $filename_o : null;
+                } else {
+                    $user->old_records = null;
+                }
 
-            $user->is_admin = $request->is_admin;
-            $user->surname = $request->surname;
-            $user->firstname = $request->firstname;
-            $user->othername = ($request->othername) ? $request->othername : ' ';
-            $user->email = $request->email;
-            $user->password = Hash::make($request->password);
+                $user->is_admin = $request->is_admin;
+                $user->surname = $request->surname;
+                $user->firstname = $request->firstname;
+                $user->othername = ($request->othername) ? $request->othername : ' ';
+                $user->email = $request->email;
+                $user->password = Hash::make($request->password);
 
-            $user->assignRole = ($request->assignRole) ? 1 : 0;
-            $user->assignPermission = ($request->assignPermission) ? 1 : 0;
+                $user->assignRole = ($request->assignRole) ? 1 : 0;
+                $user->assignPermission = ($request->assignPermission) ? 1 : 0;
 
-            if ($user->save()) {
+                $user->save();
+
                 if ($request->assignRole) {
-                    // code...
                     $user->assignRole($request->roles);
                 }
 
                 if ($request->assignPermission) {
-                    // code...
                     $user->givePermissionTo($request->permissions);
                 }
+
                 $staff = new Staff();
                 $staff->clinic_id = $request->clinic ?? null;
                 $staff->can_see_clinic_queues = array_values(array_unique(array_map('intval', array_filter((array) $request->input('can_see_clinic_queues', [])))));
@@ -614,15 +623,19 @@ class StaffController extends Controller
                 $staff->job_location = $request->job_location ?: null;
                 $staff->responsibility = $request->responsibility ?: null;
                 $staff->marital_status = $request->marital_status ?: null;
-                $staff->number_of_children = $request->number_of_children ?: null;
+                $staff->number_of_children = $request->filled('number_of_children') ? intval($request->number_of_children) : 0;
                 $staff->permanent_home_address = $request->permanent_home_address ?: null;
                 $staff->other_talents = $request->other_talents ?: null;
                 $staff->date_confirmed = $request->date_confirmed ?: null;
                 $staff->confirmation_due_date = $request->confirmation_due_date ?: null;
                 $staff->hr_notes = $request->hr_notes ?: null;
 
-                if ($staff->save()) {
-                    if (appsettings('goonline', 0) == 1) {
+                $staff->save();
+
+                DB::commit();
+
+                if (appsettings('goonline', 0) == 1) {
+                    try {
                         // Send to CoreHealth SuperAdmin
                         // For doctors and nurses
                         if ($request->is_admin == 21) {
@@ -652,22 +665,19 @@ class StaffController extends Controller
 
                             Log::info("sent api request For staff nurse, ", [$response->body()]);
                         }
+                    } catch (\Exception $apiEx) {
+                        Log::error("Failed sending API request to CoreHealth SuperAdmin: " . $apiEx->getMessage());
                     }
-
-
-                    $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
-                    Alert::success('Success ', $msg);
-
-                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success');
-                } else {
-                    $user->delete(); // rollback
-                    $msg = 'Something is went wrong. Please try again later.';
-
-                    return redirect()->back()->withInput()->with('error', $msg)->withInput();
                 }
-            } else {
-                $msg = 'Something is went wrong. Please try again later.';
 
+                $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
+                Alert::success('Success ', $msg);
+
+                return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Failed to create staff: " . $e->getMessage(), ['exception' => $e]);
+                $msg = 'Something went wrong: ' . $e->getMessage();
                 return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }
@@ -855,7 +865,10 @@ class StaffController extends Controller
             $user->assignRole = ($request->assignRole) ? 1 : 0;
             $user->assignPermission = ($request->assignPermission) ? 1 : 0;
 
-            if ($user->update()) {
+            DB::beginTransaction();
+            try {
+                $user->update();
+
                 if ($request->assignRole) {
                     $user->syncRoles($request->roles);
                 } else {
@@ -922,28 +935,25 @@ class StaffController extends Controller
                 $staff->job_location = $request->job_location ?: ($staff->job_location ?? null);
                 $staff->responsibility = $request->responsibility ?: ($staff->responsibility ?? null);
                 $staff->marital_status = $request->marital_status ?: ($staff->marital_status ?? null);
-                $staff->number_of_children = $request->number_of_children ?: ($staff->number_of_children ?? null);
+                $staff->number_of_children = $request->has('number_of_children') && $request->input('number_of_children') !== null && $request->input('number_of_children') !== '' ? intval($request->number_of_children) : ($staff->number_of_children ?? 0);
                 $staff->permanent_home_address = $request->permanent_home_address ?: ($staff->permanent_home_address ?? null);
                 $staff->other_talents = $request->other_talents ?: ($staff->other_talents ?? null);
                 $staff->date_confirmed = $request->date_confirmed ?: ($staff->date_confirmed ?? null);
                 $staff->confirmation_due_date = $request->confirmation_due_date ?: ($staff->confirmation_due_date ?? null);
                 $staff->hr_notes = $request->hr_notes ?: ($staff->hr_notes ?? null);
 
-                if ($staff->save()) {
-                    // Send User an email with set password link
-                    $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
-                    Alert::success('Success ', $msg);
+                $staff->save();
 
-                    return redirect()->route('staff.index')->withMessage($msg)->withMessageType('success');
-                    // return redirect()->route('staff.create');
-                } else {
-                    $msg = 'Something is went wrong. Please try again later.';
+                DB::commit();
 
-                    return redirect()->back()->withInput()->with('error', $msg)->withInput();
-                }
-            } else {
-                $msg = 'Something is went wrong. Please try again later.';
+                $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
+                Alert::success('Success ', $msg);
 
+                return redirect()->route('staff.index')->withMessage($msg)->withMessageType('success');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Failed to update staff: " . $e->getMessage(), ['exception' => $e]);
+                $msg = 'Something went wrong: ' . $e->getMessage();
                 return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }

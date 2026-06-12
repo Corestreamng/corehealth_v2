@@ -49,7 +49,7 @@ class StoreRequisitionController extends Controller
     {
         if ($request->ajax()) {
             $user = auth()->user();
-            $isAdmin = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store']);
+            $isAdmin = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'STORE']);
 
             // ── Store Governance: scope to stores the user can work from ─────────
             // Admins see everything; others see requisitions for any store in their
@@ -108,6 +108,10 @@ class StoreRequisitionController extends Controller
                             $badge .= sprintf(' <small class="text-muted">(%d%%)</small>', $pct);
                         }
                     }
+                    // Edited badge
+                    if ($r->isEdited()) {
+                        $badge .= ' <span class="badge badge-warning" title="Edited ' . $r->edit_count . ' time(s). Last edit: ' . ($r->edited_at ? $r->edited_at->format('d M Y H:i') : '') . '"><i class="mdi mdi-pencil"></i> Edited</span>';
+                    }
                     return $badge;
                 })
                 ->addColumn('items_count', function ($r) {
@@ -128,7 +132,7 @@ class StoreRequisitionController extends Controller
 
         // Build stats scoped to the user's candidate stores
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store']);
+        $isAdmin = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'STORE']);
         $candidateIds = $isAdmin
             ? null
             : $this->resolver->candidateStores($user)->pluck('id');
@@ -225,7 +229,7 @@ class StoreRequisitionController extends Controller
 
         // ── Store Governance: verify to_store is accessible to this user ────────
         // Admins (ADMIN, SUPERADMIN, super-admin) bypass this check.
-        if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store', 'STORE'])) {
+        if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'STORE'])) {
             $accessibleStoreIds = \App\Models\Store::active()->forUser(auth()->user())->pluck('id');
             if (! $accessibleStoreIds->contains((int) $request->to_store_id)) {
                 return response()->json([
@@ -623,12 +627,293 @@ class StoreRequisitionController extends Controller
     }
 
     /**
+     * Show the edit form for a requisition
+     */
+    public function edit(StoreRequisition $requisition)
+    {
+        if (! $requisition->canEditHeader()) {
+            return redirect()->route('inventory.requisitions.show', $requisition)
+                ->with('error', 'This requisition cannot be edited in its current status.');
+        }
+
+        // Governance: only requester or admin can edit
+        if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'STORE']) &&
+            $requisition->requested_by !== auth()->id()) {
+            abort(403, 'You are not authorised to edit this requisition.');
+        }
+
+        $requisition->load([
+            'items.product.packagings',
+            'items.packaging',
+            'fromStore',
+            'toStore',
+            'editor',
+        ]);
+
+        $stores   = Store::active()->orderBy('store_name')->get();
+        $products = Product::with('price')->where('status', true)->orderBy('product_name')->get();
+
+        $user          = auth()->user();
+        $resolvedStore = $this->resolver->resolve($user);
+        $myStores      = $this->resolver->candidateStores($user);
+
+        // Optimized per-store stats calculation (single query)
+        $statsData = \App\Models\StoreStock::where('is_active', true)
+            ->select('store_id')
+            ->selectRaw("COUNT(CASE WHEN current_quantity > 0 THEN 1 END) as products")
+            ->selectRaw("SUM(current_quantity) as stock")
+            ->selectRaw("COUNT(CASE WHEN current_quantity <= reorder_level AND current_quantity > 0 THEN 1 END) as low")
+            ->selectRaw("COUNT(CASE WHEN current_quantity <= 0 THEN 1 END) as out_of_stock")
+            ->groupBy('store_id')
+            ->get()
+            ->keyBy('store_id');
+
+        $storeStats = [];
+        foreach ($stores as $store) {
+            $s = $statsData->get($store->id);
+            $storeStats[$store->id] = [
+                'products' => $s ? (int) $s->products : 0,
+                'stock'    => $s ? (int) $s->stock : 0,
+                'low'      => $s ? (int) $s->low : 0,
+                'out'      => $s ? (int) $s->out_of_stock : 0,
+            ];
+        }
+
+        return view('admin.inventory.requisitions.edit', compact(
+            'requisition', 'stores', 'products', 'resolvedStore', 'myStores', 'storeStats'
+        ));
+    }
+
+    /**
+     * Mark an item as returned after a return request is submitted
+     */
+    public function markItemReturned(StoreRequisition $requisition, \App\Models\StoreRequisitionItem $item)
+    {
+        if ($item->store_requisition_id !== $requisition->id) {
+            abort(403);
+        }
+
+        $item->status = \App\Models\StoreRequisitionItem::STATUS_RETURNED;
+        $item->save();
+
+        // --- Auto-close: if ALL items are now returned, flip the parent requisition ---
+        $requisition->load('items');
+        if ($requisition->isFullyReturned()) {
+            $requisition->status = \App\Models\StoreRequisition::STATUS_RETURNED;
+            $requisition->save();
+        }
+
+        return response()->json([
+            'success'      => true,
+            'all_returned' => $requisition->isFullyReturned(),
+        ]);
+    }
+
+    /**
+     * Reject a specific item during the approval stage
+     */
+    public function rejectItem(Request $request, StoreRequisition $requisition, \App\Models\StoreRequisitionItem $item)
+    {
+        $request->validate([
+            'notes' => 'required|string|max:500'
+        ]);
+
+        if ($item->store_requisition_id !== $requisition->id) {
+            return response()->json(['success' => false, 'message' => 'Item mismatch'], 400);
+        }
+
+        if (!$requisition->canReject()) {
+            return response()->json(['success' => false, 'message' => 'Requisition cannot be rejected.'], 400);
+        }
+
+        $sourceStore = $requisition->fromStore;
+        $approvalCheck = \Illuminate\Support\Facades\Gate::inspect(
+            'can-approve-requisition-for-store',
+            $sourceStore
+        );
+
+        if ($approvalCheck->denied()) {
+            return response()->json(['success' => false, 'message' => $approvalCheck->message()], 403);
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
+
+            $item->status = \App\Models\StoreRequisitionItem::STATUS_REJECTED;
+            $item->approved_qty = 0;
+            $item->notes = $request->notes;
+            $item->save();
+
+            $activeItems = $requisition->items()->where('status', '!=', \App\Models\StoreRequisitionItem::STATUS_REJECTED)->count();
+            $autoClosed = false;
+
+            if ($activeItems === 0) {
+                $this->requisitionService->reject($requisition);
+                $autoClosed = true;
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item removed from requisition.',
+                'auto_closed' => $autoClosed
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Approve a specific item individually during the approval stage
+     */
+    public function approveItem(Request $request, StoreRequisition $requisition, \App\Models\StoreRequisitionItem $item)
+    {
+        $request->validate([
+            'approved_qty' => 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:500'
+        ]);
+
+        if ($item->store_requisition_id !== $requisition->id) {
+            return response()->json(['success' => false, 'message' => 'Item mismatch'], 400);
+        }
+
+        if (!$requisition->canApprove()) {
+            return response()->json(['success' => false, 'message' => 'Requisition cannot be approved.'], 400);
+        }
+
+        $sourceStore = $requisition->fromStore;
+        $approvalCheck = \Illuminate\Support\Facades\Gate::inspect(
+            'can-approve-requisition-for-store',
+            $sourceStore
+        );
+
+        if ($approvalCheck->denied()) {
+            return response()->json(['success' => false, 'message' => $approvalCheck->message()], 403);
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
+
+            $item->status = \App\Models\StoreRequisitionItem::STATUS_APPROVED;
+            $item->approved_qty = $request->approved_qty;
+            $item->notes = $request->notes;
+            $item->save();
+
+            // Check if there are any remaining pending items
+            $pendingItems = $requisition->items()->where('status', \App\Models\StoreRequisitionItem::STATUS_PENDING)->count();
+            $autoClosed = false;
+
+            if ($pendingItems === 0) {
+                // If no pending items, check if any items were actually approved
+                $approvedCount = $requisition->items()->where('status', \App\Models\StoreRequisitionItem::STATUS_APPROVED)->count();
+                
+                if ($approvedCount === 0) {
+                    $this->requisitionService->reject($requisition, 'All items rejected during individual processing');
+                } else {
+                    $requisition->approve('Automatically approved after all items were processed individually');
+                }
+                $autoClosed = true;
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item successfully approved.',
+                'auto_closed' => $autoClosed
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Reverse a specific item individually back to pending
+     */
+    public function reverseItem(Request $request, StoreRequisition $requisition, \App\Models\StoreRequisitionItem $item)
+    {
+        if ($item->store_requisition_id !== $requisition->id) {
+            return response()->json(['success' => false, 'message' => 'Item mismatch'], 400);
+        }
+
+        $sourceStore = $requisition->fromStore;
+        $approvalCheck = \Illuminate\Support\Facades\Gate::inspect(
+            'can-approve-requisition-for-store',
+            $sourceStore
+        );
+
+        if ($approvalCheck->denied()) {
+            return response()->json(['success' => false, 'message' => $approvalCheck->message()], 403);
+        }
+
+        try {
+            $this->requisitionService->reverseItem($item);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item reversed to pending.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Process a requisition edit submission
+     */
+    public function update(Request $request, StoreRequisition $requisition)
+    {
+        $request->validate([
+            'notes'                     => 'nullable|string|max:1000',
+            'to_store_id'               => 'nullable|exists:stores,id',
+            'from_store_id'             => 'nullable|exists:stores,id',
+            'items'                     => 'nullable|array',
+            'items.*.item_id'           => 'nullable|integer',
+            'items.*.product_id'        => 'nullable|exists:products,id',
+            'items.*.qty'               => 'nullable|integer|min:1',
+            'items.*.packaging_id'      => 'nullable|exists:product_packagings,id',
+            'items.*.packaging_qty'     => 'nullable|numeric|min:0',
+            'items.*._delete'           => 'nullable|boolean',
+        ]);
+
+        // Governance: only requester or admin can edit
+        if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'STORE']) &&
+            $requisition->requested_by !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Not authorized to edit this requisition.'], 403);
+        }
+
+        try {
+            $data = $request->only(['to_store_id', 'from_store_id', 'items']);
+            $data['request_notes'] = $request->input('notes');
+
+            $updated = $this->requisitionService->updateRequisition(
+                $requisition,
+                $data
+            );
+
+            return response()->json([
+                'success'  => true,
+                'message'  => "Requisition {$updated->requisition_number} updated successfully.",
+                'redirect' => route('inventory.requisitions.show', $updated->id),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
      * Get pending requisitions that need approval
      */
     public function pendingApproval()
     {
         $user     = auth()->user();
-        $isAdmin  = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store']);
+        $isAdmin  = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'STORE']);
 
         // ── Governance: only show requisitions drawn FROM my candidate stores ──
         // Admins see all. Others only see what they can act on.
@@ -652,7 +937,7 @@ class StoreRequisitionController extends Controller
     public function pendingFulfillment(Request $request)
     {
         $user     = auth()->user();
-        $isAdmin  = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'store', 'Store']);
+        $isAdmin  = $user->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin', 'STORE']);
         $myStores = $isAdmin ? null : $this->resolver->candidateStores($user);
 
         // ── Governance: resolve the active store for this session ─────────────
@@ -697,6 +982,16 @@ class StoreRequisitionController extends Controller
             '<a href="%s" class="btn btn-sm btn-info" title="View"><i class="mdi mdi-eye"></i></a>',
             route('inventory.requisitions.show', $requisition->id)
         );
+
+        // Edit button (editable statuses: pending, approved, partial)
+        if ($requisition->canEditHeader()) {
+            $editLabel = $requisition->isEdited() ? 'Edit (edited)' : 'Edit';
+            $buttons[] = sprintf(
+                '<a href="%s" class="btn btn-sm btn-outline-warning" title="%s"><i class="mdi mdi-pencil"></i></a>',
+                route('inventory.requisitions.edit', $requisition->id),
+                $editLabel
+            );
+        }
 
         // Approve button (only for pending)
         if ($requisition->canApprove()) {
