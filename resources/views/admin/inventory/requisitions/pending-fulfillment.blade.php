@@ -55,7 +55,14 @@
         <div class="requisition-card">
             <div class="requisition-header">
                 <div>
-                    <h6 class="mb-1">{{ $requisition->requisition_number }}</h6>
+                    <h6 class="mb-1">
+                        {{ $requisition->requisition_number }}
+                        @if($requisition->isEdited())
+                            <span class="badge badge-warning ml-2" tabindex="0" data-toggle="tooltip" title="Edited {{ $requisition->edit_count }} time(s). Last by {{ $requisition->editor->name ?? 'Unknown' }}">
+                                <i class="mdi mdi-pencil"></i> Edited
+                            </span>
+                        @endif
+                    </h6>
                     <small class="text-muted">
                         Approved {{ $requisition->approved_at?->diffForHumans() ?? 'N/A' }}
                         @if($requisition->approver)
@@ -174,5 +181,9 @@ function fulfillRequisition(id, btn) {
         $(btn).prop('disabled', false).html('<i class="mdi mdi-truck-delivery"></i> Fulfill & Transfer');
     });
 }
+
+$(function() {
+    $('[data-toggle="tooltip"]').tooltip();
+});
 </script>
 @endsection

@@ -156,6 +156,102 @@ class StockService
     }
 
     /**
+     * Get available batches for a product in FEFO order (closest expiry first, nulls last)
+     *
+     * @param int $productId
+     * @param int $storeId
+     * @return Collection
+     */
+    public function getAvailableBatchesFefo(int $productId, int $storeId): Collection
+    {
+        return StockBatch::where('product_id', $productId)
+            ->where('store_id', $storeId)
+            ->active()
+            ->hasStock()
+            ->fefoOrder()
+            ->get();
+    }
+
+    /**
+     * Utilize stock from a store using a selected strategy (FIFO, FEFO, or specific batch)
+     *
+     * @param int $productId
+     * @param int $storeId
+     * @param int $qty
+     * @param string $strategy 'fifo', 'fefo', or 'batch'
+     * @param int|null $batchId Required if strategy is 'batch'
+     * @param string|null $referenceType
+     * @param int|null $referenceId
+     * @param string|null $notes
+     * @return array Array of [batch_id => qty_deducted]
+     * @throws \Exception
+     */
+    public function utilizeStock(
+        int $productId,
+        int $storeId,
+        int $qty,
+        string $strategy = 'fifo',
+        ?int $batchId = null,
+        ?string $referenceType = null,
+        ?int $referenceId = null,
+        ?string $notes = null
+    ): array {
+        $availableStock = $this->getAvailableStock($productId, $storeId);
+
+        if ($availableStock < $qty) {
+            throw new \Exception("Insufficient stock. Available: {$availableStock}, Required: {$qty}");
+        }
+
+        return DB::transaction(function () use ($productId, $storeId, $qty, $strategy, $batchId, $referenceType, $referenceId, $notes) {
+            $deductions = [];
+
+            if ($strategy === 'batch') {
+                if (!$batchId) {
+                    throw new \InvalidArgumentException("Batch ID is required for 'batch' strategy.");
+                }
+                $batch = StockBatch::findOrFail($batchId);
+                if ($batch->current_qty < $qty) {
+                    throw new \Exception("Insufficient stock in selected batch. Available: {$batch->current_qty}, Required: {$qty}");
+                }
+                $batch->deductStock(
+                    $qty,
+                    StockBatchTransaction::TYPE_OUT,
+                    $referenceType,
+                    $referenceId,
+                    $notes
+                );
+                $deductions[$batch->id] = $qty;
+            } else {
+                $batches = $strategy === 'fefo'
+                    ? $this->getAvailableBatchesFefo($productId, $storeId)
+                    : $this->getAvailableBatches($productId, $storeId);
+
+                $remainingQty = $qty;
+                foreach ($batches as $batch) {
+                    if ($remainingQty <= 0) break;
+
+                    $deductQty = min($batch->current_qty, $remainingQty);
+                    $batch->deductStock(
+                        $deductQty,
+                        StockBatchTransaction::TYPE_OUT,
+                        $referenceType,
+                        $referenceId,
+                        $notes
+                    );
+
+                    $deductions[$batch->id] = $deductQty;
+                    $remainingQty -= $deductQty;
+                }
+            }
+
+            // Sync aggregate stock
+            $this->syncStoreStock($productId, $storeId);
+
+            return $deductions;
+        });
+    }
+
+    /**
      * Create a new stock batch
      *
      * @param array $data Batch data

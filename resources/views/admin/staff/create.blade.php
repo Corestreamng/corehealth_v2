@@ -426,14 +426,10 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="row g-3">
-                                <div class="col-lg-6 col-md-6">
+                                <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Password <span class="text-danger">*</span></label>
                                     <input type="password" class="form-control form-control-modern" name="password" value="123456" required>
                                     <small class="text-muted">Default: 123456</small>
-                                </div>
-                                <div class="col-lg-4 col-md-6">
-                                    <label class="form-label-modern">Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control form-control-modern" name="password" placeholder="Minimum 8 characters" required>
                                 </div>
                             </div>
 

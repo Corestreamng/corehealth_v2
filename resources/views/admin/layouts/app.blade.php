@@ -2360,6 +2360,9 @@ rgba(255, 255, 255, 0.7) !important;
     <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
     <!-- End Toastr JS -->
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     @if(appsettings('chat_enabled') ?? true)
     @include('admin.partials.chat-widget')
     @endif

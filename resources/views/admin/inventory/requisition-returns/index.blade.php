@@ -20,9 +20,15 @@
                 <p class="text-muted mb-0">Manage returns from fulfilled requisitions</p>
             </div>
             <div>
+                @if(request('requisition_id'))
+                <a href="{{ route('inventory.requisitions.show', request('requisition_id')) }}" class="btn btn-secondary btn-sm">
+                    <i class="mdi mdi-arrow-left"></i> Back to Requisition
+                </a>
+                @else
                 <a href="{{ route('inventory.store-workbench.tally-card') }}" class="btn btn-secondary btn-sm">
                     <i class="mdi mdi-arrow-left"></i> Back to Tally Card
                 </a>
+                @endif
             </div>
         </div>
 

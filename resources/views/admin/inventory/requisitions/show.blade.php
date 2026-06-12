@@ -23,6 +23,21 @@
     .status-fulfilled { background-color: #28a745; }
     .status-rejected { background-color: #dc3545; }
     .status-cancelled { background-color: #6c757d; }
+    .status-returned { background-color: #343a40; }
+    .returned-banner {
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .returned-banner .icon { font-size: 2.5rem; opacity: 0.85; }
+    .returned-banner .text-block h5 { margin-bottom: 0.25rem; font-weight: 700; }
+    .returned-banner .text-block p { margin: 0; opacity: 0.85; font-size: 0.9rem; }
 
     .priority-badge {
         padding: 0.25rem 0.5rem;
@@ -670,15 +685,23 @@
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="mb-4">
+        {{-- Action Buttons --}}
+        <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
             <a href="{{ route('inventory.requisitions.index') }}" class="btn btn-secondary btn-sm">
                 <i class="mdi mdi-arrow-left"></i> Back
             </a>
 
+            @if($requisition->canEditHeader())
+                @if(auth()->user()->hasAnyRole(['ADMIN','SUPERADMIN','super-admin','store','Store']) || auth()->id() == $requisition->requested_by)
+                <a href="{{ route('inventory.requisitions.edit', $requisition) }}" class="btn btn-warning btn-sm">
+                    <i class="mdi mdi-pencil"></i> Edit Requisition
+                </a>
+                @endif
+            @endif
+
             @if($requisition->status === 'pending')
                 @if(auth()->id() == $requisition->requested_by)
-                <button type="button" class="btn btn-warning btn-sm" onclick="cancelRequisition()">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="cancelRequisition()">
                     <i class="mdi mdi-cancel"></i> Cancel Request
                 </button>
                 @endif
@@ -692,11 +715,28 @@
                 @endcan
             @endif
 
+            @if($requisition->status !== 'pending')
+                @if($requisition->canApprove())
+                    @can('requisitions.approve')
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="approveRequisitionGlobal()">
+                        <i class="mdi mdi-check-circle"></i> Approve All
+                    </button>
+                    @endcan
+                @endif
+                @if($requisition->canReject())
+                    @can('requisitions.approve')
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="rejectRequisition()">
+                        <i class="mdi mdi-close-circle"></i> Reject All
+                    </button>
+                    @endcan
+                @endif
+            @endif
+
             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="printRequisition()">
                 <i class="mdi mdi-printer"></i> Print
             </button>
             <div class="btn-group no-print">
-                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-toggle="dropdown">
                     <i class="mdi mdi-download"></i> Export
                 </button>
                 <div class="dropdown-menu">
@@ -710,6 +750,39 @@
             </div>
         </div>
 
+        {{-- Edit History Banner --}}
+        @if($requisition->isEdited())
+        <div class="alert alert-warning border-left border-warning py-2 px-3 mb-3 d-flex align-items-center" style="border-left-width:4px !important; border-radius:6px;">
+            <i class="mdi mdi-pencil-circle text-warning mr-2" style="font-size:1.4rem;"></i>
+            <div>
+                <strong>This requisition has been edited {{ $requisition->edit_count }} time(s).</strong>
+                Last edited by <strong>{{ $requisition->editor->name ?? 'Unknown' }}</strong>
+                on {{ $requisition->edited_at ? $requisition->edited_at->format('d M Y \a\t H:i') : '—' }}.
+                <small class="d-block text-muted">Full change history is available in the audit log.</small>
+            </div>
+        </div>
+        @endif
+
+        {{-- Fully Returned Banner --}}
+        @if($requisition->isFullyReturned())
+        <div class="returned-banner mb-3">
+            <div class="icon"><i class="mdi mdi-keyboard-return"></i></div>
+            <div class="text-block">
+                <h5><i class="mdi mdi-check-circle mr-1"></i> All Items Returned</h5>
+                <p>
+                    All items in this requisition have been returned to the source store.
+                    This requisition is effectively <strong>closed</strong>. No further editing or fulfillment is possible.
+                    @php $returnCount = \App\Models\StoreRequisitionReturn::where('store_requisition_id', $requisition->id)->count(); @endphp
+                    @if($returnCount > 0)
+                        <a href="{{ route('inventory.requisition-returns.index') }}?requisition_id={{ $requisition->id }}" class="text-white ml-2">
+                            <u>View {{ $returnCount }} return record(s) &rarr;</u>
+                        </a>
+                    @endif
+                </p>
+            </div>
+        </div>
+        @endif
+
         @if($requisition->status === 'pending')
         @can('requisitions.approve')
         <!-- Approval Panel -->
@@ -718,74 +791,174 @@
             <p class="text-muted mb-3">Review the requested quantities and adjust if needed. You can approve partial quantities based on available stock.</p>
 
             <form id="approval-form">
-                @foreach($requisition->items as $item)
-                @php
-                    $sourceStock = \App\Models\StockBatch::where('product_id', $item->product_id)
-                        ->where('store_id', $requisition->from_store_id)
-                        ->where('current_qty', '>', 0)
-                        ->sum('current_qty');
-                    $destStock = \App\Models\StockBatch::where('product_id', $item->product_id)
-                        ->where('store_id', $requisition->to_store_id)
-                        ->where('current_qty', '>', 0)
-                        ->sum('current_qty');
-                    $canFulfill = $sourceStock>= $item->requested_qty;
-                @endphp
-                <div class="approval-item">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <div class="product-name">{{ $item->product->product_name }}</div>
-                            <div class="product-code">{{ $item->product->product_code }}</div>
-                            <div class="mt-2">
-                                <span class="requested-badge">
-                                    <i class="mdi mdi-cart"></i> Requested: <strong>{{ $item->requested_qty }}</strong>
-                                    {{ $item->product->base_unit_name ?? '' }}
-                                    @if($item->packaging)
-                                        <span class="text-info">({{ (float)$item->packaging_qty }} {{ $item->packaging->name }})</span>
+                <div class="list-group mb-3">
+                    @foreach($requisition->items as $item)
+                        @if($item->status === 'approved')
+                            @continue
+                        @endif
+                    @php
+                        $sourceStock = \App\Models\StockBatch::where('product_id', $item->product_id)
+                            ->where('store_id', $requisition->from_store_id)
+                            ->where('current_qty', '>', 0)
+                            ->sum('current_qty');
+                        $destStock = \App\Models\StockBatch::where('product_id', $item->product_id)
+                            ->where('store_id', $requisition->to_store_id)
+                            ->where('current_qty', '>', 0)
+                            ->sum('current_qty');
+                        $canFulfill = $sourceStock>= $item->requested_qty;
+                    @endphp
+                    <div class="list-group-item approval-item py-3 {{ $item->status === 'rejected' ? 'bg-light text-muted' : '' }}">
+                        <div class="row align-items-center">
+                            <!-- 1. Product Info & Stock -->
+                            <div class="col-12 col-xl-5 mb-3 mb-xl-0">
+                                <div class="d-flex align-items-start">
+                                    <div class="mr-3 mt-1">
+                                        @if($item->status === 'rejected')
+                                            <i class="mdi mdi-close-circle text-danger" style="font-size: 1.5rem;"></i>
+                                        @elseif($item->status === 'approved')
+                                            <i class="mdi mdi-check-circle text-success" style="font-size: 1.5rem;"></i>
+                                        @else
+                                            <i class="mdi mdi-circle-outline text-muted" style="font-size: 1.5rem;"></i>
+                                        @endif
+                                    </div>
+                                    <div class="w-100">
+                                        <h6 class="mb-1 text-primary font-weight-bold" style="{{ $item->status === 'rejected' ? 'text-decoration: line-through;' : '' }}">
+                                            {{ $item->product->product_name }}
+                                        </h6>
+                                        <div class="text-muted small mb-2">{{ $item->product->product_code }}</div>
+                                        
+                                        <div class="bg-light rounded p-2 border mt-2">
+                                            <div class="row text-center small">
+                                                <div class="col-4 border-right">
+                                                    <div class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem;">Requested</div>
+                                                    @php
+                                                        $baseUnitName = $item->product->base_unit_name ?? 'Units';
+                                                        $reqUnitStr = $item->packaging ? $item->packaging->name : $baseUnitName;
+                                                        $factor = $item->packaging ? $item->packaging->base_unit_qty : 1;
+                                                        $reqDisplay = $item->packaging ? (float)$item->packaging_qty : $item->requested_qty;
+                                                    @endphp
+                                                    <strong class="text-dark d-block mt-1" style="font-size: 0.85rem;">{{ $reqDisplay }} {{ $reqUnitStr }}</strong>
+                                                    @if($factor > 1)
+                                                        <div style="font-size: 0.65rem;" class="text-muted mt-1">{{ $item->requested_qty }} {{ $baseUnitName }}</div>
+                                                    @endif
+                                                </div>
+                                                <div class="col-4 border-right">
+                                                    <div class="text-muted text-uppercase font-weight-bold" style="font-size: 0.55rem;">From (Source)</div>
+                                                    <div class="text-dark mb-1" style="font-size: 0.75rem;" title="{{ $requisition->fromStore->store_name }}"><i class="mdi mdi-store"></i> {{ $requisition->fromStore->store_name }}</div>
+                                                    @php
+                                                        $sourceDisplay = $factor > 0 ? round($sourceStock / $factor, 1) : 0;
+                                                        $sourceColor = $sourceStock >= $item->requested_qty ? 'text-success' : ($sourceStock > 0 ? 'text-warning' : 'text-danger');
+                                                    @endphp
+                                                    <strong class="{{ $sourceColor }} d-block mt-1" style="font-size: 0.85rem;">{{ $sourceDisplay }} {{ $reqUnitStr }}</strong>
+                                                    @if($factor > 1)
+                                                        <div style="font-size: 0.65rem;" class="text-muted mt-1">Avail: {{ $sourceStock }} {{ $baseUnitName }}</div>
+                                                    @endif
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="text-muted text-uppercase font-weight-bold" style="font-size: 0.55rem;">To (Destination)</div>
+                                                    <div class="text-dark mb-1" style="font-size: 0.75rem;" title="{{ $requisition->toStore->store_name }}"><i class="mdi mdi-store"></i> {{ $requisition->toStore->store_name }}</div>
+                                                    @php
+                                                        $destDisplay = $factor > 0 ? round($destStock / $factor, 1) : 0;
+                                                    @endphp
+                                                    <strong class="text-info d-block mt-1" style="font-size: 0.85rem;">{{ $destDisplay }} {{ $reqUnitStr }}</strong>
+                                                    @if($factor > 1)
+                                                        <div style="font-size: 0.65rem;" class="text-muted mt-1">Stock: {{ $destStock }} {{ $baseUnitName }}</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Inputs & Actions -->
+                            <div class="col-12 col-xl-7">
+                                <div class="d-flex flex-column flex-sm-row justify-content-lg-end align-items-sm-center gap-3">
+                                    @if($item->status === 'rejected')
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="text-danger small"><strong>Rejected:</strong> {{ $item->notes }}</div>
+                                            @if($item->canReverse())
+                                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 ml-2" onclick="reverseItem({{ $item->id }})" title="Reverse Rejection"><i class="mdi mdi-undo"></i> Reverse</button>
+                                            @endif
+                                        </div>
+                                    @elseif($item->status === 'approved')
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="text-success small"><strong>Approved:</strong> {{ $item->approved_qty }} {{ $item->product->base_unit_name ?? 'Units' }}</div>
+                                            @if($item->canReverse())
+                                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 ml-2" onclick="reverseItem({{ $item->id }})" title="Reverse Approval"><i class="mdi mdi-undo"></i> Reverse</button>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="d-flex align-items-center gap-2 flex-grow-1 flex-sm-grow-0">
+                                            @php
+                                                $defaultFactor = $item->packaging ? $item->packaging->base_unit_qty : 1;
+                                                $defaultDisplayVal = $defaultFactor > 0 ? round(min($item->requested_qty, $sourceStock) / $defaultFactor, 1) : 0;
+                                            @endphp
+                                            <input type="number"
+                                                   class="form-control form-control-sm approve-display-qty {{ !$canFulfill ? ($sourceStock> 0 ? 'border-warning' : 'border-danger') : '' }}"
+                                                   value="{{ $defaultDisplayVal }}"
+                                                   min="0" step="0.1"
+                                                   style="min-width: 80px; width: 100px; font-weight: 600;"
+                                                   placeholder="Qty">
+                                            
+                                            <select class="form-control form-control-sm approve-unit-select" style="min-width: 150px;">
+                                                <option value="" data-factor="1" data-name="{{ $item->product->base_unit_name ?? 'Base Unit' }}" {{ !$item->packaging_id ? 'selected' : '' }}>{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
+                                                @foreach($item->product->packagings as $pkg)
+                                                    <option value="{{ $pkg->id }}" data-factor="{{ (float)$pkg->base_unit_qty }}" data-name="{{ $pkg->name }}" {{ $item->packaging_id == $pkg->id ? 'selected' : '' }}>
+                                                        {{ $pkg->name }} ({{ (float)$pkg->base_unit_qty }} {{ $item->product->base_unit_name ?? 'units' }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="text-center d-none d-sm-block px-3 py-1 bg-white border border-primary rounded shadow-sm mx-2" style="min-width: 100px;">
+                                            <div style="font-size: 0.6rem;" class="text-uppercase text-muted font-weight-bold approve-unit-label">Total {{ $item->packaging ? $item->packaging->name : ($item->product->base_unit_name ?? 'Base Qty') }}</div>
+                                            <div style="font-size: 1.15rem; line-height: 1.2;" class="font-weight-bold text-primary">
+                                                <span class="approve-unit-fraction-numerator">{{ $defaultDisplayVal }}</span>
+                                                <span class="text-muted" style="font-size: 0.8rem; font-weight: normal;">/ <span class="approve-unit-fraction-denominator">{{ $defaultFactor > 0 ? round($item->requested_qty / $defaultFactor, 1) : 0 }}</span></span>
+                                            </div>
+                                            <div style="font-size: 0.65rem;" class="text-muted border-top mt-1 pt-1">
+                                                <span class="approve-base-display">{{ min($item->requested_qty, $sourceStock) }}</span> / {{ $item->requested_qty }} {{ $item->product->base_unit_name ?? 'Units' }}
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden"
+                                               name="approved_qtys[{{ $item->id }}]"
+                                               class="qty-input"
+                                               value="{{ min($item->requested_qty, $sourceStock) }}"
+                                               data-requested="{{ $item->requested_qty }}"
+                                               data-available="{{ $sourceStock }}">
+                                        
+                                        <div class="btn-group flex-shrink-0">
+                                            <button type="button" class="btn btn-sm btn-outline-success btn-approve-item" 
+                                                data-item-id="{{ $item->id }}" 
+                                                data-product="{{ $item->product->product_name }}"
+                                                data-unit="{{ $item->product->base_unit_name ?? '' }}"
+                                                data-pkg="{{ $item->packaging ? (float)$item->packaging_qty . ' ' . $item->packaging->name : '' }}">
+                                                <i class="mdi mdi-check"></i> <span class="d-none d-xl-inline">Approve</span>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-reject-item" 
+                                                data-item-id="{{ $item->id }}" 
+                                                data-product="{{ $item->product->product_name }}">
+                                                <i class="mdi mdi-close"></i> <span class="d-none d-xl-inline">Reject</span>
+                                            </button>
+                                        </div>
                                     @endif
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stock-comparison">
-                                <div class="stock-box source">
-                                    <div class="label"><i class="mdi mdi-store"></i> {{ $requisition->fromStore->store_name }}</div>
-                                    <div class="value">{{ $sourceStock }}</div>
-                                    <div class="label">Available</div>
                                 </div>
-                                <div class="stock-box destination">
-                                    <div class="label"><i class="mdi mdi-store"></i> {{ $requisition->toStore->store_name }}</div>
-                                    <div class="value">{{ $destStock }}</div>
-                                    <div class="label">Current Stock</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="qty-adjustment">
-                                <label>Approve Qty:</label>
-                                <input type="number"
-                                       name="approved_qtys[{{ $item->id }}]"
-                                       class="qty-input {{ !$canFulfill ? ($sourceStock> 0 ? 'warning' : 'danger') : '' }}"
-                                       value="{{ min($item->requested_qty, $sourceStock) }}"
-                                       min="0"
-                                       max="{{ $item->requested_qty }}"
-                                       data-requested="{{ $item->requested_qty }}"
-                                       data-available="{{ $sourceStock }}">
-                                <span class="text-muted">/ {{ $item->requested_qty }}</span>
-                            </div>
-                            @if(!$canFulfill)
-                            <div class="stock-warning">
-                                <i class="mdi mdi-alert"></i>
-                                @if($sourceStock == 0)
-                                    No stock at source store!
-                                @else
-                                    Only {{ $sourceStock }} available ({{ $item->requested_qty - $sourceStock }} short)
+
+                                @if(!$canFulfill && $item->status !== 'rejected' && $item->status !== 'approved')
+                                    <div class="text-lg-right mt-2 text-danger small">
+                                        <i class="mdi mdi-alert"></i> 
+                                        @if($sourceStock == 0) No stock at source!
+                                        @else Only {{ $sourceStock }} available
+                                        @endif
+                                    </div>
                                 @endif
                             </div>
-                            @endif
                         </div>
                     </div>
+                    @endforeach
                 </div>
-                @endforeach
 
                 <div class="form-group mt-3">
                     <label>Approval Notes (Optional)</label>
@@ -846,10 +1019,11 @@
                 </thead>
                 <tbody>
                     @foreach($requisition->items as $index => $item)
-                    <tr>
+                    @php $isRejected = ($item->status ?? 'pending') === 'rejected'; @endphp
+                    <tr style="{{ $isRejected ? 'opacity: 0.6;' : '' }}">
                         <td style="border: 1px solid #333; padding: 8px; text-align: center;">{{ $index + 1 }}</td>
                         <td style="border: 1px solid #333; padding: 8px;">
-                            <strong>{{ $item->product->product_name }}</strong><br>
+                            <strong style="{{ $isRejected ? 'text-decoration: line-through;' : '' }}">{{ $item->product->product_name }}</strong><br>
                             <small style="color: #666;">{{ $item->product->product_code }}</small>
                             @if($item->packaging)
                                 <br><small style="color: #17a2b8;">({{ (float)$item->packaging_qty }} {{ $item->packaging->name }})</small>
@@ -885,8 +1059,30 @@
             <!-- Main Content -->
             <div class="col-md-8">
                 <!-- Requested Items - Enhanced Table -->
+                <form id="fulfill-form" method="POST" action="{{ route('inventory.requisitions.fulfill', $requisition) }}">
+                @csrf
                 <div class="detail-card">
                     <h5><i class="mdi mdi-package-variant"></i> Requisition Items</h5>
+                    
+                    {{-- Plan §7.3, §R11 — FIFO Override Warning --}}
+                    <div id="fifo-override-banner" class="alert alert-warning mb-3" style="display:none;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-exclamation-triangle fa-lg mt-1 text-warning"></i>
+                            <div>
+                                <strong>FIFO/FEFO Order Override Detected</strong>
+                                <div id="fifo-override-detail" class="mt-1 small"></div>
+                                @can('store-policy.override-fifo')
+                                <button type="button" class="btn btn-sm btn-outline-warning mt-2" id="btn-dismiss-fifo-warning">
+                                    <i class="fas fa-unlock-alt me-1"></i> I understand — proceed with out-of-order batch
+                                </button>
+                                @else
+                                <div class="mt-2 small text-danger">
+                                    <i class="fas fa-lock me-1"></i> You do not have permission to override FIFO order. Please use batches in the displayed order.
+                                </div>
+                                @endcan
+                            </div>
+                        </div>
+                    </div>
 
                     @foreach($requisition->items as $index => $item)
                     @php
@@ -895,20 +1091,24 @@
                             ->where('current_qty', '>', 0)
                             ->sum('current_qty');
                         $pending = ($item->approved_qty ?? $item->requested_qty) - ($item->fulfilled_qty ?? 0);
-                        $fulfillmentPercent = $item->approved_qty> 0
+                        $fulfillmentPercent = $item->approved_qty > 0
                             ? round((($item->fulfilled_qty ?? 0) / $item->approved_qty) * 100)
                             : 0;
+                            
+                        $displayStatus = $item->status ?? $requisition->status;
+                        if (in_array($displayStatus, ['approved', 'partial']) && $item->approved_qty === 0 && $item->approved_qty !== null) {
+                            $displayStatus = 'rejected';
+                        }
                     @endphp
-                    <div class="item-card mb-3">
+                    <div class="item-card mb-3 {{ $displayStatus === 'rejected' ? 'opacity-50' : '' }}" data-allow-decimal="{{ $item->product->allow_decimal_qty ? '1' : '0' }}">
                         <div class="item-header">
                             <div class="item-number">{{ $index + 1 }}</div>
-                            <div class="item-product">
+                            <div class="item-product" style="{{ $displayStatus === 'rejected' ? 'text-decoration: line-through;' : '' }}">
                                 <div class="product-name">{{ $item->product->product_name }}</div>
                                 <div class="product-code">{{ $item->product->product_code }}</div>
                             </div>
                             <div class="item-status">
                                 @php
-                                    $itemStatus = $item->status ?? $requisition->status;
                                     $statusColors = [
                                         'pending' => 'secondary',
                                         'approved' => 'info',
@@ -918,9 +1118,14 @@
                                         'cancelled' => 'dark'
                                     ];
                                 @endphp
-                                <span class="badge badge-{{ $statusColors[$itemStatus] ?? 'secondary' }}">
-                                    {{ ucfirst($itemStatus) }}
-                                </span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge badge-{{ $statusColors[$displayStatus] ?? 'secondary' }}">
+                                        {{ ucfirst($displayStatus) }}
+                                    </span>
+                                    @if($item->canReverse())
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="reverseItem({{ $item->id }})" title="Reverse {{ ucfirst($displayStatus) }}"><i class="mdi mdi-undo"></i> Reverse</button>
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
@@ -948,11 +1153,23 @@
                                             <span class="text-muted">--</span>
                                         @endif
                                     </div>
+                                    @if($item->approved_qty !== null)
+                                        @if($item->packaging && $item->packaging->base_unit_qty > 0)
+                                            <div class="text-muted" style="font-size:0.7rem;">({{ round($item->approved_qty / $item->packaging->base_unit_qty, 1) }} {{ $item->packaging->name }})</div>
+                                        @elseif($item->product && $item->product->base_unit_name)
+                                            <div class="text-muted" style="font-size:0.7rem;">{{ $item->product->base_unit_name }}</div>
+                                        @endif
+                                    @endif
                                 </div>
                                 <div class="qty-arrow"><i class="mdi mdi-arrow-right"></i></div>
                                 <div class="qty-stage {{ ($item->fulfilled_qty ?? 0)>= ($item->approved_qty ?? 0) && $item->approved_qty> 0 ? 'complete' : '' }}">
                                     <div class="qty-label">Fulfilled</div>
                                     <div class="qty-value">{{ $item->fulfilled_qty ?? 0 }}</div>
+                                    @if($item->packaging && $item->packaging->base_unit_qty > 0)
+                                        <div class="text-muted" style="font-size:0.7rem;">({{ round(($item->fulfilled_qty ?? 0) / $item->packaging->base_unit_qty, 1) }} {{ $item->packaging->name }})</div>
+                                    @elseif($item->product && $item->product->base_unit_name)
+                                        <div class="text-muted" style="font-size:0.7rem;">{{ $item->product->base_unit_name }}</div>
+                                    @endif
                                 </div>
                             </div>
 
@@ -982,10 +1199,144 @@
                                 <small class="text-muted"><i class="mdi mdi-note"></i> {{ $item->notes }}</small>
                             </div>
                             @endif
+
+                            @can('requisitions.fulfill')
+                            @if(in_array($requisition->status, ['approved', 'partial']) && $pending > 0 && ($item->status ?? 'pending') !== 'rejected')
+                            @php
+                                $availableBatches = \App\Models\StockBatch::where('product_id', $item->product_id)
+                                    ->where('store_id', $requisition->from_store_id)
+                                    ->where('current_qty', '>', 0)
+                                    ->where('is_active', true)
+                                    ->orderBy('expiry_date', 'asc')
+                                    ->orderBy('created_at', 'asc')
+                                    ->get();
+                                $totalAvailable = $availableBatches->sum('current_qty');
+                            @endphp
+                            <div class="fulfillment-section bg-light p-3 rounded mt-3 border">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong class="text-primary"><i class="mdi mdi-package-variant-closed"></i> Fulfill from Stock</strong>
+                                </div>
+                                <input type="hidden" name="items[{{ $item->id }}][requisition_item_id]" value="{{ $item->id }}">
+                                <input type="hidden" name="items[{{ $item->id }}][product_id]" value="{{ $item->product_id }}">
+
+                                @if($availableBatches->isEmpty())
+                                <div class="alert alert-warning mb-0">
+                                    <i class="mdi mdi-alert"></i> No stock available at source store
+                                </div>
+                                @else
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover mb-0 bg-white">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Batch</th>
+                                                <th class="text-center">Available</th>
+                                                <th class="text-center">Expiry</th>
+                                                <th class="text-center" style="width: 120px;">Unit</th>
+                                                <th class="text-center" style="width: 100px;">Transfer Qty</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($availableBatches as $batchIndex => $batch)
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ $batch->batch_name ?: 'Batch #' . $batch->id }}</strong>
+                                                    @if($batch->batch_number)
+                                                    <br><small class="text-muted">{{ $batch->batch_number }}</small>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge badge-{{ $batch->current_qty > 10 ? 'success' : ($batch->current_qty > 0 ? 'warning' : 'danger') }}">
+                                                        {{ $batch->current_qty }} {{ $item->product->base_unit_name ?? 'pcs' }}
+                                                    </span>
+                                                    @if($item->packaging)
+                                                        <br><small class="text-muted">≈ {{ round($batch->current_qty / $item->packaging->base_unit_qty, 1) }} {{ $item->packaging->name }}</small>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">
+                                                    @if($batch->expiry_date)
+                                                        @php $isExpiringSoon = $batch->expiry_date->diffInDays(now()) < 30; @endphp
+                                                        <span class="{{ $isExpiringSoon ? 'text-danger' : '' }}">
+                                                            {{ $batch->expiry_date->format('M d, Y') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted">N/A</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">
+                                                    <select class="form-control form-control-sm batch-unit-select" 
+                                                            data-batch-id="{{ $batch->id }}" 
+                                                            data-item-id="{{ $item->id }}"
+                                                            data-base-unit="{{ $item->product->base_unit_name ?? 'units' }}"
+                                                            style="min-width: 140px;">
+                                                        <option value="" data-factor="1">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
+                                                        @foreach($item->product->packagings as $pkg)
+                                                            <option value="{{ $pkg->id }}" data-factor="{{ $pkg->base_unit_qty }}">
+                                                                {{ $pkg->name }} ({{ $pkg->base_unit_qty }} {{ $item->product->base_unit_name ?? 'units' }})
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                                <td class="text-center">
+                                                    <input type="number"
+                                                           class="form-control form-control-sm batch-display-qty"
+                                                           value="0"
+                                                           min="0"
+                                                           step="any"
+                                                           data-batch-id="{{ $batch->id }}"
+                                                           data-item-id="{{ $item->id }}"
+                                                           style="font-weight: 600; min-width: 100px;">
+                                                    
+                                                    <input type="hidden"
+                                                           name="items[{{ $item->id }}][batches][{{ $batch->id }}]"
+                                                           class="batch-qty-input"
+                                                           value="0"
+                                                           data-batch-id="{{ $batch->id }}"
+                                                           data-available="{{ $batch->current_qty }}"
+                                                           data-item-id="{{ $item->id }}"
+                                                           data-pending="{{ $pending }}">
+                                                    
+                                                    <small class="text-muted batch-base-hint" style="display: none; font-size: 0.7rem;"></small>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="bg-light">
+                                                <td colspan="3" class="text-right"><strong>Total to Transfer:</strong></td>
+                                                <td class="text-center">
+                                                    <strong class="item-transfer-total text-primary" data-item-id="{{ $item->id }}">0</strong>
+                                                    <span class="text-muted">/ {{ $pending }} {{ $item->product->base_unit_name ?? 'units' }}</span>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                @endif
+                            </div>
+                            @endif
+                            @endcan
+
                         </div>
                     </div>
                     @endforeach
                 </div>
+                
+                @can('requisitions.fulfill')
+                @if(in_array($requisition->status, ['approved', 'partial']))
+                <div class="detail-card sticky-bottom shadow-lg border-top border-primary p-3" style="bottom: 0; z-index: 1000; position: sticky;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted">Total Items to transfer: </span>
+                            <strong class="text-primary h4 mb-0" id="total-transfer-qty">0</strong>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg" id="btn-process-transfer">
+                            <i class="mdi mdi-truck-delivery"></i> Process Transfer
+                        </button>
+                    </div>
+                </div>
+                @endif
+                @endcan
+                </form>
 
                 @if($requisition->request_notes)
                 <div class="detail-card">
@@ -1063,216 +1414,6 @@
     </div>
 </div>
 
-<!-- Fulfillment Panel (Inline, not modal) -->
-@if(in_array($requisition->status, ['approved', 'partial']))
-@can('requisitions.fulfill')
-@php
-    $hasPendingItems = $requisition->items->contains(function($item) {
-        return ($item->approved_qty ?? 0) - ($item->fulfilled_qty ?? 0)> 0;
-    });
-@endphp
-@if($hasPendingItems)
-<div class="container-fluid">
-    <div class="fulfill-panel" id="fulfill-panel">
-        <h5><i class="mdi mdi-package-variant-closed"></i> Fulfill Requisition Items</h5>
-        <p class="text-muted mb-3">
-            Transfer items from <strong class="text-success">{{ $requisition->fromStore->store_name }}</strong>
-            to <strong class="text-info">{{ $requisition->toStore->store_name }}</strong>.
-            Select batches and quantities for each item.
-        </p>
-
-        {{--
-            Plan §7.3, §R11 — FIFO Override Warning
-            Batches are pre-sorted FEFO (expiry_date asc). If the user skips a batch
-            with remaining stock, a JS warning prompts them to justify the override.
-            The warning is non-blocking (users with store-policy.override-fifo permission
-            can dismiss; others see a read-only advisory). Stock deduction still goes through
-            RequisitionService::fulfill() which remains unmodified.
-        --}}
-        <div id="fifo-override-banner" class="alert alert-warning" style="display:none;">
-            <div class="d-flex align-items-start gap-2">
-                <i class="fas fa-exclamation-triangle fa-lg mt-1 text-warning"></i>
-                <div>
-                    <strong>FIFO/FEFO Order Override Detected</strong>
-                    <div id="fifo-override-detail" class="mt-1 small"></div>
-                    @can('store-policy.override-fifo')
-                    <button type="button" class="btn btn-sm btn-outline-warning mt-2" id="btn-dismiss-fifo-warning">
-                        <i class="fas fa-unlock-alt me-1"></i> I understand — proceed with out-of-order batch
-                    </button>
-                    @else
-                    <div class="mt-2 small text-danger">
-                        <i class="fas fa-lock me-1"></i> You do not have permission to override FIFO order. Please use batches in the displayed order.
-                    </div>
-                    @endcan
-                </div>
-            </div>
-        </div>
-
-        <form id="fulfill-form" method="POST" action="{{ route('inventory.requisitions.fulfill', $requisition) }}">
-            @csrf
-            @foreach($requisition->items as $item)
-            @php
-                $approvedQty = $item->approved_qty ?? 0;
-                $fulfilledQty = $item->fulfilled_qty ?? 0;
-                $pendingQty = $approvedQty - $fulfilledQty;
-                $fulfillPercent = $approvedQty> 0 ? round(($fulfilledQty / $approvedQty) * 100) : 0;
-
-                // Get available batches from source store
-                $availableBatches = \App\Models\StockBatch::where('product_id', $item->product_id)
-                    ->where('store_id', $requisition->from_store_id)
-                    ->where('current_qty', '>', 0)
-                    ->where('is_active', true)
-                    ->orderBy('expiry_date', 'asc')
-                    ->orderBy('created_at', 'asc')
-                    ->get();
-                $totalAvailable = $availableBatches->sum('current_qty');
-            @endphp
-            @if($pendingQty> 0)
-            <div class="fulfill-item" data-allow-decimal="{{ $item->product->allow_decimal_qty ? '1' : '0' }}">
-                <div class="fulfill-item-header">
-                    <div>
-                        <div class="h6 mb-1">{{ $item->product->product_name }}</div>
-                        <small class="text-muted">{{ $item->product->product_code }}</small>
-                        @if($item->packaging)
-                            <br><small class="text-info"><i class="mdi mdi-package-variant"></i> Requested: <strong>{{ (float)$item->packaging_qty }} {{ $item->packaging->name }}</strong></small>
-                            <br><small class="text-muted"><i class="mdi mdi-calculator"></i> 1 {{ $item->packaging->name }} = {{ $item->packaging->base_unit_qty }} {{ $item->product->base_unit_name ?? 'pcs' }}</small>
-                        @endif
-                    </div>
-                    <div class="text-right">
-                        <span class="badge badge-{{ $totalAvailable>= $pendingQty ? 'success' : 'warning' }}">
-                            {{ $totalAvailable }} {{ $item->product->base_unit_name ?? '' }} available
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Progress visualization -->
-                <div class="fulfill-progress-bar">
-                    <small class="text-muted" style="min-width: 80px;">{{ $fulfilledQty }}/{{ $approvedQty }}</small>
-                    <div class="progress">
-                        <div class="progress-bar bg-success" style="width: {{ $fulfillPercent }}%"></div>
-                        <div class="progress-bar bg-warning" style="width: {{ min(100 - $fulfillPercent, ($pendingQty/$approvedQty)*100) }}%; opacity: 0.5;"></div>
-                    </div>
-                    <small class="text-muted" style="min-width: 80px; text-align: right;">{{ $pendingQty }} pending</small>
-                </div>
-
-                <!-- Batch Selection -->
-                <div class="batch-selector">
-                    <div class="mb-2"><strong><i class="mdi mdi-package"></i> Select Batch(es) to Transfer:</strong></div>
-                    <input type="hidden" name="items[{{ $item->id }}][requisition_item_id]" value="{{ $item->id }}">
-                    <input type="hidden" name="items[{{ $item->id }}][product_id]" value="{{ $item->product_id }}">
-
-                    @if($availableBatches->isEmpty())
-                    <div class="alert alert-warning mb-0">
-                        <i class="mdi mdi-alert"></i> No stock available at source store
-                    </div>
-                    @else
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Batch</th>
-                                    <th class="text-center">Available</th>
-                                    <th class="text-center">Expiry</th>
-                                    <th class="text-center" style="width: 120px;">Unit</th>
-                                    <th class="text-center" style="width: 100px;">Transfer Qty</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($availableBatches as $batchIndex => $batch)
-                                <tr>
-                                    <td>
-                                        <strong>{{ $batch->batch_name ?: 'Batch #' . $batch->id }}</strong>
-                                        @if($batch->batch_number)
-                                        <br><small class="text-muted">{{ $batch->batch_number }}</small>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge badge-{{ $batch->current_qty > 10 ? 'success' : ($batch->current_qty > 0 ? 'warning' : 'danger') }}">
-                                            {{ $batch->current_qty }} {{ $item->product->base_unit_name ?? 'pcs' }}
-                                        </span>
-                                        @if($item->packaging)
-                                            <br><small class="text-muted">≈ {{ round($batch->current_qty / $item->packaging->base_unit_qty, 1) }} {{ $item->packaging->name }}</small>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($batch->expiry_date)
-                                            @php $isExpiringSoon = $batch->expiry_date->diffInDays(now()) < 30; @endphp
-                                            <span class="{{ $isExpiringSoon ? 'text-danger' : '' }}">
-                                                {{ $batch->expiry_date->format('M d, Y') }}
-                                            </span>
-                                        @else
-                                            <span class="text-muted">N/A</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <select class="form-control form-control-sm batch-unit-select" 
-                                                data-batch-id="{{ $batch->id }}" 
-                                                data-item-id="{{ $item->id }}"
-                                                style="height: 31px; font-size: 0.8rem;">
-                                            <option value="" data-factor="1">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
-                                            @foreach($item->product->packagings as $pkg)
-                                                <option value="{{ $pkg->id }}" data-factor="{{ $pkg->base_unit_qty }}">
-                                                    {{ $pkg->name }} ({{ $pkg->base_unit_qty }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td class="text-center">
-                                        <input type="number"
-                                               class="form-control form-control-sm batch-display-qty"
-                                               value="0"
-                                               min="0"
-                                               step="any"
-                                               data-batch-id="{{ $batch->id }}"
-                                               data-item-id="{{ $item->id }}"
-                                               style="height: 31px; font-weight: 600;">
-                                        
-                                        <input type="hidden"
-                                               name="items[{{ $item->id }}][batches][{{ $batch->id }}]"
-                                               class="batch-qty-input"
-                                               value="0"
-                                               data-batch-id="{{ $batch->id }}"
-                                               data-available="{{ $batch->current_qty }}"
-                                               data-item-id="{{ $item->id }}"
-                                               data-pending="{{ $pendingQty }}">
-                                        
-                                        <small class="text-muted batch-base-hint" style="display: none; font-size: 0.7rem;"></small>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr class="bg-light">
-                                    <td colspan="3" class="text-right"><strong>Total to Transfer:</strong></td>
-                                    <td class="text-center">
-                                        <strong class="item-transfer-total text-primary" data-item-id="{{ $item->id }}">0</strong>
-                                        <span class="text-muted">/ {{ $pendingQty }}</span>
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    @endif
-                </div>
-            </div>
-            @endif
-            @endforeach
-
-            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                <div>
-                    <span class="text-muted">Items to transfer: </span>
-                    <strong class="text-primary" id="total-transfer-qty">0</strong>
-                </div>
-                <button type="submit" class="btn btn-primary btn-lg" id="btn-process-transfer">
-                    <i class="mdi mdi-truck-delivery"></i> Process Transfer
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-@endif
-@endcan
-@endif
 
 <!-- Print Signature Section (hidden on screen) -->
 <div class="print-only print-signature-section">
@@ -1315,6 +1456,39 @@
     <div style="font-size: 7pt; margin-top: 3px;">{{ appsettings('footer_text') }}</div>
     @endif
 </div>
+<!-- Reject Item Modal -->
+<div class="modal fade" id="rejectItemModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="mdi mdi-close-circle"></i> Reject Item</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove <strong id="rejectItemProductName"></strong> from this requisition?</p>
+                <div class="form-group">
+                    <label>Reason for Rejection <span class="text-danger">*</span></label>
+                    <textarea id="rejectItemNotes" class="form-control" rows="3" placeholder="Enter the reason..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="text-muted small">Quick Suggestions:</label><br>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-reason mb-1">Out of Stock</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-reason mb-1">Incorrect Item Requested</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-reason mb-1">Use Substitute Product</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-reason mb-1">Expired Batch Only</button>
+                </div>
+                <input type="hidden" id="rejectItemId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmRejectItem">Confirm Rejection</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
@@ -1328,7 +1502,7 @@ $(function() {
         var $unitSelect = $row.find('.batch-unit-select');
         var $hiddenInput = $row.find('.batch-qty-input');
         var $hint = $row.find('.batch-base-hint');
-        var $itemContainer = $(this).closest('.fulfill-item');
+        var $itemContainer = $(this).closest('.item-card');
         var allowDecimal = $itemContainer.data('allow-decimal') == '1';
 
         var displayVal = parseFloat($displayInput.val()) || 0;
@@ -1370,7 +1544,8 @@ $(function() {
 
         // Update hint if factor > 1
         if (factor > 1 && baseVal > 0) {
-            $hint.text('= ' + baseVal + ' base units').show();
+            var baseUnitName = $unitSelect.data('base-unit') || 'units';
+            $hint.text('= ' + baseVal + ' ' + baseUnitName).show();
         } else {
             $hint.hide();
         }
@@ -1547,6 +1722,258 @@ function rejectRequisition() {
             });
     }
 }
+
+function approveRequisitionGlobal() {
+    if (!confirm('Are you sure you want to approve this entire requisition?')) {
+        return;
+    }
+
+    $.ajax({
+        url: '{{ route("inventory.requisitions.approve", $requisition) }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}'
+        },
+        success: function(response) {
+            toastr.success(response.message || 'Requisition approved');
+            setTimeout(function() {
+                location.reload();
+            }, 1000);
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to approve requisition');
+        }
+    });
+}
+
+function approveRequisitionGlobal() {
+    if (!confirm('Are you sure you want to approve this entire requisition?')) {
+        return;
+    }
+
+    $.ajax({
+        url: '{{ route("inventory.requisitions.approve", $requisition) }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}'
+        },
+        success: function(response) {
+            toastr.success(response.message || 'Requisition approved');
+            setTimeout(function() {
+                location.reload();
+            }, 1000);
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to approve requisition');
+        }
+    });
+}
+
+function reverseItem(itemId) {
+    Swal.fire({
+        title: 'Reverse Item',
+        text: 'Are you sure you want to reverse this item back to pending?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ffc107',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="mdi mdi-undo"></i> Yes, Reverse it'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: `/inventory/requisitions/{{ $requisition->id }}/items/${itemId}/reverse`,
+                type: 'PATCH',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    toastr.success(response.message || 'Item reversed');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Failed to reverse item');
+                }
+            });
+        }
+    });
+}
+
+// Calculate approval base quantity
+$(document).on('input change', '.approve-display-qty, .approve-unit-select', function() {
+    var wrapper = $(this).closest('.approval-item');
+    var displayQty = parseFloat(wrapper.find('.approve-display-qty').val()) || 0;
+    var select = wrapper.find('.approve-unit-select option:selected');
+    var factor = parseFloat(select.data('factor')) || 1;
+    
+    var baseQty = Math.round(displayQty * factor * 10) / 10;
+    wrapper.find('.qty-input').val(baseQty);
+    
+    // Update labels and fractions
+    var pkgName = select.data('name');
+    wrapper.find('.approve-unit-label').text('Total ' + pkgName);
+    wrapper.find('.approve-unit-fraction-numerator').text(displayQty);
+    
+    var reqBase = parseInt(wrapper.find('.qty-input').data('requested')) || 0;
+    var reqUnit = factor > 0 ? Math.round((reqBase / factor) * 10) / 10 : 0;
+    wrapper.find('.approve-unit-fraction-denominator').text(reqUnit);
+    
+    wrapper.find('.approve-base-display').text(baseQty);
+    
+    // Update data attributes on the approve button
+    var btn = wrapper.find('.btn-approve-item');
+    btn.data('pkg-name', select.data('name'));
+    btn.data('display-qty', displayQty);
+});
+
+// Approve Item Logic
+$(document).on('click', '.btn-approve-item', function() {
+    var btn = $(this);
+    var itemId = btn.data('item-id');
+    var productName = btn.data('product');
+    
+    var card = btn.closest('.approval-item');
+    var qtyInput = card.find('.qty-input');
+    var baseQty = qtyInput.val();
+    var baseUnitName = btn.data('unit') || 'Units';
+    
+    var displayQty = btn.data('display-qty');
+    if (displayQty === undefined) {
+        displayQty = card.find('.approve-display-qty').val();
+    }
+    
+    var pkgName = btn.data('pkg-name');
+    if (pkgName === undefined) {
+        pkgName = card.find('.approve-unit-select option:selected').data('name');
+    }
+    
+    if (!baseQty || parseFloat(baseQty) < 0) {
+        toastr.error('Please specify a valid approval quantity.');
+        return;
+    }
+    
+    var unitStr = pkgName ? `(${pkgName})` : `(${baseUnitName})`;
+    
+    Swal.fire({
+        title: 'Approve Item',
+        html: `
+            <div class="text-left">
+                <p>You are about to approve <strong>${displayQty} ${unitStr}</strong> of <br><strong class="text-primary">${productName}</strong>.</p>
+                <div class="alert alert-info py-2"><i class="mdi mdi-information-outline"></i> This will immediately mark this specific item as approved (Total: ${baseQty} ${baseUnitName}).</div>
+                <div class="form-group mt-3">
+                    <label>Approval Notes (Optional):</label>
+                    <textarea id="swal-approve-notes" class="form-control" rows="2" placeholder="Add any notes..."></textarea>
+                </div>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="mdi mdi-check-circle"></i> Yes, Approve Item'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            var notes = document.getElementById('swal-approve-notes').value;
+            
+            btn.prop('disabled', true).html('<i class="mdi mdi-spin mdi-loading"></i>');
+            card.find('.btn-reject-item').prop('disabled', true);
+            
+            $.ajax({
+                url: '{{ url("inventory/requisitions") }}/{{ $requisition->id }}/items/' + itemId + '/approve',
+                type: 'PATCH',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    approved_qty: baseQty,
+                    notes: notes
+                },
+                success: function(res) {
+                    if(res.success) {
+                        toastr.success(res.message);
+                        if(res.auto_closed) {
+                            Swal.fire('Requisition Processed', 'All items have been processed, so the requisition status has been automatically updated.', 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            qtyInput.prop('readonly', true).removeClass('warning danger').addClass('is-valid');
+                            card.find('.btn-group').html('<span class="badge badge-success p-2" style="font-size:0.85rem;"><i class="mdi mdi-check-all"></i> Approved</span>');
+                            card.css('background-color', '#f8fff9');
+                        }
+                    } else {
+                        toastr.error(res.message);
+                        btn.prop('disabled', false).html('<i class="mdi mdi-check-circle"></i> Approve');
+                        card.find('.btn-reject-item').prop('disabled', false);
+                    }
+                },
+                error: function(xhr) {
+                    var msg = 'An error occurred.';
+                    if(xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                    toastr.error(msg);
+                    btn.prop('disabled', false).html('<i class="mdi mdi-check-circle"></i> Approve');
+                    card.find('.btn-reject-item').prop('disabled', false);
+                }
+            });
+        }
+    });
+});
+
+// Reject Item Logic
+$(document).on('click', '.btn-reject-item', function() {
+    var itemId = $(this).data('item-id');
+    var productName = $(this).data('product');
+    
+    $('#rejectItemId').val(itemId);
+    $('#rejectItemProductName').text(productName);
+    $('#rejectItemNotes').val('');
+    $('#rejectItemModal').modal('show');
+});
+
+$(document).on('click', '.btn-quick-reason', function() {
+    var reason = $(this).text();
+    $('#rejectItemNotes').val(reason);
+});
+
+$('#btnConfirmRejectItem').on('click', function() {
+    var itemId = $('#rejectItemId').val();
+    var notes = $('#rejectItemNotes').val().trim();
+    
+    if (!notes) {
+        toastr.error('Please enter a reason for rejection.');
+        return;
+    }
+    
+    var btn = $(this);
+    btn.prop('disabled', true).html('<i class="mdi mdi-spin mdi-loading"></i> Processing...');
+    
+    $.ajax({
+        url: '{{ url("inventory/requisitions") }}/{{ $requisition->id }}/items/' + itemId + '/reject',
+        type: 'PATCH',
+        data: {
+            _token: '{{ csrf_token() }}',
+            notes: notes
+        },
+        success: function(res) {
+            if(res.success) {
+                toastr.success(res.message);
+                if(res.auto_closed) {
+                    Swal.fire('Requisition Rejected', 'All items have been rejected, so the requisition has been automatically rejected.', 'info').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    location.reload();
+                }
+            } else {
+                toastr.error(res.message || 'Failed to reject item.');
+                btn.prop('disabled', false).text('Confirm Rejection');
+            }
+        },
+        error: function(xhr) {
+            var msg = xhr.responseJSON?.message || 'An error occurred while rejecting the item.';
+            toastr.error(msg);
+            btn.prop('disabled', false).text('Confirm Rejection');
+        }
+    });
+});
 
 function cancelRequisition() {
     if (confirm('Cancel this requisition?')) {

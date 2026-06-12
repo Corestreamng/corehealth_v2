@@ -9,6 +9,7 @@ use App\Http\Controllers\StoreDamagesController;
 use App\Http\Controllers\StoreWorkbenchController;
 use App\Http\Controllers\StoreGovernanceController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\StockUtilizationController;
 
 /**
  * Inventory Management Routes
@@ -63,19 +64,31 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/', [StoreRequisitionController::class, 'index'])->name('index');
         Route::get('/create', [StoreRequisitionController::class, 'create'])->name('create');
         Route::post('/', [StoreRequisitionController::class, 'store'])->name('store');
-        Route::get('/{requisition}', [StoreRequisitionController::class, 'show'])->name('show');
-
-        // Workflow actions
-        Route::post('/{requisition}/approve', [StoreRequisitionController::class, 'approve'])->name('approve');
-        Route::post('/{requisition}/reject', [StoreRequisitionController::class, 'reject'])->name('reject');
-        Route::post('/{requisition}/cancel', [StoreRequisitionController::class, 'cancel'])->name('cancel');
-        Route::post('/{requisition}/fulfill', [StoreRequisitionController::class, 'fulfill'])->name('fulfill');
-
         // Queue views
         Route::get('/queue/pending-approval', [StoreRequisitionController::class, 'pendingApproval'])->name('pending-approval');
         Route::get('/queue/pending-fulfillment', [StoreRequisitionController::class, 'pendingFulfillment'])->name('pending-fulfillment');
 
-        // AJAX
+        // My Stock & Utilization
+        Route::get('/my-stock', [StockUtilizationController::class, 'index'])->name('my-stock');
+        Route::get('/my-stock/products', [StockUtilizationController::class, 'getProducts'])->name('my-stock.products');
+        Route::get('/my-stock/batches', [StockUtilizationController::class, 'getBatches'])->name('my-stock.batches');
+        Route::get('/my-stock/patients', [StockUtilizationController::class, 'searchPatients'])->name('my-stock.patients');
+        Route::get('/my-stock/tariff-preview', [StockUtilizationController::class, 'getTariffPreview'])->name('my-stock.tariff-preview');
+        Route::post('/my-stock/utilize', [StockUtilizationController::class, 'utilize'])->name('my-stock.utilize');
+        Route::get('/my-stock/history', [StockUtilizationController::class, 'history'])->name('my-stock.history');
+
+        // Requisition Details & Actions (must be after hardcoded routes)
+        Route::get('/{requisition}', [StoreRequisitionController::class, 'show'])->name('show');
+        Route::post('/{requisition}/approve', [StoreRequisitionController::class, 'approve'])->name('approve');
+        Route::post('/{requisition}/reject', [StoreRequisitionController::class, 'reject'])->name('reject');
+        Route::post('/{requisition}/cancel', [StoreRequisitionController::class, 'cancel'])->name('cancel');
+        Route::post('/{requisition}/fulfill', [StoreRequisitionController::class, 'fulfill'])->name('fulfill');
+        Route::get('/{requisition}/edit', [StoreRequisitionController::class, 'edit'])->name('edit');
+        Route::put('/{requisition}', [StoreRequisitionController::class, 'update'])->name('update');
+        Route::patch('/{requisition}/items/{item}/mark-returned', [StoreRequisitionController::class, 'markItemReturned'])->name('items.mark-returned');
+        Route::patch('/{requisition}/items/{item}/approve', [StoreRequisitionController::class, 'approveItem'])->name('items.approve');
+        Route::patch('/{requisition}/items/{item}/reject', [StoreRequisitionController::class, 'rejectItem'])->name('items.reject');
+        Route::patch('/{requisition}/items/{item}/reverse', [StoreRequisitionController::class, 'reverseItem'])->name('items.reverse');
         Route::get('/{requisition}/available-batches', [StoreRequisitionController::class, 'getAvailableBatches'])->name('available-batches');
     });
 
@@ -235,6 +248,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/requisitions/{requisition}/reject', [StoreRequisitionController::class, 'reject'])->name('requisitions.reject');
     Route::post('/requisitions/{requisition}/cancel', [StoreRequisitionController::class, 'cancel'])->name('requisitions.cancel');
     Route::post('/requisitions/{requisition}/fulfill', [StoreRequisitionController::class, 'fulfill'])->name('requisitions.fulfill');
+    Route::get('/requisitions/{requisition}/edit',    [StoreRequisitionController::class, 'edit'])->name('requisitions.edit');
+    Route::put('/requisitions/{requisition}',          [StoreRequisitionController::class, 'update'])->name('requisitions.update');
 
     Route::get('/store-workbench', [StoreWorkbenchController::class, 'index'])->name('store-workbench.index');
 });
