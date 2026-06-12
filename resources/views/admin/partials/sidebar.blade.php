@@ -42,10 +42,16 @@
                 </a>
             </li>
             @endif
-            <li class="nav-item {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}" id="sidebar-global-requisitions">
+            <li class="nav-item {{ request()->routeIs('inventory.requisitions.*') && !request()->routeIs('inventory.requisitions.my-stock') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') && !request()->routeIs('inventory.requisitions.my-stock') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}" id="sidebar-global-requisitions">
                     <i class="mdi mdi-swap-horizontal menu-icon"></i>
                     <span class="menu-title">{{ __('sidebar.requisitions') }}</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('inventory.requisitions.my-stock') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('inventory.requisitions.my-stock') ? 'active' : '' }}" href="{{ route('inventory.requisitions.my-stock') }}" id="sidebar-global-my-stock">
+                    <i class="mdi mdi-package-variant-closed menu-icon"></i>
+                    <span class="menu-title">My Stock</span>
                 </a>
             </li>
 
@@ -404,8 +410,12 @@
                                 <i class="mdi mdi-cart-arrow-down"></i> {{ __('sidebar.purchase_orders') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}" id="sidebar-store-requisitions">
+                            <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') && !request()->routeIs('inventory.requisitions.my-stock') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}" id="sidebar-store-requisitions">
                                 <i class="mdi mdi-swap-horizontal"></i> {{ __('sidebar.requisitions') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('inventory.requisitions.my-stock') ? 'active' : '' }}" href="{{ route('inventory.requisitions.my-stock') }}" id="sidebar-store-my-stock">
+                                <i class="mdi mdi-package-variant-closed"></i> My Stock</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.expenses.*') ? 'active' : '' }}" href="{{ route('inventory.expenses.index') }}" id="sidebar-store-expenses">

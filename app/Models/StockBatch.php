@@ -216,6 +216,16 @@ class StockBatch extends Model implements Auditable
     }
 
     /**
+     * Scope for FEFO ordering (closest expiration date first, nulls last)
+     */
+    public function scopeFefoOrder($query)
+    {
+        return $query->orderByRaw('CASE WHEN expiry_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('expiry_date', 'asc')
+            ->orderBy('id', 'asc');
+    }
+
+    /**
      * Scope for batches expiring soon
      */
     public function scopeExpiringSoon($query, int $days = 30)

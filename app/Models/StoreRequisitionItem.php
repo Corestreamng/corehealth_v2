@@ -52,6 +52,7 @@ class StoreRequisitionItem extends Model implements Auditable
     const STATUS_PARTIAL = 'partial';
     const STATUS_FULFILLED = 'fulfilled';
     const STATUS_CANCELLED = 'cancelled';
+    const STATUS_RETURNED = 'returned';
 
     // ===== RELATIONSHIPS =====
 
@@ -98,6 +99,14 @@ class StoreRequisitionItem extends Model implements Auditable
     // ===== ACCESSORS =====
 
     /**
+     * Check if the item's approval/rejection can be reversed
+     */
+    public function canReverse(): bool
+    {
+        return in_array($this->status, [self::STATUS_APPROVED, self::STATUS_REJECTED]) && $this->fulfilled_qty == 0;
+    }
+
+    /**
      * Get the quantity to fulfill (approved or requested)
      */
     public function getQtyToFulfillAttribute(): int
@@ -112,6 +121,14 @@ class StoreRequisitionItem extends Model implements Auditable
     {
         $target = $this->approved_qty ?? $this->requested_qty;
         return max(0, $target - ($this->fulfilled_qty ?? 0));
+    }
+
+    /**
+     * Get the packaging quantity rounded to 1 decimal place
+     */
+    public function getPackagingQtyAttribute($value)
+    {
+        return $value !== null ? round((float)$value, 1) : null;
     }
 
     // ===== HELPERS =====

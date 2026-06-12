@@ -109,6 +109,97 @@ class RequisitionService
     }
 
     /**
+     * Update an editable requisition (PENDING / APPROVED / PARTIAL).
+     *
+     * items[] format:
+     *   { id: null,  product_id, requested_qty, packaging_id }   → add (PENDING only)
+     *   { id: 123,   _delete: true }                              → remove (PENDING only)
+     *   { id: 123,   requested_qty: 50 }                          → update qty
+     */
+    public function updateRequisition(StoreRequisition $requisition, array $data): StoreRequisition
+    {
+        if (! $requisition->canEditHeader()) {
+            throw new \Exception("Requisition cannot be edited in status: {$requisition->status}");
+        }
+
+        return DB::transaction(function () use ($requisition, $data) {
+            // 1. Update header details
+            if (array_key_exists('request_notes', $data)) {
+                $requisition->request_notes = $data['request_notes'];
+            }
+            if ($requisition->status === StoreRequisition::STATUS_PENDING) {
+                if (!empty($data['to_store_id'])) $requisition->to_store_id = $data['to_store_id'];
+                if (!empty($data['from_store_id'])) $requisition->from_store_id = $data['from_store_id'];
+            }
+
+            // Stamp edit tracking
+            $requisition->edited_by  = auth()->id();
+            $requisition->edited_at  = now();
+            $requisition->edit_count = ($requisition->edit_count ?? 0) + 1;
+            $requisition->save();
+
+            // 2. Process item changes
+            foreach ($data['items'] ?? [] as $itemData) {
+                // ── ADD new item (PENDING only) ──────────────────────────────
+                if (empty($itemData['item_id']) && $requisition->canEditItems()) {
+                    StoreRequisitionItem::create([
+                        'store_requisition_id' => $requisition->id,
+                        'product_id'           => $itemData['product_id'],
+                        'requested_qty'        => (int) $itemData['qty'],
+                        'packaging_id'         => $itemData['packaging_id'] ?? null,
+                        'packaging_qty'        => $itemData['packaging_qty'] ?? null,
+                        'status'               => StoreRequisitionItem::STATUS_PENDING,
+                        'notes'                => $itemData['notes'] ?? null,
+                    ]);
+                    continue;
+                }
+
+                $item = StoreRequisitionItem::find($itemData['item_id'] ?? null);
+                if (! $item || $item->store_requisition_id !== $requisition->id) {
+                    continue;
+                }
+
+                // ── DELETE item (PENDING only) ───────────────────────────────
+                if (! empty($itemData['_delete'])) {
+                    if ($requisition->canEditItems()) {
+                        $item->delete();
+                    }
+                    continue;
+                }
+
+                // ── UPDATE qty ───────────────────────────────────────────────
+                if (isset($itemData['qty']) && $requisition->canEditItemQty($item)) {
+                    $floor  = $item->fulfilled_qty ?? 0;
+                    $newQty = max((int) $itemData['qty'], $floor + 1);
+
+                    $item->requested_qty = $newQty;
+                    $item->packaging_id  = $itemData['packaging_id'] ?? $item->packaging_id;
+                    if (array_key_exists('packaging_qty', $itemData)) {
+                        $item->packaging_qty = $itemData['packaging_qty'];
+                    }
+
+                    // For APPROVED/PARTIAL carry approval forward to new qty (no re-approval needed)
+                    if (in_array($requisition->status, [
+                        StoreRequisition::STATUS_APPROVED,
+                        StoreRequisition::STATUS_PARTIAL,
+                    ])) {
+                        $item->approved_qty = $newQty;
+                    }
+
+                    // Update notes if provided
+                    if (isset($itemData['notes'])) {
+                        $item->notes = $itemData['notes'];
+                    }
+
+                    $item->save();
+                }
+            }
+
+            return $requisition->fresh(['items', 'items.product', 'items.packaging', 'fromStore', 'toStore', 'editor']);
+        });
+    }
+
+    /**
      * Approve requisition
      *
      * @param StoreRequisition $requisition
@@ -122,9 +213,20 @@ class RequisitionService
             throw new \Exception("Requisition cannot be approved");
         }
 
-        return DB::transaction(function () use ($requisition, $approvedQtys, $notes) {
+        // Cache the initial status to know if we are approving from pending or rejected
+        $initialStatus = $requisition->status;
+
+        return DB::transaction(function () use ($requisition, $approvedQtys, $notes, $initialStatus) {
             // Update approved quantities for each item
             foreach ($requisition->items as $item) {
+                // Preserve rejection status if item was individually rejected prior to final approval,
+                // unless we are globally approving a previously rejected requisition.
+                if ($item->status === StoreRequisitionItem::STATUS_REJECTED && $initialStatus === StoreRequisition::STATUS_PENDING) {
+                    $item->approved_qty = 0;
+                    $item->save();
+                    continue;
+                }
+
                 $approvedQty = $approvedQtys[$item->id] ?? $item->requested_qty;
 
                 $item->approved_qty = $approvedQty;
@@ -182,6 +284,33 @@ class RequisitionService
         $requisition->items()->update(['status' => StoreRequisitionItem::STATUS_CANCELLED]);
 
         return $requisition;
+    }
+
+    /**
+     * Reverse an item's approval/rejection back to pending
+     *
+     * @param StoreRequisitionItem $item
+     * @return StoreRequisitionItem
+     */
+    public function reverseItem(StoreRequisitionItem $item): StoreRequisitionItem
+    {
+        if (!$item->canReverse()) {
+            throw new \Exception("Item cannot be reversed");
+        }
+
+        return DB::transaction(function () use ($item) {
+            $item->status = StoreRequisitionItem::STATUS_PENDING;
+            $item->approved_qty = null;
+            $item->save();
+
+            $requisition = $item->requisition;
+            if (in_array($requisition->status, [StoreRequisition::STATUS_APPROVED, StoreRequisition::STATUS_REJECTED])) {
+                $requisition->status = StoreRequisition::STATUS_PENDING;
+                $requisition->save();
+            }
+
+            return $item->fresh();
+        });
     }
 
     /**
@@ -307,11 +436,15 @@ class RequisitionService
             }
 
             // Update requisition status
-            $pendingItems = $requisition->items()
-                ->whereIn('status', [StoreRequisitionItem::STATUS_APPROVED, StoreRequisitionItem::STATUS_PARTIAL])
-                ->count();
+            $allFullyFulfilled = true;
+            foreach ($requisition->items as $item) {
+                if (!$item->isFullyFulfilled()) {
+                    $allFullyFulfilled = false;
+                    break;
+                }
+            }
 
-            if ($pendingItems === 0) {
+            if ($allFullyFulfilled) {
                 $requisition->status = StoreRequisition::STATUS_FULFILLED;
                 $requisition->fulfilled_by = auth()->id();
                 $requisition->fulfilled_at = now();

@@ -56,6 +56,9 @@
                 <p class="text-muted mb-0">Manage inter-store stock transfer requests</p>
             </div>
             <div>
+                <a href="{{ route('inventory.requisitions.my-stock') }}{{ request('store_id') ? '?store_id=' . request('store_id') : '' }}" class="btn btn-info btn-sm mr-2">
+                    <i class="mdi mdi-cube"></i> My Stock
+                </a>
                 @can('requisitions.create')
                 <a href="{{ route('inventory.requisitions.create') }}" class="btn btn-primary btn-sm mr-2">
                     <i class="mdi mdi-plus"></i> New Requisition

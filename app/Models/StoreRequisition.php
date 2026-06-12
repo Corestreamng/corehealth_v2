@@ -38,6 +38,7 @@ class StoreRequisition extends Model implements Auditable
         'approved_by',
         'rejected_by',
         'fulfilled_by',
+        'edited_by',
         'status',
         'request_notes',
         'approval_notes',
@@ -45,12 +46,16 @@ class StoreRequisition extends Model implements Auditable
         'approved_at',
         'rejected_at',
         'fulfilled_at',
+        'edited_at',
+        'edit_count',
     ];
 
     protected $casts = [
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
         'fulfilled_at' => 'datetime',
+        'edited_at'   => 'datetime',
+        'edit_count'  => 'integer',
     ];
 
     /**
@@ -62,6 +67,7 @@ class StoreRequisition extends Model implements Auditable
     const STATUS_PARTIAL = 'partial';
     const STATUS_FULFILLED = 'fulfilled';
     const STATUS_CANCELLED = 'cancelled';
+    const STATUS_RETURNED = 'returned';
 
     /**
      * Get all available statuses
@@ -69,12 +75,13 @@ class StoreRequisition extends Model implements Auditable
     public static function getStatuses(): array
     {
         return [
-            self::STATUS_PENDING => 'Pending',
-            self::STATUS_APPROVED => 'Approved',
-            self::STATUS_REJECTED => 'Rejected',
-            self::STATUS_PARTIAL => 'Partially Fulfilled',
+            self::STATUS_PENDING   => 'Pending',
+            self::STATUS_APPROVED  => 'Approved',
+            self::STATUS_REJECTED  => 'Rejected',
+            self::STATUS_PARTIAL   => 'Partially Fulfilled',
             self::STATUS_FULFILLED => 'Fulfilled',
             self::STATUS_CANCELLED => 'Cancelled',
+            self::STATUS_RETURNED  => 'Fully Returned',
         ];
     }
 
@@ -233,11 +240,19 @@ class StoreRequisition extends Model implements Auditable
     // ===== HELPERS =====
 
     /**
+     * Check if requisition has any fulfilled items
+     */
+    public function hasFulfilledItems(): bool
+    {
+        return $this->items()->where('fulfilled_qty', '>', 0)->exists();
+    }
+
+    /**
      * Check if requisition can be approved
      */
     public function canApprove(): bool
     {
-        return $this->status === self::STATUS_PENDING;
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_REJECTED]) && !$this->hasFulfilledItems();
     }
 
     /**
@@ -245,7 +260,7 @@ class StoreRequisition extends Model implements Auditable
      */
     public function canReject(): bool
     {
-        return $this->status === self::STATUS_PENDING;
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_APPROVED]) && !$this->hasFulfilledItems();
     }
 
     /**
@@ -262,6 +277,78 @@ class StoreRequisition extends Model implements Auditable
     public function canCancel(): bool
     {
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_APPROVED]);
+    }
+
+    /**
+     * Check if the requisition header (notes) or unfulfilled item qtys can be edited.
+     * Editable as long as it is not fully fulfilled, rejected, or cancelled.
+     */
+    public function canEditHeader(): bool
+    {
+        // Cannot edit if fully returned
+        if ($this->isFullyReturned()) return false;
+
+        return in_array($this->status, [
+            self::STATUS_PENDING,
+            self::STATUS_APPROVED,
+            self::STATUS_PARTIAL,
+        ]);
+    }
+
+    /**
+     * Items (add/remove) can only be modified while still PENDING.
+     */
+    public function canEditItems(): bool
+    {
+        if ($this->isFullyReturned()) return false;
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Whether a specific item's requested_qty can be updated.
+     * For APPROVED/PARTIAL: only unfulfilled items (fulfilled_qty < approved_qty).
+     */
+    public function canEditItemQty(StoreRequisitionItem $item): bool
+    {
+        if ($this->status === self::STATUS_PENDING) {
+            return true;
+        }
+        if (in_array($this->status, [self::STATUS_APPROVED, self::STATUS_PARTIAL])) {
+            $fulfilledQty = $item->fulfilled_qty ?? 0;
+            $targetQty    = $item->approved_qty ?? $item->requested_qty;
+            return in_array($item->status, [
+                StoreRequisitionItem::STATUS_APPROVED,
+                StoreRequisitionItem::STATUS_PARTIAL,
+            ]) && $fulfilledQty < $targetQty;
+        }
+        return false;
+    }
+
+    /**
+     * Whether this requisition has been edited since submission.
+     */
+    public function isEdited(): bool
+    {
+        return $this->edit_count > 0;
+    }
+
+    /**
+     * Whether ALL items in this requisition have been returned.
+     * Uses the loaded relationship if available; avoids N+1 if items already loaded.
+     */
+    public function isFullyReturned(): bool
+    {
+        $items = $this->relationLoaded('items') ? $this->items : $this->items()->get();
+        if ($items->isEmpty()) return false;
+        return $items->every(fn($item) => $item->status === StoreRequisitionItem::STATUS_RETURNED);
+    }
+
+    /**
+     * Relationship: user who last edited
+     */
+    public function editor()
+    {
+        return $this->belongsTo(User::class, 'edited_by');
     }
 
     /**
@@ -300,13 +387,14 @@ class StoreRequisition extends Model implements Auditable
     public function getStatusBadgeClass(): string
     {
         return match($this->status) {
-            self::STATUS_PENDING => 'badge-warning',
-            self::STATUS_APPROVED => 'badge-primary',
-            self::STATUS_REJECTED => 'badge-danger',
-            self::STATUS_PARTIAL => 'badge-info',
+            self::STATUS_PENDING   => 'badge-warning',
+            self::STATUS_APPROVED  => 'badge-primary',
+            self::STATUS_REJECTED  => 'badge-danger',
+            self::STATUS_PARTIAL   => 'badge-info',
             self::STATUS_FULFILLED => 'badge-success',
             self::STATUS_CANCELLED => 'badge-secondary',
-            default => 'badge-secondary',
+            self::STATUS_RETURNED  => 'badge-dark',
+            default                => 'badge-secondary',
         };
     }
 }

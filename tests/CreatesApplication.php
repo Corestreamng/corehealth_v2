@@ -17,6 +17,12 @@ trait CreatesApplication
 
         $app->make(Kernel::class)->bootstrap();
 
+        // Override database strict mode and name for mysql tests to bypass zero-date constraints
+        if (env('DB_CONNECTION') === 'mysql') {
+            config(['database.connections.mysql.database' => env('DB_DATABASE', '_corehealth_db_v2_test')]);
+            config(['database.connections.mysql.strict' => false]);
+        }
+
         return $app;
     }
 }
