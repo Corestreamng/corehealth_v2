@@ -40,6 +40,11 @@
                                     <i class="mdi mdi-clipboard-text-outline mr-1"></i> Procedure Consent Template
                                 </a>
                             </li>
+                            <li class="nav-item" style="flex: 1; text-align: center; list-style: none;">
+                                <a class="nav-link" id="llm-tab" data-toggle="tab" href="#llm-settings" role="tab" style="font-weight: 600; border-radius: 8px; padding: 10px 15px; display: block; text-decoration: none; transition: all 0.2s;">
+                                    <i class="mdi mdi-robot-outline mr-1"></i> AI & LLM Integration
+                                </a>
+                            </li>
                         </ul>
 
                         <!-- Tab content -->
@@ -546,6 +551,169 @@
                                         <div class="form-group">
                                             <label class="form-label" style="font-weight: 600; color: #495057;">HTML Consent Template</label>
                                             <textarea class="form-control" name="consent_template" id="consent_template_editor" rows="18" style="border-radius: 8px; font-family: monospace; font-size: 0.9rem; line-height: 1.6; padding: 1rem;">{{ old('consent_template', $config->consent_template) }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- LLM / AI Configuration Tab -->
+                            <div class="tab-pane fade" id="llm-settings" role="tabpanel" aria-labelledby="llm-tab">
+                                <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                    <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                                <i class="mdi mdi-robot-outline mr-2" style="color: var(--primary-color);"></i>
+                                                LLM Gateway Configuration
+                                            </h5>
+                                            <span class="badge bg-success rounded-pill px-3 py-2">Gateway Active</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" style="padding: 2rem;">
+                                        <p class="text-muted mb-4" style="font-size: 0.95rem;">
+                                            <i class="mdi mdi-information-outline text-info mr-1"></i> Configure your AI providers for clinical summaries and note polishing. These settings are securely stored in the <code>application_status</code> table.
+                                        </p>
+                                        
+                                        @php
+                                            $llmConfig = is_string($config->llm_config) ? json_decode($config->llm_config, true) : (is_array($config->llm_config) ? $config->llm_config : []);
+                                            $activeProvider = $llmConfig['active_provider'] ?? 'gemini';
+                                            $providers = $llmConfig['providers'] ?? [];
+                                        @endphp
+                                        
+                                        <div class="row mb-4">
+                                            <div class="col-md-6">
+                                                <label class="form-label" style="font-weight: 600; color: #495057;">Active LLM Provider</label>
+                                                <select class="form-control" name="llm_config[active_provider]" style="border-radius: 8px; padding: 0.75rem;">
+                                                    <option value="gemini" {{ $activeProvider == 'gemini' ? 'selected' : '' }}>Google Gemini (Recommended)</option>
+                                                    <option value="anthropic" {{ $activeProvider == 'anthropic' ? 'selected' : '' }}>Anthropic Claude</option>
+                                                    <option value="openai" {{ $activeProvider == 'openai' ? 'selected' : '' }}>OpenAI GPT</option>
+                                                    <option value="ollama" {{ $activeProvider == 'ollama' ? 'selected' : '' }}>Ollama (Local / Offline)</option>
+                                                    <option value="huggingface" {{ $activeProvider == 'huggingface' ? 'selected' : '' }}>Hugging Face</option>
+                                                </select>
+                                                <small class="text-muted d-block mt-1">This provider will be used for all AI features across the system.</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label" style="font-weight: 600; color: #495057;">Global Features</label>
+                                                <div class="custom-control custom-switch mt-2">
+                                                    <input type="checkbox" class="custom-control-input" id="llmEnabledSwitch" name="llm_config[enabled]" value="1" {{ ($llmConfig['enabled'] ?? true) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label" for="llmEnabledSwitch">Enable AI Assistant globally</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-4">
+                                        
+                                        <h6 class="font-weight-bold mb-3" style="color: var(--primary-color);">Provider API Keys</h6>
+                                        <div class="row">
+                                            <!-- Gemini -->
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Google Gemini API Key</label>
+                                                <input type="password" class="form-control mb-2" name="llm_config[providers][gemini][api_key]" 
+                                                       value="{{ $providers['gemini']['api_key'] ?? '' }}" 
+                                                       placeholder="Enter API Key..." style="border-radius: 8px;">
+                                                <select class="form-control form-control-sm" name="llm_config[providers][gemini][default_model]" style="border-radius: 8px;">
+                                                    @if(!empty($providerModels['gemini']))
+                                                        @foreach($providerModels['gemini'] as $model)
+                                                            <option value="{{ $model['id'] }}" {{ ($providers['gemini']['default_model'] ?? '') == $model['id'] ? 'selected' : '' }}>{{ $model['name'] }}</option>
+                                                        @endforeach
+                                                    @else
+                                                        <option value="gemini-1.5-pro" {{ ($providers['gemini']['default_model'] ?? '') == 'gemini-1.5-pro' ? 'selected' : '' }}>Gemini 1.5 Pro</option>
+                                                        <option value="gemini-2.5-pro" {{ ($providers['gemini']['default_model'] ?? '') == 'gemini-2.5-pro' ? 'selected' : '' }}>Gemini 2.5 Pro</option>
+                                                        <option value="gemini-2.0-flash" {{ ($providers['gemini']['default_model'] ?? '') == 'gemini-2.0-flash' ? 'selected' : '' }}>Gemini 2.0 Flash</option>
+                                                    @endif
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Anthropic -->
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Anthropic API Key</label>
+                                                <input type="password" class="form-control mb-2" name="llm_config[providers][anthropic][api_key]" 
+                                                       value="{{ $providers['anthropic']['api_key'] ?? '' }}" 
+                                                       placeholder="sk-ant-..." style="border-radius: 8px;">
+                                                <select class="form-control form-control-sm" name="llm_config[providers][anthropic][default_model]" style="border-radius: 8px;">
+                                                    @if(!empty($providerModels['anthropic']))
+                                                        @foreach($providerModels['anthropic'] as $model)
+                                                            <option value="{{ $model['id'] }}" {{ ($providers['anthropic']['default_model'] ?? '') == $model['id'] ? 'selected' : '' }}>{{ $model['name'] }}</option>
+                                                        @endforeach
+                                                    @else
+                                                        <option value="claude-3-5-sonnet-20240620" {{ ($providers['anthropic']['default_model'] ?? '') == 'claude-3-5-sonnet-20240620' ? 'selected' : '' }}>Claude 3.5 Sonnet</option>
+                                                        <option value="claude-3-opus-20240229" {{ ($providers['anthropic']['default_model'] ?? '') == 'claude-3-opus-20240229' ? 'selected' : '' }}>Claude 3 Opus</option>
+                                                    @endif
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- OpenAI -->
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">OpenAI API Key</label>
+                                                <input type="password" class="form-control mb-2" name="llm_config[providers][openai][api_key]" 
+                                                       value="{{ $providers['openai']['api_key'] ?? '' }}" 
+                                                       placeholder="sk-proj-..." style="border-radius: 8px;">
+                                                <select class="form-control form-control-sm" name="llm_config[providers][openai][default_model]" style="border-radius: 8px;">
+                                                    @if(!empty($providerModels['openai']))
+                                                        @foreach($providerModels['openai'] as $model)
+                                                            <option value="{{ $model['id'] }}" {{ ($providers['openai']['default_model'] ?? '') == $model['id'] ? 'selected' : '' }}>{{ $model['name'] }}</option>
+                                                        @endforeach
+                                                    @else
+                                                        <option value="gpt-4o" {{ ($providers['openai']['default_model'] ?? '') == 'gpt-4o' ? 'selected' : '' }}>GPT-4o</option>
+                                                        <option value="gpt-4-turbo" {{ ($providers['openai']['default_model'] ?? '') == 'gpt-4-turbo' ? 'selected' : '' }}>GPT-4 Turbo</option>
+                                                    @endif
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Ollama -->
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Ollama Base URL (Local)</label>
+                                                <input type="text" class="form-control mb-2" name="llm_config[providers][ollama][base_url]" 
+                                                       value="{{ $providers['ollama']['base_url'] ?? 'http://127.0.0.1:11434/api' }}" 
+                                                       placeholder="http://localhost:11434/api" style="border-radius: 8px;">
+                                                <select class="form-control form-control-sm" name="llm_config[providers][ollama][default_model]" style="border-radius: 8px;">
+                                                    @if(!empty($providerModels['ollama']))
+                                                        @foreach($providerModels['ollama'] as $model)
+                                                            <option value="{{ $model['id'] }}" {{ ($providers['ollama']['default_model'] ?? '') == $model['id'] ? 'selected' : '' }}>{{ $model['name'] }}</option>
+                                                        @endforeach
+                                                    @else
+                                                        <option value="llama3" {{ ($providers['ollama']['default_model'] ?? '') == 'llama3' ? 'selected' : '' }}>Llama 3</option>
+                                                        <option value="mistral" {{ ($providers['ollama']['default_model'] ?? '') == 'mistral' ? 'selected' : '' }}>Mistral</option>
+                                                    @endif
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-4">
+                                        
+                                        <h6 class="font-weight-bold mb-3" style="color: var(--primary-color);">Patient Summary Settings</h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Data Scope Limiter (Months)</label>
+                                                <input type="number" class="form-control" name="llm_config[summary_scope_months]" 
+                                                       value="{{ $llmConfig['summary_scope_months'] ?? 3 }}" min="1" max="12" style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">Months of history to fetch for RAG context (Max 12).</small>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Data Entry Limit</label>
+                                                <input type="number" class="form-control" name="llm_config[summary_scope_max_entries]" 
+                                                       value="{{ $llmConfig['summary_scope_max_entries'] ?? 50 }}" min="10" max="100" style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">Maximum entries per clinical type to prevent token overflow.</small>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="custom-control custom-switch mt-2">
+                                                    <input type="checkbox" class="custom-control-input" id="voiceEnabledSwitch" name="llm_config[summary_voice_enabled]" value="1" {{ ($llmConfig['summary_voice_enabled'] ?? true) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label" for="voiceEnabledSwitch">Enable Web Speech Narration</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-4">
+                                        
+                                        <h6 class="font-weight-bold mb-3" style="color: var(--primary-color);">System Prompts</h6>
+                                        <div class="row mb-4">
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Patient Summary Prompt</label>
+                                                <textarea class="form-control" name="llm_config[system_prompts][patient_summary]" rows="4" style="border-radius: 8px;" placeholder="System instructions for generating patient summaries...">{{ $llmConfig['system_prompts']['patient_summary'] ?? config('llm.prompts.patient_summary') }}</textarea>
+                                            </div>
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Note Polishing Prompt</label>
+                                                <textarea class="form-control" name="llm_config[system_prompts][polish_note]" rows="3" style="border-radius: 8px;" placeholder="System instructions for NLP offline polishing...">{{ $llmConfig['system_prompts']['polish_note'] ?? config('llm.prompts.polish_note') }}</textarea>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

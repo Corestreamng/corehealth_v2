@@ -1,5 +1,6 @@
 {{-- Reusable Speech Dictation Kit Partial --}}
 @php
+    $targetId = $targetId ?? 'global_dictation_target';
     $uniqueId = $targetId . '_' . uniqid();
     $showLangSelect = $showLangSelect ?? true;
     $editorType = $editorType ?? 'textarea';

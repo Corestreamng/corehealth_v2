@@ -714,6 +714,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('clinical-context/patient/{patientId}/imaging', [ClinicalContextController::class, 'getImaging'])->name('clinical-context.imaging');
         Route::get('clinical-context/patient/{patientId}/procedures', [ClinicalContextController::class, 'getProcedures'])->name('clinical-context.procedures');
 
+        // LLM Integration Routes
+        Route::post('llm/patient-summary', [\App\Http\Controllers\LlmController::class, 'generatePatientSummary'])->name('llm.patient-summary');
+        Route::post('llm/polish-note', [\App\Http\Controllers\LlmController::class, 'polishNote'])->name('llm.polish-note');
+        Route::get('llm/providers', [\App\Http\Controllers\LlmController::class, 'getProviders'])->name('llm.providers')->middleware('role:SUPERADMIN|ADMIN');
+        Route::get('llm/models/{provider}', [\App\Http\Controllers\LlmController::class, 'getModels'])->name('llm.models')->middleware('role:SUPERADMIN|ADMIN');
+        Route::post('llm/test-connection', [\App\Http\Controllers\LlmController::class, 'testConnection'])->name('llm.test-connection')->middleware('role:SUPERADMIN|ADMIN');
+
         // Clinical Alerts CRUD
         Route::get('clinical-alerts/patient/{patientId}', [\App\Http\Controllers\ClinicalAlertController::class, 'index'])->name('clinical-alerts.index');
         Route::post('clinical-alerts/patient/{patientId}', [\App\Http\Controllers\ClinicalAlertController::class, 'store'])->name('clinical-alerts.store');

@@ -7870,6 +7870,15 @@ function loadPatient(patientId) {
     // Set PATIENT_ID for medication and I/O charts
     PATIENT_ID = patientId;
 
+    // Initialize patient summary manager for LLM integration
+    if (typeof PatientSummaryManager !== 'undefined') {
+        window.patientSummary = new PatientSummaryManager({
+            patientId: patientId,
+            encounterId: null,
+            autoOpen: false
+        });
+    }
+
     // CRITICAL: Hide all other views first to prevent stacking
     hideAllViews();
 
@@ -18321,6 +18330,9 @@ function showBundleRemove(btn) {
 </script>
 
 @include('admin.partials.clinical_alerts_modal')
+@include('admin.partials.patient_summary_overlay')
+@include('admin.partials.ai_quick_actions')
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
+<script src="{{ asset('js/patient-summary.js') }}"></script>
 
 @endsection
