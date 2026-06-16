@@ -97,6 +97,11 @@ class ApplicationStatu extends Model implements Auditable
         'slow_query_log_offset',
         'last_slow_query_check',
         'consent_template',
+        'llm_config',
+    ];
+
+    protected $casts = [
+        'llm_config' => 'array',
     ];
 
     /**

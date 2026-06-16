@@ -5982,6 +5982,20 @@
     </script>
     
     @include('admin.partials.clinical_alerts_modal')
+    @include('admin.partials.patient_summary_overlay')
+    @include('admin.partials.ai_quick_actions')
     <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
+    <script src="{{ asset('js/patient-summary.js') }}"></script>
     <script src="{{ asset('js/speech-dictation.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            if (typeof PatientSummaryManager !== 'undefined') {
+                window.patientSummary = new PatientSummaryManager({
+                    patientId: {{ $patient->id }},
+                    encounterId: {{ $encounter->id }},
+                    autoOpen: true
+                });
+            }
+        });
+    </script>
 @endsection

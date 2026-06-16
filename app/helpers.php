@@ -262,14 +262,25 @@ if (!function_exists('generateTransactionId')) {
 
 if (!function_exists('appsettings')) {
 
-    function appsettings($key = null)
+    function appsettings($key = null, $forceRefresh = false)
     {
         static $app = null;
+
+        if ($forceRefresh) {
+            $app = null;
+            Cache::forget('app_settings');
+        }
 
         if ($app === null) {
             $app = Cache::remember('app_settings', 3600, function () {
                 return ApplicationStatu::first();
             });
+
+            // Prevent caching null if DB fails or table is empty
+            if (!$app) {
+                Cache::forget('app_settings');
+                $app = new ApplicationStatu();
+            }
         }
 
         // If specific key is requested, return it with fallback to env
@@ -318,7 +329,7 @@ if (!function_exists('appsettings')) {
 if (!function_exists('clearAppSettingsCache')) {
     function clearAppSettingsCache()
     {
-        Cache::forget('app_settings');
+        appsettings(null, true);
     }
 }
 

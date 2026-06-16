@@ -27,6 +27,27 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        // LLM Cache Invalidation Observer
+        $clinicalModels = [
+            \App\Models\VitalSign::class,
+            \App\Models\Encounter::class,
+            \App\Models\NursingNote::class,
+            \App\Models\MedicationAdministration::class,
+            \App\Models\LabServiceRequest::class,
+            \App\Models\ImagingServiceRequest::class,
+            \App\Models\ProductRequest::class,
+            \App\Models\Procedure::class,
+            \App\Models\AdmissionRequest::class,
+            \App\Models\SpecialistReferral::class,
+            \App\Models\NonPharmOrder::class,
+            \App\Models\InjectionAdministration::class,
+            \App\Models\ImmunizationRecord::class,
+        ];
+
+        foreach ($clinicalModels as $model) {
+            if (class_exists($model)) {
+                $model::observe(\App\Observers\ClinicalDataObserver::class);
+            }
+        }
     }
 }
