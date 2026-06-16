@@ -500,11 +500,59 @@ class SpeechDictationKit {
                 // SOAP/Clinical Auto-paragraphing
                 let polished = this.formatMedicalStructure(text);
 
-                // Clean repeated words/articles via Retext NLP Scribe
-                polished = await this.scribe.process(polished);
+                // Check if we should use LLM or fallback to local NLP
+                let usedLlm = false;
+                // Rely on globals set by the pages incorporating the dictation kit
+                let encId = window.currentEncounterId || (window.patientSummary ? window.patientSummary.encounterId : null);
+                let patId = window.currentPatientId || (window.patientSummary ? window.patientSummary.patientId : null);
 
-                // Clean general spacing and punctuation issues
-                polished = this.cleanSpacingAndCasing(polished);
+                if (patId && encId) {
+                    try {
+                        const response = await fetch('/llm/polish-note', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                note_content: polished,
+                                patient_id: patId,
+                                encounter_id: encId
+                            })
+                        });
+                        const data = await response.json();
+                        if (data.success && data.polished_content) {
+                            if (this.editorType === 'ckeditor') {
+                                // Basic markdown to HTML (since LLM might return Markdown)
+                                polished = data.polished_content
+                                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                                    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                                    .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                                    .replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>')
+                                    .replace(/<\/ul>\n<ul>/gim, '')
+                                    .replace(/\n/gim, '<br>');
+                            } else {
+                                polished = data.polished_content;
+                            }
+                            usedLlm = true;
+                        } else {
+                            throw new Error(data.message || 'LLM polishing failed');
+                        }
+                    } catch (llmError) {
+                        console.warn('LLM Polish Note failed, falling back to local NLP:', llmError);
+                        polished = await this.scribe.process(polished);
+                    }
+                } else {
+                    // Offline / Local processing fallback
+                    polished = await this.scribe.process(polished);
+                }
+
+                // Clean general spacing and punctuation issues ONLY if using local NLP
+                if (!usedLlm) {
+                    polished = this.cleanSpacingAndCasing(polished);
+                }
 
                 if (this.editorType === 'ckeditor') {
                     const editor = this.getEditorInstance();
@@ -522,7 +570,11 @@ class SpeechDictationKit {
                 }
 
                 if (window.toastr) {
-                    toastr.success('✨ Clinical Note formatted & NLP-polished successfully!');
+                    if (usedLlm) {
+                        toastr.success('✨ Clinical Note AI-polished successfully!');
+                    } else {
+                        toastr.success('✨ Clinical Note formatted & NLP-polished successfully!');
+                    }
                 }
             } else {
                 if (window.toastr) {
@@ -530,7 +582,7 @@ class SpeechDictationKit {
                 }
             }
         } catch (e) {
-            console.error('Retext offline formatting error:', e);
+            console.error('Formatting error:', e);
             if (window.toastr) toastr.error('Failed to auto-format clinical notes.');
         } finally {
             this.formatButton.disabled = false;

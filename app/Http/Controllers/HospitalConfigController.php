@@ -6,6 +6,7 @@ use App\Models\ApplicationStatu;
 use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class HospitalConfigController extends Controller
 {
@@ -25,7 +26,27 @@ class HospitalConfigController extends Controller
         // Get service categories for dropdowns
         $serviceCategories = ServiceCategory::orderBy('category_name')->get();
 
-        return view('admin.hospital-config.index', compact('config', 'serviceCategories'));
+        // Fetch dynamic models for LLM config
+        $llmConfig = is_string($config->llm_config) ? json_decode($config->llm_config, true) : (is_array($config->llm_config) ? $config->llm_config : []);
+        $providers = $llmConfig['providers'] ?? [];
+        
+        $providerModels = [];
+        $gateway = app(\App\Services\LlmGatewayService::class);
+        foreach (['gemini', 'anthropic', 'openai', 'ollama', 'huggingface'] as $prov) {
+            if (!empty($providers[$prov]['api_key']) || $prov === 'ollama') {
+                try {
+                    $providerModels[$prov] = Cache::remember("llm_models_{$prov}", 3600, function() use ($gateway, $prov) {
+                        return $gateway->listModels($prov);
+                    });
+                } catch (\Exception $e) {
+                    $providerModels[$prov] = [];
+                }
+            } else {
+                $providerModels[$prov] = [];
+            }
+        }
+
+        return view('admin.hospital-config.index', compact('config', 'serviceCategories', 'providerModels'));
     }
 
     public function update(Request $request)
@@ -122,6 +143,7 @@ class HospitalConfigController extends Controller
             'doctor_self_approve_imaging_result' => 'boolean',
             'nurse_self_approve_imaging_result' => 'boolean',
             'consent_template' => 'nullable|string',
+            'llm_config' => 'nullable|array',
         ]);
 
         $config = ApplicationStatu::first();
@@ -150,6 +172,39 @@ class HospitalConfigController extends Controller
         $validated['send_appointment_email_to_doctors'] = $request->has('send_appointment_email_to_doctors');
         $validated['send_appointment_email_to_patients'] = $request->has('send_appointment_email_to_patients');
         $validated['backup_compression'] = $request->has('backup_compression');
+
+        // Handle LLM Config Checkboxes and processing
+        if ($request->has('llm_config')) {
+            $llmConfig = $request->input('llm_config');
+            
+            $existingLlmConfig = is_string($config->llm_config) ? json_decode($config->llm_config, true) : (is_array($config->llm_config) ? $config->llm_config : []);
+
+            $llmConfig['enabled'] = isset($llmConfig['enabled']);
+            $llmConfig['summary_voice_enabled'] = isset($llmConfig['summary_voice_enabled']);
+            // Ensure numbers are cast correctly if needed
+            $llmConfig['summary_scope_months'] = (int) ($llmConfig['summary_scope_months'] ?? 3);
+            $llmConfig['summary_scope_max_entries'] = (int) ($llmConfig['summary_scope_max_entries'] ?? 50);
+
+            // Merge providers securely
+            if (isset($llmConfig['providers']) && is_array($llmConfig['providers'])) {
+                foreach ($llmConfig['providers'] as $provider => $providerData) {
+                    if (empty($providerData['api_key'])) {
+                        // Restore old api key if new one is empty
+                        $llmConfig['providers'][$provider]['api_key'] = $existingLlmConfig['providers'][$provider]['api_key'] ?? '';
+                    }
+                }
+            }
+
+            // The UI now submits system_prompts. Merge any missing ones from existing config.
+            if (isset($llmConfig['system_prompts']) && is_array($llmConfig['system_prompts'])) {
+                $llmConfig['system_prompts'] = array_merge($existingLlmConfig['system_prompts'] ?? [], $llmConfig['system_prompts']);
+            } else {
+                $llmConfig['system_prompts'] = $existingLlmConfig['system_prompts'] ?? [];
+            }
+            $llmConfig['rag_settings'] = $existingLlmConfig['rag_settings'] ?? [];
+
+            $validated['llm_config'] = $llmConfig;
+        }
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
