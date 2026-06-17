@@ -84,6 +84,7 @@ class SpeechDictationKit {
         this.historyText = document.querySelector(options.historyTextSelector);
         this.langSelect = document.querySelector(options.langSelectSelector);
         this.formatButton = document.querySelector(options.formatButtonSelector);
+        this.summaryButton = document.querySelector(options.summaryButtonSelector);
 
         this.editorType = options.editorType || 'textarea'; // 'textarea' or 'ckeditor'
         this.defaultLang = options.defaultLang || 'en-US';
@@ -160,6 +161,25 @@ class SpeechDictationKit {
             this.formatButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.manualFormat();
+            });
+        }
+
+        // AI Summary Button Click
+        if (this.summaryButton) {
+            this.summaryButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (typeof window.patientSummary !== 'undefined') {
+                    // Support for SPA workbenches where the patient ID might change dynamically
+                    let patId = window.currentPatientId || window.patientSummary.patientId;
+                    let encId = window.currentEncounterId || window.patientSummary.encounterId;
+                    
+                    if (patId) {
+                        window.patientSummary.updateContext(patId, encId);
+                    }
+                    window.patientSummary.openAndLoad();
+                } else {
+                    console.warn("PatientSummaryManager is not initialized on this page.");
+                }
             });
         }
 

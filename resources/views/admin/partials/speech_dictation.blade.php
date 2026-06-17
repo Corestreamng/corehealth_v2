@@ -25,6 +25,14 @@
             <span class="speech-format-icon-wrapper"><i class="fa fa-magic"></i></span> Polish Note
         </button>
         
+        {{-- Patient Summary Button --}}
+        <button type="button" 
+                id="btn-ai-summary-{{ $uniqueId }}" 
+                class="btn btn-speech-kit btn-speech-summary d-flex align-items-center gap-2"
+                title="Generate AI Clinical Patient Summary">
+            <span class="speech-summary-icon-wrapper"><i class="fa fa-file-text-o"></i></span> AI Summary
+        </button>
+        
         @if($showLangSelect)
             <select id="select-speech-lang-{{ $uniqueId }}" 
                     class="form-select form-select-sm rounded-pill py-0 px-2 select-speech-lang" 
@@ -200,6 +208,35 @@
 .btn-speech-format:hover .speech-format-icon-wrapper {
     color: #6f42c1;
     transform: scale(1.15) rotate(20deg);
+}
+
+.btn-speech-summary {
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%) !important;
+    color: #333333 !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+.btn-speech-summary .speech-summary-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: #ffffff;
+    border-radius: 50%;
+    color: #0066cc; /* Blue icon */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.btn-speech-summary:hover {
+    transform: scale(1.08) translateY(-1px);
+    background: linear-gradient(135deg, #0066cc 0%, #004d99 100%) !important;
+    color: #ffffff !important;
+    border-color: #0066cc !important;
+    box-shadow: 0 6px 18px rgba(0, 102, 204, 0.25) !important;
+}
+.btn-speech-summary:hover .speech-summary-icon-wrapper {
+    color: #0066cc;
+    transform: scale(1.15);
 }
 
 @keyframes dictatingPulse {
@@ -494,6 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
         new SpeechDictationKit({
             buttonSelector: '#btn-voice-dictate-{{ $uniqueId }}',
             formatButtonSelector: '#btn-manual-format-{{ $uniqueId }}',
+            summaryButtonSelector: '#btn-ai-summary-{{ $uniqueId }}',
             targetSelector: '#{{ $targetId }}',
             previewBubbleSelector: '#speech-overlay-{{ $uniqueId }}',
             overlayStopBtnSelector: '#btn-stop-overlay-{{ $uniqueId }}',
