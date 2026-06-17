@@ -40,7 +40,7 @@ class LlmController extends Controller
             $context = $this->contextService->getPatientContext($request->patient_id, $request->encounter_id);
 
             $response = $this->gateway->complete($systemPrompt, $context, [
-                'max_tokens' => 1500,
+                'max_tokens' => 4096,
                 'temperature' => 0.2, // Low temp for clinical facts
             ]);
 
