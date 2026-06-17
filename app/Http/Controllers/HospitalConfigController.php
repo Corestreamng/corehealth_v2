@@ -191,6 +191,14 @@ class HospitalConfigController extends Controller
                     if (empty($providerData['api_key'])) {
                         // Restore old api key if new one is empty
                         $llmConfig['providers'][$provider]['api_key'] = $existingLlmConfig['providers'][$provider]['api_key'] ?? '';
+                    } else {
+                        // Encrypt new API key
+                        try {
+                            $llmConfig['providers'][$provider]['api_key'] = \Illuminate\Support\Facades\Crypt::encryptString($providerData['api_key']);
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::error('Failed to encrypt API key for ' . $provider);
+                            $llmConfig['providers'][$provider]['api_key'] = $existingLlmConfig['providers'][$provider]['api_key'] ?? '';
+                        }
                     }
                 }
             }

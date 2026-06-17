@@ -147,9 +147,21 @@ class LlmGatewayService
             throw new \Exception("LLM provider '{$provider}' is not configured.");
         }
 
+        $apiKey = $providerConfig['api_key'] ?? '';
+        
+        // Attempt to decrypt the API key
+        if (!empty($apiKey)) {
+            try {
+                // Crypt::decryptString throws an exception if the payload is invalid
+                $apiKey = \Illuminate\Support\Facades\Crypt::decryptString($apiKey);
+            } catch (\Exception $e) {
+                // If decryption fails, assume it's a legacy unencrypted key
+            }
+        }
+
         return $this->createAdapter(
             $provider,
-            $providerConfig['api_key'] ?? '',
+            $apiKey,
             $providerConfig['base_url'] ?? ''
         );
     }
