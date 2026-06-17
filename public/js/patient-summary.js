@@ -5,6 +5,12 @@
 
 class PatientSummaryManager {
     constructor(config = {}) {
+        if (PatientSummaryManager.instance) {
+            PatientSummaryManager.instance.updateConfig(config);
+            return PatientSummaryManager.instance;
+        }
+        PatientSummaryManager.instance = this;
+
         this.patientId = config.patientId;
         this.encounterId = config.encounterId;
         this.autoOpen = config.autoOpen !== undefined ? config.autoOpen : true;
@@ -36,6 +42,26 @@ class PatientSummaryManager {
         this.hasLoaded = false;
 
         this.init();
+    }
+
+    updateConfig(config) {
+        this.patientId = config.patientId;
+        this.encounterId = config.encounterId;
+        this.autoOpen = config.autoOpen !== undefined ? config.autoOpen : true;
+        this.voiceEnabled = config.voiceEnabled !== undefined ? config.voiceEnabled : true;
+        if (config.voiceRate) this.defaultRate = config.voiceRate;
+        
+        this.hasLoaded = false;
+        this.summaryText = '';
+        if (this.textContent) this.textContent.innerHTML = '';
+        if (this.metaInfo) this.metaInfo.innerHTML = '';
+        
+        // Check autoOpen logic for the new patient
+        const sessionKey = `summary_shown_${this.patientId}_${this.encounterId}`;
+        if (this.autoOpen && !sessionStorage.getItem(sessionKey)) {
+            sessionStorage.setItem(sessionKey, '1');
+            setTimeout(() => this.openAndLoad(), 1000);
+        }
     }
 
     init() {
