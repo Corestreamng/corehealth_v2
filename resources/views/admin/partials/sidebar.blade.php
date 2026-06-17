@@ -1400,7 +1400,7 @@
         </div>
 
         <!-- Bottom User Profile Section -->
-        <li class="nav-item nav-profile pt-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+        <li class="nav-item nav-profile pt-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.1) !important; background: rgba(0,0,0,0.15);">
             <div class="px-3 pb-3">
                 <div class="d-flex align-items-center mb-3">
                     <x-user-avatar :user="Auth::user()" width="40px" height="40px" class="border border-light" />
@@ -1408,7 +1408,7 @@
                         <div class="font-weight-bold text-white text-truncate" style="font-size: 0.95rem;">
                             {{ Auth::user()->firstname }} {{ Auth::user()->surname }}
                         </div>
-                        <div class="text-muted small text-truncate" style="opacity: 0.7;">{{ Auth::user()->category->name ?? '' }}</div>
+                        <div class="small text-truncate" style="color: rgba(255,255,255,0.8) !important;">{{ Auth::user()->category->name ?? '' }}</div>
                     </div>
                 </div>
 
@@ -1420,12 +1420,12 @@
                 <div class="mb-3">
                     <div class="d-flex flex-wrap justify-content-center" style="gap: 0.5rem;">
                         @if($staffProfile->is_dept_head)
-                            <span class="badge d-flex align-items-center" style="background: linear-gradient(135deg, #f6ad55, #ed8936); color: white; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                            <span class="badge d-flex align-items-center" style="background: linear-gradient(135deg, #f6ad55, #ed8936); color: #ffffff !important; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-shadow: 0 1px 1px rgba(0,0,0,0.2);">
                                 <i class="mdi mdi-shield-crown mr-1"></i> Dept Head
                             </span>
                         @endif
                         @if($staffProfile->is_unit_head)
-                            <span class="badge d-flex align-items-center" style="background: linear-gradient(135deg, #63b3ed, #4299e1); color: white; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                            <span class="badge d-flex align-items-center" style="background: linear-gradient(135deg, #63b3ed, #4299e1); color: #ffffff !important; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-shadow: 0 1px 1px rgba(0,0,0,0.2);">
                                 <i class="mdi mdi-shield-account mr-1"></i> Unit Head
                             </span>
                         @endif
@@ -1436,10 +1436,10 @@
                 <a href="{{ route('logout') }}"
                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                    class="btn btn-block d-flex align-items-center justify-content-center py-2"
-                   style="background: rgba(255, 50, 50, 0.15); border: 1px solid rgba(255, 50, 50, 0.2); color: #ff6b6b; transition: all 0.3s;"
+                   style="background: rgba(220, 53, 69, 0.85); border: 1px solid rgba(220, 53, 69, 1); color: #ffffff !important; border-radius: 6px; transition: all 0.3s;"
                    id="sidebar-bottom-logout">
                     <i class="mdi mdi-logout mr-2"></i>
-                    <span style="font-weight: 500;">{{ __('sidebar.logout') }}</span>
+                    <span style="font-weight: 600;">{{ __('sidebar.logout') }}</span>
                 </a>
             </div>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">

@@ -71,6 +71,15 @@
                                     </div>
 
                                     <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Site Abbreviation</label>
+                                        <input type="text" class="form-control" name="site_abbreviation"
+                                               value="{{ old('site_abbreviation', $config->site_abbreviation) }}"
+                                               placeholder="e.g. CH" maxlength="10"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                        <small class="text-muted">Used in sidebar when no logo is set.</small>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
                                         <label class="form-label" style="font-weight: 600; color: #495057;">Version</label>
                                         <input type="text" class="form-control" name="version"
                                                value="{{ old('version', $config->version) }}"
@@ -102,6 +111,46 @@
                                         <label class="form-label" style="font-weight: 600; color: #495057;">Footer Text</label>
                                         <input type="text" class="form-control" name="footer_text"
                                                value="{{ old('footer_text', $config->footer_text) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Card -->
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-card-account-phone-outline mr-2" style="color: var(--primary-color);"></i>
+                                    Contact Information
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Contact Address</label>
+                                        <textarea class="form-control" name="contact_address" rows="2"
+                                                  style="border-radius: 8px; padding: 0.75rem;">{{ old('contact_address', $config->contact_address) }}</textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Contact Phones</label>
+                                        <input type="text" class="form-control" name="contact_phones"
+                                               value="{{ old('contact_phones', $config->contact_phones) }}"
+                                               placeholder="+234 800 000 0000"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Contact Emails</label>
+                                        <input type="text" class="form-control" name="contact_emails"
+                                               value="{{ old('contact_emails', $config->contact_emails) }}"
+                                               placeholder="info@hospital.com"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Social Links</label>
+                                        <input type="text" class="form-control" name="social_links"
+                                               value="{{ old('social_links', $config->social_links) }}"
+                                               placeholder="Twitter, Facebook, etc."
                                                style="border-radius: 8px; padding: 0.75rem;">
                                     </div>
                                 </div>
@@ -833,6 +882,47 @@
                                         </label>
                                     </div>
                                     <small class="text-muted d-block mt-1">Show detailed error messages</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inventory Settings Card -->
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-store mr-2" style="color: var(--primary-color);"></i>
+                                    Inventory & Pharmacy Settings
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="allow_piece_sale" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-pill text-primary mr-1"></i>Allow Piece Sale
+                                            </label>
+                                            <small class="text-muted d-block">Allow selling items by individual pieces instead of full packs</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="allow_piece_sale" value="1" {{ $config->allow_piece_sale ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="allow_halve_sale" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-content-cut text-warning mr-1"></i>Allow Halve Sale
+                                            </label>
+                                            <small class="text-muted d-block">Allow selling half portions of inventory items</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="allow_halve_sale" value="1" {{ $config->allow_halve_sale ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
