@@ -212,9 +212,16 @@ class PatientSummaryManager {
         if (isNaN(rateVal) || !isFinite(rateVal) || rateVal < 0.1 || rateVal > 10) rateVal = 1.0;
         this.utterance.rate = rateVal;
         
-        // Find a good voice (preferably a natural-sounding English one)
+        // Find a good voice based on dictation language setting
+        const langSelect = document.querySelector('.select-speech-lang');
+        const targetLang = langSelect ? langSelect.value : 'en-US';
+        this.utterance.lang = targetLang;
+
         const voices = this.synth.getVoices();
-        const preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.lang === 'en-US');
+        let preferredVoice = voices.find(v => v.lang === targetLang && (v.name.includes('Google') || v.name.includes('Natural')));
+        if (!preferredVoice) preferredVoice = voices.find(v => v.lang.startsWith(targetLang.split('-')[0]));
+        if (!preferredVoice) preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.lang === 'en-US');
+
         if (preferredVoice) {
             this.utterance.voice = preferredVoice;
         }
@@ -251,7 +258,9 @@ class PatientSummaryManager {
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = () => {
                 const updatedVoices = this.synth.getVoices();
-                const prefVoice = updatedVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.lang === 'en-US');
+                let prefVoice = updatedVoices.find(v => v.lang === targetLang && (v.name.includes('Google') || v.name.includes('Natural')));
+                if (!prefVoice) prefVoice = updatedVoices.find(v => v.lang.startsWith(targetLang.split('-')[0]));
+                if (!prefVoice) prefVoice = updatedVoices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.lang === 'en-US');
                 if (prefVoice && this.utterance) {
                     this.utterance.voice = prefVoice;
                 }
@@ -288,8 +297,15 @@ class PatientSummaryManager {
         if (isNaN(rateVal) || !isFinite(rateVal) || rateVal < 0.1 || rateVal > 10) rateVal = 1.0;
         this.utterance.rate = rateVal;
         
+        const langSelect = document.querySelector('.select-speech-lang');
+        const targetLang = langSelect ? langSelect.value : 'en-US';
+        this.utterance.lang = targetLang;
+
         const voices = this.synth.getVoices();
-        const preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.lang === 'en-US');
+        let preferredVoice = voices.find(v => v.lang === targetLang && (v.name.includes('Google') || v.name.includes('Natural')));
+        if (!preferredVoice) preferredVoice = voices.find(v => v.lang.startsWith(targetLang.split('-')[0]));
+        if (!preferredVoice) preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Natural') || v.lang === 'en-US');
+
         if (preferredVoice) {
             this.utterance.voice = preferredVoice;
         }
