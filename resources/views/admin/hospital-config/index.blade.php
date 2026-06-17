@@ -608,8 +608,8 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label" style="font-weight: 600;">Google Gemini API Key</label>
                                                 <input type="password" class="form-control mb-2" name="llm_config[providers][gemini][api_key]" 
-                                                       value="{{ $providers['gemini']['api_key'] ?? '' }}" 
-                                                       placeholder="Enter API Key..." style="border-radius: 8px;">
+                                                       value="" 
+                                                       placeholder="{{ !empty($providers['gemini']['api_key']) ? '******** (Key stored. Leave blank to keep)' : 'Enter API Key...' }}" style="border-radius: 8px;">
                                                 <select class="form-control form-control-sm" name="llm_config[providers][gemini][default_model]" style="border-radius: 8px;">
                                                     @if(!empty($providerModels['gemini']))
                                                         @foreach($providerModels['gemini'] as $model)
@@ -627,8 +627,8 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label" style="font-weight: 600;">Anthropic API Key</label>
                                                 <input type="password" class="form-control mb-2" name="llm_config[providers][anthropic][api_key]" 
-                                                       value="{{ $providers['anthropic']['api_key'] ?? '' }}" 
-                                                       placeholder="sk-ant-..." style="border-radius: 8px;">
+                                                       value="" 
+                                                       placeholder="{{ !empty($providers['anthropic']['api_key']) ? '******** (Key stored. Leave blank to keep)' : 'sk-ant-...' }}" style="border-radius: 8px;">
                                                 <select class="form-control form-control-sm" name="llm_config[providers][anthropic][default_model]" style="border-radius: 8px;">
                                                     @if(!empty($providerModels['anthropic']))
                                                         @foreach($providerModels['anthropic'] as $model)
@@ -645,8 +645,8 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label" style="font-weight: 600;">OpenAI API Key</label>
                                                 <input type="password" class="form-control mb-2" name="llm_config[providers][openai][api_key]" 
-                                                       value="{{ $providers['openai']['api_key'] ?? '' }}" 
-                                                       placeholder="sk-proj-..." style="border-radius: 8px;">
+                                                       value="" 
+                                                       placeholder="{{ !empty($providers['openai']['api_key']) ? '******** (Key stored. Leave blank to keep)' : 'sk-proj-...' }}" style="border-radius: 8px;">
                                                 <select class="form-control form-control-sm" name="llm_config[providers][openai][default_model]" style="border-radius: 8px;">
                                                     @if(!empty($providerModels['openai']))
                                                         @foreach($providerModels['openai'] as $model)
