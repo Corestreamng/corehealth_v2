@@ -100,6 +100,12 @@ class PatientContextService
         $context[] = $this->buildNursingNotesChunk($patientId, $dateLimit, $maxEntries);
         $context[] = $this->buildProcedureChunk($patientId, $dateLimit, $maxEntries);
         $context[] = $this->buildAdmissionsChunk($patientId, $dateLimit, $maxEntries);
+        $context[] = $this->buildPrescriptionsChunk($patientId, $dateLimit, $maxEntries);
+        $context[] = $this->buildIntakeOutputChunk($patientId, $dateLimit, $maxEntries);
+        $context[] = $this->buildInjectionsChunk($patientId, $dateLimit, $maxEntries);
+        $context[] = $this->buildCarePlansChunk($patientId, $dateLimit, $maxEntries);
+        $context[] = $this->buildReferralsChunk($patientId, $dateLimit, $maxEntries);
+        $context[] = $this->buildMaternityChunk($patientId);
 
         // Filter out empty chunks and join
         return implode("\n\n", array_filter($context));
@@ -395,5 +401,138 @@ class PatientContextService
         }
         
         return $reasons;
+    }
+
+    protected function buildPrescriptionsChunk(int $patientId, Carbon $dateLimit, int $limit): ?string
+    {
+        $prescriptions = \App\Models\ProductRequest::where('patient_id', $patientId)
+            ->with('product')
+            ->where('created_at', '>=', $dateLimit)
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        if ($prescriptions->isEmpty()) return null;
+
+        $lines = ["--- PRESCRIPTIONS ---"];
+        foreach ($prescriptions as $p) {
+            $name = $p->product ? $p->product->product_name : 'Unknown Product';
+            $date = $p->created_at->format('Y-m-d H:i');
+            $lines[] = "[{$date}] {$name} (Qty: {$p->qty}, Dosage: " . ($p->dosage ?? 'N/A') . ")";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    protected function buildIntakeOutputChunk(int $patientId, Carbon $dateLimit, int $limit): ?string
+    {
+        $io = \App\Models\IntakeOutputPeriod::where('patient_id', $patientId)
+            ->where('started_at', '>=', $dateLimit)
+            ->orderBy('started_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        if ($io->isEmpty()) return null;
+
+        $lines = ["--- INTAKE & OUTPUT FLUID BALANCE ---"];
+        foreach ($io as $period) {
+            $date = $period->started_at ? Carbon::parse($period->started_at)->format('Y-m-d H:i') : 'Unknown';
+            $totalIn = $period->total_intake ?? 0;
+            $totalOut = $period->total_output ?? 0;
+            $balance = $totalIn - $totalOut;
+            $lines[] = "[{$date}] Total Intake: {$totalIn}ml | Total Output: {$totalOut}ml | Balance: {$balance}ml";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    protected function buildInjectionsChunk(int $patientId, Carbon $dateLimit, int $limit): ?string
+    {
+        $injections = \App\Models\InjectionAdministration::where('patient_id', $patientId)
+            ->where('administered_at', '>=', $dateLimit)
+            ->orderBy('administered_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        $immunizations = \App\Models\ImmunizationRecord::where('patient_id', $patientId)
+            ->where('administered_at', '>=', $dateLimit)
+            ->orderBy('administered_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        if ($injections->isEmpty() && $immunizations->isEmpty()) return null;
+
+        $lines = ["--- INJECTIONS & IMMUNIZATIONS ---"];
+        foreach ($injections as $inj) {
+            $date = $inj->administered_at ? Carbon::parse($inj->administered_at)->format('Y-m-d H:i') : 'Unknown';
+            $lines[] = "[{$date}] Injection: " . ($inj->injection_name ?? 'Unknown') . " (" . ($inj->dose ?? 'N/A') . ")";
+        }
+        foreach ($immunizations as $imm) {
+            $date = $imm->administered_at ? Carbon::parse($imm->administered_at)->format('Y-m-d H:i') : 'Unknown';
+            $lines[] = "[{$date}] Immunization: " . ($imm->vaccine_name ?? 'Unknown') . " (" . ($imm->dose ?? 'N/A') . ")";
+        }
+
+        return implode("\n", $lines);
+    }
+
+    protected function buildCarePlansChunk(int $patientId, Carbon $dateLimit, int $limit): ?string
+    {
+        $plans = \App\Models\NonPharmOrder::where('patient_id', $patientId)
+            ->where('created_at', '>=', $dateLimit)
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        if ($plans->isEmpty()) return null;
+
+        $lines = ["--- CARE PLANS & NON-PHARM ORDERS ---"];
+        foreach ($plans as $plan) {
+            $date = $plan->created_at->format('Y-m-d H:i');
+            $lines[] = "[{$date}] " . strip_tags($plan->order_details ?? 'No details');
+        }
+
+        return implode("\n", $lines);
+    }
+
+    protected function buildReferralsChunk(int $patientId, Carbon $dateLimit, int $limit): ?string
+    {
+        $referrals = \App\Models\SpecialistReferral::where('patient_id', $patientId)
+            ->where('created_at', '>=', $dateLimit)
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        if ($referrals->isEmpty()) return null;
+
+        $lines = ["--- SPECIALIST REFERRALS ---"];
+        foreach ($referrals as $ref) {
+            $date = $ref->created_at->format('Y-m-d H:i');
+            $lines[] = "[{$date}] Referral Reason: " . strip_tags($ref->reason ?? 'Consultation request');
+        }
+
+        return implode("\n", $lines);
+    }
+
+    protected function buildMaternityChunk(int $patientId): ?string
+    {
+        $enrollment = \App\Models\MaternityEnrollment::where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$enrollment) return null;
+
+        $lines = ["--- MATERNITY STATUS ---"];
+        $lines[] = "Enrolled on: " . $enrollment->created_at->format('Y-m-d');
+        if ($enrollment->edd) $lines[] = "Estimated Date of Delivery (EDD): " . Carbon::parse($enrollment->edd)->format('Y-m-d');
+        if ($enrollment->lmp) $lines[] = "Last Menstrual Period (LMP): " . Carbon::parse($enrollment->lmp)->format('Y-m-d');
+        
+        $deliveries = \App\Models\DeliveryRecord::where('patient_id', $patientId)->orderBy('delivery_date', 'desc')->get();
+        if ($deliveries->isNotEmpty()) {
+            foreach ($deliveries as $del) {
+                $lines[] = "Delivery Date: " . ($del->delivery_date ? Carbon::parse($del->delivery_date)->format('Y-m-d H:i') : 'Unknown') . " | Method: " . ($del->delivery_method ?? 'Unknown');
+            }
+        }
+
+        return implode("\n", $lines);
     }
 }
