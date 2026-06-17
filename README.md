@@ -36,71 +36,96 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 | **PDF/Invoices**| DomPDF, laraveldaily/laravel-invoices           |
 | **Excel**       | Maatwebsite/Excel (PhpSpreadsheet)             |
 
+---
+
 ## Core Modules
 
 ### 1. Reception & Patient Management
 - **Patient Registration** — demographics, dependants, photo
 - **Queue Management** — doctor queue with priority routing
-- **Appointment Booking** — multi-provider scheduling
+- **Appointment Booking** — multi-provider scheduling, check-in, cancel/no-show, rescheduling, and doctor reassignments
 - **Reception Workbench** — real-time dashboard for front-desk staff
 
-### 2. Doctor / Consultation
-- **Doctor Dashboard** — assigned patient queue, pending reviews
-- **Encounter Management** — diagnosis (ICD-10), prescriptions, lab/imaging orders, procedures, referrals
+### 2. Doctor / Consultation & Referrals
+- **Doctor Dashboard** — assigned patient queue, pending reviews, consultation timers
+- **Encounter Management** — diagnosis (ICD-10), prescriptions, lab/imaging orders, procedures, referrals, and template-based chief complaint capture
 - **Incremental Save** — encounter sections auto-save via AJAX
-- **Reason for Encounter** — template-based chief complaint capture
+- **Specialist Referrals** — creation from consultations, reception-side referral booking, doctor acceptance/declination, and patient referral histories
 
-### 3. Nursing
+### 3. Emergency Intake
+- **Walk-in & Emergency Triage** — rapid patient intake from any workbench
+- **Triage & Disposition** — rapid triage scoring, emergency bed search and assignment, and direct disposition routing (admission or consulting clinic)
+
+### 4. Nursing
 - **Nursing Workbench** — vitals, medication chart, care plans, I&O charts
 - **Medication Administration** — scheduling, administration logging, PRN
 - **Intake & Output Charts** — fluid balance tracking
 - **Nursing Notes** — typed notes with customisable templates
-- **Shift Handover** — per-shift handover summaries
+- **Shift Handover & Management** — shift start/end, per-shift activity reports, shift calendars, and multi-nurse handover acknowledgement
 - **Injection & Immunization** — vaccination schedule tracking
+- **Deceased Queue & Last Office** — clinical workflow routing and Last Office completions
 
-### 4. Laboratory (LIS)
-- **Lab Workbench** — sample collection → processing → results → verification
+### 5. Maternity Module (ANC & Wellness)
+- **ANC Enrollment** — Antenatal Care (ANC) registration, obstetric/medical history, and previous pregnancy logs
+- **ANC Visits** — progress monitoring, vitals, labs, imaging, prescriptions, and ANC cards/Road-to-Health card printing
+- **Delivery & Partograph** — delivery records, baby registration (wellness, growth charts), and digital partograph entry
+- **Postnatal & Immunizations** — postnatal visits and child immunization schedules synchronized with the nursing system
+
+### 6. Surgery / Theatre Workbench
+- **Theatre Queues** — patient procedure tracking and surgical queue metrics
+- **Procedure Management** — surgical checklist tracking, inline procedure logs, and surgical team assignments
+- **Theatre Billing** — inline billing for surgery services and consumables
+
+### 7. Laboratory (LIS)
+- **Lab Workbench** — sample collection $\rightarrow$ processing $\rightarrow$ results $\rightarrow$ verification
 - **Lab Templates** — structured result templates (ranges, flags)
 - **WYSIWYG Results** — rich-text editor for free-form reports
 - **Audit Trail** — result edit history with approval workflow
 
-### 5. Imaging / Radiology
+### 8. Imaging / Radiology
 - **Imaging Workbench** — request queue, result capture, report generation
 - **Service Requests** — imaging orders linked to encounters
 - **Result Management** — upload findings, radiologist review
 
-### 6. Pharmacy
+### 9. Pharmacy
 - **Pharmacy Workbench** — prescription queue, dispensing, FIFO batch tracking
 - **Pharmacy Quick Actions** — returns (good/wrong_item/damaged/expired), damage reports
 - **Pharmacy Reports** — revenue, stock value, daily sales, dispensing trends
 - **Damage Reports** — auto-batch assignment, JE on approval (DR Expense, CR Inventory)
 - **Returns** — restock for good/wrong_item, JE preview, refund via Patient Wallet (2200)
-- **Stock Sync** — three-tier sync: `stock_batches` → `store_stocks` → `stocks` + `prices`
+- **Stock Sync** — three-tier sync: `stock_batches` $\rightarrow$ `store_stocks` $\rightarrow$ `stocks` + `prices`
 
-### 7. Inventory & Procurement
+### 10. Inventory & Procurement
 - **Multi-Store Support** — pharmacy stores, general stores, sub-stores
 - **Stock Batches (FIFO)** — per-batch cost tracking, expiry monitoring
-- **Purchase Orders** — create → approve → receive → batch creation
-- **Store Requisitions** — inter-store transfer requests with approval
+- **Purchase Orders** — create $\rightarrow$ approve $\rightarrow$ receive $\rightarrow$ batch creation
+- **Store Requisitions & Returns** — inter-store transfer requests, approval workflows, and store/PO return processes
 - **Stock Transfers** — FIFO or specific-batch transfers, weighted-average cost
 - **Delivery Guards** — validation rules for receiving goods
 
-### 8. Billing & Revenue Cycle
+### 11. Store Governance & Advanced Administration
+- **Store Role Catalog** — definition of store roles (Central, Pharmacy Hub, Pharmacy Satellite, Lab, Imaging, Ward)
+- **Lane Policy Matrix** — matrix rules regulating transfers between store roles (with none, manager, or admin approval requirements)
+- **Context Resolution Rules** — automated store resolution based on user roles and department overrides (e.g. NURSE resolve to Ward store)
+- **Test Resolution Panel** — simulation and resolution tracing panel for debugging resolve paths
+- **Manager KPIs** — custom KPI widgets for Pharmacy, Wards, and Central Stores
+
+### 12. Billing & Revenue Cycle
 - **Billing Workbench** — payment queue, receipts, refunds
 - **Multi-Payment** — Cash, Card, Transfer, HMO, Patient Wallet
 - **Patient Deposits** — wallet system with auto-debit on billing
 - **My Transactions** — patient-facing billing portal
 - **Promotions** — discount rules and promo pricing
 
-### 9. HMO & Insurance
-- **HMO Workbench** — claims approval workflow (submitted → approved → paid)
+### 13. HMO & Insurance
+- **HMO Workbench** — claims approval workflow (submitted $\rightarrow$ approved $\rightarrow$ paid)
 - **Tariff Management** — per-HMO tariffs for products and services, import/export
 - **Claims & Remittances** — batch claiming, payment reconciliation
 - **Auto-Tariff Sync** — PriceObserver creates/updates HMO tariffs on price changes
 
-### 10. Accounting & Finance
+### 14. Accounting & Finance
 - **Double-Entry Accounting** — full General Ledger with Chart of Accounts
-- **Journal Entries** — manual JEs + auto-generated by 27 observers
+- **Journal Entries** — manual JEs + auto-generated by 30 observers
 - **Financial Reports** — Trial Balance, P&L, Balance Sheet, Cash Flow
 - **Bank Reconciliation** — statement import (CSV/OFX), auto-matching
 - **Petty Cash** — fund management with reconciliation
@@ -108,26 +133,26 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Credit Notes** — issuance and application
 - **Inter-Account Transfers** — bank-to-bank, cash-to-bank
 
-### 11. Fixed Assets (IAS 16 Compliant)
+### 15. Fixed Assets (IAS 16 Compliant)
 - **Asset Register** — acquisition, categories, locations, depreciation schedules
 - **Depreciation** — straight-line auto-calculation, monthly runs
 - **Disposal** — gain/loss on sale, JE generation
 - **Void** — for registration errors (no depreciation recorded)
 - **CAPEX Projects** — capital expenditure tracking with budget integration
 
-### 12. Budgeting & KPIs
+### 16. Budgeting & KPIs
 - **Budget Management** — fiscal-year budgets with line items
 - **CAPEX Budgets** — project-level capital budgeting
 - **Cost Centers** — departmental cost tracking
 - **Financial KPIs** — configurable performance indicators
 
-### 13. Leases & Liabilities
+### 17. Leases & Liabilities
 - **Lease Management** — IFRS 16 compliant lease tracking
 - **Payment Schedules** — auto-generated amortisation
 - **Liability Schedules** — long-term liability management
 - **Statutory Remittances** — tax, pension, NHIS obligations
 
-### 14. Human Resources
+### 18. Human Resources
 - **HR Workbench** — employee dashboard, org chart
 - **Leave Management** — types, requests, balances, calendar, approval workflow
 - **Payroll** — salary profiles, pay heads, batch processing, payslip generation
@@ -135,12 +160,25 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Suspensions & Terminations** — workflow with document attachments
 - **Employee Self-Service (ESS)** — leave requests, payslips, profile
 
-### 15. Administration
+### 19. AI/LLM Clinical Assistant
+- **Multi-Provider Gateway** — supports Google Gemini, OpenAI, Anthropic Claude, Hugging Face, and local Ollama
+- **Longitudinal EHR Summaries** — generates physician-level patient briefings by parsing 14 data vectors with intelligent caching
+- **Clinical Note Polish** — rewrites raw dictated notes into structured medical formats
+- **Connectivity Testing** — administrator panel for testing API keys and listing supported models
+
+### 20. Internal Audit Workbench
+- **Audit Responsibility Worksheets** — Cash Book/Billing, Bank Reconciliation, HMO verification, Disclosures/Refunds, Payroll/Expenses, Clinical patient flow, Ward income, Theatre bundles, Diagnostics, and Inventory
+- **Digital Approvals (Audit Stamps)** — seals audited periods/responsibility domains to freeze modifications and establish accountability
+- **Staff Receivables Settlement** — sequential payment allocation across outstanding staff bills with bank/discount overrides
+
+### 21. Administration
 - **Role-Based Access Control** — Spatie permissions, per-module
 - **Hospital Configuration** — settings, departments, clinics, specialisations
 - **Audit Logs** — full audit trail with export capability
 - **Import/Export** — bulk data (products, services, staff, patients)
 - **Chat/Messaging** — internal messaging system
+
+---
 
 ## System Architecture
 
@@ -150,7 +188,7 @@ app/
 ├── Events/               # Domain events
 ├── Exceptions/           # Custom exception handlers
 ├── Helpers/              # Utility functions + BatchHelper
-├── Http/Controllers/     # 90+ controllers across 7 subfolders
+├── Http/Controllers/     # 100+ controllers across 7 subfolders
 │   ├── Account/          # Legacy patient accounts
 │   ├── Accounting/       # 19 controllers (GL, assets, leases, CAPEX, etc.)
 │   ├── Admin/            # Tariff management
@@ -160,36 +198,41 @@ app/
 │   ├── HR/               # 12 controllers (leave, payroll, disciplinary, ESS)
 │   └── Product/          # Legacy product controller
 ├── Jobs/                 # Queued jobs
-├── Models/               # 140+ Eloquent models
+├── Models/               # 199 Eloquent models
 │   ├── Accounting/       # 38 models (JE, assets, leases, budgets, etc.)
-│   └── HR/               # 13 models (leave, payroll, disciplinary)
-├── Observers/            # 34 observers (auto JE, stock sync, HMO tariffs)
-│   └── Accounting/       # 27 accounting-specific observers
+│   └── HR/               # 22 models (leave, payroll, disciplinary)
+├── Observers/            # 46 observers (auto JE, stock sync, HMO tariffs)
+│   ├── Accounting/       # 30 accounting-specific observers
+│   └── HR/               # 3 HR-specific observers
 ├── Policies/             # Authorization policies
 ├── Providers/            # Service + event providers
-└── Services/             # 21 services
-    └── Accounting/       # 12 accounting services
+└── Services/             # 47 services
+    ├── Accounting/       # 12 accounting services
+    └── Dashboard/        # 17 dashboard-specific services
 
 database/
 ├── migrations/           # Schema history
 └── seeders/              # Sample data
 
 resources/views/admin/    # Blade templates (workbenches, modals, partials)
-routes/                   # 10 route files (web, accounting, hr, nursing, etc.)
-docs/                     # 30 documentation files
+routes/                   # 15 route files (web, accounting, hr, nursing, etc.)
+docs/                     # 30+ documentation files
 ```
 
 ### Observer-Driven Automation
 
-CoreHealth uses **34 Eloquent observers** to automate side effects:
+CoreHealth uses **46 Eloquent observers** to automate side effects:
 
 | Observer Area | Count | Examples |
 |---------------|-------|---------|
-| **Accounting** | 27 | JE creation on payments, expenses, payroll, disposals, deposits |
+| **Accounting** | 30 | JE creation on payments, expenses, payroll, lease payments, disposals, deposits |
 | **Pharmacy**   | 2  | PharmacyDamageObserver (inventory write-off), PharmacyReturnObserver (restock + refund) |
 | **Stock**      | 1  | StockBatchObserver (auto-sync store_stocks + global stocks + prices) |
 | **Pricing**    | 2  | PriceObserver (HMO tariff sync), ServicePriceObserver |
-| **Other**      | 2  | BedObserver, HmoObserver |
+| **HR**         | 3  | Promotion, salary profile enhancements, medical exam status triggers |
+| **Other**      | 8  | BedObserver, HmoObserver, DoctorAppointmentObserver, ChatMessageObserver, etc. |
+
+---
 
 ## Inventory & Stock Management
 
@@ -206,13 +249,13 @@ CoreHealth uses **34 Eloquent observers** to automate side effects:
 
 **Source of truth**: `stock_batches` table.
 
-All downstream tables are computed caches kept in sync by the `StockBatchObserver` → `StockService`:
+All downstream tables are computed caches kept in sync by the `StockBatchObserver` $\rightarrow$ `StockService`:
 
 | Sync Step | Method | What it does |
 |-----------|--------|-------------|
-| 1. Store stock | `syncStoreStock()` | SUM of active batch `current_qty` → `store_stocks.current_quantity` |
-| 2. Global stock | `syncGlobalStock()` | SUM across all stores → `stocks.current_quantity` |
-| 3. Buy price | `syncProductPrice()` | Latest batch `cost_price` → `prices.pr_buy_price` |
+| 1. Store stock | `syncStoreStock()` | SUM of active batch `current_qty` $\rightarrow$ `store_stocks.current_quantity` |
+| 2. Global stock | `syncGlobalStock()` | SUM across all stores $\rightarrow$ `stocks.current_quantity` |
+| 3. Buy price | `syncProductPrice()` | Latest batch `cost_price` $\rightarrow$ `prices.pr_buy_price` |
 
 ### Price Sync
 
@@ -227,6 +270,8 @@ The sync is triggered automatically by the `StockBatchObserver` on every batch c
 ### FIFO Dispensing
 
 When dispensing medication, the system deducts from the **oldest batch first** (by `received_date`), ensuring proper inventory rotation and accurate COGS.
+
+---
 
 ## Accounting & Finance
 
@@ -258,6 +303,8 @@ The following transactions automatically create double-entry JEs via observers:
 - **Payroll** — DR Salary Expense, CR Cash + Statutory liabilities
 - **Lease Payments** — DR Lease Liability + Interest, CR Cash
 
+---
+
 ## Module Documentation
 
 ### Accounting & Finance
@@ -281,6 +328,7 @@ The following transactions automatically create double-entry JEs via observers:
 - [Batch Stock Gap Analysis](docs/BATCH_STOCK_GAP_ANALYSIS.md)
 - [Batch Stock Implementation Status](docs/BATCH_STOCK_IMPLEMENTATION_STATUS.md)
 - [Delivery Guards Setup](docs/DELIVERY_GUARDS_SETUP.md)
+- [Store Governance and Contextual Workbench Plan](docs/STORE_GOVERNANCE_AND_CONTEXTUAL_WORKBENCH_PLAN.md)
 
 ### Fixed Assets & CAPEX
 - [CAPEX Column Mapping](CAPEX_COLUMN_MAPPING.md)
@@ -292,6 +340,10 @@ The following transactions automatically create double-entry JEs via observers:
 - [Lab Template Structure](docs/LAB_TEMPLATE_STRUCTURE.md)
 - [Injection & Immunization Update](docs/INJECTION_IMMUNIZATION_UPDATE.md)
 - [WYSIWYG & Result Edit Implementation](docs/WYSIWYG_AND_RESULT_EDIT_IMPLEMENTATION.md)
+- [Maternity Module Plan](MATERNITY_MODULE_PLAN.md)
+- [Maternity Enhancement Plan](MATERNITY_ENHANCEMENT_PLAN.md)
+- [Clinical Orders Plan](CLINICAL_ORDERS_PLAN.md)
+- [Appointment Enhancement Plan](APPOINTMENT_ENHANCEMENT_PLAN.md)
 
 ### Insurance & Billing
 - [HMO Plan](docs/hmo_plan.md)
@@ -301,11 +353,16 @@ The following transactions automatically create double-entry JEs via observers:
 
 ### Human Resources
 - [HRMS Implementation Plan](docs/HRMS_IMPLEMENTATION_PLAN.md)
+- [Attendance Clocking Module Plan](docs/ATTENDANCE_CLOCKING_MODULE_PLAN.md)
 
-### Technical Documentation
+### Technical & Mobile Documentation
 - [Database Field Reference](docs/DATABASE_FIELD_REFERENCE.md)
 - [Environment Migration Guide](docs/ENV_TO_APPSETTINGS_MIGRATION.md)
 - [Testing Checklist](docs/TESTING_CHECKLIST.md)
+- [Mobile Web Parity Plan](MOBILE_WEB_PARITY_PLAN.md)
+- [Mobile Encounters Plan](docs/MOBILE_ENCOUNTERS_PLAN.md)
+
+---
 
 ## Installation & Setup
 
@@ -367,7 +424,7 @@ The following transactions automatically create double-entry JEs via observers:
    ```bash
    composer dump-autoload -o
    ```
-   > ⚠️ **Case-sensitivity caveat**: Some model files use lowercase filenames (e.g. `patient.php` for class `patient`). PHP class names are case-insensitive at runtime, but Composer's PSR-4 autoloader maps `Patient` → `Patient.php` literally, which fails on case-sensitive filesystems (Linux/Unix). Running `composer dump-autoload -o` builds a full classmap that resolves classes by scanning file contents, bypassing the filename case issue.
+   > ⚠️ **Case-sensitivity caveat**: Some model files use lowercase filenames (e.g. `patient.php` for class `patient`). PHP class names are case-insensitive at runtime, but Composer's PSR-4 autoloader maps `Patient` $\rightarrow$ `Patient.php` literally, which fails on case-sensitive filesystems (Linux/Unix). Running `composer dump-autoload -o` builds a full classmap that resolves classes by scanning file contents, bypassing the filename case issue.
    >
    > **You must re-run this command after adding new classes.** The long-term fix is renaming files to match PSR-4 PascalCase conventions.
 
@@ -378,14 +435,16 @@ The following transactions automatically create double-entry JEs via observers:
 
 Visit `http://localhost:8000` to access the application.
 
+---
+
 ## Development
 
 ### Code Structure
 
 CoreHealth v2 follows Laravel conventions with additional patterns:
 
-- **Services** (`app/Services/`) — Business logic layer (21 services)
-- **Observers** (`app/Observers/`) — Automated side-effects on model events (34 observers)
+- **Services** (`app/Services/`) — Business logic layer (47 services)
+- **Observers** (`app/Observers/`) — Automated side-effects on model events (46 observers)
 - **Policies** (`app/Policies/`) — Authorization rules
 - **Helpers** (`app/Helpers/`) — Utility functions, BatchHelper
 
@@ -393,13 +452,18 @@ CoreHealth v2 follows Laravel conventions with additional patterns:
 
 | File | Purpose |
 |------|---------|
-| `routes/web.php` | Main application routes (~800 lines) |
-| `routes/accounting.php` | Accounting module (18 sub-prefixes) |
+| `routes/web.php` | Main application routes and legacy views |
+| `routes/accounting.php` | Accounting module (GL, assets, leases, budgets, petty cash, etc.) |
 | `routes/hr.php` | HR module (leave, payroll, disciplinary, ESS) |
-| `routes/supply.php` | Purchase orders, requisitions, store workbench |
-| `routes/nursing.php` | Nursing workbench, vitals, meds, I&O |
-| `routes/charts.php` | Medication & I&O charts |
-| `routes/reception.php` | Reception workbench, patient reg, queue |
+| `routes/inventory.php` | Inventory and PO/requisition module (replaces supply.php) |
+| `routes/nursing_workbench.php` | Nursing workbench and ward management |
+| `routes/nurse_chart.php` | Flow sheets, medication, and I&O charts |
+| `routes/reception_workbench.php` | Reception dashboard and queues |
+| `routes/appointments.php` | Multi-provider appointment bookings and calendars |
+| `routes/emergency_intake.php` | Walk-in emergency intake and triage routing |
+| `routes/maternity_workbench.php` | Maternity ANC, deliveries, wellness, and growth logs |
+| `routes/referrals.php` | Specialist referrals system |
+| `routes/surgery_workbench.php` | Theatre workbench procedures and consumables billing |
 | `routes/api.php` | API endpoints |
 
 ### Asset Compilation
@@ -420,11 +484,13 @@ CoreHealth targets **MySQL/MariaDB**. Key compatibility notes:
 - JSON columns use MariaDB-compatible syntax
 - `ENUM` columns are used for status fields
 
+---
+
 ## Artisan Commands
 
 | Command | Description |
 |---------|-------------|
-| `php artisan stock:sync` | Reconcile stock across all tiers (batches → store → global → prices) |
+| `php artisan stock:sync` | Reconcile stock across all tiers (batches $\rightarrow$ store $\rightarrow$ global $\rightarrow$ prices) |
 | `php artisan stock:sync --create-batches` | Also create reconciliation batches for unbatched store stock |
 | `php artisan stock:sync --dry-run` | Preview changes without writing |
 | `php artisan process:daily-bed-bills` | Generate daily bed billing charges (scheduler) |
@@ -432,14 +498,7 @@ CoreHealth targets **MySQL/MariaDB**. Key compatibility notes:
 | `php artisan scan:routes` | Scan and cache route metadata |
 | `php artisan hmo:sync-executives` | Sync HMO executive user group |
 
-### Stock Sync Details
-
-The `stock:sync` command performs 4 steps:
-
-1. **Store-stock sync** — recalculates `store_stocks.current_quantity` from batch SUM
-2. **Unbatched detection** — finds store_stocks with qty not covered by batches, optionally creates reconciliation batches
-3. **Global stock sync** — recalculates `stocks.current_quantity` from batch SUM across all stores
-4. **Price sync** — updates `prices.pr_buy_price` from the latest batch's `cost_price`
+---
 
 ## Testing
 
@@ -467,32 +526,7 @@ Several utility scripts are available in the project root:
 
 See [Testing Checklist](docs/TESTING_CHECKLIST.md) for detailed testing procedures.
 
-## Project Status
-
-### Completed ✅
-- Patient registration & encounter management
-- Doctor consultations & prescriptions
-- Nursing workbench (vitals, meds, I&O, notes)
-- Laboratory workbench (ordering → results → verification)
-- Imaging workbench
-- Pharmacy workbench (dispensing, FIFO, batch tracking)
-- Pharmacy quick actions (returns, damages, with accounting)
-- Billing workbench (multi-payment, deposits, receipts)
-- HMO workbench (claims, tariffs, remittances)
-- Full double-entry accounting (GL, JE, reports)
-- Fixed assets (IAS 16 — acquisition, depreciation, disposal, void)
-- CAPEX project management
-- Leases & liabilities (IFRS 16)
-- Bank reconciliation
-- HR module (leave, payroll, disciplinary, ESS)
-- Role-based access control (Spatie)
-- Audit logging
-- Batch stock management with three-tier sync + price sync
-
-### In Progress 🚧
-- Advanced financial analytics & dashboards
-- Enhanced reporting and export
-- Mobile application development
+---
 
 ## Contributing
 
@@ -511,9 +545,13 @@ See [Testing Checklist](docs/TESTING_CHECKLIST.md) for detailed testing procedur
 - Include unit tests for new features
 - Update documentation as needed
 
+---
+
 ## Security
 
 If you discover any security vulnerabilities, please email the security team immediately. Do not create public issues for security concerns.
+
+---
 
 ## License
 
