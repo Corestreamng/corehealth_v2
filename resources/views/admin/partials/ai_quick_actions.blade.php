@@ -151,24 +151,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (summaryBtn) {
         summaryBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            
+            let patId = window.currentPatientId;
             if (typeof window.patientSummary !== 'undefined') {
-                let patId = window.currentPatientId || window.patientSummary.patientId;
-                let encId = window.currentEncounterId || window.patientSummary.encounterId;
-                
-                if (!patId) {
-                    if (typeof toastr !== 'undefined') {
-                        toastr.error('Please select a patient first to generate a clinical summary.', 'No Patient Selected');
-                    } else {
-                        alert('Please select a patient first to generate a clinical summary.');
-                    }
-                    return;
-                }
-
-                window.patientSummary.updateContext(patId, encId);
-                window.patientSummary.openAndLoad();
-            } else {
-                console.warn("PatientSummaryManager is not initialized on this page.");
+                patId = patId || window.patientSummary.patientId;
             }
+            
+            if (!patId || typeof window.patientSummary === 'undefined') {
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Please select a patient first to generate a clinical summary.', 'No Patient Selected');
+                } else {
+                    alert('Please select a patient first to generate a clinical summary.');
+                }
+                return;
+            }
+
+            let encId = window.currentEncounterId || window.patientSummary.encounterId;
+            window.patientSummary.updateContext(patId, encId);
+            window.patientSummary.openAndLoad();
         });
     }
 });
