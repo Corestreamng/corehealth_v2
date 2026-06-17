@@ -12,9 +12,14 @@
     <div class="speech-overlay-header" style="position: sticky; top: 0; background: inherit; z-index: 10;">
         <div class="speech-header-left">ENCOUNTER • PATIENT BRIEFING</div>
         <div class="speech-header-center">AI CLINICAL SUMMARY</div>
-        <div class="speech-header-right">
-            <button type="button" class="btn btn-sm text-muted btn-close-summary" aria-label="Close">
-                <i class="mdi mdi-close fs-4"></i>
+        <div class="speech-header-right d-flex align-items-center gap-3">
+            <button type="button" class="btn btn-sm btn-outline-primary d-flex flex-column align-items-center p-1 px-2 btn-regenerate-summary" id="btn-regenerate-summary">
+                <i class="mdi mdi-refresh fs-5" style="line-height: 1;"></i>
+                <span style="font-size: 0.65rem; font-weight: 600; margin-top: 2px;">Regenerate</span>
+            </button>
+            <button type="button" class="btn btn-sm text-danger btn-close-summary d-flex flex-column align-items-center p-1" aria-label="Close">
+                <i class="mdi mdi-close fs-3" style="line-height: 1;"></i>
+                <span style="font-size: 0.65rem; font-weight: bold; margin-top: 0px;">Close</span>
             </button>
         </div>
     </div>
@@ -62,27 +67,33 @@
             
             @if($voiceEnabled)
             <div class="capsule-center d-flex align-items-center gap-3 px-3 border-start border-end border-secondary border-opacity-25">
-                <button type="button" class="btn btn-icon text-dark summary-voice-btn" id="btn-summary-play" title="Play/Pause" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.05); border-radius: 50%;">
-                    <i class="mdi mdi-play fs-3"></i>
+                <button type="button" class="btn btn-icon text-dark summary-voice-btn d-flex flex-column align-items-center" id="btn-summary-play" title="Play/Pause" style="width: 55px; height: 55px; justify-content: center; background: rgba(0,0,0,0.05); border-radius: 50%;">
+                    <i class="mdi mdi-play fs-2" style="line-height: 1;"></i>
+                    <span style="font-size: 0.55rem; font-weight: bold; margin-top: -2px;">Play</span>
                 </button>
-                <button type="button" class="btn btn-icon text-dark summary-voice-btn" id="btn-summary-stop" title="Stop" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.05); border-radius: 50%;">
-                    <i class="mdi mdi-stop fs-3"></i>
+                <button type="button" class="btn btn-icon text-dark summary-voice-btn d-flex flex-column align-items-center" id="btn-summary-stop" title="Stop" style="width: 55px; height: 55px; justify-content: center; background: rgba(0,0,0,0.05); border-radius: 50%;">
+                    <i class="mdi mdi-stop fs-2" style="line-height: 1;"></i>
+                    <span style="font-size: 0.55rem; font-weight: bold; margin-top: -2px;">Stop</span>
                 </button>
-                <div class="d-flex align-items-center ms-2" style="background: rgba(0,0,0,0.03); border-radius: 20px;">
-                    <i class="mdi mdi-speedometer text-secondary ms-2 fs-4" title="Playback Speed"></i>
-                    <select id="summary-voice-rate" class="form-select bg-transparent text-dark border-0 py-1 pe-4" style="width: 80px; cursor: pointer; font-weight: 600; font-size: 1.1rem; box-shadow: none;">
-                        <option class="text-dark" value="0.8">0.8x</option>
-                        <option class="text-dark" value="1.0" selected>1.0x</option>
-                        <option class="text-dark" value="1.2">1.2x</option>
-                        <option class="text-dark" value="1.5">1.5x</option>
-                    </select>
+                <div class="d-flex flex-column align-items-center ms-2" style="background: rgba(0,0,0,0.03); border-radius: 12px; padding: 4px 8px;">
+                    <span style="font-size: 0.55rem; font-weight: bold; text-transform: uppercase; color: #666;">Speed</span>
+                    <div class="d-flex align-items-center">
+                        <i class="mdi mdi-speedometer text-secondary fs-4" title="Playback Speed"></i>
+                        <select id="summary-voice-rate" class="form-select bg-transparent text-dark border-0 py-0 pe-4 ps-1" style="width: 70px; cursor: pointer; font-weight: 600; font-size: 1rem; box-shadow: none;">
+                            <option class="text-dark" value="0.8">0.8x</option>
+                            <option class="text-dark" value="1.0" selected>1.0x</option>
+                            <option class="text-dark" value="1.2">1.2x</option>
+                            <option class="text-dark" value="1.5">1.5x</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             @endif
 
-            <div class="capsule-right ps-3">
-                <button type="button" class="btn-capsule-stop btn-close-summary" title="Dismiss">
-                    <i class="mdi mdi-check"></i>
+            <div class="capsule-right ps-3 d-flex align-items-center">
+                <button type="button" class="btn-capsule-stop btn-close-summary d-flex flex-column align-items-center text-dark" title="Dismiss" style="background: transparent; border: none;">
+                    <i class="mdi mdi-check-circle fs-2 text-success" style="line-height: 1;"></i>
+                    <span style="font-size: 0.55rem; font-weight: bold; margin-top: 2px;">Dismiss</span>
                 </button>
             </div>
         </div> <!-- End of #summary-capsule-bar -->

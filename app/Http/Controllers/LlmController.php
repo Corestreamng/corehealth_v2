@@ -6,6 +6,7 @@ use App\Services\LlmGatewayService;
 use App\Services\PatientContextService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class LlmController extends Controller
 {
@@ -38,17 +39,45 @@ class LlmController extends Controller
 
             // Generate full context
             $context = $this->contextService->getPatientContext($request->patient_id, $request->encounter_id);
+            $contextHash = md5($context);
+            $cacheKey = "llm_summary_{$request->patient_id}";
+            $forceRegenerate = filter_var($request->input('force_regenerate', false), FILTER_VALIDATE_BOOLEAN);
+
+            // Check Cache
+            if (!$forceRegenerate && Cache::has($cacheKey)) {
+                $cachedData = Cache::get($cacheKey);
+                if (isset($cachedData['hash']) && $cachedData['hash'] === $contextHash) {
+                    return response()->json([
+                        'success' => true,
+                        'summary_text' => $cachedData['summary_text'],
+                        'model_used' => $cachedData['model_used'] ?? 'cached',
+                        'provider' => $cachedData['provider'] ?? 'cached',
+                        'cached' => true,
+                    ]);
+                }
+            }
 
             $response = $this->gateway->complete($systemPrompt, $context, [
                 'max_tokens' => 4096,
                 'temperature' => 0.2, // Low temp for clinical facts
             ]);
 
+            $summaryData = [
+                'hash' => $contextHash,
+                'summary_text' => $response['content'],
+                'model_used' => $response['model'],
+                'provider' => $response['provider'],
+            ];
+
+            // Cache indefinitely until context changes
+            Cache::forever($cacheKey, $summaryData);
+
             return response()->json([
                 'success' => true,
                 'summary_text' => $response['content'],
                 'model_used' => $response['model'],
                 'provider' => $response['provider'],
+                'cached' => false,
             ]);
         } catch (\Exception $e) {
             Log::error('Patient Summary Error', ['error' => $e->getMessage()]);
