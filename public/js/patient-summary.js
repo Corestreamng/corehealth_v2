@@ -124,6 +124,16 @@ class PatientSummaryManager {
         }
     }
 
+    updateContext(patientId, encounterId) {
+        if (this.patientId !== patientId || this.encounterId !== encounterId) {
+            this.patientId = patientId;
+            this.encounterId = encounterId;
+            this.hasLoaded = false; // Force a fresh fetch next time openAndLoad is called
+            this.currentText = '';
+            if (this.textContainer) this.textContainer.innerHTML = '';
+        }
+    }
+
     close() {
         this.overlay.classList.add('d-none');
         document.body.style.overflow = '';
