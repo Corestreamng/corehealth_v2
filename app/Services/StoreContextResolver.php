@@ -507,6 +507,12 @@ class StoreContextResolver
             $ids = $ids->merge($pharmStoreIds);
         }
 
+        // H) OPD store access: all active stores containing "OPD"
+        $opdStoreIds = Store::active()
+            ->where('store_name', 'like', '%opd%')
+            ->pluck('id');
+        $ids = $ids->merge($opdStoreIds);
+
         // Return unique active stores ordered by name
         return Store::active()
             ->whereIn('id', $ids->unique()->values())

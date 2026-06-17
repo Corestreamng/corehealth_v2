@@ -708,11 +708,11 @@
             @endif
 
             @if(in_array($requisition->status, ['approved', 'partial']))
-                @can('requisitions.fulfill')
+                @if(auth()->user()->can('requisitions.fulfill') || auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'STORE']))
                 <a href="#fulfill-panel" class="btn btn-primary btn-sm">
                     <i class="mdi mdi-package"></i> Fulfill Items
                 </a>
-                @endcan
+                @endif
             @endif
 
             @if($requisition->status !== 'pending')
@@ -1058,9 +1058,11 @@
         <div class="row">
             <!-- Main Content -->
             <div class="col-md-8">
-                <!-- Requested Items - Enhanced Table -->
-                <form id="fulfill-form" method="POST" action="{{ route('inventory.requisitions.fulfill', $requisition) }}">
-                @csrf
+            <!-- Requested Items - Enhanced Table -->
+        @if(auth()->user()->can('requisitions.fulfill') || auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'STORE']))
+            <form id="fulfill-form" method="POST" action="{{ route('inventory.requisitions.fulfill', $requisition) }}">
+            @csrf
+            <div class="fulfill-panel" id="fulfill-panel">
                 <div class="detail-card">
                     <h5><i class="mdi mdi-package-variant"></i> Requisition Items</h5>
                     
@@ -1200,7 +1202,7 @@
                             </div>
                             @endif
 
-                            @can('requisitions.fulfill')
+                            @if(auth()->user()->can('requisitions.fulfill') || auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'STORE']))
                             @if(in_array($requisition->status, ['approved', 'partial']) && $pending > 0 && ($item->status ?? 'pending') !== 'rejected')
                             @php
                                 $availableBatches = \App\Models\StockBatch::where('product_id', $item->product_id)
@@ -1314,14 +1316,14 @@
                                 @endif
                             </div>
                             @endif
-                            @endcan
+                            @endif
 
                         </div>
                     </div>
                     @endforeach
                 </div>
                 
-                @can('requisitions.fulfill')
+                @if(auth()->user()->can('requisitions.fulfill') || auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'STORE']))
                 @if(in_array($requisition->status, ['approved', 'partial']))
                 <div class="detail-card sticky-bottom shadow-lg border-top border-primary p-3" style="bottom: 0; z-index: 1000; position: sticky;">
                     <div class="d-flex justify-content-between align-items-center">
@@ -1335,7 +1337,7 @@
                     </div>
                 </div>
                 @endif
-                @endcan
+                @endif
                 </form>
 
                 @if($requisition->request_notes)
