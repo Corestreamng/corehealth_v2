@@ -34,12 +34,16 @@ class PatientSummaryManager {
         this.statusText = document.getElementById('summary-voice-status-text');
         this.statusIcon = document.getElementById('summary-voice-status-icon');
         
+        // Other Elements
+        this.btnRegenerate = document.getElementById('btn-regenerate-summary');
+
         // State
         this.synth = window.speechSynthesis;
         this.utterance = null;
         this.isPlaying = false;
         this.summaryText = '';
         this.hasLoaded = false;
+        this.isForceRegenerate = false;
 
         this.init();
     }
@@ -75,6 +79,10 @@ class PatientSummaryManager {
         const copyBtn = document.querySelector('.btn-copy-summary');
         if (copyBtn) {
             copyBtn.addEventListener('click', () => this.copyToClipboard());
+        }
+
+        if (this.btnRegenerate) {
+            this.btnRegenerate.addEventListener('click', () => this.regenerate());
         }
 
         // Bind Audio Events
@@ -140,6 +148,15 @@ class PatientSummaryManager {
         this.stopAudio();
     }
 
+    regenerate() {
+        this.isForceRegenerate = true;
+        this.stopAudio();
+        this.hasLoaded = false;
+        this.currentText = '';
+        if (this.textContent) this.textContent.innerHTML = '';
+        this.fetchSummary();
+    }
+
     async fetchSummary() {
         this.loadingState.style.display = 'block';
         this.errorState.style.display = 'none';
@@ -155,9 +172,12 @@ class PatientSummaryManager {
                 },
                 body: JSON.stringify({
                     patient_id: this.patientId,
-                    encounter_id: this.encounterId
+                    encounter_id: this.encounterId,
+                    force_regenerate: this.isForceRegenerate
                 })
             });
+
+            this.isForceRegenerate = false; // Reset the flag after request is dispatched
 
             const data = await response.json();
 
