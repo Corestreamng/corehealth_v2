@@ -48,9 +48,10 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </div> <!-- End of #summary-content -->
+    </div> <!-- End of .speech-overlay-content -->
         
-        {{-- Floating Capsule Control Bar --}}
+    {{-- Floating Capsule Control Bar (Sticky Footer) --}}
         <div class="speech-capsule-bar" id="summary-capsule-bar" style="display: none;">
             <div class="capsule-left flex-grow-1">
                 <span class="speech-sparkle-icon" id="summary-voice-status-icon"><i class="mdi mdi-volume-high"></i></span>
@@ -84,9 +85,8 @@
                     <i class="mdi mdi-check"></i>
                 </button>
             </div>
-        </div>
-    </div>
-</div>
+        </div> <!-- End of #summary-capsule-bar -->
+</div> <!-- End of #patient-summary-overlay -->
 
 <style>
 /* Markdown Content Styling for the summary */
@@ -111,10 +111,9 @@
 }
 
 #summary-capsule-bar {
-    position: fixed !important;
+    position: sticky !important;
     bottom: 30px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    margin: 0 auto !important;
     z-index: 1050 !important;
     box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
 }
