@@ -110,6 +110,15 @@
     -webkit-backdrop-filter: blur(8px);
 }
 
+#summary-capsule-bar {
+    position: fixed !important;
+    bottom: 30px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1050 !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+}
+
 .summary-voice-btn {
     border-radius: 50%;
     width: 32px;
