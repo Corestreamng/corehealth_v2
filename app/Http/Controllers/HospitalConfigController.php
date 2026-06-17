@@ -53,6 +53,7 @@ class HospitalConfigController extends Controller
     {
         $validated = $request->validate([
             'site_name' => 'required|string|max:255',
+            'site_abbreviation' => 'nullable|string|max:10',
             'header_text' => 'nullable|string',
             'footer_text' => 'nullable|string',
             'hos_color' => 'nullable|string|max:7',
@@ -142,6 +143,8 @@ class HospitalConfigController extends Controller
             'nurse_self_approve_lab_result' => 'boolean',
             'doctor_self_approve_imaging_result' => 'boolean',
             'nurse_self_approve_imaging_result' => 'boolean',
+            'allow_piece_sale' => 'boolean',
+            'allow_halve_sale' => 'boolean',
             'consent_template' => 'nullable|string',
             'llm_config' => 'nullable|array',
         ]);
@@ -172,6 +175,8 @@ class HospitalConfigController extends Controller
         $validated['send_appointment_email_to_doctors'] = $request->has('send_appointment_email_to_doctors');
         $validated['send_appointment_email_to_patients'] = $request->has('send_appointment_email_to_patients');
         $validated['backup_compression'] = $request->has('backup_compression');
+        $validated['allow_piece_sale'] = $request->has('allow_piece_sale');
+        $validated['allow_halve_sale'] = $request->has('allow_halve_sale');
 
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {
