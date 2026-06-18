@@ -203,16 +203,34 @@
                     <!-- TAB 2: History Table -->
                     <div class="tab-pane fade" id="history-pane" role="tabpanel" aria-labelledby="history-tab">
                         <!-- History Filters -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
+                        <div class="row mb-3">
+                            <div class="col-md-2 mb-2">
                                 <label for="history-start-date" class="small text-muted mb-1 d-block">Start Date</label>
                                 <input type="date" id="history-start-date" class="form-control form-control-sm" value="{{ date('Y-m-01') }}">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2 mb-2">
                                 <label for="history-end-date" class="small text-muted mb-1 d-block">End Date</label>
                                 <input type="date" id="history-end-date" class="form-control form-control-sm" value="{{ date('Y-m-t') }}">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4 mb-2">
+                                <label for="history-product-search" class="small text-muted mb-1 d-block">Product</label>
+                                <div class="position-relative">
+                                    <input type="text" id="history-product-search" class="form-control form-control-sm" placeholder="Search product..." autocomplete="off">
+                                    <input type="hidden" id="history-product-id">
+                                    <div id="history-product-suggestions" class="position-absolute w-100 bg-white border rounded shadow-sm d-none" style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label for="history-category" class="small text-muted mb-1 d-block">Category</label>
+                                <select id="history-category" class="form-control form-control-sm">
+                                    <option value="">All Categories</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->category_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2">
                                 <label for="history-type" class="small text-muted mb-1 d-block">Transaction Type</label>
                                 <select id="history-type" class="form-control form-control-sm">
                                     <option value="">All Types</option>
@@ -221,8 +239,17 @@
                                     <option value="adjustment">Adjustments</option>
                                 </select>
                             </div>
-                            <div class="col-md-3 mt-4">
-                                <button id="apply-history-filters" class="btn btn-primary btn-sm btn-block">
+                            <div class="col-md-4 mb-2">
+                                <label for="history-performer-search" class="small text-muted mb-1 d-block">Performer</label>
+                                <div class="position-relative">
+                                    <input type="text" id="history-performer-search" class="form-control form-control-sm" placeholder="Search staff..." autocomplete="off">
+                                    <input type="hidden" id="history-performer-id">
+                                    <div id="history-performer-suggestions" class="position-absolute w-100 bg-white border rounded shadow-sm d-none" style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2 mt-md-4">
+                                <button id="apply-history-filters" class="btn btn-primary btn-sm w-100">
                                     <i class="mdi mdi-filter"></i> Apply Filters
                                 </button>
                             </div>
@@ -896,11 +923,14 @@
                     d.start_date = $('#history-start-date').val();
                     d.end_date = $('#history-end-date').val();
                     d.transaction_type = $('#history-type').val();
+                    d.product_id = $('#history-product-id').val();
+                    d.category_id = $('#history-category').val();
+                    d.performer_id = $('#history-performer-id').val();
                 }
             },
             columns: [{
                     data: "created_at",
-                    name: "created_at"
+                    name: "stock_batch_transactions.created_at"
                 },
                 {
                     data: "product",
@@ -912,11 +942,11 @@
                 },
                 {
                     data: "type",
-                    name: "type"
+                    name: "stock_batch_transactions.type"
                 },
                 {
                     data: "qty",
-                    name: "qty"
+                    name: "stock_batch_transactions.qty"
                 },
                 {
                     data: "reference",
@@ -944,6 +974,155 @@
                 historyTable.ajax.reload();
             }
         });
+
+        // Custom Product Autocomplete with debounce and abort
+        const productSearchInput = document.getElementById('history-product-search');
+        const productIdHidden = document.getElementById('history-product-id');
+        const productSuggestions = document.getElementById('history-product-suggestions');
+        let productSearchAbortController = null;
+
+        productSearchInput.addEventListener('input', debounce(function() {
+            const term = this.value.trim();
+            
+            // Clear hidden ID if input is changed
+            productIdHidden.value = '';
+            
+            // Unlock category dropdown since product was changed
+            document.getElementById('history-category').removeAttribute('disabled');
+
+            if (productSearchAbortController) {
+                productSearchAbortController.abort();
+            }
+
+            if (term.length < 2) {
+                productSuggestions.classList.add('d-none');
+                productSuggestions.innerHTML = '';
+                return;
+            }
+
+            productSearchAbortController = new AbortController();
+            
+            productSuggestions.innerHTML = '<div class="p-2 text-muted small">Searching...</div>';
+            productSuggestions.classList.remove('d-none');
+
+            fetch(`{{ route('live-search-products') }}?term=${encodeURIComponent(term)}`, {
+                signal: productSearchAbortController.signal
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.length === 0) {
+                    productSuggestions.innerHTML = '<div class="p-2 text-muted small">No products found</div>';
+                    return;
+                }
+
+                productSuggestions.innerHTML = '';
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 border-bottom';
+                    div.style.cursor = 'pointer';
+                    const catName = item.category ? item.category.category_name : 'No Category';
+                    div.innerHTML = `<strong>${item.product_name}</strong> <small class="text-muted d-block">${item.product_code || 'No Code'} &bull; <span class="text-info">${catName}</span></small>`;
+                    
+                    div.addEventListener('mouseenter', () => div.classList.add('bg-light'));
+                    div.addEventListener('mouseleave', () => div.classList.remove('bg-light'));
+                    
+                    div.addEventListener('click', () => {
+                        productSearchInput.value = item.product_name;
+                        productIdHidden.value = item.id;
+                        productSuggestions.classList.add('d-none');
+                        
+                        // Auto-select and lock the category dropdown
+                        const catSelect = document.getElementById('history-category');
+                        if (item.category && item.category.id) {
+                            catSelect.value = item.category.id;
+                            catSelect.setAttribute('disabled', 'disabled');
+                        } else {
+                            catSelect.value = '';
+                            catSelect.removeAttribute('disabled');
+                        }
+                    });
+                    
+                    productSuggestions.appendChild(div);
+                });
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    productSuggestions.innerHTML = '<div class="p-2 text-danger small">Error loading products</div>';
+                }
+            });
+        }, 300));
+
+        // Hide suggestions on click outside
+        document.addEventListener('click', function(e) {
+            if (!productSearchInput.contains(e.target) && !productSuggestions.contains(e.target)) {
+                productSuggestions.classList.add('d-none');
+            }
+            if (!performerSearchInput.contains(e.target) && !performerSuggestions.contains(e.target)) {
+                performerSuggestions.classList.add('d-none');
+            }
+        });
+
+        // Custom Performer Autocomplete with debounce and abort
+        const performerSearchInput = document.getElementById('history-performer-search');
+        const performerIdHidden = document.getElementById('history-performer-id');
+        const performerSuggestions = document.getElementById('history-performer-suggestions');
+        let performerSearchAbortController = null;
+
+        performerSearchInput.addEventListener('input', debounce(function() {
+            const term = this.value.trim();
+            
+            performerIdHidden.value = '';
+
+            if (performerSearchAbortController) {
+                performerSearchAbortController.abort();
+            }
+
+            if (term.length < 2) {
+                performerSuggestions.classList.add('d-none');
+                performerSuggestions.innerHTML = '';
+                return;
+            }
+
+            performerSearchAbortController = new AbortController();
+            
+            performerSuggestions.innerHTML = '<div class="p-2 text-muted small">Searching...</div>';
+            performerSuggestions.classList.remove('d-none');
+
+            fetch(`{{ route('inventory.requisitions.my-stock.performers') }}?term=${encodeURIComponent(term)}`, {
+                signal: performerSearchAbortController.signal
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.length === 0) {
+                    performerSuggestions.innerHTML = '<div class="p-2 text-muted small">No staff found</div>';
+                    return;
+                }
+
+                performerSuggestions.innerHTML = '';
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 border-bottom';
+                    div.style.cursor = 'pointer';
+                    div.innerHTML = `<strong>${item.name}</strong>`;
+                    
+                    div.addEventListener('mouseenter', () => div.classList.add('bg-light'));
+                    div.addEventListener('mouseleave', () => div.classList.remove('bg-light'));
+                    
+                    div.addEventListener('click', () => {
+                        performerSearchInput.value = item.name;
+                        performerIdHidden.value = item.id;
+                        performerSuggestions.classList.add('d-none');
+                    });
+                    
+                    performerSuggestions.appendChild(div);
+                });
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    performerSuggestions.innerHTML = '<div class="p-2 text-danger small">Error loading staff</div>';
+                }
+            });
+        }, 300));
 
         // Helper functions
         function debounce(func, wait) {
