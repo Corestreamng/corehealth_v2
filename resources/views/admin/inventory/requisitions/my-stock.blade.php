@@ -255,6 +255,9 @@
                             </div>
                         </div>
 
+                        <!-- Summary Cards -->
+                        <div id="history-summary-cards" class="row mb-3 d-none"></div>
+
                         <!-- Data Table -->
                         <div class="table-responsive">
                             <table id="history-table" class="table table-sm table-bordered table-striped" style="width:100%;">
@@ -957,10 +960,102 @@
                     name: "performer.name"
                 }
             ],
+            drawCallback: function(settings) {
+                let json = this.api().ajax.json();
+                if (json && json.summary_stats) {
+                    renderSummaryCards(json.summary_stats);
+                }
+            },
             order: [
                 [0, 'desc']
             ]
         });
+
+        function renderSummaryCards(stats) {
+            const container = document.getElementById('history-summary-cards');
+            if(!container) return;
+            
+            container.classList.remove('d-none');
+            
+            if (stats.mode === 'product') {
+                container.innerHTML = `
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="card bg-light border-0 shadow-sm h-100">
+                            <div class="card-body p-3 text-center">
+                                <h6 class="text-muted mb-1"><i class="mdi mdi-ray-start"></i> Opening Balance</h6>
+                                <h3 class="mb-0 text-dark">${stats.opening_balance}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="card shadow-sm h-100" style="background-color:#f0fdf4; border-left: 4px solid #22c55e;">
+                            <div class="card-body p-3 text-center">
+                                <h6 class="text-success mb-1"><i class="mdi mdi-arrow-down-bold"></i> Total In</h6>
+                                <h3 class="mb-0 text-success">+${stats.total_in}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="card shadow-sm h-100" style="background-color:#fef2f2; border-left: 4px solid #ef4444;">
+                            <div class="card-body p-3 text-center">
+                                <h6 class="text-danger mb-1"><i class="mdi mdi-arrow-up-bold"></i> Total Out</h6>
+                                <h3 class="mb-0 text-danger">-${stats.total_out}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="card shadow-sm h-100" style="background-color:#eff6ff; border-left: 4px solid #3b82f6;">
+                            <div class="card-body p-3 text-center">
+                                <h6 class="text-primary mb-1"><i class="mdi mdi-ray-end"></i> Closing Balance</h6>
+                                <h3 class="mb-0 text-primary">${stats.closing_balance}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    ${stats.total_damaged > 0 ? `
+                    <div class="col-12 mt-2">
+                        <div class="alert py-2 mb-0 shadow-sm" style="background-color:#fffbeb; border:1px solid #fcd34d; color:#b45309;">
+                            <i class="mdi mdi-alert"></i> <strong>Warning:</strong> ${stats.total_damaged} units of this product were damaged or expired during this period.
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="card bg-light border-0 shadow-sm h-100">
+                            <div class="card-body p-3 text-center">
+                                <h6 class="text-muted mb-1"><i class="mdi mdi-tag-multiple"></i> Products Touched</h6>
+                                <h3 class="mb-0 text-dark">${stats.unique_products}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="card shadow-sm h-100" style="background-color:#f0fdf4; border-left: 4px solid #22c55e;">
+                            <div class="card-body p-3 text-center">
+                                <h6 class="text-success mb-1"><i class="mdi mdi-login"></i> Items Received</h6>
+                                <h3 class="mb-0 text-success">${stats.total_in}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="card shadow-sm h-100" style="background-color:#fffbeb; border-left: 4px solid #f59e0b;">
+                            <div class="card-body p-3 text-center">
+                                <h6 class="text-warning mb-1" style="color: #d97706 !important;"><i class="mdi mdi-logout"></i> Items Dispensed</h6>
+                                <h3 class="mb-0 text-warning" style="color: #d97706 !important;">${stats.total_out}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="card shadow-sm h-100" style="${stats.total_damaged > 0 ? 'background-color:#fef2f2; border-left: 4px solid #ef4444;' : 'background-color:#f8fafc; border-left: 4px solid #94a3b8;'}">
+                            <div class="card-body p-3 text-center">
+                                <h6 class="${stats.total_damaged > 0 ? 'text-danger' : 'text-muted'} mb-1"><i class="mdi mdi-archive-remove"></i> Damaged / Expired</h6>
+                                <h3 class="mb-0 ${stats.total_damaged > 0 ? 'text-danger' : 'text-muted'}">${stats.total_damaged}</h3>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
 
         $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
             if (e.target.id === 'history-tab') {
