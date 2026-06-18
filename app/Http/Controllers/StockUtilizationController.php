@@ -489,7 +489,69 @@ class StockUtilizationController extends Controller
         // Apply performer filter
         if ($request->filled('performer_id')) {
             $query->where('performed_by', $request->performer_id);
-        }        return DataTables::of($query)
+        }
+
+        // --- Calculate Summary Stats ---
+        $statsQuery = clone $query;
+        $statsQuery->setEagerLoads([]);
+        $statsQuery->getQuery()->columns = null;
+        $statsQuery->getQuery()->bindings['select'] = [];
+        $typeStats = $statsQuery->selectRaw('type, sum(qty) as total_qty, count(distinct stock_batches.product_id) as unique_products')
+                                ->groupBy('type')
+                                ->get();
+
+        $totalIn = 0;
+        $totalOut = 0;
+        $totalDamaged = 0;
+        $uniqueProducts = 0;
+
+        foreach ($typeStats as $stat) {
+            $qty = $stat->total_qty;
+            if (in_array($stat->type, ['in', 'transfer_in', 'return', 'req_return'])) {
+                $totalIn += $qty;
+            } elseif (in_array($stat->type, ['out', 'transfer_out', 'po_return'])) {
+                $totalOut += $qty;
+            } elseif (in_array($stat->type, ['expired', 'damaged'])) {
+                $totalDamaged += $qty;
+                $totalOut += $qty; // Include damages in total out for consistency
+            }
+            $uniqueProducts = max($uniqueProducts, $stat->unique_products);
+        }
+        
+        // Accurate distinct products count across all types
+        $upQuery = clone $query;
+        $upQuery->setEagerLoads([]);
+        $upQuery->getQuery()->columns = null;
+        $upQuery->getQuery()->bindings['select'] = [];
+        $uniqueProducts = $upQuery->distinct('stock_batches.product_id')->count('stock_batches.product_id');
+
+        $summary = [
+            'mode' => $request->filled('product_id') ? 'product' : 'generic',
+            'total_in' => $totalIn,
+            'total_out' => $totalOut,
+            'total_damaged' => $totalDamaged,
+            'unique_products' => $uniqueProducts,
+        ];
+
+        if ($request->filled('product_id')) {
+            $baseBalQuery = \App\Models\StockBatchTransaction::whereHas('stockBatch', function($q) use($storeId, $request) {
+                $q->where('store_id', $storeId)->where('product_id', $request->product_id);
+            });
+            $rawSum = 'SUM(CASE WHEN type IN ("in", "transfer_in", "return", "req_return") THEN qty WHEN type IN ("out", "transfer_out", "expired", "damaged", "po_return") THEN -qty WHEN type = "adjustment" AND notes LIKE "Positive%" THEN qty WHEN type = "adjustment" AND notes NOT LIKE "Positive%" THEN -qty ELSE 0 END) as aggregate';
+            
+            $summary['closing_balance'] = (clone $baseBalQuery)->selectRaw($rawSum)->value('aggregate') ?? 0;
+            
+            if ($request->filled('start_date')) {
+                $summary['opening_balance'] = (clone $baseBalQuery)
+                    ->where('created_at', '<', Carbon::parse($request->start_date)->startOfDay())
+                    ->selectRaw($rawSum)->value('aggregate') ?? 0;
+            } else {
+                $summary['opening_balance'] = 0;
+            }
+        }
+
+        return DataTables::of($query)
+            ->with('summary_stats', $summary)
             ->filterColumn('performer.name', function($query, $keyword) {
                 $query->whereHas('performer', function($q) use ($keyword) {
                     $q->where('firstname', 'like', "%{$keyword}%")
