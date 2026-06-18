@@ -73,6 +73,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/my-stock/products', [StockUtilizationController::class, 'getProducts'])->name('my-stock.products');
         Route::get('/my-stock/batches', [StockUtilizationController::class, 'getBatches'])->name('my-stock.batches');
         Route::get('/my-stock/patients', [StockUtilizationController::class, 'searchPatients'])->name('my-stock.patients');
+        Route::get('/my-stock/performers', [StockUtilizationController::class, 'searchPerformers'])->name('my-stock.performers');
         Route::get('/my-stock/tariff-preview', [StockUtilizationController::class, 'getTariffPreview'])->name('my-stock.tariff-preview');
         Route::post('/my-stock/utilize', [StockUtilizationController::class, 'utilize'])->name('my-stock.utilize');
         Route::get('/my-stock/history', [StockUtilizationController::class, 'history'])->name('my-stock.history');

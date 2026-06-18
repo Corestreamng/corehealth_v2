@@ -1339,6 +1339,7 @@
                 @endif
                 @endif
                 </form>
+        @endif
 
                 @if($requisition->request_notes)
                 <div class="detail-card">
