@@ -453,7 +453,7 @@ class StockUtilizationController extends Controller
 
         $query = StockBatchTransaction::select('stock_batch_transactions.*')
             ->join('stock_batches', 'stock_batches.id', '=', 'stock_batch_transactions.stock_batch_id')
-            ->with(['stockBatch.product.category', 'performer', 'reference'])
+            ->with(['stockBatch.product.category', 'stockBatch.product.packagings', 'performer', 'reference'])
             ->where('stock_batches.store_id', $storeId)
             ->addSelect([
                 'product_running_balance' => $subquery
@@ -531,22 +531,49 @@ class StockUtilizationController extends Controller
             'total_out' => $totalOut,
             'total_damaged' => $totalDamaged,
             'unique_products' => $uniqueProducts,
+            'base_unit' => '',
+            'total_in_formatted' => $totalIn,
+            'total_out_formatted' => $totalOut,
+            'total_in_bulk' => '',
+            'total_out_bulk' => '',
+            'opening_balance_formatted' => '',
+            'opening_balance_bulk' => '',
+            'closing_balance_formatted' => '',
+            'closing_balance_bulk' => ''
         ];
 
         if ($request->filled('product_id')) {
+            $product = \App\Models\Product::with('packagings')->find($request->product_id);
+            if ($product) {
+                $summary['base_unit'] = $product->baseQtyLabel();
+                $summary['total_in_formatted'] = $product->formatQty($totalIn);
+                $summary['total_out_formatted'] = $product->formatQty($totalOut);
+                $summary['total_in_bulk'] = $product->formatBulkQty($totalIn);
+                $summary['total_out_bulk'] = $product->formatBulkQty($totalOut);
+            }
+
             $baseBalQuery = \App\Models\StockBatchTransaction::whereHas('stockBatch', function($q) use($storeId, $request) {
                 $q->where('store_id', $storeId)->where('product_id', $request->product_id);
             });
             $rawSum = 'SUM(CASE WHEN type IN ("in", "transfer_in", "return", "req_return") THEN qty WHEN type IN ("out", "transfer_out", "expired", "damaged", "po_return") THEN -qty WHEN type = "adjustment" AND notes LIKE "Positive%" THEN qty WHEN type = "adjustment" AND notes NOT LIKE "Positive%" THEN -qty ELSE 0 END) as aggregate';
             
-            $summary['closing_balance'] = (clone $baseBalQuery)->selectRaw($rawSum)->value('aggregate') ?? 0;
+            $closing = (clone $baseBalQuery)->selectRaw($rawSum)->value('aggregate') ?? 0;
+            $summary['closing_balance'] = $closing;
             
             if ($request->filled('start_date')) {
-                $summary['opening_balance'] = (clone $baseBalQuery)
+                $opening = (clone $baseBalQuery)
                     ->where('created_at', '<', Carbon::parse($request->start_date)->startOfDay())
                     ->selectRaw($rawSum)->value('aggregate') ?? 0;
+                $summary['opening_balance'] = $opening;
             } else {
                 $summary['opening_balance'] = 0;
+            }
+            
+            if ($product) {
+                $summary['closing_balance_formatted'] = $product->formatQty($summary['closing_balance']);
+                $summary['closing_balance_bulk'] = $product->formatBulkQty($summary['closing_balance']);
+                $summary['opening_balance_formatted'] = $product->formatQty($summary['opening_balance']);
+                $summary['opening_balance_bulk'] = $product->formatBulkQty($summary['opening_balance']);
             }
         }
 
@@ -595,8 +622,15 @@ class StockUtilizationController extends Controller
                 $sign = ($isOut || $isNegAdj) ? '-' : '+';
                 $badgeClass = ($isOut || $isNegAdj) ? 'badge-danger' : 'badge-success';
                 $signedQty = ($isOut || $isNegAdj) ? -abs($t->qty) : abs($t->qty);
+                $product = $t->stockBatch->product;
                 
-                $html = '<span class="badge ' . $badgeClass . '" style="font-size: 1.1em; padding: 0.4em 0.6em;">' . $sign . abs($t->qty) . '</span>';
+                $qtyFormatted = $product ? $product->formatQty(abs($t->qty)) : abs($t->qty);
+                $qtyBulk = $product ? $product->formatBulkQty(abs($t->qty)) : '';
+                
+                $html = '<span class="badge ' . $badgeClass . '" style="font-size: 1.1em; padding: 0.4em 0.6em;">' . $sign . $qtyFormatted . '</span>';
+                if ($qtyBulk) {
+                    $html .= '<div class="small text-muted mt-1">' . $qtyBulk . '</div>';
+                }
                 
                 if (isset($t->product_running_balance) || isset($t->balance_after)) {
                     $html .= '<hr class="my-2" style="border-color: #eee;">';
@@ -605,21 +639,34 @@ class StockUtilizationController extends Controller
                     if (isset($t->product_running_balance)) {
                         $totalAfter = $t->product_running_balance;
                         $totalBefore = $totalAfter - $signedQty;
+                        
+                        $tbf = $product ? $product->formatQty($totalBefore) : $totalBefore;
+                        $taf = $product ? $product->formatQty($totalAfter) : $totalAfter;
+                        $tbBulk = $product ? $product->formatBulkQty($totalBefore) : '';
+                        $taBulk = $product ? $product->formatBulkQty($totalAfter) : '';
+
                         $html .= '<div class="text-dark mb-2" title="Total inventory across all batches">
                                     <i class="mdi mdi-layers text-primary mr-1"></i> <strong>Overall Stock</strong>
                                     <div class="text-muted" style="margin-left: 1.25rem;">
-                                        ' . $totalBefore . ' <i class="mdi mdi-arrow-right mx-1" style="font-size: 10px;"></i> <strong class="text-dark">' . $totalAfter . '</strong>
-                                    </div>
-                                  </div>';
+                                        ' . $tbf . ' <i class="mdi mdi-arrow-right mx-1" style="font-size: 10px;"></i> <strong class="text-dark">' . $taf . '</strong>
+                                    </div>';
+                        if ($taBulk) {
+                            $html .= '<div class="text-muted" style="margin-left: 1.25rem; font-size: 0.85em;">≈ ' . $taBulk . '</div>';
+                        }
+                        $html .= '</div>';
                     }
                     
                     if (isset($t->balance_after)) {
                         $batchAfter = $t->balance_after;
                         $batchBefore = $batchAfter - $signedQty;
+                        
+                        $bbf = $product ? $product->formatQty($batchBefore) : $batchBefore;
+                        $baf = $product ? $product->formatQty($batchAfter) : $batchAfter;
+
                         $html .= '<div class="text-dark" title="Inventory in this specific batch">
                                     <i class="mdi mdi-package-variant-closed text-muted mr-1"></i> <strong>Batch Stock</strong>
                                     <div class="text-muted" style="margin-left: 1.25rem;">
-                                        ' . $batchBefore . ' <i class="mdi mdi-arrow-right mx-1" style="font-size: 10px;"></i> <strong class="text-dark">' . $batchAfter . '</strong>
+                                        ' . $bbf . ' <i class="mdi mdi-arrow-right mx-1" style="font-size: 10px;"></i> <strong class="text-dark">' . $baf . '</strong>
                                     </div>
                                   </div>';
                     }

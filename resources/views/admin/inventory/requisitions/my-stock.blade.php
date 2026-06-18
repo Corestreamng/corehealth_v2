@@ -249,9 +249,14 @@
                                 </div>
                             </div>
                             <div class="col-md-4 mb-2 mt-md-4">
-                                <button id="apply-history-filters" class="btn btn-primary btn-sm w-100">
-                                    <i class="mdi mdi-filter"></i> Apply Filters
-                                </button>
+                                <div class="d-flex w-100">
+                                    <button id="apply-history-filters" class="btn btn-primary btn-sm flex-fill mr-1">
+                                        <i class="mdi mdi-filter"></i> Apply
+                                    </button>
+                                    <button id="clear-history-filters" class="btn btn-outline-secondary btn-sm flex-fill ml-1">
+                                        <i class="mdi mdi-close"></i> Clear
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -983,7 +988,8 @@
                         <div class="card bg-light border-0 shadow-sm h-100">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-muted mb-1"><i class="mdi mdi-ray-start"></i> Opening Balance</h6>
-                                <h3 class="mb-0 text-dark">${stats.opening_balance}</h3>
+                                <h3 class="mb-0 text-dark">${stats.opening_balance_formatted}</h3>
+                                ${stats.opening_balance_bulk ? `<div class="small text-muted mt-1" style="font-size: 0.8rem;">≈ ${stats.opening_balance_bulk}</div>` : ''}
                             </div>
                         </div>
                     </div>
@@ -991,7 +997,8 @@
                         <div class="card shadow-sm h-100" style="background-color:#f0fdf4; border-left: 4px solid #22c55e;">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-success mb-1"><i class="mdi mdi-arrow-down-bold"></i> Total In</h6>
-                                <h3 class="mb-0 text-success">+${stats.total_in}</h3>
+                                <h3 class="mb-0 text-success">+${stats.total_in_formatted}</h3>
+                                ${stats.total_in_bulk ? `<div class="small text-success mt-1" style="font-size: 0.8rem; opacity: 0.8;">≈ ${stats.total_in_bulk}</div>` : ''}
                             </div>
                         </div>
                     </div>
@@ -999,7 +1006,8 @@
                         <div class="card shadow-sm h-100" style="background-color:#fef2f2; border-left: 4px solid #ef4444;">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-danger mb-1"><i class="mdi mdi-arrow-up-bold"></i> Total Out</h6>
-                                <h3 class="mb-0 text-danger">-${stats.total_out}</h3>
+                                <h3 class="mb-0 text-danger">-${stats.total_out_formatted}</h3>
+                                ${stats.total_out_bulk ? `<div class="small text-danger mt-1" style="font-size: 0.8rem; opacity: 0.8;">≈ ${stats.total_out_bulk}</div>` : ''}
                             </div>
                         </div>
                     </div>
@@ -1007,7 +1015,8 @@
                         <div class="card shadow-sm h-100" style="background-color:#eff6ff; border-left: 4px solid #3b82f6;">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-primary mb-1"><i class="mdi mdi-ray-end"></i> Closing Balance</h6>
-                                <h3 class="mb-0 text-primary">${stats.closing_balance}</h3>
+                                <h3 class="mb-0 text-primary">${stats.closing_balance_formatted}</h3>
+                                ${stats.closing_balance_bulk ? `<div class="small text-primary mt-1" style="font-size: 0.8rem; opacity: 0.8;">≈ ${stats.closing_balance_bulk}</div>` : ''}
                             </div>
                         </div>
                     </div>
@@ -1065,6 +1074,22 @@
 
         // Bind the apply filters button to reload the table
         $('#apply-history-filters').off('click').on('click', function() {
+            if (historyTable) {
+                historyTable.ajax.reload();
+            }
+        });
+
+        // Bind the clear filters button to reset inputs and reload
+        $('#clear-history-filters').off('click').on('click', function() {
+            $('#history-start-date').val('');
+            $('#history-end-date').val('');
+            $('#history-type').val('');
+            $('#history-product-search').val('');
+            $('#history-product-id').val('');
+            $('#history-category').val('').removeAttr('disabled');
+            $('#history-performer-search').val('');
+            $('#history-performer-id').val('');
+            
             if (historyTable) {
                 historyTable.ajax.reload();
             }
