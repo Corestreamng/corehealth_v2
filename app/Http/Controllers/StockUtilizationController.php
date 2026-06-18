@@ -57,7 +57,9 @@ class StockUtilizationController extends Controller
         // Fetch all stores for the dropdown/switcher
         $stores = Store::active()->orderBy('store_name')->get();
 
-        return view('admin.inventory.requisitions.my-stock', compact('activeStore', 'myStores', 'stores'));
+        $categories = \App\Models\ProductCategory::orderBy('category_name')->get();
+
+        return view('admin.inventory.requisitions.my-stock', compact('activeStore', 'myStores', 'stores', 'categories'));
     }
 
     /**
@@ -197,6 +199,32 @@ class StockUtilizationController extends Controller
             });
 
         return response()->json($patients);
+    }
+
+    /**
+     * Search staff for performer filter
+     */
+    public function searchPerformers(Request $request)
+    {
+        $term = $request->get('term', '');
+        
+        $users = \App\Models\User::where('status', 1)
+            ->where('is_admin', '!=', 19)
+            ->where(function ($q) use ($term) {
+                $q->where('firstname', 'like', "%{$term}%")
+                  ->orWhere('surname', 'like', "%{$term}%")
+                  ->orWhere('othername', 'like', "%{$term}%");
+            })
+            ->limit(20)
+            ->get(['id', 'firstname', 'surname', 'othername'])
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => trim($user->firstname . ' ' . $user->surname . ' ' . $user->othername)
+                ];
+            });
+
+        return response()->json($users);
     }
 
     /**
@@ -410,17 +438,33 @@ class StockUtilizationController extends Controller
             return response()->json(['error' => 'Unauthorized store access.'], 403);
         }
 
-        $query = StockBatchTransaction::with(['stockBatch.product', 'performer', 'reference'])
-            ->whereHas('stockBatch', function ($q) use ($storeId) {
-                $q->where('store_id', $storeId);
+        $subquery = \App\Models\StockBatchTransaction::from('stock_batch_transactions as t2')
+            ->selectRaw('SUM(CASE WHEN t2.type IN ("in", "transfer_in", "return", "req_return") THEN t2.qty WHEN t2.type IN ("out", "transfer_out", "expired", "damaged", "po_return") THEN -t2.qty WHEN t2.type = "adjustment" AND t2.notes LIKE "Positive%" THEN t2.qty WHEN t2.type = "adjustment" AND t2.notes NOT LIKE "Positive%" THEN -t2.qty ELSE 0 END)')
+            ->join('stock_batches as sb2', 'sb2.id', '=', 't2.stock_batch_id')
+            ->whereColumn('sb2.product_id', 'stock_batches.product_id')
+            ->whereColumn('sb2.store_id', 'stock_batches.store_id')
+            ->where(function($q) {
+                $q->whereColumn('t2.created_at', '<', 'stock_batch_transactions.created_at')
+                  ->orWhere(function($q2) {
+                      $q2->whereColumn('t2.created_at', '=', 'stock_batch_transactions.created_at')
+                         ->whereColumn('t2.id', '<=', 'stock_batch_transactions.id');
+                  });
             });
+
+        $query = StockBatchTransaction::select('stock_batch_transactions.*')
+            ->join('stock_batches', 'stock_batches.id', '=', 'stock_batch_transactions.stock_batch_id')
+            ->with(['stockBatch.product.category', 'performer', 'reference'])
+            ->where('stock_batches.store_id', $storeId)
+            ->addSelect([
+                'product_running_balance' => $subquery
+            ]);
 
         // Apply date range filters
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->inDateRange(
+            $query->whereBetween('stock_batch_transactions.created_at', [
                 Carbon::parse($request->start_date)->startOfDay(),
                 Carbon::parse($request->end_date)->endOfDay()
-            );
+            ]);
         }
 
         // Apply transaction type filter
@@ -428,23 +472,105 @@ class StockUtilizationController extends Controller
             $query->where('type', $request->transaction_type);
         }
 
-        return DataTables::of($query)
+        // Apply product filter
+        if ($request->filled('product_id')) {
+            $query->whereHas('stockBatch', function ($q) use ($request) {
+                $q->where('product_id', $request->product_id);
+            });
+        }
+
+        // Apply category filter
+        if ($request->filled('category_id')) {
+            $query->whereHas('stockBatch.product', function ($q) use ($request) {
+                $q->where('category_id', $request->category_id);
+            });
+        }
+
+        // Apply performer filter
+        if ($request->filled('performer_id')) {
+            $query->where('performed_by', $request->performer_id);
+        }        return DataTables::of($query)
+            ->filterColumn('performer.name', function($query, $keyword) {
+                $query->whereHas('performer', function($q) use ($keyword) {
+                    $q->where('firstname', 'like', "%{$keyword}%")
+                      ->orWhere('surname', 'like', "%{$keyword}%")
+                      ->orWhere('othername', 'like', "%{$keyword}%");
+                });
+            })
             ->addIndexColumn()
+            ->editColumn('created_at', function ($t) {
+                $date = $t->created_at->format('M d, Y');
+                $time = $t->created_at->format('h:i A');
+                $human = $t->created_at->diffForHumans();
+                return '<div class="font-weight-bold">' . $date . '</div>' .
+                       '<small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $time . ' (' . $human . ')</small>';
+            })
             ->editColumn('product', function ($t) {
-                return $t->stockBatch->product->product_name ?? 'N/A';
+                $productName = $t->stockBatch->product->product_name ?? 'N/A';
+                $productCode = $t->stockBatch->product->product_code ?? 'No Code';
+                $categoryName = $t->stockBatch->product->category->category_name ?? 'No Category';
+                return '<div class="font-weight-bold text-dark">' . $productName . '</div>' .
+                       '<div class="small mt-1"><span class="text-muted border-right pr-1 mr-1">Code: ' . $productCode . '</span>' .
+                       '<span class="text-info"><i class="mdi mdi-tag"></i> ' . $categoryName . '</span></div>';
             })
             ->editColumn('batch', function ($t) {
-                return $t->stockBatch->batch_number ?? 'N/A';
+                $batchNumber = $t->stockBatch->batch_number ?? 'N/A';
+                $expiryDate = $t->stockBatch->expiry_date;
+                $expiryHtml = '';
+                if ($expiryDate) {
+                    $exp = \Carbon\Carbon::parse($expiryDate);
+                    $expClass = $exp->isPast() ? 'text-danger font-weight-bold' : ($exp->diffInDays(now()) < 90 ? 'text-warning' : 'text-muted');
+                    $expiryHtml = '<div class="small mt-1"><span class="text-muted">Exp: </span><span class="' . $expClass . '">' . $exp->format('Y-m-d') . '</span></div>';
+                }
+                return '<div class="font-weight-bold">' . $batchNumber . '</div>' . $expiryHtml;
             })
             ->editColumn('type', function ($t) {
                 return '<span class="badge ' . $t->type_badge_class . '">' . $t->type_label . '</span>';
             })
             ->editColumn('qty', function ($t) {
-                $class = $t->qty < 0 ? 'text-danger' : 'text-success';
-                return '<span class="' . $class . ' font-weight-bold">' . $t->qty . '</span>';
+                $isOut = in_array($t->type, ['out', 'transfer_out', 'expired', 'damaged', 'po_return']);
+                $isNegAdj = $t->type === 'adjustment' && !str_starts_with($t->notes ?? '', 'Positive');
+                $sign = ($isOut || $isNegAdj) ? '-' : '+';
+                $badgeClass = ($isOut || $isNegAdj) ? 'badge-danger' : 'badge-success';
+                $signedQty = ($isOut || $isNegAdj) ? -abs($t->qty) : abs($t->qty);
+                
+                $html = '<span class="badge ' . $badgeClass . '" style="font-size: 1.1em; padding: 0.4em 0.6em;">' . $sign . abs($t->qty) . '</span>';
+                
+                if (isset($t->product_running_balance) || isset($t->balance_after)) {
+                    $html .= '<hr class="my-2" style="border-color: #eee;">';
+                    $html .= '<div class="small text-nowrap" style="line-height: 1.4;">';
+                    
+                    if (isset($t->product_running_balance)) {
+                        $totalAfter = $t->product_running_balance;
+                        $totalBefore = $totalAfter - $signedQty;
+                        $html .= '<div class="text-dark mb-2" title="Total inventory across all batches">
+                                    <i class="mdi mdi-layers text-primary mr-1"></i> <strong>Overall Stock</strong>
+                                    <div class="text-muted" style="margin-left: 1.25rem;">
+                                        ' . $totalBefore . ' <i class="mdi mdi-arrow-right mx-1" style="font-size: 10px;"></i> <strong class="text-dark">' . $totalAfter . '</strong>
+                                    </div>
+                                  </div>';
+                    }
+                    
+                    if (isset($t->balance_after)) {
+                        $batchAfter = $t->balance_after;
+                        $batchBefore = $batchAfter - $signedQty;
+                        $html .= '<div class="text-dark" title="Inventory in this specific batch">
+                                    <i class="mdi mdi-package-variant-closed text-muted mr-1"></i> <strong>Batch Stock</strong>
+                                    <div class="text-muted" style="margin-left: 1.25rem;">
+                                        ' . $batchBefore . ' <i class="mdi mdi-arrow-right mx-1" style="font-size: 10px;"></i> <strong class="text-dark">' . $batchAfter . '</strong>
+                                    </div>
+                                  </div>';
+                    }
+                    
+                    $html .= '</div>';
+                }
+                
+                return $html;
             })
             ->editColumn('performer', function ($t) {
-                return $t->performer->name ?? 'System';
+                $name = $t->performer->name ?? 'System';
+                $idLabel = $t->performer ? 'ID: #' . $t->performer->id : 'Automated';
+                return '<div class="font-weight-bold">' . $name . '</div><small class="text-muted">' . $idLabel . '</small>';
             })
             ->editColumn('reference', function ($t) {
                 // If it is our custom StockUtilization
@@ -526,10 +652,7 @@ class StockUtilizationController extends Controller
                 // Fallbacks for other transaction types
                 return $t->notes ?? $t->type_label;
             })
-            ->editColumn('created_at', function ($t) {
-                return $t->created_at->format('Y-m-d H:i:s');
-            })
-            ->rawColumns(['type', 'qty', 'reference'])
+            ->rawColumns(['created_at', 'product', 'batch', 'type', 'qty', 'performer', 'reference'])
             ->make(true);
     }
 }
