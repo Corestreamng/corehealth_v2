@@ -233,6 +233,47 @@ class Product extends Model implements Auditable
     }
 
     /**
+     * Format a quantity in its default bulk packaging, breaking it down into packs + units if necessary.
+     * e.g. "12 Pack(s) & 3 Tablets"
+     */
+    public function formatBulkQty(float $qty): string
+    {
+        // Use eager loaded packagings if available to prevent N+1
+        $packagings = $this->relationLoaded('packagings') ? $this->packagings : $this->packagings()->get();
+        $defaultPurchasePack = $packagings->where('is_default_purchase', true)->first();
+        
+        if (!$defaultPurchasePack || $defaultPurchasePack->base_unit_qty <= 0) {
+            return '';
+        }
+
+        $baseUnitQty = (float) $defaultPurchasePack->base_unit_qty;
+        
+        if ($baseUnitQty <= 1 && strtolower($defaultPurchasePack->name) === strtolower($this->base_unit_name)) {
+            // Bulk unit is indistinguishable from base unit
+            return '';
+        }
+
+        $packQty = floor($qty / $baseUnitQty);
+        $remainder = fmod($qty, $baseUnitQty);
+
+        $name = $defaultPurchasePack->name;
+        $namePlural = str_ends_with($name, 's') ? $name : $name . 's';
+        
+        $packStr = "{$packQty} " . ($packQty == 1 ? $name : $namePlural);
+        
+        if ($remainder > 0) {
+            $baseUnitStr = $this->formatQty($remainder);
+            if ($packQty > 0) {
+                return "{$packStr} & {$baseUnitStr}";
+            } else {
+                return $baseUnitStr; // Only remainder exists
+            }
+        }
+
+        return $packStr;
+    }
+
+    /**
      * Return just the base unit label (e.g. "Tablets", "ml").
      */
     public function baseQtyLabel(): string
