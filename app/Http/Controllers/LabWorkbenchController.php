@@ -318,16 +318,8 @@ class LabWorkbenchController extends Controller
 
             // Filter by status if provided
             if ($request->has('status') && $request->status === 'approval') {
-                // Special approval queue: pending (5), rejected (6), and recently approved by current user
-                $query->where(function ($q) {
-                    $q->whereIn('status', [5, 6])
-                        ->orWhere(function ($q2) {
-                            $q2->where('status', 4)
-                                ->whereNotNull('approved_by')
-                                ->where('approved_by', Auth::id())
-                                ->where('approved_at', '>=', now()->subHours(72));
-                        });
-                });
+                // Special approval queue: pending (5), rejected (6)
+                $query->whereIn('status', [5, 6]);
             } elseif ($request->has('status') && $request->status !== 'all') {
                 $statuses = explode(',', $request->status);
                 $query->whereIn('status', $statuses);
@@ -343,12 +335,10 @@ class LabWorkbenchController extends Controller
                 $query->whereBetween('created_at', [$startDate, $endDate]);
             }
 
-            $requests = $query
-                ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $query->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
+                  ->orderBy('created_at', 'desc');
 
-            return Datatables::of($requests)
+            return Datatables::of($query)
                 ->addIndexColumn()
                 ->addColumn('card_data', function ($request) {
                     if (!$request->patient || !$request->patient->user) {

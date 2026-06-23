@@ -2981,6 +2981,10 @@
                         </div>
                     </div>
                 </div>
+                <!-- Approval Queue Hint -->
+                <div id="approval-queue-hint" class="alert alert-info" style="display: none; font-size: 0.9rem; margin-top: 1rem; border-left: 4px solid #0dcaf0;">
+                    <i class="mdi mdi-information"></i> <strong>Note:</strong> Once approved, requests are moved to the <strong>Completed</strong> list. You can reverse your recent approvals from there.
+                </div>
                 <!-- DataTable -->
                 <table class="table" id="queue-datatable" style="width: 100%">
                     <thead>
@@ -3968,6 +3972,7 @@ let queueRefreshInterval = null;
 let vitalTooltip = null;
 const isApprover = @json($isApprover ?? false);
 const requiresApproval = @json($requiresApproval ?? false);
+const currentUserId = {{ Auth::id() ?? 'null' }};
 let currentApprovalId = null;
 
 var _PI_LAB_REQ_APPROVAL = {{ appsettings('lab_results_require_approval') ? 'true' : 'false' }};
@@ -6198,6 +6203,12 @@ function showQueue(filter) {
     };
     $('#current-queue-title').html(`<i class="mdi mdi-filter"></i> Viewing: <span style="font-weight: 700; color: #667eea;">${titleNames[filter] || titleNames['all']}</span>`);
 
+    if (filter === 'approval') {
+        $('#approval-queue-hint').show();
+    } else {
+        $('#approval-queue-hint').hide();
+    }
+
     // Update active state on queue buttons
     $('.queue-item').removeClass('active');
     if (filter !== 'all') {
@@ -6301,7 +6312,9 @@ function initializeQueueDataTable(filter) {
                         statusBadge = '<span class="badge badge-danger"><i class="mdi mdi-clipboard-text"></i> Awaiting Results</span>';
                     } else if (cardData.status === 4 && cardData.approved_by) {
                         statusBadge = '<span class="badge badge-success"><i class="mdi mdi-check-circle"></i> Approved</span>';
-                        reverseBtn = `<button class="btn btn-sm btn-outline-warning reverse-approval-btn" data-request-id="${cardData.id}" style="margin-left: auto; font-size: 0.75rem; padding: 2px 8px;" title="Reverse this approval"><i class="mdi mdi-undo-variant"></i> Reverse</button>`;
+                        if (cardData.approved_by == currentUserId) {
+                            reverseBtn = `<button class="btn btn-sm btn-outline-warning reverse-approval-btn" data-request-id="${cardData.id}" style="margin-left: auto; font-size: 0.75rem; padding: 2px 8px;" title="Reverse this approval"><i class="mdi mdi-undo-variant"></i> Reverse</button>`;
+                        }
                     } else if (cardData.status === 4) {
                         statusBadge = '<span class="badge badge-success"><i class="mdi mdi-check-circle"></i> Completed</span>';
                     } else if (cardData.status === 5) {
