@@ -8314,6 +8314,10 @@ const ClinicalRequests = (function() {
                     const mode = item.coverage_mode || null;
                     const displayName = `${name}[${code}](${qty} avail.)`;
 
+                    const isCombo = item.is_combo || false;
+                    const bundleItems = item.bundle_items || [];
+                    if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+
                     // Phase 2c (Plan §4.4): Duplicate filtering for medications
                     const alreadyAdded = isCombo ? false : ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
                     const onClick = alreadyAdded ? '' : (isCombo ? `ClinicalRequests.applyProductCombo(${item.id}, '${name.replace(/'/g,"\\'")}')` : `ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})`);
