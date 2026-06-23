@@ -1894,7 +1894,9 @@ window.BILLING_KIT_CONFIG = {
     procedureId:           {{ $procedure->id }},
 };
 </script>
+@include('admin.shared.modals.request_details')
 <script src="{{ asset('js/billing-shared.js') }}"></script>
+<script src="{{ asset('js/request-details.js') }}"></script>
 @endhasanyrole
 
 <script>

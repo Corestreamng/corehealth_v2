@@ -2394,6 +2394,7 @@ class NursingWorkbenchController extends Controller{
                         'created_at' => $req->created_at,
                         'posr_id' => $posr->id ?? null,
                         'is_paid' => $posr && $posr->payment_id ? true : false,
+                        'created_by_id' => $posr->staff_user_id ?? null,
                     ];
                 });
             $allRequests = $allRequests->merge($labRequests);
@@ -2428,6 +2429,7 @@ class NursingWorkbenchController extends Controller{
                         'created_at' => $req->created_at,
                         'posr_id' => $posr->id ?? null,
                         'is_paid' => $posr && $posr->payment_id ? true : false,
+                        'created_by_id' => $posr->staff_user_id ?? null,
                     ];
                 });
             $allRequests = $allRequests->merge($imagingRequests);
@@ -2464,9 +2466,87 @@ class NursingWorkbenchController extends Controller{
                         'created_at' => $req->created_at,
                         'posr_id' => $posr->id ?? null,
                         'is_paid' => $posr && $posr->payment_id ? true : false,
+                        'created_by_id' => $posr->staff_user_id ?? null,
                     ];
                 });
             $allRequests = $allRequests->merge($productRequests);
+        }
+
+        // Pure Services & Products (POSR only)
+        if (!$typeFilter || in_array($typeFilter, ['service', 'product'])) {
+            $posrQuery = ProductOrServiceRequest::with(['service.price', 'product.price', 'payment', 'staff', 'sale'])
+                ->where('user_id', $patient->user_id)
+                ->where('is_bundle_item', false)
+                ->whereDoesntHave('productRequest')
+                ->whereNotIn('id', function($q) {
+                    $q->select('service_request_id')->from('lab_service_requests')->whereNotNull('service_request_id');
+                })
+                ->whereNotIn('id', function($q) {
+                    $q->select('service_request_id')->from('imaging_service_requests')->whereNotNull('service_request_id');
+                });
+
+            if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
+
+            $posrRequests = $posrQuery->orderBy('created_at', 'desc')->get()
+                ->map(function ($posr) use ($typeFilter) {
+                    $isProduct = !is_null($posr->product_id);
+                    $type = $isProduct ? 'product' : 'service';
+                    
+                    if ($typeFilter && $typeFilter !== $type) return null;
+
+                    $qty = $posr->qty ?? 1;
+                    $unitPrice = $isProduct 
+                        ? (optional(optional($posr->product)->price)->current_sale_price ?? 0)
+                        : (optional(optional($posr->service)->price)->sale_price ?? 0);
+                    $basePrice = $unitPrice * $qty;
+                    
+                    $name = $isProduct 
+                        ? (optional($posr->product)->product_name ?? 'Unknown Product')
+                        : (optional($posr->service)->service_name ?? 'Unknown Service');
+                    
+                    $prefix = $isProduct ? 'PRD-' : 'SVC-';
+
+                    $deliveryStatus = 'Pending Billing';
+                    $deliveryStatusCode = 'pending';
+                    if ($isProduct) {
+                        if ($posr->sale) {
+                            $deliveryStatus = 'Dispensed';
+                            $deliveryStatusCode = 'completed';
+                        } else if ($posr->payment_id) {
+                            $deliveryStatus = 'Awaiting Dispensing';
+                            $deliveryStatusCode = 'in_progress';
+                        }
+                    } else {
+                        if ($posr->payment_id) {
+                            $deliveryStatus = 'Completed';
+                            $deliveryStatusCode = 'completed';
+                        }
+                    }
+
+                    return [
+                        'id' => $posr->id,
+                        'request_no' => $prefix . str_pad($posr->id, 6, '0', STR_PAD_LEFT),
+                        'type' => $type,
+                        'type_label' => $isProduct ? 'Product' : 'Service',
+                        'name' => $name,
+                        'price' => $posr->payable_amount + $posr->claims_amount,
+                        'hmo_covers' => $posr->claims_amount ?? 0,
+                        'payable' => $posr->payable_amount ?? $basePrice,
+                        'coverage_mode' => $posr->coverage_mode ?? null,
+                        'billing_status' => $posr->payment_id ? 'Paid' : 'Billed',
+                        'billing_status_code' => $posr->payment_id ? 'paid' : 'pending', // Use pending so it can be discarded if unpaid
+                        'delivery_status' => $deliveryStatus,
+                        'delivery_status_code' => $deliveryStatusCode,
+                        'requested_by' => $posr->staff ? ($posr->staff->surname . ' ' . $posr->staff->firstname) : 'Walk-in',
+                        'created_at' => $posr->created_at,
+                        'posr_id' => $posr->id,
+                        'is_paid' => $posr->payment_id ? true : false,
+                        'created_by_id' => $posr->staff_user_id ?? null,
+                    ];
+                })->filter();
+
+            $allRequests = $allRequests->merge($posrRequests);
         }
 
         // Apply billing filter
@@ -2525,9 +2605,31 @@ class NursingWorkbenchController extends Controller{
                 return '<span class="badge ' . ($typeColors[$row['type']] ?? 'badge-secondary') . '">' . $row['type_label'] . '</span>';
             })
             ->addColumn('actions', function ($row) {
-                return '<button class="btn btn-xs btn-outline-primary view-request-btn" data-type="' . $row['type'] . '" data-id="' . $row['id'] . '" title="View Details">
+                $currentUserId = Auth::id();
+                $actions = '<button class="btn btn-xs btn-outline-primary view-request-btn" data-type="' . $row['type'] . '" data-id="' . $row['id'] . '" title="View Details">
                     <i class="mdi mdi-eye"></i>
                 </button>';
+
+                $canDiscard = !$row['is_paid'] && ($row['created_by_id'] == $currentUserId || Auth::user()->hasRole(['SUPERADMIN', 'ADMIN']));
+
+                if ($canDiscard) {
+                    if (!empty($row['posr_id'])) {
+                        $actions .= ' <button class="btn btn-xs btn-outline-danger bk-remove-bill-btn" data-id="' . $row['posr_id'] . '" title="Remove Bill">
+                            <i class="mdi mdi-delete"></i>
+                        </button>';
+                    } else {
+                        $actions .= ' <button class="btn btn-xs btn-outline-danger discard-request-btn"
+                            data-type="' . $row['type'] . '"
+                            data-id="' . $row['id'] . '"
+                            data-name="' . htmlspecialchars($row['name']) . '"
+                            data-request-no="' . $row['request_no'] . '"
+                            title="Discard Request">
+                            <i class="mdi mdi-delete"></i>
+                        </button>';
+                    }
+                }
+
+                return $actions;
             })
             ->rawColumns(['billing_badge', 'delivery_badge', 'type_badge', 'actions'])
             ->make(true);
@@ -2590,6 +2692,28 @@ class NursingWorkbenchController extends Controller{
                 $stats['hmo_covered'] += $req->productOrServiceRequest->claims_amount ?? 0;
                 $stats['patient_payable'] += $req->productOrServiceRequest->payable_amount ?? 0;
             }
+        }
+        
+        // Pure Services & Products (POSR only)
+        $posrQuery = ProductOrServiceRequest::where('user_id', $patient->user_id)
+            ->where('is_bundle_item', false)
+            ->whereDoesntHave('productRequest')
+            ->whereNotIn('id', function($q) {
+                $q->select('service_request_id')->from('lab_service_requests')->whereNotNull('service_request_id');
+            })
+            ->whereNotIn('id', function($q) {
+                $q->select('service_request_id')->from('imaging_service_requests')->whereNotNull('service_request_id');
+            });
+            
+        if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
+        if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
+        
+        $posrRequests = $posrQuery->get();
+        $stats['total_requests'] += $posrRequests->count();
+        $stats['completed'] += $posrRequests->whereNotNull('payment_id')->count();
+        foreach ($posrRequests as $req) {
+            $stats['hmo_covered'] += $req->claims_amount ?? 0;
+            $stats['patient_payable'] += $req->payable_amount ?? 0;
         }
 
         return response()->json([

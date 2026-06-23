@@ -92,7 +92,6 @@ window.BillingKit = (function ($) {
         <li class="nav-item"><a class="nav-link" id="billing-labs-tab" data-toggle="tab" href="#billing-labs" role="tab"><i class="mdi mdi-flask"></i> Labs</a></li>
         <li class="nav-item"><a class="nav-link" id="billing-imaging-tab" data-toggle="tab" href="#billing-imaging" role="tab"><i class="mdi mdi-radioactive"></i> Imaging</a></li>
         <li class="nav-item"><a class="nav-link" id="billing-consumables-tab" data-toggle="tab" href="#billing-consumables" role="tab"><i class="mdi mdi-package-variant"></i> Consumables</a></li>
-        <li class="nav-item"><a class="nav-link" id="billing-pending-tab" data-toggle="tab" href="#billing-pending" role="tab"><i class="mdi mdi-clock-outline"></i> Pending Bills</a></li>
         <li class="nav-item"><a class="nav-link" id="billing-history-tab" data-toggle="tab" href="#billing-history" role="tab"><i class="mdi mdi-clipboard-list"></i> Billing History</a></li>
     </ul>
 
@@ -285,23 +284,6 @@ window.BillingKit = (function ($) {
             </div>
         </div>
 
-        <!-- PENDING BILLS -->
-        <div class="tab-pane fade" id="billing-pending" role="tabpanel">
-            <div class="card-modern">
-                <div class="card-header py-2"><h6 class="mb-0"><i class="mdi mdi-clock-outline"></i> Pending Bills</h6></div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover" id="pending-bills-table" style="width:100%">
-                            <thead><tr>
-                                <th>Item</th><th>Type</th><th>Qty</th>
-                                <th>Amount</th><th>Added By</th><th>Date</th><th>Action</th>
-                            </tr></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- BILLING HISTORY -->
         <div class="tab-pane fade" id="billing-history" role="tabpanel">
@@ -354,6 +336,7 @@ window.BillingKit = (function ($) {
                         <table class="table table-sm table-hover" id="billing-history-table" style="width:100%">
                             <thead><tr>
                                 <th>Date</th><th>Request #</th><th>Type</th><th>Service/Item</th>
+                                <th>Requester</th>
                                 <th>Price</th><th>HMO Covers</th><th>Payable</th>
                                 <th>Billing</th><th>Delivery</th><th>Actions</th>
                             </tr></thead>
@@ -615,39 +598,7 @@ window.BillingKit = (function ($) {
        PENDING BILLS
        ═══════════════════════════════════════════════════════════ */
 
-    function loadPendingBills(patientId) {
-        if (!patientId) return;
-        if ($.fn.DataTable.isDataTable('#pending-bills-table')) {
-            $('#pending-bills-table').DataTable().destroy();
-        }
-        $('#pending-bills-table').DataTable({
-            processing: true,
-            serverSide: false,
-            ajax: { url: (_cfg.pendingBillsBase || '/nursing-workbench/patient') + '/' + patientId + '/pending-bills', dataSrc: '' },
-            columns: [
-                { data: 'item_name' },
-                { data: 'type', render: function(d) {
-                    var cls = d === 'service' ? 'badge-primary' : 'badge-info';
-                    return '<span class="badge ' + cls + '">' + d + '</span>';
-                }},
-                { data: 'qty' },
-                { data: 'payable_amount', render: function(d, t, row) {
-                    var html = '₦' + parseFloat(d || 0).toFixed(2);
-                    if (row.claims_amount > 0) html += '<br><small class="text-success">Claims: ₦' + parseFloat(row.claims_amount).toFixed(2) + '</small>';
-                    return html;
-                }},
-                { data: 'added_by' },
-                { data: 'created_at' },
-                { data: null, render: function(d) {
-                    if (d.can_delete) return '<button class="btn btn-sm btn-danger bk-remove-bill-btn" data-id="' + d.id + '"><i class="fa fa-trash"></i></button>';
-                    return '<span class="text-muted">-</span>';
-                }}
-            ],
-            order: [[5, 'desc']],
-            pageLength: 10,
-            language: { emptyTable: 'No pending bills' }
-        });
-    }
+
 
     function _removeBillItem(id) {
         if (!confirm('Remove this bill item?')) return;
@@ -657,7 +608,6 @@ window.BillingKit = (function ($) {
             headers: { 'X-CSRF-TOKEN': _csrf() },
             success: function(resp) {
                 _notify('success', resp.message || 'Item removed');
-                loadPendingBills(_patientId);
                 if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
             },
             error: function(xhr) {
@@ -699,7 +649,7 @@ window.BillingKit = (function ($) {
             },
             columns: [
                 { data: 'date_formatted' }, { data: 'request_no' }, { data: 'type_badge' },
-                { data: 'name' }, { data: 'price_formatted', className: 'text-right' },
+                { data: 'name' }, { data: 'requested_by' }, { data: 'price_formatted', className: 'text-right' },
                 { data: 'hmo_covers_formatted', className: 'text-right text-success' },
                 { data: 'payable_formatted', className: 'text-right text-primary font-weight-bold' },
                 { data: 'billing_badge' }, { data: 'delivery_badge' },
@@ -792,7 +742,6 @@ window.BillingKit = (function ($) {
                     _notify('success', r.message || 'Service added');
                     $('#service-billing-form')[0].reset();
                     $('#service-id, #service-unit-price').val('0');
-                    loadPendingBills(_patientId);
                     if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
                 },
                 error: function(xhr) {
@@ -842,7 +791,6 @@ window.BillingKit = (function ($) {
                     _notify('success', r.message || 'Lab request created');
                     $('#lab-billing-form')[0].reset();
                     $('#lab-billing-id').val('');
-                    loadPendingBills(_patientId);
                     if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
                 },
                 error: function(xhr) {
@@ -892,7 +840,6 @@ window.BillingKit = (function ($) {
                     _notify('success', r.message || 'Imaging request created');
                     $('#imaging-billing-form')[0].reset();
                     $('#imaging-billing-id').val('');
-                    loadPendingBills(_patientId);
                     if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
                 },
                 error: function(xhr) {
@@ -992,7 +939,6 @@ window.BillingKit = (function ($) {
                     $('#consumable-dose-section').hide();
                     $('#consumable-id').val('');
                     $('#consumable-selected-stock').hide();
-                    loadPendingBills(_patientId);
                     if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
                 },
                 error: function(xhr) {
@@ -1005,6 +951,37 @@ window.BillingKit = (function ($) {
         // ── Remove bill button ─────────────────────────────
         $root.on('click', '.bk-remove-bill-btn', function() {
             _removeBillItem($(this).data('id'));
+        });
+
+        // ── Discard request button ─────────────────────────
+        $root.on('click', '.discard-request-btn', function() {
+            const id = $(this).data('id');
+            const type = $(this).data('type');
+            if (!confirm('Discard this unbilled request?')) return;
+            
+            let url = '';
+            if (type === 'lab') url = '/lab-workbench/lab-service-requests/' + id;
+            else if (type === 'imaging') url = '/imaging-workbench/imaging-service-requests/' + id;
+            else if (type === 'product') url = '/product-requests/' + id;
+            else return;
+
+            const $btn = $(this);
+            const origHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+            $.ajax({
+                url: url,
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': _csrf() },
+                success: function(resp) {
+                    _notify('success', resp.message || 'Request discarded');
+                    if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload(null, false);
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).html(origHtml);
+                    _notify('error', (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to discard request');
+                }
+            });
         });
 
         // ── History Filter change ──────────────────────────
@@ -1043,11 +1020,6 @@ window.BillingKit = (function ($) {
                     _initBillingHistory(_patientId);
                 }
             });
-
-            // Auto-load pending tab
-            $('a[href="#billing-pending"]').on('shown.bs.tab', function (e) {
-                if (_patientId) loadPendingBills(_patientId);
-            });
         },
 
         setPatient: function (patientId) {
@@ -1055,10 +1027,6 @@ window.BillingKit = (function ($) {
             _billingHistoryLoaded = false;
             _billingHistoryTable = null;
 
-            // If pending tab is active, load it
-            if ($('#billing-pending').hasClass('active')) {
-                loadPendingBills(patientId);
-            }
             // If history tab is active, load it
             if ($('#billing-history').hasClass('active')) {
                 _initBillingHistory(patientId);
@@ -1067,13 +1035,8 @@ window.BillingKit = (function ($) {
 
         refresh: function() {
             if (_patientId) {
-                loadPendingBills(_patientId);
-                if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload();
+                if (_billingHistoryLoaded && _billingHistoryTable) _billingHistoryTable.ajax.reload(null, false);
             }
-        },
-
-        loadPendingBills: function (patientId) {
-            loadPendingBills(patientId);
         }
     };
 
