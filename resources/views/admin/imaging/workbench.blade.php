@@ -2881,6 +2881,10 @@
                 </button>
             </div>
             <div class="queue-view-content">
+                <!-- Approval Queue Hint -->
+                <div id="approval-queue-hint" class="alert alert-info" style="display: none; font-size: 0.9rem; margin: 1rem 1.5rem; border-left: 4px solid #0dcaf0;">
+                    <i class="mdi mdi-information"></i> <strong>Note:</strong> Once approved, requests are moved to the <strong>Completed</strong> list. You can reverse your recent approvals from there.
+                </div>
                 <table class="table" id="queue-datatable" style="width: 100%">
                     <thead>
                         <tr>
@@ -3839,6 +3843,7 @@ let queueRefreshInterval = null;
 let vitalTooltip = null;
 const isApprover = @json($isApprover ?? false);
 const requiresApproval = @json($requiresApproval ?? false);
+const currentUserId = {{ Auth::id() ?? 'null' }};
 let currentApprovalId = null;
 
 var _PI_IMG_REQ_APPROVAL = {{ appsettings('imaging_results_require_approval') ? 'true' : 'false' }};
@@ -5991,6 +5996,12 @@ function showQueue(filter) {
     };
     $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['all']}`);
 
+    if (filter === 'approval') {
+        $('#approval-queue-hint').show();
+    } else {
+        $('#approval-queue-hint').hide();
+    }
+
     // Update active state on queue buttons
     $('.queue-item').removeClass('active');
     if (filter !== 'all') {
@@ -6071,7 +6082,9 @@ function initializeQueueDataTable(filter) {
                         statusBadge = '<span class="badge badge-danger">Awaiting Results</span>';
                     } else if (row.status == 4 && card.approved_by) {
                         statusBadge = '<span class="badge badge-success"><i class="mdi mdi-check-circle"></i> Approved</span>';
-                        reverseBtn = `<button class="btn btn-sm btn-outline-warning reverse-approval-btn" data-request-id="${card.id}" style="margin-left: auto; font-size: 0.75rem; padding: 2px 8px;" title="Reverse this approval"><i class="mdi mdi-undo-variant"></i> Reverse</button>`;
+                        if (card.approved_by == currentUserId) {
+                            reverseBtn = `<button class="btn btn-sm btn-outline-warning reverse-approval-btn" data-request-id="${card.id}" style="margin-left: auto; font-size: 0.75rem; padding: 2px 8px;" title="Reverse this approval"><i class="mdi mdi-undo-variant"></i> Reverse</button>`;
+                        }
                     } else if (row.status == 5) {
                         statusBadge = '<span class="badge badge-purple">Pending Approval</span>';
                     } else if (row.status == 6) {
