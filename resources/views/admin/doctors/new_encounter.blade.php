@@ -2172,6 +2172,11 @@
             var claims  = parseFloat(comboData.claims_amount  || 0);
             var mode    = comboData.coverage_mode || null;
 
+            // Dismiss the dropdown immediately
+            $('#consult_invest_res, #consult_imaging_res, #consult_presc_res').html('');
+            $('#consult_invest_search, #consult_imaging_search, #consult_presc_search').val('');
+
+
             ComboConfirmModal.show({
                 name        : name,
                 bundleItems : bundleItems,
@@ -2194,7 +2199,9 @@
                                 if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
                                     $('#imaging_history_list').DataTable().ajax.reload(null, false);
                                 }
-                                if (typeof refreshPrescHistory === 'function') refreshPrescHistory();
+                                if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                                    $('#presc_history_list').DataTable().ajax.reload(null, false);
+                                }
                                 if (typeof refreshProceduresList === 'function') refreshProceduresList();
                             } else {
                                 toastr.error(response.message || 'Failed to apply combo');
@@ -2205,9 +2212,6 @@
                             toastr.error(msg, '', { timeOut: 5000 });
                         }
                     });
-                    $('#consult_invest_res').html('');
-                    $('#consult_imaging_res').html('');
-                    $('#consult_presc_res').html('');
                 }
             });
         }
