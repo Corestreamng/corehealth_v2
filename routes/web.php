@@ -714,6 +714,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('clinical-context/patient/{patientId}/imaging', [ClinicalContextController::class, 'getImaging'])->name('clinical-context.imaging');
         Route::get('clinical-context/patient/{patientId}/procedures', [ClinicalContextController::class, 'getProcedures'])->name('clinical-context.procedures');
 
+        // Shared Request Details
+        Route::get('shared/request/{type}/{id}/details', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getRequestDetails'])->name('shared.request.details');
+
         // LLM Integration Routes
         Route::post('llm/patient-summary', [\App\Http\Controllers\LlmController::class, 'generatePatientSummary'])->name('llm.patient-summary');
         Route::post('llm/polish-note', [\App\Http\Controllers\LlmController::class, 'polishNote'])->name('llm.polish-note');
