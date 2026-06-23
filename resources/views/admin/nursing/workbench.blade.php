@@ -6752,7 +6752,9 @@ window.BILLING_KIT_CONFIG = {
     showMedicationOption: true,
 };
 </script>
+@include('admin.shared.modals.request_details')
 <script src="{{ asset('js/billing-shared.js') }}"></script>
+<script src="{{ asset('js/request-details.js') }}"></script>
 <script src="{{ asset('js/immunization-module.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'nursing'])
 @include('admin.partials.invest_res_js')

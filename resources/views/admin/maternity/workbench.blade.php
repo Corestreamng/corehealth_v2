@@ -2536,7 +2536,9 @@ $sett = appsettings();
         showMedicationOption: true,
     };
 </script>
+@include('admin.shared.modals.request_details')
 <script src="{{ asset('js/billing-shared.js') }}"></script>
+<script src="{{ asset('js/request-details.js') }}"></script>
 {{-- SHARED partial: patient search JS with maternity context --}}
 @include('admin.partials.patient_search_js', [
     'search_context' => 'maternity',

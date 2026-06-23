@@ -2262,6 +2262,83 @@ class ReceptionWorkbenchController extends Controller
             $allRequests = $allRequests->merge($productRequests);
         }
 
+        // Pure Services & Products (POSR only)
+        if (!$typeFilter || in_array($typeFilter, ['service', 'product'])) {
+            $posrQuery = ProductOrServiceRequest::with(['service.price', 'product.price', 'payment', 'staff', 'sale'])
+                ->where('user_id', $patient->user_id)
+                ->where('is_bundle_item', false)
+                ->whereDoesntHave('productRequest')
+                ->whereNotIn('id', function($q) {
+                    $q->select('service_request_id')->from('lab_service_requests')->whereNotNull('service_request_id');
+                })
+                ->whereNotIn('id', function($q) {
+                    $q->select('service_request_id')->from('imaging_service_requests')->whereNotNull('service_request_id');
+                });
+
+            if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
+
+            $posrRequests = $posrQuery->orderBy('created_at', 'desc')->get()
+                ->map(function ($posr) use ($typeFilter) {
+                    $isProduct = !is_null($posr->product_id);
+                    $type = $isProduct ? 'product' : 'service';
+                    
+                    if ($typeFilter && $typeFilter !== $type) return null;
+
+                    $qty = $posr->qty ?? 1;
+                    $unitPrice = $isProduct 
+                        ? (optional(optional($posr->product)->price)->current_sale_price ?? 0)
+                        : (optional(optional($posr->service)->price)->sale_price ?? 0);
+                    $basePrice = $unitPrice * $qty;
+                    
+                    $name = $isProduct 
+                        ? (optional($posr->product)->product_name ?? 'Unknown Product')
+                        : (optional($posr->service)->service_name ?? 'Unknown Service');
+                    
+                    $prefix = $isProduct ? 'PRD-' : 'SVC-';
+
+                    $deliveryStatus = 'Pending Billing';
+                    $deliveryStatusCode = 'pending';
+                    if ($isProduct) {
+                        if ($posr->sale) {
+                            $deliveryStatus = 'Dispensed';
+                            $deliveryStatusCode = 'completed';
+                        } else if ($posr->payment_id) {
+                            $deliveryStatus = 'Awaiting Dispensing';
+                            $deliveryStatusCode = 'in_progress';
+                        }
+                    } else {
+                        if ($posr->payment_id) {
+                            $deliveryStatus = 'Completed';
+                            $deliveryStatusCode = 'completed';
+                        }
+                    }
+
+                    return [
+                        'id' => $posr->id,
+                        'request_no' => $prefix . str_pad($posr->id, 6, '0', STR_PAD_LEFT),
+                        'type' => $type,
+                        'type_label' => $isProduct ? 'Product' : 'Service',
+                        'name' => $name,
+                        'price' => $posr->payable_amount + $posr->claims_amount,
+                        'hmo_covers' => $posr->claims_amount ?? 0,
+                        'payable' => $posr->payable_amount ?? $basePrice,
+                        'coverage_mode' => $posr->coverage_mode ?? null,
+                        'billing_status' => $posr->payment_id ? 'Paid' : 'Billed',
+                        'billing_status_code' => $posr->payment_id ? 'paid' : 'pending', // Use pending so it can be discarded if unpaid
+                        'delivery_status' => $deliveryStatus,
+                        'delivery_status_code' => $deliveryStatusCode,
+                        'requested_by' => $posr->staff ? ($posr->staff->surname . ' ' . $posr->staff->firstname) : 'Walk-in',
+                        'created_at' => $posr->created_at,
+                        'posr_id' => $posr->id,
+                        'is_paid' => $posr->payment_id ? true : false,
+                        'created_by_id' => $posr->staff_user_id ?? null,
+                    ];
+                })->filter();
+
+            $allRequests = $allRequests->merge($posrRequests);
+        }
+
         // Apply billing filter
         if ($billingFilter) {
             $allRequests = $allRequests->filter(function ($req) use ($billingFilter) {
@@ -2322,20 +2399,23 @@ class ReceptionWorkbenchController extends Controller
                     <i class="mdi mdi-eye"></i>
                 </button>';
 
-                // Show discard button only if:
-                // 1. Not paid
-                // 2. Created by current user OR user is admin
                 $canDiscard = !$row['is_paid'] && ($row['created_by_id'] == $currentUserId || Auth::user()->hasRole(['SUPERADMIN', 'ADMIN']));
 
                 if ($canDiscard) {
-                    $actions .= ' <button class="btn btn-xs btn-outline-danger discard-request-btn"
-                        data-type="' . $row['type'] . '"
-                        data-id="' . $row['id'] . '"
-                        data-name="' . htmlspecialchars($row['name']) . '"
-                        data-request-no="' . $row['request_no'] . '"
-                        title="Discard Request">
-                        <i class="mdi mdi-delete"></i>
-                    </button>';
+                    if (!empty($row['posr_id'])) {
+                        $actions .= ' <button class="btn btn-xs btn-outline-danger bk-remove-bill-btn" data-id="' . $row['posr_id'] . '" title="Remove Bill">
+                            <i class="mdi mdi-delete"></i>
+                        </button>';
+                    } else {
+                        $actions .= ' <button class="btn btn-xs btn-outline-danger discard-request-btn"
+                            data-type="' . $row['type'] . '"
+                            data-id="' . $row['id'] . '"
+                            data-name="' . htmlspecialchars($row['name']) . '"
+                            data-request-no="' . $row['request_no'] . '"
+                            title="Discard Request">
+                            <i class="mdi mdi-delete"></i>
+                        </button>';
+                    }
                 }
 
                 return $actions;
@@ -2408,6 +2488,28 @@ class ReceptionWorkbenchController extends Controller
                 $stats['hmo_covered'] += $req->productOrServiceRequest->claims_amount ?? 0;
                 $stats['patient_payable'] += $req->productOrServiceRequest->payable_amount ?? 0;
             }
+        }
+        
+        // Pure Services & Products (POSR only)
+        $posrQuery = ProductOrServiceRequest::where('user_id', $patient->user_id)
+            ->where('is_bundle_item', false)
+            ->whereDoesntHave('productRequest')
+            ->whereNotIn('id', function($q) {
+                $q->select('service_request_id')->from('lab_service_requests')->whereNotNull('service_request_id');
+            })
+            ->whereNotIn('id', function($q) {
+                $q->select('service_request_id')->from('imaging_service_requests')->whereNotNull('service_request_id');
+            });
+            
+        if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
+        if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
+        
+        $posrRequests = $posrQuery->get();
+        $stats['total_requests'] += $posrRequests->count();
+        $stats['completed'] += $posrRequests->whereNotNull('payment_id')->count();
+        foreach ($posrRequests as $req) {
+            $stats['hmo_covered'] += $req->claims_amount ?? 0;
+            $stats['patient_payable'] += $req->payable_amount ?? 0;
         }
 
         return response()->json([
@@ -2706,6 +2808,46 @@ class ReceptionWorkbenchController extends Controller
                         'encounter_id' => $request->encounter_id,
                         'payment_reference' => $posr && $posr->payment ? $posr->payment->payment_ref : null,
                         'payment_date' => $posr && $posr->payment ? Carbon::parse($posr->payment->created_at)->format('d M Y, H:i') : null,
+                    ];
+                    break;
+
+                case 'service':
+                    $posr = ProductOrServiceRequest::with([
+                        'service.price',
+                        'service.category',
+                        'payment',
+                        'patient.user',
+                        'patient.hmo',
+                        'staff'
+                    ])->findOrFail($id);
+
+                    $qty = $posr->qty ?? 1;
+                    $unitPrice = optional(optional($posr->service)->price)->sale_price ?? 0;
+                    $basePrice = $unitPrice * $qty;
+
+                    $details = [
+                        'type' => 'service',
+                        'type_label' => 'Service',
+                        'request_no' => 'SVC-' . str_pad($posr->id, 6, '0', STR_PAD_LEFT),
+                        'service_name' => optional($posr->service)->service_name ?? 'Unknown Service',
+                        'service_category' => optional(optional($posr->service)->category)->name ?? 'Uncategorized',
+                        'patient_name' => userfullname($posr->patient->user_id ?? 0),
+                        'patient_file_no' => $posr->patient->file_no ?? 'N/A',
+                        'hmo_name' => optional($posr->patient->hmo)->name ?? 'Private',
+                        'price' => $posr->payable_amount + $posr->claims_amount,
+                        'hmo_covers' => $posr->claims_amount ?? 0,
+                        'payable' => $posr->payable_amount ?? $basePrice,
+                        'coverage_mode' => $posr->coverage_mode ?? null,
+                        'billing_status' => $posr->payment_id ? 'Paid' : 'Billed',
+                        'billing_status_code' => $posr->payment_id ? 'paid' : 'billed',
+                        'delivery_status' => $posr->payment_id ? 'Completed' : 'Pending',
+                        'delivery_status_code' => $posr->payment_id ? 'completed' : 'pending',
+                        'requested_by' => $posr->staff ? ($posr->staff->surname . ' ' . $posr->staff->firstname) : 'Walk-in Request',
+                        'requested_at' => $posr->created_at->format('d M Y, H:i'),
+                        'billed_by' => null,
+                        'billed_at' => $posr->created_at->format('d M Y, H:i'),
+                        'payment_reference' => $posr->payment ? $posr->payment->payment_ref : null,
+                        'payment_date' => $posr->payment ? \Carbon\Carbon::parse($posr->payment->created_at)->format('d M Y, H:i') : null,
                     ];
                     break;
 
