@@ -407,6 +407,18 @@ class LabWorkbenchController extends Controller
                         'lab_number' => $request->lab_number ?? null,
                     ];
                 })
+                ->filterColumn('card_data', function($query, $keyword) {
+                    $query->where(function($q) use ($keyword) {
+                        $q->whereHas('patient.user', function($qu) use ($keyword) {
+                            $qu->where('surname', 'like', "%{$keyword}%")
+                               ->orWhere('firstname', 'like', "%{$keyword}%");
+                        })->orWhereHas('patient', function($qp) use ($keyword) {
+                            $qp->where('file_no', 'like', "%{$keyword}%");
+                        })->orWhereHas('service', function($qs) use ($keyword) {
+                            $qs->where('service_name', 'like', "%{$keyword}%");
+                        })->orWhere('lab_number', 'like', "%{$keyword}%");
+                    });
+                })
                 ->rawColumns(['card_data'])
                 ->make(true);
         } catch (\Exception $e) {
