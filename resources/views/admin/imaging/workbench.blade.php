@@ -6106,6 +6106,7 @@ function initializeQueueDataTable(filter) {
                             </div>
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
                                 <i class="mdi mdi-radioactive"></i> ${serviceName}
+                                <br><small class="text-muted"><i class="mdi mdi-account-clock"></i> Req: ${card.requested_by} on ${card.requested_at}</small>
                                 ${card.approved_at ? `<br><small class="text-muted"><i class="mdi mdi-clock-check-outline"></i> Approved: ${card.approved_at}</small>` : ''}
                                 ${hmoText}
                             </div>

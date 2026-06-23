@@ -6282,6 +6282,8 @@ function initializeQueueDataTable(filter) {
 
     // Initialize DataTable for lab queue
     queueDataTable = $('#queue-datatable').DataTable({
+        processing: true,
+        serverSide: true,
         ajax: {
             url: '/lab-workbench/queue',
             data: function(d) {
@@ -6333,6 +6335,7 @@ function initializeQueueDataTable(filter) {
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
                                 <i class="mdi mdi-flask-outline"></i> ${cardData.service_name}
                                 ${statusBadge ? '<br>' + statusBadge : ''}
+                                <br><small class="text-muted"><i class="mdi mdi-account-clock"></i> Req: ${cardData.requested_by} on ${cardData.requested_at}</small>
                                 ${cardData.approved_at ? `<br><small class="text-muted"><i class="mdi mdi-clock-check-outline"></i> Approved: ${cardData.approved_at}</small>` : ''}
                                 ${cardData.hmo && cardData.hmo !== 'N/A' ? `<br><small><i class="mdi mdi-hospital-building"></i> ${cardData.hmo}</small>` : ''}
                             </div>
