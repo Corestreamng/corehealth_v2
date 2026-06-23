@@ -77,6 +77,10 @@ class EncounterController extends Controller
                 ]);
             }
 
+            if ($request->input('is_maternity') == 1) {
+                $queueQuery->whereNotNull('maternity_enrollment_id');
+            }
+
             // Get the filtered results — emergency patients first
             $queue = $queueQuery
                 ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
@@ -126,6 +130,7 @@ class EncounterController extends Controller
                 ->addColumn('view', function ($queue) {
                     $reqEntry = $queue->request_entry;
                     $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
+                    $buttons = '';
 
                     $url = route(
                         'encounters.create',
@@ -134,10 +139,22 @@ class EncounterController extends Controller
 
                     if (!$deliveryCheck['can_deliver']) {
                         $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);
-                        return '<button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Encounter</button>';
+                        $buttons .= '<button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Encounter</button>';
+                    } else {
+                        $buttons .= '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
                     }
 
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
+                    if ($queue->maternity_enrollment_id) {
+                        $matUrl = route('maternity-workbench.index', ['tab' => 'consultation', 'queue_id' => $queue->id, 'patient_id' => $queue->patient_id]);
+                        if (!$deliveryCheck['can_deliver']) {
+                            $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);
+                            $buttons .= ' <button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Mat. Visit</button>';
+                        } else {
+                            $buttons .= ' <a href="' . $matUrl . '" class="btn btn-sm text-white" style="background:#7c3aed;"><i class="mdi mdi-mother-nurse"></i> Mat. Visit</a>';
+                        }
+                    }
+
+                    return '<div class="d-flex gap-1">' . $buttons . '</div>';
                 })
                 ->addColumn('source', function ($queue) {
                     $icons = [
@@ -222,6 +239,10 @@ class EncounterController extends Controller
                 });
             }
 
+            if ($request->input('is_maternity') == 1) {
+                $queueQuery->whereNotNull('maternity_enrollment_id');
+            }
+
             $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
 
             return DataTables::of($queue)
@@ -249,6 +270,11 @@ class EncounterController extends Controller
                     return $patient?->file_no;
                 })
                 ->addColumn('view', function ($queue) {
+                    if ($queue->maternity_enrollment_id) {
+                         $url = route('maternity-workbench.index', ['tab' => 'consultation', 'queue_id' => $queue->id, 'patient_id' => $queue->patient_id]);
+                         return '<a href="' . e($url) . '" class="btn btn-sm text-white" style="background:#7c3aed;"><i class="mdi mdi-mother-nurse"></i> Maternity Visit</a>';
+                    }
+
                     $url = url('encounters/create') . '?patient_id=' . $queue->patient_id;
                     if ($queue->request_entry_id) {
                         $url .= '&req_entry_id=' . $queue->request_entry_id;
@@ -294,6 +320,10 @@ class EncounterController extends Controller
                 $queueQuery->where('created_at', '<=', $endDate->endOfDay());
             }
 
+            if ($request->input('is_maternity') == 1) {
+                $queueQuery->whereNotNull('maternity_enrollment_id');
+            }
+
             $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
 
             return DataTables::of($queue)
@@ -323,6 +353,7 @@ class EncounterController extends Controller
                 ->addColumn('view', function ($queue) {
                     $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
                     $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
+                    $buttons = '';
 
                     $url = route('encounters.create', [
                         'patient_id' => $queue->patient_id,
@@ -332,10 +363,22 @@ class EncounterController extends Controller
 
                     if (!$deliveryCheck['can_deliver']) {
                         $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);
-                        return '<button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Encounter</button>';
+                        $buttons .= '<button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Encounter</button>';
+                    } else {
+                        $buttons .= '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> Encounter</a>';
                     }
 
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> Encounter</a>';
+                    if ($queue->maternity_enrollment_id) {
+                        $matUrl = route('maternity-workbench.index', ['tab' => 'consultation', 'queue_id' => $queue->id, 'patient_id' => $queue->patient_id]);
+                        if (!$deliveryCheck['can_deliver']) {
+                            $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);
+                            $buttons .= ' <button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Mat. Visit</button>';
+                        } else {
+                            $buttons .= ' <a href="' . $matUrl . '" class="btn btn-sm text-white" style="background:#7c3aed;"><i class="mdi mdi-mother-nurse"></i> Mat. Visit</a>';
+                        }
+                    }
+
+                    return '<div class="d-flex gap-1">' . $buttons . '</div>';
                 })
                 ->addColumn('priority', function ($queue) {
                     $badges = [
@@ -377,7 +420,7 @@ class EncounterController extends Controller
     public function AllprevEncounterList(Request $request)
     {
         try {
-            $query = Encounter::query()
+            $query = Encounter::with('maternityLink')
                 ->when($request->filled(['start_date', 'end_date']), function ($query) use ($request) {
                     return $query->whereBetween('created_at', [
                         $request->start_date . ' 00:00:00',
@@ -418,6 +461,11 @@ class EncounterController extends Controller
                     return $queue->patient_id ? route('patient.show', $queue->patient_id) : '';
                 })
                 ->addColumn('view', function ($queue) {
+                    if ($queue->maternityLink) {
+                         $url = route('maternity-workbench.index', ['tab' => 'history', 'patient_id' => $queue->patient_id]);
+                         return '<a href="' . e($url) . '" class="btn btn-sm text-white" style="background:#7c3aed;"><i class="mdi mdi-mother-nurse"></i> Maternity Visit</a>';
+                    }
+
                     $showUrl = route('encounters.show', $queue->id);
                     return '<a href="' . e($showUrl) . '" class="btn btn-primary btn-sm"><i class="mdi mdi-eye-outline"></i> View</a>';
                 })

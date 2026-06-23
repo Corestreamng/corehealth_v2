@@ -518,7 +518,7 @@
                 <td>{{ $v->weight_kg ? $v->weight_kg . ' kg' : '-' }}</td>
                 <td>{!! $v->haemoglobin ? (($v->haemoglobin < 11) ? '<span style="color:#dc3545;font-weight:700;">' . $v->haemoglobin . '</span>' : $v->haemoglobin) : '-' !!}</td>
                 <td>{!! $bpHighlight ? '<span style="color:#dc3545;font-weight:700;">' . $bpVal . '</span>' : $bpVal !!}</td>
-                <td class="text-left" style="font-size:9.5px;">{{ $v->treatment ?? $v->plan ?? '-' }}</td>
+                <td class="text-left" style="font-size:9.5px;">{!! strip_tags($v->clinical_notes ?? $v->treatment ?? $v->plan ?? '-') !!}</td>
             </tr>
         @empty
             {{-- Empty rows like the physical card --}}

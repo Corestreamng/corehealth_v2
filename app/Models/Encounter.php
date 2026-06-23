@@ -96,4 +96,9 @@ class Encounter extends Model implements Auditable
     {
         return $this->hasMany(SpecialistReferral::class, 'encounter_id', 'id');
     }
+
+    public function maternityLink()
+    {
+        return $this->hasOne(MaternityEncounterLink::class, 'encounter_id', 'id');
+    }
 }

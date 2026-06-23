@@ -3,21 +3,28 @@
 @section('page_name', 'Procedures')
 @section('subpage_name', 'Categories')
 @section('content')
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="new_tab" data-bs-toggle="tab" data-bs-target="#new" type="button" role="tab" aria-controls="new" aria-selected="true">New/Scheduled</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="cont_data_tab" data-bs-toggle="tab" data-bs-target="#cont" type="button" role="tab" aria-controls="cont_data" aria-selected="false">Concluded</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="prev_data_tab" data-bs-toggle="tab" data-bs-target="#prev" type="button" role="tab" aria-controls="prev_data" aria-selected="false">Previous</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="other_admissions_tab" data-bs-toggle="tab" data-bs-target="#other_admissions" type="button" role="tab" aria-controls="other_admissions" aria-selected="false">Other
-                Procedures</button>
-        </li>
-    </ul>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <ul class="nav nav-tabs" id="myTab" role="tablist" style="border-bottom: none;">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="new_tab" data-bs-toggle="tab" data-bs-target="#new" type="button" role="tab" aria-controls="new" aria-selected="true">New/Scheduled</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cont_data_tab" data-bs-toggle="tab" data-bs-target="#cont" type="button" role="tab" aria-controls="cont_data" aria-selected="false">Concluded</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="prev_data_tab" data-bs-toggle="tab" data-bs-target="#prev" type="button" role="tab" aria-controls="prev_data" aria-selected="false">Previous</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="other_admissions_tab" data-bs-toggle="tab" data-bs-target="#other_admissions" type="button" role="tab" aria-controls="other_admissions" aria-selected="false">Other
+                    Procedures</button>
+            </li>
+        </ul>
+        <div class="form-check form-switch me-3">
+            <input class="form-check-input" type="checkbox" id="filter-anc-only">
+            <label class="form-check-label fw-bold text-purple" for="filter-anc-only" style="color:#7c3aed;"><i class="mdi mdi-mother-nurse"></i> ANC/Maternity Only</label>
+        </div>
+    </div>
+
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="new" role="tabpanel" aria-labelledby="new_tab">
             <div class="card-modern mt-2">
@@ -112,7 +119,10 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ url('NewEncounterList') }}",
-                    "type": "GET"
+                    "type": "GET",
+                    "data": function(d) {
+                        d.is_maternity = $('#filter-anc-only').is(':checked') ? 1 : 0;
+                    }
                 },
                 "columns": [{
                         data: "DT_RowIndex",
@@ -166,7 +176,10 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ url('ContEncounterList') }}",
-                    "type": "GET"
+                    "type": "GET",
+                    "data": function(d) {
+                        d.is_maternity = $('#filter-anc-only').is(':checked') ? 1 : 0;
+                    }
                 },
                 "columns": [{
                         data: "DT_RowIndex",
@@ -220,7 +233,10 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ url('PrevEncounterList') }}",
-                    "type": "GET"
+                    "type": "GET",
+                    "data": function(d) {
+                        d.is_maternity = $('#filter-anc-only').is(':checked') ? 1 : 0;
+                    }
                 },
                 "columns": [{
                         data: "DT_RowIndex",
@@ -447,6 +463,19 @@
                 // "ordering": true,
                 // "info": true,
                 // "autoWidth": false
+            });
+        });
+        $(function() {
+            $('#filter-anc-only').on('change', function() {
+                if ($.fn.DataTable.isDataTable('#new_procedure_list')) {
+                    $('#new_procedure_list').DataTable().ajax.reload();
+                }
+                if ($.fn.DataTable.isDataTable('#cont_procedure_list')) {
+                    $('#cont_procedure_list').DataTable().ajax.reload();
+                }
+                if ($.fn.DataTable.isDataTable('#prev_procedure_list')) {
+                    $('#prev_procedure_list').DataTable().ajax.reload();
+                }
             });
         });
     </script>

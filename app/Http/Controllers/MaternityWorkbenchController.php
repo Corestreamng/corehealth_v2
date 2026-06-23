@@ -45,6 +45,12 @@ use Illuminate\Support\Str;
 use App\Http\Traits\ClinicalOrdersTrait;
 use App\Services\StoreContextResolver;
 use App\Models\StoreContextRule;
+use App\Models\MaternityEncounterLink;
+use App\Models\Encounter;
+use App\Models\ProductOrServiceRequest;
+use App\Models\Staff;
+use App\Models\Clinic;
+use App\Services\QueueStatusService;
 use Illuminate\Support\Facades\Gate;
 
 class MaternityWorkbenchController extends Controller
@@ -70,7 +76,9 @@ class MaternityWorkbenchController extends Controller
         $stores = $resolver->candidateStores($user, 'ward');
         // ─────────────────────────────────────────────────────────────────────
 
-        return view('admin.maternity.workbench', compact('stores', 'resolvedStore', 'contextFallbackAction'));
+        $clinics = Clinic::orderBy('name')->get();
+
+        return view('admin.maternity.workbench', compact('stores', 'resolvedStore', 'contextFallbackAction', 'clinics'));
     }
 
     private function nursingProxy(): NursingWorkbenchController
@@ -614,13 +622,14 @@ class MaternityWorkbenchController extends Controller
 
         // ANC visits
         foreach ($enrollment->ancVisits as $visit) {
+            $prefix = ($visit->visit_type_sub === 'doctor_consultation') ? '🩺 Doctor: ' : '👩‍⚕️ Nurse: ';
             $timeline[] = [
                 'date'  => $visit->visit_date ? $visit->visit_date->format('d M Y') : null,
                 'type'  => 'anc_visit',
                 'title' => 'ANC Visit #' . $visit->visit_number,
-                'detail' => 'GA: ' . $visit->getGestationalAge() . ' | BP: ' . $visit->getBloodPressure() . ' | FHR: ' . ($visit->fetal_heart_rate ?? 'N/A'),
-                'icon'  => 'mdi-stethoscope',
-                'color' => 'info',
+                'detail' => $prefix . 'GA: ' . $visit->getGestationalAge() . ' | BP: ' . $visit->getBloodPressure() . ' | FHR: ' . ($visit->fetal_heart_rate ?? 'N/A'),
+                'icon'  => ($visit->visit_type_sub === 'doctor_consultation') ? 'mdi-doctor' : 'mdi-stethoscope',
+                'color' => ($visit->visit_type_sub === 'doctor_consultation') ? 'purple' : 'info',
                 'id'    => $visit->id,
             ];
         }
@@ -993,8 +1002,10 @@ class MaternityWorkbenchController extends Controller
             ->map(function ($v) {
                 return [
                     'id'              => $v->id,
+                    'encounter_id'    => $v->encounter_id,
                     'visit_number'    => $v->visit_number,
                     'visit_type'      => $v->visit_type,
+                    'visit_type_sub'  => $v->visit_type_sub,
                     'visit_date'      => $v->visit_date ? $v->visit_date->format('d M Y') : null,
                     'visit_date_raw'  => $v->visit_date ? $v->visit_date->format('Y-m-d') : null,
                     'gestational_age' => $v->getGestationalAge(),
@@ -3224,6 +3235,12 @@ class MaternityWorkbenchController extends Controller
             ->where('risk_level', 'high')
             ->count();
 
+        // Count today's waiting maternity consultation queue entries
+        $consultationQueue = DoctorQueue::whereNotNull('maternity_enrollment_id')
+            ->whereDate('created_at', Carbon::today())
+            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION])
+            ->count();
+
         return response()->json([
             'active_anc'          => $activeAnc,
             'due_visits'          => $dueVisits,
@@ -3231,7 +3248,499 @@ class MaternityWorkbenchController extends Controller
             'postnatal'           => $postnatal,
             'overdue_immunization' => $overdueImmunization,
             'high_risk'           => $highRisk,
+            'consultation_queue'  => $consultationQueue,
         ]);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       CONSULTATION QUEUE (Nurse Books Patient → Doctor Consults)
+       ══════════════════════════════════════════════════════════════ */
+
+    /**
+     * POST /enrollment/{id}/book-consultation
+     * Nurse books an enrolled patient into a doctor's consultation queue.
+     * Mirrors the reception booking flow — requires a service selection for billing.
+     */
+    public function bookConsultation(Request $request, $enrollmentId)
+    {
+        $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
+
+        $validator = Validator::make($request->all(), [
+            'clinic_id'  => 'required|exists:clinics,id',
+            'staff_id'   => 'nullable|exists:staff,id',
+            'service_id' => 'required|exists:services,id',
+            'priority'   => 'nullable|in:routine,urgent,emergency',
+            'note'       => 'nullable|string|max:500',
+            'is_billable'=> 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $staff   = $request->staff_id ? Staff::findOrFail($request->staff_id) : null;
+            $service = Service::findOrFail($request->service_id);
+            $patient = $enrollment->patient;
+            $isBillable = filter_var($request->is_billable, FILTER_VALIDATE_BOOLEAN);
+
+            // Build ProductOrServiceRequest (same as reception booking)
+            $payableAmount = 0;
+            $claimsAmount = 0;
+            $coverageMode = null;
+            
+            if ($isBillable) {
+                $hmoData = \App\Helpers\HmoHelper::applyHmoTariff($patient->id, null, $service->id);
+                $payableAmount = $hmoData['payable_amount'] ?? ($service->price->sale_price ?? 0);
+                $claimsAmount  = $hmoData['claims_amount'] ?? 0;
+                $coverageMode  = $hmoData['coverage_mode'] ?? null;
+            }
+            
+            $posr = ProductOrServiceRequest::create([
+                'patient_id'     => $patient->id,
+                'user_id'        => $patient->user_id,
+                'service_id'     => $service->id,
+                'staff_user_id'  => Auth::id(),
+                'amount'         => $isBillable ? ($service->price->sale_price ?? 0) : 0,
+                'payable_amount' => $payableAmount,
+                'claims_amount'  => $claimsAmount,
+                'coverage_mode'  => $coverageMode,
+                'qty'            => 1,
+                'status'         => 1,
+                'type'           => 'service',
+            ]);
+
+            // Create DoctorQueue entry (linked to maternity enrollment)
+            $queue = DoctorQueue::create([
+                'patient_id'              => $patient->id,
+                'clinic_id'               => $request->clinic_id,
+                'staff_id'                => $staff ? $staff->id : null,
+                'receptionist_id'         => Auth::user()->staff?->id,
+                'request_entry_id'        => $posr->id,
+                'maternity_enrollment_id' => $enrollmentId,
+                'status'                  => QueueStatus::WAITING,
+                'priority'                => $request->priority ?? 'routine',
+                'triage_note'             => $request->note ?? null,
+                'source'                  => 'maternity',
+                'vitals_taken'            => false,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Patient booked for doctor consultation.',
+                'queue_id' => $queue->id,
+                'queue'    => [
+                    'id'        => $queue->id,
+                    'status'    => $queue->status,
+                    'priority'  => $queue->priority,
+                    'doctor'    => $staff ? userfullname($staff->user_id) : 'Any Available',
+                    'service'   => $service->service_name,
+                    'created_at' => $queue->created_at->format('h:i a, d M Y'),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET /enrollment/{id}/consultation-queue
+     * Returns today's active consultation queue entries for this enrollment's patient,
+     * as well as the recent history for context.
+     */
+    public function getConsultationQueue($enrollmentId)
+    {
+        $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
+
+        $activeQueue = DoctorQueue::with(['patient.user', 'doctor.user', 'request_entry.service'])
+            ->where('maternity_enrollment_id', $enrollmentId)
+            ->whereDate('created_at', Carbon::today())
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn ($q) => [
+                'id'         => $q->id,
+                'patient_id' => $q->patient_id,
+                'name'       => userfullname($q->patient->user_id ?? null),
+                'file_no'    => $q->patient->file_no ?? 'N/A',
+                'doctor'     => $q->doctor ? userfullname($q->doctor->user_id) : 'Any',
+                'service'    => optional($q->request_entry?->service)->service_name ?? 'ANC Consultation',
+                'priority'   => $q->priority ?? 'routine',
+                'status'     => $q->status,
+                'status_label' => $q->status_label,
+                'triage_note'  => $q->triage_note,
+                'created_at'   => $q->created_at->format('h:i a, d M Y'),
+                'enrollment_id' => $enrollmentId,
+                'has_encounter' => $q->encounter !== null,
+                'encounter_id'  => $q->encounter?->id,
+            ]);
+
+        // Also show recent history (last 10 consultations for this enrollment)
+        $history = AncVisit::with('seenBy')
+            ->where('enrollment_id', $enrollmentId)
+            ->where('visit_type_sub', 'doctor_consultation')
+            ->orderBy('visit_date', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(fn ($v) => [
+                'id'           => $v->id,
+                'visit_date'   => $v->visit_date?->format('d M Y'),
+                'visit_number' => $v->visit_number,
+                'ga'           => $v->getGestationalAge(),
+                'seen_by'      => $v->seenBy ? userfullname($v->seenBy->id) : 'N/A',
+                'encounter_id' => $v->encounter_id,
+                'clinical_notes' => $v->clinical_notes,
+            ]);
+
+        return response()->json([
+            'success'      => true,
+            'active_queue' => $activeQueue,
+            'history'      => $history,
+        ]);
+    }
+
+    /**
+     * GET /enrollment/{id}/anc-consultation-prefill
+     * Merges enrollment data + latest nurse vitals + latest nurse ANC visit
+     * into a single pre-fill payload for the doctor's ANC consultation form.
+     */
+    public function getAncConsultationPrefill($enrollmentId)
+    {
+        $enrollment = MaternityEnrollment::with(['patient.user', 'ancVisits' => function ($q) {
+            $q->orderBy('visit_date', 'desc')->orderBy('created_at', 'desc');
+        }])->findOrFail($enrollmentId);
+
+        $patientId = $enrollment->patient_id;
+
+        // ── Latest VitalSign (today or most recent) ──────────────────────
+        $latestVital = VitalSign::where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // ── Latest nurse AncVisit (today, not a doctor_consultation) ────
+        $nurseAncToday = AncVisit::where('enrollment_id', $enrollmentId)
+            ->where(function ($q) {
+                $q->where('visit_type_sub', 'nurse_entry')
+                  ->orWhereNull('visit_type_sub');
+            })
+            ->whereDate('visit_date', Carbon::today())
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // If no nurse entry today, fall back to most recent ever
+        $nurseAnc = $nurseAncToday ?? AncVisit::where('enrollment_id', $enrollmentId)
+            ->where(function ($q) {
+                $q->where('visit_type_sub', 'nurse_entry')
+                  ->orWhereNull('visit_type_sub');
+            })
+            ->orderBy('visit_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // ── All visits (for ANC card history table) ──────────────────────
+        $allVisits = AncVisit::where('enrollment_id', $enrollmentId)
+            ->with('seenBy')
+            ->orderBy('visit_date', 'asc')
+            ->orderBy('visit_number', 'asc')
+            ->get()
+            ->map(fn ($v) => [
+                'id'                       => $v->id,
+                'visit_number'             => $v->visit_number,
+                'visit_type'               => $v->visit_type,
+                'visit_type_sub'           => $v->visit_type_sub,
+                'visit_date'               => $v->visit_date?->format('d M Y'),
+                'gestational_age'          => $v->getGestationalAge(),
+                'gestational_age_weeks'    => $v->gestational_age_weeks,
+                'gestational_age_days'     => $v->gestational_age_days,
+                'weight_kg'                => $v->weight_kg,
+                'bp'                       => $v->getBloodPressure(),
+                'blood_pressure_systolic'  => $v->blood_pressure_systolic,
+                'blood_pressure_diastolic' => $v->blood_pressure_diastolic,
+                'fundal_height_cm'         => $v->fundal_height_cm,
+                'presentation'             => $v->presentation,
+                'fetal_heart_rate'         => $v->fetal_heart_rate,
+                'foetal_movement'          => $v->foetal_movement,
+                'oedema'                   => $v->oedema,
+                'urine_protein'            => $v->urine_protein,
+                'urine_glucose'            => $v->urine_glucose,
+                'haemoglobin'              => $v->haemoglobin,
+                'clinical_notes'           => $v->clinical_notes,
+                'next_appointment'         => $v->next_appointment?->format('d M Y'),
+                'seen_by'                  => $v->seenBy ? userfullname($v->seenBy->id) : 'N/A',
+                'encounter_id'             => $v->encounter_id,
+            ]);
+
+        // ── Next visit number ────────────────────────────────────────────
+        $nextVisitNumber = AncVisit::where('enrollment_id', $enrollmentId)->max('visit_number') + 1;
+
+        // ── Current GA from LMP ──────────────────────────────────────────
+        $currentGa = $enrollment->getCurrentGestationalAge();
+        $gaWeeks = $enrollment->lmp ? $enrollment->lmp->diffInWeeks(now()) : null;
+        $gaDays  = $enrollment->lmp ? $enrollment->lmp->diffInDays(now()) % 7 : null;
+
+        return response()->json([
+            'success' => true,
+
+            // Enrollment context
+            'enrollment' => [
+                'id'                    => $enrollment->id,
+                'lmp'                   => $enrollment->lmp?->format('d M Y'),
+                'edd'                   => $enrollment->edd?->format('d M Y'),
+                'edd_raw'               => $enrollment->edd?->format('Y-m-d'),
+                'current_ga'            => $currentGa,
+                'ga_weeks'              => $gaWeeks,
+                'ga_days'               => $gaDays,
+                'gravida'               => $enrollment->gravida,
+                'parity'                => $enrollment->parity,
+                'alive'                 => $enrollment->alive,
+                'abortion_miscarriage'  => $enrollment->abortion_miscarriage,
+                'blood_group'           => $enrollment->blood_group,
+                'genotype'              => $enrollment->genotype,
+                'booking_weight_kg'     => $enrollment->booking_weight_kg,
+                'risk_level'            => $enrollment->risk_level,
+                'risk_factors'          => $enrollment->risk_factors,
+            ],
+
+            // Patient
+            'patient_name' => userfullname($enrollment->patient->user_id),
+            'patient_id'   => $enrollment->patient_id,
+            'file_no'      => $enrollment->patient->file_no,
+
+            // Next visit number
+            'next_visit_number' => $nextVisitNumber,
+
+            // Nurse vitals prefill (from VitalSign)
+            'nurse_vitals' => $latestVital ? [
+                'weight_kg'               => $latestVital->weight,
+                'blood_pressure_systolic'  => $latestVital->bp_sys,
+                'blood_pressure_diastolic' => $latestVital->bp_dia,
+                'temperature'             => $latestVital->temp,
+                'recorded_at'             => Carbon::parse($latestVital->created_at)->format('h:i a, d M Y'),
+                'is_today'                => Carbon::parse($latestVital->created_at)->isToday(),
+            ] : null,
+
+            // Nurse ANC entry prefill (from AncVisit)
+            'nurse_anc' => $nurseAnc ? [
+                'id'              => $nurseAnc->id,
+                'visit_date'      => $nurseAnc->visit_date?->format('d M Y'),
+                'urine_protein'   => $nurseAnc->urine_protein,
+                'urine_glucose'   => $nurseAnc->urine_glucose,
+                'oedema'          => $nurseAnc->oedema,
+                'foetal_movement' => $nurseAnc->foetal_movement,
+                'fundal_height_cm' => $nurseAnc->fundal_height_cm,
+                'fetal_heart_rate' => $nurseAnc->fetal_heart_rate,
+                'presentation'    => $nurseAnc->presentation,
+                'is_today'        => $nurseAnc->visit_date?->isToday(),
+            ] : null,
+
+            // Full ANC visit history for the table
+            'all_visits'      => $allVisits,
+            'today_date'      => Carbon::today()->format('Y-m-d'),
+            'today_formatted' => Carbon::today()->format('d M Y'),
+        ]);
+    }
+
+    /**
+     * POST /enrollment/{id}/anc-consultation
+     * Doctor saves ANC consultation:
+     *   1. Creates/updates Encounter (full billing/orders context preserved)
+     *   2. Creates new AncVisit (visit_type_sub=doctor_consultation, encounter_id set)
+     *   3. Creates MaternityEncounterLink
+     *   4. Transitions DoctorQueue to COMPLETED
+     */
+    public function saveAncConsultation(Request $request, $enrollmentId)
+    {
+        $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
+
+        $validator = Validator::make($request->all(), [
+            'queue_id'              => 'required|exists:doctor_queues,id',
+            'visit_date'            => 'required|date',
+            'gestational_age_weeks' => 'required|integer|min:1|max:45',
+            'gestational_age_days'  => 'nullable|integer|min:0|max:6',
+            'next_appointment'      => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $doctorQueue = DoctorQueue::with('request_entry')->findOrFail($request->queue_id);
+            $doctor = Staff::where('user_id', Auth::id())->first();
+
+            // ── 1. Find or create Encounter (mirroring EncounterController::create logic) ──
+            $reqEntry = $doctorQueue->request_entry;
+
+            $encounter = Encounter::where('queue_id', $doctorQueue->id)->first()
+                ?? Encounter::where('patient_id', $enrollment->patient_id)
+                    ->where('doctor_id', Auth::id())
+                    ->where('completed', false)
+                    ->whereNull('queue_id')
+                    ->first();
+
+            if (!$encounter) {
+                $encounter = Encounter::create([
+                    'doctor_id'          => Auth::id(),
+                    'patient_id'         => $enrollment->patient_id,
+                    'queue_id'           => $doctorQueue->id,
+                    'service_request_id' => $reqEntry?->id,
+                    'service_id'         => $reqEntry?->service_id,
+                    'started_at'         => now(),
+                    'completed'          => false,
+                ]);
+            } else {
+                $encounter->update([
+                    'doctor_id'          => Auth::id(),
+                    'queue_id'           => $doctorQueue->id,
+                    'service_request_id' => $reqEntry?->id,
+                    'service_id'         => $reqEntry?->service_id,
+                ]);
+            }
+
+            // ── 2. Update Encounter with clinical notes/diagnosis ────────────
+            // Build the encounter notes from the consultation form
+            $encounterNotes = $request->input('clinical_data_and_treatment', '');
+
+            // Parse reasons_for_encounter_data just like new_encounter does
+            $diagnosisData = $request->input('reasons_for_encounter_data');
+            $reasonsForEncounter = null;
+            
+            if ($diagnosisData && $diagnosisData !== '[]') {
+                $parsedReasons = json_decode($diagnosisData, true);
+                if (is_array($parsedReasons) && count($parsedReasons) > 0) {
+                    $reasonsForEncounter = json_encode($parsedReasons);
+                }
+            } else {
+                // Fallback for simple string if needed
+                $reasonsForEncounter = $request->input('doctor_diagnosis') ?: null;
+            }
+
+            $uiOutcome = $request->input('outcome', null);
+            $outcomeMap = [
+                'follow_up_anc'       => 'concluded',
+                'referred_specialist' => 'referred',
+                'referred_hospital'   => 'referred',
+                'admitted'            => 'concluded',
+                'delivered'           => 'concluded',
+                'discharged'          => 'discharged',
+            ];
+            $mappedOutcome = $outcomeMap[$uiOutcome] ?? null;
+
+            $encounter->update([
+                'notes'                          => $encounterNotes,
+                'reasons_for_encounter'          => $reasonsForEncounter,
+                'reasons_for_encounter_comment_1' => $request->input('reasons_for_encounter_comment_1', ''),
+                'reasons_for_encounter_comment_2' => $request->input('reasons_for_encounter_comment_2', ''),
+                'outcome'                        => $mappedOutcome,
+                'completed'                      => $request->boolean('end_consultation', false),
+                'completed_at'                   => $request->boolean('end_consultation', false) ? now() : null,
+            ]);
+
+            // ── 3. Create AncVisit (doctor consultation record) ──────────────
+            $nextVisitNumber = AncVisit::where('enrollment_id', $enrollmentId)->max('visit_number') + 1;
+
+            $oedemaRaw = strtolower(trim((string) ($request->oedema ?? '')));
+            $oedemaMap = [
+                '' => null, 'none' => 'none', 'nil' => 'none', '-' => 'none',
+                '+' => 'mild', 'mild' => 'mild', '++' => 'moderate',
+                'moderate' => 'moderate', '+++' => 'severe', 'severe' => 'severe',
+            ];
+            $normalizedOedema = $oedemaMap[$oedemaRaw] ?? null;
+
+            $ancVisit = AncVisit::create([
+                'enrollment_id'           => $enrollmentId,
+                'patient_id'              => $enrollment->patient_id,
+                'encounter_id'            => $encounter->id,
+                'visit_number'            => $nextVisitNumber,
+                'visit_type'              => 'doctor_consultation',
+                'visit_type_sub'          => 'doctor_consultation',
+                'visit_date'              => $this->safeParseDate($request->visit_date),
+                'gestational_age_weeks'   => $request->gestational_age_weeks,
+                'gestational_age_days'    => $request->gestational_age_days ?? 0,
+                'weight_kg'               => $request->weight_kg,
+                'blood_pressure_systolic' => $request->blood_pressure_systolic,
+                'blood_pressure_diastolic' => $request->blood_pressure_diastolic,
+                'fundal_height_cm'        => $request->fundal_height_cm,
+                'presentation'            => $request->presentation,
+                'fetal_heart_rate'        => $request->fetal_heart_rate,
+                'foetal_movement'         => $request->foetal_movement,
+                'oedema'                  => $normalizedOedema,
+                'urine_protein'           => $request->urine_protein,
+                'urine_glucose'           => $request->urine_glucose,
+                'haemoglobin'             => $request->haemoglobin,
+                'clinical_notes'          => $encounterNotes,
+                'next_appointment'        => $this->safeParseDate($request->next_appointment),
+                'seen_by'                 => Auth::id(),
+            ]);
+
+            // Auto-detect high risk from BP
+            if ($request->blood_pressure_systolic >= 140 || $request->blood_pressure_diastolic >= 90) {
+                if ($enrollment->risk_level !== 'high') {
+                    $enrollment->update([
+                        'risk_level'   => 'high',
+                        'risk_factors' => array_merge($enrollment->risk_factors ?? [], ['Hypertension at ANC consultation #' . $nextVisitNumber]),
+                    ]);
+                }
+            }
+
+            // ── 4. Create MaternityEncounterLink ─────────────────────────────
+            MaternityEncounterLink::firstOrCreate(
+                ['enrollment_id' => $enrollmentId, 'encounter_id' => $encounter->id],
+                ['visit_type' => 'anc_followup', 'notes' => 'ANC Doctor Consultation']
+            );
+
+            // ── 5. Transition queue to COMPLETED ─────────────────────────────
+            if ($request->boolean('end_consultation', false)) {
+                try {
+                    $queueService = app(QueueStatusService::class);
+                    // Transition through IN_CONSULTATION if needed
+                    if ($doctorQueue->status !== QueueStatus::IN_CONSULTATION) {
+                        $queueService->transition($doctorQueue, QueueStatus::IN_CONSULTATION);
+                        $doctorQueue->refresh();
+                    }
+                    $queueService->transition($doctorQueue, QueueStatus::COMPLETED);
+                } catch (\Exception $te) {
+                    // Fallback direct update
+                    $doctorQueue->update([
+                        'status'                => QueueStatus::COMPLETED,
+                        'consultation_ended_at' => now(),
+                    ]);
+                }
+            } else {
+                // Mark as in consultation if not already
+                if ($doctorQueue->status === QueueStatus::WAITING ||
+                    $doctorQueue->status === QueueStatus::VITALS_PENDING ||
+                    $doctorQueue->status === QueueStatus::READY) {
+                    try {
+                        $queueService = app(QueueStatusService::class);
+                        $queueService->transition($doctorQueue, QueueStatus::IN_CONSULTATION);
+                    } catch (\Exception $te) {
+                        $doctorQueue->update([
+                            'status' => QueueStatus::IN_CONSULTATION,
+                            'consultation_started_at' => $doctorQueue->consultation_started_at ?? now(),
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success'      => true,
+                'message'      => 'ANC Consultation saved successfully.',
+                'encounter_id' => $encounter->id,
+                'anc_visit_id' => $ancVisit->id,
+                'visit_number' => $nextVisitNumber,
+                'ended'        => $request->boolean('end_consultation', false),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
     }
 
     public function getActiveAncQueue()

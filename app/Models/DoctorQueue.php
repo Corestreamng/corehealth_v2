@@ -19,6 +19,7 @@ class DoctorQueue extends Model implements Auditable
         'receptionist_id',
         'request_entry_id',
         'appointment_id',
+        'maternity_enrollment_id',
         'status',
         'vitals_taken',
         'priority',
@@ -75,6 +76,11 @@ class DoctorQueue extends Model implements Auditable
     public function appointment()
     {
         return $this->belongsTo(DoctorAppointment::class, 'appointment_id', 'id');
+    }
+
+    public function maternityEnrollment()
+    {
+        return $this->belongsTo(MaternityEnrollment::class, 'maternity_enrollment_id', 'id');
     }
 
     public function encounter()

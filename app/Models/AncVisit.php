@@ -14,13 +14,14 @@ class AncVisit extends Model implements Auditable
 
     protected $fillable = [
         'enrollment_id', 'patient_id', 'encounter_id',
-        'visit_number', 'visit_type', 'visit_date',
+        'visit_number', 'visit_type', 'visit_type_sub', 'visit_date',
         'gestational_age_weeks', 'gestational_age_days',
         'weight_kg', 'blood_pressure_systolic', 'blood_pressure_diastolic',
         'fundal_height_cm', 'presentation', 'fetal_heart_rate',
         'foetal_movement', 'oedema', 'urine_protein', 'urine_glucose',
         'haemoglobin', 'clinical_notes', 'next_appointment', 'seen_by',
     ];
+
 
     protected $casts = [
         'visit_date' => 'date',

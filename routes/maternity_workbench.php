@@ -148,6 +148,13 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::get('/queue/high-risk', [MaternityWorkbenchController::class, 'getHighRiskQueue'])->name('queue.high-risk');
         Route::get('/queue/counts', [MaternityWorkbenchController::class, 'getQueueCounts'])->name('queue.counts');
 
+        // ── Consultation Queue (Nurse Books Doctor, Doctor Consults) ────────
+        Route::post('/enrollment/{id}/book-consultation', [MaternityWorkbenchController::class, 'bookConsultation'])->name('enrollment.book-consultation');
+        Route::get('/enrollment/{id}/consultation-queue', [MaternityWorkbenchController::class, 'getConsultationQueue'])->name('enrollment.consultation-queue');
+        Route::get('/enrollment/{id}/anc-consultation-prefill', [MaternityWorkbenchController::class, 'getAncConsultationPrefill'])->name('enrollment.anc-consultation-prefill');
+        Route::post('/enrollment/{id}/anc-consultation', [MaternityWorkbenchController::class, 'saveAncConsultation'])->name('enrollment.anc-consultation');
+
+
         // ── Reports ─────────────────────────────────────────────────
         Route::get('/reports/summary', [MaternityWorkbenchController::class, 'getReportsSummary'])->name('reports.summary');
         Route::get('/reports/delivery-stats', [MaternityWorkbenchController::class, 'getDeliveryStats'])->name('reports.delivery-stats');

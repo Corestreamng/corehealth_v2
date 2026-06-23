@@ -1495,6 +1495,12 @@ $sett = appsettings();
                 <span class="queue-item-label"><i class="mdi mdi-alert"></i> High Risk</span>
                 <span class="queue-count high-risk" id="queue-high-risk-count">0</span>
             </div>
+            {{-- NEW: Consultation Queue sidebar item --}}
+            <div class="queue-item" id="sidebar-consult-queue-item" data-tab-direct="consultation"
+                 style="border-left: 3px solid #6f42c1; background: #f5f0ff;" title="Patients waiting to see the doctor today">
+                <span class="queue-item-label" style="color:#6f42c1;"><i class="mdi mdi-doctor"></i> <strong>Consult Queue</strong></span>
+                <span class="queue-count" id="queue-consult-count" style="background:#ede9fe;color:#5b21b6;">0</span>
+            </div>
             <button class="btn-queue-all" id="refresh-queues-btn">
                 <i class="mdi mdi-refresh"></i> Refresh Queues
             </button>
@@ -1599,6 +1605,12 @@ $sett = appsettings();
 
                 {{-- Header Actions --}}
                 <div class="header-action-group">
+                    {{-- NEW: Book for Doctor button (visible to nurses/maternity staff) --}}
+                    <button class="btn btn-sm" id="btn-book-for-doctor" style="background:rgba(255,255,255,0.25);border:2px solid rgba(255,255,255,0.5);color:white;display:none;"
+                        title="Book this patient for a doctor consultation"
+                        onclick="openBookConsultationModal()">
+                        <i class="mdi mdi-doctor"></i> Book for Doctor
+                    </button>
                     <button class="btn btn-sm btn-info" id="btn-print-anc-card" title="Print ANC Card" style="display:none;">
                         <i class="mdi mdi-card-account-details"></i> ANC Card
                     </button>
@@ -1645,6 +1657,14 @@ $sett = appsettings();
                 <button class="workspace-tab" data-tab="anc">
                     <i class="mdi mdi-stethoscope"></i>
                     <span>ANC Visits</span>
+                </button>
+                {{-- NEW: Consultation Queue tab --}}
+                <button class="workspace-tab" data-tab="consultation" id="tab-btn-consultation"
+                        style="position:relative;">
+                    <i class="mdi mdi-doctor" style="color:#7c3aed;"></i>
+                    <span style="color:#7c3aed;">Consult Queue</span>
+                    <span class="badge rounded-pill" id="tab-consult-badge"
+                          style="position:absolute;top:4px;right:4px;background:#7c3aed;color:#fff;font-size:0.6rem;display:none;">0</span>
                 </button>
                 <button class="workspace-tab" data-tab="clinical-orders">
                     <i class="mdi mdi-flask"></i>
@@ -1726,6 +1746,294 @@ $sett = appsettings();
                 </div>
             </div>
 
+            <!-- ═══ CONSULTATION QUEUE TAB ═══ -->
+            <div class="workspace-tab-content" id="consultation-tab">
+                <div class="p-3">
+
+                    <!-- ── Part A: Today's Queue (Nurse View + Doctor Queue List) ── -->
+                    <div id="consult-queue-list-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <div>
+                                <h5 class="mb-0" style="color:#6f42c1;"><i class="mdi mdi-doctor me-2"></i>Consultation Queue</h5>
+                                <small class="text-muted" id="consult-queue-summary">Loading...</small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="loadConsultationQueue()">
+                                    <i class="mdi mdi-refresh"></i> Refresh
+                                </button>
+                                <button class="btn btn-sm" style="background:#7c3aed;color:white;" onclick="openBookConsultationModal()" id="btn-book-doctor-consult-tab" title="Book this patient for a doctor consultation">
+                                    <i class="mdi mdi-plus"></i> Book for Doctor
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Today's active queue entries -->
+                        <div id="consult-active-queue-cards">
+                            <p class="text-muted text-center py-3"><i class="mdi mdi-loading mdi-spin"></i> Loading...</p>
+                        </div>
+
+                        <hr>
+                        <!-- ANC Card History Table -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 text-muted"><i class="mdi mdi-table me-1"></i> ANC Visit History</h6>
+                            <small class="text-muted">Showing all visits. Doctor consultations marked with 🩺</small>
+                        </div>
+                        <div class="table-responsive" style="max-height:320px;overflow-y:auto;">
+                            <table class="table table-sm table-bordered table-hover align-middle" id="anc-card-history-table" style="min-width:900px;font-size:0.82rem;">
+                                <thead class="table-dark sticky-top">
+                                    <tr>
+                                        <th style="min-width:70px;">Date</th>
+                                        <th style="min-width:55px;">GA</th>
+                                        <th style="min-width:70px;">Ht of Fundus</th>
+                                        <th style="min-width:110px;">Presentation & Position</th>
+                                        <th style="min-width:75px;">Foetal Heart</th>
+                                        <th style="min-width:65px;">Oedema</th>
+                                        <th style="min-width:90px;">Urine (P/G)</th>
+                                        <th style="min-width:70px;">Weight (kg)</th>
+                                        <th style="min-width:55px;">H/B</th>
+                                        <th style="min-width:80px;">B.P</th>
+                                        <th style="min-width:200px;">Clinical Data &amp; Treatment</th>
+                                        <th style="min-width:85px;">Next Appt</th>
+                                        <th style="min-width:90px;">Seen By</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="anc-card-history-body">
+                                    <tr><td colspan="13" class="text-center text-muted py-3">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ── Part B: Doctor Consultation Form (shown when a queue entry is selected) ── -->
+                    <div id="consult-form-section" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0" style="color:#7c3aed;"><i class="mdi mdi-clipboard-pulse me-2"></i>ANC Consultation <span id="consult-visit-number-label" class="badge rounded-pill" style="background:#7c3aed;"></span></h5>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="closeConsultForm()">
+                                <i class="mdi mdi-close"></i> Close Form
+                            </button>
+                        </div>
+
+                        <!-- Patient + Enrollment Context Banner -->
+                        <div class="rounded p-3 mb-3" style="background:linear-gradient(135deg,#7c3aed10,#a78bfa20);border:1px solid #c4b5fd;">
+                            <div class="d-flex flex-wrap gap-4 small">
+                                <div><span class="text-muted">GA:</span> <strong id="cf-ga-display">—</strong></div>
+                                <div><span class="text-muted">EDD:</span> <strong id="cf-edd-display">—</strong></div>
+                                <div><span class="text-muted">G/P/A:</span> <strong id="cf-gpa-display">—</strong></div>
+                                <div><span class="text-muted">Blood Group:</span> <strong id="cf-blood-group">—</strong></div>
+                                <div><span class="text-muted">Genotype:</span> <strong id="cf-genotype">—</strong></div>
+                                <div><span class="text-muted">Risk:</span> <strong id="cf-risk-level">—</strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Nurse Prefill Banner (read-only) -->
+                        <div class="rounded p-3 mb-3 border" id="nurse-prefill-banner" style="background:#f0fdf4;border-color:#86efac!important;display:none;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-success">👩‍⚕️ Nurse Entry</span>
+                                <small class="text-muted" id="nurse-prefill-source">Pre-filled from nurse's entry today</small>
+                            </div>
+                            <div class="d-flex flex-wrap gap-4 small">
+                                <div><span class="text-muted">Weight:</span> <strong id="cf-nurse-weight">—</strong></div>
+                                <div><span class="text-muted">B.P:</span> <strong id="cf-nurse-bp">—</strong></div>
+                                <div><span class="text-muted">Urine Protein:</span> <strong id="cf-nurse-urine-protein">—</strong></div>
+                                <div><span class="text-muted">Urine Glucose:</span> <strong id="cf-nurse-urine-glucose">—</strong></div>
+                                <div><span class="text-muted">Oedema:</span> <strong id="cf-nurse-oedema">—</strong></div>
+                            </div>
+                        </div>
+
+                        <form id="anc-consultation-form">
+                            <input type="hidden" id="cf-queue-id" name="queue_id">
+                            <input type="hidden" id="cf-enrollment-id" name="enrollment_id">
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold small">Visit Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control form-control-sm" id="cf-visit-date" name="visit_date" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold small">GA Weeks <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control form-control-sm" id="cf-ga-weeks" name="gestational_age_weeks" min="1" max="45" required>
+                                </div>
+                                <div class="col-md-1">
+                                    <label class="form-label fw-semibold small">GA Days</label>
+                                    <input type="number" class="form-control form-control-sm" id="cf-ga-days" name="gestational_age_days" min="0" max="6">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold small">Weight (kg)</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.1" class="form-control form-control-sm" id="cf-weight" name="weight_kg">
+                                        <span class="input-group-text p-1" title="Prefilled from nurse vitals" id="cf-weight-nurse-badge" style="display:none;font-size:0.65rem;background:#d1fae5;">👩‍⚕️</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold small">B.P (Sys/Dia)</label>
+                                    <div class="d-flex gap-1">
+                                        <input type="number" class="form-control form-control-sm" id="cf-bp-sys" name="blood_pressure_systolic" placeholder="Sys" style="width:50%">
+                                        <input type="number" class="form-control form-control-sm" id="cf-bp-dia" name="blood_pressure_diastolic" placeholder="Dia" style="width:50%">
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
+                                    <label class="form-label fw-semibold small">H/B (g/dL)</label>
+                                    <input type="number" step="0.1" class="form-control form-control-sm" id="cf-hb" name="haemoglobin" placeholder="e.g. 11.5">
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold small">Ht of Fundus (cm)</label>
+                                    <input type="number" step="0.5" class="form-control form-control-sm" id="cf-fundal-height" name="fundal_height_cm">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold small">Presentation &amp; Position</label>
+                                    <input type="text" class="form-control form-control-sm" id="cf-presentation" name="presentation" placeholder="e.g. Cephalic, LOA">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold small">Foetal Heart (bpm)</label>
+                                    <input type="text" class="form-control form-control-sm" id="cf-fhr" name="fetal_heart_rate" placeholder="e.g. 140">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold small">Foetal Movement</label>
+                                    <select class="form-select form-select-sm" id="cf-foetal-movement" name="foetal_movement">
+                                        <option value="">— Select —</option>
+                                        <option value="present">Present</option>
+                                        <option value="absent">Absent</option>
+                                        <option value="reduced">Reduced</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold small">Oedema</label>
+                                    <select class="form-select form-select-sm" id="cf-oedema" name="oedema">
+                                        <option value="">— Select —</option>
+                                        <option value="none">None / Nil</option>
+                                        <option value="mild">Mild (+)</option>
+                                        <option value="moderate">Moderate (++)</option>
+                                        <option value="severe">Severe (+++)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold small">Urine Protein</label>
+                                    <select class="form-select form-select-sm" id="cf-urine-protein" name="urine_protein">
+                                        <option value="">— Select —</option>
+                                        <option value="nil">Nil</option>
+                                        <option value="trace">Trace</option>
+                                        <option value="+">+</option>
+                                        <option value="++">++</option>
+                                        <option value="+++">+++</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold small">Urine Glucose</label>
+                                    <select class="form-select form-select-sm" id="cf-urine-glucose" name="urine_glucose">
+                                        <option value="">— Select —</option>
+                                        <option value="nil">Nil</option>
+                                        <option value="trace">Trace</option>
+                                        <option value="+">+</option>
+                                        <option value="++">++</option>
+                                        <option value="+++">+++</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold small">Next Appointment</label>
+                                    <input type="date" class="form-control form-control-sm" id="cf-next-appt" name="next_appointment"
+                                           title="Sets the next appointment date — this patient will appear in the Due Visits queue on this date">
+                                    <small class="text-muted"><i class="mdi mdi-calendar-check"></i> Will appear in Due Visits queue</small>
+                                </div>
+                            </div>
+
+                            <hr>
+                            <!-- ── Diagnosis Section (mirrors new_encounter ICD lookup) ── -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold"><i class="mdi mdi-stethoscope text-danger me-1"></i>Diagnosis / Reason for Encounter</label>
+                                <div class="diagnosis-fields-wrapper bg-light p-3 border rounded mb-2" id="diagnosisFields">
+                                    <div class="form-group">
+                                        <div class="d-flex gap-2 mb-2">
+                                            <input type="text" class="form-control" id="reasons_for_encounter_search" placeholder="Type to search diagnosis codes... (e.g., 'A03', 'Fever')" autocomplete="off">
+                                        </div>
+                                        <small class="text-muted d-block mb-2" style="font-size: 0.78rem;">
+                                            <i class="mdi mdi-information"></i> Type at least 2 characters to search. You can also add custom reasons.
+                                        </small>
+                                        <style>
+                                            #reasons_search_results {
+                                                position: relative;
+                                                z-index: 1000;
+                                                border: 1px solid #ddd;
+                                                border-radius: 4px;
+                                                margin-top: -8px;
+                                            }
+                                            #reasons_search_results .list-group-item:hover {
+                                                background-color: #f8f9fa;
+                                                cursor: pointer;
+                                            }
+                                            #reasons_search_results .list-group-item.custom-reason-option {
+                                                background-color: #e7f3ff;
+                                                border-left: 4px solid #007bff;
+                                                font-weight: 600;
+                                            }
+                                        </style>
+                                        <ul class="list-group shadow-sm" id="reasons_search_results" style="display: none; max-height: 250px; overflow-y: auto; z-index: 1000; width: 100%;"></ul>
+
+                                        <div id="selected_reasons_container" class="mt-3">
+                                            <label class="d-block mb-2"><strong>Selected Diagnoses:</strong></label>
+                                            <div id="selected_reasons_list"><span class="text-muted"><i>No diagnoses selected yet</i></span></div>
+                                        </div>
+                                        <input type="hidden" name="reasons_for_encounter_data" id="reasons_for_encounter_data" value="[]">
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Diagnosis Comments / Clinical Summary</label>
+                                        <textarea class="form-control form-control-sm" id="cf-diagnosis-comments-1" name="reasons_for_encounter_comment_1" rows="2" placeholder="Subjective / History of presenting complaint..."></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Plan &amp; Additional Notes</label>
+                                        <textarea class="form-control form-control-sm" id="cf-diagnosis-comments-2" name="reasons_for_encounter_comment_2" rows="2" placeholder="Assessment and Plan..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ── Clinical Data & Treatment (CKEditor) ── -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold"><i class="mdi mdi-text-box me-1"></i>Clinical Data &amp; Treatment <span class="text-muted small">(full encounter note)</span></label>
+                                <div id="cf-ckeditor-wrapper" style="border:1px solid #dee2e6;border-radius:6px;min-height:180px;">
+                                    <textarea id="cf-clinical-data" name="clinical_data_and_treatment" class="form-control" rows="8" style="border:none;resize:vertical;" placeholder="Detailed clinical findings, treatment, prescriptions, advice, follow-up plan..."></textarea>
+                                </div>
+                                <small class="text-muted">This becomes the encounter note and the ANC visit clinical record.</small>
+                            </div>
+
+                            <!-- ── Outcome ── -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Outcome / Disposition</label>
+                                <select class="form-select form-select-sm" id="cf-outcome" name="outcome" style="max-width:280px;">
+                                    <option value="">— Select outcome —</option>
+                                    <option value="follow_up_anc">Follow-up ANC</option>
+                                    <option value="referred_specialist">Referred to Specialist</option>
+                                    <option value="referred_hospital">Referred to Hospital</option>
+                                    <option value="admitted">Admitted</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="discharged">Discharged</option>
+                                </select>
+                            </div>
+
+                            <!-- ── Form Buttons ── -->
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="saveAncConsultation(false)">
+                                    <i class="mdi mdi-content-save"></i> Save (Continue)
+                                </button>
+                                <button type="button" class="btn btn-sm" style="background:#7c3aed;color:white;" onclick="saveAncConsultation(true)">
+                                    <i class="mdi mdi-check-circle"></i> Save &amp; End Consultation
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="closeConsultForm()">
+                                    <i class="mdi mdi-close"></i> Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
             <!-- ═══ CLINICAL ORDERS TAB ═══ -->
             <div class="workspace-tab-content" id="clinical-orders-tab">
                 <div class="p-3">
@@ -1734,6 +2042,7 @@ $sett = appsettings();
                     </div>
                 </div>
             </div>
+
 
             <!-- ═══ DELIVERY TAB ═══ -->
             <div class="workspace-tab-content" id="delivery-tab">
@@ -2443,6 +2752,74 @@ $sett = appsettings();
 @include('admin.partials.invest_res_view_modal')
 @include('admin.partials.invest_res_view_js')
 
+<!-- Book Doctor Consultation Modal -->
+<div class="modal fade" id="bookConsultationModal" tabindex="-1" aria-labelledby="bookConsultationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#7c3aed;color:white;">
+                <h5 class="modal-title" id="bookConsultationModalLabel"><i class="mdi mdi-doctor"></i> Book Doctor Consultation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="book-consultation-form">
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Book this patient into a doctor's queue. A service charge will be generated.</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Clinic</label>
+                        <select class="form-select" id="book-consult-clinic" name="clinic_id" required>
+                            <option value="">-- Select Clinic --</option>
+                            @foreach($clinics as $clinic)
+                                <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Doctor (Optional)</label>
+                        <select class="form-select" id="book-consult-staff" name="staff_id">
+                            <option value="">-- Any Available Doctor --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Consultation Service</label>
+                        <select class="form-select" id="book-consult-service" name="service_id" required>
+                            <option value="">Loading services...</option>
+                        </select>
+                        <small class="text-muted" id="book-consult-price">Price: ₦0.00</small>
+                    </div>
+                    
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="book-consult-billable" name="is_billable" value="1" checked>
+                        <label class="form-check-label fw-bold text-success" for="book-consult-billable">Bill patient for this consultation?</label>
+                        <small class="d-block text-muted">Uncheck if this is a free/prepaid visit.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Priority</label>
+                        <select class="form-select" name="priority" required>
+                            <option value="routine">Routine</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="emergency">Emergency</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Triage Note (Optional)</label>
+                        <textarea class="form-control" name="note" rows="2" placeholder="Any notes for the doctor?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn text-white" style="background:#7c3aed;" id="btn-submit-book-consult">
+                        <i class="mdi mdi-check"></i> Book Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Discharge Maternity Enrollment Modal -->
 <div class="modal fade" id="dischargeModal" tabindex="-1" aria-labelledby="dischargeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -2820,6 +3197,17 @@ $sett = appsettings();
                 $('#queue-postnatal-count').text(data.postnatal || 0);
                 $('#queue-overdue-imm-count').text(data.overdue_immunization || 0);
                 $('#queue-high-risk-count').text(data.high_risk || 0);
+
+                // Update consultation queue sidebar count
+                const consultCount = data.consultation_queue || 0;
+                $('#queue-consult-count').text(consultCount);
+                // Badge on tab button
+                const $badge = $('#tab-consult-badge');
+                if (consultCount > 0) {
+                    $badge.text(consultCount).show();
+                } else {
+                    $badge.hide();
+                }
             }
         });
     }
@@ -2910,6 +3298,8 @@ $sett = appsettings();
                 if (currentEnrollmentId) {
                     $('#btn-print-anc-card').show();
                     $('#btn-print-road-card').show();
+                    // Show Book for Doctor button (for nurses to book doctor consultations)
+                    $('#btn-book-for-doctor').show();
                     // Show discharge button for active enrollments
                     if (data.enrollment && !['completed', 'transferred', 'deceased'].includes(data.enrollment.status)) {
                         $('#btn-discharge-patient').show().prop('disabled', false);
@@ -2920,6 +3310,7 @@ $sett = appsettings();
                     $('#btn-print-anc-card').hide();
                     $('#btn-print-road-card').hide();
                     $('#btn-discharge-patient').hide();
+                    $('#btn-book-for-doctor').hide();
                 }
 
                 // Load overview
@@ -7722,6 +8113,28 @@ $sett = appsettings();
              }, 500);
         }
 
+        // Handle patient deep-linking from My Queues
+        const urlPatientId = urlParams.get('patient_id');
+        const urlTab = urlParams.get('tab');
+        const urlQueueId = urlParams.get('queue_id');
+        if (urlPatientId) {
+            loadPatient(urlPatientId);
+            if (urlTab) {
+                // We need to wait for patient load to finish before switching tab, 
+                // but for simplicity, we can set a timeout or intercept it in success handler
+                setTimeout(() => {
+                    $(`.workspace-tab[data-tab="${urlTab}"]`).trigger('click');
+                    if (urlTab === 'consultation' && urlQueueId) {
+                        setTimeout(() => {
+                            if (typeof openConsultForm === 'function') {
+                                openConsultForm(urlQueueId);
+                            }
+                        }, 800); // wait for queue data to load
+                    }
+                }, 1500);
+            }
+        }
+
         // Queue item clicks (SHARED)
         $('.queue-item').on('click', function() {
             const filter = $(this).data('filter');
@@ -8514,5 +8927,417 @@ function showBundleRemove(btn) {
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')
 <script src="{{ asset('js/patient-summary.js') }}"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONSULTATION QUEUE SCRIPTS (Nurse books -> Doctor Consults)
+// ═══════════════════════════════════════════════════════════════
+function openBookConsultationModal() {
+    if (!currentEnrollmentId) {
+        toastr.warning('Please enroll the patient first.');
+        return;
+    }
+    $('#bookConsultationModal').modal('show');
+
+    // Initialize Clinic Dropdown
+    if (!$('#book-consult-clinic').hasClass('select2-hidden-accessible')) {
+        $('#book-consult-clinic').select2({dropdownParent: $('#bookConsultationModal')});
+        $('#book-consult-staff').select2({dropdownParent: $('#bookConsultationModal')});
+        
+        $('#book-consult-clinic').on('change', function() {
+            let clinicId = $(this).val();
+            if(!clinicId) {
+                $('#book-consult-staff').html('<option value="">-- Any Available Doctor --</option>');
+                return;
+            }
+            $('#book-consult-staff').html('<option value="">Loading doctors...</option>');
+            $.get(`{{ url('/reception/clinics') }}/${clinicId}/doctors`, function(data) {
+                let options = '<option value="">-- Any Available Doctor --</option>';
+                data.forEach(function(d) {
+                    options += `<option value="${d.id}">${d.name}</option>`;
+                });
+                $('#book-consult-staff').html(options);
+            });
+        });
+    }
+
+    // Load Services (if not already loaded)
+    if ($('#book-consult-service option').length <= 1) {
+        $.get('{{ route("reception.services.consultation") }}', function(data) {
+            let options = '<option value="">-- Select Service --</option>';
+            data.forEach(function(s) {
+                options += `<option value="${s.id}" data-price="${s.price}">[${s.code}] ${s.name} - ₦${s.price}</option>`;
+            });
+            $('#book-consult-service').html(options).select2({dropdownParent: $('#bookConsultationModal')});
+        });
+    }
+}
+
+$('#book-consult-service').on('change', function() {
+    const price = $(this).find(':selected').data('price') || 0;
+    $('#book-consult-price').text(`Price: ₦${parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2})}`);
+});
+
+$('#book-consultation-form').on('submit', function(e) {
+    e.preventDefault();
+    if (!currentEnrollmentId) return;
+
+    const $btn = $('#btn-submit-book-consult');
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Booking...');
+
+    $.ajax({
+        url: `/maternity-workbench/enrollment/${currentEnrollmentId}/book-consultation`,
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: $(this).serialize(),
+        success: function(res) {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Book Patient');
+            if(res.success) {
+                toastr.success(res.message);
+                $('#bookConsultationModal').modal('hide');
+                loadQueueCounts(); // Refresh counters
+                if ($('#consultation-tab').hasClass('active')) {
+                    loadConsultationQueue(); // Refresh queue view if open
+                }
+            } else {
+                toastr.error(res.message || 'Booking failed');
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Book Patient');
+            toastr.error('An error occurred during booking.');
+        }
+    });
+});
+
+function loadConsultationQueue() {
+    if (!currentEnrollmentId) return;
+    $('#consult-active-queue-cards').html('<p class="text-muted text-center py-3"><i class="mdi mdi-loading mdi-spin"></i> Loading queue...</p>');
+    $('#anc-card-history-body').html('<tr><td colspan="13" class="text-center text-muted py-3">Loading...</td></tr>');
+
+    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/consultation-queue`, function(res) {
+        if(res.success) {
+            // Render Active Queue
+            let activeHtml = '';
+            if (res.active_queue.length === 0) {
+                activeHtml = `<div class="alert alert-light text-center border">
+                    <i class="mdi mdi-check-circle-outline mdi-36px text-success d-block mb-2"></i>
+                    No active consultation requests for today.
+                </div>`;
+            } else {
+                res.active_queue.forEach(q => {
+                    const badgeColor = q.status === 1 ? 'warning' : (q.status === 4 ? 'success' : 'primary');
+                    const isDoctor = {{ auth()->user()->hasRole('DOCTOR') ? 'true' : 'false' }};
+                    // Show "Consult Patient" button if user is doctor and queue is not completed
+                    const actionBtn = (isDoctor && q.status !== 4)
+                        ? `<button class="btn btn-sm btn-primary w-100 mt-2" onclick="openConsultForm(${q.id})"><i class="mdi mdi-stethoscope"></i> Consult Patient</button>`
+                        : (q.status === 4 ? '<span class="badge bg-success w-100 mt-2 d-block py-2">Consultation Completed</span>' : '');
+
+                    activeHtml += `
+                        <div class="card shadow-sm border-0 mb-3" style="border-left:4px solid #7c3aed !important;">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">${q.service}</h6>
+                                        <small class="text-muted">Doctor: ${q.doctor} | Priority: ${q.priority} | Time: ${q.created_at}</small>
+                                    </div>
+                                    <span class="badge bg-${badgeColor}">${q.status_label}</span>
+                                </div>
+                                ${q.triage_note ? `<p class="small text-danger mt-1 mb-0"><i class="mdi mdi-alert-circle"></i> Note: ${q.triage_note}</p>` : ''}
+                                ${actionBtn}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            $('#consult-active-queue-cards').html(activeHtml);
+            $('#consult-queue-summary').text(`${res.active_queue.length} active queue entries today`);
+
+            // Fetch ANC History and populate prefill
+            fetchAncConsultationData();
+        }
+    });
+}
+
+function fetchAncConsultationData() {
+    if (!currentEnrollmentId) return;
+    $.get(`/maternity-workbench/enrollment/${currentEnrollmentId}/anc-consultation-prefill`, function(res) {
+        if(res.success) {
+            // Render full ANC table
+            let tableHtml = '';
+            if(res.all_visits.length === 0) {
+                tableHtml = '<tr><td colspan="13" class="text-center text-muted py-3">No ANC visits recorded yet.</td></tr>';
+            } else {
+                res.all_visits.forEach(v => {
+                    const isDoctor = v.visit_type_sub === 'doctor_consultation' ? '🩺 ' : '';
+                    tableHtml += `
+                        <tr>
+                            <td>${v.visit_date || ''}</td>
+                            <td>${v.gestational_age || ''}</td>
+                            <td>${v.fundal_height_cm || ''}</td>
+                            <td>${v.presentation || ''}</td>
+                            <td>${v.fetal_heart_rate || ''}</td>
+                            <td>${v.oedema || ''}</td>
+                            <td>${v.urine_protein || ''} / ${v.urine_glucose || ''}</td>
+                            <td>${v.weight_kg || ''}</td>
+                            <td>${v.haemoglobin || ''}</td>
+                            <td>${v.bp || ''}</td>
+                            <td>${isDoctor}${v.clinical_notes || ''}</td>
+                            <td>${v.next_appointment || ''}</td>
+                            <td><small>${v.seen_by}</small></td>
+                        </tr>
+                    `;
+                });
+            }
+            $('#anc-card-history-body').html(tableHtml);
+
+            // Store prefill data for when form opens
+            window.latestAncPrefillData = res;
+        }
+    });
+}
+
+let consultClinicalDataEditor;
+
+function openConsultForm(queueId) {
+    if (!window.latestAncPrefillData) {
+        toastr.info("Loading patient data...");
+        return;
+    }
+    const data = window.latestAncPrefillData;
+
+    $('#cf-queue-id').val(queueId);
+    $('#cf-enrollment-id').val(data.enrollment.id);
+
+    // Context banner
+    $('#cf-ga-display').text(data.enrollment.current_ga || 'Unknown');
+    $('#cf-edd-display').text(data.enrollment.edd || 'Not Set');
+    $('#cf-gpa-display').text(`${data.enrollment.gravida || 0} / ${data.enrollment.parity || 0} / ${data.enrollment.abortion_miscarriage || 0}`);
+    $('#cf-blood-group').text(data.enrollment.blood_group || 'Unknown');
+    $('#cf-genotype').text(data.enrollment.genotype || 'Unknown');
+    const riskBadge = data.enrollment.risk_level === 'high' ? '<span class="badge bg-danger">High Risk</span>' : '<span class="badge bg-success">Low Risk</span>';
+    $('#cf-risk-level').html(riskBadge);
+
+    $('#consult-visit-number-label').text(`Visit #${data.next_visit_number}`);
+
+    // Pre-fill form
+    $('#cf-visit-date').val(data.today_date);
+    $('#cf-ga-weeks').val(data.enrollment.ga_weeks || '');
+    $('#cf-ga-days').val(data.enrollment.ga_days || '');
+
+    // Vital signs from nurse (if taken today)
+    if (data.nurse_vitals && data.nurse_vitals.is_today) {
+        $('#cf-weight').val(data.nurse_vitals.weight_kg || '');
+        $('#cf-bp-sys').val(data.nurse_vitals.blood_pressure_systolic || '');
+        $('#cf-bp-dia').val(data.nurse_vitals.blood_pressure_diastolic || '');
+        $('#cf-weight-nurse-badge').show();
+        $('#nurse-prefill-banner').show();
+        $('#cf-nurse-weight').text(data.nurse_vitals.weight_kg ? `${data.nurse_vitals.weight_kg} kg` : '—');
+        $('#cf-nurse-bp').text(data.nurse_vitals.blood_pressure_systolic ? `${data.nurse_vitals.blood_pressure_systolic}/${data.nurse_vitals.blood_pressure_diastolic}` : '—');
+    } else {
+        $('#cf-weight-nurse-badge').hide();
+        $('#nurse-prefill-banner').hide();
+    }
+
+    // ANC values from nurse (if taken today)
+    if (data.nurse_anc && data.nurse_anc.is_today) {
+        $('#cf-fundal-height').val(data.nurse_anc.fundal_height_cm || '');
+        $('#cf-presentation').val(data.nurse_anc.presentation || '');
+        $('#cf-fhr').val(data.nurse_anc.fetal_heart_rate || '');
+        $('#cf-foetal-movement').val(data.nurse_anc.foetal_movement || '');
+        $('#cf-oedema').val(data.nurse_anc.oedema || '');
+        $('#cf-urine-protein').val(data.nurse_anc.urine_protein || '');
+        $('#cf-urine-glucose').val(data.nurse_anc.urine_glucose || '');
+
+        $('#nurse-prefill-banner').show();
+        $('#cf-nurse-urine-protein').text(data.nurse_anc.urine_protein || '—');
+        $('#cf-nurse-urine-glucose').text(data.nurse_anc.urine_glucose || '—');
+        $('#cf-nurse-oedema').text(data.nurse_anc.oedema || '—');
+    }
+
+    // Initialize CKEditor if not done
+    if (!consultClinicalDataEditor && typeof ClassicEditor !== 'undefined') {
+        ClassicEditor
+            .create(document.querySelector('#cf-clinical-data'), {
+                toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ]
+            })
+            .then(editor => { consultClinicalDataEditor = editor; })
+            .catch(err => console.error(err));
+    } else if (consultClinicalDataEditor) {
+        consultClinicalDataEditor.setData('');
+    }
+
+    // Show form, hide list
+    $('#consult-queue-list-section').hide();
+    $('#consult-form-section').fadeIn();
+}
+
+function closeConsultForm() {
+    $('#consult-form-section').hide();
+    $('#consult-queue-list-section').fadeIn();
+}
+
+function saveAncConsultation(endConsultation) {
+    if (!$('#cf-visit-date').val() || !$('#cf-ga-weeks').val()) {
+        toastr.error('Visit date and GA weeks are required.');
+        return;
+    }
+
+    // Sync CKEditor data
+    if (consultClinicalDataEditor) {
+        $('#cf-clinical-data').val(consultClinicalDataEditor.getData());
+    }
+
+    let formData = $('#anc-consultation-form').serialize() + '&end_consultation=' + (endConsultation ? '1' : '0');
+
+    $.ajax({
+        url: `/maternity-workbench/enrollment/${currentEnrollmentId}/anc-consultation`,
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: formData,
+        success: function(res) {
+            if(res.success) {
+                toastr.success(res.message);
+                if (endConsultation) {
+                    closeConsultForm();
+                }
+                loadConsultationQueue();
+                loadQueueCounts();
+                // Trigger refresh on clinical orders component if needed
+                if (typeof loadClinicalOrders === 'function') {
+                    loadClinicalOrders();
+                }
+            } else {
+                toastr.error('Failed to save consultation.');
+            }
+        },
+        error: function(xhr) {
+            let msg = 'An error occurred saving consultation.';
+            if(xhr.responseJSON && xhr.responseJSON.errors) {
+                 msg = Object.values(xhr.responseJSON.errors).map(e => e.join(', ')).join('<br>');
+            }
+            toastr.error(msg);
+        }
+    });
+}
+
+// Intercept consultation tab click to load data
+$(document).ready(function() {
+    $('.workspace-tab[data-tab="consultation"]').on('click', function() {
+        if (currentEnrollmentId) {
+            loadConsultationQueue();
+            closeConsultForm();
+        }
+    });
+    
+    // Sidebar queue item click handler for consult queue
+    $('#sidebar-consult-queue-item').on('click', function() {
+        toastr.info("Select a patient from search or Active ANC to view their consultation queue, or visit 'My Queues'.", "Consult Queue");
+    });
+});
+
+// ── Diagnosis AJAX Search Logic (mirrors new_encounter) ──
+let clinicalSelectedReasons = [];
+let clinicalSearchTimeout;
+
+$('#reasons_for_encounter_search').on('input', function() {
+    clearTimeout(clinicalSearchTimeout);
+    const query = $(this).val();
+    clinicalSearchTimeout = setTimeout(() => searchReasons(query), 300);
+});
+
+function searchReasons(query) {
+    if (query.length < 2) {
+        $('#reasons_search_results').hide();
+        return;
+    }
+    $.ajax({
+        url: '/live-search-reasons',
+        method: 'GET',
+        data: { q: query },
+        success: function(data) {
+            const resultsContainer = $('#reasons_search_results');
+            resultsContainer.empty();
+            if (data.length === 0) {
+                resultsContainer.append(`
+                    <li class="list-group-item custom-reason-option" onclick="addReason('custom:${query}', 'Custom: ${query}', 'CUSTOM', '${query}')">
+                        <i class="mdi mdi-plus-circle"></i> <strong>Add custom reason:</strong> "${query}"
+                    </li>
+                `);
+            } else {
+                data.forEach(reason => {
+                    const display = `${reason.code} - ${reason.name}`;
+                    const value = `${reason.code}-${reason.name}`;
+                    resultsContainer.append(`
+                        <li class="list-group-item" style="cursor:pointer" onclick="addReason('${value.replace(/'/g, "\\'")}', '${display.replace(/'/g, "\\'")}', '${reason.code.replace(/'/g, "\\'")}', '${reason.name.replace(/'/g, "\\'")}')">
+                            <strong>${reason.code}</strong> ${reason.name}
+                            <br><small class="text-muted">${reason.category || ''} ${reason.sub_category ? '› ' + reason.sub_category : ''}</small>
+                        </li>
+                    `);
+                });
+            }
+            resultsContainer.show();
+        }
+    });
+}
+
+function addReason(value, display, code, name) {
+    if (clinicalSelectedReasons.some(r => r.value === value)) return;
+    clinicalSelectedReasons.push({value, display, code, name, comment_1: 'NA', comment_2: 'NA'});
+    updateSelectedReasonsDisplay();
+    $('#reasons_for_encounter_search').val('');
+    $('#reasons_search_results').hide();
+}
+
+function removeReason(value) {
+    clinicalSelectedReasons = clinicalSelectedReasons.filter(r => r.value !== value);
+    updateSelectedReasonsDisplay();
+}
+
+function updateReasonComment(value, field, newVal) {
+    const reason = clinicalSelectedReasons.find(r => r.value === value);
+    if (reason) {
+        reason[field] = newVal;
+        $('#reasons_for_encounter_data').val(JSON.stringify(clinicalSelectedReasons));
+    }
+}
+
+function updateSelectedReasonsDisplay() {
+    const container = $('#selected_reasons_list');
+    if (clinicalSelectedReasons.length === 0) {
+        container.html('<span class="text-muted"><i>No diagnoses selected yet</i></span>');
+        $('#reasons_for_encounter_data').val('[]');
+        return;
+    }
+    let html = '<div class="table-responsive"><table class="table table-sm table-bordered bg-white mb-0"><thead class="table-light"><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th><th style="width:40px;"></th></tr></thead><tbody>';
+    clinicalSelectedReasons.forEach(reason => {
+        const escVal = reason.value.replace(/'/g, "\\'");
+        html += `<tr>
+            <td><span class="badge bg-primary">${reason.code}</span></td>
+            <td>${reason.name}</td>
+            <td>
+                <select class="form-select form-select-sm" onchange="updateReasonComment('${escVal}', 'comment_1', this.value)">
+                    <option value="NA" ${reason.comment_1 === 'NA' ? 'selected' : ''}>N/A</option>
+                    <option value="QUERY" ${reason.comment_1 === 'QUERY' ? 'selected' : ''}>Query</option>
+                    <option value="DIFFRENTIAL" ${reason.comment_1 === 'DIFFRENTIAL' ? 'selected' : ''}>Differential</option>
+                    <option value="CONFIRMED" ${reason.comment_1 === 'CONFIRMED' ? 'selected' : ''}>Confirmed</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" onchange="updateReasonComment('${escVal}', 'comment_2', this.value)">
+                    <option value="NA" ${reason.comment_2 === 'NA' ? 'selected' : ''}>N/A</option>
+                    <option value="ACUTE" ${reason.comment_2 === 'ACUTE' ? 'selected' : ''}>Acute</option>
+                    <option value="CHRONIC" ${reason.comment_2 === 'CHRONIC' ? 'selected' : ''}>Chronic</option>
+                    <option value="RECURRENT" ${reason.comment_2 === 'RECURRENT' ? 'selected' : ''}>Recurrent</option>
+                </select>
+            </td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeReason('${escVal}')"><i class="fa fa-times"></i></button></td>
+        </tr>`;
+    });
+    html += '</tbody></table></div>';
+    container.html(html);
+    $('#reasons_for_encounter_data').val(JSON.stringify(clinicalSelectedReasons));
+}
+</script>
 
 @endsection
