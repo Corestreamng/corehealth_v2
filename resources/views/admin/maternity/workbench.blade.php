@@ -2313,7 +2313,6 @@ $sett = appsettings();
                                     <option value="present">Present</option>
                                     <option value="absent">Absent</option>
                                     <option value="reduced">Reduced</option>
-                                    <option value="not perceptible">Not perceptible</option>
                                 </select></div>
                             <div class="col-md-3 mb-3"><label class="form-label">Urine Protein <span class="mat-tooltip-icon" title="≥++ with raised BP may indicate pre-eclampsia"><i class="mdi mdi-help-circle"></i></span></label><select name="urine_protein" class="form-select">
                                     <option value="">-- Select --</option>
@@ -5690,11 +5689,16 @@ $sett = appsettings();
                         const qty = item.stock?.current_quantity ?? 0;
                         const price = item.price?.initial_sale_price ?? 0;
                         const display = name + '[' + code + '](' + qty + ' avail.)';
-                        const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
+                        const isCombo = item.is_combo || false;
+                        const bundleItems = item.bundle_items || [];
+                        if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+                        const alreadyAdded = isCombo ? false : ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
                         const mode = item.coverage_mode || null;
                         const payable = item.payable_amount ?? price;
                         const claims = item.claims_amount ?? 0;
-                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')';
+                        const onClick = alreadyAdded ? '' : (isCombo 
+                            ? `MaternityClinicalOrders.applyProductCombo(${item.id}, ${enrollmentId}, '${name.replace(/'/g, "\\'")}')`
+                            : 'MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')');
                         $res.append(ClinicalOrdersKit.renderSearchResultItem({
                             id: item.id,
                             name: name,
@@ -5706,7 +5710,9 @@ $sett = appsettings();
                             mode: mode,
                             alreadyAdded: alreadyAdded,
                             alreadyLabel: 'Already Added',
-                            onClick: onClick
+                            onClick: onClick,
+                            isCombo: isCombo,
+                            bundleItems: bundleItems
                         }));
                     });
                 }
@@ -6010,9 +6016,13 @@ $sett = appsettings();
             }, 5000);
         }
 
-        function applyLabCombo(comboId, enrollmentId, comboName) {
+        function applyProductCombo(comboId, enrollmentId, comboName) {
             var comboData = (window.comboDataMap || {})[comboId] || {};
-            var name = comboName || comboData.service_name || 'Combo';
+            var name = comboName || comboData.product_name || comboData.service_name || 'Combo';
+
+            $('#mco_presc_search').val('');
+            $('#mco_presc_results').hide();
+
             ComboConfirmModal.show({
                 name        : name,
                 bundleItems : comboData.bundle_items || [],
@@ -6031,8 +6041,44 @@ $sett = appsettings();
                         success     : function(response) {
                             if (response.success) {
                                 toastr.success(response.message, 'Combo Applied');
-                                $('#mco_lab_search').val('');
-                                $('#mco_lab_results').hide();
+                                if (typeof loadClinicalOrdersTab === 'function') { loadClinicalOrdersTab(); }
+                            } else {
+                                toastr.error(response.message || 'Failed to apply combo', 'Error');
+                            }
+                        },
+                        error       : function(err) {
+                            toastr.error((err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : ('Error: ' + err.statusText), 'Error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function applyLabCombo(comboId, enrollmentId, comboName) {
+            var comboData = (window.comboDataMap || {})[comboId] || {};
+            var name = comboName || comboData.service_name || 'Combo';
+
+            $('#mco_lab_search').val('');
+            $('#mco_lab_results').hide();
+
+            ComboConfirmModal.show({
+                name        : name,
+                bundleItems : comboData.bundle_items || [],
+                price       : parseFloat(comboData.base_price || 0),
+                payable     : parseFloat(comboData.payable_amount != null ? comboData.payable_amount : (comboData.base_price || 0)),
+                claims      : parseFloat(comboData.claims_amount || 0),
+                mode        : comboData.coverage_mode || null,
+                onConfirm   : function() {
+                    $.ajax({
+                        url         : '/maternity-workbench/enrollment/' + enrollmentId + '/apply-combo',
+                        method      : 'POST',
+                        headers     : { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                        data        : JSON.stringify({ service_id: comboId, note: '' }),
+                        contentType : 'application/json',
+                        dataType    : 'json',
+                        success     : function(response) {
+                            if (response.success) {
+                                toastr.success(response.message, 'Combo Applied');
                                 if (typeof initMaternityLabsHistory === 'function') { initMaternityLabsHistory(); }
                             } else {
                                 toastr.error(response.message || 'Failed to apply combo', 'Error');
@@ -6049,6 +6095,10 @@ $sett = appsettings();
         function applyImagingCombo(comboId, enrollmentId, comboName) {
             var comboData = (window.comboDataMap || {})[comboId] || {};
             var name = comboName || comboData.service_name || 'Combo';
+
+            $('#mco_imaging_search').val('');
+            $('#mco_imaging_results').hide();
+
             ComboConfirmModal.show({
                 name        : name,
                 bundleItems : comboData.bundle_items || [],
@@ -6067,8 +6117,6 @@ $sett = appsettings();
                         success     : function(response) {
                             if (response.success) {
                                 toastr.success(response.message, 'Combo Applied');
-                                $('#mco_imaging_search').val('');
-                                $('#mco_imaging_results').hide();
                                 if (typeof initMaternityImagingHistory === 'function') { initMaternityImagingHistory(); }
                             } else {
                                 toastr.error(response.message || 'Failed to apply combo', 'Error');
@@ -6087,6 +6135,7 @@ $sett = appsettings();
             addProductService: addProductService,
             addLabService: addLabService,
             addImagingService: addImagingService,
+            applyProductCombo: applyProductCombo,
             applyLabCombo: applyLabCombo,
             applyImagingCombo: applyImagingCombo,
             addProcedureService: addProcedureService,

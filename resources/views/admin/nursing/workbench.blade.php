@@ -8315,8 +8315,8 @@ const ClinicalRequests = (function() {
                     const displayName = `${name}[${code}](${qty} avail.)`;
 
                     // Phase 2c (Plan §4.4): Duplicate filtering for medications
-                    const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
-                    const onClick = alreadyAdded ? '' : `ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})`;
+                    const alreadyAdded = isCombo ? false : ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
+                    const onClick = alreadyAdded ? '' : (isCombo ? `ClinicalRequests.applyProductCombo(${item.id}, '${name.replace(/'/g,"\\'")}')` : `ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})`);
                     $res.append(ClinicalOrdersKit.renderSearchResultItem({
                         id: item.id,
                         name: name,
@@ -8328,7 +8328,9 @@ const ClinicalRequests = (function() {
                         mode: mode,
                         alreadyAdded: alreadyAdded,
                         alreadyLabel: 'Already Added',
-                        onClick: onClick
+                        onClick: onClick,
+                        isCombo: isCombo,
+                        bundleItems: bundleItems
                     }));
                 });
             }
@@ -8860,9 +8862,13 @@ const ClinicalRequests = (function() {
         });
     }
 
-    function applyLabCombo(comboId, comboName) {
+    function applyProductCombo(comboId, comboName) {
         var comboData = (window.comboDataMap || {})[comboId] || {};
-        var name = comboName || comboData.service_name || 'Combo';
+        var name = comboName || comboData.product_name || comboData.service_name || 'Combo';
+
+        $('#cr_presc_search').val('');
+        $('#cr_presc_results').hide();
+
         ComboConfirmModal.show({
             name        : name,
             bundleItems : comboData.bundle_items || [],
@@ -8881,8 +8887,44 @@ const ClinicalRequests = (function() {
                     success     : function(response) {
                         if (response.success) {
                             toastr.success(response.message, 'Combo Applied');
-                            $('#cr_lab_search').val('');
-                            $('#cr_lab_results').hide();
+                            if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                        } else {
+                            toastr.error(response.message || 'Failed to apply combo', 'Error');
+                        }
+                    },
+                    error       : function(err) {
+                        toastr.error((err.responseJSON && err.responseJSON.message) ? err.responseJSON.message : ('Error: ' + err.statusText), 'Error');
+                    }
+                });
+            }
+        });
+    }
+
+    function applyLabCombo(comboId, comboName) {
+        var comboData = (window.comboDataMap || {})[comboId] || {};
+        var name = comboName || comboData.service_name || 'Combo';
+
+        $('#cr_lab_search').val('');
+        $('#cr_lab_results').hide();
+
+        ComboConfirmModal.show({
+            name        : name,
+            bundleItems : comboData.bundle_items || [],
+            price       : parseFloat(comboData.base_price || 0),
+            payable     : parseFloat(comboData.payable_amount != null ? comboData.payable_amount : (comboData.base_price || 0)),
+            claims      : parseFloat(comboData.claims_amount || 0),
+            mode        : comboData.coverage_mode || null,
+            onConfirm   : function() {
+                $.ajax({
+                    url         : '/nursing-workbench/clinical-requests/apply-combo',
+                    method      : 'POST',
+                    headers     : { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    data        : JSON.stringify({ service_id: comboId, patient_id: patientId, note: '' }),
+                    contentType : 'application/json',
+                    dataType    : 'json',
+                    success     : function(response) {
+                        if (response.success) {
+                            toastr.success(response.message, 'Combo Applied');
                             initLabHistory();
                         } else {
                             toastr.error(response.message || 'Failed to apply combo', 'Error');
@@ -8899,6 +8941,10 @@ const ClinicalRequests = (function() {
     function applyImagingCombo(comboId, comboName) {
         var comboData = (window.comboDataMap || {})[comboId] || {};
         var name = comboName || comboData.service_name || 'Combo';
+
+        $('#cr_imaging_search').val('');
+        $('#cr_imaging_results').hide();
+
         ComboConfirmModal.show({
             name        : name,
             bundleItems : comboData.bundle_items || [],
@@ -8917,8 +8963,6 @@ const ClinicalRequests = (function() {
                     success     : function(response) {
                         if (response.success) {
                             toastr.success(response.message, 'Combo Applied');
-                            $('#cr_imaging_search').val('');
-                            $('#cr_imaging_results').hide();
                             initImagingHistory();
                         } else {
                             toastr.error(response.message || 'Failed to apply combo', 'Error');
@@ -8935,6 +8979,7 @@ const ClinicalRequests = (function() {
     return {
         init: init,
         addProduct: addProduct,
+        applyProductCombo: applyProductCombo,
         addLabService: addLabService,
         addImagingService: addImagingService,
         applyLabCombo: applyLabCombo,

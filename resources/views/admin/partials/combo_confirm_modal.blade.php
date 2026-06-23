@@ -2,7 +2,7 @@
      Combo Confirmation Modal — shared across all workbenches
      and new_encounter. Include once per page.
      ============================================================ --}}
-<div class="modal fade" id="comboConfirmModal" tabindex="-1" aria-labelledby="comboConfirmModalLabel" aria-hidden="true">
+<div class="modal fade" id="comboConfirmModal" tabindex="-1" aria-labelledby="comboConfirmModalLabel" aria-hidden="true" style="z-index: 10600;">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">

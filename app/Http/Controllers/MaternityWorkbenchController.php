@@ -3660,7 +3660,7 @@ class MaternityWorkbenchController extends Controller
     public function maternityApplyCombo(Request $request, $enrollmentId)
     {
         try {
-            $enrollment = Enrollment::findOrFail($enrollmentId);
+            $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
             $request->validate([
                 'service_id' => 'required|integer|exists:services,id',
                 'note' => 'nullable|string'
@@ -3688,7 +3688,7 @@ class MaternityWorkbenchController extends Controller
     public function removeBundle(Request $request, $enrollmentId)
     {
         try {
-            $enrollment = Enrollment::findOrFail($enrollmentId);
+            $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
             
             $request->validate([
                 'parent_request_id' => 'required|integer|exists:product_or_service_requests,id'
