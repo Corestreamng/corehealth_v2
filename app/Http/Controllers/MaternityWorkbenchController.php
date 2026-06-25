@@ -323,9 +323,9 @@ class MaternityWorkbenchController extends Controller
             'dynamic_ranges'  => $dynamicRanges,
             'admission_request' => $admissionRequest ? [
                 'id' => $admissionRequest->id,
-                'status' => $admissionRequest->status,
+                'status' => $admissionRequest->admission_status,
                 'ward' => $admissionRequest->preferredWard ? $admissionRequest->preferredWard->name : null,
-                'bed' => $admissionRequest->bed ? $admissionRequest->bed->bed_number : null,
+                'bed' => $admissionRequest->bed ? $admissionRequest->bed->name : null,
             ] : null,
         ]);
     }
