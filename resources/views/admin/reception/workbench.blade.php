@@ -5175,6 +5175,7 @@
 <script src="{{ asset('plugins/daterangepicker/moment.js') }}"></script>
 <script src="{{ asset('plugins/fullcalendar/fullcalendar.min.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'reception'])
+<script src="{{ asset('js/request-details.js') }}"></script>
 <script>
 // =============================================
 // RECEPTION WORKBENCH JAVASCRIPT
@@ -7412,7 +7413,6 @@ $('#discardRequestForm').on('submit', function(e) {
     });
 });
 
-<script src="{{ asset('js/request-details.js') }}"></script>
 // =============================================
 // VISIT HISTORY
 // =============================================
