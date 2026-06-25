@@ -147,6 +147,9 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::get('/queue/overdue-immunization', [MaternityWorkbenchController::class, 'getOverdueImmunizationQueue'])->name('queue.overdue-immunization');
         Route::get('/queue/high-risk', [MaternityWorkbenchController::class, 'getHighRiskQueue'])->name('queue.high-risk');
         Route::get('/queue/counts', [MaternityWorkbenchController::class, 'getQueueCounts'])->name('queue.counts');
+        Route::get('/queue/bed-requests', [MaternityWorkbenchController::class, 'getBedRequestsQueue'])->name('queue.bed-requests');
+        Route::get('/queue/discharge-requests', [MaternityWorkbenchController::class, 'getDischargeRequestsQueue'])->name('queue.discharge-requests');
+        Route::get('/queue/admitted-patients', [MaternityWorkbenchController::class, 'getAdmittedPatientsQueue'])->name('queue.admitted-patients');
 
         // ── Reports ─────────────────────────────────────────────────
         Route::get('/reports/summary', [MaternityWorkbenchController::class, 'getReportsSummary'])->name('reports.summary');
@@ -154,6 +157,7 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::get('/reports/immunization-coverage', [MaternityWorkbenchController::class, 'getImmunizationCoverage'])->name('reports.immunization-coverage');
         Route::get('/reports/anc-defaulters', [MaternityWorkbenchController::class, 'getAncDefaulters'])->name('reports.anc-defaulters');
         Route::get('/reports/high-risk-register', [MaternityWorkbenchController::class, 'getHighRiskRegister'])->name('reports.high-risk-register');
+        Route::get('/reports/admissions-stats', [MaternityWorkbenchController::class, 'getAdmissionsReportStats'])->name('reports.admissions-stats');
 
         // ── Search Services (for billing at enrollment) ─────────────
         Route::get('/search-services', [MaternityWorkbenchController::class, 'searchServices'])->name('search-services');

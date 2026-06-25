@@ -1495,6 +1495,18 @@ $sett = appsettings();
                 <span class="queue-item-label"><i class="mdi mdi-alert"></i> High Risk</span>
                 <span class="queue-count high-risk" id="queue-high-risk-count">0</span>
             </div>
+            <div class="queue-item" data-filter="bed-requests" style="border-left: 3px solid #17a2b8;">
+                <span class="queue-item-label"><i class="mdi mdi-bed"></i> Bed Requests</span>
+                <span class="queue-count" id="queue-bed-requests-count">0</span>
+            </div>
+            <div class="queue-item" data-filter="discharge-requests" style="border-left: 3px solid #ffc107;">
+                <span class="queue-item-label"><i class="mdi mdi-exit-to-app"></i> Discharge Requests</span>
+                <span class="queue-count" id="queue-discharge-requests-count">0</span>
+            </div>
+            <div class="queue-item" data-filter="admitted-patients" style="border-left: 3px solid #6f42c1;">
+                <span class="queue-item-label"><i class="mdi mdi-hospital-building"></i> Admitted Patients</span>
+                <span class="queue-count" id="queue-admitted-patients-count">0</span>
+            </div>
             <button class="btn-queue-all" id="refresh-queues-btn">
                 <i class="mdi mdi-refresh"></i> Refresh Queues
             </button>
@@ -1581,8 +1593,96 @@ $sett = appsettings();
                     <i class="mdi mdi-close"></i> Close
                 </button>
             </div>
-            <div class="queue-view-content" id="reports-content">
-                <div class="text-center p-4 text-muted"><i class="mdi mdi-loading mdi-spin mdi-48px"></i></div>
+            <div class="queue-view-content" id="reports-content" style="padding: 1.5rem; overflow-y: auto;">
+                
+                <!-- Quick Date Presets & Filter -->
+                <div class="date-presets-bar mb-3 d-flex flex-wrap align-items-center gap-2">
+                    <span class="text-muted me-2">Global Date Filter:</span>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn active" data-preset="all">All Time</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="today">Today</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="week">This Week</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="month">This Month</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="year">This Year</button>
+                    
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        <input type="date" class="form-control form-control-sm w-auto" id="mat-report-date-from" title="Date From">
+                        <span class="text-muted">-</span>
+                        <input type="date" class="form-control form-control-sm w-auto" id="mat-report-date-to" title="Date To">
+                        <button class="btn btn-sm btn-primary" id="btn-apply-mat-dates">Apply</button>
+                    </div>
+                </div>
+
+                <!-- Report Tabs -->
+                <ul class="nav nav-tabs nav-fill mb-3" id="maternity-report-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="mat-overview-tab" data-bs-toggle="tab" data-bs-target="#mat-overview-content" type="button" role="tab">
+                            <i class="mdi mdi-view-dashboard"></i> Overview
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="mat-clinical-tab" data-bs-toggle="tab" data-bs-target="#mat-clinical-content" type="button" role="tab">
+                            <i class="mdi mdi-stethoscope"></i> Clinical Quality
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="mat-ward-tab" data-bs-toggle="tab" data-bs-target="#mat-ward-content" type="button" role="tab">
+                            <i class="mdi mdi-hospital-building"></i> Ward & Admissions
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="maternity-report-tab-content">
+                    
+                    <!-- Overview Tab -->
+                    <div class="tab-pane fade show active" id="mat-overview-content" role="tabpanel">
+                        <div class="row" id="reports-summary-cards">
+                            <div class="col-12 text-center p-4"><i class="mdi mdi-loading mdi-spin mdi-24px"></i> Loading Overview...</div>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Quality Tab -->
+                    <div class="tab-pane fade" id="mat-clinical-content" role="tabpanel">
+                        <div class="row" id="reports-clinical-cards">
+                            <div class="col-12 text-center p-4"><i class="mdi mdi-loading mdi-spin mdi-24px"></i> Loading Clinical Data...</div>
+                        </div>
+                    </div>
+
+                    <!-- Ward & Admissions Tab -->
+                    <div class="tab-pane fade" id="mat-ward-content" role="tabpanel">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card shadow-sm border-info h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted text-uppercase mb-2">Total Admissions</h6>
+                                        <h2 class="text-info fw-bold" id="admissions-total-kpi">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card shadow-sm border-primary h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted text-uppercase mb-2">Average Length of Stay (ALOS)</h6>
+                                        <h2 class="text-primary fw-bold" id="admissions-alos-kpi">0 Days</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mx-auto">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white py-2">
+                                        <h6 class="mb-0"><i class="mdi mdi-chart-pie"></i> Admissions by Class (Entry Point)</h6>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <canvas id="admissions-class-chart" width="400" height="250"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -1604,6 +1704,17 @@ $sett = appsettings();
                     </button>
                     <button class="btn btn-sm btn-success" id="btn-print-road-card" title="Print Road to Health Card" style="display:none;">
                         <i class="mdi mdi-baby-face-outline"></i> Road to Health
+                    </button>
+                    
+                    <div id="admission-status-container" class="d-none align-items-center px-2 py-1 bg-light rounded border me-2" style="gap: 5px;">
+                        <i class="fa fa-bed" style="color: var(--maternity-pink, #e91e63); font-size: 0.75rem;"></i>
+                        <div class="d-flex flex-column lh-1 text-start" id="admission-status-text"></div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" id="btn-admit-to-ward" title="Admit Patient" style="display:none;">
+                        <i class="mdi mdi-bed"></i> Admit
+                    </button>
+                    <button class="btn btn-sm btn-warning" id="btn-discharge-from-ward" title="Request Ward Discharge" style="display:none;">
+                        <i class="mdi mdi-exit-to-app"></i> Ward Discharge
                     </button>
                     <button class="btn btn-sm btn-danger" id="btn-discharge-patient" title="Discharge maternity enrollment" style="display:none;">
                         <i class="mdi mdi-exit-to-app"></i> Discharge
@@ -2432,6 +2543,7 @@ $sett = appsettings();
     </div>
 </div>
 
+@include('admin.partials.admit_discharge_modal')
 @include('admin.partials.patient-form-modal')
 @include('admin.partials.treatment-plan-modal')
 @include('admin.partials.re-prescribe-encounter-modal')
@@ -2441,6 +2553,7 @@ $sett = appsettings();
 @include('admin.partials.invest_res_view_imaging_js')
 @include('admin.partials.invest_res_view_modal')
 @include('admin.partials.invest_res_view_js')
+@include('admin.partials.ward_dashboard')
 
 <!-- Discharge Maternity Enrollment Modal -->
 <div class="modal fade" id="dischargeModal" tabindex="-1" aria-labelledby="dischargeModalLabel" aria-hidden="true">
@@ -2739,6 +2852,9 @@ $sett = appsettings();
             'postnatal': '{{ route("maternity-workbench.queue.postnatal") }}',
             'overdue-immunization': '{{ route("maternity-workbench.queue.overdue-immunization") }}',
             'high-risk': '{{ route("maternity-workbench.queue.high-risk") }}',
+            'bed-requests': '{{ route("maternity-workbench.queue.bed-requests") }}',
+            'discharge-requests': '{{ route("maternity-workbench.queue.discharge-requests") }}',
+            'admitted-patients': '{{ route("maternity-workbench.queue.admitted-patients") }}',
         };
 
         $.ajax({
@@ -2792,13 +2908,44 @@ $sett = appsettings();
                 const risks = item.risk_factors ? (Array.isArray(item.risk_factors) ? item.risk_factors.join(', ') : item.risk_factors) : 'N/A';
                 detail = `<span><i class="mdi mdi-alert"></i> ${risks}</span>
                       <span><i class="mdi mdi-calendar"></i> EDD: ${item.edd}</span>`;
+            } else if (filter === 'bed-requests') {
+                const patientName = (item.name || item.baby_name || 'Unknown').replace(/'/g, "\\'");
+                const fileNo = (item.file_no || '').replace(/'/g, "\\'");
+                badge = `<span class="badge ${item.priority === 'emergency' ? 'bg-danger' : (item.priority === 'urgent' ? 'bg-warning text-dark' : 'bg-info')}">${item.priority || 'routine'}</span>`;
+                detail = `<span><i class="mdi mdi-doctor"></i> Doctor: ${item.doctor_name || 'N/A'}</span>
+                      <span><i class="mdi mdi-hospital-building"></i> Ward: ${item.ward_name}</span>
+                      <span><i class="mdi mdi-clock"></i> Requested: ${item.requested_at}</span>
+                      <div class="mt-2 text-end w-100">
+                          <button class="btn btn-sm btn-info" onclick="event.stopPropagation(); WardDashboard.openBedAssignment(${item.id}, '${patientName}', '${fileNo}');">
+                              <i class="mdi mdi-clipboard-check"></i> Process Admission
+                          </button>
+                      </div>`;
+            } else if (filter === 'discharge-requests') {
+                const patientName = (item.name || item.baby_name || 'Unknown').replace(/'/g, "\\'");
+                const fileNo = (item.file_no || '').replace(/'/g, "\\'");
+                const bedName = (item.ward_bed || 'No bed').replace(/'/g, "\\'");
+                badge = `<span class="badge bg-warning text-dark">Discharge</span>`;
+                detail = `<span><i class="mdi mdi-doctor"></i> Doctor: ${item.doctor_name || 'N/A'}</span>
+                      <span><i class="mdi mdi-bed"></i> Bed: ${item.ward_bed}</span>
+                      <span><i class="mdi mdi-clock"></i> Requested: ${item.requested_at}</span>
+                      <div class="mt-2 text-end w-100">
+                          <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); WardDashboard.openDischarge(${item.id}, '${patientName}', '${fileNo}', '${bedName}');">
+                              <i class="mdi mdi-clipboard-check"></i> Process Discharge
+                          </button>
+                      </div>`;
+            } else if (filter === 'admitted-patients') {
+                badge = `<span class="badge bg-primary">${item.days_admitted}d Admitted</span>`;
+                detail = `<span><i class="mdi mdi-doctor"></i> Doctor: ${item.doctor_name || 'N/A'}</span>
+                      <span><i class="mdi mdi-hospital-building"></i> Ward: ${item.ward_name}</span>
+                      <span><i class="mdi mdi-bed"></i> Bed: ${item.ward_bed}</span>
+                      <span><i class="mdi mdi-calendar"></i> Admitted: ${item.admitted_date}</span>`;
             }
 
             html += `<div class="queue-card" onclick="loadPatient(${pid})">
             <div class="queue-card-header">
                 <div>
                     <div class="queue-card-patient-name">${item.name || item.baby_name || 'Unknown'}</div>
-                    <div class="queue-card-patient-meta">
+                    <div class="queue-card-patient-meta d-flex flex-wrap gap-2">
                         <span class="queue-card-patient-meta-item"><i class="mdi mdi-folder"></i> ${item.file_no || 'N/A'}</span>
                         ${detail}
                     </div>
@@ -2821,6 +2968,9 @@ $sett = appsettings();
                 $('#queue-postnatal-count').text(data.postnatal || 0);
                 $('#queue-overdue-imm-count').text(data.overdue_immunization || 0);
                 $('#queue-high-risk-count').text(data.high_risk || 0);
+                $('#queue-bed-requests-count').text(data.bed_requests || 0);
+                $('#queue-discharge-requests-count').text(data.discharge_requests || 0);
+                $('#queue-admitted-patients-count').text(data.admitted_patients || 0);
             }
         });
     }
@@ -2917,10 +3067,47 @@ $sett = appsettings();
                     } else {
                         $('#btn-discharge-patient').hide();
                     }
+                    
+                    // Show Admit or Ward Discharge button
+                    const $admContainer = $('#admission-status-container');
+                    const $admText = $('#admission-status-text');
+                    
+                    $admContainer.removeClass('d-flex').addClass('d-none');
+                    $('#btn-admit-to-ward').hide();
+                    $('#btn-discharge-from-ward').hide();
+
+                    if (data.admission_request) {
+                        $admContainer.removeClass('d-none').addClass('d-flex');
+                        let statusHtml = '';
+                        const req = data.admission_request;
+                        
+                        if (req.status === 'discharge_requested' || req.status === 'discharge_checklist') {
+                            statusHtml = '<span class="fw-bold text-warning" style="font-size: 0.68rem;">Discharge Req</span><small class="text-muted" style="font-size: 0.58rem;">Awaiting Nursing</small>';
+                        } else if (req.status === 'pending_checklist' || req.status === 'checklist_pending') {
+                            statusHtml = '<span class="fw-bold text-info" style="font-size: 0.68rem;">Admission Req</span><small class="text-muted" style="font-size: 0.58rem;">Pending Checklist</small>';
+                        } else if (req.status === 'requested') {
+                            statusHtml = '<span class="fw-bold text-primary" style="font-size: 0.68rem;">Pending Admission</span><small class="text-muted" style="font-size: 0.58rem;">Requested</small>';
+                        } else if (req.discharged) {
+                            statusHtml = '<span class="fw-bold text-secondary" style="font-size: 0.68rem;">Discharged</span>';
+                        } else {
+                            statusHtml = '<span class="fw-bold text-dark" style="font-size: 0.68rem;">Admitted</span><small class="text-muted" style="font-size: 0.58rem;">' + (req.bed ? req.bed : 'Pending Bed') + '</small>';
+                        }
+                        
+                        $admText.html(statusHtml);
+
+                        if (!req.discharged && req.status !== 'discharge_requested' && req.status !== 'discharge_checklist' && req.status !== 'requested' && req.status !== 'pending_checklist' && req.status !== 'checklist_pending') {
+                            $('#btn-discharge-from-ward').show().prop('disabled', false);
+                        }
+                    } else {
+                        $('#btn-admit-to-ward').show().prop('disabled', false);
+                    }
                 } else {
                     $('#btn-print-anc-card').hide();
                     $('#btn-print-road-card').hide();
                     $('#btn-discharge-patient').hide();
+                    $('#btn-admit-to-ward').hide();
+                    $('#btn-discharge-from-ward').hide();
+                    $('#admission-status-container').removeClass('d-flex').addClass('d-none');
                 }
 
                 // Load overview
@@ -7460,52 +7647,83 @@ $sett = appsettings();
             $('#left-panel').addClass('hidden');
             $('#main-workspace').addClass('active');
         }
+        
+        if (!window.matReportsInitialized) {
+            initMaternityReportFilters();
+            window.matReportsInitialized = true;
+        }
 
-        $.get('{{ route("maternity-workbench.reports.summary") }}', function(resp) {
+        loadMaternityReportsData();
+    }
+
+    function initMaternityReportFilters() {
+        $('.date-preset-btn').on('click', function() {
+            $('.date-preset-btn').removeClass('active');
+            $(this).addClass('active');
+            
+            const preset = $(this).data('preset');
+            const today = moment();
+            
+            if (preset === 'all') {
+                $('#mat-report-date-from').val('');
+                $('#mat-report-date-to').val('');
+            } else if (preset === 'today') {
+                $('#mat-report-date-from').val(today.format('YYYY-MM-DD'));
+                $('#mat-report-date-to').val(today.format('YYYY-MM-DD'));
+            } else if (preset === 'week') {
+                $('#mat-report-date-from').val(today.clone().startOf('isoWeek').format('YYYY-MM-DD'));
+                $('#mat-report-date-to').val(today.clone().endOf('isoWeek').format('YYYY-MM-DD'));
+            } else if (preset === 'month') {
+                $('#mat-report-date-from').val(today.clone().startOf('month').format('YYYY-MM-DD'));
+                $('#mat-report-date-to').val(today.clone().endOf('month').format('YYYY-MM-DD'));
+            } else if (preset === 'year') {
+                $('#mat-report-date-from').val(today.clone().startOf('year').format('YYYY-MM-DD'));
+                $('#mat-report-date-to').val(today.clone().endOf('year').format('YYYY-MM-DD'));
+            }
+            
+            loadMaternityReportsData();
+        });
+
+        $('#btn-apply-mat-dates').on('click', function() {
+            $('.date-preset-btn').removeClass('active');
+            loadMaternityReportsData();
+        });
+    }
+
+    function loadMaternityReportsData() {
+        const startDate = $('#mat-report-date-from').val();
+        const endDate = $('#mat-report-date-to').val();
+        const params = {};
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        const qs = new URLSearchParams(params).toString();
+
+        $('#reports-summary-cards').html('<div class="col-12 text-center p-4"><i class="mdi mdi-loading mdi-spin mdi-24px"></i> Loading...</div>');
+        $('#reports-clinical-cards').html('<div class="col-lg-6 mb-3"><div class="card shadow-sm h-100"><div class="card-header bg-white py-2"><h6 class="mb-0">Immunization Coverage</h6></div><div class="card-body" id="imm-coverage-body"></div></div></div><div class="col-lg-6 mb-3"><div class="card shadow-sm h-100"><div class="card-header bg-white py-2"><h6 class="mb-0">ANC Defaulters</h6></div><div class="card-body" id="defaulters-body"></div></div></div><div class="col-12 mt-3"><div class="card shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0">High Risk Register</h6></div><div class="card-body" id="high-risk-body"></div></div></div>');
+        
+        $('#admissions-total-kpi').text('Loading...');
+        $('#admissions-alos-kpi').text('Loading...');
+
+        // Overview
+        $.get(`{{ route("maternity-workbench.reports.summary") }}?${qs}`, function(resp) {
             if (!resp.success) return;
             const d = resp.data;
             let html = '<div class="row mb-3">';
-            const stats = [{
-                    label: 'Total Enrollments',
-                    value: d.total_enrollments,
-                    icon: 'mdi-clipboard-list',
-                    cls: 'mat-stat-pink'
-                },
-                {
-                    label: 'Active ANC',
-                    value: d.active_enrollments,
-                    icon: 'mdi-mother-nurse',
-                    cls: 'mat-stat-green'
-                },
-                {
-                    label: 'Deliveries (Month)',
-                    value: d.deliveries_this_month,
-                    icon: 'mdi-baby-carriage',
-                    cls: 'mat-stat-blue'
-                },
-                {
-                    label: 'Total Babies',
-                    value: d.total_babies,
-                    icon: 'mdi-baby-face',
-                    cls: 'mat-stat-orange'
-                },
+            const stats = [
+                { label: 'Total Enrollments', value: d.total_enrollments, icon: 'mdi-clipboard-list', cls: 'mat-stat-pink' },
+                { label: 'Active ANC', value: d.active_enrollments, icon: 'mdi-mother-nurse', cls: 'mat-stat-green' },
+                { label: 'Deliveries', value: d.deliveries_filtered, icon: 'mdi-baby-carriage', cls: 'mat-stat-blue' },
+                { label: 'Total Babies', value: d.total_babies, icon: 'mdi-baby-face', cls: 'mat-stat-orange' },
             ];
             stats.forEach(s => {
                 html += `<div class="col-lg-3 col-md-6 mb-3"><div class="mat-stat-card ${s.cls}"><div class="mat-stat-icon"><i class="mdi ${s.icon}" style="font-size:1.5rem;"></i></div><div><div class="mat-stat-value">${s.value}</div><div class="mat-stat-label">${s.label}</div></div></div></div>`;
             });
             html += '</div>';
+            html += '<div class="row"><div class="col-12 mb-3"><div class="card shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0">Delivery Stats</h6></div><div class="card-body" id="delivery-stats-body"><p class="text-muted">Loading...</p></div></div></div></div>';
+            $('#reports-summary-cards').html(html);
 
-            html += '<div class="row">';
-            html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">Delivery Stats (This Year)</h6></div><div class="card-body" id="delivery-stats-body"><p class="text-muted">Loading...</p></div></div></div>';
-            html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">Immunization Coverage</h6></div><div class="card-body" id="imm-coverage-body"><p class="text-muted">Loading...</p></div></div></div>';
-            html += '</div>';
-            html += '<div class="row"><div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">ANC Defaulters</h6></div><div class="card-body" id="defaulters-body"><p class="text-muted">Loading...</p></div></div></div>';
-            html += '<div class="col-lg-6 mb-3"><div class="card-modern"><div class="card-header"><h6 class="mb-0">High Risk Register</h6></div><div class="card-body" id="high-risk-body"><p class="text-muted">Loading...</p></div></div></div></div>';
-
-            $('#reports-content').html(html);
-
-            // Load sub-reports with charts
-            $.get('{{ route("maternity-workbench.reports.delivery-stats") }}', function(r) {
+            // Load Deliveries Chart
+            $.get(`{{ route("maternity-workbench.reports.delivery-stats") }}?${qs}`, function(r) {
                 if (!r.success) return;
                 const types = Object.keys(r.by_type);
                 const counts = Object.values(r.by_type);
@@ -7522,199 +7740,130 @@ $sett = appsettings();
                 tHtml += '</div></div>';
                 $('#delivery-stats-body').html(tHtml);
 
-                if (typeof Chart !== 'undefined' && types.length> 0) {
+                if (typeof Chart !== 'undefined' && types.length > 0) {
                     new Chart(document.getElementById('delivery-donut-chart').getContext('2d'), {
                         type: 'doughnut',
-                        data: {
-                            labels: types.map(t => t.toUpperCase()),
-                            datasets: [{
-                                data: counts,
-                                backgroundColor: chartColors.slice(0, types.length),
-                                borderWidth: 2,
-                                borderColor: '#fff'
-                            }]
+                        data: { labels: types.map(t => t.toUpperCase()), datasets: [{ data: counts, backgroundColor: chartColors.slice(0, types.length), borderWidth: 2, borderColor: '#fff' }] },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true, padding: 8 } } } }
+                    });
+                }
+            });
+        });
+
+        // Immunization
+        $.get(`{{ route("maternity-workbench.reports.immunization-coverage") }}?${qs}`, function(r) {
+            if (!r.success || !Object.keys(r.coverage).length) {
+                $('#imm-coverage-body').html('<p class="text-muted mb-0">No data</p>');
+                return;
+            }
+            const vaccines = Object.keys(r.coverage);
+            const givenArr = vaccines.map(v => r.coverage[v].given);
+            const pendingArr = vaccines.map(v => r.coverage[v].total - r.coverage[v].given);
+
+            let cHtml = '<div style="position:relative; height:250px;"><canvas id="imm-bar-chart"></canvas></div>';
+            cHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Vaccine</th><th>Given</th><th>Total</th><th>%</th></tr></thead><tbody>';
+            vaccines.forEach(vaccine => {
+                const data = r.coverage[vaccine];
+                const color = data.percentage >= 80 ? 'text-success' : (data.percentage >= 50 ? 'text-warning' : 'text-danger');
+                cHtml += `<tr><td>${vaccine}</td><td>${data.given}</td><td>${data.total}</td><td class="fw-bold ${color}">${data.percentage}%</td></tr>`;
+            });
+            cHtml += '</tbody></table>';
+            cHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'immunization_coverage')"><i class="mdi mdi-download"></i> Export CSV</button>`;
+            $('#imm-coverage-body').html(cHtml);
+
+            if (typeof Chart !== 'undefined') {
+                new Chart(document.getElementById('imm-bar-chart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: vaccines, datasets: [{ label: 'Given', data: givenArr, backgroundColor: 'rgba(76,175,80,0.7)', borderColor: '#4caf50', borderWidth: 1 }, { label: 'Pending', data: pendingArr, backgroundColor: 'rgba(255,152,0,0.5)', borderColor: '#ff9800', borderWidth: 1 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 }, usePointStyle: true } } }, scales: { x: { stacked: true, ticks: { font: { size: 9 } } }, y: { stacked: true, beginAtZero: true } } }
+                });
+            }
+        });
+
+        // Defaulters
+        $.get(`{{ route("maternity-workbench.reports.anc-defaulters") }}?${qs}`, function(r) {
+            if (!r.success) return;
+            if (r.defaulters.length === 0) {
+                $('#defaulters-body').html('<p class="text-muted mb-0">No defaulters</p>');
+                return;
+            }
+            let dHtml = '<div style="position:relative; height:' + Math.max(200, r.defaulters.length * 30) + 'px;"><canvas id="defaulters-bar-chart"></canvas></div>';
+            dHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Name</th><th>File No</th><th>Missed</th><th>Days Overdue</th></tr></thead><tbody>';
+            r.defaulters.forEach(d => {
+                dHtml += `<tr><td>${d.name}</td><td>${d.file_no}</td><td>${d.missed_date}</td><td class="text-danger fw-bold">${d.days_overdue}</td></tr>`;
+            });
+            dHtml += '</tbody></table>';
+            dHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'anc_defaulters')"><i class="mdi mdi-download"></i> Export CSV</button>`;
+            $('#defaulters-body').html(dHtml);
+
+            if (typeof Chart !== 'undefined') {
+                new Chart(document.getElementById('defaulters-bar-chart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: r.defaulters.map(d => d.name.length > 20 ? d.name.substr(0, 18) + '...' : d.name), datasets: [{ label: 'Days Overdue', data: r.defaulters.map(d => d.days_overdue), backgroundColor: r.defaulters.map(d => d.days_overdue > 30 ? 'rgba(220,53,69,0.7)' : (d.days_overdue > 14 ? 'rgba(255,152,0,0.7)' : 'rgba(255,193,7,0.7)')), borderWidth: 1 }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, title: { display: true, text: 'Days' } } } }
+                });
+            }
+        });
+
+        // High Risk Register
+        $.get(`{{ route("maternity-workbench.reports.high-risk-register") }}?${qs}`, function(r) {
+            if (!r.success) return;
+            if (r.register.length === 0) {
+                $('#high-risk-body').html('<p class="text-muted mb-0">No high-risk patients</p>');
+                return;
+            }
+            const riskDist = {};
+            r.register.forEach(p => {
+                const lvl = p.risk_level || 'high';
+                riskDist[lvl] = (riskDist[lvl] || 0) + 1;
+            });
+
+            let hHtml = '';
+            if (Object.keys(riskDist).length > 0) {
+                const riskLabels = Object.keys(riskDist).map(k => k.replace('_', ' ').toUpperCase());
+                const riskCounts = Object.values(riskDist);
+                const riskClrs = Object.keys(riskDist).map(k => k === 'very_high' ? '#dc3545' : (k === 'high' ? '#fd7e14' : '#ffc107'));
+                hHtml += '<div class="d-flex justify-content-center mb-2">';
+                riskLabels.forEach((label, i) => { hHtml += `<span class="badge me-2" style="background:${riskClrs[i]}; font-size:0.75rem;">${label}: ${riskCounts[i]}</span>`; });
+                hHtml += '</div>';
+            }
+
+            hHtml += '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Name</th><th>File No</th><th>Risk</th><th>Factors</th><th>Status</th></tr></thead><tbody>';
+            r.register.forEach(p => {
+                const risks = Array.isArray(p.risk_factors) ? p.risk_factors.join(', ') : (p.risk_factors || 'N/A');
+                const riskClr = (p.risk_level === 'very_high') ? 'bg-danger' : 'bg-warning text-dark';
+                hHtml += `<tr><td>${p.name}</td><td>${p.file_no}</td><td><span class="badge ${riskClr}">${(p.risk_level || 'high').replace('_', ' ')}</span></td><td class="small">${risks}</td><td><span class="enrollment-badge ${p.status}">${p.status}</span></td></tr>`;
+            });
+            hHtml += '</tbody></table></div>';
+            hHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'high_risk_register')"><i class="mdi mdi-download"></i> Export CSV</button>`;
+            $('#high-risk-body').html(hHtml);
+        });
+
+        // Admissions Stats
+        $.get(`{{ route("maternity-workbench.reports.admissions-stats") }}?${qs}`, function(resp) {
+            if (resp.success) {
+                $('#admissions-total-kpi').text(resp.data.total_admissions);
+                $('#admissions-alos-kpi').text(resp.data.average_length_of_stay + ' Days');
+                
+                const classes = Object.keys(resp.data.class_breakdown);
+                const classCounts = Object.values(resp.data.class_breakdown);
+                
+                if (window.admissionsClassChart) window.admissionsClassChart.destroy();
+                
+                if (typeof Chart !== 'undefined' && classes.length > 0) {
+                    window.admissionsClassChart = new Chart(document.getElementById('admissions-class-chart').getContext('2d'), {
+                        type: 'pie',
+                        data: { 
+                            labels: classes.map(c => c.toUpperCase()), 
+                            datasets: [{ 
+                                data: classCounts, 
+                                backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6610f2'] 
+                            }] 
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        font: {
-                                            size: 10
-                                        },
-                                        usePointStyle: true,
-                                        padding: 8
-                                    }
-                                }
-                            }
-                        }
+                        options: { responsive: true, maintainAspectRatio: false }
                     });
                 }
-            });
-
-            $.get('{{ route("maternity-workbench.reports.immunization-coverage") }}', function(r) {
-                if (!r.success || !Object.keys(r.coverage).length) {
-                    $('#imm-coverage-body').html('<p class="text-muted mb-0">No data</p>');
-                    return;
-                }
-                const vaccines = Object.keys(r.coverage);
-                const givenArr = vaccines.map(v => r.coverage[v].given);
-                const pendingArr = vaccines.map(v => r.coverage[v].total - r.coverage[v].given);
-
-                let cHtml = '<div style="position:relative; height:250px;"><canvas id="imm-bar-chart"></canvas></div>';
-                cHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Vaccine</th><th>Given</th><th>Total</th><th>%</th></tr></thead><tbody>';
-                vaccines.forEach(vaccine => {
-                    const data = r.coverage[vaccine];
-                    const color = data.percentage>= 80 ? 'text-success' : (data.percentage>= 50 ? 'text-warning' : 'text-danger');
-                    cHtml += `<tr><td>${vaccine}</td><td>${data.given}</td><td>${data.total}</td><td class="fw-bold ${color}">${data.percentage}%</td></tr>`;
-                });
-                cHtml += '</tbody></table>';
-                cHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'immunization_coverage')"><i class="mdi mdi-download"></i> Export CSV</button>`;
-                $('#imm-coverage-body').html(cHtml);
-
-                if (typeof Chart !== 'undefined') {
-                    new Chart(document.getElementById('imm-bar-chart').getContext('2d'), {
-                        type: 'bar',
-                        data: {
-                            labels: vaccines,
-                            datasets: [{
-                                    label: 'Given',
-                                    data: givenArr,
-                                    backgroundColor: 'rgba(76,175,80,0.7)',
-                                    borderColor: '#4caf50',
-                                    borderWidth: 1
-                                },
-                                {
-                                    label: 'Pending',
-                                    data: pendingArr,
-                                    backgroundColor: 'rgba(255,152,0,0.5)',
-                                    borderColor: '#ff9800',
-                                    borderWidth: 1
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    labels: {
-                                        font: {
-                                            size: 10
-                                        },
-                                        usePointStyle: true
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    stacked: true,
-                                    ticks: {
-                                        font: {
-                                            size: 9
-                                        }
-                                    }
-                                },
-                                y: {
-                                    stacked: true,
-                                    beginAtZero: true
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-
-            $.get('{{ route("maternity-workbench.reports.anc-defaulters") }}', function(r) {
-                if (!r.success) return;
-                if (r.defaulters.length === 0) {
-                    $('#defaulters-body').html('<p class="text-muted mb-0">No defaulters</p>');
-                    return;
-                }
-
-                // Horizontal bar chart of days overdue
-                let dHtml = '<div style="position:relative; height:' + Math.max(200, r.defaulters.length * 30) + 'px;"><canvas id="defaulters-bar-chart"></canvas></div>';
-                dHtml += '<table class="table table-sm mt-2 mb-0"><thead><tr><th>Name</th><th>File No</th><th>Missed</th><th>Days Overdue</th></tr></thead><tbody>';
-                r.defaulters.forEach(d => {
-                    dHtml += `<tr><td>${d.name}</td><td>${d.file_no}</td><td>${d.missed_date}</td><td class="text-danger fw-bold">${d.days_overdue}</td></tr>`;
-                });
-                dHtml += '</tbody></table>';
-                dHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'anc_defaulters')"><i class="mdi mdi-download"></i> Export CSV</button>`;
-                $('#defaulters-body').html(dHtml);
-
-                if (typeof Chart !== 'undefined') {
-                    new Chart(document.getElementById('defaulters-bar-chart').getContext('2d'), {
-                        type: 'bar',
-                        data: {
-                            labels: r.defaulters.map(d => d.name.length> 20 ? d.name.substr(0, 18) + '...' : d.name),
-                            datasets: [{
-                                label: 'Days Overdue',
-                                data: r.defaulters.map(d => d.days_overdue),
-                                backgroundColor: r.defaulters.map(d => d.days_overdue> 30 ? 'rgba(220,53,69,0.7)' : (d.days_overdue> 14 ? 'rgba(255,152,0,0.7)' : 'rgba(255,193,7,0.7)')),
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            indexAxis: 'y',
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    beginAtZero: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Days'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-
-            $.get('{{ route("maternity-workbench.reports.high-risk-register") }}', function(r) {
-                if (!r.success) return;
-                if (r.register.length === 0) {
-                    $('#high-risk-body').html('<p class="text-muted mb-0">No high-risk patients</p>');
-                    return;
-                }
-
-                // Risk distribution gauge
-                const riskDist = {};
-                r.register.forEach(p => {
-                    const lvl = p.risk_level || 'high';
-                    riskDist[lvl] = (riskDist[lvl] || 0) + 1;
-                });
-
-                let hHtml = '';
-                if (Object.keys(riskDist).length> 0) {
-                    const riskLabels = Object.keys(riskDist).map(k => k.replace('_', ' ').toUpperCase());
-                    const riskCounts = Object.values(riskDist);
-                    const riskClrs = Object.keys(riskDist).map(k => k === 'very_high' ? '#dc3545' : (k === 'high' ? '#fd7e14' : '#ffc107'));
-                    hHtml += '<div class="d-flex justify-content-center mb-2">';
-                    riskLabels.forEach((label, i) => {
-                        hHtml += `<span class="badge me-2" style="background:${riskClrs[i]}; font-size:0.75rem;">${label}: ${riskCounts[i]}</span>`;
-                    });
-                    hHtml += '</div>';
-                }
-
-                hHtml += '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Name</th><th>File No</th><th>Risk</th><th>Factors</th><th>Status</th></tr></thead><tbody>';
-                r.register.forEach(p => {
-                    const risks = Array.isArray(p.risk_factors) ? p.risk_factors.join(', ') : (p.risk_factors || 'N/A');
-                    const riskClr = (p.risk_level === 'very_high') ? 'bg-danger' : 'bg-warning text-dark';
-                    hHtml += `<tr><td>${p.name}</td><td>${p.file_no}</td><td><span class="badge ${riskClr}">${(p.risk_level || 'high').replace('_', ' ')}</span></td><td class="small">${risks}</td><td><span class="enrollment-badge ${p.status}">${p.status}</span></td></tr>`;
-                });
-                hHtml += '</tbody></table></div>';
-                hHtml += `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="exportReportTable(this, 'high_risk_register')"><i class="mdi mdi-download"></i> Export CSV</button>`;
-                $('#high-risk-body').html(hHtml);
-            });
+            }
         });
     }
 
@@ -7867,9 +8016,21 @@ $sett = appsettings();
             switchWorkspaceTab('audit');
         });
 
-        // Quick action: Discharge
+        // Quick action: Discharge (Maternity Enrollment)
         $('#btn-discharge-patient').on('click', function() {
             showDischargeModal();
+        });
+
+        // Quick action: Admit to Ward
+        $('#btn-admit-to-ward').on('click', function() {
+            if (!currentPatientData) return;
+            openAdmitModal(currentPatientData.id, currentPatientData.name, null);
+        });
+
+        // Quick action: Discharge from Ward
+        $('#btn-discharge-from-ward').on('click', function() {
+            if (!currentPatientData || !currentPatientData.admission_request) return;
+            openDischargeModal(currentPatientData.id, currentPatientData.name, currentPatientData.admission_request.id);
         });
 
         $('#btn-close-reports').on('click', function() {
@@ -8520,6 +8681,20 @@ $sett = appsettings();
                 const errs = xhr.responseJSON?.errors ? Object.values(xhr.responseJSON.errors).flat().join(' ') : 'Server error.';
                 toastr.error(errs);
             });
+        // Extend WardDashboard to refresh maternity queues when actions are taken
+        if (typeof WardDashboard !== 'undefined') {
+            const originalLoadDashboardData = WardDashboard.loadDashboardData;
+            WardDashboard.loadDashboardData = function() {
+                if (typeof originalLoadDashboardData === 'function') {
+                    originalLoadDashboardData.apply(this, arguments);
+                }
+                loadQueueCounts();
+                const currentFilter = $('.queue-item.active').data('filter');
+                if (currentFilter === 'bed-requests' || currentFilter === 'discharge-requests') {
+                    loadQueueData(currentFilter);
+                }
+            };
+        }
     });
 </script>
 
