@@ -46,6 +46,7 @@ use App\Http\Traits\ClinicalOrdersTrait;
 use App\Services\StoreContextResolver;
 use App\Models\StoreContextRule;
 use Illuminate\Support\Facades\Gate;
+use App\Models\AdmissionRequest;
 
 class MaternityWorkbenchController extends Controller
 {
@@ -253,6 +254,10 @@ class MaternityWorkbenchController extends Controller
             }
         }
 
+        $admissionRequest = AdmissionRequest::where('patient_id', $id)
+            ->where('discharged', 0)
+            ->first();
+
         return response()->json([
             'id'           => $patient->id,
             'user_id'      => $patient->user_id,
@@ -316,6 +321,12 @@ class MaternityWorkbenchController extends Controller
             'clinic_name' => $clinicName,
             'vitals_template' => $vitalsTemplate,
             'dynamic_ranges'  => $dynamicRanges,
+            'admission_request' => $admissionRequest ? [
+                'id' => $admissionRequest->id,
+                'status' => $admissionRequest->status,
+                'ward' => $admissionRequest->preferredWard ? $admissionRequest->preferredWard->name : null,
+                'bed' => $admissionRequest->bed ? $admissionRequest->bed->bed_number : null,
+            ] : null,
         ]);
     }
 
@@ -3224,6 +3235,21 @@ class MaternityWorkbenchController extends Controller
             ->where('risk_level', 'high')
             ->count();
 
+        $maternityPatientIds = MaternityEnrollment::whereIn('status', ['active', 'postnatal'])->pluck('patient_id')->toArray();
+
+        $bedRequests = AdmissionRequest::whereIn('patient_id', $maternityPatientIds)
+            ->pendingBed()
+            ->count();
+
+        $dischargeRequests = AdmissionRequest::whereIn('patient_id', $maternityPatientIds)
+            ->pendingDischarge()
+            ->count();
+            
+        $admittedPatients = AdmissionRequest::whereIn('patient_id', $maternityPatientIds)
+            ->whereNotNull('bed_id')
+            ->where('discharged', 0)
+            ->count();
+
         return response()->json([
             'active_anc'          => $activeAnc,
             'due_visits'          => $dueVisits,
@@ -3231,7 +3257,61 @@ class MaternityWorkbenchController extends Controller
             'postnatal'           => $postnatal,
             'overdue_immunization' => $overdueImmunization,
             'high_risk'           => $highRisk,
+            'bed_requests'        => $bedRequests,
+            'discharge_requests'  => $dischargeRequests,
+            'admitted_patients'   => $admittedPatients,
         ]);
+    }
+
+    public function getBedRequestsQueue()
+    {
+        $maternityPatientIds = MaternityEnrollment::whereIn('status', ['active', 'postnatal'])->pluck('patient_id')->toArray();
+
+        $requests = AdmissionRequest::whereIn('patient_id', $maternityPatientIds)
+            ->pendingBed()
+            ->with(['patient.user', 'preferredWard', 'doctor'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($req) {
+                return [
+                    'id'             => $req->id,
+                    'patient_id'     => $req->patient_id,
+                    'name'           => userfullname($req->patient->user_id),
+                    'file_no'        => $req->patient->file_no,
+                    'doctor_name'    => userfullname($req->doctor_id),
+                    'ward_name'      => $req->preferredWard ? $req->preferredWard->name : 'No Preference',
+                    'priority'       => $req->priority ?? 'routine',
+                    'requested_at'   => $req->created_at->format('d M Y, h:i A'),
+                    'reason'         => $req->admission_reason ?? 'N/A',
+                ];
+            });
+
+        return response()->json($requests);
+    }
+
+    public function getDischargeRequestsQueue()
+    {
+        $maternityPatientIds = MaternityEnrollment::whereIn('status', ['active', 'postnatal'])->pluck('patient_id')->toArray();
+
+        $requests = AdmissionRequest::whereIn('patient_id', $maternityPatientIds)
+            ->pendingDischarge()
+            ->with(['patient.user', 'bed.wardRelation', 'doctor'])
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->map(function ($req) {
+                return [
+                    'id'             => $req->id,
+                    'patient_id'     => $req->patient_id,
+                    'name'           => userfullname($req->patient->user_id),
+                    'file_no'        => $req->patient->file_no,
+                    'doctor_name'    => userfullname($req->doctor_id),
+                    'ward_bed'       => ($req->bed && $req->bed->wardRelation) ? $req->bed->wardRelation->name . ' - Bed ' . $req->bed->bed_number : 'N/A',
+                    'requested_at'   => $req->updated_at->format('d M Y, h:i A'),
+                    'reason'         => $req->discharge_reason ?? 'N/A',
+                ];
+            });
+
+        return response()->json($requests);
     }
 
     public function getActiveAncQueue()
@@ -3395,36 +3475,66 @@ class MaternityWorkbenchController extends Controller
        REPORTS
        ══════════════════════════════════════════════════════════════ */
 
-    public function getReportsSummary()
+    public function getReportsSummary(Request $request)
     {
-        $now = Carbon::now();
-        $monthStart = $now->copy()->startOfMonth();
-        $yearStart = $now->copy()->startOfYear();
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $enrollmentsQuery = MaternityEnrollment::query();
+        $deliveriesQuery = DeliveryRecord::query();
+        $babiesQuery = MaternityBaby::query();
+
+        if ($startDate) {
+            $enrollmentsQuery->where('created_at', '>=', Carbon::parse($startDate)->startOfDay());
+            $deliveriesQuery->where('delivery_date', '>=', Carbon::parse($startDate)->startOfDay());
+            $babiesQuery->where('created_at', '>=', Carbon::parse($startDate)->startOfDay());
+        }
+        if ($endDate) {
+            $enrollmentsQuery->where('created_at', '<=', Carbon::parse($endDate)->endOfDay());
+            $deliveriesQuery->where('delivery_date', '<=', Carbon::parse($endDate)->endOfDay());
+            $babiesQuery->where('created_at', '<=', Carbon::parse($endDate)->endOfDay());
+        }
 
         return response()->json([
             'success' => true,
             'data' => [
-                'total_enrollments' => MaternityEnrollment::count(),
-                'active_enrollments' => MaternityEnrollment::where('status', 'active')->count(),
-                'deliveries_this_month' => DeliveryRecord::where('delivery_date', '>=', $monthStart)->count(),
-                'deliveries_this_year'  => DeliveryRecord::where('delivery_date', '>=', $yearStart)->count(),
-                'total_babies'      => MaternityBaby::count(),
-                'high_risk_count'   => MaternityEnrollment::where('risk_level', 'high')->whereIn('status', ['active'])->count(),
-                'completed'         => MaternityEnrollment::where('status', 'completed')->count(),
+                'total_enrollments' => (clone $enrollmentsQuery)->count(),
+                'active_enrollments' => (clone $enrollmentsQuery)->where('status', 'active')->count(),
+                'deliveries_this_month' => (clone $deliveriesQuery)->where('delivery_date', '>=', Carbon::now()->startOfMonth())->count(), // Legacy compat
+                'deliveries_filtered'  => (clone $deliveriesQuery)->count(),
+                'total_babies'      => (clone $babiesQuery)->count(),
+                'high_risk_count'   => (clone $enrollmentsQuery)->where('risk_level', 'high')->whereIn('status', ['active'])->count(),
+                'completed'         => (clone $enrollmentsQuery)->where('status', 'completed')->count(),
             ],
         ]);
     }
 
-    public function getDeliveryStats()
+    public function getDeliveryStats(Request $request)
     {
-        $yearStart = Carbon::now()->startOfYear();
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
 
-        $stats = DeliveryRecord::where('delivery_date', '>=', $yearStart)
+        $query = DeliveryRecord::query();
+
+        if ($startDate) {
+            $query->where('delivery_date', '>=', Carbon::parse($startDate)->startOfDay());
+        }
+        if ($endDate) {
+            $query->where('delivery_date', '<=', Carbon::parse($endDate)->endOfDay());
+        }
+
+        $stats = (clone $query)
             ->selectRaw('type_of_delivery, COUNT(*) as count')
             ->groupBy('type_of_delivery')
             ->pluck('count', 'type_of_delivery');
 
-        $monthlyDeliveries = DeliveryRecord::where('delivery_date', '>=', $yearStart)
+        $monthlyDeliveries = clone $query;
+        if (!$startDate && !$endDate) {
+            // Default to this year if no filter
+            $monthlyDeliveries->where('delivery_date', '>=', Carbon::now()->startOfYear());
+        }
+        
+        $monthlyDeliveries = $monthlyDeliveries
             ->selectRaw("MONTH(delivery_date) as month, COUNT(*) as count")
             ->groupBy(DB::raw('MONTH(delivery_date)'))
             ->pluck('count', 'month');
@@ -3720,5 +3830,90 @@ class MaternityWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function getAdmittedPatientsQueue()
+    {
+        $maternityPatientIds = MaternityEnrollment::whereIn('status', ['active', 'postnatal'])->pluck('patient_id')->toArray();
+
+        $requests = AdmissionRequest::whereIn('patient_id', $maternityPatientIds)
+            ->whereNotNull('bed_id')
+            ->where('discharged', 0)
+            ->with(['patient.user', 'bed.wardRelation', 'doctor'])
+            ->orderBy('bed_assign_date', 'desc')
+            ->get()
+            ->map(function ($req) {
+                $daysAdmitted = $req->bed_assign_date ? Carbon::parse($req->bed_assign_date)->diffInDays(Carbon::now()) : 0;
+                return [
+                    'id'             => $req->id,
+                    'patient_id'     => $req->patient_id,
+                    'name'           => userfullname($req->patient->user_id),
+                    'file_no'        => $req->patient->file_no,
+                    'doctor_name'    => userfullname($req->doctor_id),
+                    'ward_name'      => $req->bed && $req->bed->wardRelation ? $req->bed->wardRelation->name : 'Unknown Ward',
+                    'ward_bed'       => $req->bed ? $req->bed->name : 'N/A',
+                    'days_admitted'  => $daysAdmitted,
+                    'admitted_date'  => $req->bed_assign_date ? Carbon::parse($req->bed_assign_date)->format('d M Y, h:i A') : 'N/A',
+                ];
+            });
+
+        return response()->json($requests);
+    }
+
+    public function getAdmissionsReportStats(Request $request)
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $enrollments = \App\Models\MaternityEnrollment::whereIn('status', ['active', 'postnatal'])->get()->keyBy('patient_id');
+        $query = AdmissionRequest::whereIn('patient_id', $enrollments->keys());
+
+        if ($startDate) {
+            $query->where('created_at', '>=', Carbon::parse($startDate)->startOfDay());
+        }
+        if ($endDate) {
+            $query->where('created_at', '<=', Carbon::parse($endDate)->endOfDay());
+        }
+
+        $admissions = $query->get();
+
+        $totalAdmissions = $admissions->count();
+        $totalDays = 0;
+        $completedAdmissions = 0;
+
+        $classBreakdown = [
+            'anc' => 0,
+            'delivery' => 0,
+            'postnatal' => 0
+        ];
+
+        foreach ($admissions as $admin) {
+            if ($admin->bed_assign_date) {
+                $endDateCalc = $admin->discharge_date ? Carbon::parse($admin->discharge_date) : Carbon::now();
+                $totalDays += Carbon::parse($admin->bed_assign_date)->diffInDays($endDateCalc);
+                $completedAdmissions++;
+            }
+
+            $enrollment = $enrollments->get($admin->patient_id);
+            if ($enrollment) {
+                $entryPoint = strtolower($enrollment->entry_point ?? 'anc');
+                if (isset($classBreakdown[$entryPoint])) {
+                    $classBreakdown[$entryPoint]++;
+                } else {
+                    $classBreakdown['anc']++; // Fallback
+                }
+            }
+        }
+
+        $averageLengthOfStay = $completedAdmissions > 0 ? round($totalDays / $completedAdmissions, 1) : 0;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_admissions' => $totalAdmissions,
+                'average_length_of_stay' => $averageLengthOfStay,
+                'class_breakdown' => $classBreakdown
+            ]
+        ]);
     }
 }
