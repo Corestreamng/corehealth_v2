@@ -2852,6 +2852,8 @@ class MaternityWorkbenchController extends Controller
         $visit = PostnatalVisit::findOrFail($id);
         $oldVisit = clone $visit;
         $visit->update($request->only([
+            'visit_type',
+            'visit_date',
             'general_condition',
             'blood_pressure',
             'temperature_c',
@@ -2878,6 +2880,8 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::find($visit->enrollment_id);
         if ($enrollment) {
             $fieldMap = [
+                'visit_type' => ['label' => 'Visit Type'],
+                'visit_date' => ['label' => 'Visit Date'],
                 'general_condition' => ['label' => 'Mother Gen. Condition'],
                 'blood_pressure' => ['label' => 'Blood Pressure'],
                 'temperature_c' => ['label' => 'Temperature', 'suffix' => '°C'],
