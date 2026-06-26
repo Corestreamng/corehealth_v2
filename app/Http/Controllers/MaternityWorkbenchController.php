@@ -1174,7 +1174,7 @@ class MaternityWorkbenchController extends Controller
                 'urine_protein' => ['label' => 'Urine Protein'],
                 'urine_glucose' => ['label' => 'Urine Glucose'],
                 'haemoglobin' => ['label' => 'Haemoglobin', 'suffix' => 'g/dL'],
-                'clinical_notes' => ['label' => 'Clinical Notes'],
+                'clinical_notes' => ['label' => 'Clinical Notes', 'is_html' => true],
                 'next_appointment' => ['label' => 'Next Appointment'],
                 'visit_date' => ['label' => 'Visit Date'],
             ];
@@ -1812,7 +1812,7 @@ class MaternityWorkbenchController extends Controller
                 'oxytocin_given' => ['label' => 'Oxytocin Given'],
                 'number_of_babies' => ['label' => 'Number of Babies'],
                 'anaesthesia_type' => ['label' => 'Anaesthesia'],
-                'notes' => ['label' => 'Delivery Notes'],
+                'notes' => ['label' => 'Delivery Notes', 'is_html' => true],
                 'delivery_date' => ['label' => 'Delivery Date'],
             ];
 
@@ -2896,7 +2896,7 @@ class MaternityWorkbenchController extends Controller
                 'baby_notes' => ['label' => 'Baby Notes'],
                 'family_planning_counselled' => ['label' => 'FP Counselled'],
                 'family_planning_method' => ['label' => 'FP Method'],
-                'clinical_notes' => ['label' => 'Clinical Notes'],
+                'clinical_notes' => ['label' => 'Clinical Notes', 'is_html' => true],
                 'next_appointment' => ['label' => 'Next Appointment'],
             ];
 
@@ -4130,22 +4130,37 @@ class MaternityWorkbenchController extends Controller
         foreach ($fieldMap as $field => $config) {
             $label = $config['label'];
             $suffix = $config['suffix'] ?? '';
+            $isHtml = $config['is_html'] ?? false;
             
             $oldVal = $oldModel->{$field};
             $newVal = $newModel->{$field};
 
             if ($oldVal != $newVal) {
                 $hasChanges = true;
-                $oldDisplay = $v($oldVal, $suffix);
-                $newDisplay = $v($newVal, $suffix);
+                
+                if ($isHtml) {
+                    $oldDisplay = $oldVal ? '<div style="opacity:0.7; border-left:3px solid #d32f2f; padding-left:8px; margin:4px 0;">' . $oldVal . '</div>' : '<em>None</em>';
+                    $newDisplay = $newVal ? '<div style="border-left:3px solid #388e3c; padding-left:8px; margin:4px 0;">' . $newVal . '</div>' : '<em>None</em>';
+                    
+                    $diffRows .= <<<HTML
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold; width:20%; border-bottom:1px solid #bbdefb; vertical-align:top;">{$label}</td>
+            <td style="padding:4px 8px; border-bottom:1px solid #eee; width:40%; vertical-align:top;">{$oldDisplay}</td>
+            <td style="padding:4px 8px; border-bottom:1px solid #eee; width:40%; vertical-align:top;">{$newDisplay}</td>
+        </tr>
+HTML;
+                } else {
+                    $oldDisplay = $v($oldVal, $suffix);
+                    $newDisplay = $v($newVal, $suffix);
 
-                $diffRows .= <<<HTML
+                    $diffRows .= <<<HTML
         <tr>
             <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold; width:30%; border-bottom:1px solid #bbdefb;">{$label}</td>
             <td style="padding:4px 8px; border-bottom:1px solid #eee; width:35%;"><span style="color:#d32f2f; text-decoration:line-through;">{$oldDisplay}</span></td>
             <td style="padding:4px 8px; border-bottom:1px solid #eee; width:35%;"><span style="color:#388e3c; font-weight:bold;">{$newDisplay}</span></td>
         </tr>
 HTML;
+                }
             }
         }
 
