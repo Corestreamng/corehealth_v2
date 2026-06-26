@@ -47,6 +47,8 @@ use App\Services\StoreContextResolver;
 use App\Models\StoreContextRule;
 use Illuminate\Support\Facades\Gate;
 use App\Models\AdmissionRequest;
+use App\Models\Encounter;
+use App\Models\MaternityEncounterLink;
 
 class MaternityWorkbenchController extends Controller
 {
@@ -1100,6 +1102,9 @@ class MaternityWorkbenchController extends Controller
                 }
             }
 
+            // Sync to Encounter and Nurse Notes
+            $this->syncAncToEncounterAndNurseNote($enrollment, $visit);
+
             return response()->json([
                 'success' => true,
                 'message' => 'ANC visit #' . $nextVisitNumber . ' recorded successfully.',
@@ -1150,9 +1155,43 @@ class MaternityWorkbenchController extends Controller
             $payload['oedema'] = $oedemaMap[$oedemaRaw] ?? null;
         }
 
+        $oldVisit = clone $visit;
         $visit->update($payload);
+        $visit->refresh();
 
-        return response()->json(['success' => true, 'message' => 'ANC visit updated.', 'visit' => $visit->fresh()]);
+        $enrollment = MaternityEnrollment::find($visit->enrollment_id);
+        if ($enrollment) {
+            $fieldMap = [
+                'gestational_age_weeks' => ['label' => 'Gestational Age', 'suffix' => 'weeks'],
+                'weight_kg' => ['label' => 'Weight', 'suffix' => 'kg'],
+                'blood_pressure_systolic' => ['label' => 'BP Systolic', 'suffix' => 'mmHg'],
+                'blood_pressure_diastolic' => ['label' => 'BP Diastolic', 'suffix' => 'mmHg'],
+                'fundal_height_cm' => ['label' => 'Fundal Height', 'suffix' => 'cm'],
+                'presentation' => ['label' => 'Presentation'],
+                'fetal_heart_rate' => ['label' => 'Fetal Heart Rate', 'suffix' => 'bpm'],
+                'foetal_movement' => ['label' => 'Foetal Movement'],
+                'oedema' => ['label' => 'Oedema'],
+                'urine_protein' => ['label' => 'Urine Protein'],
+                'urine_glucose' => ['label' => 'Urine Glucose'],
+                'haemoglobin' => ['label' => 'Haemoglobin', 'suffix' => 'g/dL'],
+                'clinical_notes' => ['label' => 'Clinical Notes'],
+                'next_appointment' => ['label' => 'Next Appointment'],
+                'visit_date' => ['label' => 'Visit Date'],
+            ];
+
+            $this->syncEditDiffToEncounterAndNurseNote(
+                $enrollment,
+                $oldVisit,
+                $visit,
+                "Edit for ANC Visit #{$visit->visit_number}",
+                $fieldMap,
+                'anc',
+                5, // "Others" note type for ANC
+                $visit->visit_date
+            );
+        }
+
+        return response()->json(['success' => true, 'message' => 'ANC visit updated.', 'visit' => $visit]);
     }
 
     public function getAncVisitDetail($id)
@@ -1697,6 +1736,9 @@ class MaternityWorkbenchController extends Controller
             // Update enrollment status — delivery transitions directly to postnatal
             $enrollment->update(['status' => 'postnatal']);
 
+            // Sync to Encounter and Nurse Notes
+            $this->syncDeliveryToEncounterAndNurseNote($enrollment, $delivery);
+
             DB::commit();
 
             return response()->json([
@@ -1728,6 +1770,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
+        $oldDelivery = clone $delivery;
         $delivery->update($request->only([
             'delivery_date',
             'delivery_time',
@@ -1748,8 +1791,44 @@ class MaternityWorkbenchController extends Controller
             'anaesthesia_type',
             'notes',
         ]));
+        $delivery->refresh();
 
-        return response()->json(['success' => true, 'message' => 'Delivery record updated.', 'delivery' => $delivery->fresh()]);
+        $enrollment = MaternityEnrollment::find($delivery->enrollment_id);
+        if ($enrollment) {
+            $fieldMap = [
+                'delivery_time' => ['label' => 'Delivery Time'],
+                'place_of_delivery' => ['label' => 'Place of Delivery'],
+                'duration_of_labour_hours' => ['label' => 'Labour Duration', 'suffix' => 'hours'],
+                'type_of_delivery' => ['label' => 'Type of Delivery'],
+                'episiotomy' => ['label' => 'Episiotomy'],
+                'induction' => ['label' => 'Induction'],
+                'induction_method' => ['label' => 'Induction Method'],
+                'augmentation' => ['label' => 'Augmentation'],
+                'complications' => ['label' => 'Complications'],
+                'blood_loss_ml' => ['label' => 'Blood Loss', 'suffix' => 'ml'],
+                'placenta_complete' => ['label' => 'Placenta Complete'],
+                'placenta_notes' => ['label' => 'Placenta Notes'],
+                'perineal_tear_degree' => ['label' => 'Perineal Tear'],
+                'oxytocin_given' => ['label' => 'Oxytocin Given'],
+                'number_of_babies' => ['label' => 'Number of Babies'],
+                'anaesthesia_type' => ['label' => 'Anaesthesia'],
+                'notes' => ['label' => 'Delivery Notes'],
+                'delivery_date' => ['label' => 'Delivery Date'],
+            ];
+
+            $this->syncEditDiffToEncounterAndNurseNote(
+                $enrollment,
+                $oldDelivery,
+                $delivery,
+                "Edit for Delivery Record",
+                $fieldMap,
+                'delivery',
+                4, // "Labour Records" note type
+                $delivery->delivery_date
+            );
+        }
+
+        return response()->json(['success' => true, 'message' => 'Delivery record updated.', 'delivery' => $delivery]);
     }
 
     public function getDeliveryRecord($id)
@@ -2755,7 +2834,8 @@ class MaternityWorkbenchController extends Controller
                 'seen_by'            => Auth::id(),
             ]);
 
-
+            // Sync to Encounter and Nurse Notes
+            $this->syncPostnatalToEncounterAndNurseNote($enrollment, $visit);
 
             return response()->json([
                 'success' => true,
@@ -2770,6 +2850,7 @@ class MaternityWorkbenchController extends Controller
     public function updatePostnatalVisit(Request $request, $id)
     {
         $visit = PostnatalVisit::findOrFail($id);
+        $oldVisit = clone $visit;
         $visit->update($request->only([
             'general_condition',
             'blood_pressure',
@@ -2792,8 +2873,48 @@ class MaternityWorkbenchController extends Controller
             'clinical_notes',
             'next_appointment',
         ]));
+        $visit->refresh();
 
-        return response()->json(['success' => true, 'message' => 'Postnatal visit updated.', 'visit' => $visit->fresh()]);
+        $enrollment = MaternityEnrollment::find($visit->enrollment_id);
+        if ($enrollment) {
+            $fieldMap = [
+                'general_condition' => ['label' => 'Mother Gen. Condition'],
+                'blood_pressure' => ['label' => 'Blood Pressure'],
+                'temperature_c' => ['label' => 'Temperature', 'suffix' => '°C'],
+                'uterus_assessment' => ['label' => 'Uterus Assessment'],
+                'lochia' => ['label' => 'Lochia'],
+                'wound_assessment' => ['label' => 'Wound Assessment'],
+                'breast_assessment' => ['label' => 'Breast Assessment'],
+                'breastfeeding_support' => ['label' => 'Breastfeeding Support'],
+                'emotional_wellbeing' => ['label' => 'Emotional Wellbeing'],
+                'emotional_notes' => ['label' => 'Emotional Notes'],
+                'baby_weight_kg' => ['label' => 'Baby Weight', 'suffix' => 'kg'],
+                'baby_feeding' => ['label' => 'Baby Feeding'],
+                'cord_status' => ['label' => 'Cord Status'],
+                'jaundice' => ['label' => 'Jaundice'],
+                'baby_general_condition' => ['label' => 'Baby Gen. Condition'],
+                'baby_notes' => ['label' => 'Baby Notes'],
+                'family_planning_counselled' => ['label' => 'FP Counselled'],
+                'family_planning_method' => ['label' => 'FP Method'],
+                'clinical_notes' => ['label' => 'Clinical Notes'],
+                'next_appointment' => ['label' => 'Next Appointment'],
+            ];
+
+            $visitTypeStr = ucfirst(str_replace('_', ' ', $visit->visit_type ?? 'visit'));
+
+            $this->syncEditDiffToEncounterAndNurseNote(
+                $enrollment,
+                $oldVisit,
+                $visit,
+                "Edit for Postnatal Visit ($visitTypeStr)",
+                $fieldMap,
+                'postnatal',
+                5, // "Others" note type for postnatal (matching original sync)
+                $visit->visit_date
+            );
+        }
+
+        return response()->json(['success' => true, 'message' => 'Postnatal visit updated.', 'visit' => $visit]);
     }
 
     /* ══════════════════════════════════════════════════════════════
@@ -3915,5 +4036,554 @@ class MaternityWorkbenchController extends Controller
                 'class_breakdown' => $classBreakdown
             ]
         ]);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SYNC HELPERS — Encounter + Nurse Notes
+       ══════════════════════════════════════════════════════════════ */
+
+    /**
+     * Core sync: creates Encounter, MaternityEncounterLink and NursingNote.
+     *
+     * @param MaternityEnrollment $enrollment
+     * @param string              $linkVisitType  enum value for maternity_encounter_links.visit_type
+     * @param int                 $noteTypeId     nursing_note_types.id (1-5)
+     * @param string              $title          Human-readable title for the note
+     * @param string              $noteHtml       Full HTML body for the nurse note
+     * @param string|null         $encounterNotes Plain-text encounter notes
+     * @param mixed               $date           Visit/delivery date
+     */
+    protected function syncToEncounterAndNurseNote(
+        MaternityEnrollment $enrollment,
+        string $linkVisitType,
+        int    $noteTypeId,
+        string $title,
+        string $noteHtml,
+        ?string $encounterNotes,
+        $date = null
+    ) {
+        try {
+            $parsedDate = $date ? Carbon::parse($date) : now();
+
+            // 1. Create Encounter
+            $encounter = Encounter::create([
+                'patient_id'            => $enrollment->patient_id,
+                'doctor_id'             => Auth::id(),
+                'reasons_for_encounter' => $title,
+                'notes'                 => $noteHtml,
+                'started_at'            => $parsedDate,
+                'completed_at'          => $parsedDate,
+                'completed'             => true,
+                'outcome'               => 'concluded',
+            ]);
+
+            // 2. Create MaternityEncounterLink
+            MaternityEncounterLink::create([
+                'enrollment_id' => $enrollment->id,
+                'encounter_id'  => $encounter->id,
+                'visit_type'    => $linkVisitType,
+                'notes'         => $encounterNotes,
+            ]);
+
+            // 3. Create Nursing Note
+            NursingNote::create([
+                'patient_id'           => $enrollment->patient_id,
+                'nursing_note_type_id' => $noteTypeId,
+                'note'                 => $noteHtml,
+                'created_by'           => Auth::id(),
+                'completed'            => true,
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to sync maternity record to encounter/nurse note: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Null-safe display helper: returns '—' for null/empty values, with optional suffix.
+     */
+    private function nv($value, string $suffix = '', string $fallback = '—'): string
+    {
+        if ($value === null || $value === '') {
+            return $fallback;
+        }
+        return e($value) . ($suffix ? ' ' . $suffix : '');
+    }
+
+    /**
+     * Generate an edit diff note and sync to Encounter and Nurse Notes.
+     */
+    protected function syncEditDiffToEncounterAndNurseNote(
+        MaternityEnrollment $enrollment,
+        $oldModel,
+        $newModel,
+        string $title,
+        array $fieldMap,
+        string $linkType,
+        int $noteTypeId,
+        $visitDate
+    ) {
+        $diffRows = '';
+        $hasChanges = false;
+
+        $v = fn($val, $suffix = '') => $this->nv($val, $suffix);
+
+        foreach ($fieldMap as $field => $config) {
+            $label = $config['label'];
+            $suffix = $config['suffix'] ?? '';
+            
+            $oldVal = $oldModel->{$field};
+            $newVal = $newModel->{$field};
+
+            if ($oldVal != $newVal) {
+                $hasChanges = true;
+                $oldDisplay = $v($oldVal, $suffix);
+                $newDisplay = $v($newVal, $suffix);
+
+                $diffRows .= <<<HTML
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold; width:30%; border-bottom:1px solid #bbdefb;">{$label}</td>
+            <td style="padding:4px 8px; border-bottom:1px solid #eee; width:35%;"><span style="color:#d32f2f; text-decoration:line-through;">{$oldDisplay}</span></td>
+            <td style="padding:4px 8px; border-bottom:1px solid #eee; width:35%;"><span style="color:#388e3c; font-weight:bold;">{$newDisplay}</span></td>
+        </tr>
+HTML;
+            }
+        }
+
+        if (!$hasChanges) {
+            return; // No changes to log
+        }
+
+        $formattedDate = $visitDate ? Carbon::parse($visitDate)->format('d M Y') : '—';
+        $userName = userfullname(Auth::id());
+
+        $noteHtml = <<<HTML
+<div style="font-family:sans-serif; font-size:13px; line-height:1.6; border: 1px solid #2196f3; border-radius: 4px; overflow:hidden;">
+    <h4 style="margin:0; color:#fff; background:#2196f3; padding:8px 12px;">
+        ✏️ {$title}
+    </h4>
+    <div style="padding: 12px;">
+        <p style="margin:0 0 10px; font-size:12px; color:#555;">Record Date: <strong>{$formattedDate}</strong></p>
+        
+        <table style="width:100%; border-collapse:collapse; margin-bottom:0;">
+            <thead>
+                <tr>
+                    <th style="padding:4px 8px; text-align:left; background:#f5f5f5; border-bottom:2px solid #ccc;">Field</th>
+                    <th style="padding:4px 8px; text-align:left; background:#f5f5f5; border-bottom:2px solid #ccc;">Old Value</th>
+                    <th style="padding:4px 8px; text-align:left; background:#f5f5f5; border-bottom:2px solid #ccc;">New Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {$diffRows}
+            </tbody>
+        </table>
+        <div style="margin-top:10px; font-size:11px; color:#777; text-align:right;">
+            <em>Edited by: {$userName}</em>
+        </div>
+    </div>
+</div>
+HTML;
+
+        $this->syncToEncounterAndNurseNote(
+            $enrollment,
+            $linkType,
+            $noteTypeId,
+            $title,
+            $noteHtml,
+            null,
+            $visitDate
+        );
+    }
+
+    /**
+     * Sync an ANC visit to Encounter + Nurse Notes with full clinical detail.
+     */
+    protected function syncAncToEncounterAndNurseNote(MaternityEnrollment $enrollment, AncVisit $visit)
+    {
+        $v = fn($val, $suffix = '') => $this->nv($val, $suffix);
+
+        $seenByName = $visit->seen_by ? userfullname($visit->seen_by) : '—';
+        $visitDate  = $visit->visit_date ? Carbon::parse($visit->visit_date)->format('d M Y') : '—';
+        $nextAppt   = $visit->next_appointment ? Carbon::parse($visit->next_appointment)->format('d M Y') : '—';
+        $bpDisplay  = ($visit->blood_pressure_systolic && $visit->blood_pressure_diastolic)
+            ? $visit->blood_pressure_systolic . '/' . $visit->blood_pressure_diastolic . ' mmHg'
+            : '—';
+        $gaDisplay  = $visit->gestational_age_weeks
+            ? $visit->gestational_age_weeks . 'w ' . ($visit->gestational_age_days ?? 0) . 'd'
+            : '—';
+
+        $title = "ANC Visit #{$visit->visit_number} (" . ucfirst($visit->visit_type ?? 'routine') . ")";
+
+        $weightKg      = $v($visit->weight_kg, 'kg');
+        $fundalHeight  = $v($visit->fundal_height_cm, 'cm');
+        $fhr           = $v($visit->fetal_heart_rate, 'bpm');
+        $presentation  = $v($visit->presentation);
+        $foetalMov     = $v($visit->foetal_movement);
+        $oedema        = $v($visit->oedema);
+        $urineProtein  = $v($visit->urine_protein);
+        $urineGlucose  = $v($visit->urine_glucose);
+        $haemoglobin   = $v($visit->haemoglobin, 'g/dL');
+        $clinicalNotes = $visit->clinical_notes ?: '<em>No notes recorded</em>';
+
+        $noteHtml = <<<HTML
+<div style="font-family:sans-serif; font-size:13px; line-height:1.6;">
+    <h4 style="margin:0 0 8px; color:#1565c0; border-bottom:2px solid #1565c0; padding-bottom:4px;">
+        🩺 {$title}
+    </h4>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold; width:40%;">Visit Date</td>
+            <td style="padding:4px 8px;">{$visitDate}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Gestational Age</td>
+            <td style="padding:4px 8px;">{$gaDisplay}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Weight</td>
+            <td style="padding:4px 8px;">{$weightKg}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Blood Pressure</td>
+            <td style="padding:4px 8px;">{$bpDisplay}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Fundal Height</td>
+            <td style="padding:4px 8px;">{$fundalHeight}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Fetal Heart Rate</td>
+            <td style="padding:4px 8px;">{$fhr}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Presentation</td>
+            <td style="padding:4px 8px;">{$presentation}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Foetal Movement</td>
+            <td style="padding:4px 8px;">{$foetalMov}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Oedema</td>
+            <td style="padding:4px 8px;">{$oedema}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Urine Protein</td>
+            <td style="padding:4px 8px;">{$urineProtein}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Urine Glucose</td>
+            <td style="padding:4px 8px;">{$urineGlucose}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold;">Haemoglobin</td>
+            <td style="padding:4px 8px;">{$haemoglobin}</td>
+        </tr>
+    </table>
+    <div style="padding:6px 8px; background:#fff8e1; border-left:3px solid #f9a825; margin-bottom:8px;">
+        <strong>Clinical Notes:</strong><br/>
+        {$clinicalNotes}
+    </div>
+    <div style="font-size:12px; color:#666;">
+        <strong>Next Appointment:</strong> {$nextAppt} &nbsp;|&nbsp;
+        <strong>Seen By:</strong> {$seenByName}
+    </div>
+</div>
+HTML;
+
+        // Determine link enum: first visit = anc_booking, subsequent = anc_followup
+        $linkType = ($visit->visit_number <= 1 && $visit->visit_type === 'booking') ? 'anc_booking' : 'anc_followup';
+
+        $this->syncToEncounterAndNurseNote(
+            $enrollment,
+            $linkType,
+            5,  // "Others" note type
+            $title,
+            $noteHtml,
+            $visit->clinical_notes,
+            $visit->visit_date
+        );
+    }
+
+    /**
+     * Sync a delivery record to Encounter + Nurse Notes with full clinical detail.
+     */
+    protected function syncDeliveryToEncounterAndNurseNote(MaternityEnrollment $enrollment, DeliveryRecord $delivery)
+    {
+        $v = fn($val, $suffix = '') => $this->nv($val, $suffix);
+
+        $deliveredByName = $delivery->delivered_by ? userfullname($delivery->delivered_by) : '—';
+        $deliveryDate    = $delivery->delivery_date ? Carbon::parse($delivery->delivery_date)->format('d M Y') : '—';
+        $deliveryTime    = $delivery->delivery_time ? Carbon::parse($delivery->delivery_time)->format('H:i') : '—';
+        $typeLabel       = $delivery->type_of_delivery
+            ? strtoupper(str_replace('_', ' ', $delivery->type_of_delivery))
+            : '—';
+        $induction       = $delivery->induction ? 'Yes' : 'No';
+        $augmentation    = $delivery->augmentation ? 'Yes' : 'No';
+        $placentaOk      = $delivery->placenta_complete ? 'Complete' : 'Incomplete';
+        $oxytocin        = $delivery->oxytocin_given ? 'Yes' : 'No';
+        $episiotomy      = ucfirst($delivery->episiotomy ?? 'none');
+        $tearDegree      = $delivery->perineal_tear_degree ? $delivery->perineal_tear_degree : 'None';
+
+        $title = "Labour & Delivery Record";
+
+        $placeOfDelivery  = $v($delivery->place_of_delivery);
+        $durationLabour   = $v($delivery->duration_of_labour_hours, 'hours');
+        $numberOfBabies   = $v($delivery->number_of_babies);
+        $inductionMethod  = $v($delivery->induction_method);
+        $anaesthesiaType  = $v($delivery->anaesthesia_type);
+        $bloodLoss        = $v($delivery->blood_loss_ml, 'ml');
+        $placentaNotes    = $v($delivery->placenta_notes);
+        $complications    = $delivery->complications ?: '<em>None documented</em>';
+        $deliveryNotes    = $delivery->notes ?: '<em>No notes recorded</em>';
+
+        $noteHtml = <<<HTML
+<div style="font-family:sans-serif; font-size:13px; line-height:1.6;">
+    <h4 style="margin:0 0 8px; color:#c62828; border-bottom:2px solid #c62828; padding-bottom:4px;">
+        🏥 {$title}
+    </h4>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold; width:40%;">Delivery Date</td>
+            <td style="padding:4px 8px;">{$deliveryDate}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Delivery Time</td>
+            <td style="padding:4px 8px;">{$deliveryTime}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Place of Delivery</td>
+            <td style="padding:4px 8px;">{$placeOfDelivery}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Type of Delivery</td>
+            <td style="padding:4px 8px;">{$typeLabel}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Duration of Labour</td>
+            <td style="padding:4px 8px;">{$durationLabour}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Number of Babies</td>
+            <td style="padding:4px 8px;">{$numberOfBabies}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Induction</td>
+            <td style="padding:4px 8px;">{$induction}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Induction Method</td>
+            <td style="padding:4px 8px;">{$inductionMethod}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Augmentation</td>
+            <td style="padding:4px 8px;">{$augmentation}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Anaesthesia Type</td>
+            <td style="padding:4px 8px;">{$anaesthesiaType}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Episiotomy</td>
+            <td style="padding:4px 8px;">{$episiotomy}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Perineal Tear</td>
+            <td style="padding:4px 8px;">{$tearDegree}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Estimated Blood Loss</td>
+            <td style="padding:4px 8px;">{$bloodLoss}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Oxytocin Given</td>
+            <td style="padding:4px 8px;">{$oxytocin}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Placenta</td>
+            <td style="padding:4px 8px;">{$placentaOk}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Placenta Notes</td>
+            <td style="padding:4px 8px;">{$placentaNotes}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#ffebee; font-weight:bold;">Complications</td>
+            <td style="padding:4px 8px;">{$complications}</td>
+        </tr>
+    </table>
+    <div style="padding:6px 8px; background:#fff8e1; border-left:3px solid #f9a825; margin-bottom:8px;">
+        <strong>Notes:</strong><br/>
+        {$deliveryNotes}
+    </div>
+    <div style="font-size:12px; color:#666;">
+        <strong>Delivered By:</strong> {$deliveredByName}
+    </div>
+</div>
+HTML;
+
+        $this->syncToEncounterAndNurseNote(
+            $enrollment,
+            'delivery',
+            4,  // "Labour Records" note type
+            $title,
+            $noteHtml,
+            $delivery->notes,
+            $delivery->delivery_date
+        );
+    }
+
+    /**
+     * Sync a postnatal visit to Encounter + Nurse Notes with full clinical detail.
+     */
+    protected function syncPostnatalToEncounterAndNurseNote(MaternityEnrollment $enrollment, PostnatalVisit $visit)
+    {
+        $v = fn($val, $suffix = '') => $this->nv($val, $suffix);
+
+        $seenByName     = $visit->seen_by ? userfullname($visit->seen_by) : '—';
+        $visitDate      = $visit->visit_date ? Carbon::parse($visit->visit_date)->format('d M Y') : '—';
+        $nextAppt       = $visit->next_appointment ? Carbon::parse($visit->next_appointment)->format('d M Y') : '—';
+        $visitTypeLabel = str_replace('_', ' ', ucfirst($visit->visit_type ?? 'other'));
+        $jaundice       = $visit->jaundice ? 'Yes' : 'No';
+        $fpCounselled   = $visit->family_planning_counselled ? 'Yes' : 'No';
+        $daysPostpartum = $visit->days_postpartum ?? '—';
+
+        $title = "Postnatal Visit ({$visitTypeLabel})";
+
+        // Mother assessment
+        $generalCond    = $v($visit->general_condition);
+        $bp             = $v($visit->blood_pressure);
+        $temp           = $v($visit->temperature_c, '°C');
+        $uterus         = $v($visit->uterus_assessment);
+        $lochia         = $v($visit->lochia);
+        $wound          = $v($visit->wound_assessment);
+        $breast         = $v($visit->breast_assessment);
+        $bfSupport      = $v($visit->breastfeeding_support);
+        $emotional      = $v($visit->emotional_wellbeing);
+        $emotionalNotes = $v($visit->emotional_notes);
+
+        // Baby assessment
+        $babyWeight  = $v($visit->baby_weight_kg, 'kg');
+        $babyFeeding = $v($visit->baby_feeding);
+        $cordStatus  = $v($visit->cord_status);
+        $babyCond    = $v($visit->baby_general_condition);
+        $babyNotes   = $v($visit->baby_notes);
+
+        // Family planning
+        $fpMethod = $v($visit->family_planning_method);
+
+        $clinicalNotes = $visit->clinical_notes ?: '<em>No notes recorded</em>';
+
+        $noteHtml = <<<HTML
+<div style="font-family:sans-serif; font-size:13px; line-height:1.6;">
+    <h4 style="margin:0 0 8px; color:#6a1b9a; border-bottom:2px solid #6a1b9a; padding-bottom:4px;">
+        👩‍👶 {$title}
+    </h4>
+
+    <p style="margin:0 0 10px; font-size:12px; color:#555;">Day <strong>{$daysPostpartum}</strong> postpartum — {$visitDate}</p>
+
+    <h5 style="margin:8px 0 4px; color:#4a148c;">Mother's Assessment</h5>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold; width:40%;">General Condition</td>
+            <td style="padding:4px 8px;">{$generalCond}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Blood Pressure</td>
+            <td style="padding:4px 8px;">{$bp}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Temperature</td>
+            <td style="padding:4px 8px;">{$temp}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Uterus Assessment</td>
+            <td style="padding:4px 8px;">{$uterus}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Lochia</td>
+            <td style="padding:4px 8px;">{$lochia}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Wound Assessment</td>
+            <td style="padding:4px 8px;">{$wound}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Breast Assessment</td>
+            <td style="padding:4px 8px;">{$breast}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Breastfeeding Support</td>
+            <td style="padding:4px 8px;">{$bfSupport}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Emotional Wellbeing</td>
+            <td style="padding:4px 8px;">{$emotional}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#f3e5f5; font-weight:bold;">Emotional Notes</td>
+            <td style="padding:4px 8px;">{$emotionalNotes}</td>
+        </tr>
+    </table>
+
+    <h5 style="margin:8px 0 4px; color:#00695c;">Baby's Assessment</h5>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+        <tr>
+            <td style="padding:4px 8px; background:#e0f2f1; font-weight:bold; width:40%;">Baby Weight</td>
+            <td style="padding:4px 8px;">{$babyWeight}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e0f2f1; font-weight:bold;">Feeding</td>
+            <td style="padding:4px 8px;">{$babyFeeding}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e0f2f1; font-weight:bold;">Cord Status</td>
+            <td style="padding:4px 8px;">{$cordStatus}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e0f2f1; font-weight:bold;">Jaundice</td>
+            <td style="padding:4px 8px;">{$jaundice}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e0f2f1; font-weight:bold;">General Condition</td>
+            <td style="padding:4px 8px;">{$babyCond}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#e0f2f1; font-weight:bold;">Baby Notes</td>
+            <td style="padding:4px 8px;">{$babyNotes}</td>
+        </tr>
+    </table>
+
+    <h5 style="margin:8px 0 4px; color:#37474f;">Family Planning</h5>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+        <tr>
+            <td style="padding:4px 8px; background:#eceff1; font-weight:bold; width:40%;">Counselled</td>
+            <td style="padding:4px 8px;">{$fpCounselled}</td>
+        </tr>
+        <tr>
+            <td style="padding:4px 8px; background:#eceff1; font-weight:bold;">Method Chosen</td>
+            <td style="padding:4px 8px;">{$fpMethod}</td>
+        </tr>
+    </table>
+
+    <div style="padding:6px 8px; background:#fff8e1; border-left:3px solid #f9a825; margin-bottom:8px;">
+        <strong>Clinical Notes:</strong><br/>
+        {$clinicalNotes}
+    </div>
+    <div style="font-size:12px; color:#666;">
+        <strong>Next Appointment:</strong> {$nextAppt} &nbsp;|&nbsp;
+        <strong>Seen By:</strong> {$seenByName}
+    </div>
+</div>
+HTML;
+
+        $this->syncToEncounterAndNurseNote(
+            $enrollment,
+            'postnatal',
+            5,  // "Others" note type
+            $title,
+            $noteHtml,
+            $visit->clinical_notes,
+            $visit->visit_date
+        );
     }
 }
