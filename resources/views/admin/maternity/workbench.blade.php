@@ -792,8 +792,8 @@ $sett = appsettings();
 
     /* ═══ MATERNITY: Rich Editor Styling ═══ */
     .ck-editor__editable_inline {
-        min-height: 100px;
-        max-height: 300px;
+        min-height: 200px;
+        max-height: 400px;
     }
 
     .ck-editor__editable_inline:focus {
@@ -2281,14 +2281,15 @@ $sett = appsettings();
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-calendar-clock"></i> Visit Information</div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Visit Type <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="WHO recommended schedule: Within 24h, Day 3, Week 1–2, Week 6"><i class="mdi mdi-help-circle"></i></span></label><select name="visit_type" class="form-select" required>
+                            <div class="col-md-4 mb-3"><label class="form-label">Visit Type <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="WHO recommended schedule: Within 24h, Day 3, Week 1–2, Week 6"><i class="mdi mdi-help-circle"></i></span></label><select name="visit_type" class="form-select" required>
                                     <option value="within_24h">Within 24 hours</option>
                                     <option value="day_3">Day 3</option>
                                     <option value="week_1_2">Week 1–2</option>
                                     <option value="week_6">Week 6</option>
                                     <option value="other">Other</option>
                                 </select></div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Visit Date <span class="text-danger">*</span></label><input type="date" name="visit_date" class="form-control" required></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Visit Date <span class="text-danger">*</span></label><input type="date" name="visit_date" class="form-control" required></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Next Appointment</label><input type="date" name="next_appointment" class="form-control"></div>
                         </div>
                     </div>
                     <div class="mat-form-section">
@@ -2301,38 +2302,87 @@ $sett = appsettings();
                                     <option>Poor</option>
                                 </select></div>
                             <div class="col-md-3 mb-3"><label class="form-label">Blood Pressure</label><input type="text" name="blood_pressure" class="form-control" placeholder="e.g. 120/80">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Monitor for postpartum hypertension</div>
                             </div>
-                            <div class="col-md-3 mb-3"><label class="form-label">Lochia <span class="mat-tooltip-icon" title="Normal: decreasing red→pink→white over weeks. Offensive smell may indicate infection"><i class="mdi mdi-help-circle"></i></span></label><select name="lochia" class="form-select">
+                            <div class="col-md-3 mb-3"><label class="form-label">Temperature (°C)</label><input type="number" name="temperature_c" class="form-control" step="0.1" placeholder="e.g. 37.2">
+                            </div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Lochia</label><select name="lochia" class="form-select">
                                     <option value="">-- Select --</option>
-                                    <option>Normal</option>
-                                    <option>Offensive</option>
-                                    <option>Heavy</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="offensive">Offensive</option>
+                                    <option value="heavy">Heavy</option>
+                                    <option value="absent">Absent</option>
                                 </select></div>
-                            <div class="col-md-3 mb-3"><label class="form-label">FP Counselled <span class="mat-tooltip-icon" title="Was the mother counselled about family planning options?"><i class="mdi mdi-help-circle"></i></span></label><select name="family_planning_counselled" class="form-select">
-                                    <option value="0">No</option>
-                                    <option value="1">Yes</option>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3"><label class="form-label">Uterus Assessment</label><input type="text" name="uterus_assessment" class="form-control" placeholder="e.g. well contracted"></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Wound Assessment</label><input type="text" name="wound_assessment" class="form-control" placeholder="e.g. healing well, clean"></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Breast Assessment</label><input type="text" name="breast_assessment" class="form-control" placeholder="e.g. soft, engorged"></div>
+                        </div>
+                    </div>
+                    <div class="mat-form-section">
+                        <div class="mat-form-section-title"><i class="mdi mdi-emoticon-outline"></i> Emotional Wellbeing</div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3"><label class="form-label">Wellbeing Status</label><select name="emotional_wellbeing" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="good">Good</option>
+                                    <option value="mild_concern">Mild Concern</option>
+                                    <option value="moderate_concern">Moderate Concern</option>
+                                    <option value="severe_concern">Severe Concern</option>
                                 </select></div>
+                            <div class="col-md-8 mb-3"><label class="form-label">Emotional Notes</label><input type="text" name="emotional_notes" class="form-control" placeholder="e.g. signs of postpartum blues"></div>
                         </div>
                     </div>
                     <div class="mat-form-section">
                         <div class="mat-form-section-title"><i class="mdi mdi-baby-face-outline"></i> Baby Assessment</div>
                         <div class="row">
-                            <div class="col-md-6 mb-3"><label class="form-label">Baby Weight (kg)</label><input type="number" name="baby_weight_kg" class="form-control" step="0.01" placeholder="e.g. 3.20">
-                                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Up to 10% weight loss in first week is normal</div>
-                            </div>
-                            <div class="col-md-6 mb-3"><label class="form-label">Baby Feeding</label><select name="baby_feeding" class="form-select">
+                            <div class="col-md-3 mb-3"><label class="form-label">Baby Gen. Condition</label><input type="text" name="baby_general_condition" class="form-control" placeholder="e.g. active"></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Baby Weight (kg)</label><input type="number" name="baby_weight_kg" class="form-control" step="0.01" placeholder="e.g. 3.20"></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Baby Feeding</label><select name="baby_feeding" class="form-select">
                                     <option value="">-- Select --</option>
-                                    <option>Exclusive breastfeeding</option>
-                                    <option>Formula</option>
-                                    <option>Mixed</option>
+                                    <option value="exclusive_breastfeeding">Exclusive breastfeeding</option>
+                                    <option value="formula">Formula</option>
+                                    <option value="mixed">Mixed</option>
                                 </select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">BF Support Needed?</label><select name="breastfeeding_support" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3"><label class="form-label">Cord Status</label><select name="cord_status" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="clean">Clean</option>
+                                    <option value="infected">Infected</option>
+                                    <option value="separated">Separated</option>
+                                </select></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Jaundice</label><select name="jaundice" class="form-select">
+                                    <option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                </select></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Baby Notes</label><input type="text" name="baby_notes" class="form-control" placeholder="e.g. cord healing well"></div>
                         </div>
                     </div>
                     <div class="mat-form-section">
-                        <div class="mat-form-section-title"><i class="mdi mdi-note-text"></i> Clinical Notes</div>
+                        <div class="mat-form-section-title"><i class="mdi mdi-human-male-female"></i> Family Planning</div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3"><label class="form-label">FP Counselled</label><select name="family_planning_counselled" class="form-select">
+                                    <option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                </select></div>
+                            <div class="col-md-8 mb-3"><label class="form-label">FP Method Chosen</label><input type="text" name="family_planning_method" class="form-control" placeholder="e.g. Implants, Depo-Provera, None"></div>
+                        </div>
+                    </div>
+                    <div class="mat-form-section p-3 bg-light rounded border-start border-4 border-info mt-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="mdi mdi-clipboard-text fs-4 text-info me-2"></i>
+                            <h5 class="mb-0 text-dark fw-bold">Encounter Notes (Global Sync)</h5>
+                        </div>
+                        <div class="alert alert-warning py-2 px-3 small mb-3">
+                            <i class="mdi mdi-information-outline me-1"></i> <b>Critical Documentation:</b> The notes entered below will be permanently synced to the patient's global encounter timeline.
+                        </div>
                         <div id="mat-postnatal-notes-editor-modal"></div>
-                        <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Document findings, concerns, counselling given, and plan of care</div>
+                        <div class="mt-2 text-muted small"><i class="mdi mdi-lightbulb-on-outline text-warning"></i> <b>Hint:</b> Document findings, concerns, counselling given, and plan of care.</div>
                     </div>
                 </form>
             </div>
@@ -2443,10 +2493,16 @@ $sett = appsettings();
                                 </select></div>
                         </div>
                     </div>
-                    <div class="mat-form-section">
-                        <div class="mat-form-section-title"><i class="mdi mdi-note-text"></i> Clinical Notes</div>
+                    <div class="mat-form-section p-3 bg-light rounded border-start border-4 border-info mt-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="mdi mdi-clipboard-text fs-4 text-info me-2"></i>
+                            <h5 class="mb-0 text-dark fw-bold">Encounter Notes (Global Sync)</h5>
+                        </div>
+                        <div class="alert alert-warning py-2 px-3 small mb-3">
+                            <i class="mdi mdi-information-outline me-1"></i> <b>Critical Documentation:</b> The notes entered below will be permanently synced to the patient's global encounter timeline.
+                        </div>
                         <div id="mat-anc-notes-editor-modal"></div>
-                        <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Document clinical findings, counselling given, concerns, and plan of care</div>
+                        <div class="mt-2 text-muted small"><i class="mdi mdi-lightbulb-on-outline text-warning"></i> <b>Hint:</b> Document clinical findings, counselling given, concerns, and plan of care.</div>
                     </div>
                 </form>
             </div>
@@ -4615,30 +4671,38 @@ $sett = appsettings();
                                    <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeleteAncVisit(${v.id})" title="Delete visit"><i class="mdi mdi-delete"></i></button>`;
                     }
 
-                    html += `<div class="anc-visit-card">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div><span class="visit-number">Visit #${v.visit_number}</span> <span class="badge bg-secondary ms-1">${v.visit_type || ''}</span></div>
+                    html += `<div class="anc-visit-card shadow-sm border-0 mb-3" style="border-left: 4px solid var(--maternity-pink) !important; border-radius: 8px;">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div><span class="visit-number" style="color: var(--maternity-pink); font-weight: bold;">Visit #${v.visit_number}</span> <span class="badge bg-secondary ms-1">${v.visit_type || ''}</span></div>
                         <div class="d-flex align-items-center gap-2">
-                            <span class="visit-date">${v.visit_date || ''}</span>
+                            <span class="visit-date text-muted"><i class="mdi mdi-calendar"></i> ${v.visit_date || ''}</span>
                             ${actions}
                         </div>
                     </div>
-                    <div class="visit-details">
-                        <div><div class="visit-detail-label">GA</div><div class="visit-detail-value">${v.gestational_age || '-'}</div></div>
-                        <div><div class="visit-detail-label">Weight</div><div class="visit-detail-value">${v.weight_kg ? v.weight_kg + ' kg' : '-'}</div></div>
-                        <div><div class="visit-detail-label">BP</div><div class="visit-detail-value">${v.bp || '-'}</div></div>
-                        <div><div class="visit-detail-label">Fundal Ht</div><div class="visit-detail-value">${v.fundal_height ? v.fundal_height + ' cm' : '-'}</div></div>
-                        <div><div class="visit-detail-label">FHR</div><div class="visit-detail-value">${v.fhr || '-'}</div></div>
-                        <div><div class="visit-detail-label">Presentation</div><div class="visit-detail-value">${v.presentation || '-'}</div></div>
-                        <div><div class="visit-detail-label">Oedema</div><div class="visit-detail-value">${v.oedema || '-'}</div></div>
-                        <div><div class="visit-detail-label">Foetal Mvt</div><div class="visit-detail-value">${v.foetal_movement || '-'}</div></div>
-                        <div><div class="visit-detail-label">Hb</div><div class="visit-detail-value">${v.haemoglobin ? v.haemoglobin + ' g/dL' : '-'}</div></div>
-                        <div><div class="visit-detail-label">Urine Protein</div><div class="visit-detail-value">${v.urine_protein || '-'}</div></div>
-                        <div><div class="visit-detail-label">Urine Glucose</div><div class="visit-detail-value">${v.urine_glucose || '-'}</div></div>
-                        <div><div class="visit-detail-label">Next Appt</div><div class="visit-detail-value">${v.next_appointment || '-'}</div></div>
+                    
+                    <div class="row small mb-2 bg-light p-2 rounded mx-0">
+                        <div class="col-md-3 mb-1"><strong>GA:</strong> ${v.gestational_age || '-'}</div>
+                        <div class="col-md-3 mb-1"><strong>Weight:</strong> ${v.weight_kg ? v.weight_kg + ' kg' : '-'}</div>
+                        <div class="col-md-3 mb-1"><strong>BP:</strong> ${v.bp || '-'}</div>
+                        <div class="col-md-3 mb-1"><strong>Next Appt:</strong> ${v.next_appointment || '-'}</div>
                     </div>
-                    ${v.clinical_notes ? '<div class="mt-2 small text-muted"><i class="mdi mdi-note"></i> ' + v.clinical_notes + '</div>' : ''}
-                    <div class="mt-1 small text-muted">Seen by: ${v.seen_by}</div>
+
+                    <div class="row small mb-2 mx-0 px-2">
+                        <div class="col-md-3 mb-1"><span class="text-muted">Fundal Ht:</span> <span class="fw-medium">${v.fundal_height ? v.fundal_height + ' cm' : '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">FHR:</span> <span class="fw-medium">${v.fhr || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Presentation:</span> <span class="fw-medium">${v.presentation || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Foetal Mvt:</span> <span class="fw-medium">${v.foetal_movement || '-'}</span></div>
+                    </div>
+
+                    <div class="row small mb-2 mx-0 px-2">
+                        <div class="col-md-3 mb-1"><span class="text-muted">Hb:</span> <span class="fw-medium">${v.haemoglobin ? v.haemoglobin + ' g/dL' : '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Oedema:</span> <span class="fw-medium">${v.oedema || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Urine Prot:</span> <span class="fw-medium">${v.urine_protein || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Urine Gluc:</span> <span class="fw-medium">${v.urine_glucose || '-'}</span></div>
+                    </div>
+
+                    ${v.clinical_notes ? '<div class="mt-2 small text-muted px-2 border-top pt-2"><i class="mdi mdi-note-text-outline text-info"></i> <strong>Notes:</strong> ' + v.clinical_notes + '</div>' : ''}
+                    <div class="mt-1 small text-muted px-2 pb-2"><em>Seen by: ${v.seen_by}</em></div>
                 </div>`;
                 });
             }
@@ -6386,20 +6450,21 @@ $sett = appsettings();
         <div class="mat-info-banner"><i class="mdi mdi-information"></i><div>Record the delivery outcome. All fields contribute to the patient\'s permanent delivery record. Fields marked <span class="text-danger">*</span> are required. After saving, register each baby separately in the Baby Records tab.</div></div>
         <form id="delivery-form">
             <div class="mat-form-section">
-                <div class="mat-form-section-title"><i class="mdi mdi-clock"></i> Timing & Method</div>
+                <div class="mat-form-section-title"><i class="mdi mdi-clock"></i> Timing & Location</div>
                 <div class="row">
                     <div class="col-md-3 mb-2"><label class="form-label">Delivery Date <span class="text-danger">*</span></label><input type="date" name="delivery_date" class="form-control" value="${new Date().toISOString().split('T')[0]}" required></div>
                     <div class="col-md-3 mb-2"><label class="form-label">Delivery Time</label><input type="time" name="delivery_time" class="form-control"></div>
-                    <div class="col-md-3 mb-2"><label class="form-label">Type of Delivery <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="SVD: Spontaneous Vaginal Delivery. CS: Caesarean Section. Vacuum/Forceps: Assisted vaginal delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="type_of_delivery" class="form-select" required><option value="svd">SVD (Spontaneous Vaginal)</option><option value="assisted_vaginal">Assisted Vaginal</option><option value="elective_cs">Elective CS</option><option value="emergency_cs">Emergency CS</option><option value="vacuum">Vacuum Extraction</option><option value="forceps">Forceps Delivery</option></select></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Place of Delivery <span class="mat-tooltip-icon" title="Where did the delivery occur?"><i class="mdi mdi-help-circle"></i></span></label><input type="text" name="place_of_delivery" class="form-control" placeholder="e.g. This Facility, Home, Transit"></div>
                     <div class="col-md-3 mb-2"><label class="form-label">Number of Babies <span class="text-danger">*</span></label><input type="number" name="number_of_babies" class="form-control" value="1" min="1" max="8" placeholder="1" required></div>
                 </div>
             </div>
             <div class="mat-form-section">
                 <div class="mat-form-section-title"><i class="mdi mdi-medical-bag"></i> Labour Details</div>
                 <div class="row">
-                    <div class="col-md-4 mb-2"><label class="form-label">Duration of Labour (hrs) <span class="mat-tooltip-icon" title="Total active labour duration in hours. Prolonged labour:>12hrs primigravida,>8hrs multigravida"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="duration_of_labour_hours" class="form-control" step="0.5" placeholder="e.g. 8.5"></div>
-                    <div class="col-md-4 mb-2"><label class="form-label">Estimated Blood Loss (ml) <span class="mat-tooltip-icon" title="Normal: SVD \u2264500ml, CS \u22641000ml.>500ml SVD or>1000ml CS = postpartum haemorrhage"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="blood_loss_ml" class="form-control" placeholder="e.g. 300"></div>
-                    <div class="col-md-4 mb-2"><label class="form-label">Oxytocin Given <span class="mat-tooltip-icon" title="Active management of third stage: Oxytocin 10 IU IM within 1 minute of delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="oxytocin_given" class="form-select"><option value="1">Yes</option><option value="0">No</option></select></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Type of Delivery <span class="text-danger">*</span> <span class="mat-tooltip-icon" title="SVD: Spontaneous Vaginal Delivery. CS: Caesarean Section. Vacuum/Forceps: Assisted vaginal delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="type_of_delivery" class="form-select" required><option value="svd">SVD (Spontaneous Vaginal)</option><option value="assisted_vaginal">Assisted Vaginal</option><option value="elective_cs">Elective CS</option><option value="emergency_cs">Emergency CS</option><option value="vacuum">Vacuum Extraction</option><option value="forceps">Forceps Delivery</option></select></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Duration of Labour (hrs) <span class="mat-tooltip-icon" title="Total active labour duration in hours. Prolonged labour:>12hrs primigravida,>8hrs multigravida"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="duration_of_labour_hours" class="form-control" step="0.5" placeholder="e.g. 8.5"></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Estimated Blood Loss (ml) <span class="mat-tooltip-icon" title="Normal: SVD \u2264500ml, CS \u22641000ml.>500ml SVD or>1000ml CS = postpartum haemorrhage"><i class="mdi mdi-help-circle"></i></span></label><input type="number" name="blood_loss_ml" class="form-control" placeholder="e.g. 300"></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Oxytocin Given <span class="mat-tooltip-icon" title="Active management of third stage: Oxytocin 10 IU IM within 1 minute of delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="oxytocin_given" class="form-select"><option value="1">Yes</option><option value="0">No</option></select></div>
                 </div>
                 <div class="row mt-2">
                     <div class="col-md-3 mb-2"><label class="form-label">Induction</label><select name="induction" class="form-select" onchange="toggleInductionMethod(this)"><option value="0">No</option><option value="1">Yes</option></select></div>
@@ -6412,19 +6477,29 @@ $sett = appsettings();
                 <div class="mat-form-section-title"><i class="mdi mdi-clipboard-check"></i> Outcomes & Assessment</div>
                 <div class="row">
                     <div class="col-md-3 mb-2"><label class="form-label">Placenta <span class="mat-tooltip-icon" title="Complete: all cotyledons and membranes accounted for. Incomplete: retained products — requires manual removal"><i class="mdi mdi-help-circle"></i></span></label><select name="placenta_complete" class="form-select"><option value="1">Complete</option><option value="0">Incomplete</option></select></div>
+                    <div class="col-md-3 mb-2"><label class="form-label">Placenta Notes</label><input type="text" name="placenta_notes" class="form-control" placeholder="e.g. membranes ragged"></div>
                     <div class="col-md-3 mb-2"><label class="form-label">Perineal Tear <span class="mat-tooltip-icon" title="1st: mucosa only. 2nd: perineal muscles. 3rd: anal sphincter involved. 4th: rectal mucosa torn"><i class="mdi mdi-help-circle"></i></span></label><select name="perineal_tear_degree" class="form-select"><option value="">None</option><option value="1st">1st degree</option><option value="2nd">2nd degree</option><option value="3rd">3rd degree</option><option value="4th">4th degree</option></select></div>
                     <div class="col-md-3 mb-2"><label class="form-label">Episiotomy <span class="mat-tooltip-icon" title="Surgical incision of perineum to widen vaginal opening during delivery"><i class="mdi mdi-help-circle"></i></span></label><select name="episiotomy" class="form-select"><option value="none">None</option><option value="mediolateral">Yes, mediolateral</option><option value="median">Yes, midline</option></select></div>
                 </div>
             </div>
-            <div class="mat-form-section">
-                <div class="mat-form-section-title"><i class="mdi mdi-alert-circle"></i> Complications</div>
+            <div class="mat-form-section p-3 bg-light rounded border-start border-4 border-danger mt-4">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="mdi mdi-alert-circle fs-4 text-danger me-2"></i>
+                    <h5 class="mb-0 text-dark fw-bold">Complications</h5>
+                </div>
                 <div id="mat-delivery-complications-editor"></div>
-                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Document any complications: PPH, shoulder dystocia, cord prolapse, fetal distress, etc.</div>
+                <div class="mt-2 text-muted small"><i class="mdi mdi-lightbulb-on-outline text-warning"></i> <b>Hint:</b> Document any complications: PPH, shoulder dystocia, cord prolapse, fetal distress, etc.</div>
             </div>
-            <div class="mat-form-section">
-                <div class="mat-form-section-title"><i class="mdi mdi-note-text"></i> Delivery Notes</div>
+            <div class="mat-form-section p-3 bg-light rounded border-start border-4 border-info mt-3">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="mdi mdi-clipboard-text fs-4 text-info me-2"></i>
+                    <h5 class="mb-0 text-dark fw-bold">Delivery Notes (Global Sync)</h5>
+                </div>
+                <div class="alert alert-warning py-2 px-3 small mb-3">
+                    <i class="mdi mdi-information-outline me-1"></i> <b>Critical Documentation:</b> These notes will be permanently synced to the patient's global encounter timeline.
+                </div>
                 <div id="mat-delivery-notes-editor"></div>
-                <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Additional notes: birth narrative, personnel present, interventions performed</div>
+                <div class="mt-2 text-muted small"><i class="mdi mdi-lightbulb-on-outline text-warning"></i> <b>Hint:</b> Birth narrative, personnel present, interventions performed.</div>
             </div>
             <div class="mt-3">
                 <button type="submit" class="btn btn-success btn-lg"><i class="mdi mdi-check"></i> Save Delivery Record</button>
@@ -6499,10 +6574,11 @@ $sett = appsettings();
             <tr><td class="text-muted">Augmentation</td><td>${d.augmentation ? 'Yes' : 'No'}</td></tr>
         </table></div><div class="col-md-6"><table class="table table-sm">
             <tr><td class="text-muted">Blood Loss</td><td>${d.blood_loss_ml ? d.blood_loss_ml + ' ml' : 'N/A'}</td></tr>
-            <tr><td class="text-muted">Placenta</td><td>${d.placenta_complete ? 'Complete' : 'Incomplete'}</td></tr>
+            <tr><td class="text-muted">Placenta</td><td>${d.placenta_complete ? 'Complete' : 'Incomplete'} ${d.placenta_notes ? '(' + d.placenta_notes + ')' : ''}</td></tr>
             <tr><td class="text-muted">Perineal Tear</td><td>${d.perineal_tear_degree || 'None'}</td></tr>
             <tr><td class="text-muted">Episiotomy</td><td>${episiotomyLabel}</td></tr>
             <tr><td class="text-muted">Anaesthesia</td><td>${d.anaesthesia_type || 'None'}</td></tr>
+            <tr><td class="text-muted">Place of Delivery</td><td>${d.place_of_delivery || 'N/A'}</td></tr>
             <tr><td class="text-muted">Complications</td><td>${d.complications || 'None'}</td></tr>
             <tr><td class="text-muted">Delivered By</td><td>${d.delivered_by_name || 'N/A'}</td></tr>
         </table></div></div>
@@ -6542,6 +6618,8 @@ $sett = appsettings();
             f.find('input[name="duration_of_labour_hours"]').val(d.duration_of_labour_hours || '');
             f.find('input[name="blood_loss_ml"]').val(d.blood_loss_ml || '');
             f.find('select[name="oxytocin_given"]').val(d.oxytocin_given ? '1' : '0');
+            f.find('input[name="place_of_delivery"]').val(d.place_of_delivery || '');
+            f.find('input[name="placenta_notes"]').val(d.placenta_notes || '');
             
             // Prefill new fields
             f.find('select[name="induction"]').val(d.induction ? '1' : '0');
@@ -7105,23 +7183,43 @@ $sett = appsettings();
                                    <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="confirmDeletePostnatalVisit(${v.id})" title="Delete visit"><i class="mdi mdi-delete"></i></button>`;
                     }
 
-                    html += `<div class="anc-visit-card" style="border-left-color: var(--info);">
-                    <div class="d-flex justify-content-between">
-                        <div><span class="visit-number" style="color: var(--info);">${v.visit_type_label}</span></div>
+                    html += `<div class="anc-visit-card shadow-sm border-0 mb-3" style="border-left: 4px solid var(--info) !important; border-radius: 8px;">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div><span class="visit-number" style="color: var(--info); font-weight: bold;">${v.visit_type_label}</span></div>
                         <div class="d-flex align-items-center gap-2">
-                            <span class="visit-date">${v.visit_date} (${v.days_postpartum || '?'}d postpartum)</span>
+                            <span class="visit-date text-muted"><i class="mdi mdi-calendar"></i> ${v.visit_date} (${v.days_postpartum || '?'}d postpartum)</span>
                             ${actions}
                         </div>
                     </div>
-                    <div class="visit-details">
-                        <div><div class="visit-detail-label">Condition</div><div class="visit-detail-value">${v.general_condition || '-'}</div></div>
-                        <div><div class="visit-detail-label">BP</div><div class="visit-detail-value">${v.blood_pressure || '-'}</div></div>
-                        <div><div class="visit-detail-label">Lochia</div><div class="visit-detail-value">${v.lochia || '-'}</div></div>
-                        <div><div class="visit-detail-label">Baby Weight</div><div class="visit-detail-value">${v.baby_weight_kg ? v.baby_weight_kg + ' kg' : '-'}</div></div>
-                        <div><div class="visit-detail-label">Baby Feeding</div><div class="visit-detail-value">${v.baby_feeding || '-'}</div></div>
-                        <div><div class="visit-detail-label">FP Counselled</div><div class="visit-detail-value">${v.family_planning_counselled ? 'Yes' : 'No'}</div></div>
+
+                    <div class="row small mb-2 bg-light p-2 rounded mx-0">
+                        <div class="col-md-3 mb-1"><strong>Condition:</strong> ${v.general_condition || '-'}</div>
+                        <div class="col-md-3 mb-1"><strong>BP:</strong> ${v.blood_pressure || '-'}</div>
+                        <div class="col-md-3 mb-1"><strong>Temp:</strong> ${v.temperature_c ? v.temperature_c + ' °C' : '-'}</div>
+                        <div class="col-md-3 mb-1"><strong>Lochia:</strong> ${v.lochia || '-'}</div>
                     </div>
-                    <div class="mt-1 small text-muted">Seen by: ${v.seen_by}</div>
+
+                    <div class="row small mb-2 mx-0 px-2">
+                        <div class="col-md-3 mb-1"><span class="text-muted">Uterus:</span> <span class="fw-medium">${v.uterus_assessment || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Wound:</span> <span class="fw-medium">${v.wound_assessment || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Breast:</span> <span class="fw-medium">${v.breast_assessment || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Wellbeing:</span> <span class="fw-medium">${v.emotional_wellbeing ? v.emotional_wellbeing.replace('_', ' ') : '-'}</span></div>
+                    </div>
+
+                    <div class="row small mb-2 mx-0 px-2">
+                        <div class="col-md-3 mb-1"><span class="text-muted">Baby Wt:</span> <span class="fw-medium">${v.baby_weight_kg ? v.baby_weight_kg + ' kg' : '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Feeding:</span> <span class="fw-medium">${v.baby_feeding || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Cord:</span> <span class="fw-medium">${v.cord_status || '-'}</span></div>
+                        <div class="col-md-3 mb-1"><span class="text-muted">Jaundice:</span> <span class="fw-medium">${v.jaundice ? 'Yes' : 'No'}</span></div>
+                    </div>
+
+                    <div class="row small mb-2 mx-0 px-2">
+                        <div class="col-md-6 mb-1"><span class="text-muted">FP Counselled:</span> <span class="fw-medium">${v.family_planning_counselled ? 'Yes' : 'No'} (${v.family_planning_method || '-'})</span></div>
+                        <div class="col-md-6 mb-1"><span class="text-muted">Next Appt:</span> <span class="fw-medium">${v.next_appointment || '-'}</span></div>
+                    </div>
+
+                    ${v.clinical_notes ? '<div class="mt-2 small text-muted px-2 border-top pt-2"><i class="mdi mdi-note-text-outline text-info"></i> <strong>Notes:</strong> ' + v.clinical_notes + '</div>' : ''}
+                    <div class="mt-1 small text-muted px-2 pb-2"><em>Seen by: ${v.seen_by}</em></div>
                 </div>`;
                 });
             }
@@ -7168,12 +7266,25 @@ $sett = appsettings();
         const m = $('#postnatalModal');
         m.find('select[name="visit_type"]').val(v.visit_type || '');
         m.find('input[name="visit_date"]').val(v.visit_date_raw || '');
+        m.find('input[name="next_appointment"]').val(v.next_appointment_raw || '');
         m.find('select[name="general_condition"]').val(v.general_condition || '');
         m.find('input[name="blood_pressure"]').val(v.blood_pressure || '');
+        m.find('input[name="temperature_c"]').val(v.temperature_c || '');
         m.find('select[name="lochia"]').val(v.lochia || '');
-        m.find('select[name="family_planning_counselled"]').val(v.family_planning_counselled ? '1' : '0');
+        m.find('input[name="uterus_assessment"]').val(v.uterus_assessment || '');
+        m.find('input[name="wound_assessment"]').val(v.wound_assessment || '');
+        m.find('input[name="breast_assessment"]').val(v.breast_assessment || '');
+        m.find('select[name="emotional_wellbeing"]').val(v.emotional_wellbeing || '');
+        m.find('input[name="emotional_notes"]').val(v.emotional_notes || '');
+        m.find('input[name="baby_general_condition"]').val(v.baby_general_condition || '');
         m.find('input[name="baby_weight_kg"]').val(v.baby_weight_kg || '');
         m.find('select[name="baby_feeding"]').val(v.baby_feeding || '');
+        m.find('select[name="breastfeeding_support"]').val(v.breastfeeding_support || '');
+        m.find('select[name="cord_status"]').val(v.cord_status || '');
+        m.find('select[name="jaundice"]').val(v.jaundice ? '1' : '0');
+        m.find('input[name="baby_notes"]').val(v.baby_notes || '');
+        m.find('select[name="family_planning_counselled"]').val(v.family_planning_counselled ? '1' : '0');
+        m.find('input[name="family_planning_method"]').val(v.family_planning_method || '');
         // CKEditor
         m.off('shown.bs.modal.pnEditor').on('shown.bs.modal.pnEditor', function() {
             initMaternityEditor('#mat-postnatal-notes-editor-modal', 'postnatal_notes').then(function(editor) {
