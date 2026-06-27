@@ -744,8 +744,11 @@ class EssController extends Controller
 
         // Handle photo upload
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('staff/photos', 'public');
-            $staff->photo = $photoPath;
+            $file = $request->file('photo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->storeAs('image/user', $filename, 'public');
+            $user->filename = $filename;
+            $user->save();
         }
 
         // Update Staff model fields - only update fields that have actual values
