@@ -36,7 +36,9 @@ class Patient extends Model implements Auditable
         'next_of_kin_phone',
         'next_of_kin_address',
         'dhis_consult_tracker_id',
-        'dhis_consult_enrollment_id'
+        'dhis_consult_enrollment_id',
+        'is_family_principal',
+        'principal_id'
     ];
 
     protected $casts = [
@@ -69,5 +71,32 @@ class Patient extends Model implements Auditable
     public function account()
     {
         return $this->hasOne(PatientAccount::class, 'patient_id', 'id');
+    }
+
+    public function principal()
+    {
+        return $this->belongsTo(Patient::class, 'principal_id');
+    }
+
+    public function beneficiaries()
+    {
+        return $this->hasMany(Patient::class, 'principal_id');
+    }
+
+    public function getFamilyUserIdsAttribute()
+    {
+        if ($this->principal_id) {
+            return Patient::where('principal_id', $this->principal_id)
+                ->orWhere('id', $this->principal_id)
+                ->pluck('user_id')->toArray();
+        }
+        return Patient::where('principal_id', $this->id)
+            ->orWhere('id', $this->id)
+            ->pluck('user_id')->toArray();
+    }
+
+    public function getBillingPatientIdAttribute()
+    {
+        return $this->principal_id ?? $this->id;
     }
 }

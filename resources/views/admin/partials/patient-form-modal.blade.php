@@ -1489,6 +1489,13 @@ function resetPatientForm() {
     $('.photo-capture-panel').removeClass('active');
     $('#panel-upload').addClass('active');
 
+    // Reset family folder
+    $('#pf-is-family-principal').prop('checked', false);
+    $('#pf-principal-select-container').show();
+    if ($.fn.select2) {
+        $('#pf-principal-id').val(null).trigger('change');
+    }
+
     // Legacy passport preview elements (keep for compatibility)
     $('.passport-preview-container').hide();
     $('#passport-preview-img').attr('src', '');
@@ -1921,6 +1928,18 @@ function populatePatientForm(data) {
         }, 150);
     }
 
+    // Family Folder
+    if (data.is_family_principal == 1) {
+        $('#pf-is-family-principal').prop('checked', true).trigger('change');
+    } else {
+        $('#pf-is-family-principal').prop('checked', false).trigger('change');
+        if (data.principal_id && data.principal) {
+            // Append the option to select2
+            var option = new Option(data.principal.user.firstname + ' ' + data.principal.user.surname + ' (' + data.principal.file_no + ')', data.principal_id, true, true);
+            $('#pf-principal-id').append(option).trigger('change');
+        }
+    }
+
     // Handle existing passport photo - use new photo capture UI
     if (data.passport_url) {
         // Show in the new photo preview UI
@@ -2341,6 +2360,8 @@ function submitPatientForm() {
     formData.append('next_of_kin_address', $('#pf-nok-address').val().trim());
     formData.append('hmo_id', $('#pf-hmo').val() || 1);
     formData.append('hmo_no', $('#pf-hmo-no').val().trim());
+    formData.append('is_family_principal', $('#pf-is-family-principal').is(':checked') ? 1 : 0);
+    formData.append('principal_id', $('#pf-principal-id').val() || '');
 
     // Add registration service if selected
     const registrationServiceId = $('#pf-registration-service').val();
@@ -3728,6 +3749,8 @@ function disableWalkInMode() {
             formData.append('next_of_kin_address', $('#pf-nok-address').val().trim());
             formData.append('hmo_id', $('#pf-hmo').val() || 1);
             formData.append('hmo_no', $('#pf-hmo-no').val().trim());
+            formData.append('is_family_principal', $('#pf-is-family-principal').is(':checked') ? 1 : 0);
+            formData.append('principal_id', $('#pf-principal-id').val() || '');
 
             // File uploads
             var passportFile = $('#pf-passport')[0].files[0];
@@ -4076,6 +4099,50 @@ function disableWalkInMode() {
 })();
 
 
+// Family folder Select2 and Toggle Logic
+$(document).ready(function() {
+    // Initialize select2 for principal
+    if ($.fn.select2) {
+        $('#pf-principal-id').select2({
+            dropdownParent: $('#patientFormModal'),
+            placeholder: 'Search for principal...',
+            allowClear: true,
+            ajax: {
+                url: '{{ route("reception.search-patients") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        q: params.term, // search term
+                        principals_only: 1
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: $.map(data, function (item) {
+                            var ageStr = item.age ? item.age + ' yrs' : 'N/A';
+                            return {
+                                text: item.name + ' (' + item.file_no + ') - ' + item.gender + ', ' + ageStr,
+                                id: item.id
+                            }
+                        })
+                    };
+                },
+                cache: true
+            }
+        });
+    }
+
+    // Toggle container based on checkbox
+    $('#pf-is-family-principal').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#pf-principal-select-container').hide();
+            $('#pf-principal-id').val(null).trigger('change');
+        } else {
+            $('#pf-principal-select-container').show();
+        }
+    });
+});
 </script>
 @endpush
 
@@ -4241,7 +4308,7 @@ function disableWalkInMode() {
 
                                 <div class="pf-new-patient-fields-wrapper" id="pf-new-patient-wrapper">
 
-                                <div class="row align-items-end pf-row-fileno-names pf-hide-unidentified">
+                                <div class="row align-items-start pf-row-fileno-family pf-hide-unidentified mb-2">
                                     <div class="col-md-4">
                                         <div class="form-group mb-3">
                                             <div class="file-no-label-row">
@@ -4278,14 +4345,43 @@ function disableWalkInMode() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-8 pf-hide-emergency">
+                                        <div class="card bg-light border-0 shadow-sm rounded-3 h-100">
+                                            <div class="card-body p-3">
+                                                <h6 class="mb-3 text-primary d-flex align-items-center gap-2" style="font-size: 0.9rem; font-weight: 600;">
+                                                    <i class="mdi mdi-account-group"></i> Family Folder Configuration
+                                                </h6>
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-5">
+                                                        <div class="form-check form-switch d-flex align-items-center gap-2">
+                                                            <input class="form-check-input" type="checkbox" id="pf-is-family-principal" style="transform: scale(1.3); margin-top: 0; cursor: pointer;">
+                                                            <label class="form-check-label fw-bold mb-0" for="pf-is-family-principal" style="cursor: pointer;">
+                                                                Is Family Principal?
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-1 ms-4" style="line-height: 1.2;">Check this if patient is the head of a family.</small>
+                                                    </div>
+                                                    <div class="col-md-7" id="pf-principal-select-container">
+                                                        <label class="form-label mb-1 fw-bold text-secondary" style="font-size: 0.85rem;">Assign to Principal (Optional)</label>
+                                                        <select class="form-control" id="pf-principal-id" style="width: 100%;">
+                                                            <option value=""></option>
+                                                        </select>
+                                                        <small class="text-muted d-block mt-1" style="line-height: 1.2;">Leave empty if patient is independent.</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row pf-row-names pf-hide-unidentified">
+                                    <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">Surname <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="pf-surname" required data-validate="required|min:2" placeholder="Enter surname">
                                             <div class="invalid-feedback"></div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">First Name <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="pf-firstname" required data-validate="required|min:2" placeholder="Enter first name">
@@ -4359,6 +4455,7 @@ function disableWalkInMode() {
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="row pf-row-address pf-hide-unidentified pf-hide-emergency">
                                     <div class="col-12">
                                         <div class="form-group mb-3">

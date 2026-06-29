@@ -279,13 +279,38 @@
             <div class="container-fluid mt-4">
                 {{-- <small class="text-danger">*Required fields</small> --}}
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 col-md-4">
                         <div class="form-group">
                             <label for="">File number </label>
                             <div class="input-group">
                                 <span class="input-group-text" id="file_no"><i class="mdi mdi-file-find"></i></span>
                                 <input type="text" class="form-control" placeholder="file_no" aria-label="file_no"
                                     aria-describedby="file_no" name="file_no" value="{{ old('file_no') }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label class="d-block">&nbsp;</label>
+                            <div class="form-check form-check-inline mt-2">
+                                <input class="form-check-input" type="checkbox" id="is_family_principal" name="is_family_principal" value="1" onchange="togglePrincipalSelect()" {{ old('is_family_principal') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_family_principal">Is Family Folder Principal?</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group" id="principal_select_group">
+                            <label for="principal_id">Select Principal Patient (If Beneficiary)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-account-star"></i></span>
+                                <select name="principal_id" id="principal_id" class="form-control select2">
+                                    <option value="">-- None --</option>
+                                    @foreach($family_principals ?? [] as $principal)
+                                        <option value="{{ $principal->id }}" {{ old('principal_id') == $principal->id ? 'selected' : '' }}>
+                                            {{ $principal->user->firstname }} {{ $principal->user->surname }} ({{ $principal->file_no }})
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -423,5 +448,26 @@
             e.preventDefault();
             $('#' + id_of_next_tab).click();
         }
+
+        function togglePrincipalSelect() {
+            var isPrincipal = document.getElementById('is_family_principal').checked;
+            var principalSelectGroup = document.getElementById('principal_select_group');
+            var principalSelect = document.getElementById('principal_id');
+            
+            if (isPrincipal) {
+                principalSelectGroup.style.display = 'none';
+                principalSelect.value = "";
+            } else {
+                principalSelectGroup.style.display = 'block';
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            togglePrincipalSelect();
+            if(jQuery().select2) {
+                $('#principal_id').select2();
+            }
+        });
     </script>
 @endsection
