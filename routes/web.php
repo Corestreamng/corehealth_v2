@@ -1153,3 +1153,18 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::get('/reports/{responsibility_key}/print', [\App\Http\Controllers\AuditWorkbenchController::class, 'printReport'])->name('reports.print');
 });
 
+// Workbench Shared Modals (Hospital Contacts & Price List)
+Route::middleware(['auth'])->group(function () {
+    // Hospital Contacts
+    Route::get('/hospital-contacts', [\App\Http\Controllers\HospitalContactController::class, 'index'])->name('hospital-contacts.index');
+    Route::post('/hospital-contacts', [\App\Http\Controllers\HospitalContactController::class, 'store'])->name('hospital-contacts.store');
+    Route::get('/hospital-contacts/{id}', [\App\Http\Controllers\HospitalContactController::class, 'show'])->name('hospital-contacts.show');
+    Route::put('/hospital-contacts/{id}', [\App\Http\Controllers\HospitalContactController::class, 'update'])->name('hospital-contacts.update');
+    Route::delete('/hospital-contacts/{id}', [\App\Http\Controllers\HospitalContactController::class, 'destroy'])->name('hospital-contacts.destroy');
+
+    // Workbench Price List
+    Route::get('/workbench/price-list/products', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getProducts'])->name('workbench.price-list.products');
+    Route::get('/workbench/price-list/services', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getServices'])->name('workbench.price-list.services');
+    Route::get('/workbench/price-list/tariffs', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getTariffs'])->name('workbench.price-list.tariffs');
+});
+
