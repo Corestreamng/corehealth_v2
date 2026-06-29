@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 29, 2026 at 12:30 PM
+-- Generation Time: Jun 29, 2026 at 01:19 PM
 -- Server version: 8.0.46-0ubuntu0.24.04.2
 -- PHP Version: 8.3.6
 
@@ -23627,7 +23627,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (386, '2026_06_12_140230_add_returned_to_store_requisitions_status', 210),
 (387, '2026_06_16_134332_add_llm_config_to_application_status', 211),
 (388, '2026_06_19_062335_add_maternity_consultation_queue_fields', 212),
-(390, '2026_06_29_112123_add_family_folder_to_patients_table', 213);
+(390, '2026_06_29_112123_add_family_folder_to_patients_table', 213),
+(391, '2026_06_29_130425_create_hospital_contacts_table', 214);
 
 -- --------------------------------------------------------
 
@@ -115025,7 +115026,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=391;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=392;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`

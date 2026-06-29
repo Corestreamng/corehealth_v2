@@ -3235,6 +3235,12 @@
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
                 </button>
+                <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
+                    <i class="mdi mdi-contacts"></i> Contacts
+                </button>
+                <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#workbench-price-list-modal" title="Price List">
+                    <i class="mdi mdi-currency-usd"></i> Price List
+                </button>
                 <button class="btn-clinical-context" id="btn-clinical-context" disabled title="Select a patient first">
                     <i class="fa fa-heartbeat"></i> Clinical Context
                 </button>
@@ -18383,6 +18389,8 @@ function showBundleRemove(btn) {
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')
+@include('admin.partials.hospital_contacts_modal')
+@include('admin.partials.price_list_modal')
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 <script src="{{ asset('js/patient-summary.js') }}"></script>
 
