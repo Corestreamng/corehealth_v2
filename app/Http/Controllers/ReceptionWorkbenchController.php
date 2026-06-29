@@ -87,14 +87,21 @@ class ReceptionWorkbenchController extends Controller
         }
 
         $patients = Patient::with(['user', 'hmo', 'account'])
-            ->whereHas('user', function($q) use ($query) {
-                $q->where('surname', 'like', "%{$query}%")
-                  ->orWhere('firstname', 'like', "%{$query}%")
-                  ->orWhere('othername', 'like', "%{$query}%");
-            })
-            ->orWhere('phone_no', 'like', "%{$query}%")
-            ->orWhere('file_no', 'like', "%{$query}%")
-            ->limit(20)
+            ->where(function($q) use ($query) {
+                $q->whereHas('user', function($u) use ($query) {
+                    $u->where('surname', 'like', "%{$query}%")
+                      ->orWhere('firstname', 'like', "%{$query}%")
+                      ->orWhere('othername', 'like', "%{$query}%");
+                })
+                ->orWhere('phone_no', 'like', "%{$query}%")
+                ->orWhere('file_no', 'like', "%{$query}%");
+            });
+
+        if ($request->boolean('principals_only')) {
+            $patients->where('is_family_principal', 1);
+        }
+
+        $patients = $patients->limit(20)
             ->get()
             ->map(function($patient) {
                 return [
@@ -1103,6 +1110,12 @@ class ReceptionWorkbenchController extends Controller
             $patient->next_of_kin_address = $request->next_of_kin_address;
             $patient->hmo_id = $request->hmo_id ?? 1; // Default to Private
             $patient->hmo_no = $request->hmo_no;
+            
+            $patient->is_family_principal = $request->has('is_family_principal') && filter_var($request->is_family_principal, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+            $patient->principal_id = $request->principal_id ?? null;
+            if ($patient->is_family_principal) {
+                $patient->principal_id = null;
+            }
 
             // Handle passport photo upload - save to user model
             if ($request->hasFile('filename')) {
@@ -1585,6 +1598,12 @@ class ReceptionWorkbenchController extends Controller
             $patient->next_of_kin_address = $request->next_of_kin_address;
             $patient->hmo_id = $request->hmo_id ?? 1;
             $patient->hmo_no = $request->hmo_no;
+            
+            $patient->is_family_principal = $request->has('is_family_principal') && filter_var($request->is_family_principal, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+            $patient->principal_id = $request->principal_id ?? null;
+            if ($patient->is_family_principal) {
+                $patient->principal_id = null;
+            }
 
             // Handle passport photo upload - save to user model
             if ($request->hasFile('filename')) {

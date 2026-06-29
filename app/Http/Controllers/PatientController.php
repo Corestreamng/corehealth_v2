@@ -351,10 +351,13 @@ class PatientController extends Controller
                     ->get();
             }
 
+            $family_principals = Patient::with(['user'])->where('is_family_principal', 1)->get();
+
             return view('admin.receptionist.new_patient')->with([
                 'all_patients' => $all_patients,
                 'hmos' => $hmos,
                 'registrationServices' => $registrationServices,
+                'family_principals' => $family_principals,
             ]);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -632,6 +635,13 @@ class PatientController extends Controller
                 $patient->dhis_consult_tracker_id = $trackedEntityInstanceId;
                 $patient->dhis_consult_enrollment_id = $enrollmentId;
 
+                $patient->is_family_principal = $request->has('is_family_principal') ? 1 : 0;
+                $patient->principal_id = $request->principal_id ?? null;
+                // If patient is marked as principal, ensure they are not a beneficiary
+                if ($patient->is_family_principal) {
+                    $patient->principal_id = null;
+                }
+
                 $patient->save();
 
                 $patient_account = new PatientAccount;
@@ -796,7 +806,8 @@ class PatientController extends Controller
     {
         try {
             $hmos = Hmo::with('scheme')->where('status', 1)->get()->groupBy('scheme.name');
-            return view('admin.patients.edit', compact('patient', 'hmos'));
+            $family_principals = Patient::with(['user'])->where('is_family_principal', 1)->where('id', '!=', $patient->id)->get();
+            return view('admin.patients.edit', compact('patient', 'hmos', 'family_principals'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withInput()->with('error', $e->getMessage());

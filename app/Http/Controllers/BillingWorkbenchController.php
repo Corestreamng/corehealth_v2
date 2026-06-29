@@ -282,8 +282,9 @@ class BillingWorkbenchController extends Controller
                 'service.category',
                 'product.price',
                 'product.category',
+                'user',
             ])
-            ->where('user_id', $patient->user_id)
+            ->whereIn('user_id', $patient->family_user_ids)
             ->whereNull('payment_id')
             ->whereNull('invoice_id')
             ->where('is_bundle_item', false); // Exclude child items from billing list
@@ -319,6 +320,8 @@ class BillingWorkbenchController extends Controller
                     'discount' => $row->discount ?? 0,
                     'created_at' => $row->created_at ? $row->created_at->toIso8601String() : null,
                     'created_at_formatted' => $row->created_at ? $row->created_at->format('d/m/Y H:i') : 'N/A',
+                    'user_id' => $row->user_id,
+                    'patient_name' => optional($row->user)->firstname . ' ' . optional($row->user)->surname,
                 ];
             });
 
@@ -333,6 +336,15 @@ class BillingWorkbenchController extends Controller
                 'hmo_name' => optional($patient->hmo)->name,
                 'hmo_no' => $patient->hmo_no,
                 'photo' => $patient->user->photo ?? 'avatar.png',
+                'family_members' => \App\Models\Patient::whereIn('user_id', $patient->family_user_ids)->get()->map(function($p) {
+                    return [
+                        'id' => $p->id,
+                        'user_id' => $p->user_id,
+                        'name' => userfullname($p->user_id),
+                        'file_no' => $p->file_no,
+                        'is_principal' => $p->is_family_principal
+                    ];
+                }),
             ],
             'items' => $items,
         ]);
@@ -516,7 +528,8 @@ class BillingWorkbenchController extends Controller
     public function getAccountTransactions($patientId, Request $request)
     {
         $patient = Patient::findOrFail($patientId);
-        $account = PatientAccount::where('patient_id', $patientId)->first();
+        $billingPatientId = $patient->billing_patient_id;
+        $account = PatientAccount::where('patient_id', $billingPatientId)->first();
 
         // Apply date filters - default to current month if not provided
         $fromDate = $request->from_date ?: now()->startOfMonth()->format('Y-m-d');
@@ -527,7 +540,7 @@ class BillingWorkbenchController extends Controller
 
         // 1. Get deposits from patient_deposits table (Accounts module deposits)
         if (!$txTypeFilter || $txTypeFilter === 'ACC_DEPOSIT') {
-            $deposits = PatientDeposit::where('patient_id', $patientId)
+            $deposits = PatientDeposit::where('patient_id', $billingPatientId)
                 ->whereDate('deposit_date', '>=', $fromDate)
                 ->whereDate('deposit_date', '<=', $toDate)
                 ->orderBy('deposit_date', 'desc')
@@ -555,7 +568,7 @@ class BillingWorkbenchController extends Controller
 
         // 2. Get withdrawals and adjustments from payment table
         // Skip ACC_DEPOSIT from payment table if the deposit has source_payment_id (to avoid duplicates)
-        $paymentQuery = Payment::where('patient_id', $patientId)
+        $paymentQuery = Payment::where('patient_id', $billingPatientId)
             ->whereIn('payment_type', ['ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
             ->whereDate('created_at', '>=', $fromDate)
             ->whereDate('created_at', '<=', $toDate);
@@ -616,10 +629,10 @@ class BillingWorkbenchController extends Controller
         })->values()->toArray();
 
         // Calculate summary stats from patient_deposits and payments
-        $totalDeposits = PatientDeposit::where('patient_id', $patientId)->sum('amount');
+        $totalDeposits = PatientDeposit::where('patient_id', $billingPatientId)->sum('amount');
 
         // Withdrawals from payments (stored as negative values)
-        $totalWithdrawals = abs(Payment::where('patient_id', $patientId)
+        $totalWithdrawals = abs(Payment::where('patient_id', $billingPatientId)
             ->where('payment_type', 'ACC_WITHDRAW')
             ->sum('total'));
 
@@ -640,11 +653,12 @@ class BillingWorkbenchController extends Controller
     public function getPatientAccountSummary($patientId)
     {
         $patient = Patient::with('hmo')->findOrFail($patientId);
+        $billingPatientId = $patient->billing_patient_id;
 
-        $account = PatientAccount::where('patient_id', $patientId)->first();
+        $account = PatientAccount::where('patient_id', $billingPatientId)->first();
         $balance = $account ? $account->balance : 0;
 
-        $totalPaid = Payment::where('patient_id', $patientId)->sum('total');
+        $totalPaid = Payment::where('patient_id', $billingPatientId)->sum('total');
 
         $totalClaims = HmoClaim::where('patient_id', $patientId)->sum('claims_amount');
         $pendingClaims = HmoClaim::where('patient_id', $patientId)
@@ -713,8 +727,8 @@ class BillingWorkbenchController extends Controller
             // Validate ownership and build totals
             foreach ($data['items'] as $itemPayload) {
                 $row = $rows->firstWhere('id', $itemPayload['id']);
-                if (!$row || $row->user_id != $patient->user_id) {
-                    throw new \Exception('Item does not belong to patient or is missing.');
+                if (!$row || !in_array($row->user_id, $patient->family_user_ids)) {
+                    throw new \Exception('Item does not belong to patient or family, or is missing.');
                 }
                 if ($row->payment_id !== null || $row->invoice_id !== null) {
                     throw new \Exception('One of the items is already paid or invoiced.');
@@ -748,13 +762,15 @@ class BillingWorkbenchController extends Controller
                 }
 
                 $receiptDetails[] = [
-                    'type' => $isService ? 'Service' : 'Product',
-                    'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
-                    'price' => $unitPrice,
-                    'qty' => $qty,
+                    'type'             => $isService ? 'Service' : 'Product',
+                    'name'             => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                    'patient_name'     => userfullname($row->user_id),
+                    'patient_user_id'  => $row->user_id,
+                    'price'            => $unitPrice,
+                    'qty'              => $qty,
                     'discount_percent' => $discountPercent,
-                    'discount_amount' => $discountAmount,
-                    'amount_paid' => $lineTotal,
+                    'discount_amount'  => $discountAmount,
+                    'amount_paid'      => $lineTotal,
                 ];
             }
 
@@ -768,12 +784,13 @@ class BillingWorkbenchController extends Controller
             $depositsToApply = collect(); // Will hold deposits with amounts to apply
 
             if ($payingFromAccount) {
-                $account = PatientAccount::where('patient_id', $patient->id)->first();
+                $billingPatientId = $patient->billing_patient_id;
+                $account = PatientAccount::where('patient_id', $billingPatientId)->first();
 
                 // Create account if it doesn't exist
                 if (!$account) {
                     $account = PatientAccount::create([
-                        'patient_id' => $patient->id,
+                        'patient_id' => $billingPatientId,
                         'balance' => 0,
                     ]);
                 }
@@ -784,7 +801,7 @@ class BillingWorkbenchController extends Controller
 
                 // FIFO: Get all active deposits ordered by date (oldest first)
                 // We'll apply the payment against deposits until the amount is covered
-                $activeDeposits = PatientDeposit::where('patient_id', $patient->id)
+                $activeDeposits = PatientDeposit::where('patient_id', $billingPatientId)
                     ->where('status', 'active')
                     ->orderBy('deposit_date', 'asc') // FIFO - oldest first
                     ->orderBy('id', 'asc')
@@ -844,9 +861,9 @@ class BillingWorkbenchController extends Controller
                 ]);
             }
 
-            // Mark items as paid
+            // Mark items as paid — covers primary patient AND all family members
             ProductOrServiceRequest::whereIn('id', $ids)
-                ->where('user_id', $patient->user_id)
+                ->whereIn('user_id', $patient->family_user_ids)
                 ->whereNull('invoice_id')
                 ->update(['payment_id' => $payment->id]);
 
@@ -902,39 +919,52 @@ class BillingWorkbenchController extends Controller
             $date = now()->format('Y-m-d H:i');
             $ref = $data['reference_no'];
 
+            // Detect if this is a cross-family payment (items for multiple patients)
+            $uniquePatientUserIds = collect($receiptDetails)->pluck('patient_user_id')->unique();
+            $isFamilyPayment = $uniquePatientUserIds->count() > 1;
+            $familyPatientNames = $isFamilyPayment
+                ? \App\Models\Patient::whereIn('user_id', $uniquePatientUserIds->all())
+                    ->get()->map(fn($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
+                    ->join(', ')
+                : null;
+
             $amountParts = explode('.', number_format((float) $total, 2, '.', ''));
             $nairaWords = convert_number_to_words((int) $amountParts[0]);
             $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
             $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords);
 
             $a4 = View::make('admin.Accounts.receipt_a4', [
-                'site' => $site,
-                'patientName' => $patientName,
-                'patientFileNo' => $patientFileNo,
-                'date' => $date,
-                'ref' => $ref,
-                'receiptDetails' => $receiptDetails,
-                'totalDiscount' => $totalDiscount,
-                'totalPaid' => $total,
-                'amountInWords' => $amountInWords,
-                'paymentType' => $data['payment_type'],
-                'notes' => '',
-                'currentUserName' => $currentUserName,
+                'site'              => $site,
+                'patientName'       => $patientName,
+                'patientFileNo'     => $patientFileNo,
+                'isFamilyPayment'   => $isFamilyPayment,
+                'familyPatientNames' => $familyPatientNames,
+                'date'              => $date,
+                'ref'               => $ref,
+                'receiptDetails'    => $receiptDetails,
+                'totalDiscount'     => $totalDiscount,
+                'totalPaid'         => $total,
+                'amountInWords'     => $amountInWords,
+                'paymentType'       => $data['payment_type'],
+                'notes'             => '',
+                'currentUserName'   => $currentUserName,
             ])->render();
 
             $thermal = View::make('admin.Accounts.receipt_thermal', [
-                'site' => $site,
-                'patientName' => $patientName,
-                'patientFileNo' => $patientFileNo,
-                'date' => $date,
-                'ref' => $ref,
-                'receiptDetails' => $receiptDetails,
-                'totalDiscount' => $totalDiscount,
-                'totalPaid' => $total,
-                'amountInWords' => $amountInWords,
-                'paymentType' => $data['payment_type'],
-                'notes' => '',
-                'currentUserName' => $currentUserName,
+                'site'              => $site,
+                'patientName'       => $patientName,
+                'patientFileNo'     => $patientFileNo,
+                'isFamilyPayment'   => $isFamilyPayment,
+                'familyPatientNames' => $familyPatientNames,
+                'date'              => $date,
+                'ref'               => $ref,
+                'receiptDetails'    => $receiptDetails,
+                'totalDiscount'     => $totalDiscount,
+                'totalPaid'         => $total,
+                'amountInWords'     => $amountInWords,
+                'paymentType'       => $data['payment_type'],
+                'notes'             => '',
+                'currentUserName'   => $currentUserName,
             ])->render();
 
             DB::commit();
@@ -993,13 +1023,15 @@ class BillingWorkbenchController extends Controller
             $totalDiscount += $discountAmount;
 
             $receiptDetails[] = [
-                'type' => $isService ? 'Service' : 'Product',
-                'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
-                'price' => $unitPrice,
-                'qty' => $qty,
+                'type'             => $isService ? 'Service' : 'Product',
+                'name'             => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                'patient_name'     => userfullname($row->user_id),
+                'patient_user_id'  => $row->user_id,
+                'price'            => $unitPrice,
+                'qty'              => $qty,
                 'discount_percent' => $discountPercent,
-                'discount_amount' => $discountAmount,
-                'amount_paid' => $lineTotal,
+                'discount_amount'  => $discountAmount,
+                'amount_paid'      => $lineTotal,
             ];
         }
 
@@ -1010,6 +1042,15 @@ class BillingWorkbenchController extends Controller
         $date = now()->format('Y-m-d H:i');
         $ref = $payments->first()->reference_no ?? 'COMBINED';
 
+        // Detect if this is a cross-family payment (items for multiple patients)
+        $uniquePatientUserIds = collect($receiptDetails)->pluck('patient_user_id')->unique();
+        $isFamilyPayment = $uniquePatientUserIds->count() > 1;
+        $familyPatientNames = $isFamilyPayment
+            ? \App\Models\Patient::whereIn('user_id', $uniquePatientUserIds->all())
+                ->get()->map(fn($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
+                ->join(', ')
+            : null;
+
         $amountParts = explode('.', number_format((float) $totalAmount, 2, '.', ''));
         $nairaWords = convert_number_to_words((int) $amountParts[0]);
         $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
@@ -1018,33 +1059,37 @@ class BillingWorkbenchController extends Controller
         $paymentType = $payments->first()->payment_type ?? 'N/A';
 
         $a4 = View::make('admin.Accounts.receipt_a4', [
-            'site' => $site,
-            'patientName' => $patientName,
-            'patientFileNo' => $patientFileNo,
-            'date' => $date,
-            'ref' => $ref,
-            'receiptDetails' => $receiptDetails,
-            'totalDiscount' => $totalDiscount,
-            'totalPaid' => $totalAmount,
-            'amountInWords' => $amountInWords,
-            'paymentType' => $paymentType,
-            'notes' => '',
-            'currentUserName' => $currentUserName,
+            'site'               => $site,
+            'patientName'        => $patientName,
+            'patientFileNo'      => $patientFileNo,
+            'isFamilyPayment'    => $isFamilyPayment,
+            'familyPatientNames' => $familyPatientNames,
+            'date'               => $date,
+            'ref'                => $ref,
+            'receiptDetails'     => $receiptDetails,
+            'totalDiscount'      => $totalDiscount,
+            'totalPaid'          => $totalAmount,
+            'amountInWords'      => $amountInWords,
+            'paymentType'        => $paymentType,
+            'notes'              => '',
+            'currentUserName'    => $currentUserName,
         ])->render();
 
         $thermal = View::make('admin.Accounts.receipt_thermal', [
-            'site' => $site,
-            'patientName' => $patientName,
-            'patientFileNo' => $patientFileNo,
-            'date' => $date,
-            'ref' => $ref,
-            'receiptDetails' => $receiptDetails,
-            'totalDiscount' => $totalDiscount,
-            'totalPaid' => $totalAmount,
-            'amountInWords' => $amountInWords,
-            'paymentType' => $paymentType,
-            'notes' => '',
-            'currentUserName' => $currentUserName,
+            'site'               => $site,
+            'patientName'        => $patientName,
+            'patientFileNo'      => $patientFileNo,
+            'isFamilyPayment'    => $isFamilyPayment,
+            'familyPatientNames' => $familyPatientNames,
+            'date'               => $date,
+            'ref'                => $ref,
+            'receiptDetails'     => $receiptDetails,
+            'totalDiscount'      => $totalDiscount,
+            'totalPaid'          => $totalAmount,
+            'amountInWords'      => $amountInWords,
+            'paymentType'        => $paymentType,
+            'notes'              => '',
+            'currentUserName'    => $currentUserName,
         ])->render();
 
         return response()->json([
@@ -1411,8 +1456,9 @@ class BillingWorkbenchController extends Controller
             $deposit = null;
             if ($paymentType === 'ACC_DEPOSIT') {
                 $depositNumber = PatientDeposit::generateNumber();
+                $billingPatientId = Patient::find($request->patient_id)->billing_patient_id ?? $request->patient_id;
                 $deposit = PatientDeposit::create([
-                    'patient_id' => $request->patient_id,
+                    'patient_id' => $billingPatientId,
                     'deposit_number' => $depositNumber,
                     'deposit_date' => now(),
                     'amount' => $amount, // Always positive for deposits
@@ -1587,7 +1633,7 @@ class BillingWorkbenchController extends Controller
 
         // Include deposits (ACC_DEPOSIT from payments OR from patient_deposits)
         if ($includeDeposits) {
-            $deposits = PatientDeposit::where('patient_id', $patientId)
+            $deposits = PatientDeposit::where('patient_id', $billingPatientId)
                 ->whereBetween('deposit_date', [$dateFrom, $dateTo])
                 ->orderBy('deposit_date')
                 ->get();
