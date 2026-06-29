@@ -56,8 +56,12 @@
         <hr class="hr-solid">
         <div class="title">RECEIPT</div>
         <div class="details">
-            <b>Patient:</b> {{ $patientName }}<br>
+            <b>{{ $isFamilyPayment ? 'Family Folder:' : 'Patient:' }}</b> {{ $patientName }}<br>
+            @if($isFamilyPayment)
+            <b>Members:</b> <span style="font-size:7.5px;">{{ $familyPatientNames }}</span><br>
+            @else
             <b>File No:</b> {{ $patientFileNo ?? 'N/A' }}<br>
+            @endif
             <b>Date:</b> {{ $date }}<br>
             <b>Ref:</b> {{ $ref }}<br>
             <b>Served By:</b> {{ $currentUserName }}<br>
@@ -68,11 +72,14 @@
         <div class="item-list">
         @foreach($receiptDetails as $row)
             <div class="item-row">
+                @if($isFamilyPayment)
+                <div style="font-size:7.5px; font-weight:700; color:#555; margin-bottom:2px;">&#8627; {{ $row['patient_name'] }}</div>
+                @endif
                 <div class="item-name">{{ $row['name'] }}</div>
                 <div class="item-type">{{ $row['type'] }}</div>
                 <div class="item-line">
-                    <span class="label">Qty × Unit Price</span>
-                    <span class="val">{{ $row['qty'] }} × ₦{{ number_format($row['price'], 2) }}</span>
+                    <span class="label">Qty &times; Unit Price</span>
+                    <span class="val">{{ $row['qty'] }} &times; ₦{{ number_format($row['price'], 2) }}</span>
                 </div>
                 @if((float)$row['discount_amount'] > 0 || (float)$row['discount_percent'] > 0)
                 <div class="item-line">

@@ -3391,6 +3391,9 @@
                     </div>
                 </div>
 
+                <!-- Family Tabs Container -->
+                <div id="billing-family-tabs" class="workspace-tabs" style="display:none; margin: 0; padding: 0 1rem; border-bottom: 1px solid #dee2e6;"></div>
+
                 <!-- Billing Items Filter/Search Bar -->
                 <div class="billing-filter-bar">
                     <div class="billing-filter-row">
@@ -4631,6 +4634,9 @@ function loadPatient(patientId) {
             renderBillingItems(data.items);
             updateBillingBadge(data.items.length);
 
+            // Build Family Tabs AFTER items are rendered (so applyBillingFilters runs after tabs are built)
+            buildFamilyTabs(data.patient, data.items);
+
             // Load account balance
             loadAccountBalance(patientId);
 
@@ -5210,7 +5216,8 @@ function updateSyncTimeDisplay() {
 }
 
 function switchWorkspaceTab(tab) {
-    $('.workspace-tab').removeClass('active');
+    // Only clear the main workspace nav tabs (those with data-tab), not the family tabs
+    $('.workspace-tab[data-tab]').removeClass('active');
     $(`.workspace-tab[data-tab="${tab}"]`).addClass('active');
 
     $('.workspace-tab-content').removeClass('active');
@@ -5909,6 +5916,9 @@ function renderBillingItems(items) {
     const tbody = $('#billing-items-tbody');
     tbody.empty();
 
+    // Default to 'all' or currently selected tab if any
+    let activeFamilyUserId = $('#billing-family-tabs .workspace-tab.active').data('user-id') || 'all';
+
     if (items.length === 0) {
         tbody.html(`
             <tr>
@@ -5925,7 +5935,7 @@ function renderBillingItems(items) {
         // Use pre-formatted datetime or format it client-side
         const datetime = item.created_at_formatted || (item.created_at ? formatDateTime(item.created_at) : 'N/A');
         const row = `
-            <tr data-item-id="${item.id}">
+            <tr data-item-id="${item.id}" data-user-id="${item.user_id}">
                 <td><input type="checkbox" class="billing-item-checkbox" data-id="${item.id}"></td>
                 <td class="text-nowrap" style="font-size: 0.85rem;"><i class="mdi mdi-clock-outline text-muted"></i> ${datetime}</td>
                 <td>${item.name}</td>
@@ -5966,6 +5976,7 @@ function renderBillingItems(items) {
 
     // Populate category filter dropdown and update stats
     populateCategoryFilter(items);
+    applyBillingFilters();
     updateBillingFilterStats();
 
     console.log('Rendered', items.length, 'billing items');
@@ -6001,6 +6012,12 @@ function applyBillingFilters() {
         const itemDateText = row.find('td:eq(1)').text().trim();
 
         let visible = true;
+        const activeFamilyUserId = $('#billing-family-tabs .workspace-tab.active').data('user-id') || 'all';
+
+        // Family Tab Filter
+        if (activeFamilyUserId !== 'all' && row.data('user-id') != activeFamilyUserId) {
+            visible = false;
+        }
 
         // Search filter
         if (searchTerm && !itemName.includes(searchTerm)) {
@@ -8655,6 +8672,59 @@ $('#receiptPreviewModal, #accountStatementModal').on('hidden.bs.modal', function
     }
 });
 
+function buildFamilyTabs(patient, items) {
+    const tabsContainer = $('#billing-family-tabs');
+    tabsContainer.empty();
+
+    if (!patient.family_members || patient.family_members.length <= 1) {
+        tabsContainer.hide();
+        return;
+    }
+
+    tabsContainer.show();
+    
+    // Add "Me" tab (active by default)
+    tabsContainer.append(`
+        <button class="workspace-tab active" data-user-id="${patient.user_id}">
+            <i class="mdi mdi-account"></i>
+            <span>Me</span>
+        </button>
+    `);
+
+    // Add "All Family Members" tab
+    tabsContainer.append(`
+        <button class="workspace-tab" data-user-id="all">
+            <i class="mdi mdi-format-list-bulleted"></i>
+            <span>All Family Members</span>
+        </button>
+    `);
+
+    // Add individual family members (excluding the current patient)
+    patient.family_members.forEach(member => {
+        if (member.user_id === patient.user_id) return;
+
+        const hasItems = items.some(item => item.user_id == member.user_id);
+        const icon = member.is_principal ? 'mdi-account-star' : 'mdi-account-outline';
+        const badge = hasItems ? '<span class="workspace-tab-badge" style="display:inline-block; margin-left: 5px; background: #dc3545; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem;">!</span>' : '';
+        
+        tabsContainer.append(`
+            <button class="workspace-tab" data-user-id="${member.user_id}">
+                <i class="mdi ${icon}"></i>
+                <span>${member.name}</span>
+                ${badge}
+            </button>
+        `);
+    });
+
+    // Handle tab clicks
+    tabsContainer.find('.workspace-tab').on('click', function() {
+        tabsContainer.find('.workspace-tab').removeClass('active');
+        $(this).addClass('active');
+        applyBillingFilters();
+        updatePaymentSummary();
+    });
+}
+
 </script>
 
 {{-- Investigation Result View Modal --}}
@@ -8671,3 +8741,4 @@ $('#receiptPreviewModal, #accountStatementModal').on('hidden.bs.modal', function
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
 @endsection
+

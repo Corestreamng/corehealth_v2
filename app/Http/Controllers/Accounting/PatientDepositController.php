@@ -298,9 +298,11 @@ class PatientDepositController extends Controller
             // Generate deposit number
             $depositNumber = PatientDeposit::generateNumber();
 
+            $billingPatientId = Patient::find($validated['patient_id'])->billing_patient_id ?? $validated['patient_id'];
+
             // Create PatientDeposit record
             $deposit = PatientDeposit::create([
-                'patient_id' => $validated['patient_id'],
+                'patient_id' => $billingPatientId,
                 'admission_id' => $validated['admission_id'],
                 'deposit_number' => $depositNumber,
                 'deposit_date' => now(),
@@ -320,7 +322,7 @@ class PatientDepositController extends Controller
 
             // SYNC WITH LEGACY SYSTEM: Update PatientAccount balance
             $patientAccount = PatientAccount::firstOrCreate(
-                ['patient_id' => $validated['patient_id']],
+                ['patient_id' => $billingPatientId],
                 ['balance' => 0]
             );
 

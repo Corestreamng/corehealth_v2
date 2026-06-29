@@ -54,8 +54,16 @@
         </div>
 
         <div class="details">
-            <div><span class="badge">Patient</span><br>{{ $patientName }}</div>
+            <div>
+                <span class="badge">{{ $isFamilyPayment ? 'Family Folder' : 'Patient' }}</span><br>
+                {{ $patientName }}
+                @if($isFamilyPayment)
+                    <div style="font-size:11px; color:var(--muted); margin-top:4px;">Covers: {{ $familyPatientNames }}</div>
+                @endif
+            </div>
+            @if(!$isFamilyPayment)
             <div><span class="badge">File No.</span><br>{{ $patientFileNo ?? 'N/A' }}</div>
+            @endif
             <div><span class="badge">Date</span><br>{{ $date }}</div>
             <div><span class="badge">Served By</span><br>{{ $currentUserName }}</div>
         </div>
@@ -63,6 +71,9 @@
         <table>
             <thead>
                 <tr>
+                    @if($isFamilyPayment)
+                    <th>Patient</th>
+                    @endif
                     <th>Type</th>
                     <th>Name</th>
                     <th>Unit Price</th>
@@ -75,6 +86,9 @@
             <tbody>
             @foreach($receiptDetails as $row)
                 <tr>
+                    @if($isFamilyPayment)
+                    <td style="font-size:12px; color:#555;">{{ $row['patient_name'] }}</td>
+                    @endif
                     <td>{{ $row['type'] }}</td>
                     <td>{{ $row['name'] }}</td>
                     <td>{{ number_format($row['price'], 2) }}</td>
