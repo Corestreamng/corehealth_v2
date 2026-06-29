@@ -3861,16 +3861,17 @@ class PharmacyWorkbenchController extends Controller
             $stockQuery->where('store_id', $storeId);
         }
 
-        $batches = $stockQuery->get();
         $totalStockValue = 0;
-        foreach ($batches as $batch) {
-            $cost = $batch->cost_price;
-            if (empty($cost) || $cost <= 0) {
-                $price = $batch->product->price ?? null;
-                $cost = $price ? $price->pr_buy_price : 0;
+        $stockQuery->chunk(500, function ($batches) use (&$totalStockValue) {
+            foreach ($batches as $batch) {
+                $cost = $batch->cost_price;
+                if (empty($cost) || $cost <= 0) {
+                    $price = $batch->product->price ?? null;
+                    $cost = $price ? $price->pr_buy_price : 0;
+                }
+                $totalStockValue += ($batch->current_qty * $cost);
             }
-            $totalStockValue += ($batch->current_qty * $cost);
-        }
+        });
 
         // Base query for dispensed items
         $posrQuery = \App\Models\ProductOrServiceRequest::whereNotNull('dispensed_from_store_id')
@@ -3878,11 +3879,9 @@ class PharmacyWorkbenchController extends Controller
                 $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
             });
 
-        if ($dateFrom) $posrQuery->where('order_date', '>=', $dateFrom);
-        if ($dateTo) $posrQuery->where('order_date', '<=', $dateTo);
+        if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
+        if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
         if ($storeId) $posrQuery->where('dispensed_from_store_id', $storeId);
-
-        $posrRecords = $posrQuery->with(['dispensedFromStore', 'patient', 'hmo.scheme', 'encounter.queue.clinic'])->get();
 
         // 1.5 Expenditure (Purchases)
         $reqQuery = \App\Models\StoreRequisitionItem::with(['sourceBatch', 'product.price'])
@@ -3897,78 +3896,29 @@ class PharmacyWorkbenchController extends Controller
                 if ($storeId) $q->where('to_store_id', $storeId);
             });
             
-        $requisitions = $reqQuery->get();
         $totalExpenditure = 0;
-        foreach ($requisitions as $reqItem) {
-            $cost = 0;
-            if ($reqItem->sourceBatch) {
-                $batch = $reqItem->sourceBatch;
-                if ($batch && $batch->cost_price > 0) {
-                    $cost = $batch->cost_price;
+        $reqQuery->chunk(500, function ($requisitions) use (&$totalExpenditure) {
+            foreach ($requisitions as $reqItem) {
+                $cost = 0;
+                if ($reqItem->sourceBatch) {
+                    $batch = $reqItem->sourceBatch;
+                    if ($batch && $batch->cost_price > 0) {
+                        $cost = $batch->cost_price;
+                    }
                 }
+                if ($cost <= 0) {
+                    $price = $reqItem->product->price ?? null;
+                    $cost = $price ? $price->pr_buy_price : 0;
+                }
+                $totalExpenditure += ($reqItem->fulfilled_qty * $cost);
             }
-            if ($cost <= 0) {
-                $price = $reqItem->product->price ?? null;
-                $cost = $price ? $price->pr_buy_price : 0;
-            }
-            $totalExpenditure += ($reqItem->fulfilled_qty * $cost);
-        }
+        });
 
-        // 2. Collections by Store (Deep nested logic)
+        // 2. Collections by Store & Demographics Data Preparation
         $collectionsByStore = [];
         $incomeByScheme = [];
         $totalGoodsUsed = 0;
         
-        foreach ($posrRecords as $record) {
-            $storeName = $record->dispensedFromStore->store_name ?? 'Unknown Store';
-            $cashAmount = (float)$record->payable_amount;
-            $claimsAmount = (float)$record->claims_amount;
-            $amount = $cashAmount + $claimsAmount;
-            
-            $totalGoodsUsed += $amount;
-            
-            $hmoId = $record->hmo_id;
-            $hmo = $record->hmo;
-            $schemeName = 'Self/Private';
-            $hmoName = 'Self/Private';
-
-            if ($hmoId && $hmoId != 1 && $hmo) {
-                $schemeName = $hmo->scheme->name ?? 'Unknown Scheme';
-                $hmoName = $hmo->name ?? 'Unknown HMO';
-            }
-
-            // Income by Scheme summary
-            if (!isset($incomeByScheme[$schemeName])) {
-                $incomeByScheme[$schemeName] = 0;
-            }
-            $incomeByScheme[$schemeName] += $amount;
-
-            if (!isset($collectionsByStore[$storeName])) {
-                $collectionsByStore[$storeName] = ['store_name' => $storeName, 'count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0, 'schemes' => []];
-            }
-            $collectionsByStore[$storeName]['count']++;
-            $collectionsByStore[$storeName]['value'] += $amount;
-            $collectionsByStore[$storeName]['cash'] += $cashAmount;
-            $collectionsByStore[$storeName]['claims'] += $claimsAmount;
-
-            if (!isset($collectionsByStore[$storeName]['schemes'][$schemeName])) {
-                $collectionsByStore[$storeName]['schemes'][$schemeName] = ['count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0, 'hmos' => []];
-            }
-            $collectionsByStore[$storeName]['schemes'][$schemeName]['count']++;
-            $collectionsByStore[$storeName]['schemes'][$schemeName]['value'] += $amount;
-            $collectionsByStore[$storeName]['schemes'][$schemeName]['cash'] += $cashAmount;
-            $collectionsByStore[$storeName]['schemes'][$schemeName]['claims'] += $claimsAmount;
-
-            if (!isset($collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName])) {
-                $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName] = ['count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0];
-            }
-            $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['count']++;
-            $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['value'] += $amount;
-            $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['cash'] += $cashAmount;
-            $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['claims'] += $claimsAmount;
-        }
-
-        // Demographics Data Preparation
         $visitTypeCounts = ['Admitted' => 0, 'Out-Patient' => 0, 'Walk-in' => 0];
         $patientClassBreakdown = [];
         $genderBreakdown = [];
@@ -4004,59 +3954,109 @@ class PharmacyWorkbenchController extends Controller
         $processedPatients = [];
         $patientsByScheme = [];
 
-        foreach ($posrRecords as $record) {
-            $patient = $record->patient;
-            if (!$patient) continue;
-            
-            $hmoId = $record->hmo_id;
-            $hmo = $record->hmo;
-            $schemeName = 'Self/Private';
-            if ($hmoId && $hmoId != 1 && $hmo) {
-                $schemeName = $hmo->scheme->name ?? 'Unknown Scheme';
-            }
+        $posrQuery->with(['dispensedFromStore', 'patient', 'hmo.scheme', 'encounter.queue.clinic'])
+            ->chunk(500, function ($posrRecords) use (
+                &$collectionsByStore, &$incomeByScheme, &$totalGoodsUsed,
+                &$visitTypeCounts, &$patientClassBreakdown, &$genderBreakdown,
+                &$ageBreakdown, &$processedPatients, &$patientsByScheme,
+                $ageBrackets, $addHmoData
+            ) {
+                foreach ($posrRecords as $record) {
+                    // Part A: Financials
+                    $storeName = $record->dispensedFromStore->store_name ?? 'Unknown Store';
+                    $cashAmount = (float)$record->payable_amount;
+                    $claimsAmount = (float)$record->claims_amount;
+                    $amount = $cashAmount + $claimsAmount;
+                    
+                    $totalGoodsUsed += $amount;
+                    
+                    $hmoId = $record->hmo_id;
+                    $hmo = $record->hmo;
+                    $schemeName = 'Self/Private';
+                    $hmoName = 'Self/Private';
 
-            // Only count patient demographics once per report run
-            if (isset($processedPatients[$patient->id])) continue;
-            $processedPatients[$patient->id] = true;
-            
-            $isAdmitted = $record->admission_request_id || ($record->encounter && $record->encounter->admission_request_id);
-            
-            if ($isAdmitted) {
-                $visitTypeCounts['Admitted']++;
-            } elseif ($record->encounter_id) {
-                $visitTypeCounts['Out-Patient']++;
-            } else {
-                $visitTypeCounts['Walk-in']++;
-            }
-
-            if (!isset($patientsByScheme[$schemeName])) {
-                $patientsByScheme[$schemeName] = 0;
-            }
-            $patientsByScheme[$schemeName]++;
-            
-            if ($isAdmitted) {
-                $addHmoData($patientClassBreakdown, 'Admitted', $record);
-            } elseif ($record->encounter_id) {
-                $addHmoData($patientClassBreakdown, 'Out-Patient', $record);
-            } else {
-                $addHmoData($patientClassBreakdown, 'Walk-in', $record);
-            }
-
-            $gender = $patient->gender ?? 'Unknown';
-            $addHmoData($genderBreakdown, $gender, $record);
-
-            $age = $patient->dob ? Carbon::parse($patient->dob)->age : null;
-            $ageLabel = 'Unknown';
-            if ($age !== null) {
-                foreach ($ageBrackets as $bracket) {
-                    if ($age >= $bracket['min'] && $age <= $bracket['max']) {
-                        $ageLabel = $bracket['label'];
-                        break;
+                    if ($hmoId && $hmoId != 1 && $hmo) {
+                        $schemeName = $hmo->scheme->name ?? 'Unknown Scheme';
+                        $hmoName = $hmo->name ?? 'Unknown HMO';
                     }
+
+                    // Income by Scheme summary
+                    if (!isset($incomeByScheme[$schemeName])) {
+                        $incomeByScheme[$schemeName] = 0;
+                    }
+                    $incomeByScheme[$schemeName] += $amount;
+
+                    if (!isset($collectionsByStore[$storeName])) {
+                        $collectionsByStore[$storeName] = ['store_name' => $storeName, 'count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0, 'schemes' => []];
+                    }
+                    $collectionsByStore[$storeName]['count']++;
+                    $collectionsByStore[$storeName]['value'] += $amount;
+                    $collectionsByStore[$storeName]['cash'] += $cashAmount;
+                    $collectionsByStore[$storeName]['claims'] += $claimsAmount;
+
+                    if (!isset($collectionsByStore[$storeName]['schemes'][$schemeName])) {
+                        $collectionsByStore[$storeName]['schemes'][$schemeName] = ['count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0, 'hmos' => []];
+                    }
+                    $collectionsByStore[$storeName]['schemes'][$schemeName]['count']++;
+                    $collectionsByStore[$storeName]['schemes'][$schemeName]['value'] += $amount;
+                    $collectionsByStore[$storeName]['schemes'][$schemeName]['cash'] += $cashAmount;
+                    $collectionsByStore[$storeName]['schemes'][$schemeName]['claims'] += $claimsAmount;
+
+                    if (!isset($collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName])) {
+                        $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName] = ['count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0];
+                    }
+                    $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['count']++;
+                    $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['value'] += $amount;
+                    $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['cash'] += $cashAmount;
+                    $collectionsByStore[$storeName]['schemes'][$schemeName]['hmos'][$hmoName]['claims'] += $claimsAmount;
+
+                    // Part B: Demographics
+                    $patient = $record->patient;
+                    if (!$patient) continue;
+                    
+                    // Only count patient demographics once per report run
+                    if (isset($processedPatients[$patient->id])) continue;
+                    $processedPatients[$patient->id] = true;
+                    
+                    $isAdmitted = $record->admission_request_id || ($record->encounter && $record->encounter->admission_request_id);
+                    
+                    if ($isAdmitted) {
+                        $visitTypeCounts['Admitted']++;
+                    } elseif ($record->encounter_id) {
+                        $visitTypeCounts['Out-Patient']++;
+                    } else {
+                        $visitTypeCounts['Walk-in']++;
+                    }
+
+                    if (!isset($patientsByScheme[$schemeName])) {
+                        $patientsByScheme[$schemeName] = 0;
+                    }
+                    $patientsByScheme[$schemeName]++;
+                    
+                    if ($isAdmitted) {
+                        $addHmoData($patientClassBreakdown, 'Admitted', $record);
+                    } elseif ($record->encounter_id) {
+                        $addHmoData($patientClassBreakdown, 'Out-Patient', $record);
+                    } else {
+                        $addHmoData($patientClassBreakdown, 'Walk-in', $record);
+                    }
+
+                    $gender = $patient->gender ?? 'Unknown';
+                    $addHmoData($genderBreakdown, $gender, $record);
+
+                    $age = $patient->dob ? Carbon::parse($patient->dob)->age : null;
+                    $ageLabel = 'Unknown';
+                    if ($age !== null) {
+                        foreach ($ageBrackets as $bracket) {
+                            if ($age >= $bracket['min'] && $age <= $bracket['max']) {
+                                $ageLabel = $bracket['label'];
+                                break;
+                            }
+                        }
+                    }
+                    $addHmoData($ageBreakdown, $ageLabel, $record);
                 }
-            }
-            $addHmoData($ageBreakdown, $ageLabel, $record);
-        }
+            });
 
         // Calculate Opening Stock
         // Opening Stock = Closing Stock + Goods Used - Expenditure
