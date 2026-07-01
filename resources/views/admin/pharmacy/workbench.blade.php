@@ -4090,6 +4090,10 @@
                 <span class="queue-item-label">🔵 HMO Items</span>
                 <span class="queue-count hmo-items" id="queue-hmo-count">0</span>
             </div>
+            <div class="queue-item" data-filter="freeform">
+                <span class="queue-item-label">⚪ Free-Form / External</span>
+                <span class="queue-count" id="queue-freeform-count" style="background: #6c757d; color: white;">0</span>
+            </div>
             <button class="btn-queue-all" id="show-all-queue-btn">
                 📋 Show All Queue →
             </button>
@@ -5106,7 +5110,10 @@
                     </div>
                     <form id="new-prescription-request-form" class="new-request-form">
                         <div class="form-group" style="position: relative; width: 100%;">
-                            <label for="product-search-input"><i class="mdi mdi-magnify"></i> Search Medications/Products</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="product-search-input" class="mb-0"><i class="mdi mdi-magnify"></i> Search Medications/Products</label>
+                                <a href="javascript:void(0)" onclick="addFreeFormProductWorkbench()" class="text-primary small"><i class="mdi mdi-plus"></i> Not listed? Add free-form</a>
+                            </div>
                             <input type="text" class="form-control" id="product-search-input" placeholder="Type medication name or code..." autocomplete="off">
                             <ul class="list-group" id="product-search-results" style="display: none; position: absolute; top: 100%; left: 0; z-index: 1050; max-height: 300px; overflow-y: auto; width: 100%; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #ddd; border-radius: 0 0 4px 4px;"></ul>
                         </div>
@@ -6839,35 +6846,62 @@ let selectedProducts = [];
 
 function searchProducts(query) {
     const $container = $('#product-search-results');
-    $container.html('<li class="list-group-item text-center"><i class="mdi mdi-loading mdi-spin"></i> Loading products...</li>');
-    $container.show();
-
-    $.ajax({
-        url: '/pharmacy-workbench/search-products',
-        method: 'GET',
-        data: {
-            term: query,
-            patient_id: currentPatient // Include patient_id for HMO tariff lookup
-        },
-        success: function(results) {
-            displayProductSearchResults(results);
-        },
-        error: function() {
-            console.error('Product search failed');
-            $container.html('<li class="list-group-item text-danger"><i class="mdi mdi-alert-circle"></i> Failed to search products</li>');
-            toastr.error('Failed to search products');
-        }
-    });
+    
+    // Ensure SearchManager is available
+    if (typeof SearchManager !== 'undefined') {
+        SearchManager.execute({
+            inputVal: query,
+            minLength: 2,
+            delay: 300,
+            url: '/pharmacy-workbench/search-products',
+            data: {
+                term: query,
+                patient_id: currentPatient
+            },
+            onStart: function() {
+                $container.html('<li class="list-group-item text-center"><i class="mdi mdi-loading mdi-spin"></i> Loading products...</li>').show();
+            },
+            onSuccess: function(results) {
+                displayProductSearchResults(results, query);
+            },
+            onError: function() {
+                $container.html('<li class="list-group-item text-danger"><i class="mdi mdi-alert-circle"></i> Failed to search products</li>');
+            },
+            onEmptyQuery: function() {
+                $container.empty().hide();
+            }
+        });
+    } else {
+        // Fallback if not loaded
+        $container.html('<li class="list-group-item text-center"><i class="mdi mdi-loading mdi-spin"></i> Loading products...</li>').show();
+        $.ajax({
+            url: '/pharmacy-workbench/search-products',
+            method: 'GET',
+            data: { term: query, patient_id: currentPatient },
+            success: function(results) { displayProductSearchResults(results, query); },
+            error: function() {
+                $container.html('<li class="list-group-item text-danger"><i class="mdi mdi-alert-circle"></i> Failed to search products</li>');
+            }
+        });
+    }
 }
 
-function displayProductSearchResults(results) {
+function displayProductSearchResults(results, query) {
     const $container = $('#product-search-results');
     $container.empty();
 
     window.comboSearchMap = {};
 
+    // Inject Free-Form option at the top
+    const freeFormHtml = `
+        <li class="list-group-item list-group-item-action text-primary" onclick="addFreeFormProductWorkbench()" style="cursor:pointer;">
+            <i class="mdi mdi-plus-circle"></i> Not listed? Add free-form '${query}'
+        </li>
+    `;
+    $container.append(freeFormHtml);
+
     if (results.length === 0) {
-        $container.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-magnify"></i> No products found matching your search</li>');
+        $container.append('<li class="list-group-item text-center text-muted"><i class="mdi mdi-magnify"></i> No products found matching your search</li>');
         $container.show();
         return;
     }
@@ -6989,6 +7023,43 @@ function displayProductSearchResults(results) {
     });
 
     $container.show();
+}
+
+function addFreeFormProductWorkbench() {
+    Swal.fire({
+        title: 'Add Free-Form Medication',
+        text: 'Enter the name of the medication to prescribe:',
+        input: 'text',
+        showCancelButton: true,
+        confirmButtonText: 'Add',
+        inputValidator: (value) => {
+            if (!value) return 'You need to write something!'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const product = {
+                id: 'FF_' + result.value,
+                name: result.value + ' [Free-form]',
+                code: '',
+                price: 0,
+                category: 'Free-form',
+                payableAmount: 0,
+                claimsAmount: 0,
+                coverageMode: 'cash',
+                stockQty: 999, // infinite for free-form
+                qty: 1,
+                dose: ''
+            };
+            if (selectedProducts.some(p => p.id === product.id)) {
+                toastr.warning('Product already added');
+                return;
+            }
+            selectedProducts.push(product);
+            renderSelectedProducts();
+            $('#product-search-input').val('');
+            $('#product-search-results').hide();
+        }
+    });
 }
 
 function selectProduct(element) {
@@ -8309,6 +8380,54 @@ function renderPrescCardPharmacy(row, type) {
     let cardClass = 'presc-card';
     let cardStyle = '';
 
+    // Handle Free-Form items early - simplified card look
+    if (row.is_free_form) {
+        let metaInfoFree = `
+            <div class="presc-card-meta small text-muted mt-2">
+                <div><i class="mdi mdi-account"></i> By: ${row.requested_by || 'N/A'}</div>
+                <div><i class="mdi mdi-clock-outline"></i> ${row.requested_at || row.created_at || ''}</div>
+                ${row.dispensed_by ? `<div><i class="mdi mdi-pill"></i> Dispensed: ${row.dispensed_by} (${row.dispensed_at || ''})</div>` : ''}
+            </div>
+        `;
+        let statusBadge = row.status == 3 
+            ? '<span class="badge bg-success">Dispensed</span>' 
+            : '<span class="badge bg-secondary">Free-Form</span>';
+        
+        let dispenseBtn = '';
+        if (row.status != 3) {
+            dispenseBtn = `
+            <div class="presc-card-actions mt-2 pt-2 border-top">
+                <button type="button" class="btn btn-sm btn-success dispense-freeform-inline-btn" data-request-id="${row.id}" style="width: 100%;">
+                    <i class="mdi mdi-check"></i> Dispense Free-Form
+                </button>
+            </div>`;
+        }
+        
+        return `
+            <div class="presc-card border-secondary"
+                 data-id="${row.id}"
+                 data-product-id=""
+                 data-qty="${qty}"
+                 style="border-left: 4px solid #6c757d; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: #fdfdfd;">
+                 <div class="presc-card-header" style="display: flex; justify-content: space-between;">
+                    <div>
+                        <div class="presc-card-title fw-bold" style="font-size: 1.1rem; color: #333;">${row.free_form_name || row.product_name || 'Free-Form Item'}</div>
+                        <small class="text-muted"><i class="mdi mdi-file-document-edit"></i> Unmapped External Request</small>
+                    </div>
+                    <div class="text-end">
+                        ${statusBadge}
+                    </div>
+                </div>
+                <div class="presc-card-body mt-2 p-2 rounded" style="background: #f1f3f5; border: 1px solid #e9ecef;">
+                    <div style="font-size: 0.95rem;"><strong>Dose/Freq:</strong> ${row.dose || 'N/A'}</div>
+                    <div style="font-size: 0.95rem;"><strong>Qty:</strong> ${qty}</div>
+                </div>
+                ${metaInfoFree}
+                ${dispenseBtn}
+            </div>
+        `;
+    }
+
     // Bundled procedure indicator
     let bundledBadge = '';
     if (isBundled && procedureName) {
@@ -8797,6 +8916,7 @@ function loadQueueCounts() {
         $('#queue-unbilled-count').text(counts.unbilled || 0);
         $('#queue-ready-count').text(counts.ready || 0);
         $('#queue-hmo-count').text(counts.hmo || 0);
+        $('#queue-freeform-count').text(counts.freeform || 0);
         var emergencyCount = counts.emergency || 0;
         $('#queue-emergency-count').text(emergencyCount);
         if (emergencyCount> 0) {
@@ -10022,17 +10142,21 @@ function createFilteredTableRow(item) {
     let statusText = 'Unbilled';
     let statusClass = 'status-requested';
 
-    if (item.status == 1) {
+    if (item.is_free_form) {
+        statusText = 'Free-Form';
+        statusClass = 'status-ready bg-secondary text-white';
+        isReady = true;
+    } else if (item.status == 1) {
         statusText = 'Unbilled';
         statusClass = 'status-requested';
     } else if (item.status == 2) {
         // Check readiness
-        if (payableAmount> 0 && !isPaid) {
+        if (payableAmount > 0 && !isPaid) {
             isReady = false;
             blockingReason = 'Awaiting Payment';
             statusClass = 'status-billed';
             statusText = 'Awaiting Payment';
-        } else if (claimsAmount> 0 && !isValidated) {
+        } else if (claimsAmount > 0 && !isValidated) {
             isReady = false;
             blockingReason = 'Awaiting HMO Validation';
             statusClass = 'status-billed';
@@ -10087,9 +10211,14 @@ function createFilteredTableRow(item) {
 
     return `
         <tr data-item-id="${item.id}" class="${isReady ? 'table-success' : ''}">
-            <td><input type="checkbox" class="prescription-item-checkbox" data-id="${item.id}" ${isReady || item.status == 1 ? '' : 'disabled'}></td>
+            <td class="text-center">
+                ${item.is_free_form 
+                    ? '<span class="badge bg-secondary text-white" style="font-size: 0.65rem;">External</span>'
+                    : `<input type="checkbox" class="prescription-item-checkbox" data-id="${item.id}" ${(isReady || item.status == 1) ? '' : 'disabled'}>`
+                }
+            </td>
             <td>
-                <strong>${item.product_name || 'Unknown'}</strong>
+                <strong>${item.product_name || item.free_form_name || 'Unknown'}</strong>
                 ${item.dose ? `<br><small class="text-muted">Dose: ${item.dose}</small>` : ''}
             </td>
             <td class="text-center">${qty}</td>
@@ -10102,12 +10231,14 @@ function createFilteredTableRow(item) {
             <td>
                 <div class="btn-group btn-group-sm">
                     ${actionButtons}
-                    <button class="btn btn-success btn-sm dispense-single-btn" data-id="${item.id}" title="Dispense" ${isReady ? '' : 'disabled'}>
+                    <button class="btn btn-success btn-sm ${item.is_free_form ? 'dispense-free-form-single-btn' : 'dispense-single-btn'}" data-id="${item.id}" title="Dispense" ${isReady ? '' : 'disabled'}>
                         <i class="mdi mdi-pill"></i>
                     </button>
+                    ${!item.is_free_form ? `
                     <button class="btn btn-primary btn-sm print-single-btn" data-id="${item.id}" title="Print">
                         <i class="mdi mdi-printer"></i>
                     </button>
+                    ` : ''}
                 </div>
             </td>
         </tr>
@@ -10201,18 +10332,20 @@ function createPrescriptionCard(item, section) {
         `;
     }
 
+    let isFreeForm = item.is_free_form == 1 || item.is_free_form === true;
+    let freeFormBadge = isFreeForm ? `<span class="badge badge-secondary text-white ml-2" style="font-size:0.75rem;">[Free-form]</span>` : '';
+    let borderStyle = isFreeForm ? 'border-left: 4px solid #6c757d; background-color: #f8f9fa;' : '';
+    let checkboxOrIcon = isFreeForm ? `<i class="mdi mdi-information-outline text-muted fs-4"></i>` : `<input type="checkbox" class="prescription-checkbox" data-id="${item.id}" ${checkboxDisabled}>`;
+
     return `
-        <div class="request-card" data-request-id="${item.id}" data-section="${section}">
+        <div class="request-card" data-request-id="${item.id}" data-section="${section}" style="${borderStyle}">
             <div class="card-checkbox">
-                <input type="checkbox"
-                       class="prescription-checkbox"
-                       data-id="${item.id}"
-                       ${checkboxDisabled}>
+                ${checkboxOrIcon}
             </div>
             <div class="card-content">
                 <div class="card-header-row">
                     <div class="card-title">
-                        <strong>${item.product_name || item.medication_name || 'N/A'}</strong>
+                        <strong>${item.product_name || item.medication_name || 'N/A'}</strong>${freeFormBadge}
                         ${paymentModeHtml}
                         ${paymentStatusHtml}
                         ${item.adapted_from_product_id ? '<span class="badge badge-warning ml-1" title="Adapted from another product"><i class="mdi mdi-swap-horizontal"></i> Adapted</span>' : ''}
@@ -10220,7 +10353,7 @@ function createPrescriptionCard(item, section) {
                     </div>
                     <div class="card-meta">
                         <span class="text-muted">Qty: ${item.qty || item.quantity || 'N/A'}</span>
-                        ${section === 'unbilled' ? `
+                        ${!isFreeForm && section === 'unbilled' ? `
                             <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product" data-id="${item.id}" data-product="${item.product_name || item.medication_name || 'N/A'}" data-product-code="${item.product_code || ''}" data-dose="${item.dose || ''}" data-qty="${item.qty || item.quantity || 1}" data-price="${item.base_price || item.price || 0}" data-status="unbilled" data-payable="0" data-claims="0" data-is-paid="false" data-is-validated="false" data-coverage-mode="${item.coverage_mode || 'cash'}" title="Change to a different product">
                                 <i class="mdi mdi-swap-horizontal"></i> Adapt
                             </button>
@@ -10228,7 +10361,7 @@ function createPrescriptionCard(item, section) {
                                 <i class="mdi mdi-counter"></i> Adjust Qty
                             </button>
                         ` : ''}
-                        ${section === 'billed' && canModifyBilled(item) ? `
+                        ${!isFreeForm && section === 'billed' && canModifyBilled(item) ? `
                             <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product" data-id="${item.id}" data-product="${item.product_name || item.medication_name || 'N/A'}" data-product-code="${item.product_code || ''}" data-dose="${item.dose || ''}" data-qty="${item.qty || item.quantity || 1}" data-price="${item.base_price || item.price || 0}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${item.coverage_mode || 'none'}" title="Change to a different product (will update billing)">
                                 <i class="mdi mdi-swap-horizontal"></i> Adapt
                             </button>
@@ -10236,7 +10369,7 @@ function createPrescriptionCard(item, section) {
                                 <i class="mdi mdi-counter"></i> Adjust Qty
                             </button>
                         ` : ''}
-                        ${section === 'billed' && !canModifyBilled(item) ? `
+                        ${!isFreeForm && section === 'billed' && !canModifyBilled(item) ? `
                             <span class="text-muted ml-2" title="Cannot modify - partially settled"><i class="mdi mdi-lock-outline"></i></span>
                         ` : ''}
                     </div>
@@ -10265,20 +10398,22 @@ function createPrescriptionCard(item, section) {
                     ` : ''}
                 </div>
 
+                ${!isFreeForm ? `
                 <div class="card-pricing">
-                    ${payableAmount> 0 ? `
+                    ${payableAmount > 0 ? `
                         <div class="pricing-item">
                             <span class="label">Patient Pays:</span>
                             <span class="value text-primary">${formatMoney(payableAmount)}</span>
                         </div>
                     ` : ''}
-                    ${claimsAmount> 0 ? `
+                    ${claimsAmount > 0 ? `
                         <div class="pricing-item">
                             <span class="label">HMO Pays:</span>
                             <span class="value text-info">${formatMoney(claimsAmount)}</span>
                         </div>
                     ` : ''}
                 </div>
+                ` : ''}
 
                 ${warningHtml}
             </div>
@@ -10430,6 +10565,11 @@ function attachPrescriptionEventListeners() {
         dispenseItems([itemId]);
     });
 
+    $('.dispense-free-form-single-btn').off('click').on('click', function() {
+        const itemId = $(this).data('id');
+        dispenseFreeFormMed(itemId);
+    });
+
     $('.print-single-btn').off('click').on('click', function() {
         const itemId = $(this).data('id');
         printPrescription([itemId]);
@@ -10548,6 +10688,45 @@ function getSelectedPrescriptions(section) {
         selected.push($(this).data('id'));
     });
     return selected;
+}
+
+function dispenseFreeFormMed(requestId) {
+    Swal.fire({
+        title: 'Mark as Dispensed',
+        text: 'Enter the quantity dispensed:',
+        input: 'number',
+        inputValue: 1,
+        inputAttributes: {
+            min: 1,
+            step: 1
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Record as Dispensed',
+        showLoaderOnConfirm: true,
+        preConfirm: (qty) => {
+            return $.ajax({
+                url: '{{ route("pharmacy.dispense-free-form") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    request_id: requestId,
+                    qty_dispensed: qty
+                }
+            }).catch(error => {
+                Swal.showValidationMessage(
+                    `Request failed: ${error.responseJSON?.message || error.statusText}`
+                );
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            toastr.success('Medication marked as dispensed.');
+            if (window.prescHistoryTable) {
+                window.prescHistoryTable.ajax.reload(null, false);
+            }
+        }
+    });
 }
 
 function recordBillingForPrescriptions(itemIds) {
@@ -18135,7 +18314,91 @@ $(document).on('click', '#btn-register-walkin', function() {
     openWalkInRegistration();
 });
 
+// --- Free-Form Dispensing ---
+$(document).on('click', '.dispense-freeform-inline-btn', function(e) {
+    e.preventDefault();
+    const requestId = $(this).data('request-id');
+    const card = $(this).closest('.presc-card');
+    const itemName = card.find('.presc-card-title').text();
+    const qty = card.data('qty') || 1;
+    
+    $('#ff-dispense-request-id').val(requestId);
+    $('#ff-dispense-item-name').text(itemName);
+    $('#ff-dispense-qty').val(qty);
+    
+    $('#dispenseFreeFormModal').modal('show');
+});
+
+$(document).on('click', '#btn-confirm-ff-dispense', function() {
+    const requestId = $('#ff-dispense-request-id').val();
+    const qtyDispensed = $('#ff-dispense-qty').val();
+    const $btn = $(this);
+    
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Dispensing...');
+    
+    $.ajax({
+        url: "{{ route('pharmacy.dispense-free-form') }}",
+        method: 'POST',
+        data: {
+            _token: "{{ csrf_token() }}",
+            request_id: requestId,
+            qty_dispensed: qtyDispensed
+        },
+        success: function(response) {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Confirm Dispense');
+            $('#dispenseFreeFormModal').modal('hide');
+            toastr.success(response.message || 'Item dispensed successfully');
+            
+            // Reload patient data
+            if (currentPatient) {
+                loadPatient(currentPatient);
+            }
+            if (queueDataTable) {
+                queueDataTable.ajax.reload(null, false);
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Confirm Dispense');
+            toastr.error(xhr.responseJSON?.message || 'Error dispensing item');
+        }
+    });
+});
 </script>
+
+<!-- Free-Form Dispense Modal -->
+<div class="modal fade" id="dispenseFreeFormModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2 bg-success text-white">
+                <h6 class="modal-title mb-0"><i class="mdi mdi-pill me-1"></i> Dispense External Request</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <input type="hidden" id="ff-dispense-request-id">
+                
+                <div class="alert alert-info mb-3">
+                    <i class="mdi mdi-information-outline"></i> You are dispensing an external/free-form request. No billing or stock logic is tied to this action.
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted small fw-bold mb-1">Item to Dispense</label>
+                    <div id="ff-dispense-item-name" class="fw-bold" style="font-size: 1.1rem;"></div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted small fw-bold mb-1">Quantity Dispensed</label>
+                    <input type="number" class="form-control" id="ff-dispense-qty" min="1" step="1">
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="btn-confirm-ff-dispense" class="btn btn-success">
+                    <i class="mdi mdi-check me-1"></i> Confirm Dispense
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Store Context Override Modal -->
 <div class="modal fade" id="storeContextOverrideModal" tabindex="-1" aria-hidden="true">

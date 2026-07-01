@@ -9,6 +9,7 @@
 @endpush
 
 @section('content')
+    @include('admin.partials.procedure_outcome_modal')
 @php
 $hosColor = appsettings()->hos_color ?? '#0066cc';
 $sett = appsettings();
@@ -5414,11 +5415,7 @@ $sett = appsettings();
                                     <table class="table table-hover" style="width:100%" id="mco_proc_history_list">
                                         <thead class="table-light">
                                             <tr>
-                                                <th><i class="mdi mdi-medical-bag"></i> Procedure</th>
-                                                <th>Priority</th>
-                                                <th>Status</th>
-                                                <th>Date</th>
-                                                <th>Actions</th>
+                                                <th style="width: 100%;"><i class="mdi mdi-medical-bag"></i> Procedure Requests</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -5841,32 +5838,15 @@ $sett = appsettings();
                     url: '/procedureHistoryList/' + patientId,
                     type: 'GET'
                 },
-                columns: [{
-                        data: 'procedure',
-                        name: 'procedure'
-                    },
+                columns: [
                     {
-                        data: 'priority',
-                        name: 'priority'
-                    },
-                    {
-                        data: 'status',
-                        name: 'procedure_status'
-                    },
-                    {
-                        data: 'date',
-                        name: 'requested_on'
-                    },
-                    {
-                        data: 'actions',
-                        name: 'actions',
+                        data: 'info',
+                        name: 'info',
                         orderable: false,
                         searchable: false
                     }
                 ],
-                order: [
-                    [3, 'desc']
-                ],
+                order: [],
                 pageLength: 10,
                 language: {
                     emptyTable: 'No procedure history',
@@ -5885,6 +5865,9 @@ $sett = appsettings();
 
             $.get('/live-search-services', data, function(results) {
                 const $res = $('#mco_lab_results').empty();
+                ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Lab Test', 'Enter lab test name:', '#mco_lab_search', function(val) {
+                    MaternityClinicalOrders.addLabService(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
+                });
                 if (!results.length) {
                     ClinicalOrdersKit.showSearchEmpty('#mco_lab_results', 'lab services');
                     return;
@@ -5932,6 +5915,9 @@ $sett = appsettings();
                 patient_id: patientId
             }, function(results) {
                 const $res = $('#mco_presc_results').empty();
+                ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Medication', 'Enter medication name:', '#mco_presc_search', function(val) {
+                    MaternityClinicalOrders.addProductService(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
+                });
                 if (!results.length) {
                     ClinicalOrdersKit.showSearchEmpty('#mco_presc_results', 'products');
                     return;
@@ -5980,6 +5966,9 @@ $sett = appsettings();
                 patient_id: patientId
             }, function(results) {
                 const $res = $('#mco_imaging_results').empty();
+                ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Imaging Request', 'Enter imaging request name:', '#mco_imaging_search', function(val) {
+                    MaternityClinicalOrders.addImagingService(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
+                });
                 if (!results.length) {
                     ClinicalOrdersKit.showSearchEmpty('#mco_imaging_results', 'imaging services');
                     return;
@@ -6028,6 +6017,9 @@ $sett = appsettings();
                 patient_id: patientId
             }, function(results) {
                 const $res = $('#mco_proc_results').empty();
+                ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Procedure', 'Enter procedure name:', '#mco_proc_search', function(val) {
+                    MaternityClinicalOrders.addProcedureService(val + ' [Free-form]', 'FF_' + val, 0);
+                });
                 if (!results.length) {
                     ClinicalOrdersKit.showSearchEmpty('#mco_proc_results', 'procedures');
                     return;
@@ -6205,10 +6197,13 @@ $sett = appsettings();
                 type: 'procedures',
                 referenceId: parseInt(id),
                 buildRowHtml: function(resp) {
+                    var isFreeForm = String(id).startsWith('FF_');
+                    var nameHtml = isFreeForm ? '<h6 class="mb-0"><span class="badge bg-info text-dark">' + name.replace(' [Free-form]', '') + '</span></h6>' : '<strong>' + name + '</strong>';
+                    var priceHtml = isFreeForm ? '<span class="text-muted">N/A</span>' : 'NGN ' + price;
                     return '<tr data-record-id="' + resp.id + '" data-record-type="procedure" data-service-id="' + id + '">' +
-                        '<td><strong>' + name + '</strong>' +
+                        '<td>' + nameHtml +
                         (preNotes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + preNotes.substring(0, 60) + '</small>' : '') + '</td>' +
-                        '<td>NGN ' + price + '</td>' +
+                        '<td>' + priceHtml + '</td>' +
                         '<td><span class="badge ' + priorityClass + '">' + priorityLabel + '</span>' +
                         (scheduledDate ? '<br><small>' + scheduledDate + '</small>' : '') + '</td>' +
                         '<td><button class="btn btn-sm btn-danger" onclick="MaternityClinicalOrders.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + id + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
@@ -8853,3 +8848,5 @@ function showBundleRemove(btn) {
 <script src="{{ asset('js/patient-summary.js') }}"></script>
 
 @endsection
+
+

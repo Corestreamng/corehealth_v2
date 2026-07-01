@@ -7,6 +7,7 @@
 @endif
 @section('subpage_name', 'New Encounter')
 @section('content')
+    @include('admin.partials.procedure_outcome_modal')
     <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
     <style>
         /* Fix for modals inside overflow containers */
@@ -1823,6 +1824,46 @@
     </script>
     <script>
         /* ═══ Re-order / Re-prescribe from history (Plan §5.2) ═══ */
+
+        function dispenseFreeFormMed(requestId) {
+            Swal.fire({
+                title: 'Mark as Dispensed',
+                text: 'Enter the quantity dispensed:',
+                input: 'number',
+                inputValue: 1,
+                inputAttributes: {
+                    min: 1,
+                    step: 1
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Record as Dispensed',
+                showLoaderOnConfirm: true,
+                preConfirm: (qty) => {
+                    return $.ajax({
+                        url: '/pharmacy-workbench/dispense-free-form',
+                        method: 'POST',
+                        data: {
+                            _token: $('meta[name="csrf-token"]').attr('content'),
+                            request_id: requestId,
+                            qty_dispensed: qty
+                        }
+                    }).catch(error => {
+                        Swal.showValidationMessage(
+                            `Request failed: ${error.responseJSON?.message || error.statusText}`
+                        );
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('Success', 'Medication marked as dispensed.', 'success');
+                    if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                        $('#presc_history_list').DataTable().ajax.reload(null, false);
+                    }
+                }
+            });
+        }
+
         $(document).on('click', '.re-order-btn', function() {
             var $btn = $(this);
             if ($btn.prop('disabled')) return;
@@ -2016,6 +2057,9 @@
                         $('#consult_presc_res').html('');
                         console.log(data);
                         // data = JSON.parse(data);
+
+                        ClinicalOrdersKit.appendFreeFormLink($('#consult_presc_res'), q, 'Add Free-Form Medication', 'Enter the medication name:', '#consult_presc_search', function(val) { setSearchValProd(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0); });
+                        if(data.length === 0) { $('#consult_presc_res').show(); return; }
 
                         for (var i = 0; i < data.length; i++) {
                             const item = data[i] || {};
@@ -2230,6 +2274,9 @@
                         $('#consult_invest_res').html('');
                         console.log(data);
 
+                        ClinicalOrdersKit.appendFreeFormLink($('#consult_invest_res'), q, 'Add Free-Form Lab Test', 'Enter the lab test name:', '#consult_invest_search', function(val) { setSearchValSer(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0); });
+                        if(data.length === 0) { $('#consult_invest_res').show(); return; }
+
                         for (var i = 0; i < data.length; i++) {
                             const item = data[i] || {};
                             const category = item.category || 'N/A';
@@ -2299,6 +2346,9 @@
                     success: function(data) {
                         $('#consult_imaging_res').html('');
                         console.log(data);
+
+                        ClinicalOrdersKit.appendFreeFormLink($('#consult_imaging_res'), q, 'Add Free-Form Imaging Request', 'Enter the imaging request name:', '#consult_imaging_search', function(val) { setSearchValImaging(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0); });
+                        if(data.length === 0) { $('#consult_imaging_res').show(); return; }
 
                         for (var i = 0; i < data.length; i++) {
                             const item = data[i] || {};

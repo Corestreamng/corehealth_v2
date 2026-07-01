@@ -82,7 +82,10 @@
                 @include('admin.partials.dose-mode-toggle', ['prefix' => ''])
 
                 <div class="form-group">
-                    <label for="consult_presc_search">Search products</label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="consult_presc_search" class="mb-0">Search products</label>
+                        <a href="javascript:void(0)" onclick="addFreeFormPrescription()" class="text-primary small"><i class="fa fa-plus"></i> Not listed? Add free-form</a>
+                    </div>
                     <input type="text" class="form-control" id="consult_presc_search"
                         onkeyup="searchProducts(this.value)" placeholder="search products..." autocomplete="off">
                     <ul class="list-group" id="consult_presc_res" style="display: none;"></ul>

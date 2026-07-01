@@ -114,7 +114,7 @@ class ClinicalContextController extends Controller
 
             return [
                 'id' => $med->id,
-                'drug_name' => $med->product ? $med->product->product_name : 'N/A',
+                'drug_name' => $med->is_free_form ? $med->free_form_name : ($med->product ? $med->product->product_name : 'N/A'),
                 'product_code' => $med->product ? $med->product->product_code : null,
                 'dose' => $med->dose ?? 'N/A',
                 'freq' => $med->freq ?? 'N/A',
@@ -170,7 +170,7 @@ class ClinicalContextController extends Controller
 
             return [
                 'id' => $lab->id,
-                'service_name' => $lab->service ? $lab->service->service_name : 'N/A',
+                'service_name' => $lab->is_free_form ? $lab->free_form_name : ($lab->service ? $lab->service->service_name : 'N/A'),
                 'lab_number' => $lab->lab_number,
                 'status' => $status,
                 'priority' => $lab->priority,
@@ -217,7 +217,7 @@ class ClinicalContextController extends Controller
 
             return [
                 'id' => $img->id,
-                'service_name' => $img->service ? $img->service->service_name : 'N/A',
+                'service_name' => $img->is_free_form ? $img->free_form_name : ($img->service ? $img->service->service_name : 'N/A'),
                 'status' => $status,
                 'priority' => $img->priority,
                 'result_preview' => $img->result ? \Illuminate\Support\Str::limit(strip_tags($img->result), 100) : null,
@@ -261,7 +261,7 @@ class ClinicalContextController extends Controller
             $status = $p->procedure_status ?? 'requested';
             return [
                 'id' => $p->id,
-                'service_name' => $p->service ? $p->service->service_name : ($p->procedureDefinition ? $p->procedureDefinition->name : 'N/A'),
+                'service_name' => $p->is_free_form ? $p->free_form_name : ($p->service ? $p->service->service_name : ($p->procedureDefinition ? $p->procedureDefinition->name : 'N/A')),
                 'status' => $status,
                 'priority' => $p->priority ?? 'routine',
                 'requested_date' => $p->created_at->format('h:i a D M j, Y'),

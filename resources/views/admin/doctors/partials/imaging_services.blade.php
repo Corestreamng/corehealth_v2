@@ -69,7 +69,10 @@
                 <div id="imaging_save_message" class="mb-2"></div>
                 <h5 class="mb-3"><i class="fa fa-plus-circle"></i> New Imaging Request</h5>
                 <div class="form-group">
-                    <label for="consult_imaging_search">Search imaging services</label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="consult_imaging_search" class="mb-0">Search imaging services</label>
+                        <a href="javascript:void(0)" onclick="addFreeFormImaging()" class="text-primary small"><i class="fa fa-plus"></i> Not listed? Add free-form</a>
+                    </div>
                     <input type="text" class="form-control" id="consult_imaging_search"
                         onkeyup="searchImagingServices(this.value)" placeholder="search imaging services..." autocomplete="off">
                     <ul class="list-group" id="consult_imaging_res" style="display: none;"></ul>

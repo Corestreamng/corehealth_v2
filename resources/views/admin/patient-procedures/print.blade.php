@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Procedure Report - {{ optional($procedure->service)->service_name ?? 'Procedure' }}</title>
+    <title>Procedure Report - {{ $procedure->name }}</title>
     @php
         // Get settings object
         $sett = appsettings();
@@ -364,11 +364,11 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">Procedure:</span>
-                    <span class="info-value"><strong>{{ optional($procedure->service)->service_name ?? 'N/A' }}</strong></span>
+                    <span class="info-value"><strong>{{ $procedure->name }}</strong></span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Code:</span>
-                    <span class="info-value">{{ optional($procedure->service)->service_code ?? 'N/A' }}</span>
+                    <span class="info-value">{{ $procedure->is_free_form ? 'FREE-FORM' : (optional($procedure->service)->service_code ?? 'N/A') }}</span>
                 </div>
                 @if($procedure->procedureDefinition && $procedure->procedureDefinition->procedureCategory)
                     <div class="info-item">

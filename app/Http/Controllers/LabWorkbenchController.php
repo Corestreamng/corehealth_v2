@@ -89,12 +89,13 @@ class LabWorkbenchController extends Controller
     {
         // ── Performance: Single aggregate query for all queue counts ──
         $counts = LabServiceRequest::selectRaw("
-            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as billing,
-            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as sample,
-            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as results,
+            SUM(CASE WHEN status = 1 AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as billing,
+            SUM(CASE WHEN status = 2 AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as sample,
+            SUM(CASE WHEN status = 3 AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as results,
             SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as completed,
             SUM(CASE WHEN status IN (5, 6) THEN 1 ELSE 0 END) as approval,
-            SUM(CASE WHEN priority = 'emergency' AND status IN (1, 2, 3) THEN 1 ELSE 0 END) as emergency
+            SUM(CASE WHEN priority = 'emergency' AND status IN (1, 2, 3) AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as emergency,
+            SUM(CASE WHEN is_free_form = 1 AND status IN (1, 2, 3) THEN 1 ELSE 0 END) as freeform
         ")->first();
 
         $billingCount = (int) ($counts->billing ?? 0);
@@ -103,13 +104,15 @@ class LabWorkbenchController extends Controller
         $completedCount = (int) ($counts->completed ?? 0);
         $emergencyCount = (int) ($counts->emergency ?? 0);
         $approvalCount = (int) ($counts->approval ?? 0);
+        $freeformCount = (int) ($counts->freeform ?? 0);
 
         return response()->json([
             'billing' => $billingCount,
             'sample' => $sampleCount,
             'results' => $resultCount,
             'completed' => $completedCount,
-            'total' => $billingCount + $sampleCount + $resultCount,
+            'freeform' => $freeformCount,
+            'total' => $billingCount + $sampleCount + $resultCount + $freeformCount,
             'emergency' => $emergencyCount,
             'approval' => $approvalCount,
         ]);
@@ -132,6 +135,14 @@ class LabWorkbenchController extends Controller
         $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
             ->where('patient_id', $patientId)
             ->whereIn('status', $statuses)
+            ->where(function ($q) {
+                $q->whereNull('is_free_form')
+                  ->orWhere('is_free_form', 0)
+                  ->orWhere(function ($sq) {
+                      $sq->where('is_free_form', 1)
+                         ->where('created_at', '>=', now()->subHours(48));
+                  });
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -191,11 +202,14 @@ class LabWorkbenchController extends Controller
         });
 
         // Group by status
-        $billing = $requests->where('status', 1)->values();
-        $sample = $requests->where('status', 2)->values();
-        $results = $requests->where('status', 3)->values();
-        $pendingApproval = $requests->where('status', 5)->values();
-        $rejected = $requests->where('status', 6)->values();
+        $freeform = $requests->where('is_free_form', 1)->values();
+        $standardRequests = $requests->where('is_free_form', '!=', 1);
+
+        $billing = $standardRequests->where('status', 1)->values();
+        $sample = $standardRequests->where('status', 2)->values();
+        $results = $standardRequests->where('status', 3)->values();
+        $pendingApproval = $standardRequests->where('status', 5)->values();
+        $rejected = $standardRequests->where('status', 6)->values();
 
         // Calculate detailed age
         $ageText = 'N/A';
@@ -241,6 +255,7 @@ class LabWorkbenchController extends Controller
                 'results' => $results,
                 'pending_approval' => $pendingApproval,
                 'rejected' => $rejected,
+                'freeform' => $freeform,
             ],
         ]);
     }
@@ -320,12 +335,18 @@ class LabWorkbenchController extends Controller
             if ($request->has('status') && $request->status === 'approval') {
                 // Special approval queue: pending (5), rejected (6)
                 $query->whereIn('status', [5, 6]);
+            } elseif ($request->has('status') && $request->status === 'freeform') {
+                $query->whereIn('status', [1, 2, 3])->where('is_free_form', 1);
             } elseif ($request->has('status') && $request->status !== 'all') {
                 $statuses = explode(',', $request->status);
-                $query->whereIn('status', $statuses);
+                $query->whereIn('status', $statuses)->where(function($q) {
+                    $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+                });
             } else {
                 // Default to pending statuses (1, 2, 3)
-                $query->whereIn('status', [1, 2, 3]);
+                $query->whereIn('status', [1, 2, 3])->where(function($q) {
+                    $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+                });
             }
 
             // Apply date range filter if provided
@@ -385,7 +406,7 @@ class LabWorkbenchController extends Controller
                         'hmo' => $request->patient->hmo ? $request->patient->hmo->name : 'N/A',
                         'hmo_category' => $request->patient->hmo && $request->patient->hmo->scheme ? $request->patient->hmo->scheme->name : 'N/A',
                         'hmo_no' => $request->patient->hmo_no ?? 'N/A',
-                        'service_name' => $request->service ? $request->service->service_name : 'N/A',
+                        'service_name' => $request->service_name,
                         'status' => $request->status,
                         'note' => $request->note ?? null,
                         'result' => $request->result ?? null,
@@ -405,6 +426,7 @@ class LabWorkbenchController extends Controller
                         'approved_by' => $request->approved_by,
                         'approved_at' => $this->formatDateTime($request->approved_at),
                         'lab_number' => $request->lab_number ?? null,
+                        'is_free_form' => $request->is_free_form,
                     ];
                 })
                 ->filterColumn('card_data', function($query, $keyword) {
@@ -809,7 +831,7 @@ class LabWorkbenchController extends Controller
                 'patient_id' => $request->patient_id,
                 'lab_number' => $request->lab_number,
                 'service' => [
-                    'name' => $request->service->service_name ?? 'N/A',
+                    'name' => $request->service_name,
                     'template_version' => !empty($request->service->result_template_v2) ? 2 : 1,
                     'template_body' => $request->service->template ?? '',
                     'template_structure' => $request->service->result_template_v2 ?? null
@@ -898,7 +920,7 @@ class LabWorkbenchController extends Controller
             }
 
             // Check if service can be delivered (payment + HMO validation)
-            if ($labRequest->productOrServiceRequest) {
+            if (!$labRequest->is_free_form && $labRequest->productOrServiceRequest) {
                 $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($labRequest->productOrServiceRequest);
                 if (!$deliveryCheck['can_deliver'] && $labRequest->billed_by != Auth::id()) {
                     return response()->json([
@@ -1496,16 +1518,36 @@ class LabWorkbenchController extends Controller
             $request->validate([
                 'patient_id' => 'required|exists:patients,id',
                 'service_ids' => 'required|array',
-                'service_ids.*' => 'exists:services,id',
+                'service_ids.*' => 'required|string',
                 'clinical_notes' => 'nullable|string',
             ]);
+
+            // Validate regular services exist
+            $regularServiceIds = array_filter($request->service_ids, function($id) {
+                return strpos($id, 'FF_') !== 0;
+            });
+            
+            if (count($regularServiceIds) > 0) {
+                $existingCount = \App\Models\Service::whereIn('id', $regularServiceIds)->count();
+                if ($existingCount !== count($regularServiceIds)) {
+                    return response()->json(['success' => false, 'message' => 'One or more selected services are invalid.'], 422);
+                }
+            }
 
             DB::beginTransaction();
 
             $createdRequests = [];
             foreach ($request->service_ids as $index => $serviceId) {
                 $labRequest = new LabServiceRequest();
-                $labRequest->service_id = $serviceId;
+                
+                if (strpos($serviceId, 'FF_') === 0) {
+                    $labRequest->service_id = null;
+                    $labRequest->is_free_form = true;
+                    $labRequest->free_form_name = str_replace(' [Free-form]', '', substr($serviceId, 3));
+                } else {
+                    $labRequest->service_id = $serviceId;
+                }
+                
                 $labRequest->patient_id = $request->patient_id;
                 $labRequest->doctor_id = Auth::id();
                 $labRequest->note = $request->clinical_notes[$index] ?? $request->clinical_notes ?? '';
@@ -1601,7 +1643,7 @@ class LabWorkbenchController extends Controller
                         : 'N/A';
                 })
                 ->addColumn('service_name', function ($row) {
-                    return $row->service->service_name ?? 'N/A';
+                    return $row->service_name;
                 })
                 ->addColumn('doctor_name', function ($row) {
                     return $row->doctor ? $row->doctor->surname . ' ' . $row->doctor->firstname : 'N/A';
@@ -1837,7 +1879,7 @@ class LabWorkbenchController extends Controller
                 ->get()
                 ->map(function ($item) {
                     return [
-                        'name' => $item->service->service_name ?? 'N/A', // JS expects 'name'
+                        'name' => $item->service_name, // JS expects 'name'
                         'count' => $item->total,
                         'revenue' => 0 // Placeholder
                     ];
@@ -1916,7 +1958,7 @@ class LabWorkbenchController extends Controller
             $items = $query->get()->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'service_name' => $item->service->service_name ?? 'N/A',
+                    'service_name' => $item->service_name,
                     'patient_name' => $item->patient && $item->patient->user
                         ? $item->patient->user->surname . ' ' . $item->patient->user->firstname
                         : 'N/A',
@@ -1984,7 +2026,7 @@ class LabWorkbenchController extends Controller
                 'success' => true,
                 'data' => [
                     'id' => $item->id,
-                    'service_name' => $item->service->service_name ?? 'N/A',
+                    'service_name' => $item->service_name,
                     'patient_name' => $item->patient && $item->patient->user
                         ? $item->patient->user->surname . ' ' . $item->patient->user->firstname
                         : 'N/A',
@@ -2253,7 +2295,7 @@ class LabWorkbenchController extends Controller
                 'patient_name' => $req->patient && $req->patient->user
                     ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
                     : 'Unknown',
-                'service_name' => $req->service ? $req->service->service_name : 'N/A',
+                'service_name' => $req->service_name,
                 'lab_number' => $req->lab_number
             ];
         });

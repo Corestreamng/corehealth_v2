@@ -79,11 +79,7 @@
                     <table class="table table-hover" style="width: 100%" id="procedure_history_list">
                         <thead class="table-light">
                             <tr>
-                                <th><i class="fa fa-user-md"></i> Procedure</th>
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th>Actions</th>
+                                <th style="width: 100%;"><i class="fa fa-user-md"></i> Procedure Requests</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -406,13 +402,9 @@ function initProcedureHistoryTable() {
             }
         },
         columns: [
-            { data: 'procedure', name: 'procedure' },
-            { data: 'priority', name: 'priority' },
-            { data: 'status', name: 'procedure_status' },
-            { data: 'date', name: 'requested_on' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+            { data: 'info', name: 'info', orderable: false, searchable: false }
         ],
-        order: [[3, 'desc']],
+        order: [],
         language: {
             emptyTable: "No procedures found for this patient"
         }
@@ -491,6 +483,10 @@ function searchProcedures(query) {
                 });
             }
 
+            ClinicalOrdersKit.appendFreeFormLink($results, query, 'Add Free-Form Procedure', 'Enter the procedure name:', '#procedure_search', function(val) {
+                addProcedure({ id: 'FF_' + val, service_name: val + ' [Free-form]', is_free_form: true });
+            });
+
             $results.show();
         },
         error: function(xhr) {
@@ -514,18 +510,19 @@ function addProcedure(procedure) {
     const encounterId = {{ $encounter->id ?? 0 }};
     const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
+    const isFreeForm = String(procId).startsWith('FF_');
     const coverageMode = procedure.coverage_mode || null;
     const payable = procedure.payable_amount ?? (procedure.price?.sale_price ?? 0);
     const claims = procedure.claims_amount ?? 0;
     const basePrice = procedure.price?.sale_price ?? 0;
 
-    const coverageDisplay = coverageMode === 'hmo' ?
+    const coverageDisplay = isFreeForm ? '<span class="badge bg-secondary">Free-form</span>' : (coverageMode === 'hmo' ?
         '<span class="badge bg-success"><i class="fa fa-shield-alt"></i> HMO Covered</span>' :
-        '<span class="badge bg-secondary"><i class="fa fa-wallet"></i> Self-Pay</span>';
-    const priceDisplay = coverageMode === 'hmo' ? `₦${formatNumber(claims)}` : `₦${formatNumber(payable)}`;
+        '<span class="badge bg-secondary"><i class="fa fa-wallet"></i> Self-Pay</span>');
+    const priceDisplay = isFreeForm ? '<span class="text-muted">N/A</span>' : (coverageMode === 'hmo' ? `₦${formatNumber(claims)}` : `₦${formatNumber(payable)}`);
     const priorityClass = `priority-${priority}`;
     const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
-    const categoryName = procedure.category ? procedure.category.category_name : 'Procedures';
+    const categoryName = isFreeForm ? 'Free-form Request' : (procedure.category ? procedure.category.category_name : 'Procedures');
 
     ClinicalOrdersKit.addItem({
         url: `/encounters/${encounterId}/add-procedure`,
@@ -542,8 +539,8 @@ function addProcedure(procedure) {
         buildRowHtml: function(resp) {
             return `<tr data-record-id="${resp.id}" data-record-type="procedure" data-service-id="${procId}">
                 <td>
-                    <strong>${procedure.service_name || 'N/A'}</strong>
-                    <br><small class="text-muted">${procedure.service_code || ''}</small>
+                    ${isFreeForm ? `<h6 class="mb-0"><span class="badge bg-info text-dark">${procedure.service_name}</span></h6>` : `<strong><span class="badge bg-success">${procedure.service_name || 'N/A'}</span></strong>`}
+                    ${!isFreeForm && procedure.service_code ? `<br><small class="text-muted">${procedure.service_code}</small>` : ''}
                     ${preNotes ? `<br><small class="text-info"><i class="fa fa-sticky-note"></i> ${preNotes.substring(0, 50)}...</small>` : ''}
                 </td>
                 <td><small>${categoryName}</small></td>

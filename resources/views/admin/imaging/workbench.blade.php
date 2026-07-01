@@ -2809,6 +2809,10 @@
                 <span class="queue-item-label">🔴 Result Entry</span>
                 <span class="queue-count results" id="queue-results-count">0</span>
             </div>
+            <div class="queue-item" data-filter="freeform">
+                <span class="queue-item-label">⚪ Free-Form / External</span>
+                <span class="queue-count" id="queue-freeform-count" style="background: #6c757d; color: white;">0</span>
+            </div>
             @if(($isApprover ?? false) && ($requiresApproval ?? false))
             <div class="queue-item" data-filter="approval" style="background: #f3f0ff; border-left: 3px solid #6f42c1;">
                 <span class="queue-item-label">🟣 <strong class="text-purple">Awaiting Approval</strong></span>
@@ -3214,6 +3218,11 @@
                         <span>Awaiting Results</span>
                         <span class="subtab-badge" id="results-subtab-badge">0</span>
                     </button>
+                    <button class="pending-subtab" data-status="freeform">
+                        <i class="mdi mdi-file-document-edit"></i>
+                        <span>Free-Form</span>
+                        <span class="subtab-badge" id="freeform-subtab-badge" style="background: #6c757d;">0</span>
+                    </button>
                     @if(($requiresApproval ?? false))
                     <button class="pending-subtab" data-status="approval">
                         <i class="mdi mdi-check-decagram"></i>
@@ -3236,7 +3245,10 @@
                     <form id="new-imaging-request-form" class="new-request-form">
                         <div class="form-row">
                             <div class="form-group col-md-12">
-                                <label for="service-search-input"><i class="mdi mdi-magnify"></i> Search Imaging Services *</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="service-search-input" class="mb-0"><i class="mdi mdi-magnify"></i> Search Imaging Services *</label>
+                                    <a href="javascript:void(0)" onclick="addFreeFormImagingWorkbench()" class="text-primary small"><i class="mdi mdi-plus"></i> Not listed? Add free-form</a>
+                                </div>
                                 <input type="text" class="form-control" id="service-search-input" placeholder="Type to search for imaging services..." autocomplete="off" onkeyup="searchImagingServices(this.value)">
                                 <ul class="list-group" id="service-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 300px; overflow-y: auto; width: calc(100% - 30px);"></ul>
                             </div>
@@ -3887,7 +3899,7 @@ $(document).ready(function() {
 
     // Auto-open queue from URL parameter (e.g., from dashboard queue widget click)
     const queueFilter = urlParams.get('queue_filter');
-    if (queueFilter && ['billing', 'results'].includes(queueFilter)) {
+    if (queueFilter && ['billing', 'results', 'freeform'].includes(queueFilter)) {
         setTimeout(function() { showQueue(queueFilter); }, 500);
     }
 });
@@ -4528,11 +4540,13 @@ function displayPendingRequests(requests) {
 function updatePendingSubtabBadges(requests) {
     // No sample stage for imaging
     const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
-    const totalPending = requests.billing.length + requests.results.length + approvalItems;
+    const freeformCount = (requests.freeform || []).length;
+    const totalPending = requests.billing.length + requests.results.length + approvalItems + freeformCount;
     $('#all-pending-badge').text(totalPending);
     $('#billing-subtab-badge').text(requests.billing.length);
     $('#results-subtab-badge').text(requests.results.length);
     $('#approval-subtab-badge').text(approvalItems);
+    $('#freeform-subtab-badge').text(freeformCount);
 }
 
 function renderPendingSubtabContent(filter) {
@@ -4542,7 +4556,8 @@ function renderPendingSubtabContent(filter) {
     const requests = currentPendingRequests;
     // No sample stage for imaging
     const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
-    const totalPending = requests.billing.length + requests.results.length + approvalItems;
+    const freeformCount = (requests.freeform || []).length;
+    const totalPending = requests.billing.length + requests.results.length + approvalItems + freeformCount;
 
     const $container = $('#pending-subtab-container');
     $container.empty();
@@ -4550,6 +4565,27 @@ function renderPendingSubtabContent(filter) {
     if (totalPending === 0) {
         $container.html('<div class="alert alert-info">No pending imaging requests for this patient</div>');
         return;
+    }
+
+    // Free-Form Section (Status 1, 2)
+    const freeformItems = requests.freeform || [];
+    if ((filter === 'all' || filter === 'freeform') && freeformItems.length > 0) {
+        const freeformHtml = `
+            <div class="request-section" data-section="freeform">
+                <div class="request-section-header">
+                    <h5>
+                        <i class="mdi mdi-file-document-edit" class="text-dark"></i>
+                        <span class="text-dark fw-bold">Free-Form / External (${freeformItems.length})</span>
+                    </h5>
+                </div>
+                <div class="request-cards-container" id="freeform-cards"></div>
+            </div>
+        `;
+        $container.append(freeformHtml);
+
+        freeformItems.forEach(request => {
+            $('#freeform-cards').append(createRequestCard(request, 'freeform'));
+        });
     }
 
     // Billing Section (Status 1)
@@ -4654,13 +4690,14 @@ function renderPendingSubtabContent(filter) {
         });
     }
 
+
     // Initialize event handlers + restore preserved selections
     initializeRequestHandlers();
     restoreCheckedItemsState();
 }
 
 function createRequestCard(request, section) {
-    const serviceName = request.service?.service_name || 'Unknown Service';
+    const serviceName = request.service_name || request.service?.service_name || 'Unknown Service';
     const doctorName = request.doctor ? (request.doctor.firstname + ' ' + request.doctor.surname) : 'N/A';
     const requestDate = formatDateTime(request.created_at);
     const note = request.note || '';
@@ -4714,6 +4751,14 @@ function createRequestCard(request, section) {
         if (request.rejection_reason) {
             pendingAlerts += `<div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
                 <i class="mdi mdi-message-alert"></i> <strong>Rejection Reason:</strong> ${request.rejection_reason}</div>`;
+        }
+    } else if (section === 'freeform') {
+        statusBadges = '<span class="badge bg-secondary">Free-Form</span>';
+        borderStyle = 'border-left: 4px solid #6c757d;';
+        if (request.status == 1) {
+            statusBadges += ' <span class="badge bg-warning text-dark">Unbilled</span>';
+        } else if (request.status == 2) {
+            statusBadges += ' <span class="badge bg-success">Awaiting Result</span>';
         }
     }
 
@@ -4811,6 +4856,12 @@ function createRequestCard(request, section) {
                 <i class="mdi mdi-pencil"></i>
                 Re-enter
             </button>
+        `;
+    } else if (section === 'freeform' || request.is_free_form == 1 || request.is_free_form === true) {
+        checkboxOrAction = `
+            <div style="width: 40px; text-align: center; display: flex; align-items: center; justify-content: center;">
+                <span class="badge bg-secondary" style="font-size: 0.7rem;">Ext.</span>
+            </div>
         `;
     } else {
         checkboxOrAction = `
@@ -4930,7 +4981,6 @@ function displayNotes(notes) {
         $('#notes-panel-body').html('<p class="text-danger">Error: DataTables library not loaded</p>');
         return;
     }
-
     // Destroy existing DataTable if present
     if ($.fn.DataTable.isDataTable('#notes-table')) {
         $('#notes-table').DataTable().destroy();
@@ -5080,6 +5130,7 @@ function loadQueueCounts() {
         $('#queue-billing-count').text(counts.billing);
         $('#queue-results-count').text(counts.results);
         $('#queue-sample-count').text(0); // Imaging doesn't have sample stage
+        $('#queue-freeform-count').text(counts.freeform || 0);
         var emergencyCount = counts.emergency || 0;
         $('#queue-emergency-count').text(emergencyCount);
         if (emergencyCount> 0) {
@@ -5122,7 +5173,6 @@ function refreshCurrentPatientData() {
         console.log('Skipping auto-refresh: active selections detected');
         return;
     }
-
     // Silently reload patient requests
     $.get(`/imaging-workbench/patient/${currentPatient}/requests`, function(data) {
         displayPendingRequests(data.requests);
@@ -5151,7 +5201,6 @@ function updateSyncTimeDisplay() {
         $('#last-sync-time').text('Just now');
         return;
     }
-
     const secondsAgo = Math.floor((Date.now() - lastSyncTimestamp) / 1000);
 
     if (secondsAgo < 10) {
@@ -5286,7 +5335,6 @@ function updateFloatingCart() {
         $('#floating-cart').fadeOut(200);
         return;
     }
-
     const totalPrice = items.billing.reduce((sum, i) => sum + i.price, 0);
     $('#cart-item-count').text(totalCount);
     if (totalPrice> 0) {
@@ -5417,7 +5465,6 @@ function addReorderServiceToCart(serviceId, serviceName, price) {
         toastr.info(serviceName + ' is already in the request list');
         return;
     }
-
     let row = `<tr data-service-id="${serviceId}">
         <td>${serviceName}<input type="hidden" name="service_ids[]" value="${serviceId}"></td>
         <td>${parseFloat(price).toLocaleString()}</td>
@@ -5455,7 +5502,6 @@ $('#deleteRequestForm').on('submit', function(e) {
         toastr.warning('Please provide a detailed reason (minimum 10 characters)');
         return;
     }
-
     $.ajax({
         url: `/imaging-workbench/imaging-service-requests/${deleteRequestId}`,
         method: 'DELETE',
@@ -5503,7 +5549,6 @@ $('#dismissRequestForm').on('submit', function(e) {
         toastr.warning('Please provide a detailed reason (minimum 10 characters)');
         return;
     }
-
     $.ajax({
         url: `/imaging-workbench/imaging-service-requests/${dismissRequestId}/dismiss`,
         method: 'POST',
@@ -6053,7 +6098,8 @@ function initializeQueueDataTable(filter) {
         'all': '1,2',
         'billing': '1',
         'results': '2',
-        'approval': 'approval'
+        'approval': 'approval',
+        'freeform': 'freeform'
     };
     let status = filterMap[filter] || '1,2';
 
@@ -6093,7 +6139,7 @@ function initializeQueueDataTable(filter) {
 
                     // Format Date
                     const dateStr = row.created_at ? new Date(row.created_at).toLocaleString() : '';
-                    const serviceName = row.service ? row.service.service_name : 'Imaging Request';
+                    const serviceName = row.service_name || (row.service ? row.service.service_name : 'Imaging Request');
                     const hmoText = card.hmo && card.hmo !== 'N/A' ? `<br><small><i class="mdi mdi-hospital-building"></i> ${card.hmo}</small>` : '';
 
                     return `
@@ -6171,86 +6217,121 @@ $(document).ready(function() {
 let imagingSearchTimer = null;
 
 function searchImagingServices(q) {
-    clearTimeout(imagingSearchTimer);
     const $results = $('#service-search-results');
+    const patientId = currentPatient ? currentPatient : null;
 
-    if (!q || q.trim().length < 2) {
-        $results.html('').hide();
-        return;
-    }
-
-    // Show loading state
-    $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
-
-    imagingSearchTimer = setTimeout(function() {
-        $.ajax({
+    if (typeof SearchManager !== 'undefined') {
+        SearchManager.execute({
+            inputVal: q,
+            minLength: 2,
+            delay: 300,
             url: "{{ url('live-search-services') }}",
-            method: "GET",
-            dataType: 'json',
             data: {
                 term: q,
                 category_id: {{ appsettings('imaging_category_id') ?? 6 }},
-                patient_id: currentPatient ? currentPatient : null
+                patient_id: patientId
             },
-            success: function(data) {
-                $results.html('');
-
-                if (!data || data.length === 0) {
-                    $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-alert-circle-outline"></i> No imaging services found for "' + q + '"</li>').show();
-                    return;
-                }
-
-                for (var i = 0; i < data.length; i++) {
-                    const item = data[i] || {};
-                    const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
-                    const name = item.service_name || 'Unknown';
-                    const code = item.service_code || '';
-                    const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
-                    const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
-                    const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
-                    const mode = item.coverage_mode || null;
-                    const isCombo = item.is_combo || false;
-                    const bundleItems = item.bundle_items || [];
-                    if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
-                    
-                    const coverageBadge = mode && mode !== 'cash' ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
-                    const comBoBadge = isCombo ? `<span class='badge bg-primary ms-1'>COMBO</span>` : '';
-                    const displayName = `${name}[${code}]`;
-
-                    const escapedDisplayName = displayName.replace(/'/g, "\\'");
-                    const escapedId = (item.id + '').replace(/'/g, "\\'");
-
-                    let mk = '';
-                    if (isCombo) {
-                        // Combo rendering with bundle items
-                        const bundleList = bundleItems.map(bi => `<li class="ms-3"><small>${bi.name || 'Unknown'} (${bi.qty || 1})</small></li>`).join('');
-                        mk = `<li class='list-group-item' style="background-color: #e8f4f8; cursor: pointer;">
-                                <div onclick="ImagingWorkbench.applyCombo('${escapedId}', '${escapedDisplayName}')">
-                                    [${category}] <b>${name}[${code}]</b> ${comBoBadge} NGN ${Number(price).toLocaleString()} ${coverageBadge}
-                                    <div style="margin-top: 8px; font-size: 12px; color: #666; border-left: 2px solid #0066cc; padding-left: 8px;">
-                                        <strong>Includes:</strong>
-                                        <ul style="margin: 4px 0 0 0; padding-left: 20px; list-style: disc;">
-                                            ${bundleList}
-                                        </ul>
-                                    </div>
-                                </div>
-                             </li>`;
-                    } else {
-                        // Direct service rendering
-                        mk = `<li class='list-group-item'
-                               style="background-color: #f0f0f0; cursor: pointer;"
-                               onclick="setSearchValImaging('${escapedDisplayName}', '${escapedId}', '${price}', '${mode}', '${claims}', '${payable}')">
-                               [${category}] <b>${name}[${code}]</b> NGN ${Number(price).toLocaleString()} ${coverageBadge}</li>`;
-                    }
-                    $results.append(mk);
-                }
-                $results.show();
+            onStart: function() {
+                $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
             },
-            error: function() {
-                $results.html('<li class="list-group-item text-center text-danger"><i class="mdi mdi-alert"></i> Search failed. Please try again.</li>').show();
+            onSuccess: function(data) {
+                renderImagingSearchResults(data, q);
+            },
+            onEmptyQuery: function() {
+                $results.html('').hide();
             }
         });
-    }, 300);
+    } else {
+        clearTimeout(imagingSearchTimer);
+        if (!q || q.trim().length < 2) {
+            $results.html('').hide();
+            return;
+        }
+
+        $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+        imagingSearchTimer = setTimeout(function() {
+            $.ajax({
+                url: "{{ url('live-search-services') }}",
+                method: "GET",
+                dataType: 'json',
+                data: {
+                    term: q,
+                    category_id: {{ appsettings('imaging_category_id') ?? 6 }},
+                    patient_id: patientId
+                },
+                success: function(data) {
+                    renderImagingSearchResults(data, q);
+                },
+                error: function() {
+                    $results.html('<li class="list-group-item text-center text-danger"><i class="mdi mdi-alert"></i> Search failed. Please try again.</li>').show();
+                }
+            });
+        }, 300);
+    }
+}
+
+function renderImagingSearchResults(data, q) {
+    const $results = $('#service-search-results');
+    $results.html('');
+    
+    // Inject Free-Form option at the top
+    const freeFormHtml = `
+        <li class="list-group-item list-group-item-action text-primary" onclick="addFreeFormImagingWorkbench()" style="cursor:pointer;">
+            <i class="mdi mdi-plus-circle"></i> Not listed? Add free-form '${q}'
+        </li>
+    `;
+    $results.append(freeFormHtml);
+
+    if (!data || data.length === 0) {
+        $results.append('<li class="list-group-item text-center text-muted"><i class="mdi mdi-alert-circle-outline"></i> No imaging services found for "' + q + '"</li>');
+        $results.show();
+        return;
+    }
+    for (var i = 0; i < data.length; i++) {
+        const item = data[i] || {};
+        const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+        const name = item.service_name || 'Unknown';
+        const code = item.service_code || '';
+        const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
+        const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
+        const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+        const mode = item.coverage_mode || null;
+        const isCombo = item.is_combo || false;
+        const bundleItems = item.bundle_items || [];
+        if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+
+        const coverageBadge = mode && mode !== 'cash' ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+        const comBoBadge = isCombo ? `<span class='badge bg-primary ms-1'>COMBO</span>` : '';
+        const displayName = `${name}[${code}]`;
+
+        const escapedDisplayName = displayName.replace(/'/g, "\'");
+        const escapedId = (item.id + '').replace(/'/g, "\'");
+
+        let mk = '';
+        if (isCombo) {
+            // Combo rendering with bundle items
+            const bundleList = bundleItems.map(bi => `<li class="ms-3"><small>${bi.name || 'Unknown'} (${bi.qty || 1})</small></li>`).join('');
+            mk = `<li class='list-group-item' style="background-color: #e8f4f8; cursor: pointer;">
+                    <div onclick="ImagingWorkbench.applyCombo('${escapedId}', '${escapedDisplayName}')">
+                        [${category}] <b>${name}[${code}]</b> ${comBoBadge} NGN ${Number(price).toLocaleString()} ${coverageBadge}
+                        <div style="margin-top: 8px; font-size: 12px; color: #666; border-left: 2px solid #0066cc; padding-left: 8px;">
+                            <strong>Includes:</strong>
+                            <ul style="margin: 4px 0 0 0; padding-left: 20px; list-style: disc;">
+                                ${bundleList}
+                            </ul>
+                        </div>
+                    </div>
+                 </li>`;
+        } else {
+            // Direct service rendering
+            mk = `<li class='list-group-item'
+                   style="background-color: #f0f0f0; cursor: pointer;"
+                   onclick="setSearchValImaging('${escapedDisplayName}', '${escapedId}', '${price}', '${mode}', '${claims}', '${payable}')">
+                   [${category}] <b>${name}[${code}]</b> NGN ${Number(price).toLocaleString()} ${coverageBadge}</li>`;
+        }
+        $results.append(mk);
+    }
+    $results.show();
 }
 
 function setSearchValImaging(name, id, price, coverageMode = null, claims = null, payable = null) {
@@ -6808,8 +6889,7 @@ $('#btn-new-request').on('click', function() {
     if (!currentPatient) {
         toastr.warning('Please select a patient first');
         return;
-    }
-    switchWorkspaceTab('new-request');
+    }    switchWorkspaceTab('new-request');
     $('#new-request-patient-name').text(currentPatientData ? currentPatientData.name : '');
 });
 
@@ -6833,12 +6913,10 @@ $('#new-imaging-request-form').on('submit', function(e) {
         toastr.warning('Please select at least one imaging service');
         return;
     }
-
     if (!currentPatient) {
         toastr.error('No patient selected');
         return;
     }
-
     const $submitBtn = $(this).find('button[type="submit"]');
     const originalBtnHtml = $submitBtn.html();
     $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Submitting...');
@@ -6944,7 +7022,6 @@ function renderTopServices(services, totalRequests = 0) {
         container.html('<p class="text-muted text-center p-3">No data available for the selected period.</p>');
         return;
     }
-
     let html = '<ul class="list-group list-group-flush">';
 
     services.forEach((service, index) => {
@@ -6975,7 +7052,6 @@ function renderTopDoctors(doctors) {
         container.html('<p class="text-muted text-center p-3">No data available.</p>');
         return;
     }
-
     let html = '<div class="table-responsive"><table class="table table-hover table-sm"><thead><tr><th>Doctor Name</th><th class="text-center">Requests</th><th class="text-right">Total Revenue</th></tr></thead><tbody>';
 
     doctors.forEach(doc => {
@@ -7303,7 +7379,6 @@ function confirmRejectImagingResult() {
         toastr.error('Please provide a rejection reason.');
         return;
     }
-
     $.ajax({
         url: `/imaging-workbench/approval/${currentApprovalId}/reject`,
         type: 'POST',

@@ -265,8 +265,11 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>
-                        <strong>{{ $prescription->product->product_name }}</strong>
-                        @if($prescription->product->product_code)
+                        <strong>{{ $prescription->item_name }}</strong>
+                        @if($prescription->is_free_form)
+                            <span class="badge" style="background:#f0f0f0; color:#666; margin-left:4px;">Free-form</span>
+                        @endif
+                        @if(!$prescription->is_free_form && optional($prescription->product)->product_code)
                             <br><small style="color: var(--muted);">[{{ $prescription->product->product_code }}]</small>
                         @endif
                         @if($hasHmo)

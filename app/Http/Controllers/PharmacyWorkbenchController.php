@@ -202,7 +202,7 @@ class PharmacyWorkbenchController extends Controller
                 return $item->product_id;
             })
             ->addColumn('product_name', function ($item) {
-                return optional($item->product)->product_name ?? 'Unknown';
+                return $item->item_name;
             })
             ->addColumn('product_code', function ($item) {
                 return optional($item->product)->product_code ?? '';
@@ -415,7 +415,7 @@ class PharmacyWorkbenchController extends Controller
             })
             ->editColumn('dose', function ($item) {
                 $code = optional($item->product)->product_code ?? '';
-                $name = optional($item->product)->product_name ?? 'Unknown';
+                $name = $item->item_name;
                 $posr = $item->productOrServiceRequest;
 
                 $str = "<span class='badge badge-success'>[{$code}] {$name}</span>";
@@ -466,7 +466,7 @@ class PharmacyWorkbenchController extends Controller
                 return $str;
             })
             ->addColumn('product_name', function ($item) {
-                return optional($item->product)->product_name ?? 'Unknown';
+                return $item->item_name;
             })
             ->addColumn('product_code', function ($item) {
                 return optional($item->product)->product_code ?? '';
@@ -585,7 +585,7 @@ class PharmacyWorkbenchController extends Controller
         return DataTables::of($items)
             ->addIndexColumn()
             ->addColumn('product_name', function($item) {
-                return optional($item->product)->product_name ?? 'Unknown';
+                return $item->item_name;
             })
             ->addColumn('product_code', function($item) {
                 return optional($item->product)->product_code ?? '';
@@ -629,7 +629,7 @@ class PharmacyWorkbenchController extends Controller
             })
             ->editColumn('dose', function ($item) {
                 $code = optional($item->product)->product_code ?? '';
-                $name = optional($item->product)->product_name ?? 'Unknown';
+                $name = $item->item_name;
                 $posr = $item->productOrServiceRequest;
 
                 $str = "<span class='badge badge-success'>[{$code}] {$name}</span>";
@@ -831,15 +831,24 @@ class PharmacyWorkbenchController extends Controller
         });
 
         // Apply filters
-        if ($filter === 'unbilled') {
-            $query->where('status', 1);
-        } elseif ($filter === 'billed') {
-            $query->where('status', 2);
-        } elseif ($filter === 'hmo') {
-            // Filter for prescriptions with HMO coverage
-            $query->whereHas('productOrServiceRequest', function($q) {
-                $q->where('claims_amount', '>', 0);
+        if ($filter === 'freeform') {
+            $query->where('is_free_form', 1);
+        } else {
+            // Standard queues shouldn't include free-form items
+            $query->where(function ($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
             });
+
+            if ($filter === 'unbilled') {
+                $query->where('status', 1);
+            } elseif ($filter === 'billed') {
+                $query->where('status', 2);
+            } elseif ($filter === 'hmo') {
+                // Filter for prescriptions with HMO coverage
+                $query->whereHas('productOrServiceRequest', function($q) {
+                    $q->where('claims_amount', '>', 0);
+                });
+            }
         }
 
         $results = $query
@@ -909,24 +918,41 @@ class PharmacyWorkbenchController extends Controller
     public function getQueueCounts()
     {
         $totalCount = ProductRequest::whereIn('status', [1, 2])
+            ->where(function($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
             ->select('patient_id')
             ->distinct()
             ->count();
 
         $unbilledCount = ProductRequest::where('status', 1)
+            ->where(function($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
             ->select('patient_id')
             ->distinct()
             ->count();
 
         $readyCount = ProductRequest::where('status', 2)
+            ->where(function($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
             ->select('patient_id')
             ->distinct()
             ->count();
 
         $hmoCount = ProductRequest::whereIn('status', [1, 2])
+            ->where(function($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
             ->whereHas('productOrServiceRequest', function($q) {
                 $q->where('claims_amount', '>', 0);
             })
+            ->select('patient_id')
+            ->distinct()
+            ->count();
+
+        $freeformCount = ProductRequest::where('is_free_form', 1)
             ->select('patient_id')
             ->distinct()
             ->count();
@@ -936,6 +962,7 @@ class PharmacyWorkbenchController extends Controller
             'unbilled' => $unbilledCount,
             'ready' => $readyCount,
             'hmo' => $hmoCount,
+            'freeform' => $freeformCount,
             'emergency' => $this->getEmergencyPharmacyCount(),
         ]);
     }
@@ -998,7 +1025,14 @@ class PharmacyWorkbenchController extends Controller
             ->whereIn('status', [1, 2]); // Requested or Billed
 
         // Apply status filter if provided
-        if ($statusFilter) {
+        if ($statusFilter === 'freeform') {
+            $query->where('is_free_form', 1);
+        } else {
+            // Exclude free-form from normal tabs
+            $query->where(function ($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            });
+
             if ($statusFilter === 'unbilled') {
                 $query->where('status', 1);
             } elseif ($statusFilter === 'billed') {
@@ -1101,7 +1135,7 @@ class PharmacyWorkbenchController extends Controller
                 return [
                     'id' => $pr->id,
                     'product_request_id' => $pr->id,
-                    'product_name' => optional($pr->product)->product_name,
+                    'product_name' => $pr->item_name,
                     'product_code' => optional($pr->product)->product_code,
                     'category' => optional(optional($pr->product)->category)->category_name,
                     'dose' => $pr->dose ?? 'N/A',
@@ -1262,7 +1296,7 @@ class PharmacyWorkbenchController extends Controller
             $basePrice = optional(optional($pr->product)->price)->current_sale_price ?? 0;
             return [
                 'product_request_id' => $pr->id,
-                'product_name' => optional($pr->product)->product_name,
+                'product_name' => $pr->item_name,
                 'product_code' => optional($pr->product)->product_code,
                 'dose' => $pr->dose ?? 'N/A',
                 'qty' => $pr->qty ?? 1,
@@ -1322,7 +1356,7 @@ class PharmacyWorkbenchController extends Controller
             $result = [
                 'product_request_id' => $prId,
                 'product_id' => $productRequest->product_id,
-                'product_name' => $productRequest->product->name ?? 'Unknown',
+                'product_name' => $productRequest->item_name,
                 'qty_required' => $productRequest->qty ?? 1,
                 'valid' => true,
                 'error' => null,
@@ -1431,6 +1465,37 @@ class PharmacyWorkbenchController extends Controller
             'store_governance_blocked' => $storeGovernanceBlocked,
             'store_governance_message' => $storeGovernanceMessage,
             'validation_results' => $validationResults
+        ]);
+    }
+
+    /**
+     * Dispense free-form medication (bypass billing and stock)
+     */
+    public function dispenseFreeFormMedication(Request $request)
+    {
+        $request->validate([
+            'request_id' => 'required|exists:product_requests,id',
+            'qty_dispensed' => 'required|numeric|min:1',
+        ]);
+
+        $item = ProductRequest::findOrFail($request->request_id);
+
+        if (!$item->is_free_form) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only free-form medications can be dispensed via this route.'
+            ], 403);
+        }
+
+        $item->status = 3; // Dispensed
+        $item->qty = $request->qty_dispensed;
+        $item->dispensed_by = Auth::id();
+        $item->dispense_date = now();
+        $item->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Medication marked as dispensed.'
         ]);
     }
 
@@ -1693,7 +1758,7 @@ class PharmacyWorkbenchController extends Controller
                 'reference_no' => optional($payment)->reference_no,
                 'payment_type' => optional($payment)->payment_type ?? 'N/A',
                 'bank_name' => optional($payment)->bank ? optional($payment)->bank->name : null,
-                'product_name' => optional($pr->product)->product_name,
+                'product_name' => $pr->item_name,
                 'quantity' => $pr->qty,
                 'unit_price' => $price,
                 'total' => $amount,
@@ -2048,10 +2113,23 @@ class PharmacyWorkbenchController extends Controller
         $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'products' => 'required|array|min:1',
-            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.product_id' => 'required|string',
             'products.*.qty' => 'required|integer|min:1',
             'products.*.dose' => 'nullable|string',
         ]);
+
+        $patient = Patient::findOrFail($request->patient_id);
+
+        // Validate regular products exist
+        $regularProductIds = array_filter(array_column($request->products, 'product_id'), function($id) {
+            return strpos($id, 'FF_') !== 0;
+        });
+        if (count($regularProductIds) > 0) {
+            $existingCount = \App\Models\Product::whereIn('id', $regularProductIds)->count();
+            if ($existingCount !== count($regularProductIds)) {
+                return response()->json(['success' => false, 'message' => 'One or more selected products are invalid.'], 422);
+            }
+        }
 
         $patient = Patient::findOrFail($request->patient_id);
 
@@ -2060,13 +2138,25 @@ class PharmacyWorkbenchController extends Controller
             $createdRequests = [];
 
             foreach ($request->products as $productData) {
-                $product = Product::with('price')->findOrFail($productData['product_id']);
+                $productId = $productData['product_id'];
+                $isFreeForm = strpos($productId, 'FF_') === 0;
+                $dbProductId = null;
+                $freeFormName = null;
+
+                if ($isFreeForm) {
+                    $freeFormName = str_replace(' [Free-form]', '', substr($productId, 3));
+                } else {
+                    $product = Product::with('price')->findOrFail($productId);
+                    $dbProductId = $product->id;
+                }
 
                 // Create ProductRequest ONLY (status=1 means unbilled/requested)
                 // This matches EncounterController::savePrescriptions() behavior
                 $productRequest = ProductRequest::create([
                     'patient_id' => $patient->id,
-                    'product_id' => $product->id,
+                    'product_id' => $dbProductId,
+                    'is_free_form' => $isFreeForm,
+                    'free_form_name' => $freeFormName,
                     'encounter_id' => $patient->current_encounter_id ?? null,
                     'qty' => $productData['qty'] ?? 1,
                     'dose' => $productData['dose'] ?? null,
@@ -3159,7 +3249,7 @@ class PharmacyWorkbenchController extends Controller
                 $statusLabel = $statusLabels[$productRequest->status] ?? 'Unknown';
                 $validationErrors[] = [
                     'id' => $prId,
-                    'product' => $productRequest->product->product_name ?? 'Unknown',
+                    'product' => $productRequest->item_name,
                     'error' => "Cannot dispense - item is '{$statusLabel}' (must be 'Billed')"
                 ];
                 continue;
@@ -3172,7 +3262,7 @@ class PharmacyWorkbenchController extends Controller
                 if (!$deliveryCheck['can_deliver']) {
                     $validationErrors[] = [
                         'id' => $prId,
-                        'product' => $productRequest->product->product_name ?? 'Unknown',
+                        'product' => $productRequest->item_name,
                         'error' => $deliveryCheck['reason'] . ' (Bundled with: ' . $bundledCheck['procedure_name'] . ')'
                     ];
                     continue;
@@ -3182,7 +3272,7 @@ class PharmacyWorkbenchController extends Controller
                 if (!$deliveryCheck['can_deliver']) {
                     $validationErrors[] = [
                         'id' => $prId,
-                        'product' => $productRequest->product->product_name ?? 'Unknown',
+                        'product' => $productRequest->item_name,
                         'error' => $deliveryCheck['reason']
                     ];
                     continue;
@@ -3197,7 +3287,7 @@ class PharmacyWorkbenchController extends Controller
             if ($availableQty < $qty) {
                 $validationErrors[] = [
                     'id' => $prId,
-                    'product' => $productRequest->product->product_name ?? 'Unknown',
+                    'product' => $productRequest->item_name,
                     'error' => "Insufficient stock in '{$store->store_name}': need {$qty}, available {$availableQty}",
                     'shortage' => $qty - $availableQty
                 ];
@@ -3213,7 +3303,7 @@ class PharmacyWorkbenchController extends Controller
                 if (!$batch || $batch->product_id != $productRequest->product_id || $batch->store_id != $storeId) {
                     $validationErrors[] = [
                         'id' => $prId,
-                        'product' => $productRequest->product->product_name ?? 'Unknown',
+                        'product' => $productRequest->item_name,
                         'error' => 'Invalid batch selection'
                     ];
                     continue;
@@ -3221,7 +3311,7 @@ class PharmacyWorkbenchController extends Controller
                 if ($batch->current_qty < $qty) {
                     $validationErrors[] = [
                         'id' => $prId,
-                        'product' => $productRequest->product->product_name ?? 'Unknown',
+                        'product' => $productRequest->item_name,
                         'error' => "Selected batch has insufficient stock: need {$qty}, available {$batch->current_qty}"
                     ];
                     continue;
