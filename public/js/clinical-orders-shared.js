@@ -1884,7 +1884,8 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
     function appendFreeFormLink($container, query, promptTitle, promptText, inputSel, onConfirm) {
         var $li = $('<li class="list-group-item list-group-item-action text-primary" style="cursor:pointer;"><i class="mdi mdi-plus-circle"></i> Not listed? Add free-form \'' + query + '\'</li>');
         $li.on('click', function() {
-            Swal.fire({
+            var $modal = $container.closest('.modal');
+            var swalOpts = {
                 title: promptTitle,
                 text: promptText,
                 input: 'text',
@@ -1893,7 +1894,11 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                 inputValidator: function(value) {
                     if (!value) return 'You need to write something!';
                 }
-            }).then(function(result) {
+            };
+            if ($modal.length) {
+                swalOpts.target = $modal[0];
+            }
+            Swal.fire(swalOpts).then(function(result) {
                 if (result.isConfirmed) {
                     onConfirm(result.value);
                     if (inputSel) $(inputSel).val('');

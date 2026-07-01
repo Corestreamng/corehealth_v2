@@ -436,23 +436,38 @@ class EncounterController extends Controller
         }
     }
 
-    public function investigationHistoryList($patient_id)
+    public function investigationHistoryList(Request $request, $patient_id)
     {
-        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person', 'resultViews'])
+        $query = LabServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person', 'resultViews'])
             ->where('status', '>', 0)
             ->where('patient_id', $patient_id)
-            ->where(function ($query) {
-                $query->whereNull('service_request_id')
+            ->where(function ($q) {
+                $q->whereNull('service_request_id')
                     ->orWhereHas('productOrServiceRequest', function ($posr) {
                         $posr->whereNull('removed_at');
                     });
-            })
-            ->orderBy('created_at', 'DESC')
-            ->get();
+            });
+
+        if ($request->has('procedure_id')) {
+            $procedure = \App\Models\Procedure::find($request->procedure_id);
+            if ($procedure) {
+                $labRequestIds = $procedure->items()->whereNotNull('lab_service_request_id')->pluck('lab_service_request_id');
+                $query->whereIn('id', $labRequestIds);
+            }
+        }
+
+        $his = $query->orderBy('created_at', 'DESC')->get();
 
         // dd($pc);
         return DataTables::of($his)
-            ->addColumn('info', function ($his) {
+            ->addColumn('info', function ($his) use ($request) {
+                $isBundled = false;
+                if ($request->has('procedure_id')) {
+                    $procedureItem = \App\Models\ProcedureItem::where('procedure_id', $request->procedure_id)
+                        ->where('lab_service_request_id', $his->id)->first();
+                    $isBundled = $procedureItem ? $procedureItem->is_bundled : false;
+                }
+
                 $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
                 $str .= '<div class="card-body p-3">';
 
@@ -480,6 +495,10 @@ class EncounterController extends Controller
                 // Combo badge (our service combo system — distinct from procedure is_bundled)
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item) {
                     $str .= " <span class='badge bg-secondary ms-1'><i class='mdi mdi-link-variant'></i> Combo</span>";
+                }
+                // Procedure Bundled badge
+                if ($isBundled) {
+                    $str .= " <span class='badge bg-info ms-1'>Bundled</span>";
                 }
                 // Self-Performed badge — only when doctor explicitly opted in
                 if ($his->self_perform_intent) {
@@ -835,22 +854,37 @@ class EncounterController extends Controller
             ->make(true);
     }
 
-    public function imagingHistoryList($patient_id)
+    public function imagingHistoryList(Request $request, $patient_id)
     {
-        $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person', 'resultViews'])
+        $query = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'productOrServiceRequest', 'doctor', 'biller', 'results_person', 'resultViews'])
             ->where('status', '>', 0)
             ->where('patient_id', $patient_id)
-            ->where(function ($query) {
-                $query->whereNull('service_request_id')
+            ->where(function ($q) {
+                $q->whereNull('service_request_id')
                     ->orWhereHas('productOrServiceRequest', function ($posr) {
                         $posr->whereNull('removed_at');
                     });
-            })
-            ->orderBy('created_at', 'DESC')
-            ->get();
+            });
+
+        if ($request->has('procedure_id')) {
+            $procedure = \App\Models\Procedure::find($request->procedure_id);
+            if ($procedure) {
+                $imagingRequestIds = $procedure->items()->whereNotNull('imaging_service_request_id')->pluck('imaging_service_request_id');
+                $query->whereIn('id', $imagingRequestIds);
+            }
+        }
+
+        $his = $query->orderBy('created_at', 'DESC')->get();
 
         return DataTables::of($his)
-            ->addColumn('info', function ($his) {
+            ->addColumn('info', function ($his) use ($request) {
+                $isBundled = false;
+                if ($request->has('procedure_id')) {
+                    $procedureItem = \App\Models\ProcedureItem::where('procedure_id', $request->procedure_id)
+                        ->where('imaging_service_request_id', $his->id)->first();
+                    $isBundled = $procedureItem ? $procedureItem->is_bundled : false;
+                }
+
                 $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
                 $str .= '<div class="card-body p-3">';
 
@@ -876,6 +910,10 @@ class EncounterController extends Controller
                 // Combo badge (our service combo system — distinct from procedure is_bundled)
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item) {
                     $str .= " <span class='badge bg-secondary ms-1'><i class='mdi mdi-link-variant'></i> Combo</span>";
+                }
+                // Procedure Bundled badge
+                if ($isBundled) {
+                    $str .= " <span class='badge bg-info ms-1'>Bundled</span>";
                 }
                 // Self-Performed badge — only when doctor explicitly opted in
                 if ($his->self_perform_intent) {
@@ -1874,24 +1912,40 @@ class EncounterController extends Controller
             ->make(true);
     }
 
-    public function prescHistoryList($patient_id)
+    public function prescHistoryList(Request $request, $patient_id)
     {
         // Show ALL prescription requests (not just dispensed) for complete history
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser', 'adaptedFromProduct', 'adapter', 'qtyAdjuster'])
+        $query = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser', 'adaptedFromProduct', 'adapter', 'qtyAdjuster'])
             ->where('patient_id', $patient_id)
-            ->where(function ($query) {
-                $query->whereNull('product_request_id')
+            ->where(function ($q) {
+                $q->whereNull('product_request_id')
                     ->orWhereHas('productOrServiceRequest', function ($posr) {
                         $posr->whereNull('removed_at');
                     });
-            })
-            ->orderBy('created_at', 'DESC')
-            ->get();
+            });
+
+        if ($request->has('procedure_id')) {
+            $procedure = \App\Models\Procedure::find($request->procedure_id);
+            if ($procedure) {
+                $medRequestIds = $procedure->items()->whereNotNull('product_request_id')->pluck('product_request_id');
+                $query->whereIn('id', $medRequestIds);
+            }
+        }
+
+        $items = $query->orderBy('created_at', 'DESC')->get();
 
         return DataTables::of($items)
             ->addIndexColumn()
             ->addColumn('id', function ($item) {
                 return $item->id;
+            })
+            ->addColumn('is_bundled', function ($item) use ($request) {
+                if ($request->has('procedure_id')) {
+                    $procedureItem = \App\Models\ProcedureItem::where('procedure_id', $request->procedure_id)
+                        ->where('product_request_id', $item->id)->first();
+                    return $procedureItem ? $procedureItem->is_bundled : false;
+                }
+                return false;
             })
             ->addColumn('product_id', function ($item) {
                 return $item->product_id;
