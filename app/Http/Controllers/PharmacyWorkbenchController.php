@@ -773,15 +773,7 @@ class PharmacyWorkbenchController extends Controller
         }
 
         $patients = Patient::with('user', 'hmo')
-            ->where(function ($query) use ($term) {
-                $query->whereHas('user', function ($userQuery) use ($term) {
-                    $userQuery->where('surname', 'like', "%{$term}%")
-                        ->orWhere('firstname', 'like', "%{$term}%")
-                        ->orWhere('othername', 'like', "%{$term}%");
-                })
-                ->orWhere('file_no', 'like', "%{$term}%")
-                ->orWhere('phone_no', 'like', "%{$term}%");
-            })
+            ->searchByTerm($term)
             ->limit(10)
             ->get();
 
@@ -799,7 +791,7 @@ class PharmacyWorkbenchController extends Controller
                 'age' => $patient->dob ? Carbon::parse($patient->dob)->age : 'N/A',
                 'gender' => $patient->gender ?? 'N/A',
                 'phone' => $patient->phone_no ?? 'N/A',
-                'photo' => $patient->user->filename ?? null,
+                'photo' => $patient->user && $patient->user->filename ? asset('storage/image/user/' . $patient->user->filename) : asset('assets/images/default-avatar.png'),
                 'hmo' => optional($patient->hmo)->name ?? 'Self',
                 'hmo_no' => $patient->hmo_no ?? '',
                 'pending_count' => $pendingCount,

@@ -24,42 +24,17 @@ class PatientSearchController extends Controller
      */
     public function search(Request $request)
     {
-        $q = trim($request->get('q', ''));
+        $q = trim($request->get('q', $request->get('term', '')));
 
         if (mb_strlen($q) < 2) {
             return response()->json([]);
         }
 
-        // ── 1. File‑number matches (limit 10) ──────────────────────────
-        $fileNoPatients = Patient::with(['user', 'hmo', 'account'])
-            ->where('file_no', 'like', "%{$q}%")
-            ->limit(10)
+        // ── Use the model's unified spaced partial search with priority ordering ──
+        $merged = Patient::with(['user', 'hmo', 'account'])
+            ->searchByTerm($q)
+            ->limit(20)
             ->get();
-
-        $fileNoIds = $fileNoPatients->pluck('id')->toArray();
-
-        // ── 2. Name matches (limit 10, excluding already‑found) ────────
-        $namePatients = Patient::with(['user', 'hmo', 'account'])
-            ->whereNotIn('id', $fileNoIds)
-            ->whereHas('user', function ($uq) use ($q) {
-                $uq->where('surname', 'like', "%{$q}%")
-                   ->orWhere('firstname', 'like', "%{$q}%")
-                   ->orWhere('othername', 'like', "%{$q}%");
-            })
-            ->limit(10)
-            ->get();
-
-        $excludeIds = array_merge($fileNoIds, $namePatients->pluck('id')->toArray());
-
-        // ── 3. Phone‑number matches (limit 10, excluding already‑found)
-        $phonePatients = Patient::with(['user', 'hmo', 'account'])
-            ->whereNotIn('id', $excludeIds)
-            ->where('phone_no', 'like', "%{$q}%")
-            ->limit(10)
-            ->get();
-
-        // Merge in priority order
-        $merged = $fileNoPatients->concat($namePatients)->concat($phonePatients);
 
         $context = $request->get('context', 'reception');
 
