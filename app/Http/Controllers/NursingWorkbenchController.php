@@ -5889,7 +5889,7 @@ class NursingWorkbenchController extends Controller{
             $request->validate([
                 'patient_id'    => 'required|integer|exists:patients,id',
                 'service_ids'   => 'required|array|min:1',
-                'service_ids.*' => 'required|integer',
+                'service_ids.*' => 'required|string',
                 'notes'         => 'required|array',
                 'notes.*'       => 'nullable|string',
             ]);
@@ -5929,7 +5929,7 @@ class NursingWorkbenchController extends Controller{
             $request->validate([
                 'patient_id'    => 'required|integer|exists:patients,id',
                 'service_ids'   => 'required|array|min:1',
-                'service_ids.*' => 'required|integer',
+                'service_ids.*' => 'required|string',
                 'notes'         => 'required|array',
                 'notes.*'       => 'nullable|string',
             ]);
@@ -5969,7 +5969,7 @@ class NursingWorkbenchController extends Controller{
             $request->validate([
                 'patient_id'      => 'required|integer|exists:patients,id',
                 'product_ids'     => 'required|array|min:1',
-                'product_ids.*'   => 'required|integer',
+                'product_ids.*' => 'required|string',
                 'doses'           => 'required|array',
                 'doses.*'         => 'nullable|string',
             ]);
@@ -6015,7 +6015,7 @@ class NursingWorkbenchController extends Controller{
             $request->validate([
                 'patient_id'                  => 'required|integer|exists:patients,id',
                 'procedures'                  => 'required|array|min:1',
-                'procedures.*.service_id'     => 'required|integer|exists:services,id',
+                'procedures.*.service_id' => 'required|string',
                 'procedures.*.priority'       => 'required|in:routine,urgent,emergency',
                 'procedures.*.scheduled_date' => 'nullable|date',
                 'procedures.*.pre_notes'      => 'nullable|string|max:2000',
@@ -6106,7 +6106,7 @@ class NursingWorkbenchController extends Controller{
     public function nurseAddSingleLab(Request $request)
     {
         try {
-            $request->validate(['service_id' => 'required|integer', 'patient_id' => 'required|integer']);
+            $request->validate(['service_id' => 'required|string', 'patient_id' => 'required|integer']);
             $lab = $this->addSingleLab(
                 $request->input('service_id'),
                 $request->input('note'),
@@ -6139,7 +6139,7 @@ class NursingWorkbenchController extends Controller{
     public function nurseAddSingleImaging(Request $request)
     {
         try {
-            $request->validate(['service_id' => 'required|integer', 'patient_id' => 'required|integer']);
+            $request->validate(['service_id' => 'required|string', 'patient_id' => 'required|integer']);
             $imaging = $this->addSingleImaging(
                 $request->input('service_id'),
                 $request->input('note'),
@@ -6172,7 +6172,7 @@ class NursingWorkbenchController extends Controller{
     public function nurseAddSinglePrescription(Request $request)
     {
         try {
-            $request->validate(['product_id' => 'required|integer', 'patient_id' => 'required|integer']);
+            $request->validate(['product_id' => 'required|string', 'patient_id' => 'required|integer']);
             $presc = $this->addSinglePrescription(
                 $request->input('product_id'),
                 $request->input('dose', ''),
@@ -6217,7 +6217,7 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $request->validate([
-                'service_id' => 'required|integer',
+                'service_id' => 'required|string',
                 'patient_id' => 'required|integer',
                 'priority' => 'required|string',
             ]);
@@ -6348,7 +6348,7 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $request->validate([
-                'service_id' => 'required|integer|exists:services,id',
+                'service_id' => 'required|string',
                 'patient_id' => 'required|integer|exists:patients,id',
                 'note' => 'nullable|string'
             ]);

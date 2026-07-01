@@ -69,7 +69,10 @@
                 <div id="labs_save_message" class="mb-2"></div>
                 <h5 class="mb-3"><i class="fa fa-plus-circle"></i> New Lab Request</h5>
                 <div class="form-group">
-                    <label for="consult_invest_search">Search services</label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="consult_invest_search" class="mb-0">Search services</label>
+                        <a href="javascript:void(0)" onclick="addFreeFormLab()" class="text-primary small"><i class="fa fa-plus"></i> Not listed? Add free-form</a>
+                    </div>
                     <input type="text" class="form-control" id="consult_invest_search"
                         onkeyup="searchServices(this.value)" placeholder="search services..." autocomplete="off">
                     <ul class="list-group" id="consult_invest_res" style="display: none;"></ul>

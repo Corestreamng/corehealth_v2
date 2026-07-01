@@ -7,6 +7,7 @@
 @endpush
 
 @section('content')
+    @include('admin.partials.procedure_outcome_modal')
 @php
     $hosColor = appsettings()->hos_color ?? '#0066cc';
     $sett = appsettings();
@@ -2873,6 +2874,10 @@
                 <span class="queue-item-label">🟢 Completed</span>
                 <span class="queue-count completed" id="queue-completed-count">0</span>
             </div>
+            <div class="queue-item" data-filter="freeform">
+                <span class="queue-item-label">⚪ Free-Form / External</span>
+                <span class="queue-count" id="queue-freeform-count" style="background: #6c757d; color: white;">0</span>
+            </div>
             @if(($isApprover ?? false) && ($requiresApproval ?? false))
             <div class="queue-item" data-filter="approval" style="background: #f3f0ff; border-left: 3px solid #6f42c1;">
                 <span class="queue-item-label">🟣 <strong class="text-purple">Awaiting Approval</strong></span>
@@ -3319,6 +3324,11 @@
                         <span>Awaiting Results</span>
                         <span class="subtab-badge" id="results-subtab-badge">0</span>
                     </button>
+                    <button class="pending-subtab" data-status="freeform">
+                        <i class="mdi mdi-file-document-edit"></i>
+                        <span>Free-Form</span>
+                        <span class="subtab-badge" id="freeform-subtab-badge" style="background: #6c757d;">0</span>
+                    </button>
                     @if(($requiresApproval ?? false))
                     <button class="pending-subtab" data-status="approval">
                         <i class="mdi mdi-check-decagram"></i>
@@ -3341,7 +3351,10 @@
                     <form id="new-lab-request-form" class="new-request-form">
                         <div class="form-row">
                             <div class="form-group col-md-12" style="position: relative;">
-                                <label for="service-search-input"><i class="mdi mdi-magnify"></i> Search Laboratory Services *</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="service-search-input" class="mb-0"><i class="mdi mdi-magnify"></i> Search Laboratory Services *</label>
+                                    <a href="javascript:void(0)" onclick="addFreeFormLabWorkbench()" class="text-primary small"><i class="mdi mdi-plus"></i> Not listed? Add free-form</a>
+                                </div>
                                 <input type="text" class="form-control" id="service-search-input" placeholder="Type to search for lab services..." autocomplete="off" onkeyup="searchLabServices(this.value)">
                                 <ul class="list-group" id="service-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 300px; overflow-y: auto; width: calc(100% - 30px);"></ul>
                             </div>
@@ -4107,8 +4120,13 @@ function initializeEventListeners() {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        $('#queue-start-date').val(firstDay.toISOString().split('T')[0]);
-        $('#queue-end-date').val(lastDay.toISOString().split('T')[0]);
+        
+        const formatDate = (d) => {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
+        
+        $('#queue-start-date').val(formatDate(firstDay));
+        $('#queue-end-date').val(formatDate(lastDay));
         if (currentQueueFilter) {
             initializeQueueDataTable(currentQueueFilter);
         }
@@ -4559,21 +4577,27 @@ function displayPendingRequests(requests) {
 
 function updatePendingSubtabBadges(requests) {
     const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length + approvalItems;
+    const totalPending = requests.billing.length + requests.sample.length + requests.results.length + approvalItems + (requests.freeform || []).length;
     $('#all-pending-badge').text(totalPending);
     $('#billing-subtab-badge').text(requests.billing.length);
     $('#sample-subtab-badge').text(requests.sample.length);
     $('#results-subtab-badge').text(requests.results.length);
     $('#approval-subtab-badge').text(approvalItems);
+    $('#freeform-subtab-badge').text((requests.freeform || []).length);
 }
 
 function renderPendingSubtabContent(filter) {
     if (!currentPendingRequests) return;
 
     currentPendingFilter = filter;
+    
+    // Sync active tab UI
+    $('.pending-subtab').removeClass('active');
+    $(`.pending-subtab[data-status="${filter}"]`).addClass('active');
+
     const requests = currentPendingRequests;
     const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length + approvalItems;
+    const totalPending = requests.billing.length + requests.sample.length + requests.results.length + approvalItems + (requests.freeform || []).length;
 
     const $container = $('#pending-subtab-container');
     $container.empty();
@@ -4581,6 +4605,27 @@ function renderPendingSubtabContent(filter) {
     if (totalPending === 0) {
         $container.html('<div class="alert alert-info">No pending lab requests for this patient</div>');
         return;
+    }
+
+    // Freeform Section
+    const freeformItems = requests.freeform || [];
+    if ((filter === 'all' || filter === 'freeform') && freeformItems.length > 0) {
+        const freeformHtml = `
+            <div class="request-section" data-section="freeform">
+                <div class="request-section-header">
+                    <h5>
+                        <i class="mdi mdi-file-document-edit text-dark fw-bold"></i>
+                        <span class="text-dark fw-bold">Free-Form / External (${freeformItems.length})</span>
+                    </h5>
+                </div>
+                <div class="request-cards-container" id="freeform-cards"></div>
+            </div>
+        `;
+        $container.append(freeformHtml);
+
+        freeformItems.forEach(request => {
+            $('#freeform-cards').append(createRequestCard(request, 'freeform'));
+        });
     }
 
     // Billing Section (Status 1)
@@ -4712,16 +4757,24 @@ function renderPendingSubtabContent(filter) {
         });
     }
 
+
     // Initialize event handlers + restore preserved selections
     initializeRequestHandlers();
     restoreCheckedItemsState();
 }
 
 function createRequestCard(request, section) {
-    const serviceName = request.service?.service_name || 'Unknown Service';
+    const serviceName = request.service_name || request.service?.service_name || 'Unknown Service';
     const doctorName = request.doctor ? (request.doctor.firstname + ' ' + request.doctor.surname) : 'N/A';
     const requestDate = formatDateTime(request.created_at);
     const note = request.note || '';
+    
+    let freeFormBadge = '';
+    let isFreeForm = request.is_free_form == 1 || request.is_free_form === true;
+    if (isFreeForm) {
+        freeFormBadge = `<span class="badge bg-secondary text-white ms-2" style="font-size:0.75rem;">[Free-form]</span>`;
+    }
+
     const price = parseFloat(request.service?.price_assign || 0);
     const payableAmount = parseFloat(request.payable_amount || 0);
     const claimsAmount = parseFloat(request.claims_amount || 0);
@@ -4798,7 +4851,7 @@ function createRequestCard(request, section) {
     }
 
     // Price display
-    const priceHtml = price> 0 ? `<div class="request-card-price">₦${Number(price).toLocaleString()}</div>` : '';
+    let priceHtml = price > 0 ? `<div class="request-card-price">₦${Number(price).toLocaleString()}</div>` : '';
 
     // HMO coverage split info
     let hmoHtml = '';
@@ -4875,6 +4928,16 @@ function createRequestCard(request, section) {
         }
     }
 
+    if (isFreeForm) {
+        statusBadges = '';
+        pendingAlerts = '';
+        priceHtml = '';
+        hmoHtml = '';
+        tariffPreviewHtml = '';
+        deliveryWarningHtml = '';
+        metaDetails = '';
+    }
+
     // Results section has individual action button instead of checkbox
     let checkboxOrAction = '';
     if (section === 'results') {
@@ -4898,6 +4961,8 @@ function createRequestCard(request, section) {
                 Re-enter
             </button>
         `;
+    } else if (isFreeForm) {
+        checkboxOrAction = `<div class="request-card-checkbox"><i class="mdi mdi-information-outline text-muted fs-4"></i></div>`;
     } else {
         checkboxOrAction = `
             <div class="request-card-checkbox">
@@ -4907,13 +4972,17 @@ function createRequestCard(request, section) {
         `;
     }
 
+    if (isFreeForm) {
+        borderStyle = 'border-left: 4px solid #6c757d; background-color: #f8f9fa;';
+    }
+
     return `
         <div class="request-card" data-request-id="${request.id}" style="${borderStyle}">
             ${checkboxOrAction}
             <div class="request-card-content">
                 <div class="request-card-header">
                     <div>
-                        <div class="request-service-name">${serviceName}</div>
+                        <div class="request-service-name">${serviceName}${freeFormBadge}</div>
                         ${bundledHtml}
                         <div class="request-card-meta">
                             <div class="request-meta-item">
@@ -5016,6 +5085,7 @@ function displayNotes(notes) {
         $('#notes-panel-body').html('<p class="text-danger">Error: DataTables library not loaded</p>');
         return;
     }
+
 
     // Destroy existing DataTable if present
     if ($.fn.DataTable.isDataTable('#notes-table')) {
@@ -5167,6 +5237,8 @@ function loadQueueCounts() {
         $('#queue-sample-count').text(counts.sample);
         $('#queue-results-count').text(counts.results);
         $('#queue-completed-count').text(counts.completed);
+        $('#queue-freeform-count').text(counts.freeform);
+        $('#freeform-subtab-badge').text(counts.freeform);
         var emergencyCount = counts.emergency || 0;
         $('#queue-emergency-count').text(emergencyCount);
         if (emergencyCount> 0) {
@@ -5210,6 +5282,7 @@ function refreshCurrentPatientData() {
         return;
     }
 
+
     // Silently reload patient requests
     $.get(`/lab-workbench/patient/${currentPatient}/requests`, function(data) {
         displayPendingRequests(data.requests);
@@ -5238,6 +5311,7 @@ function updateSyncTimeDisplay() {
         $('#last-sync-time').text('Just now');
         return;
     }
+
 
     const secondsAgo = Math.floor((Date.now() - lastSyncTimestamp) / 1000);
 
@@ -5384,6 +5458,7 @@ function confirmCollectSample() {
         return;
     }
 
+
     let requestIds = window._pendingSampleIds || [];
     if (requestIds.length === 0) return;
 
@@ -5444,6 +5519,7 @@ function enterResult(requestId) {
         '/lab-workbench/lab-service-requests/' + requestId,
         '/lab-workbench/lab-service-requests/' + requestId + '/attachments');
 }
+window.enterLabResult = enterResult;
 
 // ── Floating Cart Logic ──────────────────────────────────────────────
 function getSelectedItems() {
@@ -5482,6 +5558,7 @@ function updateFloatingCart() {
         $('#floating-cart').fadeOut(200);
         return;
     }
+
 
     const totalPrice = [...items.billing, ...items.sample].reduce((sum, i) => sum + i.price, 0);
     $('#cart-item-count').text(totalCount);
@@ -5649,6 +5726,7 @@ $('#deleteRequestForm').on('submit', function(e) {
         return;
     }
 
+
     $.ajax({
         url: `/lab-workbench/lab-service-requests/${deleteRequestId}`,
         method: 'DELETE',
@@ -5696,6 +5774,7 @@ $('#dismissRequestForm').on('submit', function(e) {
         toastr.warning('Please provide a detailed reason (minimum 10 characters)');
         return;
     }
+
 
     $.ajax({
         url: `/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss`,
@@ -6199,6 +6278,7 @@ function showQueue(filter) {
         'results': 'Result Entry',
         'completed': 'Completed',
         'approval': 'Awaiting Approval',
+        'freeform': 'Free-Form / External',
         'all': 'All Pending'
     };
     $('#current-queue-title').html(`<i class="mdi mdi-filter"></i> Viewing: <span style="font-weight: 700; color: #667eea;">${titleNames[filter] || titleNames['all']}</span>`);
@@ -6220,8 +6300,13 @@ function showQueue(filter) {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        $('#queue-start-date').val(firstDay.toISOString().split('T')[0]);
-        $('#queue-end-date').val(lastDay.toISOString().split('T')[0]);
+        
+        const formatDate = (d) => {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
+        
+        $('#queue-start-date').val(formatDate(firstDay));
+        $('#queue-end-date').val(formatDate(lastDay));
     }
 
     // Hide other views, show queue view
@@ -6272,6 +6357,7 @@ function initializeQueueDataTable(filter) {
         'results': '3',
         'completed': '4',
         'approval': 'approval',
+        'freeform': 'freeform',
         'all': 'all'
     };
     const status = filterMap[filter] || 'all';
@@ -6325,12 +6411,19 @@ function initializeQueueDataTable(filter) {
                         statusBadge = '<span class="badge" style="background:#dc3545;color:#fff;"><i class="mdi mdi-close-circle"></i> Rejected</span>';
                     }
 
+                    let inlineActionBtn = '';
+                    if (cardData.is_free_form) {
+                        statusBadge = '<span class="badge badge-secondary"><i class="mdi mdi-file-document-edit"></i> Free-Form</span>';
+                        inlineActionBtn = `<button class="btn btn-sm btn-success enter-result-inline-btn" data-request-id="${cardData.id}" style="margin-left: auto;"><i class="mdi mdi-check"></i> Record Result</button>`;
+                    }
+
                     return `
                         <div class="queue-patient-item" data-patient-id="${cardData.patient_id}" style="cursor: pointer; padding: 1rem; border-bottom: 1px solid #e9ecef;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
                                 <div style="font-weight: 600; font-size: 1rem; color: #212529;">${cardData.patient_name}</div>
                                 <span class="badge badge-primary">${cardData.file_no}</span>
                                 ${reverseBtn}
+                                ${inlineActionBtn}
                             </div>
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
                                 <i class="mdi mdi-flask-outline"></i> ${cardData.service_name}
@@ -6863,6 +6956,7 @@ $('#btn-new-request').on('click', function() {
         toastr.warning('Please select a patient first');
         return;
     }
+
     switchWorkspaceTab('new-request');
     $('#new-request-patient-name').text(currentPatient.name);
 });
@@ -6873,34 +6967,74 @@ $('#btn-new-request').on('click', function() {
 let labSearchTimer = null;
 
 function searchLabServices(q) {
-    clearTimeout(labSearchTimer);
     const $results = $('#service-search-results');
+    const patientId = currentPatient ? (typeof currentPatient === 'object' ? currentPatient.id : currentPatient) : null;
 
-    if (!q || q.trim().length < 2) {
-        $results.html('').hide();
-        return;
-    }
-
-    // Show loading state
-    $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
-
-    labSearchTimer = setTimeout(function() {
-        $.ajax({
+    if (typeof SearchManager !== 'undefined') {
+        SearchManager.execute({
+            inputVal: q,
+            minLength: 2,
+            delay: 300,
             url: "{{ url('live-search-services') }}",
-            method: "GET",
-            dataType: 'json',
             data: {
                 term: q,
                 category_id: {{ appsettings('investigation_category_id') ?? 2 }},
-                patient_id: currentPatient ? (typeof currentPatient === 'object' ? currentPatient.id : currentPatient) : null
+                patient_id: patientId
             },
-            success: function(data) {
-                $results.html('');
+            onStart: function() {
+                $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+            },
+            onSuccess: function(data) {
+                renderLabSearchResults(data, q);
+            },
+            onEmptyQuery: function() {
+                $results.html('').hide();
+            }
+        });
+    } else {
+        clearTimeout(labSearchTimer);
+        if (!q || q.trim().length < 2) {
+            $results.html('').hide();
+            return;
+        }
 
-                if (!data || data.length === 0) {
-                    $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-alert-circle-outline"></i> No lab services found for "' + q + '"</li>').show();
-                    return;
+        $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+        labSearchTimer = setTimeout(function() {
+            $.ajax({
+                url: "{{ url('live-search-services') }}",
+                method: "GET",
+                dataType: 'json',
+                data: {
+                    term: q,
+                    category_id: {{ appsettings('investigation_category_id') ?? 2 }},
+                    patient_id: patientId
+                },
+                success: function(data) {
+                    renderLabSearchResults(data, q);
                 }
+            });
+        }, 300);
+    }
+}
+
+function renderLabSearchResults(data, q) {
+    const $results = $('#service-search-results');
+    $results.html('');
+    
+    // Inject Free-Form option at the top
+    const freeFormHtml = `
+        <li class="list-group-item list-group-item-action text-primary" onclick="addFreeFormLabWorkbench()" style="cursor:pointer;">
+            <i class="mdi mdi-plus-circle"></i> Not listed? Add free-form '${q}'
+        </li>
+    `;
+    $results.append(freeFormHtml);
+
+    if (!data || data.length === 0) {
+        $results.append('<li class="list-group-item text-center text-muted"><i class="mdi mdi-alert-circle-outline"></i> No lab services found for "' + q + '"</li>');
+        $results.show();
+        return;
+    }
+
 
                 for (var i = 0; i < data.length; i++) {
                     const item = data[i] || {};
@@ -6950,12 +7084,25 @@ function searchLabServices(q) {
                     $results.append(mk);
                 }
                 $results.show();
-            },
-            error: function() {
-                $results.html('<li class="list-group-item text-center text-danger"><i class="mdi mdi-alert"></i> Search failed. Please try again.</li>').show();
-            }
-        });
-    }, 300);
+}
+
+function addFreeFormLabWorkbench() {
+    Swal.fire({
+        title: 'Add Free-Form Lab Test',
+        text: 'Enter the name of the lab test to request:',
+        input: 'text',
+        showCancelButton: true,
+        confirmButtonText: 'Add',
+        inputValidator: (value) => {
+            if (!value) return 'You need to write something!'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            setSearchValLab(result.value + ' [Free-form]', 'FF_' + result.value, 0, 'cash', 0, 0);
+            $('#service-search-input').val('');
+            $('#service-search-results').hide();
+        }
+    });
 }
 
 function setSearchValLab(name, id, price, coverageMode, claims, payable) {
@@ -6997,6 +7144,7 @@ function applyLabComboWb(comboId) {
         toastr.warning('Please select a patient first before applying a bundle.');
         return;
     }
+
 
     ComboConfirmModal.show({
         name        : name,
@@ -7061,11 +7209,13 @@ $('#new-lab-request-form').on('submit', function(e) {
         return;
     }
 
+
     const patientId = currentPatient ? (typeof currentPatient === 'object' ? currentPatient.id : currentPatient) : null;
     if (!patientId) {
         toastr.error('No patient selected');
         return;
     }
+
 
     const $submitBtn = $(this).find('button[type="submit"]');
     const originalBtnHtml = $submitBtn.html();
@@ -7164,6 +7314,7 @@ function renderTopServices(services, totalRequests = 0) {
         return;
     }
 
+
     let html = '<ul class="list-group list-group-flush">';
 
     services.forEach((service, index) => {
@@ -7194,6 +7345,7 @@ function renderTopDoctors(doctors) {
         container.html('<p class="text-muted text-center p-3">No data available.</p>');
         return;
     }
+
 
     let html = '<div class="table-responsive"><table class="table table-hover table-sm"><thead><tr><th>Doctor Name</th><th class="text-center">Requests</th><th class="text-right">Total Revenue</th></tr></thead><tbody>';
 
@@ -7320,6 +7472,20 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
 // =============================================
 // RESULT APPROVAL WORKFLOW
 // =============================================
+
+    // Click on queue item opens patient workspace
+    $('#queue-datatable').on('click', '.queue-patient-item', function(e) {
+        // Prevent opening workspace if they clicked an inline action button
+        if ($(e.target).closest('.enter-result-inline-btn').length || $(e.target).closest('.reverse-approval-btn').length) {
+            return;
+        }
+
+        const patientId = $(this).data('patient-id');
+        currentPatientId = patientId;
+        
+        // Show loading state
+        $('#main-workspace').addClass('active');
+    });
 
 function openApprovalReview(requestId) {
     currentApprovalId = requestId;
@@ -7523,6 +7689,7 @@ function confirmRejectLabResult() {
         return;
     }
 
+
     $.ajax({
         url: `/lab-workbench/approval/${currentApprovalId}/reject`,
         type: 'POST',
@@ -7565,6 +7732,13 @@ $(document).on('click', '.reverse-approval-btn', function(e) {
     const requestId = $(this).data('request-id');
     reverseLabApproval(requestId);
 });
+
+    // Handle inline Enter Result click
+    $('#queue-datatable').on('click', '.enter-result-inline-btn', function(e) {
+        e.stopPropagation();
+        const requestId = $(this).data('request-id');
+        window.enterLabResult(requestId);
+    });
 
 $(document).on('click', '#btn-confirm-reverse', function() {
     confirmReverseLabApproval();
@@ -7668,3 +7842,5 @@ function showBundleRemove(btn) {
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
 @endsection
+
+

@@ -39,7 +39,11 @@ protected $fillable = [
         'rejected_by',
         'rejected_at',
         'rejection_reason',
+        'is_free_form',
+        'free_form_name',
     ];
+
+    protected $appends = ['service_name'];
 
     protected $casts = [
         'attachments' => 'array',
@@ -145,5 +149,13 @@ protected $fillable = [
     public function procedureItem()
     {
         return $this->hasOne(ProcedureItem::class, 'imaging_service_request_id', 'id');
+    }
+
+    /**
+     * Get the service name gracefully handling free form requests.
+     */
+    public function getServiceNameAttribute()
+    {
+        return $this->is_free_form ? $this->free_form_name : ($this->service ? $this->service->service_name : 'Unknown Service');
     }
 }

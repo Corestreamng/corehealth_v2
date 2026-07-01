@@ -38,10 +38,16 @@ trait ClinicalOrdersTrait
      * @param array       $extra        Extra fields (service_request_id, status, etc)
      * @return LabServiceRequest
      */
-    protected function addSingleLab(int $serviceId, ?string $note, int $patientId, ?int $encounterId, array $extra = []): LabServiceRequest
+    protected function addSingleLab($serviceId, ?string $note, int $patientId, ?int $encounterId, array $extra = []): LabServiceRequest
     {
         $lab = new LabServiceRequest();
-        $lab->service_id   = $serviceId;
+        if (strpos((string)$serviceId, 'FF_') === 0) {
+            $lab->is_free_form = true;
+            $lab->free_form_name = substr((string)$serviceId, 3);
+            $lab->service_id = null;
+        } else {
+            $lab->service_id = $serviceId;
+        }
         $lab->note         = $note;
         $lab->patient_id   = $patientId;
         $lab->encounter_id = $encounterId; // null for nurse
@@ -112,10 +118,16 @@ trait ClinicalOrdersTrait
      * @param array       $extra        Extra fields
      * @return ImagingServiceRequest
      */
-    protected function addSingleImaging(int $serviceId, ?string $note, int $patientId, ?int $encounterId, array $extra = []): ImagingServiceRequest
+    protected function addSingleImaging($serviceId, ?string $note, int $patientId, ?int $encounterId, array $extra = []): ImagingServiceRequest
     {
         $imaging = new ImagingServiceRequest();
-        $imaging->service_id   = $serviceId;
+        if (strpos((string)$serviceId, 'FF_') === 0) {
+            $imaging->is_free_form = true;
+            $imaging->free_form_name = substr((string)$serviceId, 3);
+            $imaging->service_id = null;
+        } else {
+            $imaging->service_id = $serviceId;
+        }
         $imaging->note         = $note;
         $imaging->patient_id   = $patientId;
         $imaging->encounter_id = $encounterId;
@@ -186,10 +198,16 @@ trait ClinicalOrdersTrait
      * @param array       $extra        Extra fields
      * @return ProductRequest
      */
-    protected function addSinglePrescription(int $productId, ?string $dose, int $patientId, ?int $encounterId, array $extra = []): ProductRequest
+    protected function addSinglePrescription($productId, ?string $dose, int $patientId, ?int $encounterId, array $extra = []): ProductRequest
     {
         $presc = new ProductRequest();
-        $presc->product_id    = $productId;
+        if (strpos((string)$productId, 'FF_') === 0) {
+            $presc->is_free_form = true;
+            $presc->free_form_name = substr((string)$productId, 3);
+            $presc->product_id = null;
+        } else {
+            $presc->product_id = $productId;
+        }
         $presc->dose          = $dose ?? '';
         $presc->patient_id    = $patientId;
         $presc->encounter_id  = $encounterId;
@@ -258,7 +276,36 @@ trait ClinicalOrdersTrait
      */
     protected function addSingleProcedure(array $data, int $patientId, ?int $encounterId, ?int $admissionRequestId = null, array $extra = []): Procedure
     {
-        $service = Service::with('price', 'procedureDefinition')->find($data['service_id']);
+        $serviceId = $data['service_id'];
+        $isFreeForm = strpos((string)$serviceId, 'FF_') === 0;
+
+        if ($isFreeForm) {
+            $freeFormName = str_replace(' [Free-form]', '', substr((string)$serviceId, 3));
+            
+            $procedure = new Procedure();
+            $procedure->is_free_form     = true;
+            $procedure->free_form_name   = $freeFormName;
+            $procedure->patient_id       = $patientId;
+            $procedure->encounter_id     = $encounterId;
+            $procedure->requested_by     = \Illuminate\Support\Facades\Auth::id();
+            $procedure->requested_on     = now();
+            $procedure->priority         = $data['priority'] ?? 'routine';
+            $procedure->procedure_status = Procedure::STATUS_REQUESTED;
+            $procedure->pre_notes        = $data['pre_notes'] ?? null;
+            $procedure->pre_notes_by     = !empty($data['pre_notes']) ? \Illuminate\Support\Facades\Auth::id() : null;
+
+            if (!empty($data['scheduled_date'])) {
+                $procedure->scheduled_date   = $data['scheduled_date'];
+                $procedure->procedure_status = Procedure::STATUS_SCHEDULED;
+            }
+
+            $procedure->save();
+            
+            // Skip billing entry for free form procedures
+            return $procedure;
+        }
+
+        $service = Service::with('price', 'procedureDefinition')->find($serviceId);
 
         if (!$service) {
             throw new \InvalidArgumentException('Service not found: ' . $data['service_id']);

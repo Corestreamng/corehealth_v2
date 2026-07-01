@@ -458,7 +458,7 @@ class EncounterController extends Controller
 
                 // Header with service name and status
                 $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
-                $str .= "<h6 class='mb-0'><span class='badge bg-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span></h6>';
+                $str .= "<h6 class='mb-0'><span class='badge " . ($his->is_free_form ? "bg-info text-dark" : "bg-success") . "'>" . $his->service_name . ($his->is_free_form ? " [Free-form]" : "") . '</span></h6>';
 
                 // Status badges
                 $str .= '<div>';
@@ -528,9 +528,11 @@ class EncounterController extends Controller
                     . ((isset($his->doctor_id) && $his->doctor_id != null) ? (userfullname($his->doctor_id) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')</span>') : "<span class='badge bg-secondary'>N/A</span>");
                 $str .= '</div>';
 
-                $str .= '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
-                    . ((isset($his->billed_by) && $his->billed_by != null) ? (userfullname($his->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->billed_date)) . ')</span>') : "<span class='badge bg-secondary'>Not billed</span>");
-                $str .= '</div>';
+                if (!$his->is_free_form) {
+                    $str .= '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
+                        . ((isset($his->billed_by) && $his->billed_by != null) ? (userfullname($his->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->billed_date)) . ')</span>') : "<span class='badge bg-secondary'>Not billed</span>");
+                    $str .= '</div>';
+                }
 
                 $str .= '<div class="mb-2"><i class="mdi mdi-test-tube text-warning"></i> <b>Sample taken by:</b> '
                     . ((isset($his->sample_taken_by) && $his->sample_taken_by != null) ? (userfullname($his->sample_taken_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->sample_date)) . ')</span>') : "<span class='badge bg-secondary'>Not taken</span>");
@@ -632,7 +634,9 @@ class EncounterController extends Controller
 
                 // Enter Result button for doctors/nurses who requested the investigation
                 $canEnterResult = false;
-                if (empty($his->result) && ($canDeliver || $his->self_perform_intent) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
+                if ($his->is_free_form && empty($his->result)) {
+                    $canEnterResult = true; // Bypasses billing and sample restrictions
+                } elseif (empty($his->result) && ($canDeliver || $his->self_perform_intent) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
                         || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_lab_result'))
@@ -641,15 +645,22 @@ class EncounterController extends Controller
                     }
                 }
                 if ($canEnterResult) {
-                    $str .= "
-                        <button type='button' class='btn btn-success btn-sm' onclick='enterLabResult({$his->id})'>
-                            <i class='mdi mdi-flask-outline'></i> Enter Result
-                        </button>";
+                    if ($his->is_free_form) {
+                        $str .= "
+                            <button type='button' class='btn btn-success btn-sm' onclick='enterLabResult({$his->id})' title='Record results brought from outside'>
+                                <i class='mdi mdi-flask-outline'></i> Record External Result
+                            </button>";
+                    } else {
+                        $str .= "
+                            <button type='button' class='btn btn-success btn-sm' onclick='enterLabResult({$his->id})'>
+                                <i class='mdi mdi-flask-outline'></i> Enter Result
+                            </button>";
+                    }
                 }
 
                 // "Perform Investigation" button — status == 1 (unbilled), requester only
                 $canPerformInvestigation = false;
-                if (empty($his->result) && $his->status == 1 && Auth::id() == $his->doctor_id) {
+                if (!$his->is_free_form && empty($his->result) && $his->status == 1 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && e(appsettings('doctor_can_enter_lab_result')))
                         || ($user->hasRole('NURSE') && e(appsettings('nurse_can_enter_lab_result')))
@@ -660,7 +671,8 @@ class EncounterController extends Controller
                 // "Perform Investigation" button — combo item (status == 2, is_bundle_item), not yet claimed
                 $canClaimComboPerform = false;
                 if (
-                     empty($his->result)
+                     !$his->is_free_form
+                     && empty($his->result)
                      && $his->status == 2
                      && !$his->self_perform_intent
                      && Auth::id() == $his->doctor_id
@@ -764,17 +776,19 @@ class EncounterController extends Controller
                 $roCov   = optional($his->productOrServiceRequest)->coverage_mode ?? '';
                 $roPay   = optional($his->productOrServiceRequest)->payable_amount ?? $roPrice;
                 $roClaim = optional($his->productOrServiceRequest)->claims_amount ?? 0;
-                $str .= "<button type='button' class='btn btn-outline-primary btn-sm re-order-btn ms-1'
-                    data-type='labs'
-                    data-service-id='{$roSvcId}'
-                    data-name='{$roName}'
-                    data-price='{$roPrice}'
-                    data-coverage-mode='{$roCov}'
-                    data-payable='{$roPay}'
-                    data-claims='{$roClaim}'
-                    title='Add to current lab requests'>
-                    <i class='fa fa-redo'></i> Re-order
-                </button>";
+                if (!$his->is_free_form) {
+                    $str .= "<button type='button' class='btn btn-outline-primary btn-sm re-order-btn ms-1'
+                        data-type='labs'
+                        data-service-id='{$roSvcId}'
+                        data-name='{$roName}'
+                        data-price='{$roPrice}'
+                        data-coverage-mode='{$roCov}'
+                        data-payable='{$roPay}'
+                        data-claims='{$roClaim}'
+                        title='Add to current lab requests'>
+                        <i class='fa fa-redo'></i> Re-order
+                    </button>";
+                }
 
                 $str .= '</div>'; // Close btn-group
                 $str .= '</div>'; // Close card-body
@@ -842,7 +856,7 @@ class EncounterController extends Controller
 
                 // Header with service name and status
                 $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
-                $str .= "<h6 class='mb-0'><span class='badge bg-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span></h6>';
+                $str .= "<h6 class='mb-0'><span class='badge " . ($his->is_free_form ? "bg-info text-dark" : "bg-success") . "'>" . $his->service_name . ($his->is_free_form ? " [Free-form]" : "") . '</span></h6>';
 
                 // Status badges
                 $str .= '<div>';
@@ -910,9 +924,11 @@ class EncounterController extends Controller
                     . ((isset($his->doctor_id) && $his->doctor_id != null) ? (userfullname($his->doctor_id) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')</span>') : "<span class='badge bg-secondary'>N/A</span>");
                 $str .= '</div>';
 
-                $str .= '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
-                    . ((isset($his->billed_by) && $his->billed_by != null) ? (userfullname($his->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->billed_date)) . ')</span>') : "<span class='badge bg-secondary'>Not billed</span>");
-                $str .= '</div>';
+                if (!$his->is_free_form) {
+                    $str .= '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
+                        . ((isset($his->billed_by) && $his->billed_by != null) ? (userfullname($his->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->billed_date)) . ')</span>') : "<span class='badge bg-secondary'>Not billed</span>");
+                    $str .= '</div>';
+                }
 
                 $str .= '<div class="mb-2"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> '
                     . ((isset($his->result_by) && $his->result_by != null) ? (userfullname($his->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->result_date)) . ')</span>') : "<span class='badge bg-secondary'>Awaiting Results</span>");
@@ -1004,7 +1020,9 @@ class EncounterController extends Controller
 
                 // Enter Result button for doctors/nurses who requested the imaging
                 $canEnterImagingResult = false;
-                if (empty($his->result) && ($canDeliver || $his->self_perform_intent) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
+                if ($his->is_free_form && empty($his->result)) {
+                    $canEnterImagingResult = true;
+                } elseif (empty($his->result) && ($canDeliver || $his->self_perform_intent) && $his->status >= 2 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
                         || ($user->hasRole('NURSE') && e(appsettings('nurse_can_enter_imaging_result')))
@@ -1013,15 +1031,22 @@ class EncounterController extends Controller
                     }
                 }
                 if ($canEnterImagingResult) {
-                    $str .= "
-                        <button type='button' class='btn btn-success btn-sm' onclick='enterImagingResult({$his->id})'>
-                            <i class='mdi mdi-radiology-box-outline'></i> Enter Result
-                        </button>";
+                    if ($his->is_free_form) {
+                        $str .= "
+                            <button type='button' class='btn btn-success btn-sm' onclick='enterImagingResult({$his->id})' title='Record results brought from outside'>
+                                <i class='mdi mdi-radiology-box-outline'></i> Record External Result
+                            </button>";
+                    } else {
+                        $str .= "
+                            <button type='button' class='btn btn-success btn-sm' onclick='enterImagingResult({$his->id})'>
+                                <i class='mdi mdi-radiology-box-outline'></i> Enter Result
+                            </button>";
+                    }
                 }
 
                 // "Perform Investigation" button — status == 1 (unbilled), requester only
                 $canPerformImagingInvestigation = false;
-                if (empty($his->result) && $his->status == 1 && Auth::id() == $his->doctor_id) {
+                if (!$his->is_free_form && empty($his->result) && $his->status == 1 && Auth::id() == $his->doctor_id) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_imaging_result'))
                         || ($user->hasRole('NURSE') && appsettings('nurse_can_enter_imaging_result'))
@@ -1032,7 +1057,8 @@ class EncounterController extends Controller
                 // "Perform Investigation" button — combo item (status == 2, is_bundle_item), not yet claimed
                 $canClaimComboImagingPerform = false;
                 if (
-                    empty($his->result)
+                    !$his->is_free_form
+                    && empty($his->result)
                     && $his->status == 2
                     && !$his->self_perform_intent
                     && Auth::id() == $his->doctor_id
@@ -1136,17 +1162,19 @@ class EncounterController extends Controller
                 $roCov   = optional($his->productOrServiceRequest)->coverage_mode ?? '';
                 $roPay   = optional($his->productOrServiceRequest)->payable_amount ?? $roPrice;
                 $roClaim = optional($his->productOrServiceRequest)->claims_amount ?? 0;
-                $str .= "<button type='button' class='btn btn-outline-primary btn-sm re-order-btn ms-1'
-                    data-type='imaging'
-                    data-service-id='{$roSvcId}'
-                    data-name='{$roName}'
-                    data-price='{$roPrice}'
-                    data-coverage-mode='{$roCov}'
-                    data-payable='{$roPay}'
-                    data-claims='{$roClaim}'
-                    title='Add to current imaging requests'>
-                    <i class='fa fa-redo'></i> Re-order
-                </button>";
+                if (!$his->is_free_form) {
+                    $str .= "<button type='button' class='btn btn-outline-primary btn-sm re-order-btn ms-1'
+                        data-type='imaging'
+                        data-service-id='{$roSvcId}'
+                        data-name='{$roName}'
+                        data-price='{$roPrice}'
+                        data-coverage-mode='{$roCov}'
+                        data-payable='{$roPay}'
+                        data-claims='{$roClaim}'
+                        title='Add to current imaging requests'>
+                        <i class='fa fa-redo'></i> Re-order
+                    </button>";
+                }
 
                 $str .= '</div>'; // Close btn-group
                 $str .= '</div>'; // Close card-body
@@ -1872,10 +1900,10 @@ class EncounterController extends Controller
                 return $item->status;
             })
             ->addColumn('product_name', function ($item) {
-                return optional($item->product)->product_name ?? 'Unknown';
+                return $item->item_name;
             })
             ->addColumn('product_code', function ($item) {
-                return optional($item->product)->product_code ?? '';
+                return $item->is_free_form ? '[Free-form]' : (optional($item->product)->product_code ?? '');
             })
             ->addColumn('dose', function ($item) {
                 return $item->dose ?? 'N/A';
@@ -1957,7 +1985,7 @@ class EncounterController extends Controller
             })
             ->addColumn('info', function ($item) {
                 // Build info HTML for new_encounter.blade.php compatibility
-                $productName = optional($item->product)->product_name ?? 'Unknown';
+                $productName = $item->is_free_form ? $item->item_name : (optional($item->product)->product_name ?? $item->item_name ?? 'Unknown');
                 $productCode = optional($item->product)->product_code ?? '';
                 $dose = $item->dose ?? 'N/A';
                 $qty = $item->qty ?? 1;
@@ -1974,46 +2002,59 @@ class EncounterController extends Controller
                 $statusBadge = '';
                 $statusInfo = '';
 
-                if ($status == 0) {
-                    $statusBadge = "<span class='badge bg-danger'>Dismissed</span>";
-                    $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
-                } elseif ($status == 1) {
-                    $statusBadge = "<span class='badge bg-warning text-dark'>Unbilled</span>";
-                    $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
-                } elseif ($status == 2) {
-                    // Check if ready to dispense or awaiting payment/validation
-                    $payableAmount = optional($item->productOrServiceRequest)->payable_amount ?? 0;
-                    $claimsAmount = optional($item->productOrServiceRequest)->claims_amount ?? 0;
-                    $isPaid = optional($item->productOrServiceRequest)->payment_id !== null;
-                    $validationStatus = optional($item->productOrServiceRequest)->validation_status;
-                    $isValidated = in_array($validationStatus, ['validated', 'approved']);
-
-                    $pendingReasons = [];
-                    if ($payableAmount > 0 && !$isPaid) {
-                        $pendingReasons[] = 'Payment';
-                    }
-                    if ($claimsAmount > 0 && !$isValidated) {
-                        $pendingReasons[] = 'HMO Validation';
-                    }
-
-                    if (count($pendingReasons) > 0) {
-                        $statusBadge = "<span class='badge bg-info'>Awaiting " . implode(' & ', $pendingReasons) . "</span>";
+                if ($item->is_free_form) {
+                    if ($status == 3) {
+                        $statusBadge = "<span class='badge bg-secondary'>Dispensed (Free-form)</span>";
+                        $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                        if ($dispensedBy) {
+                            $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-truck-delivery'></i> Dispensed by: {$dispensedBy} on {$dispensedAt}</div>";
+                        }
                     } else {
-                        $statusBadge = "<span class='badge bg-success'>Ready to Dispense</span>";
+                        $statusBadge = "<span class='badge bg-info text-dark'>Free-form Request</span>";
+                        $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
                     }
+                } else {
+                    if ($status == 0) {
+                        $statusBadge = "<span class='badge bg-danger'>Dismissed</span>";
+                        $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                    } elseif ($status == 1) {
+                        $statusBadge = "<span class='badge bg-warning text-dark'>Unbilled</span>";
+                        $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                    } elseif ($status == 2) {
+                        // Check if ready to dispense or awaiting payment/validation
+                        $payableAmount = optional($item->productOrServiceRequest)->payable_amount ?? 0;
+                        $claimsAmount = optional($item->productOrServiceRequest)->claims_amount ?? 0;
+                        $isPaid = optional($item->productOrServiceRequest)->payment_id !== null;
+                        $validationStatus = optional($item->productOrServiceRequest)->validation_status;
+                        $isValidated = in_array($validationStatus, ['validated', 'approved']);
 
-                    $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
-                    if ($billedBy) {
-                        $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-receipt'></i> Billed by: {$billedBy} on {$billedAt}</div>";
-                    }
-                } elseif ($status == 3) {
-                    $statusBadge = "<span class='badge bg-secondary'>Dispensed</span>";
-                    $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
-                    if ($billedBy) {
-                        $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-receipt'></i> Billed by: {$billedBy} on {$billedAt}</div>";
-                    }
-                    if ($dispensedBy) {
-                        $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-truck-delivery'></i> Dispensed by: {$dispensedBy} on {$dispensedAt}</div>";
+                        $pendingReasons = [];
+                        if ($payableAmount > 0 && !$isPaid) {
+                            $pendingReasons[] = 'Payment';
+                        }
+                        if ($claimsAmount > 0 && !$isValidated) {
+                            $pendingReasons[] = 'HMO Validation';
+                        }
+
+                        if (count($pendingReasons) > 0) {
+                            $statusBadge = "<span class='badge bg-info'>Awaiting " . implode(' & ', $pendingReasons) . "</span>";
+                        } else {
+                            $statusBadge = "<span class='badge bg-success'>Ready to Dispense</span>";
+                        }
+
+                        $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                        if ($billedBy) {
+                            $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-receipt'></i> Billed by: {$billedBy} on {$billedAt}</div>";
+                        }
+                    } elseif ($status == 3) {
+                        $statusBadge = "<span class='badge bg-secondary'>Dispensed</span>";
+                        $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                        if ($billedBy) {
+                            $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-receipt'></i> Billed by: {$billedBy} on {$billedAt}</div>";
+                        }
+                        if ($dispensedBy) {
+                            $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-truck-delivery'></i> Dispensed by: {$dispensedBy} on {$dispensedAt}</div>";
+                        }
                     }
                 }
 
@@ -2122,7 +2163,17 @@ class EncounterController extends Controller
                     }
                 }
 
-                return "
+                $freeFormDispenseBtn = '';
+                if ($item->is_free_form && in_array($status, [1, 2])) {
+                    $freeFormDispenseBtn = "<button type='button' class='btn btn-success btn-sm' onclick='dispenseFreeFormMed({$item->id})' title='Record quantity dispensed without billing'><i class='mdi mdi-check-circle-outline'></i> Mark Dispensed</button>";
+                }
+
+                $priceHtml = '';
+                if (!$item->is_free_form) {
+                    $priceHtml = "<span class='ms-2'><i class='mdi mdi-cash'></i> ₦" . number_format($price, 2) . "</span>";
+                }
+
+                $html = "
                     <div class='p-2 border-bottom'>
                         <div class='d-flex justify-content-between'>
                             <strong>{$productName}</strong>
@@ -2132,7 +2183,7 @@ class EncounterController extends Controller
                         <div class='mt-1'>
                             <span><i class='mdi mdi-pill'></i> {$dose}</span>
                             {$qtyDisplay}
-                            <span class='ms-2'><i class='mdi mdi-cash'></i> ₦" . number_format($price, 2) . "</span>
+                            {$priceHtml}
                         </div>
                         {$statusInfo}
                         {$bundleHtml}
@@ -2140,6 +2191,9 @@ class EncounterController extends Controller
                         {$qtyAdjustmentHtml}
                         <div class='mt-1'>
                             {$deleteBtn}
+                            {$freeFormDispenseBtn}";
+                if (!$item->is_free_form) {
+                    $html .= "
                             <button type='button' class='btn btn-outline-primary btn-sm re-order-btn'
                                 data-type='prescriptions'
                                 data-product-id='{$item->product_id}'
@@ -2151,10 +2205,13 @@ class EncounterController extends Controller
                                 data-claims='{$roClaim}'
                                 title='Add to current prescriptions'>
                                 <i class='fa fa-redo'></i> Re-prescribe
-                            </button>
+                            </button>";
+                }
+                $html .= "
                         </div>
                     </div>
                 ";
+                return $html;
             })
             ->rawColumns(['info'])
             ->make(true);
@@ -2866,7 +2923,14 @@ class EncounterController extends Controller
             if (isset($request->consult_invest_id) && count($request->consult_invest_id) > 0) {
                 for ($r = 0; $r < count($request->consult_invest_id); ++$r) {
                     $invest = new LabServiceRequest();
-                    $invest->service_id = $request->consult_invest_id[$r];
+                    $idValue = $request->consult_invest_id[$r];
+                    if (strpos($idValue, 'FF_') === 0) {
+                        $invest->is_free_form = true;
+                        $invest->free_form_name = substr($idValue, 3);
+                        $invest->service_id = null;
+                    } else {
+                        $invest->service_id = $idValue;
+                    }
                     $invest->note = $request->consult_invest_note[$r];
                     $invest->encounter_id = $encounter->id;
                     $invest->patient_id = $request->patient_id;
@@ -2883,7 +2947,14 @@ class EncounterController extends Controller
             if (isset($request->consult_imaging_id) && count($request->consult_imaging_id) > 0) {
                 for ($r = 0; $r < count($request->consult_imaging_id); ++$r) {
                     $imaging = new ImagingServiceRequest();
-                    $imaging->service_id = $request->consult_imaging_id[$r];
+                    $idValue = $request->consult_imaging_id[$r];
+                    if (strpos($idValue, 'FF_') === 0) {
+                        $imaging->is_free_form = true;
+                        $imaging->free_form_name = substr($idValue, 3);
+                        $imaging->service_id = null;
+                    } else {
+                        $imaging->service_id = $idValue;
+                    }
                     $imaging->note = $request->consult_imaging_note[$r];
                     $imaging->encounter_id = $encounter->id;
                     $imaging->patient_id = $request->patient_id;
@@ -2898,7 +2969,14 @@ class EncounterController extends Controller
             if (isset($request->consult_presc_id) && count($request->consult_presc_id) > 0) {
                 for ($r = 0; $r < count($request->consult_presc_id); ++$r) {
                     $presc = new ProductRequest();
-                    $presc->product_id = $request->consult_presc_id[$r];
+                    $idValue = $request->consult_presc_id[$r];
+                    if (strpos($idValue, 'FF_') === 0) {
+                        $presc->is_free_form = true;
+                        $presc->free_form_name = substr($idValue, 3);
+                        $presc->product_id = null;
+                    } else {
+                        $presc->product_id = $idValue;
+                    }
                     $presc->dose = $request->consult_presc_dose[$r];
                     $presc->encounter_id = $encounter->id;
                     $presc->patient_id = $request->patient_id;
@@ -3119,7 +3197,7 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'consult_invest_id' => 'required|array',
-                'consult_invest_id.*' => 'required|integer',
+                'consult_invest_id.*' => 'required|string',
                 'consult_invest_note' => 'required|array',
                 'consult_invest_note.*' => 'nullable|string',
             ]);
@@ -3137,7 +3215,14 @@ class EncounterController extends Controller
             // Save new lab requests
             for ($r = 0; $r < count($request->consult_invest_id); ++$r) {
                 $invest = new LabServiceRequest();
-                $invest->service_id = $request->consult_invest_id[$r];
+                $idValue = $request->consult_invest_id[$r];
+                if (strpos($idValue, 'FF_') === 0) {
+                    $invest->is_free_form = true;
+                    $invest->free_form_name = substr($idValue, 3);
+                    $invest->service_id = null;
+                } else {
+                    $invest->service_id = $idValue;
+                }
                 $invest->note = $request->consult_invest_note[$r];
                 $invest->encounter_id = $encounter->id;
                 $invest->patient_id = $encounter->patient_id;
@@ -3166,7 +3251,7 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'consult_imaging_id' => 'required|array',
-                'consult_imaging_id.*' => 'required|integer',
+                'consult_imaging_id.*' => 'required|string',
                 'consult_imaging_note' => 'required|array',
                 'consult_imaging_note.*' => 'nullable|string',
             ]);
@@ -3184,7 +3269,14 @@ class EncounterController extends Controller
             // Save new imaging requests
             for ($r = 0; $r < count($request->consult_imaging_id); ++$r) {
                 $imaging = new ImagingServiceRequest();
-                $imaging->service_id = $request->consult_imaging_id[$r];
+                $idValue = $request->consult_imaging_id[$r];
+                if (strpos($idValue, 'FF_') === 0) {
+                    $imaging->is_free_form = true;
+                    $imaging->free_form_name = substr($idValue, 3);
+                    $imaging->service_id = null;
+                } else {
+                    $imaging->service_id = $idValue;
+                }
                 $imaging->note = $request->consult_imaging_note[$r];
                 $imaging->encounter_id = $encounter->id;
                 $imaging->patient_id = $encounter->patient_id;
@@ -3213,20 +3305,27 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'consult_presc_id' => 'required|array|min:1',
-                'consult_presc_id.*' => 'required|integer|exists:products,id',
+                'consult_presc_id.*' => 'required|string',
                 'consult_presc_dose' => 'required|array|min:1',
                 'consult_presc_dose.*' => 'nullable|string',
             ]);
 
             // Validate all selected products are drugs (prescriptions should only contain drugs)
-            $nonDrugs = \App\Models\Product::whereIn('id', $request->consult_presc_id)
-                ->where('product_type', '!=', 'drug')
-                ->pluck('product_name');
-            if ($nonDrugs->isNotEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only drug-type products can be prescribed. Non-drug items: ' . $nonDrugs->implode(', ')
-                ], 422);
+            // Skip free form items from this check
+            $regularProductIds = array_filter($request->consult_presc_id, function($id) {
+                return strpos($id, 'FF_') !== 0;
+            });
+            
+            if (count($regularProductIds) > 0) {
+                $nonDrugs = \App\Models\Product::whereIn('id', $regularProductIds)
+                    ->where('product_type', '!=', 'drug')
+                    ->pluck('product_name');
+                if ($nonDrugs->isNotEmpty()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Only drug-type products can be prescribed. Non-drug items: ' . $nonDrugs->implode(', ')
+                    ], 422);
+                }
             }
 
             if (count($request->consult_presc_id) !== count($request->consult_presc_dose)) {
@@ -3250,7 +3349,14 @@ class EncounterController extends Controller
             // Save new prescriptions
             for ($r = 0; $r < count($request->consult_presc_id); ++$r) {
                 $presc = new ProductRequest();
-                $presc->product_id = $request->consult_presc_id[$r];
+                $idValue = $request->consult_presc_id[$r];
+                if (strpos($idValue, 'FF_') === 0) {
+                    $presc->is_free_form = true;
+                    $presc->free_form_name = substr($idValue, 3);
+                    $presc->product_id = null;
+                } else {
+                    $presc->product_id = $idValue;
+                }
                 $presc->dose = $request->consult_presc_dose[$r] ?? '';
                 $presc->encounter_id = $encounter->id;
                 $presc->patient_id = $encounter->patient_id;
@@ -3766,7 +3872,7 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'procedures' => 'required|array|min:1',
-                'procedures.*.service_id' => 'required|integer|exists:services,id',
+                'procedures.*.service_id' => 'required|string',
                 'procedures.*.priority' => 'required|in:routine,urgent,emergency',
                 'procedures.*.scheduled_date' => 'nullable|date',
                 'procedures.*.pre_notes' => 'nullable|string|max:2000',
@@ -3878,35 +3984,98 @@ class EncounterController extends Controller
             ->get();
 
         return DataTables::of($procedures)
-            ->addColumn('procedure', function ($proc) {
-                $name = optional($proc->service)->service_name ?? 'Unknown';
-                $code = optional($proc->service)->service_code ?? '';
-                return "<strong>{$name}</strong><br><small class='text-muted'>{$code}</small>";
-            })
-            ->addColumn('priority', function ($proc) {
-                $priorityClass = "priority-{$proc->priority}";
-                $label = ucfirst($proc->priority);
-                return "<span class='priority-badge {$priorityClass}'>{$label}</span>";
-            })
-            ->addColumn('status', function ($proc) {
-                $statusClass = "status-{$proc->procedure_status}";
-                $label = \App\Models\Procedure::STATUSES[$proc->procedure_status] ?? ucfirst($proc->procedure_status);
-                return "<span class='status-badge {$statusClass}'>{$label}</span>";
-            })
-            ->addColumn('date', function ($proc) {
-                $requestedDate = $proc->requested_on ? $proc->requested_on->format('d M Y H:i') : 'N/A';
-                $scheduledDate = $proc->scheduled_date ? $proc->scheduled_date->format('d M Y') : null;
-                $html = "<small>{$requestedDate}</small>";
-                if ($scheduledDate) {
-                    $html .= "<br><small class='text-info'><i class='fa fa-calendar'></i> Scheduled: {$scheduledDate}</small>";
-                }
-                return $html;
-            })
-            ->addColumn('actions', function ($proc) {
-                $detailsUrl = route('patient-procedures.show', $proc->id);
-                $openDetailsBtn = "<a href='{$detailsUrl}' target='_blank' class='btn btn-sm btn-primary' title='View Details'><i class='fa fa-external-link-alt'></i> Details</a>";
+            ->addColumn('info', function ($proc) {
+                $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str .= '<div class="card-body p-3">';
 
-                $deleteBtn = '';
+                // 1. Header with Name and Badges
+                $str .= '<div class="d-flex justify-content-between align-items-start mb-2">';
+                if ($proc->is_free_form) {
+                    $name = htmlspecialchars($proc->free_form_name, ENT_QUOTES);
+                    $str .= "<h6 class='mb-0'><span class='badge bg-info text-dark'>{$name} [Free-form]</span></h6>";
+                } else {
+                    $name = htmlspecialchars(optional($proc->service)->service_name ?? 'Unknown', ENT_QUOTES);
+                    $code = htmlspecialchars(optional($proc->service)->service_code ?? '', ENT_QUOTES);
+                    $str .= "<h6 class='mb-0'><span class='badge bg-success'>{$name}</span> <small class='text-muted ml-1'>{$code}</small></h6>";
+                }
+
+                // Badges container
+                $str .= '<div>';
+
+                // Status badge
+                $statusColor = ['requested' => 'secondary', 'scheduled' => 'info', 'in_progress' => 'warning', 'completed' => 'success', 'cancelled' => 'danger'][$proc->procedure_status] ?? 'secondary';
+                $statusLabel = \App\Models\Procedure::STATUSES[$proc->procedure_status] ?? ucfirst($proc->procedure_status);
+                $str .= "<span class='badge bg-{$statusColor} me-1'>{$statusLabel}</span>";
+
+                // Priority badge
+                if ($proc->priority && $proc->priority !== 'routine') {
+                    $prioColor = $proc->priority === 'emergency' ? 'danger' : 'warning text-dark';
+                    $str .= "<span class='badge bg-{$prioColor} me-1'><i class='fa fa-exclamation-triangle'></i> " . ucfirst($proc->priority) . "</span>";
+                }
+
+                // HMO Coverage Badge
+                if ($proc->productOrServiceRequest && $proc->productOrServiceRequest->coverage_mode) {
+                    $covMode = $proc->productOrServiceRequest->coverage_mode;
+                    $coverageClass = $covMode === 'express' ? 'success' : ($covMode === 'primary' ? 'primary' : 'secondary');
+                    $str .= "<span class='badge bg-{$coverageClass} me-1'>HMO: " . strtoupper($covMode) . "</span>";
+                }
+
+                // Consent badge
+                if ($proc->consent_status) {
+                    $csColor = ['obtained' => 'success', 'waived' => 'secondary', 'not_required' => 'light text-dark', 'pending' => 'warning text-dark'][$proc->consent_status] ?? 'secondary';
+                    $str .= "<span class='badge bg-{$csColor}'><i class='fa fa-clipboard-check'></i> Consent " . ucfirst($proc->consent_status) . "</span>";
+                }
+
+                $str .= '</div>';
+                $str .= '</div>'; // End header
+
+                // 2. Timeline & Details
+                $str .= '<div class="small">';
+                
+                // Requested by
+                if ($proc->requestedByUser) {
+                    $reqDate = $proc->requested_on ? $proc->requested_on->format('d M Y H:i') : 'N/A';
+                    $str .= '<div class="mb-1"><i class="fa fa-user-md text-primary"></i> <b>Requested by:</b> ' . htmlspecialchars($proc->requestedByUser->name) . ' <span class="text-muted">(' . $reqDate . ')</span></div>';
+                }
+
+                // Scheduled Date
+                if ($proc->scheduled_date) {
+                    $schedTime = $proc->scheduled_time ? ' ' . $proc->scheduled_time : '';
+                    $str .= '<div class="mb-1"><i class="fa fa-calendar-check text-info"></i> <b>Scheduled for:</b> ' . $proc->scheduled_date->format('d M Y') . $schedTime . '</div>';
+                }
+
+                // OR Info
+                if ($proc->actual_start_time) {
+                    $str .= '<div class="mb-1"><i class="fa fa-play-circle text-success"></i> <b>Started:</b> ' . $proc->actual_start_time->format('d M Y H:i') . '</div>';
+                }
+
+                // Pre notes
+                if (!empty($proc->pre_notes)) {
+                    $str .= '<div class="mb-1"><i class="fa fa-sticky-note text-info"></i> <b>Pre-Notes:</b> <span class="text-muted">' . htmlspecialchars(substr($proc->pre_notes, 0, 100)) . (strlen($proc->pre_notes) > 100 ? '...' : '') . '</span></div>';
+                }
+
+                // Outcome
+                if (!empty($proc->outcome)) {
+                    $outcomeDisplay = ucfirst($proc->outcome);
+                    $badgeClass = $proc->outcome === 'successful' ? 'success' : ($proc->outcome === 'complications' ? 'danger' : 'warning');
+                    $str .= '<div class="mb-1"><i class="fa fa-poll text-secondary"></i> <b>Outcome:</b> <span class="badge bg-' . $badgeClass . '">' . $outcomeDisplay . '</span></div>';
+                    if (!empty($proc->outcome_notes)) {
+                        $str .= '<div class="text-muted mb-1 pl-2" style="border-left: 2px solid #17a2b8;"><i>' . htmlspecialchars(substr($proc->outcome_notes, 0, 150)) . (strlen($proc->outcome_notes) > 150 ? '...' : '') . '</i></div>';
+                    }
+                }
+
+                // Cancellation reason
+                if ($proc->procedure_status === 'cancelled' && !empty($proc->cancellation_reason)) {
+                    $str .= '<div class="text-danger mb-1"><i class="fa fa-ban"></i> <b>Cancelled:</b> ' . htmlspecialchars($proc->cancellation_reason) . '</div>';
+                }
+
+                $str .= '</div>'; // End small
+
+                // Action buttons
+                $str .= '<div class="btn-group btn-group-sm mt-2" role="group">';
+                
+                $detailsUrl = route('patient-procedures.show', $proc->id);
+                $str .= "<a href='{$detailsUrl}' target='_blank' class='btn btn-sm btn-primary' title='View Details'><i class='fa fa-external-link-alt'></i> Details</a>";
 
                 // Delete only available to creator and within edit window
                 $currentUserId = auth()->id();
@@ -3918,16 +4087,19 @@ class EncounterController extends Controller
                 if ($proc->procedure_status === \App\Models\Procedure::STATUS_REQUESTED && $isCreator && $withinEditWindow) {
                     $serviceName = addslashes(optional($proc->service)->service_name ?? 'Procedure');
                     if ($proc->encounter_id) {
-                        $deleteBtn = " <button class='btn btn-sm btn-outline-danger' onclick='deleteProcedureRequest({$proc->id}, {$proc->encounter_id}, \"{$serviceName}\")' title='Delete Request'><i class='fa fa-trash'></i></button>";
+                        $str .= " <button class='btn btn-sm btn-outline-danger' onclick='deleteProcedureRequest({$proc->id}, {$proc->encounter_id}, \"{$serviceName}\")' title='Delete Request'><i class='fa fa-trash'></i> Delete</button>";
                     } else {
                         // Nurse-created item (no encounter) — use nurse route
-                        $deleteBtn = " <button class='btn btn-sm btn-outline-danger' onclick='deleteNurseClinicalRequest(\"procedure\", {$proc->id}, \"{$serviceName}\")' title='Delete Request'><i class='fa fa-trash'></i></button>";
+                        $str .= " <button class='btn btn-sm btn-outline-danger' onclick='deleteNurseClinicalRequest(\"procedure\", {$proc->id}, \"{$serviceName}\")' title='Delete Request'><i class='fa fa-trash'></i> Delete</button>";
                     }
                 }
 
-                return "<div class='btn-group btn-group-sm' role='group'>" . $openDetailsBtn . $deleteBtn . "</div>";
+                $str .= '</div>'; // End btn-group
+                
+                $str .= '</div></div>';
+                return $str;
             })
-            ->rawColumns(['procedure', 'priority', 'status', 'date', 'actions'])
+            ->rawColumns(['info'])
             ->make(true);
     }
 
@@ -4567,7 +4739,7 @@ class EncounterController extends Controller
     public function addSingleLabRequest(Request $request, Encounter $encounter)
     {
         try {
-            $request->validate(['service_id' => 'required|integer']);
+            $request->validate(['service_id' => 'required|string']);
             $lab = $this->addSingleLab(
                 $request->input('service_id'),
                 $request->input('note'),
@@ -4593,7 +4765,7 @@ class EncounterController extends Controller
     public function addSingleImagingRequest(Request $request, Encounter $encounter)
     {
         try {
-            $request->validate(['service_id' => 'required|integer']);
+            $request->validate(['service_id' => 'required|string']);
             $imaging = $this->addSingleImaging(
                 $request->input('service_id'),
                 $request->input('note'),
@@ -4619,7 +4791,7 @@ class EncounterController extends Controller
     public function addSinglePrescriptionRequest(Request $request, Encounter $encounter)
     {
         try {
-            $request->validate(['product_id' => 'required|integer']);
+            $request->validate(['product_id' => 'required|string']);
             $presc = $this->addSinglePrescription(
                 $request->input('product_id'),
                 $request->input('dose', ''),
@@ -4663,7 +4835,7 @@ class EncounterController extends Controller
     public function addSingleProcedureRequest(Request $request, Encounter $encounter)
     {
         try {
-            $request->validate(['service_id' => 'required|integer', 'priority' => 'required|string']);
+            $request->validate(['service_id' => 'required|string', 'priority' => 'required|string']);
             $procedure = $this->addSingleProcedure(
                 $request->only(['service_id', 'priority', 'scheduled_date', 'pre_notes']),
                 $encounter->patient_id,
@@ -5632,7 +5804,7 @@ class EncounterController extends Controller
                     $statusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed/Pending','bg-info'], 3 => ['Sample Taken','bg-primary'], 4 => ['Completed','bg-success'], 5 => ['Pending Approval','bg-warning'], 6 => ['Rejected','bg-danger']];
 
                     $data = $items->map(function ($item) use ($matchEncounter, $statusLabels) {
-                        $sName = $item->service ? $item->service->service_name : 'N/A';
+                        $sName = $item->service_name;
                         $sCode = $item->service ? $item->service->service_code : '';
                         $sl = $statusLabels[$item->status] ?? ['Unknown','bg-secondary'];
                         $doctorName = $item->doctor ? userfullname($item->doctor->id) : 'N/A';
@@ -5682,7 +5854,7 @@ class EncounterController extends Controller
                     $imgStatusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed/Pending','bg-info'], 3 => ['In Progress','bg-primary'], 4 => ['Completed','bg-success'], 5 => ['Pending Approval','bg-warning'], 6 => ['Rejected','bg-danger']];
 
                     $data = $items->map(function ($item) use ($matchEncounter, $imgStatusLabels) {
-                        $sName = $item->service ? $item->service->service_name : 'N/A';
+                        $sName = $item->service_name;
                         $sCode = $item->service ? $item->service->service_code : '';
                         $sl = $imgStatusLabels[$item->status] ?? ['Unknown','bg-secondary'];
                         $doctorName = $item->doctor ? userfullname($item->doctor->id) : 'N/A';
@@ -5730,7 +5902,7 @@ class EncounterController extends Controller
                     $prescStatusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed','bg-info'], 3 => ['Dispensed','bg-success']];
 
                     $data = $items->map(function ($item) use ($matchEncounter, $prescStatusLabels) {
-                        $pName = $item->product ? $item->product->product_name : 'N/A';
+                        $pName = $item->item_name;
                         $pCode = $item->product ? ($item->product->product_code ?? '') : '';
                         $dose = $item->dose ?? '';
                         $qty = $item->qty ?? '';

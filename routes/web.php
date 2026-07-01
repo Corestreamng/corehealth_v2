@@ -546,6 +546,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/pharmacy-workbench/presc-dispense-list/{patient_id}', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'prescDispenseList'])->name('pharmacy.presc-dispense-list');
         Route::get('/pharmacy-workbench/presc-history-list/{patient_id}', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'prescHistoryList'])->name('pharmacy.presc-history-list');
         Route::post('/pharmacy-workbench/dispense', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dispenseMedication'])->name('pharmacy.dispense');
+        Route::post('/pharmacy-workbench/dispense-free-form', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dispenseFreeFormMedication'])->name('pharmacy.dispense-free-form');
         Route::post('/pharmacy-workbench/record-billing', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'recordBilling'])->name('pharmacy.record-billing');
         Route::post('/pharmacy-workbench/bill', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'billPrescriptions'])->name('pharmacy.bill');
         Route::post('/pharmacy-workbench/dismiss', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dismissPrescriptions'])->name('pharmacy.dismiss');

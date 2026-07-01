@@ -1,5 +1,5 @@
 @extends('admin.layouts.app')
-@section('title', 'Procedure Details - ' . ($procedure->service->service_name ?? 'Procedure'))
+@section('title', 'Procedure Details - ' . ($procedure->name))
 @section('page_name', 'Procedures')
 @section('subpage_name', 'Procedure Details')
 
@@ -436,9 +436,9 @@
                 <a href="{{ route('surgery-workbench.index') }}" class="btn btn-sm btn-light mr-3" style="opacity:.85;">
                     <i class="fa fa-arrow-left mr-1"></i> Workbench
                 </a>
-                <h2 class="proc-name d-inline">{{ $procedure->service->service_name ?? 'Procedure' }}</h2>
+                <h2 class="proc-name d-inline">{{ $procedure->name }}</h2>
                 <div class="proc-meta mt-1">
-                    <span><i class="fa fa-hashtag"></i> {{ $procedure->service->service_code ?? 'N/A' }}</span>
+                    <span><i class="fa fa-hashtag"></i> {{ $procedure->is_free_form ? 'FREE-FORM' : (optional($procedure->service)->service_code ?? 'N/A') }}</span>
                     @if($procedure->procedureDefinition && $procedure->procedureDefinition->procedureCategory)
                         <span><i class="fa fa-folder"></i> {{ $procedure->procedureDefinition->procedureCategory->name }}</span>
                     @endif
@@ -461,6 +461,7 @@
             </div>
         </div>
 
+        @if(!$procedure->is_free_form)
         {{-- Row B — Consent Strip --}}
         @if(!$isCancelled)
             @if($consentInfo)
@@ -561,6 +562,7 @@
             </div>
         @endif
 
+        @endif
         {{-- Row D — Patient Bar --}}
         <div class="patient-cmd-bar">
             @php
@@ -602,6 +604,45 @@
     {{-- ╔══════════════════════════════════════════════════════════╗
          ║  MAIN CONTENT + SIDEBAR                                 ║
          ╚══════════════════════════════════════════════════════════╝ --}}
+    @if($procedure->is_free_form)
+        <div class="row mt-4">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h5><i class="fa fa-notes-medical"></i> Free-Form Procedure Documentation</h5>
+                    </div>
+                    <div class="section-card-body">
+                        <div class="mb-3">
+                            <strong>Outcome:</strong> 
+                            <span class="badge badge-info" id="display_outcome">{{ $procedure->outcome ? ucfirst($procedure->outcome) : 'Not Documented' }}</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Notes:</strong><br/>
+                            <div class="p-3 bg-light rounded" id="display_outcome_notes">
+                                {{ $procedure->outcome_notes ?? 'No notes provided.' }}
+                            </div>
+                        </div>
+                        <button class="btn btn-primary mt-2" onclick="openProcedureOutcomeModal({{ $procedure->id }}, '{{ addslashes($procedure->free_form_name) }}', true)">
+                            <i class="fa fa-edit"></i> Edit Outcome
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        @include('admin.partials.procedure_outcome_modal')
+        <script>
+            // Automatically update the view when modal saves (since we're already on the page)
+            $(document).ajaxSuccess(function(event, xhr, settings) {
+                if (settings.url.indexOf('/outcome') !== -1 && settings.type === 'PUT') {
+                    if (xhr.responseJSON && xhr.responseJSON.success) {
+                        $('#display_outcome').text(xhr.responseJSON.outcome ? xhr.responseJSON.outcome.charAt(0).toUpperCase() + xhr.responseJSON.outcome.slice(1) : '');
+                        $('#display_outcome_notes').text(xhr.responseJSON.outcome_notes || 'No notes provided.');
+                    }
+                }
+            });
+        </script>
+    @else
     <div class="row">
         {{-- LEFT — Tabs (8 cols) --}}
         <div class="col-lg-8">
@@ -1616,6 +1657,7 @@
                     <div id="item-service-section" class="item-type-section" style="display:none;">
                         <div class="form-group">
                             <label>Service / Lab / Imaging <span class="text-danger">*</span></label>
+                            <a href="javascript:void(0)" onclick="promptProcedureFreeFormService()" class="float-right text-primary small"><i class="fa fa-plus-circle"></i> Not listed? Add free-form</a>
                             <select class="form-control chosen-select" id="item_service_id" name="service_id">
                                 <option value="">-- Type to search --</option>
                             </select>
@@ -1626,6 +1668,7 @@
                     <div id="item-product-section" class="item-type-section" style="display:none;">
                         <div class="form-group">
                             <label>Product / Medication <span class="text-danger">*</span></label>
+                            <a href="javascript:void(0)" onclick="promptProcedureFreeFormProduct()" class="float-right text-primary small"><i class="fa fa-plus-circle"></i> Not listed? Add free-form</a>
                             <select class="form-control chosen-select" id="item_product_id" name="product_id">
                                 <option value="">-- Type to search --</option>
                             </select>
@@ -1707,7 +1750,7 @@
     $chiefSurgeon = $procedure->teamMembers->where('role', 'chief_surgeon')->first();
     $doctorName = $chiefSurgeon && $chiefSurgeon->user ? $chiefSurgeon->user->name : (optional($procedure->requestedByUser)->name ?? auth()->user()->name);
     $patientName = $pt ? userfullname($pt->user_id) : 'Unknown Patient';
-    $procedureName = optional($procedure->service)->service_name ?? 'Procedure';
+    $procedureName = $procedure->name;
     $hospitalName = $sett->site_name ?? 'Hospital';
     $currentDate = now()->format('d M Y');
 
@@ -1861,6 +1904,8 @@
 {{-- Result View Modals --}}
 @include("admin.partials.invest_res_view_modal")
 @include("admin.partials.invest_res_view_imaging_modal")
+    @endif
+
 @endsection
 
 @section('scripts')
@@ -2934,4 +2979,5 @@ function executeDeleteAttachment(attId) {
 }
 
 </script>
+
 @endsection

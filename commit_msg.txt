@@ -1,0 +1,19 @@
+Implement Free-Form Clinical Requests & UI Standardizations
+
+This commit contains the following updates:
+1. Database & Migrations:
+   - Added free_form_support migrations for lab, imaging, product, and procedure request tables.
+   - Database test dump file updated (`_corehealth_db_v2_test.sql`).
+
+2. Backend Controllers & Models:
+   - Updated `ClinicalOrdersTrait` and all Workbench Controllers (Imaging, Lab, Maternity, Nursing, Pharmacy) to handle free-form requests using prefix `FF_`.
+   - EncounterController updated to consolidate procedure history list columns into a single dense `info` column and improve the UX.
+   - Models (`Procedure`, `LabServiceRequest`, `ImagingServiceRequest`, `ProductRequest`) updated with the `is_free_form` attributes.
+
+3. Frontend (Views & Assets):
+   - Refactored `clinical-orders-shared.js` to support free-form search input fallback.
+   - Updated unified procedure notes (`procedure_notes.blade.php`), and doctor/nursing/maternity procedure partials to correctly display the condensed procedure details.
+   - Added `procedure_outcome_modal.blade.php` to handle outcomes smoothly.
+
+4. Cleanup:
+   - Removed temporary Python refactoring scripts and test_render files.

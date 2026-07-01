@@ -90,21 +90,24 @@ class ImagingWorkbenchController extends Controller
     {
         // ── Performance: Single aggregate query for all queue counts ──
         $counts = ImagingServiceRequest::selectRaw("
-            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as billing,
-            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as results,
+            SUM(CASE WHEN status = 1 AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as billing,
+            SUM(CASE WHEN status = 2 AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as results,
             SUM(CASE WHEN status IN (5, 6) THEN 1 ELSE 0 END) as approval,
-            SUM(CASE WHEN priority = 'emergency' AND status IN (1, 2) THEN 1 ELSE 0 END) as emergency
+            SUM(CASE WHEN priority = 'emergency' AND status IN (1, 2) AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as emergency,
+            SUM(CASE WHEN is_free_form = 1 AND status IN (1, 2) THEN 1 ELSE 0 END) as freeform
         ")->first();
 
         $billingCount = (int) ($counts->billing ?? 0);
         $resultCount = (int) ($counts->results ?? 0);
         $emergencyCount = (int) ($counts->emergency ?? 0);
         $approvalCount = (int) ($counts->approval ?? 0);
+        $freeformCount = (int) ($counts->freeform ?? 0);
 
         return response()->json([
             'billing' => $billingCount,
             'results' => $resultCount,
-            'total' => $billingCount + $resultCount,
+            'freeform' => $freeformCount,
+            'total' => $billingCount + $resultCount + $freeformCount,
             'emergency' => $emergencyCount,
             'approval' => $approvalCount,
         ]);
@@ -126,6 +129,14 @@ class ImagingWorkbenchController extends Controller
         $requests = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
             ->where('patient_id', $patientId)
             ->whereIn('status', $statuses)
+            ->where(function ($q) {
+                $q->whereNull('is_free_form')
+                  ->orWhere('is_free_form', 0)
+                  ->orWhere(function ($sq) {
+                      $sq->where('is_free_form', 1)
+                         ->where('created_at', '>=', now()->subHours(48));
+                  });
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -183,10 +194,13 @@ class ImagingWorkbenchController extends Controller
         });
 
         // Group by status - No sample stage for imaging
-        $billing = $requests->where('status', 1)->values();
-        $results = $requests->where('status', 2)->values();
-        $pendingApproval = $requests->where('status', 5)->values();
-        $rejected = $requests->where('status', 6)->values();
+        $freeform = $requests->where('is_free_form', 1)->values();
+        $standardRequests = $requests->where('is_free_form', '!=', 1);
+
+        $billing = $standardRequests->where('status', 1)->values();
+        $results = $standardRequests->where('status', 2)->values();
+        $pendingApproval = $standardRequests->where('status', 5)->values();
+        $rejected = $standardRequests->where('status', 6)->values();
 
         // Calculate detailed age
         $ageText = 'N/A';
@@ -231,6 +245,7 @@ class ImagingWorkbenchController extends Controller
                 'results' => $results,
                 'pending_approval' => $pendingApproval,
                 'rejected' => $rejected,
+                'freeform' => $freeform,
             ],
         ]);
     }
@@ -310,12 +325,18 @@ class ImagingWorkbenchController extends Controller
             if ($request->has('status') && $request->status === 'approval') {
                 // Special approval queue: pending (5), rejected (6)
                 $query->whereIn('status', [5, 6]);
+            } elseif ($request->has('status') && $request->status === 'freeform') {
+                $query->whereIn('status', [1, 2])->where('is_free_form', 1);
             } elseif ($request->has('status') && $request->status !== 'all') {
                 $statuses = explode(',', $request->status);
-                $query->whereIn('status', $statuses);
+                $query->whereIn('status', $statuses)->where(function($q) {
+                    $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+                });
             } else {
                 // Default to pending statuses (1 = billing, 2 = results)
-                $query->whereIn('status', [1, 2]);
+                $query->whereIn('status', [1, 2])->where(function($q) {
+                    $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+                });
             }
 
             // Apply date range filter if provided
@@ -375,7 +396,7 @@ class ImagingWorkbenchController extends Controller
                         'hmo' => $request->patient->hmo ? $request->patient->hmo->name : 'N/A',
                         'hmo_category' => $request->patient->hmo && $request->patient->hmo->scheme ? $request->patient->hmo->scheme->name : 'N/A',
                         'hmo_no' => $request->patient->hmo_no ?? 'N/A',
-                        'service_name' => $request->service ? $request->service->service_name : 'N/A',
+                        'service_name' => $request->service_name,
                         'status' => $request->status,
                         'note' => $request->note ?? null,
                         'result' => $request->result ?? null,
@@ -392,6 +413,7 @@ class ImagingWorkbenchController extends Controller
                         'priority' => $request->priority ?? 'routine',
                         'approved_by' => $request->approved_by,
                         'approved_at' => $this->formatDateTime($request->approved_at),
+                        'is_free_form' => $request->is_free_form,
                     ];
                 })
                 ->filterColumn('card_data', function($query, $keyword) {
@@ -662,7 +684,7 @@ class ImagingWorkbenchController extends Controller
                     ]
                 ],
                 'service' => [
-                    'name' => $request->service->service_name ?? 'N/A',
+                    'name' => $request->service_name,
                     'template_version' => !empty($request->service->result_template_v2) ? 2 : 1,
                     'template_body' => $request->service->template ?? '',
                     'template_structure' => $request->service->result_template_v2 ?? null
@@ -757,7 +779,7 @@ class ImagingWorkbenchController extends Controller
             }
 
             // Check if service can be delivered (payment + HMO validation)
-            if ($imagingRequest->productOrServiceRequest) {
+            if (!$imagingRequest->is_free_form && $imagingRequest->productOrServiceRequest) {
                 $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($imagingRequest->productOrServiceRequest);
                 if (!$deliveryCheck['can_deliver'] && $imagingRequest->billed_by != Auth::id()) {
                     return response()->json([
@@ -1164,7 +1186,7 @@ class ImagingWorkbenchController extends Controller
             $result = $requests->map(function ($req) {
                 return [
                     'id' => $req->id,
-                    'service_name' => $req->service ? $req->service->service_name : 'N/A',
+                    'service_name' => $req->service_name,
                     'patient_name' => $req->patient && $req->patient->user
                         ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
                         : 'N/A',
@@ -1200,7 +1222,7 @@ class ImagingWorkbenchController extends Controller
             $result = $requests->map(function ($req) {
                 return [
                     'id' => $req->id,
-                    'service_name' => $req->service ? $req->service->service_name : 'N/A',
+                    'service_name' => $req->service_name,
                     'patient_name' => $req->patient && $req->patient->user
                         ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
                         : 'N/A',
@@ -1232,7 +1254,7 @@ class ImagingWorkbenchController extends Controller
         return Datatables::of($history)
             ->addIndexColumn()
             ->addColumn('info', function ($req) {
-                $serviceName = $req->service ? $req->service->service_name : 'N/A';
+                $serviceName = $req->service_name;
                 $requestDate = $this->formatDateTime($req->created_at);
                 $resultDate = $this->formatDateTime($req->result_date);
                 $doctorName = $req->doctor ? $req->doctor->surname . ' ' . $req->doctor->firstname : 'N/A';
@@ -1414,13 +1436,25 @@ class ImagingWorkbenchController extends Controller
             $request->validate([
                 'patient_id' => 'required|exists:patients,id',
                 'service_ids' => 'required|array',
-                'service_ids.*' => 'exists:services,id',
+                'service_ids.*' => 'required|string',
                 'notes' => 'nullable|array',
                 'clinical_notes' => 'nullable|string',
                 'special_instructions' => 'nullable|string',
                 'urgency' => 'nullable|string|in:routine,urgent,stat',
                 'priority' => 'nullable|string|in:normal,high,emergency',
             ]);
+
+            // Validate regular services exist
+            $regularServiceIds = array_filter($request->service_ids, function($id) {
+                return strpos($id, 'FF_') !== 0;
+            });
+            
+            if (count($regularServiceIds) > 0) {
+                $existingCount = \App\Models\Service::whereIn('id', $regularServiceIds)->count();
+                if ($existingCount !== count($regularServiceIds)) {
+                    return response()->json(['success' => false, 'message' => 'One or more selected services are invalid.'], 422);
+                }
+            }
 
             DB::beginTransaction();
 
@@ -1430,7 +1464,15 @@ class ImagingWorkbenchController extends Controller
             foreach ($request->service_ids as $index => $serviceId) {
                 $imagingRequest = new ImagingServiceRequest();
                 $imagingRequest->patient_id = $patient->id;
-                $imagingRequest->service_id = $serviceId;
+                
+                if (strpos($serviceId, 'FF_') === 0) {
+                    $imagingRequest->service_id = null;
+                    $imagingRequest->is_free_form = true;
+                    $imagingRequest->free_form_name = str_replace(' [Free-form]', '', substr($serviceId, 3));
+                } else {
+                    $imagingRequest->service_id = $serviceId;
+                }
+                
                 $imagingRequest->doctor_id = Auth::id();
                 // Use individual note if available, otherwise use clinical_notes
                 $individualNote = isset($notes[$index]) && !empty($notes[$index]) ? $notes[$index] : '';
@@ -1546,7 +1588,7 @@ class ImagingWorkbenchController extends Controller
             $items = $query->get()->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'service_name' => $item->service->service_name ?? 'N/A',
+                    'service_name' => $item->service_name,
                     'patient_name' => $item->patient && $item->patient->user
                         ? $item->patient->user->surname . ' ' . $item->patient->user->firstname
                         : 'N/A',
@@ -1613,7 +1655,7 @@ class ImagingWorkbenchController extends Controller
                 'success' => true,
                 'data' => [
                     'id' => $item->id,
-                    'service_name' => $item->service->service_name ?? 'N/A',
+                    'service_name' => $item->service_name,
                     'patient_name' => $item->patient && $item->patient->user
                         ? $item->patient->user->surname . ' ' . $item->patient->user->firstname
                         : 'N/A',

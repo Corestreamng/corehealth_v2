@@ -45,7 +45,11 @@ class ProductRequest extends Model implements Auditable
         'price_override_at',
         'packaging_id',
         'packaging_qty',
+        'is_free_form',
+        'free_form_name',
     ];
+
+    protected $appends = ['item_name'];
 
     protected $casts = [
         'adapted_at' => 'datetime',
@@ -155,5 +159,13 @@ class ProductRequest extends Model implements Auditable
     public function procedureItem()
     {
         return $this->hasOne(ProcedureItem::class, 'product_request_id', 'id');
+    }
+
+    /**
+     * Get the item name gracefully handling free form requests.
+     */
+    public function getItemNameAttribute()
+    {
+        return $this->is_free_form ? $this->free_form_name : ($this->product ? $this->product->product_name : 'Unknown Product');
     }
 }
