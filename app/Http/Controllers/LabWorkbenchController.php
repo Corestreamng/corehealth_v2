@@ -50,15 +50,7 @@ class LabWorkbenchController extends Controller
         }
 
         $patients = Patient::with('user')
-            ->where(function ($query) use ($term) {
-                $query->whereHas('user', function ($userQuery) use ($term) {
-                    $userQuery->where('surname', 'like', "%{$term}%")
-                        ->orWhere('firstname', 'like', "%{$term}%")
-                        ->orWhere('othername', 'like', "%{$term}%");
-                })
-                    ->orWhere('file_no', 'like', "%{$term}%")
-                    ->orWhere('phone_no', 'like', "%{$term}%");
-            })
+            ->searchByTerm($term)
             ->limit(10)
             ->get();
 
@@ -74,7 +66,7 @@ class LabWorkbenchController extends Controller
                 'age' => $patient->dob ? \Carbon\Carbon::parse($patient->dob)->age : 'N/A',
                 'gender' => $patient->gender ?? 'N/A',
                 'phone' => $patient->phone_no ?? 'N/A',
-                'photo' => $patient->user->photo ?? 'avatar.png',
+                'photo' => $patient->user && $patient->user->filename ? asset('storage/image/user/' . $patient->user->filename) : asset('assets/images/default-avatar.png'),
                 'pending_count' => $pendingCount,
             ];
         });
@@ -588,13 +580,23 @@ class LabWorkbenchController extends Controller
                             $billReq->claims_amount = $hmoData['claims_amount'];
                             $billReq->coverage_mode = $hmoData['coverage_mode'];
                             $billReq->validation_status = $hmoData['validation_status'];
+                        } else {
+                            // Private patient - standard pricing
+                            $service = \App\Models\Service::with('price')->find($labRequest->service_id);
+                            $billReq->payable_amount = $service->price->sale_price ?? 0;
                         }
                     } catch (\Exception $e) {
-                        DB::rollBack();
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'HMO Tariff Error: ' . $e->getMessage()
-                        ], 400);
+                        // Fall back to standard price if HMO tariff is missing
+                        $service = \App\Models\Service::with('price')->find($labRequest->service_id);
+                        $billReq->payable_amount = $service->price->sale_price ?? 0;
+                        $billReq->claims_amount = 0;
+                        $billReq->coverage_mode = null;
+                        
+                        \Illuminate\Support\Facades\Log::warning('HMO tariff not found for service in lab auto-billing, falling back to standard price', [
+                            'patient_id' => $labRequest->patient_id,
+                            'service_id' => $labRequest->service_id,
+                            'error' => $e->getMessage()
+                        ]);
                     }
 
                     $billReq->save();
