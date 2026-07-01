@@ -99,4 +99,37 @@ class Patient extends Model implements Auditable
     {
         return $this->principal_id ?? $this->id;
     }
+
+    public function scopeSearchByTerm($query, $term)
+    {
+        if (empty($term)) {
+            return $query;
+        }
+
+        $terms = array_filter(explode(' ', trim($term)));
+
+        return $query->where(function ($q) use ($terms, $term) {
+            $q->whereHas('user', function ($u) use ($terms, $term) {
+                // Ensure all parts of a spaced term match somewhere in the name
+                foreach ($terms as $t) {
+                    $u->where(function ($uSub) use ($t) {
+                        $uSub->where('surname', 'like', "%{$t}%")
+                             ->orWhere('firstname', 'like', "%{$t}%")
+                             ->orWhere('othername', 'like', "%{$t}%");
+                    });
+                }
+                // Fallbacks for full name exact match
+                $u->orWhereRaw("CONCAT(firstname, ' ', surname) LIKE ?", ["%{$term}%"])
+                  ->orWhereRaw("CONCAT(surname, ' ', firstname) LIKE ?", ["%{$term}%"]);
+            })
+            ->orWhere('file_no', 'like', "%{$term}%")
+            ->orWhere('phone_no', 'like', "%{$term}%");
+        })->orderByRaw("
+            CASE 
+                WHEN file_no LIKE ? THEN 1 
+                WHEN phone_no LIKE ? THEN 3 
+                ELSE 2 
+            END ASC
+        ", ["%{$term}%", "%{$term}%"]);
+    }
 }

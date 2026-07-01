@@ -771,11 +771,13 @@
                 </h2>
                 <small>Procedure scheduling &amp; management</small>
             </div>
-            <div class="sw-header-search">
-                <i class="mdi mdi-magnify sw-search-icon"></i>
-                <input type="text" id="sw-patient-search" placeholder="Search patient, file no…" autocomplete="off">
-                <button type="button" id="sw-patient-clear" title="Clear patient filter" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.25);border:none;border-radius:50%;width:22px;height:22px;line-height:1;padding:0;cursor:pointer;color:#fff;font-size:14px;" aria-label="Clear search">&times;</button>
-                <div class="sw-search-dropdown" id="sw-search-dropdown"></div>
+            <div class="sw-header-search" style="min-width: 300px; flex: 1; max-width: 400px; margin-left: auto;">
+                @include('admin.partials.patient_search_widget', [
+                    'id' => 'sw-patient-search-widget',
+                    'searchRoute' => route('surgery-workbench.search-patients'),
+                    'context' => 'surgery',
+                    'placeholder' => 'Search patient, file no…'
+                ])
             </div>
         </div>
 
@@ -856,9 +858,14 @@
                 <div class="spb-name" id="spb-name"></div>
                 <div class="spb-meta" id="spb-meta"></div>
             </div>
-            <button class="spb-exit" id="spb-exit-btn">
-                <i class="mdi mdi-close"></i> Exit patient view
-            </button>
+            <div style="margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button class="btn btn-sm btn-primary" id="btn-book-procedure" style="font-size: 0.82rem; font-weight: 600; padding: 3px 12px; border-radius: 6px;">
+                    <i class="mdi mdi-plus-circle"></i> Book Procedure
+                </button>
+                <button class="spb-exit" id="spb-exit-btn" style="margin-left: 0;">
+                    <i class="mdi mdi-close"></i> Exit
+                </button>
+            </div>
         </div>
 
         {{-- ── Board ── --}}
@@ -872,7 +879,11 @@
 
     </div>
 
+    @include('admin.partials.clinical_orders_modal')
+
     @push('scripts')
+        <script src="{{ asset('js/patient-search-widget.js') }}?v={{ time() }}"></script>
+        <script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
         <script>
             (function() {
                 'use strict';
@@ -890,6 +901,7 @@
                 let currentConsent = '';
                 let currentDate = '';
                 let searchTerm = '';
+                let selectedPatientId = null;
                 let viewMode = 'grid'; // 'grid' | 'list'
                 let searchTimer = null;
                 let refreshTimer = null;
@@ -945,6 +957,7 @@
                     if (currentConsent) params.consent = currentConsent;
                     if (currentDate) params.date = currentDate;
                     if (searchTerm) params.search = searchTerm;
+                    if (selectedPatientId) params.patient_id = selectedPatientId;
 
                     $.get(ROUTES.queue, params, function(resp) {
                         $('#sw-loading').hide();
@@ -1096,203 +1109,51 @@
                         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 }
 
-                /* ── Patient Search ── */
-                function doPatientSearch(term) {
-                    if (term.length < 2) {
-                        $('#sw-search-dropdown').hide().empty();
-                        return;
-                    }
-                    $.get(ROUTES.searchPatients, {
-                        term
-                    }, function(data) {
-                        const $dd = $('#sw-search-dropdown').empty();
-                        if (!data.length) {
-                            $dd.html(
-                                '<div class="sw-search-item"><div class="sw-search-item-meta">No patients found</div></div>'
-                                );
-                        } else {
-                            data.forEach(p => {
-                                const init = initials(p.name);
-
-                                // Admitted badge
-                                const admBadge = p.is_admitted
-                                    ? '<span class="badge bg-success ms-1" title="Currently admitted"><i class="fa fa-bed"></i> Admitted</span>'
-                                    : '';
-
-                                // Procedure count badges
-                                let procBadges = '';
-                                if (p.active_procedures > 0) {
-                                    procBadges += `<span class="badge ms-1" style="background:var(--surgery-primary,#0066cc)">${p.active_procedures} In&nbsp;OR</span>`;
-                                }
-                                if (p.scheduled_procedures > 0) {
-                                    procBadges += `<span class="badge bg-info ms-1">${p.scheduled_procedures} Scheduled</span>`;
-                                }
-                                if (!p.active_procedures && !p.scheduled_procedures && p.requested_procedures > 0) {
-                                    procBadges += `<span class="badge bg-warning text-dark ms-1">${p.requested_procedures} Requested</span>`;
-                                }
-
-                                // Next scheduled procedure hint
-                                const nextHint = p.next_procedure_name
-                                    ? `<span class="ms-1" style="color:var(--surgery-primary,#0066cc)"><i class="fa fa-calendar-check"></i> ${escHtml(p.next_procedure_name)}${p.next_scheduled_date ? ' · ' + escHtml(p.next_scheduled_date) : ''}</span>`
-                                    : '';
-
-                                // Photo / initials
-                                const avatarHtml = (p.photo && p.photo !== 'avatar.png')
-                                    ? `<img src="/storage/${escHtml(p.photo)}" class="sw-search-item-avatar" style="object-fit:cover;border-radius:50%;" alt="">`
-                                    : `<div class="sw-search-item-avatar">${init}</div>`;
-
-                                $dd.append(`
-                    <div class="sw-search-item" data-patient-id="${p.id}"
-                         data-file-no="${escHtml(p.file_no || '')}"
-                         data-age="${p.age || ''}" data-gender="${escHtml(p.gender || '')}"
-                         data-hmo="${escHtml(p.hmo || '')}" data-total="${p.total_procedures || 0}"
-                         data-active="${p.active_procedures || 0}">
-                        ${avatarHtml}
-                        <div class="flex-grow-1 overflow-hidden">
-                            <div class="sw-search-item-name">
-                                ${escHtml(p.name)}
-                                ${admBadge}
-                                ${procBadges}
-                            </div>
-                            <div class="sw-search-item-meta">
-                                ${escHtml(p.file_no || '')}
-                                ${p.age ? ' · ' + p.age + 'yrs' : ''}
-                                ${p.gender && p.gender !== 'N/A' ? ' · ' + p.gender : ''}
-                                ${p.hmo ? ' · <i class="fa fa-shield-alt"></i> ' + escHtml(p.hmo) : ''}
-                                ${nextHint}
-                            </div>
-                        </div>
-                    </div>`);
-                            });
-                        }
-                        $dd.show();
-                    });
-                }
-
-                /* ── Event Bindings ── */
-
-                // Status tabs
-                $(document).on('click', '.sw-stat-tab', function() {
-                    $('.sw-stat-tab').removeClass('active');
-                    $(this).addClass('active');
-                    currentStatus = $(this).data('status');
-                    loadQueue();
-                });
-
-                // Filters
-                $('#filter-priority').on('change', function() {
-                    currentPriority = $(this).val();
-                    loadQueue();
-                });
-                $('#filter-consent').on('change', function() {
-                    currentConsent = $(this).val();
-                    loadQueue();
-                });
-                $('#filter-date').on('change', function() {
-                    currentDate = $(this).val();
-                    $('#btn-clear-date').toggle(!!currentDate);
-                    loadQueue();
-                });
-                $('#btn-clear-date').on('click', function() {
-                    currentDate = '';
-                    $('#filter-date').val('');
-                    $(this).hide();
-                    $('#btn-filter-today').css('font-weight', '');
-                    loadQueue();
-                });
-
-                // Today quick-filter
-                $('#btn-filter-today').on('click', function() {
-                    const today = new Date().toISOString().split('T')[0];
-                    currentDate = today;
-                    $('#filter-date').val(today);
-                    $('#btn-clear-date').show();
-                    $(this).css('font-weight', '700');
-                    loadQueue();
-                });
-
-                // Refresh
-                $('#btn-refresh-queue').on('click', function() {
-                    loadStats();
-                    loadQueue();
-                });
-
-                // View mode
-                $('#btn-view-grid').on('click', function() {
-                    viewMode = 'grid';
-                    $('#btn-view-grid').addClass('active');
-                    $('#btn-view-list').removeClass('active');
-                    renderFromCache();
-                });
-                $('#btn-view-list').on('click', function() {
-                    viewMode = 'list';
-                    $('#btn-view-list').addClass('active');
-                    $('#btn-view-grid').removeClass('active');
-                    renderFromCache();
-                });
-
-                // Open procedure on card click (not on the "Open" button, which handles itself)
-                $(document).on('click', '.proc-card', function(e) {
-                    if ($(e.target).closest('.btn-open-proc').length) return;
-                    const url = $(this).data('show-url');
-                    if (url) window.open(url, '_blank');
-                });
-
-                // Patient search input
-                $('#sw-patient-search').on('input', function() {
-                    clearTimeout(searchTimer);
-                    const val = $(this).val().trim();
-                    $('#sw-patient-clear').toggle(val.length > 0);
-                    searchTimer = setTimeout(() => {
-                        if (val.length >= 2) {
-                            doPatientSearch(val);
-                        } else {
-                            $('#sw-search-dropdown').hide().empty();
-                            if (searchTerm) {
-                                searchTerm = '';
-                                loadQueue();
-                            }
-                        }
-                    }, 280);
-                });
-
-                // Select patient from dropdown — filter queue to this patient
-                $(document).on('click', '.sw-search-item[data-patient-id]', function() {
-                    const $item   = $(this);
-                    const name    = $item.find('.sw-search-item-name').text().trim();
-                    const fileNo  = $item.data('file-no')  || $item.find('.sw-search-item-meta').text().trim().split('·')[0].trim();
-                    const age     = $item.data('age')    || '';
-                    const gender  = $item.data('gender') || '';
-                    const hmo     = $item.data('hmo')    || '';
-                    const total   = parseInt($item.data('total')  || 0);
-                    const active  = parseInt($item.data('active') || 0);
-                    searchTerm = fileNo || name;
-                    $('#sw-patient-search').val(name);
-                    $('#sw-patient-clear').show();
-                    $('#sw-search-dropdown').hide();
+                /* ── Patient Search Integration ── */
+                $('#sw-patient-search-widget-input').on('patient-selected', function(e, patientData) {
+                    const name    = patientData.name;
+                    const fileNo  = patientData.file_no || '';
+                    const age     = patientData.age || '';
+                    const gender  = patientData.gender || '';
+                    const hmo     = patientData.hmo || '';
+                    const total   = parseInt(patientData.total_procedures || 0);
+                    const active  = parseInt(patientData.active_procedures || 0);
+                    
+                    searchTerm = '';
+                    selectedPatientId = patientData.id;
+                    
                     currentStatus = 'all';
                     $('.sw-stat-tab').removeClass('active');
                     $('#tab-all').addClass('active');
+                    
                     // Build banner content
                     let meta = [];
                     if (fileNo) meta.push('<i class="mdi mdi-identifier"></i> ' + fileNo);
                     if (age)    meta.push(age + ' yrs');
                     if (gender && gender !== 'N/A') meta.push(gender);
                     if (hmo)    meta.push('<i class="mdi mdi-shield-plus-outline"></i> ' + hmo);
+                    
                     let badges = '';
                     if (active > 0) badges += '<span class="spb-badge"><i class="mdi mdi-progress-clock"></i> ' + active + ' In OR</span>';
                     if (total  > 0) badges += '<span class="spb-badge">' + total + ' procedure' + (total > 1 ? 's' : '') + '</span>';
+                    
                     $('#spb-name').text(name);
                     $('#spb-meta').html(meta.join(' &nbsp;&middot;&nbsp; ') + (badges ? '&nbsp;&nbsp;' + badges : ''));
                     $('#sw-patient-banner').addClass('visible');
+
+                    // Initialize ClinicalOrdersKit for this patient
+                    if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.init === 'function') {
+                        window.ClinicalOrdersKit.init({
+                            patientId: patientData.id
+                        });
+                    }
+
                     loadQueue();
                 });
 
                 function clearPatientFilter() {
                     searchTerm = '';
-                    $('#sw-patient-search').val('');
-                    $('#sw-patient-clear').hide();
-                    $('#sw-search-dropdown').hide().empty();
+                    selectedPatientId = null;
                     $('#sw-patient-banner').removeClass('visible');
                     currentStatus = 'requested';
                     $('.sw-stat-tab').removeClass('active');
@@ -1300,28 +1161,35 @@
                     loadQueue();
                 }
 
-                // Clear patient filter (× button in search box)
-                $('#sw-patient-clear').on('click', function() {
+                $('#sw-patient-search-widget-input').on('patient-cleared', function() {
                     clearPatientFilter();
-                    $('#sw-patient-search').trigger('focus');
                 });
 
                 // Exit patient view (banner button)
                 $('#spb-exit-btn').on('click', function() {
+                    $('#sw-patient-search-widget-clear').trigger('click'); // Let widget handle UI state
                     clearPatientFilter();
                 });
 
-                // Close search on outside click
-                $(document).on('click', function(e) {
-                    if (!$(e.target).closest('#sw-patient-search, #sw-search-dropdown').length) {
-                        $('#sw-search-dropdown').hide();
+                // Book Procedure button
+                $('#btn-book-procedure').on('click', function() {
+                    if (window.ClinicalOrdersKit) {
+                        $('#clinical_orders_modal').modal('show');
+                        setTimeout(function() {
+                            if (typeof window.ClinicalOrdersKit.switchCpSubTab === 'function') {
+                                window.ClinicalOrdersKit.switchCpSubTab('cp-procedures');
+                            } else {
+                                $('#cp-procedures-tab').tab('show');
+                            }
+                        }, 200);
                     }
                 });
 
-                // Clear search on ESC
-                $('#sw-patient-search').on('keydown', function(e) {
-                    if (e.key === 'Escape') {
-                        clearPatientFilter();
+                // Refresh queue when clinical orders modal is closed
+                $('#clinical_orders_modal').on('hidden.bs.modal', function () {
+                    if (refreshTimer) {
+                        loadStats();
+                        loadQueue();
                     }
                 });
 

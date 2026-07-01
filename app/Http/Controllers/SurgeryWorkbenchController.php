@@ -66,11 +66,12 @@ class SurgeryWorkbenchController extends Controller
      */
     public function getQueue(Request $request)
     {
-        $status   = $request->get('status');
-        $search   = $request->get('search');
-        $priority = $request->get('priority');
-        $consent  = $request->get('consent');
-        $date     = $request->get('date');
+        $status    = $request->get('status');
+        $search    = $request->get('search');
+        $priority  = $request->get('priority');
+        $consent   = $request->get('consent');
+        $date      = $request->get('date');
+        $patientId = $request->get('patient_id');
 
         $query = Procedure::with([
             'service',
@@ -103,16 +104,36 @@ class SurgeryWorkbenchController extends Controller
             $query->whereDate('scheduled_date', $date);
         }
 
+        if ($patientId) {
+            $query->where('patient_id', $patientId);
+        }
+
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('patient.user', function ($u) use ($search) {
-                    $u->where('surname', 'like', "%{$search}%")
-                      ->orWhere('firstname', 'like', "%{$search}%");
-                })->orWhereHas('patient', function ($p) use ($search) {
+            $terms = array_filter(explode(' ', trim($search)));
+
+            $query->where(function ($q) use ($terms, $search) {
+                // Patient Name (spaced partial match)
+                $q->whereHas('patient.user', function ($u) use ($terms, $search) {
+                    foreach ($terms as $t) {
+                        $u->where(function ($uSub) use ($t) {
+                            $uSub->where('surname', 'like', "%{$t}%")
+                                 ->orWhere('firstname', 'like', "%{$t}%")
+                                 ->orWhere('othername', 'like', "%{$t}%");
+                        });
+                    }
+                    $u->orWhereRaw("CONCAT(firstname, ' ', surname) LIKE ?", ["%{$search}%"])
+                      ->orWhereRaw("CONCAT(surname, ' ', firstname) LIKE ?", ["%{$search}%"]);
+                })
+                // Patient File No
+                ->orWhereHas('patient', function ($p) use ($search) {
                     $p->where('file_no', 'like', "%{$search}%");
-                })->orWhereHas('service', function ($s) use ($search) {
+                })
+                // Service Name
+                ->orWhereHas('service', function ($s) use ($search) {
                     $s->where('service_name', 'like', "%{$search}%");
-                });
+                })
+                // Free form Name
+                ->orWhere('free_form_name', 'like', "%{$search}%");
             });
         }
 
@@ -127,7 +148,7 @@ class SurgeryWorkbenchController extends Controller
 
             return [
                 'id'               => $proc->id,
-                'service_name'     => optional($proc->service)->service_name ?? 'Procedure',
+                'service_name'     => $proc->is_free_form ? ($proc->free_form_name . ' [Free-form]') : (optional($proc->service)->service_name ?? 'Procedure'),
                 'category'         => optional(optional($proc->procedureDefinition)->procedureCategory)->category_name ?? '',
                 'procedure_status' => $proc->procedure_status,
                 'priority'         => $proc->priority,
@@ -168,7 +189,7 @@ class SurgeryWorkbenchController extends Controller
         $results = $procedures->map(function ($proc) {
             return [
                 'id'               => $proc->id,
-                'service_name'     => optional($proc->service)->service_name ?? 'Procedure',
+                'service_name'     => $proc->is_free_form ? ($proc->free_form_name . ' [Free-form]') : (optional($proc->service)->service_name ?? 'Procedure'),
                 'category'         => optional(optional($proc->procedureDefinition)->procedureCategory)->category_name ?? '',
                 'procedure_status' => $proc->procedure_status,
                 'priority'         => $proc->priority,
@@ -194,15 +215,7 @@ class SurgeryWorkbenchController extends Controller
         }
 
         $patients = Patient::with(['user', 'hmo'])
-            ->where(function ($query) use ($term) {
-                $query->whereHas('user', function ($u) use ($term) {
-                    $u->where('surname', 'like', "%{$term}%")
-                      ->orWhere('firstname', 'like', "%{$term}%")
-                      ->orWhere('othername', 'like', "%{$term}%");
-                })
-                ->orWhere('file_no', 'like', "%{$term}%")
-                ->orWhere('phone_no', 'like', "%{$term}%");
-            })
+            ->searchByTerm($term)
             ->whereExists(function ($q) {
                 $q->from('procedures')->whereColumn('procedures.patient_id', 'patients.id');
             })
@@ -242,7 +255,7 @@ class SurgeryWorkbenchController extends Controller
             $byStatus = $counts->pluck('cnt', 'procedure_status');
 
             $nextProc     = optional($nextScheduled->get($patient->id, collect())->first());
-            $nextSvc      = optional($nextProc->service)->service_name ?? null;
+            $nextSvc      = $nextProc ? ($nextProc->is_free_form ? ($nextProc->free_form_name . ' [Free-form]') : (optional($nextProc->service)->service_name ?? 'Procedure')) : null;
             $nextDate     = $nextProc->scheduled_date
                 ? Carbon::parse($nextProc->scheduled_date)->format('d M Y')
                 : null;
@@ -258,7 +271,7 @@ class SurgeryWorkbenchController extends Controller
                 'age'                  => $age,
                 'gender'               => $patient->sex ?? 'N/A',
                 'phone'                => $patient->phone_no ?? 'N/A',
-                'photo'                => $user && $user->photo ? $user->photo : 'avatar.png',
+                'photo'                => $user && $user->filename ? asset('storage/image/user/' . $user->filename) : asset('assets/images/default-avatar.png'),
                 'hmo'                  => optional($patient->hmo)->hmo_name ?? null,
                 'is_admitted'          => in_array($patient->id, $admittedPatientIds),
                 // Surgery-specific
