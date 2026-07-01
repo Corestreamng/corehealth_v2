@@ -24,6 +24,8 @@ class Procedure extends Model implements Auditable
     protected $table = 'procedures';
 
     protected $fillable = [
+        'is_free_form',
+        'free_form_name',
         'service_id',
         'procedure_definition_id',
         'requested_by',
@@ -395,5 +397,16 @@ class Procedure extends Model implements Auditable
     public function getPriceAttribute()
     {
         return $this->service?->price?->price ?? 0;
+    }
+
+    /**
+     * Get the unified name of the procedure (supports free-form)
+     */
+    public function getNameAttribute()
+    {
+        if ($this->is_free_form) {
+            return $this->free_form_name . ' [Free-form]';
+        }
+        return optional($this->service)->service_name ?? 'Procedure';
     }
 }

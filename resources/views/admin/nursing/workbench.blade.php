@@ -57,6 +57,7 @@
 @endpush
 
 @section('content')
+    @include('admin.partials.procedure_outcome_modal')
 @php
     $hosColor = appsettings()->hos_color ?? '#0066cc';
     $sett = appsettings();
@@ -5322,11 +5323,7 @@
                                                 <table class="table table-hover" style="width:100%" id="cr_proc_history_list">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th><i class="mdi mdi-medical-bag"></i> Procedure</th>
-                                                            <th>Priority</th>
-                                                            <th>Status</th>
-                                                            <th>Date</th>
-                                                            <th>Actions</th>
+                                                            <th style="width: 100%;"><i class="mdi mdi-medical-bag"></i> Procedure Requests</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody></tbody>
@@ -8205,13 +8202,9 @@ const ClinicalRequests = (function() {
             processing: true, serverSide: true,
             ajax: { url: '/procedureHistoryList/' + patientId, type: 'GET' },
             columns: [
-                { data: 'procedure', name: 'procedure' },
-                { data: 'priority', name: 'priority' },
-                { data: 'status', name: 'procedure_status' },
-                { data: 'date', name: 'requested_on' },
-                { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                { data: 'info', name: 'info', orderable: false, searchable: false }
             ],
-            order: [[3, 'desc']], pageLength: 10,
+            order: [], pageLength: 10,
             language: { emptyTable: 'No procedure history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
         });
     }
@@ -8308,8 +8301,16 @@ const ClinicalRequests = (function() {
 
     // ===== SEARCH FUNCTIONS =====
     function searchProducts(q) {
-        $.get('/live-search-products', { term: q, patient_id: patientId }, function(data) {
-            const $res = $('#cr_presc_results').empty();
+        if (typeof SearchManager !== 'undefined') {
+            SearchManager.execute({
+                inputVal: q, minLength: 2, url: '/live-search-products', data: { term: q, patient_id: patientId },
+                onStart: () => $('#cr_presc_results').html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>'),
+                onEmptyQuery: () => $('#cr_presc_results').empty(),
+                onSuccess: (data) => {
+                    const $res = $('#cr_presc_results').empty();
+                    ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Medication', 'Enter medication name:', '#cr_presc_search', function(val) {
+                        ClinicalRequests.addProduct(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
+                    });
             if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_presc_results', 'products'); return; }
             else {
                 data.forEach(item => {
@@ -8347,14 +8348,24 @@ const ClinicalRequests = (function() {
                 });
             }
             $res.show();
-        });
+                }
+            });
+        }
     }
 
     function searchLabServices(q) {
-        const data = { term: q, patient_id: patientId };
-        if (investigationCategoryId) data.category_id = investigationCategoryId;
-        $.get('/live-search-services', data, function(data) {
-            const $res = $('#cr_lab_results').empty();
+        const reqData = { term: q, patient_id: patientId };
+        if (investigationCategoryId) reqData.category_id = investigationCategoryId;
+        if (typeof SearchManager !== 'undefined') {
+            SearchManager.execute({
+                inputVal: q, minLength: 2, url: '/live-search-services', data: reqData,
+                onStart: () => $('#cr_lab_results').html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>'),
+                onEmptyQuery: () => $('#cr_lab_results').empty(),
+                onSuccess: (data) => {
+                    const $res = $('#cr_lab_results').empty();
+                    ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Lab Test', 'Enter lab test name:', '#cr_lab_search', function(val) {
+                        ClinicalRequests.addLabService(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
+                    });
             if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_lab_results', 'lab services'); return; }
             else {
                 data.forEach(item => {
@@ -8392,12 +8403,17 @@ const ClinicalRequests = (function() {
                 });
             }
             $res.show();
-        });
+                }
+            });
+        }
     }
 
     function searchImagingServices(q) {
         $.get('/live-search-services', { term: q, category_id: 6, patient_id: patientId }, function(data) {
             const $res = $('#cr_imaging_results').empty();
+            ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Imaging Request', 'Enter imaging request name:', '#cr_imaging_search', function(val) {
+                ClinicalRequests.addImagingService(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
+            });
             if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_imaging_results', 'imaging services'); return; }
             else {
                 data.forEach(item => {
@@ -8440,6 +8456,9 @@ const ClinicalRequests = (function() {
     function searchProcedureServices(q) {
         $.get('/live-search-services', { term: q, category_id: procedureCategoryId, patient_id: patientId }, function(data) {
             const $res = $('#cr_proc_results').empty();
+            ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Procedure', 'Enter procedure name:', '#cr_proc_search', function(val) {
+                ClinicalRequests.addProcedure({ id: 'FF_' + val, service_name: val + ' [Free-form]', price: {sale_price: 0}, claims_amount: 0, coverage_mode: 'cash' });
+            });
             if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_proc_results', 'procedures'); return; }
             else {
                 data.forEach(item => {
@@ -8620,10 +8639,13 @@ const ClinicalRequests = (function() {
             type: 'procedures',
             referenceId: procId,
             buildRowHtml: function(resp) {
+                var isFreeForm = String(procId).startsWith('FF_');
+                var nameHtml = isFreeForm ? '<h6 class="mb-0"><span class="badge bg-info text-dark">' + (item.service_name || 'N/A').replace(' [Free-form]', '') + '</span></h6>' : '<strong>' + (item.service_name || 'N/A') + '</strong><br><small class="text-muted">' + (item.service_code || '') + '</small>';
+                var priceHtml = isFreeForm ? '<span class="text-muted">N/A</span>' : 'NGN ' + payable;
                 return '<tr data-record-id="' + resp.id + '" data-record-type="procedure" data-service-id="' + procId + '">' +
-                    '<td><strong>' + (item.service_name || 'N/A') + '</strong><br><small class="text-muted">' + (item.service_code || '') + '</small>' +
+                    '<td>' + nameHtml +
                     (preNotes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + preNotes.substring(0, 60) + '</small>' : '') + '</td>' +
-                    '<td>NGN ' + payable + '</td>' +
+                    '<td>' + priceHtml + '</td>' +
                     '<td><span class="badge ' + priorityClass + '">' + priorityLabel + '</span>' +
                     (scheduledDate ? '<br><small>' + scheduledDate + '</small>' : '') + '</td>' +
                     '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + procId + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
@@ -9591,7 +9613,7 @@ function refreshCurrentPatientData() {
     if (!currentPatient) return;
 
     // Silently reload patient data
-    BillingKit.loadPendingBills(currentPatient);
+    if (window.BillingKit) { BillingKit.refresh(); }
     loadInjectionHistory(currentPatient);
     loadInjectionPrescriptions(true);
     loadImmunizationHistory(currentPatient);
@@ -18395,3 +18417,5 @@ function showBundleRemove(btn) {
 <script src="{{ asset('js/patient-summary.js') }}"></script>
 
 @endsection
+
+

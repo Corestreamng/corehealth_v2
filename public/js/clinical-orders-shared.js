@@ -1873,19 +1873,112 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
     }
 
     /**
+     * Appends a unified "Add Free-form" list item to search results and wires up the prompt.
+     * @param {jQuery} $container The results container (e.g. $('#cr_presc_results'))
+     * @param {string} query The user's search query string
+     * @param {string} promptTitle Title of the SweetAlert prompt
+     * @param {string} promptText Text of the SweetAlert prompt
+     * @param {string} inputSel The input selector to clear after adding
+     * @param {function} onConfirm Callback that receives the free-form string entered by the user
+     */
+    function appendFreeFormLink($container, query, promptTitle, promptText, inputSel, onConfirm) {
+        var $li = $('<li class="list-group-item list-group-item-action text-primary" style="cursor:pointer;"><i class="mdi mdi-plus-circle"></i> Not listed? Add free-form \'' + query + '\'</li>');
+        $li.on('click', function() {
+            Swal.fire({
+                title: promptTitle,
+                text: promptText,
+                input: 'text',
+                showCancelButton: true,
+                confirmButtonText: 'Add',
+                inputValidator: function(value) {
+                    if (!value) return 'You need to write something!';
+                }
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    onConfirm(result.value);
+                    if (inputSel) $(inputSel).val('');
+                    $container.hide();
+                }
+            });
+        });
+        $container.prepend($li);
+    }
+
+    /**
      * Show "no results" inside a search dropdown.
      * @param {string} dropSel
      * @param {string} [label]  e.g. 'products', 'lab services'
      */
     function showSearchEmpty(dropSel, label) {
         label = label || 'items';
-        $(dropSel).html(
-            '<li class="list-group-item co-search-empty">' +
-            '<i class="mdi mdi-magnify-close"></i>' +
+        $(dropSel).append(
+            '<li class="list-group-item co-search-empty text-muted text-center">' +
+            '<i class="mdi mdi-magnify-close"></i> ' +
             'No ' + label + ' found' +
             '</li>'
         ).show();
     }
+
+    /**
+     * SearchManager Utility
+     * Handles robust debouncing and aborting of stale AJAX requests for live searches.
+     */
+    var SearchManager = (function() {
+        var _timer = null;
+        var _xhr = null;
+        
+        return {
+            /**
+             * Execute a debounced and abortable search.
+             * @param {Object} options 
+             *   - inputVal: string, the query
+             *   - minLength: number (default 2)
+             *   - delay: number (default 300ms)
+             *   - url: string
+             *   - data: object
+             *   - onStart: function() (e.g. show loading)
+             *   - onSuccess: function(results)
+             *   - onError: function(err)
+             *   - onEmptyQuery: function() (e.g. hide results)
+             */
+            execute: function(options) {
+                var query = options.inputVal.trim();
+                var minLen = options.minLength || 2;
+                var delay = options.delay || 300;
+                
+                if (_timer) clearTimeout(_timer);
+                if (_xhr) { _xhr.abort(); _xhr = null; }
+                
+                if (query.length < minLen) {
+                    if (typeof options.onEmptyQuery === 'function') options.onEmptyQuery();
+                    return;
+                }
+                
+                _timer = setTimeout(function() {
+                    if (typeof options.onStart === 'function') options.onStart();
+                    
+                    _xhr = $.ajax({
+                        url: options.url,
+                        method: options.method || 'GET',
+                        data: options.data || { term: query },
+                        success: function(res) {
+                            _xhr = null;
+                            if (typeof options.onSuccess === 'function') options.onSuccess(res);
+                        },
+                        error: function(xhr, status, error) {
+                            if (status !== 'abort') {
+                                _xhr = null;
+                                if (typeof options.onError === 'function') options.onError(xhr, status, error);
+                            }
+                        }
+                    });
+                }, delay);
+            }
+        };
+    })();
+
+    // Make SearchManager globally available for backwards compatibility with older views
+    window.SearchManager = SearchManager;
 
     /**
      * Bind a search input to auto-position its dropdown, and
@@ -1996,6 +2089,8 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         positionDropdown: positionDropdown,
         showSearchLoading: showSearchLoading,
         showSearchEmpty: showSearchEmpty,
+        appendFreeFormLink: appendFreeFormLink,
+        SearchManager: SearchManager,
 
         // Unified deletion confirmation
         showDeleteConfirmation: showDeleteConfirmation
@@ -2641,3 +2736,269 @@ window.NonPharmManager = (function($) {
     };
 
 })(jQuery);
+
+// Universal Global Listeners for Search Dropdowns
+$(document).ready(function() {
+    // 1. Click away to hide results
+    $(document).on('click.globalSearchClickAway', function(e) {
+        if (!$(e.target).closest('input[type="text"], ul.list-group').length) {
+            $('[id$="-results"], [id$="_res"], [id$="_results"]').filter('ul.list-group').hide();
+        }
+    });
+
+    // 2. Escape to hide & Enter to select first item
+    $(document).on('keydown.globalSearchKeys', 'input[type="text"]', function(e) {
+        if (e.key === 'Escape' || e.key === 'Enter') {
+            var $input = $(this);
+            var $dropdown = null;
+            var inputId = $input.attr('id');
+            
+            if (inputId) {
+                if (inputId === 'service-search-input') {
+                    $dropdown = $('#service-search-results');
+                } else if (inputId.endsWith('_search')) {
+                    var base = inputId.replace('_search', '');
+                    $dropdown = $('#' + base + '_res');
+                    if (!$dropdown.length) $dropdown = $('#' + base + '_results');
+                }
+            }
+
+            if (!$dropdown || !$dropdown.length) {
+                $dropdown = $input.siblings('ul.list-group');
+                if (!$dropdown.length) $dropdown = $input.parent().find('ul.list-group');
+            }
+
+            if ($dropdown && $dropdown.length && $dropdown.is(':visible')) {
+                if (e.key === 'Escape') {
+                    $dropdown.hide();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
+                    var $firstItem = $dropdown.find('li.list-group-item:not(.text-muted)').first();
+                    if ($firstItem.length) {
+                        $firstItem.click(); // Trigger selection
+                    }
+                }
+            }
+        }
+    });
+});
+
+/**
+ * Global dispense function for free-form meds (Plan §5.2)
+ * Exposed globally because it's called from server-rendered action buttons
+ * in the prescription history datatable.
+ */
+window.dispenseFreeFormMed = function(requestId) {
+    if (typeof Swal === 'undefined') {
+        console.error('SweetAlert2 is required for dispenseFreeFormMed');
+        return;
+    }
+    Swal.fire({
+        title: 'Mark as Dispensed',
+        text: 'Enter the quantity dispensed:',
+        input: 'number',
+        inputValue: 1,
+        inputAttributes: {
+            min: 1,
+            step: 1
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Record as Dispensed',
+        showLoaderOnConfirm: true,
+        preConfirm: (qty) => {
+            return $.ajax({
+                url: '/pharmacy-workbench/dispense-free-form',
+                method: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    request_id: requestId,
+                    qty_dispensed: qty
+                }
+            }).catch(error => {
+                Swal.showValidationMessage(
+                    `Request failed: ${error.responseJSON?.message || error.statusText}`
+                );
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Success', 'Medication marked as dispensed.', 'success');
+            // Reload all known prescription tables if they exist
+            ['#presc_history_list', '#cr_presc_history_list', '#mco_presc_history_list', '#drug_history_list'].forEach(function(tableId) {
+                if ($.fn.DataTable.isDataTable(tableId)) {
+                    $(tableId).DataTable().ajax.reload(null, false);
+                }
+            });
+        }
+    });
+};
+
+/**
+ * Global fallback delete functions (Plan §5.2)
+ * These ensure that deleting requests from any workbench (Nursing, Maternity)
+ * works correctly even if the view-specific scripts.blade.php isn't included.
+ */
+window.deleteLabRequest = window.deleteLabRequest || function(labId, encounterId, serviceName) {
+    if (!window.ClinicalOrdersKit) return;
+    ClinicalOrdersKit.showDeleteConfirmation({
+        type: 'lab',
+        itemName: serviceName,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: `/encounters/${encounterId}/labs/${labId}`,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+                        ['#investigation_history_list', '#cr_lab_history_list', '#mco_lab_history_list'].forEach(function(id) {
+                            if ($.fn.DataTable.isDataTable(id)) $(id).DataTable().ajax.reload(null, false);
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    if (typeof toastr !== 'undefined') toastr.error(msg);
+                }
+            });
+        }
+    });
+};
+
+window.deleteImagingRequest = window.deleteImagingRequest || function(imagingId, encounterId, serviceName) {
+    if (!window.ClinicalOrdersKit) return;
+    ClinicalOrdersKit.showDeleteConfirmation({
+        type: 'imaging',
+        itemName: serviceName,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: `/encounters/${encounterId}/imaging/${imagingId}`,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+                        ['#imaging_history_list', '#cr_imaging_history_list', '#mco_imaging_history_list'].forEach(function(id) {
+                            if ($.fn.DataTable.isDataTable(id)) $(id).DataTable().ajax.reload(null, false);
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    if (typeof toastr !== 'undefined') toastr.error(msg);
+                }
+            });
+        }
+    });
+};
+
+window.deletePrescription = window.deletePrescription || function(prescriptionId, encounterId, productName) {
+    if (!window.ClinicalOrdersKit) return;
+    ClinicalOrdersKit.showDeleteConfirmation({
+        type: 'prescription',
+        itemName: productName,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: `/encounters/${encounterId}/prescriptions/${prescriptionId}`,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+                        ['#presc_history_list', '#cr_presc_history_list', '#mco_presc_history_list'].forEach(function(id) {
+                            if ($.fn.DataTable.isDataTable(id)) $(id).DataTable().ajax.reload(null, false);
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    if (typeof toastr !== 'undefined') toastr.error(msg);
+                }
+            });
+        }
+    });
+};
+
+window.deleteProcedureRequest = window.deleteProcedureRequest || function(procedureId, encounterId, procedureName) {
+    if (!window.ClinicalOrdersKit) return;
+    ClinicalOrdersKit.showDeleteConfirmation({
+        type: 'procedure',
+        itemName: procedureName,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: `/encounters/${encounterId}/procedures/${procedureId}`,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+                        ['#procedure_history_list', '#cr_proc_history_list', '#mco_proc_history_list'].forEach(function(id) {
+                            if ($.fn.DataTable.isDataTable(id)) $(id).DataTable().ajax.reload(null, false);
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    if (typeof toastr !== 'undefined') toastr.error(msg);
+                }
+            });
+        }
+    });
+};
+
+window.deleteNurseClinicalRequest = window.deleteNurseClinicalRequest || function(type, id, name) {
+    if (!window.ClinicalOrdersKit) return;
+    var pathMap = {
+        lab:          'labs',
+        imaging:      'imaging',
+        prescription: 'prescriptions',
+        procedure:    'procedures'
+    };
+    ClinicalOrdersKit.showDeleteConfirmation({
+        type: type,
+        itemName: name,
+        onConfirm: function (reason, callback) {
+            $.ajax({
+                url: '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+                        var tableMap = {
+                            lab:          ['#cr_lab_history_list', '#mco_lab_history_list', '#investigation_history_list'],
+                            imaging:      ['#cr_imaging_history_list', '#mco_imaging_history_list', '#imaging_history_list'],
+                            prescription: ['#cr_presc_history_list', '#mco_presc_history_list', '#presc_history_list'],
+                            procedure:    ['#cr_proc_history_list', '#mco_proc_history_list', '#procedure_history_list']
+                        };
+                        var tables = tableMap[type] || [];
+                        tables.forEach(function(tableId) {
+                            if ($.fn.DataTable.isDataTable(tableId)) $(tableId).DataTable().ajax.reload(null, false);
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    callback(false);
+                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                    if (typeof toastr !== 'undefined') toastr.error(msg);
+                }
+            });
+        }
+    });
+};
+

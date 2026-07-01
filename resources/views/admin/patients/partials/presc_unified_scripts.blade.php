@@ -526,23 +526,51 @@ function updatePrescBillingTotal() {
 // ========== PRODUCT SEARCH ==========
 
 function searchProductsForPresc(query) {
-    if (!query || query.length < 2) {
-        $('#presc_product_results').html('').hide();
+    const $container = $('#presc_product_results');
+    
+    if (typeof SearchManager !== 'undefined') {
+        SearchManager.execute({
+            inputVal: query,
+            minLength: 2,
+            delay: 300,
+            url: '/live-search-products',
+            data: { term: query, patient_id: prescPatientId },
+            onStart: function() {
+                $container.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+            },
+            onSuccess: function(data) {
+                renderPrescProductResults(data);
+            },
+            onEmptyQuery: function() {
+                $container.html('').hide();
+            }
+        });
+    } else {
+        if (!query || query.length < 2) {
+            $container.html('').hide();
+            return;
+        }
+
+        $.ajax({
+            url: '/live-search-products',
+            method: 'GET',
+            dataType: 'json',
+            data: { term: query, patient_id: prescPatientId },
+            success: function(data) {
+                renderPrescProductResults(data);
+            }
+        });
+    }
+}
+
+function renderPrescProductResults(data) {
+    const $container = $('#presc_product_results');
+    $container.html('');
+
+    if (data.length === 0) {
+        $container.html('<li class="list-group-item text-muted">No products found</li>').show();
         return;
     }
-
-    $.ajax({
-        url: '/live-search-products',
-        method: 'GET',
-        dataType: 'json',
-        data: { term: query, patient_id: prescPatientId },
-        success: function(data) {
-            $('#presc_product_results').html('');
-
-            if (data.length === 0) {
-                $('#presc_product_results').html('<li class="list-group-item text-muted">No products found</li>').show();
-                return;
-            }
 
             data.forEach(function(item) {
                 const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';

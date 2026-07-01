@@ -6,11 +6,7 @@
     <table class="table table-hover" style="width: 100%" id="procedure_history_list">
         <thead class="table-light">
             <tr>
-                <th><i class="fa fa-user-md"></i> Procedure</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
+                <th style="width: 100%;"><i class="fa fa-user-md"></i> Procedure Requests</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -35,13 +31,9 @@ $(function() {
             }
         },
         columns: [
-            { data: 'procedure', name: 'procedure' },
-            { data: 'priority', name: 'priority' },
-            { data: 'status', name: 'procedure_status' },
-            { data: 'date', name: 'requested_on' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+            { data: 'info', name: 'info', orderable: false, searchable: false }
         ],
-        order: [[3, 'desc']],
+        order: [],
         language: {
             emptyTable: "No procedures found for this patient"
         }

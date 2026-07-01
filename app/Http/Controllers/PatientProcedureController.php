@@ -225,7 +225,7 @@ class PatientProcedureController extends Controller
     public function addLabRequest(Request $request, Procedure $procedure)
     {
         $request->validate([
-            'service_id' => 'required|exists:services,id',
+            'service_id' => 'required|string',
             'is_bundled' => 'required|boolean',
             'note' => 'nullable|string|max:1000',
         ]);
@@ -284,7 +284,7 @@ class PatientProcedureController extends Controller
     public function addImagingRequest(Request $request, Procedure $procedure)
     {
         $request->validate([
-            'service_id' => 'required|exists:services,id',
+            'service_id' => 'required|string',
             'is_bundled' => 'required|boolean',
             'note' => 'nullable|string|max:1000',
         ]);
@@ -342,7 +342,7 @@ class PatientProcedureController extends Controller
     public function addServiceBill(Request $request, Procedure $procedure)
     {
         $request->validate([
-            "service_id" => "required|exists:services,id",
+            "service_id" => "required|string",
             "qty" => "required|integer|min:1",
             "is_bundled" => "required|boolean",
         ]);
@@ -413,7 +413,7 @@ class PatientProcedureController extends Controller
     public function addMedication(Request $request, Procedure $procedure)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
+            'product_id' => 'required|string',
             'qty' => 'required|integer|min:1',
             'dose' => 'nullable|string|max:255',
             'is_bundled' => 'required|boolean',
@@ -1518,8 +1518,10 @@ class PatientProcedureController extends Controller
      */
     private function formatProcedureCard($procedure)
     {
-        $serviceName = optional($procedure->service)->service_name ?? 'Procedure';
-        $category = optional(optional($procedure->procedureDefinition)->procedureCategory)->category_name ?? '';
+        $serviceName = $procedure->name;
+        $category = $procedure->is_free_form 
+            ? 'Free-Form Procedure' 
+            : (optional(optional($procedure->procedureDefinition)->procedureCategory)->category_name ?? '');
         $status = $procedure->procedure_status ?? 'requested';
         $priority = $procedure->priority ?? 'routine';
 
@@ -1562,6 +1564,8 @@ class PatientProcedureController extends Controller
 
         // URL to procedure detail page
         $detailUrl = route('patient-procedures.show', $procedure->id);
+        $isFreeFormJs = $procedure->is_free_form ? 'true' : 'false';
+        $safeServiceName = addslashes($serviceName);
 
         $html = <<<HTML
 <div class="procedure-card {$statusClass}">
@@ -1620,6 +1624,9 @@ HTML;
         $html .= <<<HTML
     </div>
     <div class="procedure-actions">
+        <button class="btn btn-sm btn-success mr-2" onclick="openProcedureOutcomeModal({$procedure->id}, '{$safeServiceName}', {$isFreeFormJs})">
+            <i class="fa fa-notes-medical"></i> Document Outcome
+        </button>
         <a href="{$detailUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
             <i class="fa fa-eye"></i> View Details
         </a>
