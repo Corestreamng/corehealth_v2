@@ -145,6 +145,17 @@ class PatientProcedureController extends Controller
         try {
             $procedure->outcome = $request->outcome;
             $procedure->outcome_notes = $request->outcome_notes;
+            
+            // Documenting an outcome is considered completing the procedure
+            if ($procedure->procedure_status !== \App\Models\Procedure::STATUS_CANCELLED) {
+                $procedure->procedure_status = \App\Models\Procedure::STATUS_COMPLETED;
+                $procedure->actual_end_time = now();
+                
+                if (!$procedure->actual_start_time) {
+                    $procedure->actual_start_time = now();
+                }
+            }
+            
             $procedure->save();
 
             return response()->json([
@@ -232,19 +243,31 @@ class PatientProcedureController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $procedure) {
-                $service = \App\Models\Service::with('price')->find($request->service_id);
+                $isFreeForm = strpos($request->service_id, 'FF_') === 0;
+                $service = null;
+                
+                if (!$isFreeForm) {
+                    $service = \App\Models\Service::with('price')->find($request->service_id);
+                }
 
                 // Create the lab service request
                 $labRequest = new LabServiceRequest();
-                $labRequest->service_id = $service->id;
+                
+                if ($isFreeForm) {
+                    $labRequest->is_free_form = true;
+                    $labRequest->free_form_name = str_replace(' [Free-form]', '', substr($request->service_id, 3));
+                } else {
+                    $labRequest->service_id = $service->id;
+                }
+                
                 $labRequest->patient_id = $procedure->patient_id;
                 $labRequest->encounter_id = $procedure->encounter_id;
                 $labRequest->doctor_id = Auth::id();
                 $labRequest->note = $request->note;
 
                 // Handle status based on is_bundled flag
-                if ($request->is_bundled) {
-                    // Bundled: No separate billing, go directly to "sample collection" (status 2)
+                if ($request->is_bundled || $isFreeForm) {
+                    // Bundled or Free Form: No separate billing, go directly to "sample collection" (status 2)
                     $labRequest->status = 2;
                 } else {
                     // Non-bundled: Let Lab Workbench handle billing, stays at "pending billing" (status 1)
@@ -291,19 +314,31 @@ class PatientProcedureController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $procedure) {
-                $service = \App\Models\Service::with('price')->find($request->service_id);
+                $isFreeForm = strpos($request->service_id, 'FF_') === 0;
+                $service = null;
+                
+                if (!$isFreeForm) {
+                    $service = \App\Models\Service::with('price')->find($request->service_id);
+                }
 
                 // Create the imaging service request
                 $imagingRequest = new ImagingServiceRequest();
-                $imagingRequest->service_id = $service->id;
+                
+                if ($isFreeForm) {
+                    $imagingRequest->is_free_form = true;
+                    $imagingRequest->free_form_name = str_replace(' [Free-form]', '', substr($request->service_id, 3));
+                } else {
+                    $imagingRequest->service_id = $service->id;
+                }
+                
                 $imagingRequest->patient_id = $procedure->patient_id;
                 $imagingRequest->encounter_id = $procedure->encounter_id;
                 $imagingRequest->doctor_id = Auth::id();
                 $imagingRequest->note = $request->note;
 
                 // Handle status based on is_bundled flag
-                if ($request->is_bundled) {
-                    // Bundled: No separate billing, go directly to "ready" (status 2)
+                if ($request->is_bundled || $isFreeForm) {
+                    // Bundled or Free Form: No separate billing, go directly to "image capture" (status 2)
                     $imagingRequest->status = 2;
                 } else {
                     // Non-bundled: Let Imaging Workbench handle billing, stays at "pending billing" (status 1)
@@ -421,11 +456,23 @@ class PatientProcedureController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $procedure) {
-                $product = \App\Models\Product::with('price')->find($request->product_id);
+                $isFreeForm = strpos($request->product_id, 'FF_') === 0;
+                $product = null;
+                
+                if (!$isFreeForm) {
+                    $product = \App\Models\Product::with('price')->find($request->product_id);
+                }
 
                 // Create the product request
                 $productRequest = new ProductRequest();
-                $productRequest->product_id = $product->id;
+                
+                if ($isFreeForm) {
+                    $productRequest->is_free_form = true;
+                    $productRequest->free_form_name = str_replace(' [Free-form]', '', substr($request->product_id, 3));
+                } else {
+                    $productRequest->product_id = $product->id;
+                }
+                
                 $productRequest->patient_id = $procedure->patient_id;
                 $productRequest->encounter_id = $procedure->encounter_id;
                 $productRequest->doctor_id = Auth::id();
@@ -433,8 +480,8 @@ class PatientProcedureController extends Controller
                 $productRequest->dose = $request->dose;
 
                 // Handle status based on is_bundled flag
-                if ($request->is_bundled) {
-                    // Bundled: No separate billing, go directly to "ready for dispense" (status 2)
+                if ($request->is_bundled || $isFreeForm) {
+                    // Bundled or Free Form: No separate billing, go directly to "ready for dispense" (status 2)
                     $productRequest->status = 2;
                 } else {
                     // Non-bundled: Let Pharmacy Workbench handle billing, stays at "pending billing" (status 1)
@@ -1045,7 +1092,8 @@ class PatientProcedureController extends Controller
 
         // Header with service name and status
         $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
-        $str .= "<h6 class='mb-0'><span class='badge bg-primary'><i class='fa fa-flask'></i> " . (($req->service) ? $req->service->service_name : 'N/A') . '</span></h6>';
+        $name = $req->is_free_form ? $req->free_form_name . ' <span class="badge bg-secondary ms-1" style="font-size:0.6rem;">Free-form</span>' : (($req->service) ? $req->service->service_name : 'N/A');
+        $str .= "<h6 class='mb-0'><span class='badge bg-primary'><i class='fa fa-flask'></i> " . $name . '</span></h6>';
 
         // Status badges
         $str .= '<div>';
@@ -1144,7 +1192,8 @@ class PatientProcedureController extends Controller
 
         // Header with service name and status
         $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
-        $str .= "<h6 class='mb-0'><span class='badge bg-purple' style='background:#9c27b0'><i class='fa fa-x-ray'></i> " . (($req->service) ? $req->service->service_name : 'N/A') . '</span></h6>';
+        $name = $req->is_free_form ? $req->free_form_name . ' <span class="badge bg-secondary ms-1" style="font-size:0.6rem;">Free-form</span>' : (($req->service) ? $req->service->service_name : 'N/A');
+        $str .= "<h6 class='mb-0'><span class='badge bg-purple' style='background:#9c27b0'><i class='fa fa-x-ray'></i> " . $name . '</span></h6>';
 
         // Status badges
         $str .= '<div>';
@@ -1236,7 +1285,7 @@ class PatientProcedureController extends Controller
         $str = '<div class="card-modern mb-2" style="border-left: 4px solid #28a745;">';
         $str .= '<div class="card-body p-3">';
 
-        $productName = optional($req->product)->product_name ?? 'Unknown';
+        $productName = $req->is_free_form ? $req->free_form_name . ' <span class="badge bg-secondary ms-1" style="font-size:0.6rem;">Free-form</span>' : (optional($req->product)->product_name ?? 'Unknown');
         $productCode = optional($req->product)->product_code ?? '';
         $dose = $req->dose ?? 'N/A';
         $qty = $req->qty ?? 1;
@@ -1418,19 +1467,19 @@ class PatientProcedureController extends Controller
         $deliveryStatus = 'pending';
 
         if ($item->labServiceRequest) {
-            $name = optional($item->labServiceRequest->service)->service_name ?? 'Lab Test';
+            $name = $item->labServiceRequest->is_free_form ? $item->labServiceRequest->free_form_name : (optional($item->labServiceRequest->service)->service_name ?? 'Lab Test');
             $code = optional($item->labServiceRequest->service)->service_code ?? '';
-            $price = optional($item->labServiceRequest->service->price)->sale_price ?? 0;
+            $price = $item->labServiceRequest->service ? (optional($item->labServiceRequest->service->price)->sale_price ?? 0) : 0;
             $deliveryStatus = $item->labServiceRequest->status ?? 'pending';
         } elseif ($item->imagingServiceRequest) {
-            $name = optional($item->imagingServiceRequest->service)->service_name ?? 'Imaging';
+            $name = $item->imagingServiceRequest->is_free_form ? $item->imagingServiceRequest->free_form_name : (optional($item->imagingServiceRequest->service)->service_name ?? 'Imaging');
             $code = optional($item->imagingServiceRequest->service)->service_code ?? '';
-            $price = optional($item->imagingServiceRequest->service->price)->sale_price ?? 0;
+            $price = $item->imagingServiceRequest->service ? (optional($item->imagingServiceRequest->service->price)->sale_price ?? 0) : 0;
             $deliveryStatus = $item->imagingServiceRequest->status ?? 'pending';
         } elseif ($item->productRequest) {
-            $name = optional($item->productRequest->product)->product_name ?? 'Medication';
+            $name = $item->productRequest->is_free_form ? $item->productRequest->free_form_name : (optional($item->productRequest->product)->product_name ?? 'Medication');
             $code = optional($item->productRequest->product)->product_code ?? '';
-            $price = (optional($item->productRequest->product->price)->sale_price ?? 0) * ($item->productRequest->qty ?? 1);
+            $price = ($item->productRequest->product ? (optional($item->productRequest->product->price)->sale_price ?? 0) : 0) * ($item->productRequest->qty ?? 1);
             $deliveryStatus = $item->productRequest->status ?? 'pending';
         } elseif ($item->productOrServiceRequest) {
             $name = optional($item->productOrServiceRequest->service)->service_name ?? 'Service';
