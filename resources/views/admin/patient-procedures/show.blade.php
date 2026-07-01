@@ -58,10 +58,10 @@
     $pt = $procedure->patient;
 
     // Item counts
-    $labCount     = $procedure->items->filter(fn($i) => $i->lab_service_request_id !== null)->count();
-    $imagingCount = $procedure->items->filter(fn($i) => $i->imaging_service_request_id !== null)->count();
-    $medsCount    = $procedure->items->filter(fn($i) => $i->product_request_id !== null)->count();
-    $totalItems   = $procedure->items->count();
+    $labCount     = $procedure->items->filter(fn($i) => $i->lab_service_request_id !== null && $i->labServiceRequest !== null && $i->labServiceRequest->status > 0)->count();
+    $imagingCount = $procedure->items->filter(fn($i) => $i->imaging_service_request_id !== null && $i->imagingServiceRequest !== null && $i->imagingServiceRequest->status > 0)->count();
+    $medsCount    = $procedure->items->filter(fn($i) => $i->product_request_id !== null && $i->productRequest !== null && $i->productRequest->status > 0)->count();
+    $totalItems   = $procedure->items->filter(fn($i) => $i->getRequestAttribute() !== null && $i->getRequestAttribute()->status > 0)->count();
 
     $isCancelled  = $procedure->procedure_status === 'cancelled';
     $isCompleted  = $procedure->procedure_status === 'completed';
@@ -1904,6 +1904,11 @@
 {{-- Result View Modals --}}
 @include("admin.partials.invest_res_view_modal")
 @include("admin.partials.invest_res_view_imaging_modal")
+@include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
+@include('admin.partials.perform_investigation_modal')
+@include('admin.partials.combo_confirm_modal')
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
     @endif
 
 @endsection
@@ -1913,6 +1918,9 @@
 {{-- Result View JS --}}
 @include("admin.partials.invest_res_view_js")
 @include("admin.partials.invest_res_view_imaging_js")
+@include('admin.doctors.partials.scripts')
+@include('admin.partials.invest_res_js')
+@include('admin.patients.partials.presc_unified_scripts')
 <script src="{{ asset('assets/js/chosen.jquery.min.js') }}"></script>
 {{-- CKEditor --}}
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
@@ -1942,6 +1950,7 @@ window.BILLING_KIT_CONFIG = {
 @include('admin.shared.modals.request_details')
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 <script src="{{ asset('js/request-details.js') }}"></script>
+<script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 @endhasanyrole
 
 <script>
@@ -2430,7 +2439,14 @@ function formatMoney(amount) {
 $('#item_product_id').on('change', function() {
     const productId = $(this).val();
     if (!productId) { $('#item_batch_id').html('<option value="">-- Select product first --</option>'); return; }
-    $.get('{{ route('nursing-workbench.product-batches') }}', { product_id: productId }, function(data) {
+    
+    // Prevent fetching batches for free-form items
+    if (productId.startsWith('FF_')) {
+        $('#item_batch_id').html('<option value="">-- N/A (Free-form) --</option>');
+        return;
+    }
+    
+    $.get('{{ route('nursing-workbench.product-batches') }}', { product_id: productId, store_id: '{{ $resolvedStore->id }}' }, function(data) {
         $('#item_batch_id').html('<option value="">-- Select batch --</option>');
         if (data && data.batches) {
             data.batches.forEach(function(b) {
@@ -2454,12 +2470,18 @@ $('#addItemForm').on('submit', function(e) {
     if (type === 'medication') {
         formData.product_id = $('#item_product_id').val();
         formData.batch_id   = $('#item_batch_id').val();
-        formData.quantity   = $('#item_quantity').val();
+        formData.qty        = $('#item_quantity').val();
     } else {
         formData.service_id = $('#item_service_id').val();
     }
+    let submitUrl = '';
+    if (formData.item_type === 'lab') submitUrl = '/patient-procedures/' + procedureId + '/items/lab';
+    else if (formData.item_type === 'imaging') submitUrl = '/patient-procedures/' + procedureId + '/items/imaging';
+    else if (formData.item_type === 'service') submitUrl = '/patient-procedures/' + procedureId + '/items/service';
+    else if (formData.item_type === 'medication') submitUrl = '/patient-procedures/' + procedureId + '/items/medication';
+
     $.ajax({
-        url: '/patient-procedures/' + procedureId + '/items',
+        url: submitUrl,
         method: 'POST',
         data: formData,
         success: function() {
@@ -2660,7 +2682,7 @@ function executePrint() {
 function initLabHistoryTable() {
     if ($.fn.DataTable.isDataTable("#procedure_lab_history")) return;
     $("#procedure_lab_history").DataTable({
-        ajax: { url: "/patient-procedures/" + procedureId + "/lab-history", dataSrc: "data" },
+        ajax: { url: "/investigationHistoryList/{{ $procedure->patient_id }}?procedure_id={{ $procedure->id }}", type: "GET" },
         columns: [{ data: "info" }],
         pageLength: 10,
         dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
@@ -2671,7 +2693,7 @@ function initLabHistoryTable() {
 function initImagingHistoryTable() {
     if ($.fn.DataTable.isDataTable("#procedure_imaging_history")) return;
     $("#procedure_imaging_history").DataTable({
-        ajax: { url: "/patient-procedures/" + procedureId + "/imaging-history", dataSrc: "data" },
+        ajax: { url: "/imagingHistoryList/{{ $procedure->patient_id }}?procedure_id={{ $procedure->id }}", type: "GET" },
         columns: [{ data: "info" }],
         pageLength: 10,
         dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
@@ -2682,18 +2704,20 @@ function initImagingHistoryTable() {
 function initMedsHistoryTable() {
     if ($.fn.DataTable.isDataTable("#procedure_meds_history")) return;
     $("#procedure_meds_history").DataTable({
-        ajax: { url: "/patient-procedures/" + procedureId + "/medication-history", dataSrc: "data" },
-        columns: [{ data: "info" }],
+        ajax: { url: "/prescHistoryList/{{ $procedure->patient_id }}?procedure_id={{ $procedure->id }}", type: "GET" },
+        columns: [
+            { data: "info" }
+        ],
         pageLength: 10,
         dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
         language: { search: "", searchPlaceholder: "Search meds…", emptyTable: "No medication requests." },
     });
 }
 
-$("#proc-orders-labs").on("shown.bs.tab", function() { initLabHistoryTable(); });
+$('a[href="#proc-orders-labs"]').on("shown.bs.tab", function() { initLabHistoryTable(); });
 $("#tab-orders-link").on("shown.bs.tab", function() { initLabHistoryTable(); });
-$("#proc-orders-imaging").on("shown.bs.tab", function() { initImagingHistoryTable(); });
-$("#proc-orders-meds").on("shown.bs.tab", function() { initMedsHistoryTable(); });
+$('a[href="#proc-orders-imaging"]').on("shown.bs.tab", function() { initImagingHistoryTable(); });
+$('a[href="#proc-orders-meds"]').on("shown.bs.tab", function() { initMedsHistoryTable(); });
 
 function openConsentModal() {
     $("#consentModal").modal("show");
@@ -2975,6 +2999,161 @@ function executeDeleteAttachment(attId) {
             toastr.success('Attachment deleted.');
         },
         error: function() { toastr.error('Error deleting attachment.'); }
+    });
+}
+
+function promptProcedureFreeFormService() {
+    Swal.fire({
+        title: 'Add Free-Form Service',
+        text: 'Enter the exact name of the lab/imaging request:',
+        input: 'text',
+        showCancelButton: true,
+        confirmButtonText: 'Add',
+        target: document.getElementById('addItemModal'),
+        inputValidator: function(value) {
+            if (!value) return 'You need to write something!';
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let val = result.value;
+            let combined = 'FF_' + val + ' [Free-form]';
+            let newOption = new Option(val + ' (Free-form)', combined, true, true);
+            $('#item_service_id').append(newOption).trigger('chosen:updated').trigger('change');
+            
+            let html = `
+                <div class="d-flex align-items-center p-2 mt-2" style="border: 1px dashed #6c757d; border-radius: 4px; background: #f8f9fa;">
+                    <div class="mr-3">
+                        <i class="fa fa-file-alt text-secondary fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">${val} <span class="badge bg-secondary ms-1">Free-Form</span></h6>
+                        <small class="text-muted d-block">External or Unlisted Request</small>
+                        <small class="text-success"><i class="fa fa-check-circle"></i> Ready to process</small>
+                    </div>
+                </div>
+            `;
+            $('#item_service_preview').removeClass('d-none').html(html);
+            toastr.success('Free-form service set.');
+        }
+    });
+}
+
+function promptProcedureFreeFormProduct() {
+    Swal.fire({
+        title: 'Add Free-Form Medication',
+        text: 'Enter the exact name of the medication:',
+        input: 'text',
+        showCancelButton: true,
+        confirmButtonText: 'Add',
+        target: document.getElementById('addItemModal'),
+        inputValidator: function(value) {
+            if (!value) return 'You need to write something!';
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let val = result.value;
+            let combined = 'FF_' + val + ' [Free-form]';
+            let newOption = new Option(val + ' (Free-form)', combined, true, true);
+            $('#item_product_id').append(newOption).trigger('chosen:updated').trigger('change');
+            
+            // For free form, there's no batch validation
+            $('#item_batch_id').html('<option value="">-- N/A (Free-form) --</option>');
+            
+            let html = `
+                <div class="d-flex align-items-center p-2 mt-2" style="border: 1px dashed #6c757d; border-radius: 4px; background: #f8f9fa;">
+                    <div class="mr-3">
+                        <i class="fa fa-file-alt text-secondary fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">${val} <span class="badge bg-secondary ms-1">Free-Form</span></h6>
+                        <small class="text-muted d-block">External or Unlisted Medication</small>
+                        <small class="text-success"><i class="fa fa-check-circle"></i> Ready to dispense</small>
+                    </div>
+                </div>
+            `;
+            $('#item_product_preview').removeClass('d-none').html(html);
+
+            toastr.success('Free-form medication set.');
+        }
+    });
+}
+
+function enterLabResult(requestId) {
+    window._investResultContext = { type: 'lab', id: requestId };
+    InvestResultEntry.enterResult(
+        requestId,
+        `/lab-workbench/lab-service-requests/${requestId}`,
+        `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+        '{{ route("lab.saveResult") }}'
+    );
+}
+
+function editLabResult(obj) {
+    const requestId = $(obj).data('id');
+    InvestResultEntry.editResult(
+        requestId,
+        `/lab-workbench/lab-service-requests/${requestId}`,
+        `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+        '{{ route("lab.saveResult") }}'
+    );
+}
+
+function enterImagingResult(requestId) {
+    window._investResultContext = { type: 'imaging', id: requestId };
+    InvestResultEntry.enterResult(
+        requestId,
+        `/imaging-workbench/imaging-service-requests/${requestId}`,
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+        '{{ route("imaging.saveResult") }}'
+    );
+}
+
+function editImagingResult(obj) {
+    const requestId = $(obj).data('id');
+    InvestResultEntry.editResult(
+        requestId,
+        `/imaging-workbench/imaging-service-requests/${requestId}`,
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+        '{{ route("imaging.saveResult") }}'
+    );
+}
+
+function dispenseFreeFormMed(requestId) {
+    Swal.fire({
+        title: 'Mark as Dispensed',
+        text: 'Enter the quantity dispensed:',
+        input: 'number',
+        inputValue: 1,
+        inputAttributes: {
+            min: 1,
+            step: 1
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Record as Dispensed',
+        showLoaderOnConfirm: true,
+        preConfirm: (qty) => {
+            return $.ajax({
+                url: '/pharmacy-workbench/dispense-free-form',
+                method: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    request_id: requestId,
+                    qty_dispensed: qty
+                }
+            }).catch(error => {
+                Swal.showValidationMessage(
+                    `Request failed: ${error.responseJSON?.message || error.statusText}`
+                );
+            });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Success', 'Medication marked as dispensed.', 'success');
+            if ($.fn.DataTable.isDataTable('#procedure_meds_history')) {
+                $('#procedure_meds_history').DataTable().ajax.reload(null, false);
+            }
+        }
     });
 }
 
