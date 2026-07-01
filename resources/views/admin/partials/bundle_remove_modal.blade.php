@@ -28,6 +28,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 window.BundleRemoveModal = (function() {
     let currentOptions = {};
@@ -106,3 +107,4 @@ window.BundleRemoveModal = (function() {
     return { show };
 })();
 </script>
+@endpush
