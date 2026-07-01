@@ -244,15 +244,7 @@ class NursingWorkbenchController extends Controller{
         }
 
         $patients = Patient::with(['user', 'hmo'])
-            ->where(function ($query) use ($term) {
-                $query->whereHas('user', function ($userQuery) use ($term) {
-                    $userQuery->where('surname', 'like', "%{$term}%")
-                        ->orWhere('firstname', 'like', "%{$term}%")
-                        ->orWhere('othername', 'like', "%{$term}%");
-                })
-                ->orWhere('file_no', 'like', "%{$term}%")
-                ->orWhere('phone_no', 'like', "%{$term}%");
-            })
+            ->searchByTerm($term)
             ->limit(15)
             ->get();
 
@@ -279,7 +271,7 @@ class NursingWorkbenchController extends Controller{
                 'age' => $this->calculateAge($patient->dob),
                 'gender' => $patient->gender ?? 'N/A',
                 'phone' => $patient->phone_no ?? 'N/A',
-                'photo' => $patient->user->photo ?? 'avatar.png',
+                'photo' => $patient->user && $patient->user->filename ? asset('storage/image/user/' . $patient->user->filename) : asset('assets/images/default-avatar.png'),
                 'hmo' => $patient->hmo ? $patient->hmo->name : null,
                 'is_admitted' => $isAdmitted,
                 'pending_meds' => $pendingMeds,

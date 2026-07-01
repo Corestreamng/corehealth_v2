@@ -87,15 +87,7 @@ class ReceptionWorkbenchController extends Controller
         }
 
         $patients = Patient::with(['user', 'hmo', 'account'])
-            ->where(function($q) use ($query) {
-                $q->whereHas('user', function($u) use ($query) {
-                    $u->where('surname', 'like', "%{$query}%")
-                      ->orWhere('firstname', 'like', "%{$query}%")
-                      ->orWhere('othername', 'like', "%{$query}%");
-                })
-                ->orWhere('phone_no', 'like', "%{$query}%")
-                ->orWhere('file_no', 'like', "%{$query}%");
-            });
+            ->searchByTerm($query);
 
         if ($request->boolean('principals_only')) {
             $patients->where('is_family_principal', 1);

@@ -137,15 +137,7 @@ class MaternityWorkbenchController extends Controller
         if (strlen($term) < 2) return response()->json([]);
 
         $patients = Patient::with(['user', 'hmo'])
-            ->where(function ($query) use ($term) {
-                $query->whereHas('user', function ($uq) use ($term) {
-                    $uq->where('surname', 'like', "%{$term}%")
-                        ->orWhere('firstname', 'like', "%{$term}%")
-                        ->orWhere('othername', 'like', "%{$term}%");
-                })
-                    ->orWhere('file_no', 'like', "%{$term}%")
-                    ->orWhere('phone_no', 'like', "%{$term}%");
-            })
+            ->searchByTerm($term)
             ->limit(15)
             ->get();
 
@@ -169,7 +161,7 @@ class MaternityWorkbenchController extends Controller
                 'age'           => $this->calculateAge($p->dob),
                 'gender'        => $p->gender ?? 'N/A',
                 'phone'         => $p->phone_no ?? 'N/A',
-                'photo'         => $p->user->photo ?? 'avatar.png',
+                'photo'         => $p->user && $p->user->filename ? asset('storage/image/user/' . $p->user->filename) : asset('assets/images/default-avatar.png'),
                 'hmo'           => $p->hmo ? $p->hmo->name : null,
                 'has_enrollment' => $enrollment ? true : false,
                 'enrollment_id' => $enrollment ? $enrollment->id : null,
