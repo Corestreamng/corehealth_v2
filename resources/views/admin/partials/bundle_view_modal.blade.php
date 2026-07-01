@@ -21,6 +21,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 window.BundleViewModal = (function() {
     function show(bundleData) {
@@ -102,3 +103,4 @@ window.BundleViewModal = (function() {
     return { show };
 })();
 </script>
+@endpush

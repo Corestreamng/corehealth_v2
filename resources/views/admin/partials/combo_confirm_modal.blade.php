@@ -76,6 +76,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 /**
  * ComboConfirmModal — singleton utility for showing the bundle-confirmation modal.
@@ -199,3 +200,4 @@ window.ComboConfirmModal = (function () {
     return { show: show };
 })();
 </script>
+@endpush

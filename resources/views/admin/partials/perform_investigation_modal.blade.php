@@ -64,6 +64,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 (function () {
     'use strict';
@@ -218,3 +219,4 @@
     };
 })();
 </script>
+@endpush

@@ -214,6 +214,10 @@ function renderPrescCard(row, type) {
     let statusBadges = '';
     let pendingAlert = '';
 
+    if (row.is_bundled) {
+        statusBadges += '<span class="badge bg-info ms-1">Bundled</span> ';
+    }
+
     // Different status display based on tab type
     if (type === 'pending') {
         // Show clear indication of what's pending
@@ -595,12 +599,6 @@ function renderPrescProductResults(data) {
             });
 
             $('#presc_product_results').show();
-        },
-        error: function(xhr) {
-            console.error('Product search failed', xhr);
-            $('#presc_product_results').html('<li class="list-group-item text-danger">Search failed</li>').show();
-        }
-    });
 }
 
 function addPrescProduct(name, id, price, coverageMode, claims, payable, code) {
