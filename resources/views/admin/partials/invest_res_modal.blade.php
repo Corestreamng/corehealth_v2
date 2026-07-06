@@ -42,11 +42,13 @@
 
                     <!-- V1 Template Selector (only shown for V1 templates) -->
                     <div id="v1_template_selector_container" class="mb-3" style="display:none;">
-                        <div class="d-flex align-items-center gap-2">
-                            <select class="form-select form-select-sm" id="v1_result_template_select" style="max-width: 350px;">
-                                <option value="">-- Insert Template --</option>
-                            </select>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="v1_insert_template_btn" disabled onclick="insertV1ResultTemplate()">
+                        <div class="d-flex align-items-center gap-2 w-100">
+                            <div style="flex: 1; max-width: 500px;">
+                                <select class="form-control" id="v1_result_template_select" style="width: 100%;">
+                                    <option value="">-- Search and Insert Template --</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="v1_insert_template_btn" disabled onclick="insertV1ResultTemplate()">
                                 <i class="mdi mdi-file-import"></i> Insert
                             </button>
                         </div>
