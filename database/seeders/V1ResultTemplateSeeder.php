@@ -31,20 +31,23 @@ class V1ResultTemplateSeeder extends Seeder
         $count = 0;
 
         foreach ($this->templates() as $t) {
-            if (!V1ResultTemplate::where('name', $t['name'])->exists()) {
-                V1ResultTemplate::create([
-                    'name'        => $t['name'],
-                    'description' => $t['description'],
-                    'content'     => $t['content'],
-                    'category'    => $t['category'],
-                    'sort_order'  => $t['sort_order'],
-                    'is_active'   => true,
-                    'created_by'  => 1,
-                ]);
+            $template = V1ResultTemplate::updateOrCreate(
+                ['name' => $t['name']],
+                [
+                    'description'   => $t['description'],
+                    'content'       => $t['content'],
+                    'category'      => $t['category'],
+                    'sort_order'    => $t['sort_order'],
+                    'template_type' => $t['template_type'] ?? 'lab',
+                    'is_active'     => true,
+                    'created_by'    => 1,
+                ]
+            );
+            if ($template->wasRecentlyCreated) {
                 $count++;
                 $this->command->line("  + [{$t['category']}] {$t['name']}");
             } else {
-                $this->command->line("  = [{$t['category']}] {$t['name']} (already exists)");
+                $this->command->line("  = [{$t['category']}] {$t['name']} (updated)");
             }
         }
 
@@ -66,6 +69,9 @@ class V1ResultTemplateSeeder extends Seeder
             $this->microbiologyTemplates(),
             $this->seminalFluidTemplates(),
             $this->serologyTemplates(),
+            $this->chemistryExtensions(),
+            $this->pathologyExtensions(),
+            $this->imagingTemplates()
         );
     }
 
@@ -76,7 +82,7 @@ class V1ResultTemplateSeeder extends Seeder
         return [
             [
                 'name' => 'Haematology (FBC, Genotype, Blood Group, Coagulation, Widal, Blood Film)',
-                'description' => 'Full haematology report form covering FBC, differentials, coagulation studies, blood film, and Widal test',
+                'description' => 'Full haematology report covering FBC, PCV, Hb, WBC, Plt, Genotype, Blood Group, ESR, PT, APTT, Widal, and Blood Film.',
                 'category' => 'Haematology',
                 'sort_order' => 1,
                 'content' => '<table class="table table-bordered">
@@ -344,7 +350,7 @@ class V1ResultTemplateSeeder extends Seeder
             // Simple Hormonal Assay (from Image 2)
             [
                 'name' => 'Hormonal Assay - Simple (T4, T3, TSH, PSA, Prolactin, FSH, Testosterone, Estrogen, LH, CEA, B HCG, AFP, CRP, D-Dimer)',
-                'description' => 'Simple hormonal assay form with basic reference ranges',
+                'description' => 'Simple hormonal assay covering T4, T3, TSH, PSA, Prolactin, FSH, Testosterone, Estrogen, LH, CEA, B-HCG, AFP, CRP, and D-Dimer.',
                 'category' => 'Hormonal Assay',
                 'sort_order' => 1,
                 'content' => '<table class="table table-bordered">
@@ -451,7 +457,7 @@ class V1ResultTemplateSeeder extends Seeder
             // Detailed Hormonal Assay without Progesterone (from Image 3)
             [
                 'name' => 'Hormonal Assay - Detailed (Prolactin, TSH, LH, FSH, Estradiol)',
-                'description' => 'Detailed hormonal assay with phase-specific reference ranges for LH, FSH, Estradiol',
+                'description' => 'Detailed hormonal assay covering Prolactin, TSH, LH, FSH, and Estradiol with phase-specific reference ranges.',
                 'category' => 'Hormonal Assay',
                 'sort_order' => 2,
                 'content' => '<table class="table table-bordered">
@@ -540,7 +546,7 @@ class V1ResultTemplateSeeder extends Seeder
             // Full Hormonal Assay with Progesterone (from Image 4/13/14)
             [
                 'name' => 'Hormonal Assay - Full Panel (Prolactin, Testosterone, LH, FSH, Progesterone, Estradiol)',
-                'description' => 'Complete hormonal assay panel including Progesterone with phase-specific reference ranges',
+                'description' => 'Complete hormonal assay covering Prolactin, Testosterone, LH, FSH, Progesterone, and Estradiol.',
                 'category' => 'Hormonal Assay',
                 'sort_order' => 3,
                 'content' => '<table class="table table-bordered">
@@ -658,7 +664,7 @@ class V1ResultTemplateSeeder extends Seeder
         return [
             [
                 'name' => 'Chemistry - U/E/Cr (Urea, Electrolytes, Creatinine)',
-                'description' => 'Urea, Electrolytes and Creatinine panel',
+                'description' => 'U/E/Cr panel covering Sodium (Na+), Potassium (K+), Chloride (Cl-), Bicarbonate (HCO3-), Urea, Creatinine, and Uric Acid.',
                 'category' => 'Chemistry',
                 'sort_order' => 1,
                 'content' => '<table class="table table-bordered">
@@ -711,7 +717,7 @@ class V1ResultTemplateSeeder extends Seeder
 
             [
                 'name' => 'Chemistry - LFT (Liver Function Test)',
-                'description' => 'Liver function test panel',
+                'description' => 'Liver Function Test (LFT) covering Total Protein, Albumin, Bilirubin (Total/Conjugated), ALP, ALT (SGPT), AST (SGOT), and GGT.',
                 'category' => 'Chemistry',
                 'sort_order' => 2,
                 'content' => '<table class="table table-bordered">
@@ -769,7 +775,7 @@ class V1ResultTemplateSeeder extends Seeder
 
             [
                 'name' => 'Chemistry - Glucose (FBG, RBS, 2hrPP)',
-                'description' => 'Blood glucose panel: Fasting, Random, and 2-hour Post Prandial',
+                'description' => 'Blood glucose panel covering Fasting Blood Sugar (FBS), Random Blood Sugar (RBS), and 2-hour Post Prandial (2HPP).',
                 'category' => 'Chemistry',
                 'sort_order' => 3,
                 'content' => '<table class="table table-bordered">
@@ -802,7 +808,7 @@ class V1ResultTemplateSeeder extends Seeder
 
             [
                 'name' => 'Chemistry - Lipid Profile',
-                'description' => 'Lipid panel: Total Cholesterol, HDL, LDL, Triglyceride',
+                'description' => 'Lipid Profile covering Total Cholesterol, HDL, LDL, and Triglycerides.',
                 'category' => 'Chemistry',
                 'sort_order' => 4,
                 'content' => '<table class="table table-bordered">
@@ -840,7 +846,7 @@ class V1ResultTemplateSeeder extends Seeder
 
             [
                 'name' => 'Chemistry - Full Panel (U/E/Cr, LFT, Glucose, Lipids, Tumor Markers, OGTT, CSF, Misc)',
-                'description' => 'Complete chemistry report form covering U/E/Cr, LFT, Glucose, Lipids, Tumor Markers, OGTT, CSF Chemistry',
+                'description' => 'Complete chemistry panel covering U/E/Cr (Na, K, Urea, Cr), LFT (ALT, AST, ALP), Glucose (FBS, RBS), Lipids, Tumor Markers, OGTT, and CSF.',
                 'category' => 'Chemistry',
                 'sort_order' => 5,
                 'content' => '<table class="table table-bordered">
@@ -1147,7 +1153,7 @@ class V1ResultTemplateSeeder extends Seeder
 
             [
                 'name' => 'Chemistry - Tumor Markers (PSA, CEA, AFP)',
-                'description' => 'Tumor marker panel',
+                'description' => 'Basic tumor marker panel covering PSA, CEA, and AFP.',
                 'category' => 'Chemistry',
                 'sort_order' => 6,
                 'content' => '<table class="table table-bordered">
@@ -1180,7 +1186,7 @@ class V1ResultTemplateSeeder extends Seeder
 
             [
                 'name' => 'Chemistry - OGTT (Oral Glucose Tolerance Test)',
-                'description' => 'Oral Glucose Tolerance Test panel',
+                'description' => 'Oral Glucose Tolerance Test (OGTT) covering baseline and subsequent hour readings (X1, X2, X3, X4, X5).',
                 'category' => 'Chemistry',
                 'sort_order' => 7,
                 'content' => '<table class="table table-bordered">
@@ -1228,7 +1234,7 @@ class V1ResultTemplateSeeder extends Seeder
 
             [
                 'name' => 'Chemistry - CSF (Cerebrospinal Fluid)',
-                'description' => 'CSF Chemistry panel',
+                'description' => 'Cerebrospinal Fluid (CSF) Chemistry covering Glucose, Protein, and Chloride.',
                 'category' => 'Chemistry',
                 'sort_order' => 8,
                 'content' => '<table class="table table-bordered">
@@ -1268,7 +1274,7 @@ class V1ResultTemplateSeeder extends Seeder
         return [
             [
                 'name' => 'Glycated Haemoglobin (HBA1C)',
-                'description' => 'Glycated Haemoglobin test with interpretation ranges',
+                'description' => 'Glycated Haemoglobin (HbA1c) test with diabetic interpretation ranges.',
                 'category' => 'Chemistry',
                 'sort_order' => 9,
                 'content' => '<table class="table table-bordered">
@@ -1307,7 +1313,7 @@ class V1ResultTemplateSeeder extends Seeder
         return [
             [
                 'name' => 'Parasitology (Urinalysis, Urine Microscopy, Stool Analysis)',
-                'description' => 'Full parasitology report form covering urinalysis, urine microscopy, and stool analysis',
+                'description' => 'Parasitology panel covering Urinalysis (pH, Protein, Glucose), Urine Microscopy (Pus cells, RBC, Casts), and Stool Analysis (Ova, Cyst, Protozoa).',
                 'category' => 'Parasitology',
                 'sort_order' => 1,
                 'content' => '<table class="table table-bordered">
@@ -1450,7 +1456,7 @@ class V1ResultTemplateSeeder extends Seeder
         return [
             [
                 'name' => 'Clinical Chemistry - Drugs of Abuse (DOA)',
-                'description' => 'Drug of Abuse screening panel with 10 drug classes',
+                'description' => 'Drugs of Abuse (DOA) covering TCA, MET, AMP, COC, OPI, THC, BAR, MDMA, TML, and BZO.',
                 'category' => 'Clinical Chemistry',
                 'sort_order' => 1,
                 'content' => '<table class="table table-bordered">
@@ -1528,7 +1534,7 @@ class V1ResultTemplateSeeder extends Seeder
         return [
             [
                 'name' => 'Medical Microbiology (Culture & Sensitivity)',
-                'description' => 'Microbiology report form with microscopy, culture, and antibiotic sensitivity testing',
+                'description' => 'Microbiology (M/C/S) covering Microscopy, Culture, and Antibiotic Sensitivity testing.',
                 'category' => 'Microbiology',
                 'sort_order' => 1,
                 'content' => '<table class="table table-bordered">
@@ -1738,7 +1744,7 @@ class V1ResultTemplateSeeder extends Seeder
         return [
             [
                 'name' => 'Seminal Fluid Analysis (SFA)',
-                'description' => 'Complete seminal fluid analysis report form',
+                'description' => 'Seminal Fluid Analysis (SFA) covering Volume, Motility, Sperm Count, Morphology, and Abnormalities.',
                 'category' => 'Microbiology',
                 'sort_order' => 2,
                 'content' => '<table class="table table-bordered">
@@ -1893,7 +1899,7 @@ class V1ResultTemplateSeeder extends Seeder
         return [
             [
                 'name' => 'Serology (ESR, KOH Skin Screpping, Microfilaria, Prothrombin Time, APTT)',
-                'description' => 'Serology report form covering ESR, KOH skin screpping, microfilaria/skin snip, prothrombin time, and APTT',
+                'description' => 'General serology/haematology covering ESR, KOH Skin Scraping, Microfilaria (MF), Prothrombin Time (PT), and APTT.',
                 'category' => 'Haematology',
                 'sort_order' => 2,
                 'content' => '<table class="table table-bordered">
@@ -2013,4 +2019,382 @@ class V1ResultTemplateSeeder extends Seeder
             ],
         ];
     }
+
+    // ─── IMAGING TEMPLATES ───────────────────────────────────────────────────
+
+    private function imagingTemplates(): array
+    {
+        return [
+            [
+                'name' => 'Ultrasound Scan (General)',
+                'description' => 'General Ultrasound Scan (USS) reporting covering Clinical Indication, Findings, and Conclusion/Impression.',
+                'category' => 'Ultrasound',
+                'template_type' => 'imaging',
+                'sort_order' => 1,
+                'content' => '<table class="table table-bordered">
+    <tbody>
+        <tr>
+            <th style="width: 25%; background-color: #f8f9fa;">Clinical Indication</th>
+            <td><p>&nbsp;</p></td>
+        </tr>
+        <tr>
+            <th style="background-color: #f8f9fa;">Findings</th>
+            <td><p>&nbsp;</p></td>
+        </tr>
+        <tr>
+            <th style="background-color: #f8f9fa;">Conclusion / Impression</th>
+            <td><strong></strong></td>
+        </tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'Obstetric Ultrasound Scan',
+                'description' => 'Obstetric Ultrasound Scan (USS) covering LMP, EDD, Fetal Presentation, BPD, FL, AC, Placenta, Liquor, and Conclusion.',
+                'category' => 'Ultrasound',
+                'template_type' => 'imaging',
+                'sort_order' => 2,
+                'content' => '<table class="table table-bordered">
+    <tbody>
+        <tr>
+            <th colspan="2" style="background-color: #f8f9fa; text-align: center;">OBSTETRIC ULTRASOUND REPORT</th>
+        </tr>
+        <tr>
+            <th style="width: 30%;">Clinical Indication</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>LMP / EDD by LMP</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Number of Fetuses</th>
+            <td>Single/Multiple</td>
+        </tr>
+        <tr>
+            <th>Presentation / Lie</th>
+            <td>Cephalic / Longitudinal</td>
+        </tr>
+        <tr>
+            <th>Fetal Heart Rate (FHR)</th>
+            <td>Present, regular</td>
+        </tr>
+        <tr>
+            <th>Biometry (BPD, FL, AC, HC)</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Estimated Fetal Weight (EFW)</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Gestational Age (EGA by USS)</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>EDD by USS</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Placenta</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Liquor Volume</th>
+            <td>Adequate</td>
+        </tr>
+        <tr>
+            <th style="background-color: #f8f9fa;">Impression / Conclusion</th>
+            <td><strong></strong></td>
+        </tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'X-Ray Report',
+                'description' => 'Standard X-Ray reporting template covering Indication, Region, Findings, and Impression.',
+                'category' => 'X-Ray',
+                'template_type' => 'imaging',
+                'sort_order' => 1,
+                'content' => '<table class="table table-bordered">
+    <tbody>
+        <tr>
+            <th style="width: 25%; background-color: #f8f9fa;">Investigation</th>
+            <td><strong>X-Ray</strong></td>
+        </tr>
+        <tr>
+            <th style="background-color: #f8f9fa;">Clinical Details</th>
+            <td><p>&nbsp;</p></td>
+        </tr>
+        <tr>
+            <th style="background-color: #f8f9fa;">Findings</th>
+            <td><p>&nbsp;</p></td>
+        </tr>
+        <tr>
+            <th style="background-color: #f8f9fa;">Impression</th>
+            <td><strong></strong></td>
+        </tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'ECG Report',
+                'description' => 'Electrocardiogram (ECG) report covering Rate, Rhythm, Axis, Intervals, ST-T wave changes, and Interpretation.',
+                'category' => 'Cardiology',
+                'template_type' => 'imaging',
+                'sort_order' => 1,
+                'content' => '<table class="table table-bordered">
+    <tbody>
+        <tr>
+            <th colspan="2" style="background-color: #f8f9fa; text-align: center;">ELECTROCARDIOGRAM (ECG) REPORT</th>
+        </tr>
+        <tr>
+            <th style="width: 30%;">Clinical Indication</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>Heart Rate</th>
+            <td> bpm</td>
+        </tr>
+        <tr>
+            <th>Rhythm</th>
+            <td>Sinus Rhythm</td>
+        </tr>
+        <tr>
+            <th>Axis</th>
+            <td>Normal</td>
+        </tr>
+        <tr>
+            <th>PR Interval</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>QRS Duration</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>QTc Interval</th>
+            <td></td>
+        </tr>
+        <tr>
+            <th>ST-T Wave Changes</th>
+            <td>None</td>
+        </tr>
+        <tr>
+            <th style="background-color: #f8f9fa;">Interpretation</th>
+            <td><strong>Normal ECG</strong></td>
+        </tr>
+    </tbody>
+</table>',
+            ]
+        ];
+    }
+
+    // ─── ADDED EXTENSIONS ───────────────────────────────────────────────────
+
+    private function chemistryExtensions(): array
+    {
+        return [
+            [
+                'name' => 'Chemistry - Cardiac Markers (Troponin I, Troponin T)',
+                'description' => 'Cardiac biomarkers panel covering Troponin I and Troponin T.',
+                'category' => 'Chemistry',
+                'template_type' => 'lab',
+                'sort_order' => 12,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-4">Test</th><th class="col-sm-4">Result</th><th class="col-sm-4">Reference Range</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Troponin I</td><td></td><td>Negative</td></tr>
+        <tr><td>Troponin T</td><td></td><td>Negative</td></tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'Chemistry - Tumor Markers Extended (PSA, CEA, AFP, CA-125)',
+                'description' => 'Extended tumor marker panel covering PSA, CEA, AFP, and CA-125.',
+                'category' => 'Chemistry',
+                'template_type' => 'lab',
+                'sort_order' => 13,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-4">Test</th><th class="col-sm-4">Result</th><th class="col-sm-4">Reference Range</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>PSA</td><td></td><td>0 - 4.0 ng/mL</td></tr>
+        <tr><td>CEA</td><td></td><td>0 - 3.0 ng/mL</td></tr>
+        <tr><td>AFP</td><td></td><td>0 - 8.5 ng/mL</td></tr>
+        <tr><td>CA-125</td><td></td><td>0 - 35.0 U/mL</td></tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'Chemistry - 24-Hour Urine Chemistry',
+                'description' => '24-Hour Urine Chemistry covering 24h Volume, 24h Protein, 24h Calcium, and Creatinine Clearance.',
+                'category' => 'Chemistry',
+                'template_type' => 'lab',
+                'sort_order' => 14,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-4">Test</th><th class="col-sm-4">Result</th><th class="col-sm-4">Reference Range</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>24h Urine Volume</td><td></td><td></td></tr>
+        <tr><td>24h Urine Protein</td><td></td><td>< 150 mg/24h</td></tr>
+        <tr><td>24h Urine Calcium</td><td></td><td>2.5 - 7.5 mmol/24h</td></tr>
+        <tr><td>Creatinine Clearance</td><td></td><td>80 - 120 mL/min</td></tr>
+    </tbody>
+</table>',
+            ],
+        ];
+    }
+
+    private function pathologyExtensions(): array
+    {
+        return [
+            [
+                'name' => 'Chemical Pathology - Qualitative Tests (PT, FOB)',
+                'description' => 'Basic qualitative tests covering Urine/Serum Pregnancy Test (PT) and Fecal Occult Blood (FOB).',
+                'category' => 'Chemical Pathology',
+                'template_type' => 'lab',
+                'sort_order' => 1,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-6">Test</th><th class="col-sm-6">Result</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Pregnancy Test (Urine)</td><td></td></tr>
+        <tr><td>Pregnancy Test (Serum)</td><td></td></tr>
+        <tr><td>Fecal Occult Blood (FOB)</td><td></td></tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'Microbiology - Sputum AFB',
+                'description' => 'Sputum Acid Fast Bacilli (AFB) covering Appearance and WHO Grading (Negative, Scanty, 1+, 2+, 3+).',
+                'category' => 'Microbiology',
+                'template_type' => 'lab',
+                'sort_order' => 3,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-6">Parameter</th><th class="col-sm-6">Result</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Appearance</td><td></td></tr>
+        <tr><td>AFB Grading</td><td></td></tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'Serology - Infectious Diseases & Rapid Tests',
+                'description' => 'Infectious diseases & rapid tests covering HIV (RVS), HBsAg, HCV, VDRL/TPHA, H. Pylori, RF, and ASO Titre.',
+                'category' => 'Serology',
+                'template_type' => 'lab',
+                'sort_order' => 2,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-4">Test</th><th class="col-sm-4">Result</th><th class="col-sm-4">Normal Range</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>HIV Test (RVS)</td><td></td><td>Non-Reactive</td></tr>
+        <tr><td>HBsAg</td><td></td><td>Non-Reactive</td></tr>
+        <tr><td>HCV</td><td></td><td>Non-Reactive</td></tr>
+        <tr><td>VDRL / TPHA</td><td></td><td>Non-Reactive</td></tr>
+        <tr><td>H. Pylori</td><td></td><td>Negative</td></tr>
+        <tr><td>Rheumatoid Factor (RF)</td><td></td><td>< 20 IU/mL</td></tr>
+        <tr><td>ASO Titre</td><td></td><td>< 200 IU/mL</td></tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'Virology - Viral Load (HIV, HBV, HCV)',
+                'description' => 'Quantitative Viral Load reporting (HIV, HBV, HCV) covering Copies/mL and Log Values.',
+                'category' => 'Virology',
+                'template_type' => 'lab',
+                'sort_order' => 1,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-4">Test</th><th class="col-sm-4">Result</th><th class="col-sm-4">Interpretation</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Viral Load (Copies/mL)</td><td></td><td>Target Not Detected</td></tr>
+        <tr><td>Log Value</td><td></td><td></td></tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'Virology - Gene Xpert',
+                'description' => 'Sputum Gene Xpert covering Mycobacterium Tuberculosis (MTB) detection and Rifampicin (RIF) Resistance.',
+                'category' => 'Virology',
+                'template_type' => 'lab',
+                'sort_order' => 2,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-6">Test</th><th class="col-sm-6">Result</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Mycobacterium Tuberculosis (MTB)</td><td></td></tr>
+        <tr><td>Rifampicin (RIF) Resistance</td><td></td></tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'Histology & Cytology Report',
+                'description' => 'Pathology report covering Clinical Details, Macroscopic (Gross), Microscopic Appearance, and Diagnosis/Conclusion.',
+                'category' => 'Histology',
+                'template_type' => 'lab',
+                'sort_order' => 1,
+                'content' => '<table class="table table-bordered">
+    <tbody>
+        <tr><td class="col-sm-3"><strong>Clinical Details:</strong></td><td></td></tr>
+        <tr><td class="col-sm-3"><strong>Macroscopic (Gross) Appearance:</strong></td><td></td></tr>
+        <tr><td class="col-sm-3"><strong>Microscopic Appearance:</strong></td><td></td></tr>
+        <tr><td class="col-sm-3"><strong>Diagnosis / Conclusion:</strong></td><td></td></tr>
+    </tbody>
+</table><p><strong>Pathologist Comment:</strong></p>',
+            ],
+            [
+                'name' => 'Immunology - CD4 Count',
+                'description' => 'Immunology reporting covering CD4 Absolute Count and CD4 Percentage.',
+                'category' => 'Immunology',
+                'template_type' => 'lab',
+                'sort_order' => 1,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-4">Parameter</th><th class="col-sm-4">Result</th><th class="col-sm-4">Reference Range</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>CD4 Absolute Count</td><td></td><td>410-1590 Cells/&micro;L</td></tr>
+        <tr><td>CD4 Percent Count</td><td></td><td>31-60 %</td></tr>
+    </tbody>
+</table>',
+            ],
+            [
+                'name' => 'APIN Baseline / Follow-Up Test Panel',
+                'description' => 'Comprehensive APIN Panel covering CD4 Absolute Count, Viral Load, PCV, WBC, Creatinine, and ALT.',
+                'category' => 'APIN',
+                'template_type' => 'lab',
+                'sort_order' => 1,
+                'content' => '<table class="table table-bordered">
+    <thead>
+        <tr><th class="col-sm-4">Parameter</th><th class="col-sm-4">Result</th><th class="col-sm-4">Reference Range</th></tr>
+    </thead>
+    <tbody>
+        <tr><td colspan="3"><strong>Immunology / Virology</strong></td></tr>
+        <tr><td>CD4 Absolute Count</td><td></td><td>410-1590 Cells/&micro;L</td></tr>
+        <tr><td>Viral Load</td><td></td><td>Target Not Detected</td></tr>
+        <tr><td colspan="3"><strong>Haematology</strong></td></tr>
+        <tr><td>PCV</td><td></td><td>37-52%</td></tr>
+        <tr><td>WBC</td><td></td><td>4.0-11.0 x10^9/L</td></tr>
+        <tr><td colspan="3"><strong>Chemistry</strong></td></tr>
+        <tr><td>Creatinine</td><td></td><td>60-110 &micro;mol/L</td></tr>
+        <tr><td>ALT (SGPT)</td><td></td><td>Up to 40 U/L</td></tr>
+    </tbody>
+</table>',
+            ]
+        ];
+    }
 }
+
+
