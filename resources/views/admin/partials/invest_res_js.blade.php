@@ -589,14 +589,94 @@ function copyResTemplateToField() {
 
     function _populateV1TemplateSelect() {
         var $select = $('#v1_result_template_select');
+        
+        if ($.fn.select2 && $select.hasClass("select2-hidden-accessible")) {
+            $select.select2('destroy');
+        }
+
         $select.find('option:not(:first)').remove();
+        $select.find('optgroup').remove();
+        
         _v1TemplateData.forEach(function(group) {
             var $optgroup = $('<optgroup>').attr('label', group.category);
             group.templates.forEach(function(t) {
-                $optgroup.append($('<option>').val(t.id).text(t.name).data('content', t.content));
+                var desc = t.description ? t.description : '';
+                $optgroup.append($('<option>').val(t.id).text(t.name).attr('data-content', t.content).attr('data-description', desc));
             });
             $select.append($optgroup);
         });
+
+        if ($.fn.select2) {
+            $select.select2({
+                dropdownParent: $('#investResModal'),
+                width: '100%',
+                templateResult: formatTemplateResult,
+                templateSelection: formatTemplateSelection,
+                placeholder: "-- Search and Insert Template --",
+                matcher: customTemplateMatcher
+            });
+        }
+    }
+
+    function customTemplateMatcher(params, data) {
+        // If there are no search terms, return all of the data
+        if ($.trim(params.term) === '') {
+            return data;
+        }
+
+        // Skip if there is no 'text'
+        if (typeof data.text === 'undefined') {
+            return null;
+        }
+
+        var term = params.term.toLowerCase();
+        var text = data.text.toLowerCase();
+        var desc = $(data.element).attr('data-description') || '';
+        desc = desc.toLowerCase();
+
+        // Check if the term matches the text or description
+        if (text.indexOf(term) > -1 || desc.indexOf(term) > -1) {
+            return data;
+        }
+
+        // If it's an optgroup, check if any of the children match
+        if (data.children && data.children.length > 0) {
+            var match = $.extend(true, {}, data);
+            var filteredChildren = [];
+
+            for (var i = 0; i < data.children.length; i++) {
+                var child = data.children[i];
+                var childText = child.text.toLowerCase();
+                var childDesc = $(child.element).attr('data-description') || '';
+                childDesc = childDesc.toLowerCase();
+
+                if (childText.indexOf(term) > -1 || childDesc.indexOf(term) > -1) {
+                    filteredChildren.push(child);
+                }
+            }
+
+            if (filteredChildren.length > 0) {
+                match.children = filteredChildren;
+                return match;
+            }
+        }
+
+        return null;
+    }
+
+    function formatTemplateResult(template) {
+        if (!template.id) {
+            return template.text;
+        }
+        var desc = $(template.element).attr('data-description') || 'No description available';
+        var $result = $(
+            '<div><strong>' + template.text + '</strong></div><div style="font-size: 0.85em; color: #6c757d;">' + desc + '</div>'
+        );
+        return $result;
+    }
+
+    function formatTemplateSelection(template) {
+        return template.text;
     }
 
     // Enable/disable insert button based on selection
@@ -617,7 +697,7 @@ function copyResTemplateToField() {
 function insertV1ResultTemplate() {
     var $select = $('#v1_result_template_select');
     var $selectedOption = $select.find('option:selected');
-    var content = $selectedOption.data('content');
+    var content = $selectedOption.attr('data-content') || $selectedOption.data('content');
     if (!content) return;
 
     if (window.investResEditor) {
@@ -630,7 +710,7 @@ function insertV1ResultTemplate() {
     }
 
     // Reset select
-    $select.val('');
+    $select.val('').trigger('change');
     $('#v1_insert_template_btn').prop('disabled', true);
 }
 
