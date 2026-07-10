@@ -21,9 +21,12 @@ class Kernel extends ConsoleKernel
         // Sync HMO executives to messenger group every hour
         $schedule->command('hmo:sync-executives-group')->hourly();
 
-        // Automated daily database backup at 2:00 AM
-        $schedule->command('backup:database')->dailyAt('02:00')
-                 ->appendOutputTo(storage_path('logs/backup.log'));
+        // NOTE: Automated daily database backup logic has been moved to AppServiceProvider.
+        // Shared hosting environments typically do not have cron jobs configured, 
+        // meaning this scheduler would never trigger. 
+        // We now use a pseudo-cron approach tied to the request lifecycle instead.
+        // $schedule->command('backup:database')->dailyAt('02:00')
+        //          ->appendOutputTo(storage_path('logs/backup.log'));
     }
 
     /**
