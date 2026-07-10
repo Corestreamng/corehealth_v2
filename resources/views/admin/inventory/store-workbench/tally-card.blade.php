@@ -1211,9 +1211,13 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label class="small font-weight-bold">Cost Price (₦) <span class="text-danger">*</span></label>
+                                    <label class="small font-weight-bold" id="batch-cost-price-label">Cost Price (₦) <span class="text-danger">*</span></label>
                                     <input type="number" name="cost_price" id="batch-cost-price" class="form-control" step="0.01" min="0" required style="border-radius:8px;" placeholder="0.00 — enter 0 for donations" oninput="updateBatchCostPreview()">
-                                    <small class="text-muted" style="display:block;">Enter cost per <strong>selected packaging unit</strong>. The system converts this to a base-unit cost for storage.</small>
+                                    <div class="custom-control custom-checkbox mt-2">
+                                        <input type="checkbox" class="custom-control-input" name="skip_cost_price" id="tally_skip_cost_price" value="1" onchange="toggleTallyCostRequirement(this)">
+                                        <label class="custom-control-label" for="tally_skip_cost_price" style="font-size: 0.8rem;">Skip Cost Price (Not Recommended)</label>
+                                    </div>
+                                    <small class="text-muted" style="display:block; margin-top: 5px;">Enter cost per <strong>selected packaging unit</strong>. The system converts this to a base-unit cost for storage.</small>
                                     <div id="batch-cost-preview" class="mt-1" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:6px 10px; font-size:0.78rem;">
                                         <i class="mdi mdi-calculator text-success mr-1"></i>
                                         <span id="batch-cost-preview-text"></span>
@@ -3018,6 +3022,20 @@
                 $('#batch-base-qty-hidden').val(baseQty);
 
                 var baseUnit = $('#batch-product option:selected').data('base-unit') || 'units';
+                
+                var pkgText = $pkg.text().trim() || 'packaging unit';
+                var rawPkgName = pkgText.split('(')[0].trim();
+                var labelStr = rawPkgName;
+                if (factor > 1) {
+                    labelStr = rawPkgName + ' ~ ' + factor + ' ' + baseUnit;
+                } else if (rawPkgName === 'Base Unit' || rawPkgName === 'packaging unit') {
+                    labelStr = baseUnit;
+                }
+
+                $('#batch-cost-price-label').html('Cost Price (per ' + labelStr + ') <span class="text-danger">*</span>');
+                if ($('#tally_skip_cost_price').is(':checked')) {
+                    $('#batch-cost-price-label span.text-danger').hide();
+                }
                 if (factor > 1 && qty > 0) {
                     $('#batch-qty-hint').text(`= ${baseQty} ${baseUnit}`);
                 } else {
@@ -4276,6 +4294,22 @@
             if (typeof toast === 'function') toast(msg, 'error');
             else alert('Error: ' + msg);
         }
+
+        window.toggleTallyCostRequirement = function(checkbox) {
+            var costInput = $('#batch-cost-price');
+            var labelSpan = $('#batch-cost-price-label span.text-danger');
+            if (checkbox.checked) {
+                costInput.prop('required', false);
+                costInput.prop('disabled', true);
+                costInput.val('');
+                labelSpan.hide();
+                $('#batch-cost-preview').hide();
+            } else {
+                costInput.prop('required', true);
+                costInput.prop('disabled', false);
+                labelSpan.show();
+            }
+        };
 
     })();
     </script>

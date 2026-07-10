@@ -500,7 +500,7 @@ class StoreWorkbenchController extends Controller
         $request->validate([
             'supplier_id' => 'nullable|exists:suppliers,id',
             'quantity' => 'required|integer|min:1',
-            'cost_price' => 'required|numeric|min:0', // Required per user request
+            'cost_price' => 'required_unless:skip_cost_price,1|numeric|min:0|nullable',
             'expiry_date' => 'nullable|date|after:today',
             'batch_name' => 'nullable|string|max:100',
             'batch_number' => 'required|string|max:100|unique:stock_batches,batch_number',

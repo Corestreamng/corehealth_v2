@@ -198,17 +198,21 @@
 
                         <div class="row">
                             <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="cost_price">Cost Price (per packaging unit)</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">₦</span>
-                                        </div>
-                                        <input type="number" name="cost_price" id="cost_price"
-                                            class="form-control"
-                                            value="{{ old('cost_price', 0) }}" step="0.01" min="0"
-                                            oninput="updateManualBatchCostPreview()">
-                                    </div>
+                                  <div class="form-group">
+                                      <label for="cost_price" id="manual-cost-price-label">Cost Price (per packaging unit) <span class="text-danger">*</span></label>
+                                      <div class="input-group">
+                                          <div class="input-group-prepend">
+                                              <span class="input-group-text">₦</span>
+                                          </div>
+                                          <input type="number" name="cost_price" id="cost_price"
+                                              class="form-control"
+                                              value="{{ old('cost_price', '') }}" step="0.01" min="0" required
+                                              oninput="updateManualBatchCostPreview()">
+                                      </div>
+                                      <div class="custom-control custom-checkbox mt-2">
+                                          <input type="checkbox" class="custom-control-input" name="skip_cost_price" id="manual_skip_cost_price" value="1" onchange="toggleManualCostRequirement(this)">
+                                          <label class="custom-control-label" for="manual_skip_cost_price" style="font-size: 0.8rem;">Skip Cost Price (Not Recommended)</label>
+                                      </div>
                                     <small class="text-muted d-block mt-1">
                                         <i class="mdi mdi-information-outline"></i>
                                         Enter cost per <strong>selected packaging unit</strong>. The system automatically converts to base-unit cost for storage.
@@ -404,6 +408,22 @@
             var select = $('#batch_packaging');
             var prevFactor = parseFloat(select.data('prev-factor')) || 1;
             var newFactor = parseFloat(select.find(':selected').data('base')) || 1;
+            var pkgText = select.find(':selected').text().trim() || 'packaging unit';
+            var rawPkgName = pkgText.split('(')[0].trim();
+            var baseUnitName = $('#batch-base-unit-name').text() || 'units';
+            
+            var labelStr = rawPkgName;
+            if (newFactor > 1) {
+                labelStr = rawPkgName + ' ~ ' + newFactor + ' ' + baseUnitName;
+            } else if (rawPkgName === 'Base Unit' || rawPkgName === 'packaging unit') {
+                labelStr = baseUnitName;
+            }
+            
+            $('#manual-cost-price-label').html('Cost Price (per ' + labelStr + ') <span class="text-danger">*</span>');
+            if ($('#manual_skip_cost_price').is(':checked')) {
+                $('#manual-cost-price-label span.text-danger').hide();
+            }
+
             var costInput = $('#cost_price');
             var currentCost = parseFloat(costInput.val()) || 0;
 
@@ -464,5 +484,21 @@
             }
         });
     });
+
+    window.toggleManualCostRequirement = function(checkbox) {
+        var costInput = $('#cost_price');
+        var labelSpan = $('#manual-cost-price-label span.text-danger');
+        if (checkbox.checked) {
+            costInput.prop('required', false);
+            costInput.prop('disabled', true);
+            costInput.val('');
+            labelSpan.hide();
+            $('#manual-batch-cost-preview').hide();
+        } else {
+            costInput.prop('required', true);
+            costInput.prop('disabled', false);
+            labelSpan.show();
+        }
+    };
 </script>
 @endsection
