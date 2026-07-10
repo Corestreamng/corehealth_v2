@@ -4012,8 +4012,9 @@ class PharmacyWorkbenchController extends Controller
             }
             $breakdown[$key]['count']++;
 
-            $hmoId = $record->hmo_id;
-            $hmo = $record->hmo;
+            $patient = $record->patient;
+            $hmoId = $record->hmo_id ?: ($patient->hmo_id ?? null);
+            $hmo = $record->hmo ?: ($patient->hmo ?? null);
             $schemeName = 'Self/Private';
             $hmoName = 'Self/Private';
 
@@ -4036,7 +4037,7 @@ class PharmacyWorkbenchController extends Controller
         $processedPatients = [];
         $patientsByScheme = [];
 
-        $posrQuery->with(['dispensedFromStore', 'patient', 'hmo.scheme', 'encounter.queue.clinic'])
+        $posrQuery->with(['dispensedFromStore', 'patient.hmo.scheme', 'hmo.scheme', 'encounter.queue.clinic'])
             ->chunk(500, function ($posrRecords) use (
                 &$collectionsByStore, &$incomeByScheme, &$totalGoodsUsed,
                 &$visitTypeCounts, &$patientClassBreakdown, &$genderBreakdown,
@@ -4052,8 +4053,9 @@ class PharmacyWorkbenchController extends Controller
                     
                     $totalGoodsUsed += $amount;
                     
-                    $hmoId = $record->hmo_id;
-                    $hmo = $record->hmo;
+                    $patient = $record->patient;
+                    $hmoId = $record->hmo_id ?: ($patient->hmo_id ?? null);
+                    $hmo = $record->hmo ?: ($patient->hmo ?? null);
                     $schemeName = 'Self/Private';
                     $hmoName = 'Self/Private';
 
