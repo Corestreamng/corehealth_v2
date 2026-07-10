@@ -88,6 +88,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use App\Support\QueryContext;
 use App\Database\CommenterMySqlGrammar;
 
@@ -210,6 +211,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();
+
+        // Process daily database backups - runs once per day automatically
+        // This is necessary because shared hosting environments lack a cron daemon to trigger Laravel Scheduler.
+        $this->processDailyBackups();
 
         // Run department notification checks - runs once per hour
         $this->runDepartmentNotificationChecks();
@@ -488,5 +493,108 @@ class AppServiceProvider extends ServiceProvider
 
         // Cash patient or HMO failed - use bed price
         return ['payable_amount' => $basePrice];
+    }
+
+    /**
+     * Process daily database backup.
+     * Uses DATABASE-BACKED tracking to run once per day reliably on shared hosting.
+     * 
+     * How it works (for future reference):
+     * - Runs on every web request but skips immediately if a backup was already created today.
+     * - Uses the application_status table to track the last backup date (persisted across restarts).
+     * - Employs a file lock (database_backup.lock) to prevent multiple concurrent requests from
+     *   triggering the backup simultaneously.
+     * - This approach bypasses the need for a system-level cron job, which is typically unavailable 
+     *   in shared hosting environments.
+     */
+    protected function processDailyBackups()
+    {
+        try {
+            $today = Carbon::today()->format('Y-m-d');
+
+            // Quick check: Has backup already run today?
+            $lastBackupDate = $this->getLastDatabaseBackupDate();
+            if ($lastBackupDate === $today) {
+                return; // Already processed today
+            }
+
+            // Use file lock to prevent concurrent execution race conditions
+            $lockFile = storage_path('framework/database_backup.lock');
+            $lockHandle = fopen($lockFile, 'c+');
+
+            if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
+                // Another process is already running the backup
+                fclose($lockHandle);
+                return;
+            }
+
+            try {
+                // Double-check after acquiring lock (another request might have just completed it)
+                $lastBackupDate = $this->getLastDatabaseBackupDate();
+                if ($lastBackupDate === $today) {
+                    return;
+                }
+
+                // Execute the backup command silently
+                // This blocks the current request for a few seconds, which is an accepted tradeoff
+                // on shared hosting environments where background queues might not be available.
+                Artisan::call('backup:database');
+
+                // Update last backup date in database
+                $this->setLastDatabaseBackupDate($today);
+
+                Log::info("Daily automated database backup triggered by AppServiceProvider", [
+                    'date' => $today,
+                ]);
+
+            } finally {
+                // Release lock
+                flock($lockHandle, LOCK_UN);
+                fclose($lockHandle);
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Fatal error in processDailyBackups: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get the last date database backup was processed (from database)
+     */
+    protected function getLastDatabaseBackupDate(): ?string
+    {
+        try {
+            $result = DB::table('application_status')
+                ->where('id', 1)
+                ->value('last_database_backup_date');
+
+            return $result;
+        } catch (\Exception $e) {
+            // Column might not exist yet - return null to trigger it
+            return null;
+        }
+    }
+
+    /**
+     * Set the last date database backup was processed (in database)
+     * Handles dynamic schema modification if the column doesn't exist yet.
+     */
+    protected function setLastDatabaseBackupDate(string $date): void
+    {
+        try {
+            DB::table('application_status')
+                ->where('id', 1)
+                ->update(['last_database_backup_date' => $date]);
+        } catch (\Exception $e) {
+            // Column might not exist - try to add it (MySQL specific)
+            try {
+                DB::statement('ALTER TABLE application_status ADD COLUMN last_database_backup_date DATE NULL');
+                DB::table('application_status')
+                    ->where('id', 1)
+                    ->update(['last_database_backup_date' => $date]);
+            } catch (\Exception $e2) {
+                Log::warning("Could not update last_database_backup_date: " . $e2->getMessage());
+            }
+        }
     }
 }
