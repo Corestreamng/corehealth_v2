@@ -966,6 +966,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('admin/hmo-tariffs/normalize', [TariffManagementController::class, 'normalizeScheme'])->name('hmo-tariffs.normalize');
         Route::get('admin/hmo-tariffs/scheme-hmos/{id}', [TariffManagementController::class, 'getSchemeHmos'])->name('hmo-tariffs.scheme-hmos');
         Route::post('admin/hmo-tariffs', [TariffManagementController::class, 'store'])->name('hmo-tariffs.store');
+        Route::get('admin/hmo-tariffs/overrides/item-price', [TariffManagementController::class, 'getItemPrice'])->name('hmo-tariffs.overrides.item-price');
+
+        Route::get('admin/hmo-tariffs/overrides', [TariffManagementController::class, 'overridesView'])->name('hmo-tariffs.overrides');
+
+        Route::get('admin/hmo-tariffs/overrides/data', [TariffManagementController::class, 'getOverrides'])->name('hmo-tariffs.overrides.data');
+        Route::post('admin/hmo-tariffs/overrides', [TariffManagementController::class, 'storeOverride'])->name('hmo-tariffs.overrides.store');
+        Route::delete('admin/hmo-tariffs/overrides/{id}', [TariffManagementController::class, 'deleteOverride'])->name('hmo-tariffs.overrides.destroy');
+
         Route::get('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'show'])->name('hmo-tariffs.show');
         Route::put('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'update'])->name('hmo-tariffs.update');
         Route::delete('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'destroy'])->name('hmo-tariffs.destroy');

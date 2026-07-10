@@ -17,7 +17,7 @@
         .tariff-page .stat-card .stat-label { font-size: 0.85rem; color: #718096; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
 
         /* Modern Axis Cards */
-        .axis-selector-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .axis-selector-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
         .axis-card {
             background: #fff; border: 2px solid #edf2f7; border-radius: 16px; padding: 20px;
             cursor: pointer; transition: all 0.2s; position: relative; text-align: center;
@@ -111,6 +111,12 @@
                 <div class="axis-icon"><i class="mdi mdi-domain"></i></div>
                 <div class="axis-title">Scheme Axis</div>
                 <div class="axis-desc">Edit entire catalog for a Scheme</div>
+            </div>
+            <div class="axis-card" data-type="overrides" onclick="window.location.href='/admin/hmo-tariffs/overrides'">
+                <i class="mdi mdi-check-circle active-check"></i>
+                <div class="axis-icon"><i class="mdi mdi-flash text-warning"></i></div>
+                <div class="axis-title">Overrides</div>
+                <div class="axis-desc">Manage Tariff Overrides</div>
             </div>
         </div>
 
