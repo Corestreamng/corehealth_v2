@@ -69,6 +69,32 @@ try {
 
             $currentQty = (int) ($storeStock->current_quantity ?? 0);
 
+            // First, ensure existing classic quantity is accounted for in batches.
+            $existingBatchesSum = (int) StockBatch::where('store_id', $store->id)
+                                        ->where('product_id', $product->id)
+                                        ->sum('current_qty');
+
+            if ($currentQty > $existingBatchesSum) {
+                $missingQty = $currentQty - $existingBatchesSum;
+                // Create a batch for the missing classic stock
+                StockBatch::create([
+                    'product_id'    => $product->id,
+                    'store_id'      => $store->id,
+                    'batch_name'    => 'Legacy Stock',
+                    'batch_number'  => 'LEGACY-' . $store->id . '-' . $product->id . '-' . time(),
+                    'initial_qty'   => $missingQty,
+                    'current_qty'   => $missingQty,
+                    'sold_qty'      => 0,
+                    'cost_price'    => 0,
+                    'received_date' => $now->toDateString(),
+                    'source'        => 'manual',
+                    'created_by'    => $adminId,
+                    'is_active'     => true,
+                ]);
+                $createdBatches++;
+                echo "  [SYNC] {$product->product_name}: created legacy batch for {$missingQty} units.\n";
+            }
+
             if ($currentQty >= $minQty) {
                 continue; // Stock is sufficient
             }
