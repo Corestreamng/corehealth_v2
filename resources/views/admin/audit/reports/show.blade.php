@@ -388,6 +388,38 @@ $(document).ready(function() {
             }
         });
     });
+    // Handle Physical Stock Verification Save
+    $(document).on('click', '.save-physical-count-btn', function() {
+        var btn = $(this);
+        var stockId = btn.data('stock-id');
+        var physVal = $('#phys_count_' + stockId).val();
+        
+        if (!physVal) {
+            alert('Please enter a physical count');
+            return;
+        }
+
+        btn.prop('disabled', true).text('Saving...');
+        $.ajax({
+            url: "{{ route('audit.physical-stock.save') }}",
+            method: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                store_id: btn.data('store'),
+                product_id: btn.data('product'),
+                system_value: btn.data('system'),
+                physical_value: physVal
+            },
+            success: function(res) {
+                alert(res.message);
+                window.location.reload();
+            },
+            error: function(err) {
+                btn.prop('disabled', false).text('Save');
+                alert(err.responseJSON?.message || 'Error saving count');
+            }
+        });
+    });
 });
 </script>
 @endpush
