@@ -3889,7 +3889,7 @@ class MaternityWorkbenchController extends Controller
         try {
             $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
             $request->validate([
-                'service_id' => 'required|string',
+                'service_id' => 'required|integer',
                 'note' => 'nullable|string'
             ]);
 
