@@ -51,7 +51,7 @@
         .vitals-dashboard-header .bh-stat-green .bh-stat-icon { background: #ecfdf5; color: #10b981; }
     </style>
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
-<link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
+<link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}?v={{ filemtime(public_path('css/clinical-orders-shared.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
 <link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">
 @endpush
@@ -6733,7 +6733,7 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/workbench-notes-shared.js') }}"></script>
 <script src="{{ asset('js/speech-dictation.js') }}"></script>
-<script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
+<script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
 window.BILLING_KIT_CONFIG = {

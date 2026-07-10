@@ -8,7 +8,7 @@
 @section('subpage_name', 'New Encounter')
 @section('content')
     @include('admin.partials.procedure_outcome_modal')
-    <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}?v={{ filemtime(public_path('css/clinical-orders-shared.css')) }}">
     <style>
         /* Fix for modals inside overflow containers */
         .modal {
@@ -1336,7 +1336,7 @@
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
     <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
-    <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
+    <script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
 
     <style>
         /* Modern Toggle Switch Styling */
