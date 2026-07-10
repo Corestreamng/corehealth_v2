@@ -4,7 +4,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
-<link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
+<link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}?v={{ filemtime(public_path('css/clinical-orders-shared.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">
 @endpush
 
@@ -2683,7 +2683,7 @@ $sett = appsettings();
 <script src="{{ asset('js/workbench-notes-shared.js') }}"></script>
 <script src="{{ asset('js/speech-dictation.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
+<script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
 <script src="{{ asset('js/immunization-module.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>

@@ -1950,7 +1950,7 @@ window.BILLING_KIT_CONFIG = {
 @include('admin.shared.modals.request_details')
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 <script src="{{ asset('js/request-details.js') }}"></script>
-<script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
+<script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
 @endhasanyrole
 
 <script>
