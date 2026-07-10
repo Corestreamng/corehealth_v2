@@ -18,10 +18,16 @@ class HmoHelper
      */
     public static function applyHmoTariff($patientId, $productId = null, $serviceId = null)
     {
-        $patient = Patient::find($patientId);
+        $patient = Patient::with('hmo')->find($patientId);
 
         if (!$patient || !$patient->hmo_id) {
             return null; // Not an HMO patient
+        }
+
+        // Check for Tariff Override
+        $overrideData = self::getTariffOverrideData($patient->hmo_id, $patient->hmo->hmo_scheme_id ?? null, $productId, $serviceId);
+        if ($overrideData) {
+            return $overrideData;
         }
 
         $tariff = HmoTariff::where('hmo_id', $patient->hmo_id)
@@ -63,35 +69,161 @@ class HmoHelper
             return $result;
         }
 
+        $hmo = \App\Models\Hmo::find($hmoId);
+        $schemeId = $hmo->hmo_scheme_id ?? null;
+
         if (!empty($productIds)) {
-            $tariffs = HmoTariff::where('hmo_id', $hmoId)
-                ->whereIn('product_id', $productIds)
-                ->whereNull('service_id')
-                ->get();
-            foreach ($tariffs as $t) {
-                $result['products'][$t->product_id] = [
-                    'payable_amount' => (float) $t->payable_amount,
-                    'claims_amount'  => (float) $t->claims_amount,
-                    'coverage_mode'  => $t->coverage_mode,
-                ];
+            foreach ($productIds as $productId) {
+                $overrideData = self::getTariffOverrideData($hmoId, $schemeId, $productId, null);
+                if ($overrideData) {
+                    $result['products'][$productId] = [
+                        'payable_amount' => (float) $overrideData['payable_amount'],
+                        'claims_amount'  => (float) $overrideData['claims_amount'],
+                        'coverage_mode'  => $overrideData['coverage_mode'],
+                    ];
+                }
+            }
+            
+            // Get non-overridden products
+            $remainingProductIds = array_diff($productIds, array_keys($result['products']));
+            if (!empty($remainingProductIds)) {
+                $tariffs = HmoTariff::where('hmo_id', $hmoId)
+                    ->whereIn('product_id', $remainingProductIds)
+                    ->whereNull('service_id')
+                    ->get();
+                foreach ($tariffs as $t) {
+                    $result['products'][$t->product_id] = [
+                        'payable_amount' => (float) $t->payable_amount,
+                        'claims_amount'  => (float) $t->claims_amount,
+                        'coverage_mode'  => $t->coverage_mode,
+                    ];
+                }
             }
         }
 
         if (!empty($serviceIds)) {
-            $tariffs = HmoTariff::where('hmo_id', $hmoId)
-                ->whereIn('service_id', $serviceIds)
-                ->whereNull('product_id')
-                ->get();
-            foreach ($tariffs as $t) {
-                $result['services'][$t->service_id] = [
-                    'payable_amount' => (float) $t->payable_amount,
-                    'claims_amount'  => (float) $t->claims_amount,
-                    'coverage_mode'  => $t->coverage_mode,
-                ];
+            foreach ($serviceIds as $serviceId) {
+                $overrideData = self::getTariffOverrideData($hmoId, $schemeId, null, $serviceId);
+                if ($overrideData) {
+                    $result['services'][$serviceId] = [
+                        'payable_amount' => (float) $overrideData['payable_amount'],
+                        'claims_amount'  => (float) $overrideData['claims_amount'],
+                        'coverage_mode'  => $overrideData['coverage_mode'],
+                    ];
+                }
+            }
+            
+            // Get non-overridden services
+            $remainingServiceIds = array_diff($serviceIds, array_keys($result['services']));
+            if (!empty($remainingServiceIds)) {
+                $tariffs = HmoTariff::where('hmo_id', $hmoId)
+                    ->whereIn('service_id', $remainingServiceIds)
+                    ->whereNull('product_id')
+                    ->get();
+                foreach ($tariffs as $t) {
+                    $result['services'][$t->service_id] = [
+                        'payable_amount' => (float) $t->payable_amount,
+                        'claims_amount'  => (float) $t->claims_amount,
+                        'coverage_mode'  => $t->coverage_mode,
+                    ];
+                }
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Check if a TariffOverride applies and calculate the overridden tariff
+     */
+    private static function getTariffOverrideData($hmoId, $schemeId, $productId, $serviceId)
+    {
+        $targetType = $productId ? 'product' : 'service';
+        $targetId = $productId ?: $serviceId;
+        $categoryId = null;
+        $basePrice = 0;
+
+        if ($productId) {
+            $product = \App\Models\Product::with('price')->find($productId);
+            if (!$product) return null;
+            $categoryId = $product->category_id;
+            
+            // Use cost from latest active stock batch, fallback to product price
+            $batch = \App\Models\StockBatch::active()->where('product_id', $productId)->latest()->first();
+            if ($batch && $batch->cost_price > 0) {
+                $basePrice = $batch->cost_price;
+            } else {
+                $basePrice = $product->price->current_sale_price ?? 0;
+            }
+        } else {
+            $service = \App\Models\Service::with('price')->find($serviceId);
+            if (!$service) return null;
+            $categoryId = $service->category_id;
+            $basePrice = $service->price->sale_price ?? 0;
+        }
+
+        $overrides = \App\Models\TariffOverride::where('is_active', 1)
+            ->where(function($q) use ($hmoId, $schemeId) {
+                $q->where('hmo_id', $hmoId)
+                  ->orWhere('hmo_scheme_id', $schemeId);
+            })
+            ->where(function($q) use ($targetType, $targetId, $categoryId) {
+                $q->where(function($q2) use ($targetType, $targetId) {
+                    $q2->where('target_type', $targetType)->where('target_id', $targetId);
+                })
+                ->orWhere(function($q2) use ($targetType, $categoryId) {
+                    $q2->where('target_type', $targetType . '_category')->where('target_id', $categoryId);
+                });
+            })
+            ->get();
+
+        if ($overrides->isEmpty()) return null;
+
+        // Sort overrides by priority:
+        // 1. Exact HMO + Exact Product/Service
+        // 2. Exact HMO + Category
+        // 3. Scheme + Exact Product/Service
+        // 4. Scheme + Category
+        $override = $overrides->sortBy(function($o) use ($targetType) {
+            $score = 0;
+            if ($o->hmo_id) $score += 10;
+            if ($o->target_type === $targetType) $score += 5;
+            return -$score;
+        })->first();
+
+        if (!$override) return null;
+
+        // Calculate payable amount
+        $payableAmount = 0;
+        if ($override->override_type === 'percentage') {
+            $payableAmount = $basePrice * ($override->amount / 100);
+        } else {
+            $payableAmount = $override->amount;
+        }
+
+        $claimsAmount = max(0, $basePrice - $payableAmount);
+
+        // Fallback coverage mode to express
+        $coverageMode = 'express';
+        $existingTariff = \App\Models\HmoTariff::where('hmo_id', $hmoId)
+            ->where(function($q) use ($productId, $serviceId) {
+                if ($productId) {
+                    $q->where('product_id', $productId)->whereNull('service_id');
+                } else {
+                    $q->where('service_id', $serviceId)->whereNull('product_id');
+                }
+            })->first();
+        
+        if ($existingTariff) {
+            $coverageMode = $existingTariff->coverage_mode;
+        }
+
+        return [
+            'payable_amount' => round($payableAmount, 2),
+            'claims_amount' => round($claimsAmount, 2),
+            'coverage_mode' => $coverageMode,
+            'validation_status' => $coverageMode === 'express' ? 'approved' : 'pending',
+        ];
     }
 
     /**
