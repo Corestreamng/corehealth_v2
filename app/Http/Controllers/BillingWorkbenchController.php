@@ -849,7 +849,7 @@ class BillingWorkbenchController extends Controller
                     'total_amount' => $total,
                     'discount_amount' => $totalDiscount,
                     'outstanding_amount' => $total,
-                    'status' => 'pending',
+                    'status' => 'pending_audit',
                 ]);
             }
 
