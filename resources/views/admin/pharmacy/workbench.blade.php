@@ -15179,11 +15179,17 @@ const originalLoadExecSummaryAjaxSuccess = function(data) {
     const $incomeList = $('#exec-det-income-scheme-list');
     $incomeList.empty();
     if (data.income_by_scheme && Object.keys(data.income_by_scheme).length) {
-        for (const [schemeName, val] of Object.entries(data.income_by_scheme)) {
+        for (const [schemeName, valObj] of Object.entries(data.income_by_scheme)) {
+            let total = typeof valObj === 'object' ? (valObj.total || 0) : valObj;
+            let cash = typeof valObj === 'object' ? (valObj.cash || 0) : 0;
+            let claims = typeof valObj === 'object' ? (valObj.claims || 0) : 0;
             $incomeList.append(`
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span class="text-muted">${escapeHtml(schemeName)}</span>
-                    <span class="fw-bold text-success">${formatCurrency(val)}</span>
+                    <div>
+                        <span class="text-muted d-block">${escapeHtml(schemeName)}</span>
+                        <small class="text-secondary" style="font-size: 0.75rem;">Cash: ${formatCurrency(cash)} | Claims: ${formatCurrency(claims)}</small>
+                    </div>
+                    <span class="fw-bold text-success">${formatCurrency(total)}</span>
                 </li>
             `);
         }

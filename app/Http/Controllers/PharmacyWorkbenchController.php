@@ -4066,9 +4066,11 @@ class PharmacyWorkbenchController extends Controller
 
                     // Income by Scheme summary
                     if (!isset($incomeByScheme[$schemeName])) {
-                        $incomeByScheme[$schemeName] = 0;
+                        $incomeByScheme[$schemeName] = ['total' => 0, 'cash' => 0, 'claims' => 0];
                     }
-                    $incomeByScheme[$schemeName] += $amount;
+                    $incomeByScheme[$schemeName]['total'] += $amount;
+                    $incomeByScheme[$schemeName]['cash'] += $cashAmount;
+                    $incomeByScheme[$schemeName]['claims'] += $claimsAmount;
 
                     if (!isset($collectionsByStore[$storeName])) {
                         $collectionsByStore[$storeName] = ['store_name' => $storeName, 'count' => 0, 'value' => 0, 'cash' => 0, 'claims' => 0, 'schemes' => []];
