@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\HmoTariff;
+use App\Models\TariffOverride;
 use App\Models\Hmo;
 use App\Models\HmoScheme;
 use App\Models\Product;
@@ -1420,5 +1421,116 @@ class TariffManagementController extends Controller
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
+    }
+    public function getOverrides(Request $request)
+    {
+        $overrides = TariffOverride::with(['hmo', 'scheme'])->orderBy('id', 'desc')->get();
+        $formatted = $overrides->map(function($o) {
+            $context = $o->hmo_id ? 'HMO: ' . $o->hmo->name : 'Scheme: ' . $o->scheme->name;
+            return [
+                'id' => $o->id,
+                'context' => $context,
+                'target_type' => ucwords(str_replace('_', ' ', $o->target_type)),
+                'target_name' => $o->target_name,
+                'override_type' => ucfirst($o->override_type),
+                'amount' => $o->override_type === 'percentage' ? $o->amount . '%' : '₦' . number_format($o->amount, 2),
+                'is_active' => $o->is_active ? 'Active' : 'Inactive',
+            ];
+        });
+        return response()->json(['data' => $formatted]);
+    }
+
+    public function storeOverride(Request $request)
+    {
+        $request->validate([
+            'context_type' => 'required|in:hmo,scheme',
+            'context_id' => 'required|integer',
+            'target_type' => 'required|in:product,service,product_category,service_category',
+            'target_id' => 'required|integer',
+            'override_type' => 'required|in:percentage,fixed',
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            TariffOverride::updateOrCreate(
+                [
+                    'hmo_id' => $request->context_type === 'hmo' ? $request->context_id : null,
+                    'hmo_scheme_id' => $request->context_type === 'scheme' ? $request->context_id : null,
+                    'target_type' => $request->target_type,
+                    'target_id' => $request->target_id,
+                ],
+                [
+                    'override_type' => $request->override_type,
+                    'amount' => $request->amount,
+                    'is_active' => 1
+                ]
+            );
+            return response()->json(['success' => true, 'message' => 'Override saved successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to save override: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteOverride($id)
+    {
+        try {
+            TariffOverride::findOrFail($id)->delete();
+            return response()->json(['success' => true, 'message' => 'Override deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to delete override: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function overridesView()
+    {
+        $hmos = Hmo::with('scheme')->where('status', 1)->orderBy('name', 'ASC')->get();
+        $products = Product::where('status', 1)->orderBy('product_name', 'ASC')->get();
+        $services = Service::where('status', 1)->orderBy('service_name', 'ASC')->get();
+        $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
+        $productCategories = ProductCategory::orderBy('category_name', 'ASC')->get();
+        $serviceCategories = ServiceCategory::orderBy('category_name', 'ASC')->get();
+
+        return view('admin.tariffs.overrides', compact('hmos', 'products', 'services', 'schemes', 'productCategories', 'serviceCategories'));
+    }
+
+    public function getItemPrice(Request $request)
+    {
+        $type = $request->get('target_type');
+        $id = $request->get('target_id');
+
+        if (!$type || !$id) {
+            return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
+        }
+
+        $basePrice = 0;
+        $name = '';
+
+        if ($type === 'product') {
+            $product = \App\Models\Product::with('price')->find($id);
+            if (!$product) return response()->json(['success' => false, 'message' => 'Product not found'], 404);
+            $name = $product->product_name;
+
+            $batch = \App\Models\StockBatch::active()->where('product_id', $id)->latest()->first();
+            if ($batch && $batch->cost_price > 0) {
+                $basePrice = $batch->cost_price;
+            } else {
+                $basePrice = $product->price->current_sale_price ?? 0;
+            }
+        } elseif ($type === 'service') {
+            $service = \App\Models\Service::with('price')->find($id);
+            if (!$service) return response()->json(['success' => false, 'message' => 'Service not found'], 404);
+            $name = $service->service_name;
+            $basePrice = $service->price->sale_price ?? 0;
+        } else {
+            return response()->json(['success' => false, 'message' => 'Invalid target type for price lookup'], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'name' => $name,
+                'base_price' => round($basePrice, 2)
+            ]
+        ]);
     }
 }
