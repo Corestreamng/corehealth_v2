@@ -66,7 +66,11 @@ class AuditWorkbenchController extends Controller
         ],
         'inventory' => [
             'central_store_stock_check' => 'Central Store Stock & PO Price Variance',
-            'departmental_ward_stores' => 'Departmental/Ward Stock & Requisitions'
+            'departmental_stores' => 'Departmental Stock & Requisitions',
+            'ward_stores' => 'Ward Stock & Requisitions',
+            'procurement_lifecycle' => 'Procurement Lifecycle (PO → Payment → Delivery)',
+            'requisition_fulfillment' => 'Requisition & Fulfillment by Store Role',
+            'physical_stock_verification' => 'Physical Stock Verification & Count'
         ]
     ];
 
@@ -543,7 +547,7 @@ class AuditWorkbenchController extends Controller
             }
         }
 
-        if ($responsibility_key === 'central_store_stock_check' || $responsibility_key === 'departmental_ward_stores') {
+        if ($responsibility_key === 'central_store_stock_check') {
             $stores = Store::where('distribution_role', '!=', \App\Models\Store::ROLE_CENTRAL)->select('id', 'store_name')->orderBy('store_name')->get();
             foreach ($stores as $s) {
                 $storeOptions[$s->id] = $s->store_name;
@@ -994,6 +998,8 @@ class AuditWorkbenchController extends Controller
                     ['label' => 'Unbilled Value (Leakage)', 'value' => '₦' . number_format($leakageTotal, 2), 'class' => 'text-danger']
                 ];
 
+                $shiftReconRows = $this->getShiftRevenueReconciliationData($startDate, $endDate);
+
                 $tabbedData = [
                     'unified_receipts' => [
                         'label' => 'Unified Daily Receipts (Showing max ' . ($fetchLimit == 10000 ? 'All' : $fetchLimit) . ')',
@@ -1004,6 +1010,11 @@ class AuditWorkbenchController extends Controller
                         'label' => 'Unbilled Self/Private Services (Showing max ' . ($fetchLimit == 10000 ? 'All' : $fetchLimit) . ')',
                         'headers' => ['Req ID', 'Patient', 'Item', 'Original Price', 'Discount', 'Leakage Value', 'Date'],
                         'rows' => $leakageRows
+                    ],
+                    'shift_revenue_recon' => [
+                        'label' => 'Shift Revenue Reconciliation',
+                        'headers' => ['Metric / Department', 'Amount (₦)'],
+                        'rows' => $shiftReconRows
                     ],
                     'type_performance' => [
                         'label' => 'Performance by Transaction Type',
@@ -1695,7 +1706,14 @@ class AuditWorkbenchController extends Controller
                     ];
                 }
 
+                $wardSummaryRows = $this->getWardSummaryData($startDate, $endDate);
+
                 $tabbedData = [
+                    'ward_summary' => [
+                        'label' => 'Ward Admission/Discharge Summary',
+                        'headers' => ['Ward Name', 'Admissions (Period)', 'Discharges (Period)', 'Currently Active', 'Est. Income'],
+                        'rows' => $wardSummaryRows
+                    ],
                     'active_admissions' => [
                         'label' => 'Active Admissions & Clearances',
                         'headers' => ['Patient', 'Ward', 'Bed', 'Status', 'Admitted At'],
@@ -1749,8 +1767,8 @@ class AuditWorkbenchController extends Controller
                     $procedureItemsQuery->whereHas('procedure', fn($pq) => $pq->where('requested_by', $surgeonId));
                 }
                 if ($procStatus) {
-                    $proceduresQuery->where('status', $procStatus);
-                    $procedureItemsQuery->whereHas('procedure', fn($pq) => $pq->where('status', $procStatus));
+                    $proceduresQuery->where('procedure_status', $procStatus);
+                    $procedureItemsQuery->whereHas('procedure', fn($pq) => $pq->where('procedure_status', $procStatus));
                 }
                 if ($minQty) {
                     $procedureItemsQuery->where('qty', '>=', $minQty);
@@ -1761,9 +1779,9 @@ class AuditWorkbenchController extends Controller
 
                 $kpis = [
                     ['label' => 'Total Procedures', 'value' => $procedures->count(), 'class' => 'text-primary'],
-                    ['label' => 'Completed Procedures', 'value' => $procedures->where('status', 'completed')->count(), 'class' => 'text-success'],
+                    ['label' => 'Completed Procedures', 'value' => $procedures->where('procedure_status', 'completed')->count(), 'class' => 'text-success'],
                     ['label' => 'Bundled Items Used', 'value' => $procedureItems->sum('qty'), 'class' => 'text-warning'],
-                    ['label' => 'Scheduled Procedures', 'value' => $procedures->where('status', 'scheduled')->count(), 'class' => 'text-info']
+                    ['label' => 'Scheduled Procedures', 'value' => $procedures->where('procedure_status', 'scheduled')->count(), 'class' => 'text-info']
                 ];
 
                 $procRows = [];
@@ -1772,7 +1790,7 @@ class AuditWorkbenchController extends Controller
                         $this->formatPatientModelLink($p->patient),
                         $p->service ? $p->service->service_name : 'N/A',
                         $this->formatStaffNameThree($p->requestedByUser),
-                        '<span class="badge badge-primary">' . ucfirst($p->status) . '</span>',
+                        '<span class="badge badge-primary">' . ucfirst($p->procedure_status) . '</span>',
                         $p->scheduled_date ? $p->scheduled_date->format('Y-m-d H:i') : 'N/A'
                     ];
                 }
@@ -1788,6 +1806,11 @@ class AuditWorkbenchController extends Controller
                 }
 
                 $tabbedData = [
+                    'hmo_utilization' => [
+                        'label' => 'HMO Scheme Utilization',
+                        'headers' => ['Scheme Name', 'Procedures Done', 'Completed', 'Bundled Items Qty'],
+                        'rows' => $this->getTheatreHmoUtilizationData($startDate, $endDate)
+                    ],
                     'procedure_register' => [
                         'label' => 'Theatre Procedure Register',
                         'headers' => ['Patient', 'Procedure', 'Surgeon/Doctor', 'Status', 'Scheduled Date'],
@@ -1797,6 +1820,11 @@ class AuditWorkbenchController extends Controller
                         'label' => 'Bundled Consumables Consumption',
                         'headers' => ['Patient', 'Consumable Item', 'Quantity Used', 'Usage Date'],
                         'rows' => $itemRows
+                    ],
+                    'income_vs_consumption' => [
+                        'label' => 'Income vs. Consumption',
+                        'headers' => ['Category', 'Amount (₦)'],
+                        'rows' => $this->getIncomeVsConsumptionData($startDate, $endDate, 'theatre')
                     ]
                 ];
                 break;
@@ -1804,31 +1832,30 @@ class AuditWorkbenchController extends Controller
             case 'maternity_morgue_audit':
                 $filters = [
                     [
-                        'name' => 'delivery_mode',
-                        'label' => 'Delivery Mode',
+                        'name' => 'type_of_delivery',
+                        'label' => 'Delivery Type',
                         'type' => 'select',
-                        'options' => ['spontaneous' => 'Spontaneous Vaginal Delivery', 'caesarean' => 'Caesarean Section', 'assisted' => 'Assisted (Forceps/Vacuum)'],
-                        'value' => $request->get('delivery_mode')
+                        'options' => [
+                            'svd' => 'Spontaneous Vaginal Delivery',
+                            'elective_cs' => 'Elective CS',
+                            'emergency_cs' => 'Emergency CS',
+                            'assisted_vaginal' => 'Assisted Vaginal',
+                            'vacuum' => 'Vacuum',
+                            'forceps' => 'Forceps'
+                        ],
+                        'value' => $request->get('type_of_delivery')
                     ],
                     [
                         'name' => 'morgue_status',
                         'label' => 'Morgue Status',
                         'type' => 'select',
-                        'options' => ['admitted' => 'Currently Admitted', 'released' => 'Released'],
+                        'options' => ['stored' => 'Currently Admitted / Stored', 'released' => 'Released'],
                         'value' => $request->get('morgue_status')
-                    ],
-                    [
-                        'name' => 'delivery_outcome',
-                        'label' => 'Delivery Outcome',
-                        'type' => 'select',
-                        'options' => ['live_birth' => 'Live Birth', 'still_birth' => 'Still Birth'],
-                        'value' => $request->get('delivery_outcome')
                     ]
                 ];
 
-                $deliveryMode = $request->get('delivery_mode');
+                $typeOfDelivery = $request->get('type_of_delivery');
                 $morgueStatus = $request->get('morgue_status');
-                $outcome = $request->get('delivery_outcome');
 
                 $enrollments = \App\Models\MaternityEnrollment::with(['patient.user'])
                     ->whereBetween('created_at', [$startDate, $endDate])
@@ -1840,14 +1867,11 @@ class AuditWorkbenchController extends Controller
                 $morgueQuery = \App\Models\MorgueAdmission::with(['patient.user'])
                     ->whereBetween('created_at', [$startDate, $endDate]);
 
-                if ($deliveryMode) {
-                    $deliveriesQuery->where('delivery_mode', $deliveryMode);
+                if ($typeOfDelivery) {
+                    $deliveriesQuery->where('type_of_delivery', $typeOfDelivery);
                 }
                 if ($morgueStatus) {
                     $morgueQuery->where('status', $morgueStatus);
-                }
-                if ($outcome) {
-                    $deliveriesQuery->where('outcome', $outcome);
                 }
 
                 $deliveries = $deliveriesQuery->get();
@@ -1863,9 +1887,8 @@ class AuditWorkbenchController extends Controller
                 foreach ($deliveries as $d) {
                     $deliveryRows[] = [
                         $this->formatPatientModelLink($d->patient),
-                        $d->delivery_mode ?? 'N/A',
-                        $d->outcome ?? 'N/A',
-                        $d->delivery_date ? $d->delivery_date->format('Y-m-d H:i') : 'N/A'
+                        ucwords(str_replace('_', ' ', $d->type_of_delivery)) ?? 'N/A',
+                        $d->delivery_date ? $d->delivery_date->format('Y-m-d') : 'N/A'
                     ];
                 }
 
@@ -1882,13 +1905,18 @@ class AuditWorkbenchController extends Controller
                 $tabbedData = [
                     'maternity_deliveries' => [
                         'label' => 'Maternity Deliveries',
-                        'headers' => ['Patient', 'Delivery Mode', 'Outcome', 'Delivery Date'],
+                        'headers' => ['Patient', 'Delivery Type', 'Delivery Date'],
                         'rows' => $deliveryRows
                     ],
                     'mortuary_register' => [
                         'label' => 'Mortuary Register',
                         'headers' => ['Decedent Name', 'Admission Date', 'Release Date', 'Status'],
                         'rows' => $morgueRows
+                    ],
+                    'income_vs_consumption' => [
+                        'label' => 'Income vs. Consumption (Morgue)',
+                        'headers' => ['Category', 'Amount (₦)'],
+                        'rows' => $this->getIncomeVsConsumptionData($startDate, $endDate, 'morgue')
                     ]
                 ];
                 break;
@@ -1985,6 +2013,9 @@ class AuditWorkbenchController extends Controller
                     ];
                 }
 
+                $incConsLab = $this->getIncomeVsConsumptionData($startDate, $endDate, 'lab');
+                $kpis[] = ['label' => 'Total Reagents Cost', 'value' => '₦' . number_format($incConsLab['kpis']['total_consumption_value'], 2), 'class' => 'text-warning'];
+
                 $tabbedData = [
                     'laboratory_register' => [
                         'label' => 'Laboratory Register',
@@ -1995,6 +2026,11 @@ class AuditWorkbenchController extends Controller
                         'label' => 'Reagents Usage',
                         'headers' => ['Product', 'Laboratory Store', 'Quantity Dispensed', 'Dispensed By', 'Notes', 'Date'],
                         'rows' => $usageRows
+                    ],
+                    'income_vs_consumption' => [
+                        'label' => 'Income vs Consumption (Margin)',
+                        'headers' => ['Store', 'Product/Reagent', 'Qty Used', 'Unit Cost', 'Total Cost', 'Patient (Ref)', 'Billed Income', 'Gross Margin', 'Date'],
+                        'rows' => $incConsLab['rows']
                     ]
                 ];
                 break;
@@ -2091,6 +2127,9 @@ class AuditWorkbenchController extends Controller
                     ];
                 }
 
+                $incConsImg = $this->getIncomeVsConsumptionData($startDate, $endDate, 'imaging');
+                $kpis[] = ['label' => 'Total Consumables Cost', 'value' => '₦' . number_format($incConsImg['kpis']['total_consumption_value'], 2), 'class' => 'text-warning'];
+
                 $tabbedData = [
                     'imaging_register' => [
                         'label' => 'Imaging Register',
@@ -2101,6 +2140,11 @@ class AuditWorkbenchController extends Controller
                         'label' => 'Consumables Usage',
                         'headers' => ['Product', 'Imaging Store', 'Quantity Dispensed', 'Dispensed By', 'Notes', 'Date'],
                         'rows' => $usageRows
+                    ],
+                    'income_vs_consumption' => [
+                        'label' => 'Income vs Consumption (Margin)',
+                        'headers' => ['Store', 'Product/Reagent', 'Qty Used', 'Unit Cost', 'Total Cost', 'Patient (Ref)', 'Billed Income', 'Gross Margin', 'Date'],
+                        'rows' => $incConsImg['rows']
                     ]
                 ];
                 break;
@@ -2206,6 +2250,9 @@ class AuditWorkbenchController extends Controller
                     ];
                 }
 
+                $incConsPharm = $this->getIncomeVsConsumptionData($startDate, $endDate, 'pharmacy');
+                $kpis[] = ['label' => 'Total Consumed Value', 'value' => '₦' . number_format($incConsPharm['kpis']['total_consumption_value'], 2), 'class' => 'text-warning'];
+
                 $tabbedData = [
                     'prescription_workflow' => [
                         'label' => 'Prescription Workflow',
@@ -2221,6 +2268,11 @@ class AuditWorkbenchController extends Controller
                         'label' => 'Damages & Expiries',
                         'headers' => ['Product', 'Store', 'Quantity', 'Type', 'Notes', 'Date'],
                         'rows' => $damageRows
+                    ],
+                    'income_vs_consumption' => [
+                        'label' => 'Income vs Consumption (Margin)',
+                        'headers' => ['Store', 'Product/Reagent', 'Qty Used', 'Unit Cost', 'Total Cost', 'Patient (Ref)', 'Billed Income', 'Gross Margin', 'Date'],
+                        'rows' => $incConsPharm['rows']
                     ]
                 ];
                 break;
@@ -2374,126 +2426,452 @@ class AuditWorkbenchController extends Controller
                 ];
                 break;
 
-            case 'departmental_ward_stores':
+            case 'physical_stock_verification':
+                $stores = \App\Models\Store::all();
+                $storeOptions = [];
+                foreach ($stores as $st) { $storeOptions[$st->id] = $st->store_name; }
+                
+                $storeId = $request->get('store_id') ?? ($stores->first()->id ?? null);
                 $filters = [
                     [
                         'name' => 'store_id',
-                        'label' => 'Departmental Store',
+                        'label' => 'Store to Verify',
                         'type' => 'select',
                         'options' => $storeOptions,
-                        'value' => $request->get('store_id')
-                    ],
-                    [
-                        'name' => 'product_type',
-                        'label' => 'Product Type',
-                        'type' => 'select',
-                        'options' => ['drug' => 'Drugs', 'consumable' => 'Consumables', 'reagent' => 'Reagents', 'equipment' => 'Equipment'],
-                        'value' => $request->get('product_type')
-                    ],
-                    [
-                        'name' => 'category_id',
-                        'label' => 'Category',
-                        'type' => 'select',
-                        'options' => $categoryOptions,
-                        'value' => $request->get('category_id')
+                        'value' => $storeId
                     ]
                 ];
-
-                $storeId = $request->get('store_id');
-                $prodType = $request->get('product_type');
-                $catId = $request->get('category_id');
-
-                $storeQuery = \App\Models\Store::where('distribution_role', '!=', \App\Models\Store::ROLE_CENTRAL);
-                if ($storeId) {
-                    $storeQuery->where('id', $storeId);
-                }
-                $decentralizedStoreIds = $storeQuery->pluck('id');
-
-                $stockQuery = \App\Models\StoreStock::with(['product.category', 'product.price', 'store'])
-                    ->whereIn('store_id', $decentralizedStoreIds);
                 
-                $requisitionsQuery = \App\Models\StoreRequisition::with(['toStore', 'fromStore', 'items.product', 'requester'])
-                    ->whereIn('to_store_id', $decentralizedStoreIds)
-                    ->whereBetween('created_at', [$startDate, $endDate]);
+                $stocks = \App\Models\StoreStock::with(['product.category', 'store'])
+                    ->where('store_id', $storeId)
+                    ->get();
                     
-                $damagesQuery = \App\Models\StoreDamage::with(['product', 'store', 'creator'])
-                    ->whereIn('store_id', $decentralizedStoreIds)
-                    ->whereBetween('created_at', [$startDate, $endDate]);
-
-                if ($prodType) {
-                    $stockQuery->whereHas('product', fn($q) => $q->where('product_type', $prodType));
-                    $requisitionsQuery->whereHas('items.product', fn($q) => $q->where('product_type', $prodType));
-                    $damagesQuery->whereHas('product', fn($q) => $q->where('product_type', $prodType));
-                }
-                if ($catId) {
-                    $stockQuery->whereHas('product', fn($q) => $q->where('category_id', $catId));
-                    $requisitionsQuery->whereHas('items.product', fn($q) => $q->where('category_id', $catId));
-                    $damagesQuery->whereHas('product', fn($q) => $q->where('category_id', $catId));
-                }
-
-                $stocks = $stockQuery->get();
-                $requisitions = $requisitionsQuery->get();
-                $damages = $damagesQuery->get();
+                $reconciliations = \App\Models\AuditReconciliation::with(['product', 'auditor'])
+                    ->where('store_id', $storeId)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get();
 
                 $kpis = [
-                    ['label' => 'Decentralized Stock Value', 'value' => '₦' . number_format($stocks->sum(fn($s) => $s->quantity * optional(optional($s->product)->price)->initial_buy_price), 2), 'class' => 'text-primary'],
-                    ['label' => 'Requisitions Made', 'value' => $requisitions->count(), 'class' => 'text-info'],
-                    ['label' => 'Damaged/Expired (Qty)', 'value' => $damages->sum('qty_damaged'), 'class' => 'text-danger']
+                    ['label' => 'Total Products in Store', 'value' => $stocks->count(), 'class' => 'text-primary'],
+                    ['label' => 'Items Verified', 'value' => $reconciliations->count(), 'class' => 'text-success'],
+                    ['label' => 'Net Variance Qty', 'value' => $reconciliations->sum('variance'), 'class' => 'text-warning']
                 ];
-
-                $stockRows = [];
+                
+                $verificationRows = [];
                 foreach ($stocks as $s) {
-                    $stockRows[] = [
-                        $s->store ? $s->store->store_name : 'N/A',
-                        $s->product ? $s->product->product_name : 'N/A',
-                        $s->product ? ucfirst($s->product->product_type) : 'N/A',
+                    $prodName = $s->product ? $s->product->product_name : 'Unknown';
+                    $actionHtml = '<div class="d-flex gap-2">
+                        <input type="number" step="any" class="form-control form-control-sm physical-count-input" id="phys_count_'.$s->id.'" value="'.$s->current_quantity.'" style="width:80px;">
+                        <button class="btn btn-sm btn-outline-primary save-physical-count-btn" data-store="'.$storeId.'" data-product="'.$s->product_id.'" data-stock-id="'.$s->id.'" data-system="'.$s->current_quantity.'">Save</button>
+                    </div>';
+                    
+                    $verificationRows[] = [
+                        $prodName,
                         $s->product && $s->product->category ? $s->product->category->category_name : 'N/A',
-                        $s->quantity,
-                        '₦' . number_format(optional(optional($s->product)->price)->initial_buy_price ?? 0, 2)
+                        '<span class="font-weight-bold" id="sys_qty_'.$s->id.'">'.$s->current_quantity.'</span>',
+                        $actionHtml
                     ];
                 }
-
-                $reqRows = [];
-                foreach ($requisitions as $r) {
-                    $reqRows[] = [
-                        $r->requisition_number ?? 'N/A',
-                        $r->toStore ? $r->toStore->store_name : 'N/A',
-                        $r->fromStore ? $r->fromStore->store_name : 'Main Store',
-                        $r->items ? $r->items->count() : 0,
-                        ucfirst($r->status),
-                        $this->formatStaffNameThree($r->requester),
+                
+                $historyRows = [];
+                foreach ($reconciliations as $r) {
+                    $historyRows[] = [
+                        $r->product ? $r->product->product_name : 'N/A',
+                        $r->system_value,
+                        $r->physical_value,
+                        $r->variance,
+                        $r->notes ?? 'N/A',
+                        $r->auditor ? $r->auditor->surname : 'N/A',
                         $r->created_at->format('Y-m-d H:i')
                     ];
                 }
+                
+                $tabbedData = [
+                    'verification_form' => [
+                        'label' => 'Physical Count Form',
+                        'headers' => ['Product', 'Category', 'System Quantity', 'Actual Physical Count'],
+                        'rows' => $verificationRows
+                    ],
+                    'reconciliation_history' => [
+                        'label' => 'Reconciliation History',
+                        'headers' => ['Product', 'System Qty', 'Physical Qty', 'Variance', 'Notes', 'Auditor', 'Date'],
+                        'rows' => $historyRows
+                    ]
+                ];
+                break;
 
-                $damageRows = [];
-                foreach ($damages as $d) {
-                    $damageRows[] = [
-                        $d->product ? $d->product->product_name : 'N/A',
-                        $d->store ? $d->store->store_name : 'N/A',
-                        $d->qty_damaged,
-                        ucfirst($d->damage_type ?? 'N/A'),
-                        $d->notes ?? 'N/A',
-                        $d->created_at->format('Y-m-d H:i')
+            case 'procurement_lifecycle':
+                $filters = [
+                    [
+                        'name' => 'supplier_id',
+                        'label' => 'Supplier',
+                        'type' => 'select',
+                        'options' => \App\Models\Supplier::pluck('company_name', 'id')->toArray(),
+                        'value' => $request->get('supplier_id')
+                    ],
+                    [
+                        'name' => 'status',
+                        'label' => 'Delivery Status',
+                        'type' => 'select',
+                        'options' => \App\Models\PurchaseOrder::getStatuses(),
+                        'value' => $request->get('status')
+                    ],
+                    [
+                        'name' => 'payment_status',
+                        'label' => 'Payment Status',
+                        'type' => 'select',
+                        'options' => \App\Models\PurchaseOrder::getPaymentStatuses(),
+                        'value' => $request->get('payment_status')
+                    ]
+                ];
+
+                $q = \App\Models\PurchaseOrder::with(['supplier', 'creator', 'targetStore'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($request->filled('supplier_id')) $q->where('supplier_id', $request->get('supplier_id'));
+                if ($request->filled('status')) $q->where('status', $request->get('status'));
+                if ($request->filled('payment_status')) $q->where('payment_status', $request->get('payment_status'));
+
+                $pos = $q->orderBy('created_at', 'desc')->get();
+
+                $kpis = [
+                    ['label' => 'Total POs', 'value' => $pos->count(), 'class' => 'text-primary'],
+                    ['label' => 'Total Value', 'value' => '₦' . number_format($pos->sum('total_amount'), 2), 'class' => 'text-info'],
+                    ['label' => 'Amount Paid', 'value' => '₦' . number_format($pos->sum('amount_paid'), 2), 'class' => 'text-success'],
+                    ['label' => 'Outstanding Balance', 'value' => '₦' . number_format($pos->sum('total_amount') - $pos->sum('amount_paid'), 2), 'class' => 'text-danger']
+                ];
+
+                $poRows = [];
+                foreach ($pos as $po) {
+                    $deliveryBadge = match($po->status) {
+                        'received' => '<span class="badge bg-success text-white">Received</span>',
+                        'partial' => '<span class="badge bg-warning text-dark">Partially Received</span>',
+                        'cancelled' => '<span class="badge bg-danger text-white">Cancelled</span>',
+                        default => '<span class="badge bg-secondary text-white">'.ucfirst($po->status).'</span>',
+                    };
+                    $paymentBadge = match($po->payment_status) {
+                        'paid' => '<span class="badge bg-success text-white">Paid</span>',
+                        'partial' => '<span class="badge bg-warning text-dark">Partially Paid</span>',
+                        default => '<span class="badge bg-danger text-white">Unpaid</span>',
+                    };
+
+                    $poRows[] = [
+                        $po->po_number,
+                        $po->supplier ? $po->supplier->company_name : 'N/A',
+                        $po->targetStore ? $po->targetStore->store_name : 'N/A',
+                        '₦' . number_format($po->total_amount, 2),
+                        $deliveryBadge,
+                        $paymentBadge,
+                        $po->created_at->format('Y-m-d H:i')
                     ];
                 }
 
                 $tabbedData = [
-                    'ward_stock_overview' => [
-                        'label' => 'Ward/Dept Stock Overview',
-                        'headers' => ['Store', 'Product', 'Classification', 'Category', 'Current Qty', 'Sys Buy Price'],
-                        'rows' => $stockRows
-                    ],
-                    'requisition_fulfillment' => [
-                        'label' => 'Requisition Fulfillment',
-                        'headers' => ['Req Number', 'Requesting Store', 'Supplying Store', 'Items Count', 'Status', 'Requested By', 'Date'],
-                        'rows' => $reqRows
-                    ],
-                    'departmental_damages' => [
-                        'label' => 'Departmental Damages',
-                        'headers' => ['Product', 'Store', 'Quantity', 'Type', 'Notes', 'Date'],
-                        'rows' => $damageRows
+                    'lifecycle' => [
+                        'label' => 'Procurement Lifecycle',
+                        'headers' => ['PO Number', 'Supplier', 'Target Store', 'Total Value', 'Delivery Status', 'Payment Status', 'Created Date'],
+                        'rows' => $poRows
                     ]
+                ];
+                break;
+
+            case 'requisition_fulfillment':
+                $storeOptionsArr = \App\Models\Store::pluck('store_name', 'id')->toArray();
+                $filters = [
+                    [
+                        'name' => 'from_store_id',
+                        'label' => 'Requesting Store (From)',
+                        'type' => 'select',
+                        'options' => $storeOptionsArr,
+                        'value' => $request->get('from_store_id')
+                    ],
+                    [
+                        'name' => 'to_store_id',
+                        'label' => 'Fulfilling Store (To)',
+                        'type' => 'select',
+                        'options' => $storeOptionsArr,
+                        'value' => $request->get('to_store_id')
+                    ],
+                    [
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'type' => 'select',
+                        'options' => ['pending'=>'Pending', 'approved'=>'Approved', 'partial'=>'Partial', 'fulfilled'=>'Fulfilled', 'rejected'=>'Rejected'],
+                        'value' => $request->get('status')
+                    ]
+                ];
+
+                $q = \App\Models\StoreRequisition::with(['fromStore', 'toStore', 'requester', 'items'])
+                    ->whereBetween('created_at', [$startDate, $endDate]);
+
+                if ($request->filled('from_store_id')) $q->where('from_store_id', $request->get('from_store_id'));
+                if ($request->filled('to_store_id')) $q->where('to_store_id', $request->get('to_store_id'));
+                if ($request->filled('status')) $q->where('status', $request->get('status'));
+
+                $reqs = $q->orderBy('created_at', 'desc')->get();
+
+                $kpis = [
+                    ['label' => 'Total Requisitions', 'value' => $reqs->count(), 'class' => 'text-primary'],
+                    ['label' => 'Fulfilled', 'value' => $reqs->where('status', 'fulfilled')->count(), 'class' => 'text-success'],
+                    ['label' => 'Pending/Partial', 'value' => $reqs->whereIn('status', ['pending','partial'])->count(), 'class' => 'text-warning'],
+                    ['label' => 'Rejected', 'value' => $reqs->where('status', 'rejected')->count(), 'class' => 'text-danger']
+                ];
+
+                $reqRows = [];
+                foreach ($reqs as $r) {
+                    $badge = match($r->status) {
+                        'fulfilled' => '<span class="badge bg-success text-white">Fulfilled</span>',
+                        'partial' => '<span class="badge bg-warning text-dark">Partial</span>',
+                        'rejected' => '<span class="badge bg-danger text-white">Rejected</span>',
+                        'approved' => '<span class="badge bg-info text-white">Approved</span>',
+                        default => '<span class="badge bg-secondary text-white">Pending</span>',
+                    };
+
+                    $reqRows[] = [
+                        $r->requisition_number,
+                        $r->fromStore ? $r->fromStore->store_name : 'N/A',
+                        $r->toStore ? $r->toStore->store_name : 'N/A',
+                        $r->items->count(),
+                        $badge,
+                        $r->requester ? $this->formatStaffNameThree($r->requester) : 'N/A',
+                        $r->created_at->format('Y-m-d H:i')
+                    ];
+                }
+
+                $tabbedData = [
+                    'fulfillment' => [
+                        'label' => 'Requisition Fulfillment',
+                        'headers' => ['Req Number', 'Requesting Store', 'Fulfilling Store', 'Items Count', 'Status', 'Requested By', 'Date'],
+                        'rows' => $reqRows
+                    ]
+                ];
+                break;
+
+            case 'departmental_stores':
+                $stores = \App\Models\Store::where(function($q) {
+                    $q->where('distribution_role', \App\Models\Store::ROLE_DEPARTMENT)
+                      ->orWhere('store_type', 'theatre');
+                })->active()->orderBy('store_name')->get();
+                
+                $tabbedData = [];
+                $totalStockValue = 0;
+                $totalReqs = 0;
+                $totalDamages = 0;
+                $totalReturns = 0;
+
+                foreach ($stores as $store) {
+                    $stocks = \App\Models\StoreStock::with(['product.category', 'product.price'])
+                        ->where('store_id', $store->id)->get();
+                    $reqs = \App\Models\StoreRequisition::with(['toStore', 'fromStore', 'items.product', 'requester'])
+                        ->where('to_store_id', $store->id)
+                        ->whereBetween('created_at', [$startDate, $endDate])->get();
+                    $damages = \App\Models\StoreDamage::with(['product', 'creator'])
+                        ->where('store_id', $store->id)
+                        ->whereBetween('created_at', [$startDate, $endDate])->get();
+                    $returns = \App\Models\StoreRequisitionReturn::with(['product', 'creator'])
+                        ->where('source_store_id', $store->id)
+                        ->whereBetween('created_at', [$startDate, $endDate])->get();
+
+                    $totalReqs += $reqs->count();
+                    $totalDamages += $damages->sum('qty_damaged');
+                    $totalReturns += $returns->sum('qty_returned');
+
+                    $stockRows = [];
+                    foreach ($stocks as $s) {
+                        $val = $s->quantity * optional(optional($s->product)->price)->initial_buy_price;
+                        $totalStockValue += $val;
+                        $stockRows[] = [
+                            $s->product ? $s->product->product_name : 'N/A',
+                            $s->product ? ucfirst($s->product->product_type) : 'N/A',
+                            $s->product && $s->product->category ? $s->product->category->category_name : 'N/A',
+                            $s->quantity,
+                            '₦' . number_format(optional(optional($s->product)->price)->initial_buy_price ?? 0, 2)
+                        ];
+                    }
+                    
+                    $reqRows = [];
+                    foreach ($reqs as $r) {
+                        $reqRows[] = [
+                            $r->requisition_number ?? 'N/A',
+                            $r->fromStore ? $r->fromStore->store_name : 'Main Store',
+                            $r->items ? $r->items->count() : 0,
+                            ucfirst($r->status),
+                            $this->formatStaffNameThree($r->requester),
+                            $r->created_at->format('Y-m-d H:i')
+                        ];
+                    }
+
+                    $damageRows = [];
+                    foreach ($damages as $d) {
+                        $damageRows[] = [
+                            $d->product ? $d->product->product_name : 'N/A',
+                            $d->qty_damaged,
+                            ucfirst($d->damage_type ?? 'N/A'),
+                            $d->notes ?? 'N/A',
+                            $d->created_at->format('Y-m-d H:i')
+                        ];
+                    }
+
+                    if (count($stockRows) > 0) {
+                        $tabbedData['dept_stock_'.$store->id] = [
+                            'label' => $store->store_name . ' (Stock)',
+                            'headers' => ['Product', 'Classification', 'Category', 'Current Qty', 'Sys Buy Price'],
+                            'rows' => $stockRows
+                        ];
+                    }
+                    if (count($reqRows) > 0) {
+                        $tabbedData['dept_req_'.$store->id] = [
+                            'label' => $store->store_name . ' (Reqs)',
+                            'headers' => ['Req Number', 'Supplying Store', 'Items Count', 'Status', 'Requested By', 'Date'],
+                            'rows' => $reqRows
+                        ];
+                    }
+                    if (count($damageRows) > 0) {
+                        $tabbedData['dept_damages_'.$store->id] = [
+                            'label' => $store->store_name . ' (Damages)',
+                            'headers' => ['Product', 'Quantity', 'Type', 'Notes', 'Date'],
+                            'rows' => $damageRows
+                        ];
+                    }
+                    
+                    $returnRows = [];
+                    foreach ($returns as $r) {
+                        $returnRows[] = [
+                            $r->product ? $r->product->product_name : 'N/A',
+                            $r->qty_returned,
+                            ucfirst($r->status ?? 'pending'),
+                            $r->return_reason ?? 'N/A',
+                            $this->formatStaffNameThree($r->creator),
+                            $r->created_at->format('Y-m-d H:i')
+                        ];
+                    }
+                    if (count($returnRows) > 0) {
+                        $tabbedData['dept_returns_'.$store->id] = [
+                            'label' => $store->store_name . ' (Returns)',
+                            'headers' => ['Product', 'Quantity', 'Status', 'Reason', 'Returned By', 'Date'],
+                            'rows' => $returnRows
+                        ];
+                    }
+                }
+
+                $kpis = [
+                    ['label' => 'Total Stock Value', 'value' => '₦' . number_format($totalStockValue, 2), 'class' => 'text-primary'],
+                    ['label' => 'Total Requisitions', 'value' => $totalReqs, 'class' => 'text-info'],
+                    ['label' => 'Total Returns (Qty)', 'value' => $totalReturns, 'class' => 'text-warning'],
+                    ['label' => 'Total Damaged/Expired', 'value' => $totalDamages, 'class' => 'text-danger']
+                ];
+                break;
+
+            case 'ward_stores':
+                $stores = \App\Models\Store::where('distribution_role', \App\Models\Store::ROLE_WARD)
+                    ->active()->orderBy('store_name')->get();
+                
+                $tabbedData = [];
+                $totalStockValue = 0;
+                $totalReqs = 0;
+                $totalDamages = 0;
+                $totalReturns = 0;
+
+                foreach ($stores as $store) {
+                    $stocks = \App\Models\StoreStock::with(['product.category', 'product.price'])
+                        ->where('store_id', $store->id)->get();
+                    $reqs = \App\Models\StoreRequisition::with(['toStore', 'fromStore', 'items.product', 'requester'])
+                        ->where('to_store_id', $store->id)
+                        ->whereBetween('created_at', [$startDate, $endDate])->get();
+                    $damages = \App\Models\StoreDamage::with(['product', 'creator'])
+                        ->where('store_id', $store->id)
+                        ->whereBetween('created_at', [$startDate, $endDate])->get();
+                    $returns = \App\Models\StoreRequisitionReturn::with(['product', 'creator'])
+                        ->where('source_store_id', $store->id)
+                        ->whereBetween('created_at', [$startDate, $endDate])->get();
+
+                    $totalReqs += $reqs->count();
+                    $totalDamages += $damages->sum('qty_damaged');
+                    $totalReturns += $returns->sum('qty_returned');
+
+                    $stockRows = [];
+                    foreach ($stocks as $s) {
+                        $val = $s->quantity * optional(optional($s->product)->price)->initial_buy_price;
+                        $totalStockValue += $val;
+                        $stockRows[] = [
+                            $s->product ? $s->product->product_name : 'N/A',
+                            $s->product ? ucfirst($s->product->product_type) : 'N/A',
+                            $s->product && $s->product->category ? $s->product->category->category_name : 'N/A',
+                            $s->quantity,
+                            '₦' . number_format(optional(optional($s->product)->price)->initial_buy_price ?? 0, 2)
+                        ];
+                    }
+                    
+                    $reqRows = [];
+                    foreach ($reqs as $r) {
+                        $reqRows[] = [
+                            $r->requisition_number ?? 'N/A',
+                            $r->fromStore ? $r->fromStore->store_name : 'Main Store',
+                            $r->items ? $r->items->count() : 0,
+                            ucfirst($r->status),
+                            $this->formatStaffNameThree($r->requester),
+                            $r->created_at->format('Y-m-d H:i')
+                        ];
+                    }
+
+                    $damageRows = [];
+                    foreach ($damages as $d) {
+                        $damageRows[] = [
+                            $d->product ? $d->product->product_name : 'N/A',
+                            $d->qty_damaged,
+                            ucfirst($d->damage_type ?? 'N/A'),
+                            $d->notes ?? 'N/A',
+                            $d->created_at->format('Y-m-d H:i')
+                        ];
+                    }
+
+                    if (count($stockRows) > 0) {
+                        $tabbedData['ward_stock_'.$store->id] = [
+                            'label' => $store->store_name . ' (Stock)',
+                            'headers' => ['Product', 'Classification', 'Category', 'Current Qty', 'Sys Buy Price'],
+                            'rows' => $stockRows
+                        ];
+                    }
+                    if (count($reqRows) > 0) {
+                        $tabbedData['ward_req_'.$store->id] = [
+                            'label' => $store->store_name . ' (Reqs)',
+                            'headers' => ['Req Number', 'Supplying Store', 'Items Count', 'Status', 'Requested By', 'Date'],
+                            'rows' => $reqRows
+                        ];
+                    }
+                    if (count($damageRows) > 0) {
+                        $tabbedData['ward_damages_'.$store->id] = [
+                            'label' => $store->store_name . ' (Damages)',
+                            'headers' => ['Product', 'Quantity', 'Type', 'Notes', 'Date'],
+                            'rows' => $damageRows
+                        ];
+                    }
+
+                    $returnRows = [];
+                    foreach ($returns as $r) {
+                        $returnRows[] = [
+                            $r->product ? $r->product->product_name : 'N/A',
+                            $r->qty_returned,
+                            ucfirst($r->status ?? 'pending'),
+                            $r->return_reason ?? 'N/A',
+                            $this->formatStaffNameThree($r->creator),
+                            $r->created_at->format('Y-m-d H:i')
+                        ];
+                    }
+                    if (count($returnRows) > 0) {
+                        $tabbedData['ward_returns_'.$store->id] = [
+                            'label' => $store->store_name . ' (Returns)',
+                            'headers' => ['Product', 'Quantity', 'Status', 'Reason', 'Returned By', 'Date'],
+                            'rows' => $returnRows
+                        ];
+                    }
+                }
+
+                $kpis = [
+                    ['label' => 'Total Stock Value', 'value' => '₦' . number_format($totalStockValue, 2), 'class' => 'text-primary'],
+                    ['label' => 'Total Requisitions', 'value' => $totalReqs, 'class' => 'text-info'],
+                    ['label' => 'Total Returns (Qty)', 'value' => $totalReturns, 'class' => 'text-warning'],
+                    ['label' => 'Total Damaged/Expired', 'value' => $totalDamages, 'class' => 'text-danger']
                 ];
                 break;
 
@@ -2972,5 +3350,309 @@ class AuditWorkbenchController extends Controller
         }
 
         return view('admin.audit.reports.print', $viewData);
+    }
+
+    /**
+     * Helper to compute Income vs Consumption for various modules
+     */
+    private function getIncomeVsConsumptionData($startDate, $endDate, $moduleType)
+    {
+        $storeRoles = [];
+        if ($moduleType === 'pharmacy') {
+            $storeRoles = [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE];
+        } elseif ($moduleType === 'lab') {
+            $storeRoles = [\App\Models\Store::ROLE_LAB];
+        } elseif ($moduleType === 'imaging') {
+            $storeRoles = [\App\Models\Store::ROLE_IMAGING];
+        } elseif ($moduleType === 'ward') {
+            $storeRoles = [\App\Models\Store::ROLE_WARD];
+        } elseif ($moduleType === 'theatre') {
+            $storeIds = \App\Models\Store::where('store_type', 'theatre')->pluck('id');
+        } elseif ($moduleType === 'morgue') {
+            $storeIds = \App\Models\Store::where('store_name', 'like', '%morgue%')->pluck('id');
+        }
+
+        if (!isset($storeIds)) {
+            $storeIds = \App\Models\Store::whereIn('distribution_role', $storeRoles)->pluck('id');
+        }
+
+        $consumptions = \App\Models\StockBatchTransaction::with(['stockBatch.product.price', 'stockBatch.store'])
+            ->where('type', \App\Models\StockBatchTransaction::TYPE_OUT)
+            ->whereHas('stockBatch', function($q) use ($storeIds) {
+                $q->whereIn('store_id', $storeIds);
+            })
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $consumptionRows = [];
+        $totalConsumptionValue = 0;
+        $totalItemsDispensed = 0;
+
+        foreach ($consumptions as $c) {
+            $qty = (float)$c->qty;
+            $costPrice = (float)($c->stockBatch->cost_price ?? 0);
+            if ($costPrice <= 0 && $c->stockBatch->product && $c->stockBatch->product->price) {
+                $costPrice = (float)$c->stockBatch->product->price->initial_buy_price;
+            }
+            
+            $value = $qty * $costPrice;
+            $totalConsumptionValue += $value;
+            $totalItemsDispensed += $qty;
+
+            $incomeValue = 0;
+            $patientName = 'Unknown';
+            $billRef = 'N/A';
+
+            if ($c->reference_type === 'ProductRequest' && $c->reference_id) {
+                $pr = \App\Models\ProductRequest::with(['productOrServiceRequest', 'patient.user'])->find($c->reference_id);
+                if ($pr) {
+                    $patientName = $pr->patient && $pr->patient->user ? $pr->patient->user->surname . ' ' . $pr->patient->user->firstname : 'Unknown';
+                    if ($pr->productOrServiceRequest) {
+                        $incomeValue = (float)$pr->productOrServiceRequest->payable_amount;
+                        $billRef = $pr->productOrServiceRequest->request_number ?? 'Billed';
+                    }
+                }
+            } elseif ($c->reference_type === 'ProductOrServiceRequest' && $c->reference_id) {
+                $posr = \App\Models\ProductOrServiceRequest::with('patient.user')->find($c->reference_id);
+                if ($posr) {
+                    $patientName = $posr->patient && $posr->patient->user ? $posr->patient->user->surname . ' ' . $posr->patient->user->firstname : 'Unknown';
+                    $incomeValue = (float)$posr->payable_amount;
+                    $billRef = $posr->request_number ?? 'Billed';
+                }
+            } elseif ($c->reference_type === 'LabServiceRequest' && $c->reference_id) {
+                 $lsr = \App\Models\LabServiceRequest::with(['productOrServiceRequest', 'patient.user'])->find($c->reference_id);
+                 if ($lsr) {
+                    $patientName = $lsr->patient && $lsr->patient->user ? $lsr->patient->user->surname . ' ' . $lsr->patient->user->firstname : 'Unknown';
+                    if ($lsr->productOrServiceRequest) {
+                        $incomeValue = (float)$lsr->productOrServiceRequest->payable_amount;
+                        $billRef = $lsr->productOrServiceRequest->request_number ?? 'Billed';
+                    }
+                 }
+            } elseif ($c->reference_type === 'ImagingServiceRequest' && $c->reference_id) {
+                 $isr = \App\Models\ImagingServiceRequest::with(['productOrServiceRequest', 'patient.user'])->find($c->reference_id);
+                 if ($isr) {
+                    $patientName = $isr->patient && $isr->patient->user ? $isr->patient->user->surname . ' ' . $isr->patient->user->firstname : 'Unknown';
+                    if ($isr->productOrServiceRequest) {
+                        $incomeValue = (float)$isr->productOrServiceRequest->payable_amount;
+                        $billRef = $isr->productOrServiceRequest->request_number ?? 'Billed';
+                    }
+                 }
+            }
+
+            $margin = $incomeValue - $value;
+
+            $consumptionRows[] = [
+                $c->stockBatch->store->store_name ?? 'Unknown Store',
+                $c->stockBatch->product->product_name ?? 'Unknown Product',
+                number_format($qty, 2),
+                '₦' . number_format($costPrice, 2),
+                '₦' . number_format($value, 2),
+                $patientName . ' (' . $billRef . ')',
+                '₦' . number_format($incomeValue, 2),
+                '<span class="' . ($margin >= 0 ? 'text-success' : 'text-danger') . ' font-weight-bold">₦' . number_format($margin, 2) . '</span>',
+                $c->created_at->format('Y-m-d H:i')
+            ];
+        }
+
+        return [
+            'rows' => $consumptionRows,
+            'kpis' => [
+                'total_items_dispensed' => $totalItemsDispensed,
+                'total_consumption_value' => $totalConsumptionValue
+            ]
+        ];
+    }
+
+    private function getShiftRevenueReconciliationData($startDate, $endDate)
+    {
+        $posrs = \App\Models\ProductOrServiceRequest::with(['service.category'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where(function($q) {
+                 $q->whereNull('hmo_id')->orWhere('hmo_id', 1)->orWhere('coverage_mode', 'cash');
+            })
+            ->get();
+            
+        $labExpected = 0;
+        $pharmExpected = 0;
+        $imagingExpected = 0;
+        $regExpected = 0;
+        $otherExpected = 0;
+        
+        foreach($posrs as $p) {
+            $amt = $p->payable_amount > 0 ? (float)$p->payable_amount : (float)$p->amount;
+            if ($p->product_id) {
+                $pharmExpected += $amt;
+            } elseif ($p->service_id) {
+                $catName = strtolower($p->service->category->category_name ?? '');
+                if (str_contains($catName, 'lab') || str_contains($catName, 'pathology')) {
+                    $labExpected += $amt;
+                } elseif (str_contains($catName, 'scan') || str_contains($catName, 'imaging') || str_contains($catName, 'x-ray')) {
+                    $imagingExpected += $amt;
+                } elseif (str_contains($catName, 'registration') || str_contains($catName, 'consultation')) {
+                    $regExpected += $amt;
+                } else {
+                    $otherExpected += $amt;
+                }
+            } else {
+                $otherExpected += $amt;
+            }
+        }
+        
+        $totalExpected = $labExpected + $pharmExpected + $imagingExpected + $regExpected + $otherExpected;
+        
+        $payments = \App\Models\Payment::whereBetween('created_at', [$startDate, $endDate])->get();
+        $cashCollected = (float)$payments->where('payment_method', 'CASH')->sum('total');
+        $posCollected = (float)$payments->whereIn('payment_method', ['POS', 'TRANSFER', 'CARD'])->sum('total');
+        
+        $variance = $totalExpected - ($cashCollected + $posCollected);
+        
+        return [
+            ['Expected Revenue: Lab', '₦' . number_format($labExpected, 2)],
+            ['Expected Revenue: Pharmacy', '₦' . number_format($pharmExpected, 2)],
+            ['Expected Revenue: Imaging', '₦' . number_format($imagingExpected, 2)],
+            ['Expected Revenue: Registration/Consultation', '₦' . number_format($regExpected, 2)],
+            ['Expected Revenue: Others', '₦' . number_format($otherExpected, 2)],
+            ['<strong>Total Expected System Revenue</strong>', '<strong>₦' . number_format($totalExpected, 2) . '</strong>'],
+            ['Actual Cash Collected', '₦' . number_format($cashCollected, 2)],
+            ['Actual POS/Bank Collected', '₦' . number_format($posCollected, 2)],
+            ['<strong>Variance (Expected - Actual)</strong>', '<strong class="' . ($variance > 0 ? 'text-danger' : 'text-success') . '">₦' . number_format($variance, 2) . '</strong>']
+        ];
+    }
+    
+    public function approveStaffBill($id)
+    {
+        if (!auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) && !auth()->user()->hasRole('AUDITOR')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $bill = \App\Models\StaffBill::findOrFail($id);
+        if ($bill->status !== 'pending_audit') {
+            return response()->json(['message' => 'Bill is not in pending audit state.'], 400);
+        }
+        
+        $bill->status = 'pending'; // Approved and now acts as receivable
+        $bill->save();
+        
+        return response()->json(['success' => true, 'message' => 'Staff bill audited and approved as receivable.']);
+    }
+
+    private function getWardSummaryData($startDate, $endDate)
+    {
+        $wards = \App\Models\Ward::all();
+        $wardRows = [];
+        
+        foreach ($wards as $ward) {
+            $admissionsPeriod = \App\Models\AdmissionRequest::where('preferred_ward_id', $ward->id)
+                ->whereBetween('created_at', [$startDate, $endDate])->count();
+                
+            $dischargesPeriod = \App\Models\AdmissionRequest::where('preferred_ward_id', $ward->id)
+                ->where('discharged', 1)
+                ->whereBetween('updated_at', [$startDate, $endDate])->count();
+                
+            $activeCount = \App\Models\AdmissionRequest::where('preferred_ward_id', $ward->id)
+                ->where('discharged', 0)->count();
+                
+            $income = \App\Models\Payment::whereIn('patient_id', function($query) use ($ward) {
+                        $query->select('patient_id')
+                              ->from('admission_requests')
+                              ->where('discharged', 0)
+                              ->where('preferred_ward_id', $ward->id);
+                    })->whereBetween('created_at', [$startDate, $endDate])->sum('total');
+                    
+            $wardRows[] = [
+                $ward->name,
+                $admissionsPeriod,
+                $dischargesPeriod,
+                $activeCount,
+                '₦' . number_format((float)$income, 2)
+            ];
+        }
+        return $wardRows;
+    }
+
+    private function getTheatreHmoUtilizationData($startDate, $endDate)
+    {
+        $schemes = \App\Models\HmoScheme::all();
+        $rows = [];
+
+        foreach ($schemes as $scheme) {
+            $procedures = \App\Models\Procedure::whereHas('patient.hmo', function($q) use ($scheme) {
+                $q->where('hmo_scheme_id', $scheme->id);
+            })->whereBetween('created_at', [$startDate, $endDate])->get();
+
+            $totalProcedures = $procedures->count();
+            if ($totalProcedures === 0) continue;
+
+            $completedCount = $procedures->where('status', 'completed')->count();
+
+            $itemsQty = \App\Models\ProcedureItem::whereIn('procedure_id', $procedures->pluck('id'))
+                ->where('is_bundled', 1)
+                ->sum('qty');
+
+            $rows[] = [
+                $scheme->name,
+                $totalProcedures,
+                $completedCount,
+                $itemsQty
+            ];
+        }
+
+        $privateProcedures = \App\Models\Procedure::whereHas('patient', function($q) {
+            $q->whereNull('hmo_id');
+        })->whereBetween('created_at', [$startDate, $endDate])->get();
+
+        if ($privateProcedures->count() > 0) {
+            $privateItemsQty = \App\Models\ProcedureItem::whereIn('procedure_id', $privateProcedures->pluck('id'))
+                ->where('is_bundled', 1)
+                ->sum('qty');
+            $rows[] = [
+                'Private / Out-of-Pocket',
+                $privateProcedures->count(),
+                $privateProcedures->where('status', 'completed')->count(),
+                $privateItemsQty
+            ];
+        }
+
+        return $rows;
+    }
+
+    public function savePhysicalCount(\Illuminate\Http\Request $request)
+    {
+        if (!auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) && !auth()->user()->hasRole('AUDITOR')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'store_id' => 'required|integer',
+            'product_id' => 'required|integer',
+            'system_value' => 'required|numeric',
+            'physical_value' => 'required|numeric'
+        ]);
+
+        $variance = $request->physical_value - $request->system_value;
+
+        \App\Models\AuditReconciliation::create([
+            'type' => 'physical_stock_verification',
+            'store_id' => $request->store_id,
+            'product_id' => $request->product_id,
+            'system_value' => $request->system_value,
+            'physical_value' => $request->physical_value,
+            'variance' => $variance,
+            'notes' => 'Recorded via physical stock verification worksheet.',
+            'auditor_id' => auth()->id(),
+        ]);
+        
+        // Also update the store stock physical quantity to match reality
+        $stock = \App\Models\StoreStock::where('store_id', $request->store_id)
+            ->where('product_id', $request->product_id)
+            ->first();
+            
+        if ($stock) {
+            $stock->current_quantity = $request->physical_value;
+            $stock->save();
+        }
+
+        return response()->json(['success' => true, 'message' => 'Physical count saved and variance recorded.']);
     }
 }

@@ -375,7 +375,10 @@
                                                 <td class="text-right font-weight-bold @if($bill->outstanding_amount > 0) text-warning @else text-success @endif">
                                                     ₦{{ number_format($bill->outstanding_amount, 2) }}
                                                                                         <td>
-                                                    @if($bill->status == 'paid' || $bill->status == 'settled' || floatval($bill->outstanding_amount) <= 0)
+                                                    @if($bill->status == 'pending_audit')
+                                                        <span class="badge bg-warning text-dark mb-1">Awaiting Audit</span><br>
+                                                        <button class="btn btn-sm btn-outline-success audit-approve-btn py-0 px-2" data-id="{{ $bill->id }}" style="font-size: 0.7rem;">Approve</button>
+                                                    @elseif($bill->status == 'paid' || $bill->status == 'settled' || floatval($bill->outstanding_amount) <= 0)
                                                         <span class="badge bg-success text-white">Fully Settled</span>
                                                     @elseif($bill->payments->isNotEmpty() && floatval($bill->outstanding_amount) > 0)
                                                         <span class="badge bg-warning text-dark">Partially Cleared</span>
@@ -919,7 +922,71 @@ $(document).ready(function() {
             $(this).html('<i class="mdi mdi-book-open-page-variant mr-1"></i> Show Journal Entry').removeClass('btn-secondary').addClass('btn-outline-secondary');
         }
     });
+
+    // Staff Bill Pre-Audit Approval
+    $('.audit-approve-btn').on('click', function() {
+        var btn = $(this);
+        var id = btn.data('id');
+        if (!confirm('Approve this staff bill as a verified receivable?')) return;
+        btn.prop('disabled', true).text('Approving...');
+        $.ajax({
+            url: "/admin/audit/staff-bills/" + id + "/approve",
+            method: "POST",
+            data: { _token: "{{ csrf_token() }}" },
+            success: function(res) {
+                alert(res.message);
+                window.location.reload();
+            },
+            error: function(err) {
+                btn.prop('disabled', false).text('Approve');
+                alert(err.responseJSON?.message || 'An error occurred');
+            }
+        });
+    });
 });
 </script>
 @endpush
+
+{{-- Stamp Shift/Period Modal --}}
+<div class="modal fade" id="stampModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title text-dark">Apply Digital Approval Stamp</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="stampForm">
+                @csrf
+                <input type="hidden" name="responsibility_key" id="stamp_responsibility_key" value="">
+                <div class="modal-body d-flex flex-column gap-3">
+                    <div class="bg-light p-2 rounded border">
+                        <div class="text-muted small">Worksheet Responsibility:</div>
+                        <div class="font-weight-bold text-dark" id="stamp_responsibility_label"></div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted font-weight-bold">Shift Start</label>
+                            <input type="datetime-local" name="start_date" id="stamp_start_date" class="form-control" value="{{ $startDate->format('Y-m-d\T00:00') }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted font-weight-bold">Shift End</label>
+                            <input type="datetime-local" name="end_date" id="stamp_end_date" class="form-control" value="{{ $endDate->format('Y-m-d\T23:59') }}" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label small text-muted font-weight-bold">Auditing Notes / Review Comments</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Verify reconciliations are complete and correct..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-indigo text-white" style="background: #4f46e5;">Apply Approval Stamp</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection

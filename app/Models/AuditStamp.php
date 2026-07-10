@@ -22,8 +22,8 @@ class AuditStamp extends Model
     ];
 
     protected $casts = [
-        'from_date' => 'date',
-        'to_date' => 'date',
+        'from_date' => 'datetime',
+        'to_date' => 'datetime',
         'stamped_at' => 'datetime',
     ];
 
