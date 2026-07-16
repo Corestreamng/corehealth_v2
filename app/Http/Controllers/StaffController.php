@@ -422,12 +422,7 @@ class StaffController extends Controller
             ];
         }
 
-        if ($request->assignRole) {
-            //  Making sure if password change was selected it's being validated
-            $rules += [
-                'roles' => 'required',
-            ];
-        }
+
 
         if ($request->is_admin == 21) {
             //  Making sure specialization being validated for doctors
@@ -441,19 +436,9 @@ class StaffController extends Controller
                 'clinic' => 'required',
             ];
         }
-        if ($request->is_admin == 21) {
-            // Making sure consultation_fee being validated for doctors
-            $rules += [
-                'consultation_fee' => 'nullable',
-            ];
-        }
 
-        if ($request->assignPermission) {
-            // Making sure permissions being validated
-            $rules += [
-                'permissions' => 'required',
-            ];
-        }
+
+
 
         if (!$request->email) {
             $baseEmail = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . '@hms.com';
@@ -564,20 +549,25 @@ class StaffController extends Controller
                 $user->email = $request->email;
                 $user->password = Hash::make($request->password);
 
-                $user->assignRole = ($request->assignRole) ? 1 : 0;
-                $user->assignPermission = ($request->assignPermission) ? 1 : 0;
-
                 $user->save();
 
-                if ($request->assignRole) {
-                    $user->assignRole($request->roles);
+                if ($request->has('roles') && count($request->roles) > 0) {
+                    $user->syncRoles($request->roles);
+                    $user->assignRole = 1;
+                } else {
+                    $user->assignRole = 0;
                 }
 
-                if ($request->assignPermission) {
-                    $user->givePermissionTo($request->permissions);
+                if ($request->has('permissions') && count($request->permissions) > 0) {
+                    $user->syncPermissions($request->permissions);
+                    $user->assignPermission = 1;
+                } else {
+                    $user->assignPermission = 0;
                 }
+                
+                $user->update();
 
-                $staff = new Staff();
+                $staff = Staff::firstOrNew(['user_id' => $user->id]);
                 $staff->clinic_id = $request->clinic ?? null;
                 $staff->can_see_clinic_queues = array_values(array_unique(array_map('intval', array_filter((array) $request->input('can_see_clinic_queues', [])))));
                 $staff->user_id = $user->id;
@@ -586,7 +576,7 @@ class StaffController extends Controller
                 $staff->date_of_birth = $request->dob ?? null;
                 $staff->home_address = $request->address ?? null;
                 $staff->phone_number = $request->phone_number ?? null;
-                $staff->consultation_fee = $request->consultation_fee ?? 0;
+
                 $staff->is_unit_head = $request->has('is_unit_head') ? true : false;
                 $staff->is_dept_head = $request->has('is_dept_head') ? true : false;
 
@@ -673,7 +663,7 @@ class StaffController extends Controller
                 $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
                 Alert::success('Success ', $msg);
 
-                return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success');
+                return redirect()->route('staff.index')->withMessage($msg)->withMessageType('success');
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error("Failed to create staff: " . $e->getMessage(), ['exception' => $e]);
@@ -860,28 +850,30 @@ class StaffController extends Controller
             $user->firstname = $request->firstname;
             $user->othername = ($request->othername) ? $request->othername : ' ';
             $user->email = $request->email;
-            $user->password = Hash::make($request->password);
-
-            $user->assignRole = ($request->assignRole) ? 1 : 0;
-            $user->assignPermission = ($request->assignPermission) ? 1 : 0;
-
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->password);
+            }
             DB::beginTransaction();
             try {
-                $user->update();
-
-                if ($request->assignRole) {
+                if ($request->has('roles') && count($request->roles) > 0) {
                     $user->syncRoles($request->roles);
+                    $user->assignRole = 1;
                 } else {
                     // Checkbox unchecked — remove all roles
                     $user->syncRoles([]);
+                    $user->assignRole = 0;
                 }
 
-                if ($request->assignPermission) {
+                if ($request->has('permissions') && count($request->permissions) > 0) {
                     $user->syncPermissions($request->permissions);
+                    $user->assignPermission = 1;
                 } else {
                     // Checkbox unchecked — remove all direct permissions
                     $user->syncPermissions([]);
+                    $user->assignPermission = 0;
                 }
+                
+                $user->update();
                 $staff = Staff::where('user_id', $id)->first();
                 if (!$staff) {
                     $staff = new Staff();
@@ -898,7 +890,7 @@ class StaffController extends Controller
                 $staff->date_of_birth = $request->dob ?? $staff->date_of_birth;
                 $staff->home_address = $request->address ?? $staff->home_address;
                 $staff->phone_number = $request->phone_number ?? $staff->phone_number;
-                $staff->consultation_fee = $request->consultation_fee ?? $staff->consultation_fee ?? 0;
+
                 $staff->is_unit_head = $request->has('is_unit_head') ? true : false;
                 $staff->is_dept_head = $request->has('is_dept_head') ? true : false;
 
