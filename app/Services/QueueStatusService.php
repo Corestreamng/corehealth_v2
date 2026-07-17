@@ -148,4 +148,35 @@ class QueueStatusService
 
         return $queue->fresh();
     }
+    public function autoConcludeOverdue(): void
+    {
+        $cycleDuration = (int) (appsettings('consultation_cycle_duration') ?: 24);
+        $timeThreshold = \Carbon\Carbon::now()->subHours($cycleDuration);
+
+        DB::transaction(function () use ($timeThreshold) {
+            $overdueQueues = DoctorQueue::where('status', QueueStatus::IN_CONSULTATION)
+                ->where('updated_at', '<', $timeThreshold)
+                ->get(['id', 'appointment_id']);
+                
+            if ($overdueQueues->isEmpty()) {
+                return;
+            }
+
+            $queueIds = $overdueQueues->pluck('id')->toArray();
+            $appointmentIds = $overdueQueues->pluck('appointment_id')->filter()->toArray();
+
+            DoctorQueue::whereIn('id', $queueIds)->update([
+                'status' => QueueStatus::COMPLETED,
+                'consultation_ended_at' => \Carbon\Carbon::now(),
+                'updated_at' => \Carbon\Carbon::now(),
+            ]);
+            
+            if (!empty($appointmentIds)) {
+                DoctorAppointment::whereIn('id', $appointmentIds)->update([
+                    'status' => QueueStatus::COMPLETED,
+                    'updated_at' => \Carbon\Carbon::now(),
+                ]);
+            }
+        });
+    }
 }
