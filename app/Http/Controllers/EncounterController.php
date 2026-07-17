@@ -54,6 +54,8 @@ class EncounterController extends Controller
     public function NewEncounterList(Request $request)
     {
         try {
+            app(QueueStatusService::class)->autoConcludeOverdue();
+
             // Fetch the currently logged-in doctor (with user for display)
             $doc = Staff::with('user')->where('user_id', Auth::id())->first();
 
@@ -168,7 +170,7 @@ class EncounterController extends Controller
     public function endOldEncounterReq()
     {
         $currentDateTime = Carbon::now();
-        $timeThreshold = $currentDateTime->subHours(appsettings('consultation_cycle_duration', 24));
+        $timeThreshold = $currentDateTime->subHours(appsettings('consultation_cycle_duration') ?: 24);
 
         $q = DoctorQueue::where('status', QueueStatus::VITALS_PENDING)
             ->where('created_at', '<', $timeThreshold)->get();
@@ -182,6 +184,7 @@ class EncounterController extends Controller
     public function PrevEncounterList(Request $request)
     {
         try {
+            app(QueueStatusService::class)->autoConcludeOverdue();
             $doc = Staff::where('user_id', Auth::id())->first();
 
             // Handle case where staff record doesn't exist
@@ -270,10 +273,11 @@ class EncounterController extends Controller
     public function ContEncounterList(Request $request)
     {
         try {
+            app(QueueStatusService::class)->autoConcludeOverdue();
             $this->endOldEncounterReq();
             $doc = Staff::where('user_id', Auth::id())->first();
 
-            $timeThreshold = Carbon::now()->subHours(appsettings('consultation_cycle_duration', 24));
+            $timeThreshold = Carbon::now()->subHours(appsettings('consultation_cycle_duration') ?: 24);
 
             // Get start and end dates from request, fallback to null
             $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
