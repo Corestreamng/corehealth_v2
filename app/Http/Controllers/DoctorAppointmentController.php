@@ -237,6 +237,8 @@ class DoctorAppointmentController extends Controller
      */
     public function getCalendarEvents(Request $request)
     {
+        $this->queueStatusService->autoConcludeOverdue();
+
         $startDate = $request->filled('start') ? Carbon::parse($request->start)->toDateString() : Carbon::today()->toDateString();
         $endDate   = $request->filled('end')   ? Carbon::parse($request->end)->toDateString()   : Carbon::today()->toDateString();
 
@@ -1439,6 +1441,8 @@ class DoctorAppointmentController extends Controller
      */
     public function getUnifiedQueueList(Request $request)
     {
+        $this->queueStatusService->autoConcludeOverdue();
+
         $doc = Staff::where('user_id', Auth::id())->first();
         if (!$doc) {
             return DataTables::of(collect([]))->make(true);
