@@ -193,6 +193,8 @@
                                                 <option value="service">Specific Service</option>
                                                 <option value="product_category">Product Category</option>
                                                 <option value="service_category">Service Category</option>
+                                                <option value="all_products">All Products</option>
+                                                <option value="all_services">All Services</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6 form-group mb-0">
@@ -362,8 +364,19 @@
         $('#target_type').change(function() {
             var type = $(this).val();
             var select = $('#target_id');
+            var container = select.closest('.form-group');
+            
+            container.show();
             select.empty().append('<option value="">Select Target</option>');
             
+            if (type === 'all_products' || type === 'all_services') {
+                container.hide();
+                select.append(new Option('All', '0', true, true));
+                select.prop('disabled', false);
+                select.trigger('change');
+                return;
+            }
+
             var mapKey = null;
             if (type === 'product') mapKey = 'products';
             else if (type === 'service') mapKey = 'services';
@@ -395,22 +408,27 @@
             var type = $('#override_type').val();
             var amt = parseFloat($('#amount').val()) || 0;
             
-            var isCategory = (targetType === 'product_category' || targetType === 'service_category');
+            var isCategory = (targetType === 'product_category' || targetType === 'service_category' || targetType === 'all_products' || targetType === 'all_services');
 
             if (isCategory) {
                 $('#preview_base_price').text('Varies by Item');
                 
+                var targetTextDisplay = targetText;
+                if (targetType === 'all_products') targetTextDisplay = 'any product';
+                else if (targetType === 'all_services') targetTextDisplay = 'any service';
+                else targetTextDisplay = 'any item in <strong>' + targetText + '</strong>';
+
                 if (type === 'percentage') {
                     $('#preview_patient_pays').html('<span class="text-dark small">Varies</span> (' + amt + '%)');
                     $('#preview_hmo_pays').html('<span class="text-dark small">Varies</span> (' + (100 - amt) + '%)');
                     
-                    var story = `When a patient under the <strong>${contextText}</strong> ${cText} accesses any item in <strong>${targetText}</strong>, the patient will be charged <strong>${amt}%</strong> of its base retail price, while the remaining <strong>${100 - amt}%</strong> will be sent to the HMO as a claim.`;
+                    var story = `When a patient under the <strong>${contextText}</strong> ${cText} accesses ${targetTextDisplay}, the patient will be charged <strong>${amt}%</strong> of its base retail price, while the remaining <strong>${100 - amt}%</strong> will be sent to the HMO as a claim.`;
                     $('#preview_story').html(story);
                 } else {
                     $('#preview_patient_pays').text('₦' + amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                     $('#preview_hmo_pays').html('<span class="text-dark small">Remaining Balance</span>');
                     
-                    var story = `When a patient under the <strong>${contextText}</strong> ${cText} accesses any item in <strong>${targetText}</strong>, the patient will be charged exactly <strong>₦${amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>, while any remaining balance of the item's cost will be sent to the HMO as a claim.`;
+                    var story = `When a patient under the <strong>${contextText}</strong> ${cText} accesses ${targetTextDisplay}, the patient will be charged exactly <strong>₦${amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>, while any remaining balance of the item's cost will be sent to the HMO as a claim.`;
                     $('#preview_story').html(story);
                 }
             } else {
@@ -442,15 +460,17 @@
             var targetId = $('#target_id').val();
             var contextId = $('#context_id').val();
 
-            if (!targetId || !contextId) {
-                $('#preview_loading').hide();
-                $('#preview_data').hide();
-                $('#preview_empty').show();
-                currentBasePrice = 0;
-                return;
+            if ((!targetId && targetId !== '0') || !contextId) {
+                if (targetType !== 'all_products' && targetType !== 'all_services') {
+                    $('#preview_loading').hide();
+                    $('#preview_data').hide();
+                    $('#preview_empty').show();
+                    currentBasePrice = 0;
+                    return;
+                }
             }
 
-            var isCategory = (targetType === 'product_category' || targetType === 'service_category');
+            var isCategory = (targetType === 'product_category' || targetType === 'service_category' || targetType === 'all_products' || targetType === 'all_services');
             
             if (isCategory) {
                 $('#preview_empty').hide();
