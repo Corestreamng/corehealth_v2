@@ -1445,11 +1445,13 @@ class TariffManagementController extends Controller
         $request->validate([
             'context_type' => 'required|in:hmo,scheme',
             'context_id' => 'required|integer',
-            'target_type' => 'required|in:product,service,product_category,service_category',
-            'target_id' => 'required|integer',
+            'target_type' => 'required|in:product,service,product_category,service_category,all_products,all_services',
+            'target_id' => 'required_unless:target_type,all_products,all_services|integer|nullable',
             'override_type' => 'required|in:percentage,fixed',
             'amount' => 'required|numeric|min:0',
         ]);
+
+        $targetId = in_array($request->target_type, ['all_products', 'all_services']) ? 0 : $request->target_id;
 
         try {
             TariffOverride::updateOrCreate(
@@ -1457,7 +1459,7 @@ class TariffManagementController extends Controller
                     'hmo_id' => $request->context_type === 'hmo' ? $request->context_id : null,
                     'hmo_scheme_id' => $request->context_type === 'scheme' ? $request->context_id : null,
                     'target_type' => $request->target_type,
-                    'target_id' => $request->target_id,
+                    'target_id' => $targetId,
                 ],
                 [
                     'override_type' => $request->override_type,
