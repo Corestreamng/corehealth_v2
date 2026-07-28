@@ -44,6 +44,10 @@ class TariffOverride extends Model
             case 'service_category':
                 $category = ServiceCategory::find($this->target_id);
                 return $category ? $category->category_name : 'Unknown Service Category';
+            case 'all_products':
+                return 'All Products';
+            case 'all_services':
+                return 'All Services';
             default:
                 return 'Unknown';
         }
