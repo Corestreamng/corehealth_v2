@@ -8,7 +8,7 @@
 @section('subpage_name', 'New Encounter')
 @section('content')
     @include('admin.partials.procedure_outcome_modal')
-    <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}?v={{ filemtime(public_path('css/clinical-orders-shared.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
     <style>
         /* Fix for modals inside overflow containers */
         .modal {
@@ -1336,7 +1336,7 @@
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
     <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
-    <script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
+    <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 
     <style>
         /* Modern Toggle Switch Styling */
@@ -1874,6 +1874,7 @@
             var coverageMode  = $btn.data('coverage-mode') || null;
             var claims        = $btn.data('claims') || null;
             var payable       = $btn.data('payable') || null;
+            var dose          = $btn.data('dose') || '';
             if (coverageMode === '') coverageMode = null;
 
             if (type === 'labs') {
@@ -1896,7 +1897,7 @@
                     toastr.warning(name + ' is already in your current prescriptions');
                     return;
                 }
-                setSearchValProd(name, productId, price, coverageMode, claims, payable);
+                setSearchValProd(name, productId, price, coverageMode, claims, payable, dose);
             }
 
             $btn.prop('disabled', true).html('<i class="fa fa-check text-success"></i> Added');
@@ -1991,14 +1992,14 @@
 
         // Phase 2b (Plan §4.3): Two-phase medication auto-save
         // Phase 1 — instant POST with empty dose; Phase 2 — debounced PUT on dose field changes
-        function setSearchValProd(name, id, price, coverageMode = null, claims = null, payable = null) {
+        function setSearchValProd(name, id, price, coverageMode = null, claims = null, payable = null, initialDose = '') {
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
             const rowId = 'rx_' + Date.now() + '_' + id;
             const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(coverageMode, payable ?? price, claims ?? 0);
 
             ClinicalOrdersKit.addItem({
                 url: `/encounters/${encounterId}/add-prescription`,
-                payload: { product_id: id, dose: '' },
+                payload: { product_id: id, dose: initialDose },
                 csrfToken: csrfToken,
                 tableSelector: '#selected-products',
                 type: 'meds',
@@ -2018,7 +2019,8 @@
                         }) + '<input type="hidden" name="consult_presc_id[]" value="' + id + '"></td>';
                     } else {
                         var simpleDoseCmd = "ClinicalOrdersKit.updateDoseValue(this, '');";
-                        doseCell = '<td><input type="text" class="form-control" name="consult_presc_dose[]" ' +
+                        var initialDoseEscaped = initialDose ? initialDose.replace(/"/g, '&quot;') : '';
+                        doseCell = '<td><input type="text" class="form-control" name="consult_presc_dose[]" value="' + initialDoseEscaped + '" ' +
                             'placeholder="e.g. 500mg BD x 5days" ' +
                             'onfocus="ClinicalOrdersKit.startPeriodicSave(this)" ' +
                             'onblur="ClinicalOrdersKit.stopPeriodicSave(this); ClinicalOrdersKit.cancelIdleTimer(this); ' + simpleDoseCmd + '" ' +
@@ -2036,6 +2038,24 @@
                 onSuccess: function(resp) {
                     if ($.fn.DataTable.isDataTable('#presc_history_list')) {
                         $('#presc_history_list').DataTable().ajax.reload(null, false);
+                    }
+                    if (initialDose) {
+                        var $row = $('tr[data-row-id="' + rowId + '"]');
+                        if ($row.length) {
+                            if (typeof doseStructuredMode !== 'undefined' && doseStructuredMode) {
+                                var parts = initialDose.split('|');
+                                if (parts.length >= 7) {
+                                    $row.find('.dose-amount').val(parts[0]);
+                                    $row.find('.dose-unit').val(parts[1]);
+                                    $row.find('.dose-route').val(parts[2]);
+                                    $row.find('.dose-frequency').val(parts[3]);
+                                    $row.find('.dose-duration').val(parts[4]);
+                                    $row.find('.dose-duration-unit').val(parts[5]);
+                                    $row.find('.dose-qty').val(parts[6]);
+                                    $row.find('.structured-dose-value').val(initialDose);
+                                }
+                            }
+                        }
                     }
                 }
             });
