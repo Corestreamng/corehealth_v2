@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use \App\Traits\WorkbenchAuditable;
 use OwenIt\Auditing\Contracts\Auditable;
 
 /**
@@ -30,6 +31,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class StockBatchTransaction extends Model implements Auditable
 {
     use HasFactory;
+    use WorkbenchAuditable;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [

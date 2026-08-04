@@ -1180,6 +1180,33 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::get('/reports/{responsibility_key}', [\App\Http\Controllers\AuditWorkbenchController::class, 'showReport'])->name('reports.show');
     Route::get('/reports/{responsibility_key}/print', [\App\Http\Controllers\AuditWorkbenchController::class, 'printReport'])->name('reports.print');
     
+    // New Audit Zone Routes
+    Route::get('/prescriptions', [\App\Http\Controllers\AuditWorkbenchController::class, 'prescriptionAudit'])->name('prescriptions');
+    Route::get('/lab-verification', [\App\Http\Controllers\AuditWorkbenchController::class, 'labPriceVerification'])->name('lab-verification');
+    Route::get('/imaging-verification', [\App\Http\Controllers\AuditWorkbenchController::class, 'imagingPriceVerification'])->name('imaging-verification');
+    Route::get('/procedures', [\App\Http\Controllers\AuditWorkbenchController::class, 'procedureAudit'])->name('procedures');
+    Route::get('/stock-utilization', [\App\Http\Controllers\AuditWorkbenchController::class, 'stockUtilizationAudit'])->name('stock-utilization');
+    Route::get('/stock-utilization/data', [\App\Http\Controllers\AuditWorkbenchController::class, 'stockUtilizationData'])->name('stock-utilization.data');
+    Route::get('/receivables', [\App\Http\Controllers\AuditWorkbenchController::class, 'receivablesAudit'])->name('receivables');
+    Route::get('/ward-discharge', [\App\Http\Controllers\AuditWorkbenchController::class, 'wardDischargeAudit'])->name('ward-discharge');
+    
+    // New Harmonized Zones
+    Route::get('/cash-and-billing', [\App\Http\Controllers\AuditWorkbenchController::class, 'cashAndBillingAudit'])->name('cash-and-billing');
+    Route::get('/hmo-claims', [\App\Http\Controllers\AuditWorkbenchController::class, 'hmoClaimsAudit'])->name('hmo-claims');
+    Route::get('/expenses-payroll', [\App\Http\Controllers\AuditWorkbenchController::class, 'expensesPayrollAudit'])->name('expenses-payroll');
+    Route::get('/clinics-flow', [\App\Http\Controllers\AuditWorkbenchController::class, 'clinicsFlowAudit'])->name('clinics-flow');
+    Route::get('/maternity-morgue', [\App\Http\Controllers\AuditWorkbenchController::class, 'maternityMorgueAudit'])->name('maternity-morgue');
+    
+    Route::get('/custom-report', [\App\Http\Controllers\AuditWorkbenchController::class, 'customReport'])->name('custom-report');
+    Route::get('/overall-report', [\App\Http\Controllers\AuditWorkbenchController::class, 'overallReport'])->name('overall-report');
+    Route::get('/shift-audit', [\App\Http\Controllers\AuditWorkbenchController::class, 'shiftAudit'])->name('shift-audit');
+    Route::get('/staff-deductions', [\App\Http\Controllers\AuditWorkbenchController::class, 'staffDeductions'])->name('staff-deductions');
+    
+    // Audit actions
+    Route::post('/mark-audited', [\App\Http\Controllers\AuditWorkbenchController::class, 'markAudited'])->name('mark-audited');
+    Route::post('/bulk-stamp', [\App\Http\Controllers\AuditWorkbenchController::class, 'bulkStampPeriod'])->name('bulk-stamp');
+    Route::post('/raise-query', [\App\Http\Controllers\AuditWorkbenchController::class, 'raiseQuery'])->name('raise-query');
+    Route::post('/resolve-query', [\App\Http\Controllers\AuditWorkbenchController::class, 'resolveQuery'])->name('resolve-query');
 });
 
 // Workbench Shared Modals (Hospital Contacts & Price List)

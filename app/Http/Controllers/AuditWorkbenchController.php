@@ -234,7 +234,7 @@ class AuditWorkbenchController extends Controller
 
         $responsibilities = self::$responsibilities;
 
-        return view('admin.audit.workbench', compact(
+        return view('admin.audit_workbench.index', compact(
             'startDate', 'endDate',
             'staffWithBills', 'allStaffBills', 'activeBanks', 'stamps',
             'cashierSummary', 'hmoClaims', 'payrollBreakdown',
@@ -3274,6 +3274,25 @@ class AuditWorkbenchController extends Controller
         return $this->formatPatientNameLink($patientId, $surname, $firstname, $othername, $fileNo);
     }
 
+    protected function applyAuditStatusFilter($query, $status, $table = null) {
+        if (!$status || $status === "all") return $query;
+        $prefix = $table ? $table . "." : "";
+
+        if ($status === "not_audited") {
+            $query->where(function($q) use ($prefix) {
+                $q->where($prefix . "is_audited", false)->orWhereNull($prefix . "is_audited");
+            });
+        } elseif ($status === "audited") {
+            $query->where($prefix . "is_audited", true);
+        } elseif ($status === "queried") {
+            $query->where($prefix . "is_queried", true)->whereNull($prefix . "query_resolved_at");
+        } elseif ($status === "resolved_audited") {
+            $query->where($prefix . "is_queried", true)->whereNotNull($prefix . "query_resolved_at")->where($prefix . "is_audited", true);
+        }
+
+        return $query;
+    }
+
     private function formatStaffNameThree($user) {
         if (!$user) return 'System';
         $names = [];
@@ -3648,11 +3667,708 @@ class AuditWorkbenchController extends Controller
             ->where('product_id', $request->product_id)
             ->first();
             
-        if ($stock) {
-            $stock->current_quantity = $request->physical_value;
-            $stock->save();
+        return response()->json(['success' => true, 'message' => 'Physical count saved and variance recorded.']);
+    }
+
+    // ==========================================
+    // NEW AUDIT ZONE METHODS
+    // ==========================================
+
+    public function prescriptionAudit(Request $request)
+    {
+        $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date) : now()->startOfDay();
+        $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : now()->endOfDay();
+        $zoneKey = 'prescriptions';
+
+        $query = \App\Models\ProductRequest::with(['patient.user', 'product', 'user', 'auditor', 'querier', 'queryResolver'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc');
+        $query = $this->applyAuditStatusFilter($query, $request->audit_status);
+        $prescriptions = $query->paginate(20);
+
+        return view('admin.audit_workbench.zones.prescriptions', compact('prescriptions', 'startDate', 'endDate', 'zoneKey'));
+    }
+
+    public function labPriceVerification(Request $request)
+    {
+        $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date) : now()->startOfDay();
+        $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : now()->endOfDay();
+        $zoneKey = 'lab_verification';
+
+        $query = \App\Models\LabServiceRequest::with(['patient.user', 'service', 'user', 'investigationType', 'auditor', 'querier', 'queryResolver'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc');
+        $query = $this->applyAuditStatusFilter($query, $request->audit_status);
+        $labRequests = $query->paginate(20);
+
+        return view('admin.audit_workbench.zones.lab_verification', compact('labRequests', 'startDate', 'endDate', 'zoneKey'));
+    }
+
+    public function imagingPriceVerification(Request $request)
+    {
+        $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date) : now()->startOfDay();
+        $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : now()->endOfDay();
+        $zoneKey = 'imaging_verification';
+
+        $query = \App\Models\ImagingServiceRequest::with(['patient.user', 'service', 'user', 'auditor', 'querier', 'queryResolver'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc');
+        $query = $this->applyAuditStatusFilter($query, $request->audit_status);
+        $imagingRequests = $query->paginate(20);
+
+        return view('admin.audit_workbench.zones.imaging_verification', compact('imagingRequests', 'startDate', 'endDate', 'zoneKey'));
+    }
+
+    public function procedureAudit(Request $request)
+    {
+        $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date) : now()->startOfDay();
+        $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : now()->endOfDay();
+        $zoneKey = 'procedures';
+
+        $query = \App\Models\PatientProcedure::with(['patient.user', 'procedure', 'user', 'auditor', 'querier', 'queryResolver'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc');
+        $query = $this->applyAuditStatusFilter($query, $request->audit_status);
+        $procedures = $query->paginate(20);
+
+        return view('admin.audit_workbench.zones.procedures', compact('procedures', 'startDate', 'endDate', 'zoneKey'));
+    }
+
+    public function stockUtilizationAudit(Request $request)
+    {
+        $stores = \App\Models\Store::active()->orderBy('store_name')->get();
+        $categories = \App\Models\ProductCategory::orderBy('category_name')->get();
+        return view('admin.audit_workbench.zones.stock_utilization', compact('stores', 'categories'));
+    }
+
+    public function stockUtilizationData(Request $request)
+    {
+        $subquery = \App\Models\StockBatchTransaction::from('stock_batch_transactions as t2')
+            ->selectRaw('SUM(CASE WHEN t2.type IN ("in", "transfer_in", "return", "req_return") THEN t2.qty WHEN t2.type IN ("out", "transfer_out", "expired", "damaged", "po_return") THEN -t2.qty WHEN t2.type = "adjustment" AND t2.notes LIKE "Positive%" THEN t2.qty WHEN t2.type = "adjustment" AND t2.notes NOT LIKE "Positive%" THEN -t2.qty ELSE 0 END)')
+            ->join('stock_batches as sb2', 'sb2.id', '=', 't2.stock_batch_id')
+            ->whereColumn('sb2.product_id', 'stock_batches.product_id')
+            ->whereColumn('sb2.store_id', 'stock_batches.store_id')
+            ->where(function($q) {
+                $q->whereColumn('t2.created_at', '<', 'stock_batch_transactions.created_at')
+                  ->orWhere(function($q2) {
+                      $q2->whereColumn('t2.created_at', '=', 'stock_batch_transactions.created_at')
+                         ->whereColumn('t2.id', '<=', 'stock_batch_transactions.id');
+                  });
+            });
+
+        $query = \App\Models\StockBatchTransaction::select('stock_batch_transactions.*')
+            ->join('stock_batches', 'stock_batches.id', '=', 'stock_batch_transactions.stock_batch_id')
+            ->with(['stockBatch.product.category', 'stockBatch.product.packagings', 'performer', 'reference', 'auditor', 'querier', 'queryResolver'])
+            ->addSelect([
+                'product_running_balance' => $subquery
+            ]);
+        $query = $this->applyAuditStatusFilter($query, $request->audit_status, 'stock_batch_transactions');
+
+        if ($request->filled('store_id')) {
+            $query->where('stock_batches.store_id', $request->store_id);
         }
 
-        return response()->json(['success' => true, 'message' => 'Physical count saved and variance recorded.']);
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('stock_batch_transactions.created_at', [
+                \Carbon\Carbon::parse($request->start_date)->startOfDay(),
+                \Carbon\Carbon::parse($request->end_date)->endOfDay()
+            ]);
+        }
+
+        if ($request->filled('transaction_type')) {
+            $query->where('type', $request->transaction_type);
+        }
+
+        if ($request->filled('product_id')) {
+            $query->whereHas('stockBatch', function ($q) use ($request) {
+                $q->where('product_id', $request->product_id);
+            });
+        }
+
+        if ($request->filled('category_id')) {
+            $query->whereHas('stockBatch.product', function ($q) use ($request) {
+                $q->where('category_id', $request->category_id);
+            });
+        }
+
+        if ($request->filled('performer_id')) {
+            $query->where('performed_by', $request->performer_id);
+        }
+
+        // Summary Stats
+        $statsQuery = clone $query;
+        $statsQuery->setEagerLoads([]);
+        $statsQuery->getQuery()->columns = null;
+        $statsQuery->getQuery()->bindings['select'] = [];
+        $typeStats = $statsQuery->selectRaw('type, sum(qty) as total_qty, count(distinct stock_batches.product_id) as unique_products')
+                                ->groupBy('type')
+                                ->get();
+
+        $totalIn = 0;
+        $totalOut = 0;
+        $totalDamaged = 0;
+        $uniqueProducts = 0;
+
+        foreach ($typeStats as $stat) {
+            $qty = $stat->total_qty;
+            if (in_array($stat->type, ['in', 'transfer_in', 'return', 'req_return'])) {
+                $totalIn += $qty;
+            } elseif (in_array($stat->type, ['out', 'transfer_out', 'po_return'])) {
+                $totalOut += $qty;
+            } elseif (in_array($stat->type, ['expired', 'damaged'])) {
+                $totalDamaged += $qty;
+                $totalOut += $qty;
+            }
+            $uniqueProducts = max($uniqueProducts, $stat->unique_products);
+        }
+        
+        $upQuery = clone $query;
+        $upQuery->setEagerLoads([]);
+        $upQuery->getQuery()->columns = null;
+        $upQuery->getQuery()->bindings['select'] = [];
+        $uniqueProducts = $upQuery->distinct('stock_batches.product_id')->count('stock_batches.product_id');
+
+        $summary = [
+            'mode' => $request->filled('product_id') ? 'product' : 'generic',
+            'total_in' => $totalIn,
+            'total_out' => $totalOut,
+            'total_damaged' => $totalDamaged,
+            'unique_products' => $uniqueProducts,
+            'base_unit' => '',
+            'total_in_formatted' => $totalIn,
+            'total_out_formatted' => $totalOut,
+            'total_in_bulk' => '',
+            'total_out_bulk' => '',
+            'opening_balance_formatted' => '',
+            'opening_balance_bulk' => '',
+            'closing_balance_formatted' => '',
+            'closing_balance_bulk' => ''
+        ];
+
+        if ($request->filled('product_id')) {
+            $product = \App\Models\Product::with('packagings')->find($request->product_id);
+            if ($product) {
+                $summary['base_unit'] = $product->baseQtyLabel();
+                $summary['total_in_formatted'] = $product->formatQty($totalIn);
+                $summary['total_out_formatted'] = $product->formatQty($totalOut);
+                $summary['total_in_bulk'] = $product->formatBulkQty($totalIn);
+                $summary['total_out_bulk'] = $product->formatBulkQty($totalOut);
+            }
+
+            $baseBalQuery = \App\Models\StockBatchTransaction::whereHas('stockBatch', function($q) use($request) {
+                $q->where('product_id', $request->product_id);
+                if ($request->filled('store_id')) {
+                    $q->where('store_id', $request->store_id);
+                }
+            });
+            $rawSum = 'SUM(CASE WHEN type IN ("in", "transfer_in", "return", "req_return") THEN qty WHEN type IN ("out", "transfer_out", "expired", "damaged", "po_return") THEN -qty WHEN type = "adjustment" AND notes LIKE "Positive%" THEN qty WHEN type = "adjustment" AND notes NOT LIKE "Positive%" THEN -qty ELSE 0 END) as aggregate';
+            
+            $closing = (clone $baseBalQuery)->selectRaw($rawSum)->value('aggregate') ?? 0;
+            $summary['closing_balance'] = $closing;
+            
+            if ($request->filled('start_date')) {
+                $opening = (clone $baseBalQuery)
+                    ->where('created_at', '<', \Carbon\Carbon::parse($request->start_date)->startOfDay())
+                    ->selectRaw($rawSum)->value('aggregate') ?? 0;
+                $summary['opening_balance'] = $opening;
+            } else {
+                $summary['opening_balance'] = 0;
+            }
+            
+            if ($product) {
+                $summary['closing_balance_formatted'] = $product->formatQty($summary['closing_balance']);
+                $summary['closing_balance_bulk'] = $product->formatBulkQty($summary['closing_balance']);
+                $summary['opening_balance_formatted'] = $product->formatQty($summary['opening_balance']);
+                $summary['opening_balance_bulk'] = $product->formatBulkQty($summary['opening_balance']);
+            }
+        }
+
+        return \Yajra\DataTables\DataTables::of($query)
+            ->with('summary_stats', $summary)
+            ->filterColumn('performer.name', function($query, $keyword) {
+                $query->whereHas('performer', function($q) use ($keyword) {
+                    $q->where('firstname', 'like', "%{$keyword}%")
+                      ->orWhere('surname', 'like', "%{$keyword}%")
+                      ->orWhere('othername', 'like', "%{$keyword}%");
+                });
+            })
+            ->addIndexColumn()
+            ->editColumn('created_at', function ($t) {
+                $date = $t->created_at->format('M d, Y');
+                $time = $t->created_at->format('h:i A');
+                $human = $t->created_at->diffForHumans();
+                return '<div class="font-weight-bold">' . $date . '</div>' .
+                       '<small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $time . ' (' . $human . ')</small>';
+            })
+            ->editColumn('store', function ($t) {
+                return $t->stockBatch->store->store_name ?? 'N/A';
+            })
+            ->editColumn('product', function ($t) {
+                $productName = $t->stockBatch->product->product_name ?? 'N/A';
+                $productCode = $t->stockBatch->product->product_code ?? 'No Code';
+                $categoryName = $t->stockBatch->product->category->category_name ?? 'No Category';
+                return '<div class="font-weight-bold text-dark">' . $productName . '</div>' .
+                       '<div class="small mt-1"><span class="text-muted border-right pr-1 mr-1">Code: ' . $productCode . '</span>' .
+                       '<span class="text-info"><i class="mdi mdi-tag"></i> ' . $categoryName . '</span></div>';
+            })
+            ->editColumn('batch', function ($t) {
+                $batchNumber = $t->stockBatch->batch_number ?? 'N/A';
+                $expiryDate = $t->stockBatch->expiry_date;
+                $expiryHtml = '';
+                if ($expiryDate) {
+                    $exp = \Carbon\Carbon::parse($expiryDate);
+                    $expClass = $exp->isPast() ? 'text-danger font-weight-bold' : ($exp->diffInDays(now()) < 90 ? 'text-warning' : 'text-muted');
+                    $expiryHtml = '<div class="small mt-1"><span class="text-muted">Exp: </span><span class="' . $expClass . '">' . $exp->format('Y-m-d') . '</span></div>';
+                }
+                return '<div class="font-weight-bold">' . $batchNumber . '</div>' . $expiryHtml;
+            })
+            ->editColumn('type', function ($t) {
+                return '<span class="badge ' . $t->type_badge_class . '">' . $t->type_label . '</span>';
+            })
+            ->editColumn('qty', function ($t) {
+                $isOut = in_array($t->type, ['out', 'transfer_out', 'expired', 'damaged', 'po_return']);
+                $isNegAdj = $t->type === 'adjustment' && !str_starts_with($t->notes ?? '', 'Positive');
+                $sign = ($isOut || $isNegAdj) ? '-' : '+';
+                $badgeClass = ($isOut || $isNegAdj) ? 'badge-danger' : 'badge-success';
+                $signedQty = ($isOut || $isNegAdj) ? -abs($t->qty) : abs($t->qty);
+                $product = $t->stockBatch->product;
+                
+                $qtyFormatted = $product ? $product->formatQty(abs($t->qty)) : abs($t->qty);
+                $qtyBulk = $product ? $product->formatBulkQty(abs($t->qty)) : '';
+                
+                $html = '<span class="badge ' . $badgeClass . '" style="font-size: 1.1em; padding: 0.4em 0.6em;">' . $sign . $qtyFormatted . '</span>';
+                if ($qtyBulk) {
+                    $html .= '<div class="small text-muted mt-1">' . $qtyBulk . '</div>';
+                }
+                
+                if (isset($t->product_running_balance) || isset($t->balance_after)) {
+                    $html .= '<hr class="my-2" style="border-color: #eee;">';
+                    $html .= '<div class="small text-nowrap" style="line-height: 1.4;">';
+                    
+                    if (isset($t->product_running_balance)) {
+                        $totalAfter = $t->product_running_balance;
+                        $totalBefore = $totalAfter - $signedQty;
+                        
+                        $tbf = $product ? $product->formatQty($totalBefore) : $totalBefore;
+                        $taf = $product ? $product->formatQty($totalAfter) : $totalAfter;
+                        $taBulk = $product ? $product->formatBulkQty($totalAfter) : '';
+
+                        $html .= '<div class="text-dark mb-2" title="Total inventory across all batches">
+                                    <i class="mdi mdi-layers text-primary mr-1"></i> <strong>Overall Stock</strong>
+                                    <div class="text-muted" style="margin-left: 1.25rem;">
+                                        ' . $tbf . ' <i class="mdi mdi-arrow-right mx-1" style="font-size: 10px;"></i> <strong class="text-dark">' . $taf . '</strong>
+                                    </div>';
+                        if ($taBulk) {
+                            $html .= '<div class="text-muted" style="margin-left: 1.25rem; font-size: 0.85em;">≈ ' . $taBulk . '</div>';
+                        }
+                        $html .= '</div>';
+                    }
+                    
+                    if (isset($t->balance_after)) {
+                        $batchAfter = $t->balance_after;
+                        $batchBefore = $batchAfter - $signedQty;
+                        
+                        $bbf = $product ? $product->formatQty($batchBefore) : $batchBefore;
+                        $baf = $product ? $product->formatQty($batchAfter) : $batchAfter;
+
+                        $html .= '<div class="text-dark" title="Inventory in this specific batch">
+                                    <i class="mdi mdi-package-variant-closed text-muted mr-1"></i> <strong>Batch Stock</strong>
+                                    <div class="text-muted" style="margin-left: 1.25rem;">
+                                        ' . $bbf . ' <i class="mdi mdi-arrow-right mx-1" style="font-size: 10px;"></i> <strong class="text-dark">' . $baf . '</strong>
+                                    </div>
+                                  </div>';
+                    }
+                    
+                    $html .= '</div>';
+                }
+                
+                return $html;
+            })
+            ->editColumn('performer', function ($t) {
+                $name = $t->performer->name ?? 'System';
+                $idLabel = $t->performer ? 'ID: #' . $t->performer->id : 'Automated';
+                return '<div class="font-weight-bold">' . $name . '</div><small class="text-muted">' . $idLabel . '</small>';
+            })
+            ->editColumn('reference', function ($t) {
+                if ($t->reference_type === \App\Models\StockUtilization::class && $t->reference) {
+                    $u = $t->reference;
+                    if ($u->utilization_type === 'patient') {
+                        $pName = $u->patient ? userfullname($u->patient->user_id) : 'Patient';
+                        $fileNo = $u->patient && $u->patient->file_no ? " [{$u->patient->file_no}]" : '';
+                        $billingStatus = $u->is_billed ? ' (Billed)' : ' (Unbilled)';
+                        return "Stock Utilization (Patient): {$pName}{$fileNo}{$billingStatus} - {$u->reason}";
+                    }
+                    return "Stock Utilization (Internal): {$u->reason}";
+                }
+
+                if (str_contains((string)$t->reference_type, 'MedicationAdministration') && $t->reference) {
+                    $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
+                    $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+                    return "Medication Administered to {$pName}{$fileNo} - Dose: " . ($t->reference->dose ?? 'N/A');
+                }
+
+                if (str_contains((string)$t->reference_type, 'InjectionAdministration') && $t->reference) {
+                    $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
+                    $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+                    return "Injection Administered to {$pName}{$fileNo} - Dose: " . ($t->reference->dose ?? 'N/A');
+                }
+
+                if (str_contains((string)$t->reference_type, 'VaccineAdministration') && $t->reference) {
+                    $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
+                    $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+                    return "Vaccine Administered to {$pName}{$fileNo}";
+                }
+
+                if (str_contains((string)$t->reference_type, 'ProductRequest') && $t->reference) {
+                    $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
+                    $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+                    return "Pharmacy Dispense (Prescription) for {$pName}{$fileNo}";
+                }
+
+                if (str_contains((string)$t->reference_type, 'ProductOrServiceRequest') && $t->reference) {
+                    $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
+                    $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+                    return "Consumable Billing/Direct Dispense for {$pName}{$fileNo}";
+                }
+
+                if (str_contains((string)$t->reference_type, 'StoreRequisitionReturn') && $t->reference) {
+                    $retName = $t->reference->return_number ?? 'Return #' . $t->reference->id;
+                    if ($t->is_inbound) {
+                        return "Stock Returned to Store: " . $retName;
+                    } else {
+                        return "Requisition Return Sent: " . $retName;
+                    }
+                }
+
+                if (str_contains((string)$t->reference_type, 'StoreRequisition') && $t->reference) {
+                    $reqName = $t->reference->requisition_number ?? 'Requisition #' . $t->reference->id;
+                    if ($t->is_inbound) {
+                        return "Requisition Fulfillment Received: " . $reqName;
+                    } else {
+                        return "Dispatched for Requisition: " . $reqName;
+                    }
+                }
+
+                if (!$t->reference_type) {
+                    if ($t->type === 'in') {
+                        return $t->notes ?? "Initial Stock / Manual Entry";
+                    } elseif ($t->type === 'adjustment') {
+                        return "Manual Stock Adjustment" . ($t->notes ? ": {$t->notes}" : "");
+                    }
+                }
+
+                return $t->notes ?? $t->type_label;
+            })
+            ->addColumn('action', function($t) {
+                $html = '<div class="d-flex justify-content-end gap-1">';
+                if ($t->is_audited) {
+                    $auditor = optional($t->auditor)->firstname ?? 'System';
+                    $html .= '<button class="btn btn-sm btn-success audit-tick-btn" disabled title="Audited by '.$auditor.' on '.$t->audited_at.'"><i class="mdi mdi-check-decagram"></i> Audited</button>';
+                } elseif ($t->is_queried && is_null($t->query_resolved_at)) {
+                    $html .= '<button class="btn btn-sm btn-warning text-dark font-weight-bold" onclick="openResolveQueryModal(\'StockBatchTransaction\', ' . $t->id . ')" title="Queried: ' . htmlspecialchars($t->query_notes) . '"><i class="mdi mdi-alert-circle"></i> Resolve Query</button>';
+                } else {
+                    $html .= '<button class="btn btn-sm btn-outline-warning" onclick="openRaiseQueryModal(\'StockBatchTransaction\', ' . $t->id . ')" title="Raise Query"><i class="mdi mdi-help-circle-outline"></i></button>';
+                    $html .= '<button class="btn btn-sm btn-outline-success audit-tick-btn" onclick="markAudited(\'StockBatchTransaction\', ' . $t->id . ', this)"><i class="mdi mdi-check-circle-outline"></i> Mark Audited</button>';
+                }
+                $html .= '</div>';
+                return $html;
+            })
+            ->setRowClass(function ($t) {
+                return ($t->is_queried && is_null($t->query_resolved_at)) ? 'table-warning' : '';
+            })
+            ->rawColumns(['created_at', 'product', 'batch', 'type', 'qty', 'performer', 'reference', 'action'])
+            ->make(true);
+    }
+
+
+
+    public function receivablesAudit(Request $request)
+    {
+        $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date) : now()->startOfDay();
+        $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : now()->endOfDay();
+        $zoneKey = 'receivables';
+
+        // Staff Receivables
+        $staffQuery = \App\Models\StaffBill::with(['staff.user', 'patient.user', 'journalEntry', 'auditor', 'querier', 'queryResolver'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc');
+        $staffQuery = $this->applyAuditStatusFilter($staffQuery, $request->audit_status);
+        $staffBills = $staffQuery->paginate(15, ['*'], 'staff_page');
+            
+        // Org Receivables
+        $orgQuery = \App\Models\OrganizationBill::with(['organization', 'patient.user', 'journalEntry', 'auditor', 'querier', 'queryResolver'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc');
+        $orgQuery = $this->applyAuditStatusFilter($orgQuery, $request->audit_status);
+        $orgBills = $orgQuery->paginate(15, ['*'], 'org_page');
+
+        return view('admin.audit_workbench.zones.receivables', compact('staffBills', 'orgBills', 'startDate', 'endDate', 'zoneKey'));
+    }
+
+    public function wardDischargeAudit(Request $request)
+    {
+        $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date) : now()->startOfDay();
+        $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date) : now()->endOfDay();
+        $zoneKey = 'ward_discharge';
+
+        $query = \App\Models\AdmissionRequest::with(['patient.user', 'ward', 'bed', 'auditor', 'querier', 'queryResolver'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereIn('status', ['discharged', 'cleared', 'admitted'])
+            ->orderBy('created_at', 'desc');
+        $query = $this->applyAuditStatusFilter($query, $request->audit_status);
+        $admissions = $query->paginate(20);
+
+        return view('admin.audit_workbench.zones.ward_discharge', compact('admissions', 'startDate', 'endDate', 'zoneKey'));
+    }
+
+    public function cashAndBillingAudit(Request $request)
+    {
+        return view('admin.audit_workbench.zones.cash_and_billing');
+    }
+
+    public function hmoClaimsAudit(Request $request)
+    {
+        return view('admin.audit_workbench.zones.hmo_claims');
+    }
+
+    public function expensesPayrollAudit(Request $request)
+    {
+        return view('admin.audit_workbench.zones.expenses_payroll');
+    }
+
+    public function clinicsFlowAudit(Request $request)
+    {
+        return view('admin.audit_workbench.zones.clinics_flow');
+    }
+
+    public function maternityMorgueAudit(Request $request)
+    {
+        return view('admin.audit_workbench.zones.maternity_morgue');
+    }
+
+    public function customReport(Request $request)
+    {
+        // Dynamic reporting logic based on request filters
+        $data = []; // Fetch based on $request filters
+        return view('admin.audit_workbench.zones.custom_report', compact('data'));
+    }
+
+    public function overallReport(Request $request)
+    {
+        // Aggregate data for billing department
+        $totalCollections = \App\Models\Payment::where('status', 'settled')->sum('total');
+        $totalReceivables = \App\Models\StaffBill::sum('outstanding_amount') + \App\Models\OrganizationBill::sum('outstanding_amount');
+        
+        return view('admin.audit_workbench.zones.overall_report', compact('totalCollections', 'totalReceivables'));
+    }
+
+    public function markAudited(Request $request)
+    {
+        $request->validate([
+            'model_type' => 'required|string',
+            'model_id' => 'required|integer'
+        ]);
+
+        $modelClass = '\\App\\Models\\' . $request->model_type;
+
+        if (class_exists($modelClass)) {
+            $record = $modelClass::find($request->model_id);
+            if ($record) {
+                // Check if the record has an active query
+                if (\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'is_queried')) {
+                    if ($record->is_queried && is_null($record->query_resolved_at)) {
+                        return response()->json(['success' => false, 'message' => 'Cannot audit this record because it has an unresolved active query.'], 400);
+                    }
+                }
+
+                if (\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'is_audited')) {
+                    $record->is_audited = true;
+                    $record->audited_by = auth()->id();
+                    $record->audited_at = now();
+                    $record->save();
+
+                    return response()->json(['success' => true, 'message' => 'Marked as audited.']);
+                }
+            }
+        }
+
+        return response()->json(['success' => false, 'message' => 'Failed to mark as audited.'], 400);
+    }
+
+    public function raiseQuery(Request $request)
+    {
+        $request->validate([
+            'model_type' => 'required|string',
+            'model_id' => 'required|integer',
+            'query_notes' => 'required|string'
+        ]);
+
+        $modelClass = '\\App\\Models\\' . $request->model_type;
+
+        if (class_exists($modelClass)) {
+            $record = $modelClass::find($request->model_id);
+            if ($record && \Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'is_queried')) {
+                $record->is_queried = true;
+                $record->queried_by = auth()->id();
+                $record->queried_at = now();
+                $record->query_notes = $request->query_notes;
+                $record->save();
+
+                return response()->json(['success' => true, 'message' => 'Audit query raised successfully.']);
+            }
+        }
+
+        return response()->json(['success' => false, 'message' => 'Failed to raise query.'], 400);
+    }
+
+    public function resolveQuery(Request $request)
+    {
+        $request->validate([
+            'model_type' => 'required|string',
+            'model_id' => 'required|integer',
+            'resolution_notes' => 'required|string'
+        ]);
+
+        $modelClass = '\\App\\Models\\' . $request->model_type;
+
+        if (class_exists($modelClass)) {
+            $record = $modelClass::find($request->model_id);
+            if ($record && \Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'is_queried')) {
+                $record->query_resolved_by = auth()->id();
+                $record->query_resolved_at = now();
+                $record->query_resolution_notes = $request->resolution_notes;
+                $record->save();
+
+                return response()->json(['success' => true, 'message' => 'Audit query resolved successfully.']);
+            }
+        }
+
+        return response()->json(['success' => false, 'message' => 'Failed to resolve query.'], 400);
+    }
+
+    public function bulkStampPeriod(Request $request)
+    {
+        if (!auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) && !auth()->user()->hasRole('AUDITOR')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'zone_key' => 'required|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $startDate = \Carbon\Carbon::parse($request->start_date);
+        $endDate = \Carbon\Carbon::parse($request->end_date);
+
+        // Map zone_key to Model and optionally a date column if different from created_at
+        $zoneMapping = [
+            'prescriptions' => ['model' => \App\Models\ProductRequest::class, 'date_col' => 'created_at'],
+            'lab_verification' => ['model' => \App\Models\LabServiceRequest::class, 'date_col' => 'created_at'],
+            'imaging_verification' => ['model' => \App\Models\ImagingServiceRequest::class, 'date_col' => 'created_at'],
+            'procedures' => ['model' => \App\Models\PatientProcedure::class, 'date_col' => 'created_at'],
+            'stock_utilization' => ['model' => \App\Models\StockBatchTransaction::class, 'date_col' => 'created_at'],
+            'shift_audit' => ['model' => \App\Models\NursingShift::class, 'date_col' => 'created_at'],
+        ];
+
+        $affectedRows = 0;
+
+        if (array_key_exists($request->zone_key, $zoneMapping)) {
+            $mapping = $zoneMapping[$request->zone_key];
+            $modelClass = $mapping['model'];
+            $dateCol = $mapping['date_col'];
+
+            // We update records that are NOT already audited, AND not actively queried
+            // An active query is when is_queried = 1 and query_resolved_at is NULL.
+            $query = $modelClass::whereBetween($dateCol, [$startDate, $endDate])
+                ->where(function($q) {
+                    $q->where('is_audited', false)->orWhereNull('is_audited');
+                })
+                ->where(function($q) {
+                    $q->where('is_queried', false)
+                      ->orWhereNull('is_queried')
+                      ->orWhereNotNull('query_resolved_at');
+                });
+                
+            $affectedRows = $query->update([
+                'is_audited' => true,
+                'audited_by' => auth()->id(),
+                'audited_at' => now()
+            ]);
+        } elseif ($request->zone_key === 'receivables') {
+            // Receivables spans two tables: Staff Bills and Organization Bills
+            $staffQuery = \App\Models\StaffBill::whereBetween('created_at', [$startDate, $endDate])
+                ->where(function($q) {
+                    $q->where('is_audited', false)->orWhereNull('is_audited');
+                })
+                ->where(function($q) {
+                    $q->where('is_queried', false)
+                      ->orWhereNull('is_queried')
+                      ->orWhereNotNull('query_resolved_at');
+                });
+            
+            $affectedStaff = $staffQuery->update([
+                'is_audited' => true,
+                'audited_by' => auth()->id(),
+                'audited_at' => now()
+            ]);
+
+            $orgQuery = \App\Models\OrganizationBill::whereBetween('created_at', [$startDate, $endDate])
+                ->where(function($q) {
+                    $q->where('is_audited', false)->orWhereNull('is_audited');
+                })
+                ->where(function($q) {
+                    $q->where('is_queried', false)
+                      ->orWhereNull('is_queried')
+                      ->orWhereNotNull('query_resolved_at');
+                });
+            
+            $affectedOrg = $orgQuery->update([
+                'is_audited' => true,
+                'audited_by' => auth()->id(),
+                'audited_at' => now()
+            ]);
+            
+            $affectedRows = $affectedStaff + $affectedOrg;
+        }
+
+        // Keep historical tracking record of the period stamp itself
+        $stamp = \App\Models\AuditStamp::create([
+            'user_id' => auth()->id(),
+            'responsibility_key' => $request->zone_key,
+            'from_date' => $startDate,
+            'to_date' => $endDate,
+            'status' => 'approved',
+            'notes' => $request->notes,
+            'stamped_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Bulk audit stamp applied. $affectedRows records were marked as audited.",
+        ]);
+    }
+
+    public function shiftAudit(Request $request)
+    {
+        $query = \App\Models\NursingShift::with(['user', 'auditor', 'querier', 'queryResolver'])
+            ->where('context', 'billing')
+            ->orderBy('created_at', 'desc');
+        $query = $this->applyAuditStatusFilter($query, $request->audit_status);
+        $shifts = $query->paginate(20);
+            
+        return view('admin.audit_workbench.zones.shift_audit', compact('shifts'));
+    }
+
+    public function staffDeductions(Request $request)
+    {
+        // Fetch aggregated deductions per staff
+        $deductions = \App\Models\StaffBill::with('staff')
+            ->selectRaw('staff_user_id, sum(outstanding_amount) as total_outstanding, sum(total_amount - outstanding_amount) as total_paid')
+            ->groupBy('staff_user_id')
+            ->paginate(20);
+            
+        return view('admin.audit_workbench.zones.staff_deductions', compact('deductions'));
     }
 }
