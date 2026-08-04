@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use \App\Traits\WorkbenchAuditable;
+
+class OrganizationBill extends Model
+{
+    use HasFactory;
+    use WorkbenchAuditable;
+
+    protected $table = 'organization_bills';
+
+    protected $fillable = [
+        'patient_id',
+        'organization_id',
+        'payment_id',
+        'total_amount',
+        'discount_amount',
+        'outstanding_amount',
+        'status',
+        'settlement_payment_id',
+        'settled_at',
+    ];
+
+    protected $casts = [
+        'settled_at' => 'datetime',
+        'total_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'outstanding_amount' => 'decimal:2',
+    ];
+
+    /**
+     * Get the patient receiving care.
+     */
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class, 'patient_id');
+    }
+
+    /**
+     * Get the organization responsible for the bill.
+     */
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class, 'organization_id');
+    }
+
+    /**
+     * Get the checkout payment record (original billing event).
+     */
+    public function checkoutPayment()
+    {
+        return $this->belongsTo(Payment::class, 'payment_id');
+    }
+
+    /**
+     * Get the settlement payment record (legacy single-settlement FK).
+     */
+    public function settlementPayment()
+    {
+        return $this->belongsTo(Payment::class, 'settlement_payment_id');
+    }
+
+    /**
+     * Get all settlement payments via the allocations pivot table.
+     */
+    public function payments()
+    {
+        return $this->belongsToMany(Payment::class, 'org_bill_pay_allocs', 'organization_bill_id', 'payment_id')
+            ->withPivot('amount_allocated', 'discount_allocated')
+            ->withTimestamps();
+    }
+}

@@ -518,6 +518,23 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/billing-workbench/patient/{id}/generate-statement', [\App\Http\Controllers\BillingWorkbenchController::class, 'generateStatement'])->name('billing.generate-statement');
         Route::get('/billing-workbench/print-deposit-receipt/{id}', [\App\Http\Controllers\BillingWorkbenchController::class, 'printDepositReceipt'])->name('billing.print-deposit-receipt');
         Route::get('/billing-workbench/staff-list', [\App\Http\Controllers\BillingWorkbenchController::class, 'getStaffList'])->name('billing.staff-list');
+        Route::get('/billing-workbench/organization-list', [\App\Http\Controllers\BillingWorkbenchController::class, 'getOrganizationList'])->name('billing.organization-list');
+        Route::get('/billing-workbench/patient/{id}/billing-defaults', [\App\Http\Controllers\BillingWorkbenchController::class, 'getPatientBillingDefaults'])->name('billing.patient-billing-defaults');
+
+        // Billing Shift Management
+        Route::post('/billing-workbench/start-shift', [\App\Http\Controllers\BillingWorkbenchController::class, 'startBillingShift'])->name('billing.start-shift');
+        Route::post('/billing-workbench/end-shift', [\App\Http\Controllers\BillingWorkbenchController::class, 'endBillingShift'])->name('billing.end-shift');
+        Route::get('/billing-workbench/active-shift', [\App\Http\Controllers\BillingWorkbenchController::class, 'getActiveBillingShift'])->name('billing.active-shift');
+
+        // Organization Admin CRUD
+        Route::get('/admin/organizations', [\App\Http\Controllers\OrganizationController::class, 'index'])->name('organizations.index');
+        Route::get('/admin/organizations/data', [\App\Http\Controllers\OrganizationController::class, 'data'])->name('organizations.data');
+        Route::post('/admin/organizations', [\App\Http\Controllers\OrganizationController::class, 'store'])->name('organizations.store');
+        Route::get('/admin/organizations/{organization}', [\App\Http\Controllers\OrganizationController::class, 'show'])->name('organizations.show');
+        Route::put('/admin/organizations/{organization}', [\App\Http\Controllers\OrganizationController::class, 'update'])->name('organizations.update');
+        Route::delete('/admin/organizations/{organization}', [\App\Http\Controllers\OrganizationController::class, 'destroy'])->name('organizations.destroy');
+        Route::get('/admin/organizations/{organization}/bills', [\App\Http\Controllers\OrganizationController::class, 'bills'])->name('organizations.bills');
+        Route::post('/admin/organizations/{organization}/settle', [\App\Http\Controllers\OrganizationController::class, 'settleBill'])->name('organizations.settle');
 
         // Shared Admission Module Routes
         Route::get('/admission-module/patient/{id}/admissions', [\App\Http\Controllers\AdmissionModuleController::class, 'getPatientAdmissions'])->name('admission-module.patient-admissions');
@@ -1162,6 +1179,7 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::post('/physical-stock/save', [\App\Http\Controllers\AuditWorkbenchController::class, 'savePhysicalCount'])->name('physical-stock.save');
     Route::get('/reports/{responsibility_key}', [\App\Http\Controllers\AuditWorkbenchController::class, 'showReport'])->name('reports.show');
     Route::get('/reports/{responsibility_key}/print', [\App\Http\Controllers\AuditWorkbenchController::class, 'printReport'])->name('reports.print');
+    
 });
 
 // Workbench Shared Modals (Hospital Contacts & Price List)

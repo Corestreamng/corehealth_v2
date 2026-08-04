@@ -408,6 +408,48 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label class="d-block">&nbsp;</label>
+                            <div class="form-check form-check-inline mt-2">
+                                <input class="form-check-input" type="checkbox" id="is_hmo_principal" name="is_hmo_principal" value="1" onchange="toggleHMOPrincipalSelect()" {{ old('is_hmo_principal', 1) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_hmo_principal">Is HMO Principal?</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group hmo-dependent-fields" style="display: none;">
+                            <label for="hmo_principal_id">Select HMO Principal</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-account-star"></i></span>
+                                <select name="hmo_principal_id" id="hmo_principal_id" class="form-control select2" style="width: 100%;">
+                                    <option value="">-- None --</option>
+                                    @foreach($hmo_principals ?? [] as $principal)
+                                        <option value="{{ $principal->id }}" {{ old('hmo_principal_id') == $principal->id ? 'selected' : '' }}>
+                                            {{ $principal->user->firstname }} {{ $principal->user->surname }} ({{ $principal->file_no }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group hmo-dependent-fields" style="display: none;">
+                            <label for="hmo_dependent_role">Dependent Role</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-account-group"></i></span>
+                                <select name="hmo_dependent_role" id="hmo_dependent_role" class="form-control">
+                                    <option value="">Select Role</option>
+                                    <option value="Spouse" {{ old('hmo_dependent_role') == 'Spouse' ? 'selected' : '' }}>Spouse</option>
+                                    <option value="Child" {{ old('hmo_dependent_role') == 'Child' ? 'selected' : '' }}>Child</option>
+                                    <option value="Other" {{ old('hmo_dependent_role') == 'Other' ? 'selected' : '' }}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Registration Fee (Optional) --}}
                 @if(isset($registrationServices) && $registrationServices->count()> 0)
                 <div class="row">
@@ -462,11 +504,31 @@
             }
         }
 
+        function toggleHMOPrincipalSelect() {
+            var isPrincipal = document.getElementById('is_hmo_principal').checked;
+            var dependentFields = document.querySelectorAll('.hmo-dependent-fields');
+            var principalSelect = document.getElementById('hmo_principal_id');
+            var dependentRole = document.getElementById('hmo_dependent_role');
+            
+            if (isPrincipal) {
+                dependentFields.forEach(el => el.style.display = 'none');
+                principalSelect.value = "";
+                if(jQuery().select2) {
+                    $('#hmo_principal_id').trigger('change');
+                }
+                dependentRole.value = "";
+            } else {
+                dependentFields.forEach(el => el.style.display = 'block');
+            }
+        }
+
         // Initialize on load
         document.addEventListener('DOMContentLoaded', function() {
             togglePrincipalSelect();
+            toggleHMOPrincipalSelect();
             if(jQuery().select2) {
                 $('#principal_id').select2();
+                $('#hmo_principal_id').select2();
             }
         });
     </script>

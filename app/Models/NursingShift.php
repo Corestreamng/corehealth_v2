@@ -35,6 +35,7 @@ class NursingShift extends Model implements Auditable
         'user_id',
         'ward_id',
         'shift_type',
+        'context', // nursing, billing, lab, general
         'started_at',
         'ended_at',
         'scheduled_end_at',
@@ -49,6 +50,8 @@ class NursingShift extends Model implements Auditable
         'injections_count',
         'immunizations_count',
         'bills_count',
+        'payments_count',
+        'total_collected',
         'patients_seen',
     ];
 
@@ -63,6 +66,8 @@ class NursingShift extends Model implements Auditable
         'injections_count' => 'integer',
         'immunizations_count' => 'integer',
         'bills_count' => 'integer',
+        'payments_count' => 'integer',
+        'total_collected' => 'decimal:2',
         'patients_seen' => 'integer',
     ];
 
@@ -114,6 +119,14 @@ class NursingShift extends Model implements Auditable
         return $this->hasOne(ShiftHandover::class, 'shift_id');
     }
 
+    /**
+     * Get all payments collected during this shift (for billing context).
+     */
+    public function shiftPayments()
+    {
+        return $this->hasMany(Payment::class, 'shift_id');
+    }
+
     // ========================================
     // Scopes
     // ========================================
@@ -137,6 +150,16 @@ class NursingShift extends Model implements Auditable
     public function scopeRecent($query, $hours = 24)
     {
         return $query->where('started_at', '>=', now()->subHours($hours));
+    }
+
+    public function scopeBilling($query)
+    {
+        return $query->where('context', 'billing');
+    }
+
+    public function scopeForContext($query, $context)
+    {
+        return $query->where('context', $context);
     }
 
     // ========================================
