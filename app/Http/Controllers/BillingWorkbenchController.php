@@ -56,6 +56,150 @@ class BillingWorkbenchController extends Controller
     }
 
     /**
+     * Get active organizations list for checkout selection
+     */
+    public function getOrganizationList()
+    {
+        $organizations = \App\Models\Organization::active()
+            ->orderBy('name')
+            ->get()
+            ->map(function ($org) {
+                return [
+                    'id' => $org->id,
+                    'name' => $org->name,
+                    'text' => $org->name,
+                    'outstanding' => $org->total_outstanding,
+                ];
+            })
+            ->values();
+
+        return response()->json($organizations);
+    }
+
+    /**
+     * Start a billing shift for the current user
+     */
+    public function startBillingShift(Request $request)
+    {
+        try {
+            $shift = \App\Models\NursingShift::startShift(Auth::id(), [
+                'shift_type' => $request->shift_type ?? \App\Models\NursingShift::determineShiftType(),
+                'ward_id' => null, // Billing staff don't have wards
+            ]);
+
+            // Set the context to 'billing'
+            $shift->update(['context' => 'billing']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Billing shift started successfully',
+                'shift' => [
+                    'id' => $shift->id,
+                    'shift_type' => $shift->shift_type,
+                    'shift_type_label' => $shift->shift_type_label,
+                    'started_at' => $shift->started_at->format('g:i A'),
+                    'scheduled_end_at' => $shift->scheduled_end_at->format('g:i A'),
+                    'status' => $shift->status,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to start billing shift: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * End the active billing shift for the current user
+     */
+    public function endBillingShift(Request $request)
+    {
+        try {
+            $shift = \App\Models\NursingShift::forUser(Auth::id())
+                ->active()
+                ->forContext('billing')
+                ->first();
+
+            if (!$shift) {
+                return response()->json(['success' => false, 'message' => 'No active billing shift found'], 404);
+            }
+
+            $shift->endShift(false);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Billing shift ended successfully',
+                'shift' => [
+                    'id' => $shift->id,
+                    'duration' => $shift->duration,
+                    'payments_count' => $shift->payments_count,
+                    'total_collected' => number_format($shift->total_collected, 2),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to end billing shift: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get the active billing shift status for the current user
+     */
+    public function getActiveBillingShift()
+    {
+        $shift = \App\Models\NursingShift::forUser(Auth::id())
+            ->active()
+            ->forContext('billing')
+            ->first();
+
+        if (!$shift) {
+            return response()->json(['active' => false]);
+        }
+
+        return response()->json([
+            'active' => true,
+            'shift' => [
+                'id' => $shift->id,
+                'shift_type' => $shift->shift_type,
+                'shift_type_label' => $shift->shift_type_label,
+                'started_at' => $shift->started_at->format('g:i A'),
+                'scheduled_end_at' => $shift->scheduled_end_at->format('g:i A'),
+                'elapsed_seconds' => $shift->elapsed_seconds,
+                'remaining_seconds' => $shift->remaining_seconds,
+                'payments_count' => $shift->payments_count,
+                'total_collected' => number_format($shift->total_collected, 2),
+                'status' => $shift->status,
+            ],
+        ]);
+    }
+
+    /**
+     * Get patient's default billing preferences (for auto-selecting payment method)
+     */
+    public function getPatientBillingDefaults($patientId)
+    {
+        $patient = Patient::find($patientId);
+        if (!$patient || !$patient->default_billing_mode) {
+            return response()->json(['has_default' => false]);
+        }
+
+        $defaultName = null;
+        if ($patient->default_billing_mode === 'BILL_TO_STAFF' && $patient->default_billing_id) {
+            $staff = \App\Models\User::find($patient->default_billing_id);
+            $defaultName = $staff ? trim($staff->surname . ' ' . $staff->firstname) : null;
+        } elseif ($patient->default_billing_mode === 'BILL_TO_ORGANIZATION' && $patient->default_billing_id) {
+            $org = \App\Models\Organization::find($patient->default_billing_id);
+            $defaultName = $org ? $org->name : null;
+        }
+
+        return response()->json([
+            'has_default' => true,
+            'mode' => $patient->default_billing_mode,
+            'billing_id' => $patient->default_billing_id,
+            'billing_name' => $defaultName,
+        ]);
+    }
+
+    /**
      * Search for patients (autocomplete)
      */
     public function searchPatients(Request $request)
@@ -828,6 +972,12 @@ class BillingWorkbenchController extends Controller
                 $paymentTotal = 0 - $total;
             }
 
+            // Link payment to active billing shift (if billing shift is active for this cashier)
+            $activeShift = \App\Models\NursingShift::forUser(Auth::id())
+                ->active()
+                ->forContext('billing')
+                ->first();
+
             // Create payment entry
             $payment = Payment::create([
                 'payment_type' => $paymentType,
@@ -838,13 +988,33 @@ class BillingWorkbenchController extends Controller
                 'reference_no' => $data['reference_no'],
                 'user_id' => Auth::id(),
                 'patient_id' => $patient->id,
+                'shift_id' => $activeShift?->id,
             ]);
+
+            // Update shift counters if we have an active billing shift
+            if ($activeShift) {
+                $activeShift->increment('payments_count');
+                $activeShift->increment('total_collected', abs($paymentTotal));
+            }
 
             // Create Staff Bill if payment method is BILL_TO_STAFF
             if (($data['payment_method'] ?? null) === 'BILL_TO_STAFF') {
                 \App\Models\StaffBill::create([
                     'patient_id' => $patient->id,
                     'staff_user_id' => $data['staff_user_id'],
+                    'payment_id' => $payment->id,
+                    'total_amount' => $total,
+                    'discount_amount' => $totalDiscount,
+                    'outstanding_amount' => $total,
+                    'status' => 'pending_audit',
+                ]);
+            }
+
+            // Create Organization Bill if payment method is BILL_TO_ORGANIZATION
+            if (($data['payment_method'] ?? null) === 'BILL_TO_ORGANIZATION') {
+                \App\Models\OrganizationBill::create([
+                    'patient_id' => $patient->id,
+                    'organization_id' => $data['organization_id'],
                     'payment_id' => $payment->id,
                     'total_amount' => $total,
                     'discount_amount' => $totalDiscount,

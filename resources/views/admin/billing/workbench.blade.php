@@ -2965,8 +2965,220 @@
         background: #f8f9fa;
         border-radius: 0.5rem;
     }
+    /* Shift Lock Overlay */
+    .shift-lock-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.97);
+        z-index: 1040; /* Below Bootstrap modal */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
+    .shift-lock-overlay.modal-open-hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .shift-lock-content {
+        text-align: center;
+        max-width: 500px;
+        padding: 2rem;
+    }
+
+    .shift-lock-icon {
+        font-size: 5rem;
+        color: var(--hospital-primary);
+        margin-bottom: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.05); }
+    }
+
+    .shift-lock-content h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+    }
+
+    .shift-lock-nav-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        border-top: 1px solid #dee2e6;
+        padding-top: 1.5rem;
+    }
+
+    /* Floating Shift Control Button */
+    .shift-control-fab {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        cursor: move;
+    }
+
+    .shift-fab-timer {
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        font-family: monospace;
+    }
+
+    .shift-fab-timer.overdue {
+        background: var(--danger);
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .shift-fab-main .btn-shift-control {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--hospital-primary);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        font-size: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .shift-fab-main .btn-shift-control:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .shift-fab-main .btn-shift-control.active {
+        background: #28a745;
+    }
+
+    .shift-fab-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .shift-fab-actions .shift-action-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
 </style>
+
+<!-- Workbench Lock Overlay (shown when no active shift) -->
+<div id="shift-lock-overlay" class="shift-lock-overlay" style="display: none;">
+    <div class="shift-lock-content">
+        <div class="shift-lock-icon">
+            <i class="mdi mdi-clock-alert-outline"></i>
+        </div>
+        <h3>Start Your Shift</h3>
+        <p class="text-muted">Please start your billing shift to access the workbench and process payments.</p>
+        <button class="btn btn-lg btn-success" id="start-shift-btn">
+            <i class="mdi mdi-play-circle"></i> Start Shift
+        </button>
+        <div class="shift-lock-nav-buttons mt-4">
+            <a href="{{ route('home') }}" class="btn btn-outline-primary btn-lg me-2">
+                <i class="mdi mdi-home"></i> Home
+            </a>
+            <a href="{{ route('logout') }}"
+               onclick="event.preventDefault(); document.getElementById('shift-overlay-logout-form').submit();"
+               class="btn btn-outline-danger btn-lg">
+                <i class="mdi mdi-logout"></i> Logout
+            </a>
+            <form id="shift-overlay-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                @csrf
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Start Shift Modal -->
+<div class="modal fade" id="startShiftModal" tabindex="-1" aria-labelledby="startShiftModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="startShiftModalLabel">
+                    <i class="mdi mdi-play-circle"></i> Start Billing Shift
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label for="shift-type-select">Shift Type</label>
+                    <select class="form-control" id="shift-type-select">
+                        <option value="morning">Morning (8AM - 2PM)</option>
+                        <option value="afternoon">Afternoon (2PM - 8PM)</option>
+                        <option value="night">Night (8PM - 8AM)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirm-start-shift-btn">
+                    <i class="mdi mdi-play-circle"></i> Start Shift
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- End Shift Modal -->
+<div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="endShiftModalLabel">
+                    <i class="mdi mdi-stop-circle"></i> End Billing Shift
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to end your current billing shift?</p>
+                <div id="shift-summary-preview"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-end-shift-btn">
+                    <i class="mdi mdi-stop-circle"></i> End Shift
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Shift Control Button -->
+<div id="shift-control-fab" class="shift-control-fab" style="display: none;">
+    <div class="shift-fab-timer">
+        <span id="shift-elapsed-time">00:00</span>
+    </div>
+    <div class="shift-fab-main">
+        <button class="btn-shift-control" id="shift-fab-btn" title="End Shift">
+            <i class="mdi mdi-stop-circle"></i>
+        </button>
+    </div>
+</div>
 
 <div class="billing-workbench-container">
     <!-- Left Panel: Patient Search & Queue -->
@@ -3518,6 +3730,7 @@
                                             <option value="TRANSFER">Bank Transfer</option>
                                             <option value="MOBILE">Mobile Money</option>
                                             <option value="BILL_TO_STAFF">Bill to Staff</option>
+                                            <option value="BILL_TO_ORGANIZATION">Bill to Organization</option>
                                             <option value="ACCOUNT" id="account-payment-option" style="display: none;">Pay from Account Balance</option>
                                         </select>
                                         <small class="text-muted" id="account-payment-note" style="display: none;">
@@ -3528,6 +3741,12 @@
                                         <label><i class="mdi mdi-account-card-outline"></i> Select Staff to Bill</label>
                                         <select class="form-control select2" id="payment-staff-id" style="width: 100%;">
                                             <option value="">-- Select Staff --</option>
+                                        </select>
+                                    </div>
+                                    <div class="org-selection-section" id="org-selection-section" style="display: none;">
+                                        <label><i class="mdi mdi-domain"></i> Select Organization to Bill</label>
+                                        <select class="form-control select2" id="payment-organization-id" style="width: 100%;">
+                                            <option value="">-- Select Organization --</option>
                                         </select>
                                     </div>
                                     <div class="bank-selection-section" id="bank-selection-section" style="display: none;">
@@ -4294,6 +4513,10 @@ $(document).ready(function() {
     createVitalTooltip();
     loadBanks(); // Load available banks for payment
     loadStaffList(); // Load active staff members for billing
+    loadOrganizationList(); // Load active organizations for billing
+    
+    // Initialize Billing Shift Manager
+    BillingShiftManager.init();
 
     // Auto-select patient from URL query parameter (e.g., from Patient list workbench button)
     const urlParams = new URLSearchParams(window.location.search);
@@ -4387,18 +4610,27 @@ function initializeEventListeners() {
             $('#account-payment-note').show();
             $('#bank-selection-section').hide();
             $('#staff-selection-section').hide();
+            $('#org-selection-section').hide();
         } else if (['POS', 'TRANSFER', 'MOBILE'].includes(method)) {
             $('#account-payment-note').hide();
             $('#bank-selection-section').show();
             $('#staff-selection-section').hide();
+            $('#org-selection-section').hide();
         } else if (method === 'BILL_TO_STAFF') {
             $('#account-payment-note').hide();
             $('#bank-selection-section').hide();
             $('#staff-selection-section').show();
+            $('#org-selection-section').hide();
+        } else if (method === 'BILL_TO_ORGANIZATION') {
+            $('#account-payment-note').hide();
+            $('#bank-selection-section').hide();
+            $('#staff-selection-section').hide();
+            $('#org-selection-section').show();
         } else {
             $('#account-payment-note').hide();
             $('#bank-selection-section').hide();
             $('#staff-selection-section').hide();
+            $('#org-selection-section').hide();
         }
     });
 
@@ -6239,6 +6471,25 @@ $(document).on('click', '#process-payment-btn', function() {
         toastr.warning('Please select items to process payment');
         return;
     }
+    // Auto-select patient default billing preference if set
+    if (currentPatientData && currentPatientData.default_billing_mode) {
+        $('#payment-method').val(currentPatientData.default_billing_mode).trigger('change');
+        if (currentPatientData.default_billing_mode === 'BILL_TO_STAFF') {
+            $('#payment-staff-id').val(currentPatientData.default_billing_id).trigger('change');
+        } else if (currentPatientData.default_billing_mode === 'BILL_TO_ORGANIZATION') {
+            $('#payment-organization-id').val(currentPatientData.default_billing_id).trigger('change');
+        }
+        
+        // Add a small visual cue
+        if ($('#default-billing-cue').length === 0) {
+            $('.payment-method-section label').append(' <span id="default-billing-cue" class="badge bg-info text-white ms-2" style="font-size: 0.7rem;">Default</span>');
+        }
+    } else {
+        // Reset to default
+        $('#payment-method').val('CASH').trigger('change');
+        $('#default-billing-cue').remove();
+    }
+
     // Open the payment modal using Bootstrap 5 API
     const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
     paymentModal.show();
@@ -6288,6 +6539,15 @@ function processPayment() {
         }
     }
 
+    // Validate organization selection
+    if (paymentType === 'BILL_TO_ORGANIZATION') {
+        const orgId = $('#payment-organization-id').val();
+        if (!orgId) {
+            toastr.warning('Please select an organization to bill');
+            return;
+        }
+    }
+
     // Validate account balance payment (Credit facility: allow negative balance with warning)
     if (paymentType === 'ACCOUNT') {
         const balanceAfter = currentAccountBalance - totalPayable;
@@ -6324,6 +6584,7 @@ function processPayment() {
             payment_method: paymentType,
             bank_id: bankId || null,
             staff_user_id: paymentType === 'BILL_TO_STAFF' ? $('#payment-staff-id').val() : null,
+            organization_id: paymentType === 'BILL_TO_ORGANIZATION' ? $('#payment-organization-id').val() : null,
             reference_no: referenceNo,
             items: items
         },
@@ -8730,6 +8991,300 @@ function buildFamilyTabs(patient, items) {
         updatePaymentSummary();
     });
 }
+
+// =============================================
+// BILLING SHIFT MANAGEMENT MODULE
+// =============================================
+
+const BillingShiftManager = {
+    // State
+    activeShift: null,
+    shiftTimer: null,
+
+    // Routes
+    routes: {
+        check: '/billing-workbench/active-shift',
+        start: '/billing-workbench/start-shift',
+        end: '/billing-workbench/end-shift'
+    },
+
+    // Initialize
+    init: function() {
+        this.bindEvents();
+        this.checkShiftStatus();
+        this.makeFabDraggable();
+    },
+
+    // Bind event handlers
+    bindEvents: function() {
+        const self = this;
+
+        // Start shift button (on lock overlay)
+        $('#start-shift-btn').on('click', function() {
+            self.showStartShiftModal();
+        });
+
+        // Confirm start shift
+        $('#confirm-start-shift-btn').on('click', function() {
+            self.startShift();
+        });
+
+        // End shift button (FAB)
+        $('#shift-fab-btn').on('click', function() {
+            self.showEndShiftModal();
+        });
+
+        // Confirm end shift
+        $('#confirm-end-shift-btn').on('click', function() {
+            self.endShift();
+        });
+    },
+
+    // Check shift status on load
+    checkShiftStatus: function() {
+        const self = this;
+
+        $.ajax({
+            url: this.routes.check,
+            type: 'GET',
+            success: function(response) {
+                if (response.active) {
+                    self.activeShift = response.shift;
+                    self.showWorkbench();
+                    self.startShiftTimer();
+                } else {
+                    self.showLockOverlay();
+                }
+            },
+            error: function() {
+                // If check fails, show workbench anyway to prevent locking out on error
+                self.showWorkbench();
+            }
+        });
+    },
+
+    // Show lock overlay
+    showLockOverlay: function() {
+        $('#shift-lock-overlay').show();
+        $('#shift-control-fab').hide();
+    },
+
+    // Show workbench (unlock)
+    showWorkbench: function() {
+        $('#shift-lock-overlay').hide();
+        $('#shift-control-fab').show();
+    },
+
+    // Show start shift modal
+    showStartShiftModal: function() {
+        // Temporarily hide overlay so modal is visible clearly
+        $('#shift-lock-overlay').addClass('modal-open-hidden');
+        $('#startShiftModal').modal('show');
+    },
+
+    // Start shift action
+    startShift: function() {
+        const self = this;
+        const shiftType = $('#shift-type-select').val();
+        
+        $('#confirm-start-shift-btn').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Starting...');
+
+        $.ajax({
+            url: this.routes.start,
+            type: 'POST',
+            data: {
+                shift_type: shiftType,
+                _token: CSRF_TOKEN
+            },
+            success: function(response) {
+                $('#confirm-start-shift-btn').prop('disabled', false).html('<i class="mdi mdi-play-circle"></i> Start Shift');
+                
+                if (response.success) {
+                    toastr.success('Billing shift started successfully');
+                    $('#startShiftModal').modal('hide');
+                    $('#shift-lock-overlay').removeClass('modal-open-hidden');
+                    
+                    self.activeShift = response.shift;
+                    self.showWorkbench();
+                    self.startShiftTimer();
+                } else {
+                    toastr.error(response.message || 'Failed to start shift');
+                    $('#shift-lock-overlay').removeClass('modal-open-hidden');
+                }
+            },
+            error: function(xhr) {
+                $('#confirm-start-shift-btn').prop('disabled', false).html('<i class="mdi mdi-play-circle"></i> Start Shift');
+                toastr.error(xhr.responseJSON?.message || 'Failed to start shift');
+                $('#shift-lock-overlay').removeClass('modal-open-hidden');
+            }
+        });
+    },
+
+    // Show end shift modal
+    showEndShiftModal: function() {
+        $('#endShiftModal').modal('show');
+    },
+
+    // End shift action
+    endShift: function() {
+        const self = this;
+        
+        $('#confirm-end-shift-btn').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Ending...');
+
+        $.ajax({
+            url: this.routes.end,
+            type: 'POST',
+            data: {
+                _token: CSRF_TOKEN
+            },
+            success: function(response) {
+                $('#confirm-end-shift-btn').prop('disabled', false).html('<i class="mdi mdi-stop-circle"></i> End Shift');
+                
+                if (response.success) {
+                    toastr.success('Billing shift ended successfully');
+                    $('#endShiftModal').modal('hide');
+                    
+                    self.stopShiftTimer();
+                    self.activeShift = null;
+                    self.showLockOverlay();
+                    
+                    // Show a summary toast
+                    toastr.info(`Shift ended. Collected: ₦${response.shift.total_collected} from ${response.shift.payments_count} payments.`, 'Shift Summary', {timeOut: 10000});
+                } else {
+                    toastr.error(response.message || 'Failed to end shift');
+                }
+            },
+            error: function(xhr) {
+                $('#confirm-end-shift-btn').prop('disabled', false).html('<i class="mdi mdi-stop-circle"></i> End Shift');
+                toastr.error(xhr.responseJSON?.message || 'Failed to end shift');
+            }
+        });
+    },
+
+    // Shift Timer
+    startShiftTimer: function() {
+        const self = this;
+        this.stopShiftTimer(); // Clear any existing timer
+        
+        this.updateTimerDisplay(); // Initial update
+        
+        this.shiftTimer = setInterval(function() {
+            if (self.activeShift) {
+                // Increment elapsed seconds
+                if (typeof self.activeShift.elapsed_seconds !== 'undefined') {
+                    self.activeShift.elapsed_seconds++;
+                } else {
+                    self.activeShift.elapsed_seconds = 1;
+                }
+                self.updateTimerDisplay();
+            }
+        }, 1000);
+    },
+
+    stopShiftTimer: function() {
+        if (this.shiftTimer) {
+            clearInterval(this.shiftTimer);
+            this.shiftTimer = null;
+        }
+    },
+
+    updateTimerDisplay: function() {
+        if (!this.activeShift || typeof this.activeShift.elapsed_seconds === 'undefined') return;
+        
+        const totalSeconds = this.activeShift.elapsed_seconds;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        
+        const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        $('#shift-elapsed-time').text(formatted);
+        
+        // Highlight if overdue (> 12 hours)
+        if (hours >= 12) {
+            $('.shift-fab-timer').addClass('overdue');
+        } else {
+            $('.shift-fab-timer').removeClass('overdue');
+        }
+    },
+
+    // Make FAB draggable
+    makeFabDraggable: function() {
+        const fab = document.getElementById('shift-control-fab');
+        if (!fab) return;
+
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        let isClick = false;
+        let dragStartTime;
+
+        fab.addEventListener("touchstart", dragStart, {passive: false});
+        fab.addEventListener("touchend", dragEnd, {passive: false});
+        fab.addEventListener("touchmove", drag, {passive: false});
+        
+        fab.addEventListener("mousedown", dragStart, false);
+        document.addEventListener("mouseup", dragEnd, false);
+        document.addEventListener("mousemove", drag, false);
+
+        function dragStart(e) {
+            if (e.type === "touchstart") {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+
+            // Only start drag if not clicking a button directly
+            if (!e.target.closest('button')) {
+                isDragging = true;
+                isClick = true;
+                dragStartTime = new Date().getTime();
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            
+            // If dragging occurred for more than 200ms or moved significantly, prevent click
+            const dragDuration = new Date().getTime() - dragStartTime;
+            if (dragDuration > 200) {
+                isClick = false;
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                
+                isClick = false; // Moved, so it's not a click
+
+                if (e.type === "touchmove") {
+                    currentX = e.touches[0].clientX - initialX;
+                    currentY = e.touches[0].clientY - initialY;
+                } else {
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                }
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, fab);
+            }
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+        }
+    }
+};
 
 </script>
 

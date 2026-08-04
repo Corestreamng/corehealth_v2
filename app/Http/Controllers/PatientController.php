@@ -352,12 +352,14 @@ class PatientController extends Controller
             }
 
             $family_principals = Patient::with(['user'])->where('is_family_principal', 1)->get();
+            $hmo_principals = Patient::with(['user'])->where('is_hmo_principal', 1)->get();
 
             return view('admin.receptionist.new_patient')->with([
                 'all_patients' => $all_patients,
                 'hmos' => $hmos,
                 'registrationServices' => $registrationServices,
                 'family_principals' => $family_principals,
+                'hmo_principals' => $hmo_principals,
             ]);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -640,6 +642,15 @@ class PatientController extends Controller
                 // If patient is marked as principal, ensure they are not a beneficiary
                 if ($patient->is_family_principal) {
                     $patient->principal_id = null;
+                }
+
+                $patient->is_hmo_principal = $request->has('is_hmo_principal') ? 1 : 0;
+                $patient->hmo_principal_id = $request->hmo_principal_id ?? null;
+                $patient->hmo_dependent_role = $request->hmo_dependent_role ?? null;
+                // If marked as HMO principal, remove dependent fields
+                if ($patient->is_hmo_principal) {
+                    $patient->hmo_principal_id = null;
+                    $patient->hmo_dependent_role = null;
                 }
 
                 $patient->save();

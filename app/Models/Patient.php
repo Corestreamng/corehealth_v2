@@ -38,7 +38,13 @@ class Patient extends Model implements Auditable
         'dhis_consult_tracker_id',
         'dhis_consult_enrollment_id',
         'is_family_principal',
-        'principal_id'
+        'principal_id',
+        'default_billing_mode',
+        'default_billing_id',
+        'role',
+        'is_hmo_principal',
+        'hmo_principal_id',
+        'hmo_dependent_role',
     ];
 
     protected $casts = [
@@ -51,6 +57,16 @@ class Patient extends Model implements Auditable
     public function deathRecord()
     {
         return $this->hasOne(DeathRecord::class);
+    }
+
+    public function hmoPrincipal()
+    {
+        return $this->belongsTo(Patient::class, 'hmo_principal_id');
+    }
+
+    public function hmoDependents()
+    {
+        return $this->hasMany(Patient::class, 'hmo_principal_id');
     }
 
     public function morgueAdmission()
@@ -81,6 +97,38 @@ class Patient extends Model implements Auditable
     public function beneficiaries()
     {
         return $this->hasMany(Patient::class, 'principal_id');
+    }
+
+    /**
+     * Get the default billing organization (if default_billing_mode is BILL_TO_ORGANIZATION).
+     */
+    public function defaultBillingOrganization()
+    {
+        return $this->belongsTo(Organization::class, 'default_billing_id');
+    }
+
+    /**
+     * Get the default billing staff user (if default_billing_mode is BILL_TO_STAFF).
+     */
+    public function defaultBillingStaff()
+    {
+        return $this->belongsTo(User::class, 'default_billing_id');
+    }
+
+    /**
+     * Get all staff bills for this patient.
+     */
+    public function staffBills()
+    {
+        return $this->hasMany(StaffBill::class, 'patient_id');
+    }
+
+    /**
+     * Get all organization bills for this patient.
+     */
+    public function organizationBills()
+    {
+        return $this->hasMany(OrganizationBill::class, 'patient_id');
     }
 
     public function getFamilyUserIdsAttribute()

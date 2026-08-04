@@ -15,6 +15,7 @@ class Payment extends Model implements Auditable
         'reference_no', 'total', 'payment_type', 'payment_method', 'bank_id',
         'invoice_id', 'patient_id', 'user_id', 'hmo_id', 'total_discount',
         'journal_entry_id', // For linking to accounting journal entries
+        'shift_id', // For billing shift tracking
     ];
 
 
@@ -52,5 +53,29 @@ class Payment extends Model implements Auditable
     public function journalEntry()
     {
         return $this->belongsTo(Accounting\JournalEntry::class, 'journal_entry_id');
+    }
+
+    /**
+     * Get the billing shift this payment was made during.
+     */
+    public function shift()
+    {
+        return $this->belongsTo(NursingShift::class, 'shift_id');
+    }
+
+    /**
+     * Get staff bills created from this payment (checkout side).
+     */
+    public function staffBills()
+    {
+        return $this->hasMany(StaffBill::class, 'payment_id');
+    }
+
+    /**
+     * Get organization bills created from this payment (checkout side).
+     */
+    public function organizationBills()
+    {
+        return $this->hasMany(OrganizationBill::class, 'payment_id');
     }
 }
