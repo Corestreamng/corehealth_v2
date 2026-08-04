@@ -883,7 +883,7 @@
 
     @push('scripts')
         <script src="{{ asset('js/patient-search-widget.js') }}?v={{ time() }}"></script>
-        <script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
+        <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
         <script>
             (function() {
                 'use strict';

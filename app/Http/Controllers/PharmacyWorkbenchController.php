@@ -1127,6 +1127,9 @@ class PharmacyWorkbenchController extends Controller
                 return [
                     'id' => $pr->id,
                     'product_request_id' => $pr->id,
+                    'posr_id' => $pr->product_request_id,
+                    'product_id' => $pr->product_id,
+                    'is_free_form' => $pr->is_free_form,
                     'product_name' => $pr->item_name,
                     'product_code' => optional($pr->product)->product_code,
                     'category' => optional(optional($pr->product)->category)->category_name,

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use \App\Traits\WorkbenchAuditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 
@@ -48,6 +49,9 @@ protected $fillable = [
         'rejection_reason',
         'is_free_form',
         'free_form_name',
+        'audited_at',
+        'audited_by',
+        'audit_notes',
     ];
 
     protected $appends = ['service_name'];
@@ -164,5 +168,13 @@ protected $fillable = [
     public function getServiceNameAttribute()
     {
         return $this->is_free_form ? $this->free_form_name : ($this->service ? $this->service->service_name : 'Unknown Service');
+    }
+
+    /**
+     * Get the user who audited this item.
+     */
+    public function auditor()
+    {
+        return $this->belongsTo(User::class, 'audited_by');
     }
 }
