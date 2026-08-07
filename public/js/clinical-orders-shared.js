@@ -17,6 +17,382 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
     'use strict';
 
     /* ═══════════════════════════════════════════
+       TREATMENT PLANS MODULE (Plan Upgrade v2)
+       ═══════════════════════════════════════════ */
+
+    /**
+     * Render the active plan context bar on all 6 ordering tabs.
+     * Also updates the hidden notes widget selector if applicable.
+     */
+    function renderActivePlanContextBar() {
+        var tp = window._activeTreatmentPlan;
+        var $bars = $('.tp-active-context-bar');
+
+        if (!tp) {
+            $bars.addClass('d-none');
+            // Reset borders
+            $('.tp-context-borderable').removeClass('tp-plan-active-border');
+            // Reset notes widget if present
+            var $ns = $('#tp-notes-plan-selector');
+            if ($ns.length) {
+                $ns.val('');
+                $('#tp-notes-mini-progress').addClass('d-none');
+                $('#tp-notes-view-plan-link').addClass('d-none');
+                $('#tp-notes-helper-text').addClass('d-none');
+                $('#notes_treatment_plan_id').val('');
+            }
+            return;
+        }
+
+        // Show and populate bars
+        $bars.removeClass('d-none');
+        $('.tp-context-borderable').addClass('tp-plan-active-border');
+
+        $bars.each(function() {
+            var $b = $(this);
+            $b.find('.tp-ctx-plan-name').text(tp.name);
+            $b.find('.tp-ctx-progress-bar').css('width', tp.progress + '%');
+            $b.find('.tp-ctx-progress-text').text(tp.progress + '%');
+            $b.find('.tp-ctx-doctor').text(tp.doctor ? 'Dr. ' + tp.doctor : '');
+            $b.find('.tp-ctx-view-link').attr('onclick', 'ClinicalOrdersKit.viewTreatmentPlan(' + tp.id + ')');
+
+            var diagText = 'No Diagnosis Linked';
+            if (tp.diagnosis_data) {
+                var dList = [];
+                try { dList = typeof tp.diagnosis_data === 'string' ? JSON.parse(tp.diagnosis_data) : tp.diagnosis_data; } catch(e){}
+                if (dList && dList.length > 0) {
+                    diagText = dList.map(function(d) { return d.name || d.display; }).join(', ');
+                } else if (tp.problem_text) {
+                    diagText = tp.problem_text;
+                }
+            } else if (tp.problem_text) {
+                diagText = tp.problem_text;
+            }
+            $b.find('.tp-ctx-diagnosis span').text(diagText);
+
+            var $badge = $b.find('.tp-ctx-priority-badge');
+            $badge.text(tp.priority).removeClass('tp-priority-low tp-priority-medium tp-priority-high tp-priority-urgent');
+            $badge.addClass('tp-priority-' + (tp.priority || 'medium'));
+        });
+
+        // Update notes widget selector if present
+        var $ns = $('#tp-notes-plan-selector');
+        if ($ns.length) {
+            // Check if option exists, if not add it (active plan is always selectable)
+            if ($ns.find('option[value="' + tp.id + '"]').length === 0) {
+                $ns.append('<option value="' + tp.id + '">' + escapeHtml(tp.name) + '</option>');
+            }
+            $ns.val(tp.id);
+            onNotesPlanSelected($ns[0]);
+        }
+    }
+
+    /**
+     * Clear the active treatment plan state.
+     */
+    function clearActivePlan() {
+        window._activeTreatmentPlan = null;
+        renderActivePlanContextBar();
+        // Re-render plan cards if the tab object is available
+        if (window.TreatmentPlansTab) {
+            window.TreatmentPlansTab.loadPatientPlans();
+        }
+    }
+
+    /**
+     * Render the DataTables column for treatment plans.
+     */
+    function renderPlanCol(data, type, row) {
+        if (!row.treatment_plan_id) return '<span class="text-muted small">—</span>';
+        var name = row.treatment_plan_name || 'View Plan';
+        return '<a href="#" class="tp-view-link" onclick="ClinicalOrdersKit.viewTreatmentPlan(' + row.treatment_plan_id + ')">' +
+               '<i class="fa fa-clipboard-list me-1"></i>' + escapeHtml(name) + '</a>';
+    }
+
+    /**
+     * View a treatment plan in the shared modal.
+     */
+    function viewTreatmentPlan(planId) {
+        window._tpvCurrentPlanId = planId;
+        $('#treatmentPlanViewerModal').modal('show');
+        $('#tpv-plan-name').text('Loading...');
+        $('#tpv-details-content').html('<div class="text-center py-5"><div class="spinner-border text-teal" role="status"></div></div>');
+        $('#tpv-timeline-items').html('Loading...');
+
+        var role = window.currentWorkbenchRole || 'doctors';
+        $.get('/treatment-plans/' + planId + '/linked-items', { role: role }, function(response) {
+            if (!response.success) {
+                $('#tpv-details-content').html('<div class="alert alert-danger">Failed to load plan details</div>');
+                return;
+            }
+
+            var plan = response.plan;
+            var progress = response.progress_percent || 0;
+            var doctor = plan.creator ? (plan.creator.surname + ' ' + plan.creator.firstname) : 'Unknown';
+            var clinic = plan.clinic ? plan.clinic.name : 'Unknown';
+
+            if (plan.status !== 'active') {
+                $('#tpv-set-active-btn').hide();
+                $('#tpv-retire-btn').hide();
+            } else {
+                $('#tpv-set-active-btn').show();
+                $('#tpv-retire-btn').show();
+            }
+
+            $('#tpv-plan-name').text(plan.name);
+
+            var visHtml = '';
+            if (plan.visibility && Array.isArray(plan.visibility) && plan.visibility.length > 0 && !plan.visibility.includes('all')) {
+                plan.visibility.forEach(function(v) {
+                    visHtml += '<span class="badge me-1" style="background-color: #00796b; color: #ffffff; font-weight: 600; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 6px;"><i class="fa fa-shield-alt me-1"></i>' + escapeHtml(v) + '</span>';
+                });
+            } else {
+                visHtml = '<span class="badge me-1" style="background-color: #0288d1; color: #ffffff; font-weight: 600; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 6px;"><i class="fa fa-globe me-1"></i>ALL DEPARTMENTS</span>';
+            }
+
+            // Render details
+            var html = '<div class="d-flex justify-content-between align-items-start mb-4">';
+            html += '<div>';
+            html += '<p class="text-muted mb-2"><i class="fa fa-user-md me-1"></i> Dr. ' + escapeHtml(doctor) + ' | <i class="fa fa-hospital me-1"></i> ' + escapeHtml(clinic) + ' | <span class="ms-1">Visibility:</span> ' + visHtml + '</p>';
+            
+            // Diagnosis Data rendering
+            if (plan.diagnosis_data && plan.diagnosis_data.length > 0) {
+                var diagnoses = [];
+                try {
+                    diagnoses = typeof plan.diagnosis_data === 'string' ? JSON.parse(plan.diagnosis_data) : plan.diagnosis_data;
+                } catch(e) {}
+                
+                if (diagnoses.length > 0) {
+                    html += '<div class="mb-2"><p class="mb-1"><strong><i class="fa fa-stethoscope me-1"></i>Diagnoses:</strong></p>';
+                    html += '<ul class="mb-1" style="font-size: 0.9rem; padding-left: 20px;">';
+                    diagnoses.forEach(function(d) {
+                        var diagName = d.name || d.display || 'Unknown Diagnosis';
+                        html += '<li>' + escapeHtml(diagName);
+                        if (d.comment_1 && d.comment_1 !== 'NA') {
+                            html += ' <span class="badge bg-secondary ms-1" style="font-size: 0.75rem;">' + escapeHtml(d.comment_1) + '</span>';
+                        }
+                        if (d.comment_2 && d.comment_2 !== 'NA') {
+                            html += ' <span class="badge bg-info ms-1" style="font-size: 0.75rem;">' + escapeHtml(d.comment_2) + '</span>';
+                        }
+                        html += '</li>';
+                    });
+                    html += '</ul></div>';
+                }
+            } else if (plan.problem_text) {
+                html += '<p class="mb-1"><strong><i class="fa fa-stethoscope me-1"></i>Problem:</strong> ' + escapeHtml(plan.problem_text) + (plan.icd_code ? ' (' + escapeHtml(plan.icd_code) + ')' : '') + '</p>';
+            }
+
+            if (plan.goal) html += '<p class="mb-1 mt-2"><strong>Goal:</strong> ' + escapeHtml(plan.goal) + '</p>';
+            if (plan.description) html += '<p class="text-muted small mt-2">' + escapeHtml(plan.description) + '</p>';
+            html += '</div>';
+            // Progress ring
+            html += '<div class="text-center"><div class="tp-progress-ring" style="--progress: ' + progress + '%; width: 60px; height: 60px;">';
+            html += '<div class="tp-progress-ring-inner" style="width: 48px; height: 48px; font-size: 0.8rem;">' + progress + '%</div></div>';
+            html += '<small class="text-muted d-block mt-1">Progress</small></div>';
+            html += '</div>';
+
+            // Linked Items groups
+            var types = [
+                {key: 'labs', label: 'Labs', icon: 'fa-flask text-primary'},
+                {key: 'imaging', label: 'Imaging', icon: 'fa-x-ray text-info'},
+                {key: 'medications', label: 'Medications', icon: 'fa-pills text-warning'},
+                {key: 'procedures', label: 'Procedures', icon: 'fa-user-md text-danger'},
+                {key: 'non_pharm', label: 'Care Plan', icon: 'fa-heartbeat text-success'},
+                {key: 'referrals', label: 'Referrals', icon: 'mdi mdi-account-switch text-purple'},
+                {key: 'admissions', label: 'Admissions', icon: 'fa-bed text-secondary'}
+            ];
+
+            html += '<h6 class="border-bottom pb-2 mb-3">Linked Orders & Progress</h6>';
+            
+            var hasItems = false;
+            types.forEach(function(t) {
+                var items = response.linked_items[t.key] || [];
+                if (items.length > 0) {
+                    hasItems = true;
+                    html += '<div class="mb-3">';
+                    html += '<h6 class="small fw-bold mb-2"><i class="' + t.icon + ' me-1"></i>' + t.label + ' <span class="badge bg-light text-dark ms-1">' + items.length + '</span></h6>';
+                    html += '<div class="list-group list-group-flush border rounded">';
+                    items.forEach(function(item) {
+                        var name = item._order_name || item.service_name || item.item_name || item.free_form_name || item.instructions || item.reason || item.admission_reason || 'Unknown Order';
+                        var isDone = ['Completed', 'Dispensed', 'Discharged'].includes(item._status_label);
+                        var itemProgress = item._item_progress_percent !== undefined ? item._item_progress_percent : (isDone ? 100 : 25);
+                        
+                        var badgeClass = 'bg-secondary';
+                        var barClass = 'bg-info';
+                        if (itemProgress >= 100) {
+                            badgeClass = 'bg-success';
+                            barClass = 'bg-success';
+                        } else if (itemProgress >= 75) {
+                            badgeClass = 'bg-info text-white';
+                            barClass = 'bg-info';
+                        } else if (itemProgress >= 50) {
+                            badgeClass = 'bg-warning text-dark';
+                            barClass = 'bg-warning';
+                        } else if (itemProgress > 0) {
+                            badgeClass = 'bg-light text-dark border';
+                            barClass = 'bg-secondary';
+                        } else {
+                            badgeClass = 'bg-danger text-white';
+                            barClass = 'bg-danger';
+                        }
+
+                        html += '<div class="list-group-item list-group-item-action py-2 px-3">';
+                        html += '<div class="d-flex justify-content-between align-items-center mb-1">';
+                        html += '<span style="font-size: 0.85rem;" class="' + (isDone ? 'text-muted text-decoration-line-through' : 'fw-semibold text-dark') + '">' + escapeHtml(name) + '</span>';
+                        html += '<div class="d-flex align-items-center gap-1">';
+                        html += '<span class="badge ' + badgeClass + '" style="font-size: 0.68rem;">' + escapeHtml(item._status_label) + '</span>';
+                        html += '<span class="badge bg-teal rounded-pill text-white" style="font-size: 0.68rem; font-weight: 700;">' + itemProgress + '%</span>';
+                        html += '<button class="btn btn-sm btn-outline-danger py-0 px-2 btn-delink-tp-item ms-1" data-plan-id="' + plan.id + '" data-type="' + t.key + '" data-id="' + item.id + '" title="Unlink order from treatment plan" style="font-size: 0.65rem; border-radius: 4px;"><i class="fa fa-unlink me-1"></i>Delink</button>';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '<div class="progress" style="height: 5px; border-radius: 4px; background: #e0f2f1;">';
+                        html += '<div class="progress-bar ' + barClass + '" role="progressbar" style="width: ' + itemProgress + '%;" aria-valuenow="' + itemProgress + '" aria-valuemin="0" aria-valuemax="100"></div>';
+                        html += '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div></div>';
+                }
+            });
+
+            if (!hasItems) {
+                html += '<div class="alert alert-light text-center text-muted">No linked orders found. Apply this template to start tracking progress.</div>';
+            }
+
+            $('#tpv-details-content').html(html);
+
+            // Simple timeline
+            var timelineHtml = '';
+            var tlItems = [];
+            
+            // Add plan creation
+            tlItems.push({ date: plan.created_at, label: 'Plan Created', icon: 'fa-plus-circle text-teal' });
+            
+            // Extract dates from linked items
+            ['labs','imaging','medications','procedures','non_pharm','referrals','admissions'].forEach(function(k) {
+                var arr = response.linked_items[k] || [];
+                arr.forEach(function(itm) {
+                    if (itm.created_at) tlItems.push({ date: itm.created_at, label: 'Order: ' + (itm.service_name || itm.item_name || k), icon: 'fa-arrow-right text-muted' });
+                    if (itm.completed_at || itm.result_date || itm.dispense_date || itm.discharged_at) {
+                        var dt = itm.completed_at || itm.result_date || itm.dispense_date || itm.discharged_at;
+                        tlItems.push({ date: dt, label: 'Completed: ' + (itm.service_name || itm.item_name || k), icon: 'fa-check-circle text-success' });
+                    }
+                });
+            });
+
+            tlItems.sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+            tlItems = tlItems.slice(0, 10); // show last 10
+            
+            if (tlItems.length === 0) {
+                timelineHtml = '<div class="text-muted small">No activity yet.</div>';
+            } else {
+                tlItems.forEach(function(t) {
+                    var d = new Date(t.date).toLocaleString();
+                    timelineHtml += '<div class="d-flex mb-2">';
+                    timelineHtml += '<div class="me-2"><i class="fa ' + t.icon + '"></i></div>';
+                    timelineHtml += '<div><div class="fw-semibold">' + escapeHtml(t.label) + '</div><div class="text-muted" style="font-size:0.7rem;">' + d + '</div></div>';
+                    timelineHtml += '</div>';
+                });
+            }
+            $('#tpv-timeline-items').html(timelineHtml);
+
+        }).fail(function(xhr) {
+            var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Error communicating with server';
+            $('#tpv-plan-name').text('Access Restricted');
+            $('#tpv-details-content').html('<div class="alert alert-warning p-4"><i class="fa fa-lock me-2"></i> ' + escapeHtml(msg) + '</div>');
+            $('#tpv-timeline-items').html('<div class="text-muted small">No activity timeline available.</div>');
+        });
+    }
+
+    /**
+     * Open treatment plan edit modal from the viewer modal.
+     */
+    function openEditModalFromViewer() {
+        $('#treatmentPlanViewerModal').modal('hide');
+        if (window.TreatmentPlansTab && typeof window.TreatmentPlansTab.openEditModal === 'function') {
+            window.TreatmentPlansTab.openEditModal(window._tpvCurrentPlanId);
+        } else {
+            toastr.info('Editing treatment plan from this view is available on the Treatment Plans tab.');
+        }
+    }
+
+    /**
+     * Open treatment plan retire modal from the viewer modal.
+     */
+    function openRetireModalFromViewer() {
+        $('#treatmentPlanViewerModal').modal('hide');
+        if (window.TreatmentPlansTab && typeof window.TreatmentPlansTab.openRetireModal === 'function') {
+            window.TreatmentPlansTab.openRetireModal(window._tpvCurrentPlanId);
+        } else {
+            toastr.info('Retiring treatment plan from this view is available on the Treatment Plans tab.');
+        }
+    }
+
+    // Delink item click delegate
+    $(document).on('click', '.btn-delink-tp-item', function(e) {
+        e.preventDefault();
+        var planId = $(this).data('plan-id');
+        var type = $(this).data('type');
+        var itemId = $(this).data('id');
+
+        if (!confirm('Are you sure you want to unlink this order request from the treatment plan?')) return;
+
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: '/treatment-plans/' + planId + '/delink-item',
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                item_type: type,
+                item_id: itemId
+            },
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message || 'Order unlinked successfully');
+                    viewTreatmentPlan(planId);
+                    if (window.TreatmentPlansTab && typeof window.TreatmentPlansTab.loadPatientPlans === 'function') {
+                        window.TreatmentPlansTab.loadPatientPlans();
+                    }
+                } else {
+                    toastr.error(res.message || 'Failed to unlink order');
+                    $btn.prop('disabled', false).html('<i class="fa fa-unlink me-1"></i>Delink');
+                }
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.message : 'Server error');
+                $btn.prop('disabled', false).html('<i class="fa fa-unlink me-1"></i>Delink');
+            }
+        });
+    });
+
+    /**
+     * Handle plan selection in the Clinical Notes context widget.
+     */
+    function onNotesPlanSelected(selectEl) {
+        var val = $(selectEl).val();
+        $('#notes_treatment_plan_id').val(val);
+        
+        if (!val) {
+            $('#tp-notes-mini-progress').addClass('d-none');
+            $('#tp-notes-view-plan-link').addClass('d-none');
+            $('#tp-notes-helper-text').addClass('d-none');
+            return;
+        }
+
+        // If the selected plan is the active plan, sync the progress
+        if (window._activeTreatmentPlan && window._activeTreatmentPlan.id == val) {
+            var prog = window._activeTreatmentPlan.progress;
+            $('#tp-notes-progress-bar').css('width', prog + '%');
+            $('#tp-notes-progress-text').text(prog + '%');
+        }
+
+        $('#tp-notes-mini-progress').removeClass('d-none');
+        $('#tp-notes-view-plan-link').removeClass('d-none').attr('onclick', 'ClinicalOrdersKit.viewTreatmentPlan(' + val + ')');
+        $('#tp-notes-helper-text').removeClass('d-none');
+    }
+
+    /* ═══════════════════════════════════════════
        CONSTANTS  (Plan §2.1 — FREQ_MULTIPLIER_MAP / DUR_UNIT_MULTIPLIER_MAP)
        ═══════════════════════════════════════════ */
     const FREQ_MULTIPLIER_MAP = {
@@ -32,6 +408,16 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
     /* ═══════════════════════════════════════════
        UTILITY
        ═══════════════════════════════════════════ */
+
+    /**
+     * Escape HTML helper
+     */
+    function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
 
     /**
      * Debounce helper (Plan §2.1 — new, for auto-save)
@@ -795,6 +1181,12 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         );
 
         config.payload._token = config.csrfToken;
+
+        // Append active treatment plan if context is active
+        if (window._activeTreatmentPlan && window._activeTreatmentPlan.id) {
+            config.payload.treatment_plan_id = window._activeTreatmentPlan.id;
+            config.payload.treatment_plan_name = window._activeTreatmentPlan.name;
+        }
 
         $.ajax({
             url: config.url,
@@ -2098,7 +2490,16 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         SearchManager: SearchManager,
 
         // Unified deletion confirmation
-        showDeleteConfirmation: showDeleteConfirmation
+        showDeleteConfirmation: showDeleteConfirmation,
+
+        // Treatment Plans additions
+        renderActivePlanContextBar: renderActivePlanContextBar,
+        clearActivePlan: clearActivePlan,
+        renderPlanCol: renderPlanCol,
+        viewTreatmentPlan: viewTreatmentPlan,
+        openEditModalFromViewer: openEditModalFromViewer,
+        openRetireModalFromViewer: openRetireModalFromViewer,
+        onNotesPlanSelected: onNotesPlanSelected
     };
 
 })(jQuery));
@@ -2205,7 +2606,7 @@ window.NonPharmManager = (function($) {
         var executorToggleHtml = '';
         if (!isNurseView) {
             executorToggleHtml = 
-                '<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; background: linear-gradient(145deg, #ffffff, #fdfdfd); border: 1px solid rgba(0,0,0,0.05);">' +
+                '<div class="card-modern border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; background: linear-gradient(145deg, #ffffff, #fdfdfd); border: 1px solid rgba(0,0,0,0.05);">' +
                     '<div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center" style="background-color: #f8fafc !important;">' +
                         '<div class="d-flex align-items-center gap-2">' +
                             '<div class="bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 8px;">' +
@@ -2263,7 +2664,7 @@ window.NonPharmManager = (function($) {
         }
 
         var tableHtml = 
-            '<div class="card border-0 shadow-sm" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">' +
+            '<div class="card-modern border-0 shadow-sm" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">' +
                 '<div class="card-header bg-light border-0 py-3" style="background-color: #f8fafc !important;">' +
                     '<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">' +
                         '<div>' +

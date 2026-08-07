@@ -271,7 +271,7 @@
             if (freq) doseInfo += ' | Freq: ' + freq;
             if (duration) doseInfo += ' | Duration: ' + duration;
 
-            html += '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+            html += '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
             html += '<div class="card-body p-3">';
             html += '<div class="d-flex justify-content-between align-items-start mb-3">';
             html += '<h6 class="mb-0"><span class="badge bg-success">' + (productCode ? '[' + productCode + '] ' : '') + drugName + '</span></h6>';
@@ -330,7 +330,7 @@
             var priorityBadge = priority === 'emergency' ? '<span class="badge bg-danger ms-1">Emergency</span>' :
                                (priority === 'urgent' ? '<span class="badge bg-warning ms-1">Urgent</span>' : '');
 
-            html += '<div class="card procedure-card mb-2 ' + statusClass + '">';
+            html += '<div class="card-modern procedure-card mb-2' + statusClass + '">';
             html += '<div class="card-body p-3">';
             html += '<div class="d-flex justify-content-between align-items-start mb-2">';
             html += '<div>';

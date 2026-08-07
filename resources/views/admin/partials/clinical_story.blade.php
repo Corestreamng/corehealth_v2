@@ -433,4 +433,4 @@
 </style>
 
 {{-- Reusable lazy loading controller script --}}
-<script src="{{ asset('js/clinical-story.js') }}" defer></script>
+<script src="{{ asset('js/clinical-story.js') }}?v={{ filemtime(public_path('js/clinical-story.js')) }}" defer></script>
