@@ -64,6 +64,8 @@ class HospitalConfigController extends Controller
             'description' => 'nullable|string',
             'version' => 'nullable|string|max:50',
             'active' => 'boolean',
+            'enable_treatment_plans_in_consult' => 'boolean',
+            'require_treatment_plan_in_consult' => 'boolean',
             'debug_mode' => 'boolean',
             'notification_sound' => 'nullable',
 
@@ -157,6 +159,8 @@ class HospitalConfigController extends Controller
 
         // Handle Checkboxes
         $validated['notification_sound'] = $request->has('notification_sound');
+        $validated['enable_treatment_plans_in_consult'] = $request->has('enable_treatment_plans_in_consult');
+        $validated['require_treatment_plan_in_consult'] = $request->has('require_treatment_plan_in_consult');
         $validated['goonline'] = $request->has('goonline');
         $validated['chat_enabled'] = $request->has('chat_enabled');
         $validated['group_chat_enabled'] = $request->has('group_chat_enabled');
