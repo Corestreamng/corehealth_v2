@@ -843,7 +843,7 @@
             </div>
             <div class="modal-body p-4 bg-light">
                 <!-- Receipt Master Info Card -->
-                <div class="card border-0 shadow-sm mb-4 rounded">
+                <div class="card-modern border-0 shadow-sm mb-4 rounded">
                     <div class="card-body p-3">
                         <div class="row">
                             <div class="col-md-3">
@@ -878,7 +878,7 @@
                 </div>
 
                 <!-- Allocation Details Table -->
-                <div class="card border-0 shadow-sm rounded">
+                <div class="card-modern border-0 shadow-sm rounded">
                     <div class="card-header bg-white border-0 py-3">
                         <h6 class="mb-0 text-dark font-weight-bold">
                             <i class="mdi mdi-format-list-bulleted mr-1 text-info"></i>

@@ -599,7 +599,7 @@ rgba(255, 255, 255, 0.7) !important;
             border-bottom: 1px solid #e0e0e0;
             padding: 0;
             box-shadow: none;
-            z-index: 999;
+            z-index: 1035;
             position: fixed;
             left: 250px;
             width: calc(100% - 250px);

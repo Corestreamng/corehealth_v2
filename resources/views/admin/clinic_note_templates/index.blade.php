@@ -117,7 +117,7 @@
                     <textarea id="templateContent" class="form-control d-none" rows="10"></textarea>
                 </div>
                 <div class="mb-3">
-                    <div class="card border-info">
+                    <div class="card-modern border-info">
                         <div class="card-header bg-info bg-opacity-10 py-2 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#placeholderHelperCollapse" style="cursor:pointer;">
                             <i class="mdi mdi-code-braces"></i> <strong>Available Placeholders</strong>
                             <small class="text-muted ms-2">(click to expand)</small>

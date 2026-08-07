@@ -43,7 +43,7 @@ window.BundleRemoveModal = (function() {
                 <strong>Remove Combo?</strong> This will remove all combo items from the patient's encounter.
             </div>
             
-            <div class="card border-0 bg-light mb-3">
+            <div class="card-modern border-0 bg-light mb-3">
                 <div class="card-body">
                     <h6 class="text-danger fw-bold mb-2">${options.bundleName || 'Combo'}</h6>
                     <p class="mb-2 text-muted"><small>The following items will be removed:</small></p>

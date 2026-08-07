@@ -383,7 +383,7 @@
                     <h6 class="text-muted mb-3"><i class="mdi mdi-format-list-checks mr-1"></i> Exit Checklist</h6>
 
                     <!-- Step 1: Clearance -->
-                    <div class="exit-step card mb-3" style="border-radius: 10px; border-left: 4px solid #6c757d;">
+                    <div class="exit-step card-modern mb-3" style="border-radius: 10px; border-left: 4px solid #6c757d;">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
@@ -403,7 +403,7 @@
                     </div>
 
                     <!-- Step 2: Exit Interview -->
-                    <div class="exit-step card mb-3" style="border-radius: 10px; border-left: 4px solid #6c757d;">
+                    <div class="exit-step card-modern mb-3" style="border-radius: 10px; border-left: 4px solid #6c757d;">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
@@ -431,7 +431,7 @@
                     </div>
 
                     <!-- Step 3: Final Payment -->
-                    <div class="exit-step card mb-3" style="border-radius: 10px; border-left: 4px solid #6c757d;">
+                    <div class="exit-step card-modern mb-3" style="border-radius: 10px; border-left: 4px solid #6c757d;">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">

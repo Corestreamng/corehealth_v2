@@ -3287,7 +3287,7 @@
             </div>
             <div class="queue-view-content" style="padding: 1.5rem;">
                 <!-- Filter Panel -->
-                <div class="reports-filter-panel card mb-4">
+                <div class="reports-filter-panel card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-filter"></i> Filters</h6>
                     </div>
@@ -5116,9 +5116,7 @@
                                     {{-- Treatment Plans + Re-prescribe buttons (Plan §6.4, §5.3) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                                                <i class="fa fa-clipboard-list"></i> Treatment Plans
-                                            </button>
+
                                             <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
@@ -5194,9 +5192,7 @@
                                     {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                                                <i class="fa fa-clipboard-list"></i> Treatment Plans
-                                            </button>
+
                                             <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
@@ -5249,9 +5245,7 @@
                                     {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                                                <i class="fa fa-clipboard-list"></i> Treatment Plans
-                                            </button>
+
                                             <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
@@ -5304,9 +5298,7 @@
                                     {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
                                     <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                                                <i class="fa fa-clipboard-list"></i> Treatment Plans
-                                            </button>
+
                                             <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                                 <i class="fa fa-save"></i> Save as Template
                                             </button>
@@ -6719,7 +6711,8 @@
 
 <!-- Include Clinical Context Modal -->
 @include('admin.partials.clinical_context_modal')
-@include('admin.partials.treatment-plan-modal')
+@include('admin.partials.treatment-plan-viewer-modal')
+
 @include('admin.partials.re-prescribe-encounter-modal')
 @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
 @include('admin.partials.invest_res_view_imaging_modal')
@@ -9427,7 +9420,10 @@ function renderPendingSubtabContent(filter) {
 }
 
 function createRequestCard(request, section) {
-    const serviceName = request.service?.service_name || 'Unknown Service';
+    let serviceName = request.service?.service_name || request.service_name || request.name || 'Unknown Service';
+    if (request.treatment_plan_id && request.treatment_plan_name) {
+        serviceName += ` <br><a href="#" class="tp-view-link badge mt-1" style="background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;" onclick="ClinicalOrdersKit.viewTreatmentPlan(${request.treatment_plan_id}); event.stopPropagation(); return false;"><i class="fa fa-clipboard-list"></i> ${escapeHtml(request.treatment_plan_name)}</a>`;
+    }
     const doctorName = request.doctor ? (request.doctor.firstname + ' ' + request.doctor.surname) : 'N/A';
     const requestDate = formatDateTime(request.created_at);
     const note = request.note || '';

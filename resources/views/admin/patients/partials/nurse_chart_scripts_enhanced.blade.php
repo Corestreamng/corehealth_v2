@@ -2633,7 +2633,7 @@
                 const periodIcon = type === 'fluid' ? 'mdi-water' :
                     'mdi-food-apple';
 
-                html += `<div class='card mb-2 shadow-sm period-card ${!p.ended_at ? 'border-info' : ''}'>
+                html += `<div class='card-modern mb-2 shadow-sm period-card ${!p.ended_at ?'border-info' : ''}'>
                         <div class='card-header py-2 d-flex justify-content-between align-items-center ${!p.ended_at ? 'bg-info bg-opacity-10' : ''}'>
                             <div>
                                 <span class="badge bg-${periodStatus} rounded-pill me-1" data-bs-toggle="tooltip"

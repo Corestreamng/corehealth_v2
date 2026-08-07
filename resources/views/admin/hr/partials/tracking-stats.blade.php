@@ -2,7 +2,7 @@
 <div class="row mb-3">
     @foreach($trackingStats as $stat)
     <div class="col-sm-6 col-md-3 mb-2">
-        <div class="card border-0 shadow-sm" style="border-radius: 10px; border-left: 4px solid {{ $stat['color'] }} !important;">
+        <div class="card-modern border-0 shadow-sm" style="border-radius: 10px; border-left: 4px solid {{ $stat['color'] }} !important;">
             <div class="card-body py-2 px-3">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>

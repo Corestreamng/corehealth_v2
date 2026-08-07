@@ -44,7 +44,7 @@
 </style>
 
 <div class="tariff-section mt-2">
-    <div class="card mb-0" style="border-radius: 10px; border: 1px dashed #adb5bd;">
+    <div class="card-modern mb-0" style="border-radius: 10px; border: 1px dashed #adb5bd;">
         <div class="card-header section-toggle px-3 py-2" style="background: #f8f9fa; border-radius: 10px;" id="tariffToggle">
             <div class="d-flex align-items-center justify-content-between">
                 <span>
