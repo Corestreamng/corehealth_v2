@@ -48,6 +48,8 @@ protected $fillable = [
         'rejection_reason',
         'is_free_form',
         'free_form_name',
+        'treatment_plan_id',
+        'treatment_plan_name',
     ];
 
     protected $appends = ['service_name'];
@@ -60,6 +62,11 @@ protected $fillable = [
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
     ];
+
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(\App\Models\TreatmentPlan::class);
+    }
 
     public function productOrServiceRequest()
     {

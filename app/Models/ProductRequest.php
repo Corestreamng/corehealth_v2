@@ -47,6 +47,8 @@ class ProductRequest extends Model implements Auditable
         'packaging_qty',
         'is_free_form',
         'free_form_name',
+        'treatment_plan_id',
+        'treatment_plan_name',
     ];
 
     protected $appends = ['item_name'];
@@ -58,6 +60,11 @@ class ProductRequest extends Model implements Auditable
         'dispense_date' => 'datetime',
         'billed_date' => 'datetime',
     ];
+
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(\App\Models\TreatmentPlan::class);
+    }
 
     /**
      * Get the user who adapted the prescription

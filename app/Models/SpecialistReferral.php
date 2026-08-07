@@ -35,11 +35,18 @@ class SpecialistReferral extends Model implements Auditable
         'action_notes',
         'appointment_id',
         'referral_letter_attachment_id',
+        'treatment_plan_id',
+        'treatment_plan_name',
     ];
 
     protected $casts = [
         'actioned_at' => 'datetime',
     ];
+
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(\App\Models\TreatmentPlan::class);
+    }
 
     // Status constants
     public const STATUS_PENDING      = 'pending';
