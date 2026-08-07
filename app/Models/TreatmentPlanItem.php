@@ -36,6 +36,8 @@ class TreatmentPlanItem extends Model
      * Resolve the referenced service or product based on item_type.
      * - lab, imaging, procedure → services table (App\Models\service)
      * - medication → products table (App\Models\Product)
+     * - non_pharm, referral, admission, encounter_note → no direct reference
+     *   (these store freeform instructions rather than service/product refs)
      *
      * WARNING (A4): This conditional belongsTo CANNOT be eager-loaded
      * (e.g. ::with('referenceable')). Eager loading executes on a blank model
@@ -48,6 +50,11 @@ class TreatmentPlanItem extends Model
         if ($this->item_type === 'medication') {
             return $this->belongsTo(\App\Models\Product::class, 'reference_id');
         }
+        if (in_array($this->item_type, ['non_pharm', 'referral', 'admission', 'encounter_note'])) {
+            // Extended types don't reference services/products — they use the note field
+            // Return a null-safe belongsTo that won't crash
+            return $this->belongsTo(\App\Models\Service::class, 'reference_id');
+        }
         // lab, imaging, procedure → service
         return $this->belongsTo(\App\Models\Service::class, 'reference_id');
     }
@@ -59,6 +66,18 @@ class TreatmentPlanItem extends Model
     {
         if ($this->item_type === 'medication') {
             return optional(\App\Models\Product::find($this->reference_id))->product_name ?? 'Unknown Product';
+        }
+        if ($this->item_type === 'non_pharm') {
+            return $this->note ?? 'Non-Pharmacological Order';
+        }
+        if ($this->item_type === 'referral') {
+            return $this->note ?? 'Specialist Referral';
+        }
+        if ($this->item_type === 'admission') {
+            return $this->note ?? 'Admission Request';
+        }
+        if ($this->item_type === 'encounter_note') {
+            return $this->note ?? 'Encounter Note';
         }
         return optional(\App\Models\Service::find($this->reference_id))->service_name ?? 'Unknown Service';
     }

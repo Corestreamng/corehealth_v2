@@ -28,12 +28,19 @@ class NonPharmOrder extends Model
         'discontinued_at',
         'discontinue_reason',
         'completed_notes',
+        'treatment_plan_id',
+        'treatment_plan_name',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
         'discontinued_at' => 'datetime',
     ];
+
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(\App\Models\TreatmentPlan::class);
+    }
 
     /**
      * Scope to return active orders

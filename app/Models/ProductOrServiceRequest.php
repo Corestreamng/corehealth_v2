@@ -110,6 +110,16 @@ class ProductOrServiceRequest extends Model implements Auditable
         return $this->hasOne(ProductRequest::class, 'product_request_id', 'id');
     }
 
+    public function labRequest()
+    {
+        return $this->hasOne(LabServiceRequest::class, 'service_request_id', 'id');
+    }
+
+    public function imagingRequest()
+    {
+        return $this->hasOne(ImagingServiceRequest::class, 'service_request_id', 'id');
+    }
+
     /**
      * Get the HMO remittance associated with this request.
      */

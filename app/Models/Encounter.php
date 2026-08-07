@@ -30,6 +30,8 @@ class Encounter extends Model implements Auditable
         'deleted_at',
         'deleted_by',
         'deletion_reason',
+        'treatment_plan_id',
+        'treatment_plan_name',
     ];
 
     public function deathRecord()
@@ -42,6 +44,11 @@ class Encounter extends Model implements Auditable
         'started_at'   => 'datetime',
         'completed_at' => 'datetime',
     ];
+
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(\App\Models\TreatmentPlan::class);
+    }
 
     // ──────────────────────────────────────
     // Relationships

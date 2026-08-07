@@ -26,6 +26,8 @@ class ApplicationStatu extends Model implements Auditable
         'description',
         'version',
         'active',
+        'enable_treatment_plans_in_consult',
+        'require_treatment_plan_in_consult',
         'debug_mode',
         'notification_sound',
         'bed_service_category_id',
