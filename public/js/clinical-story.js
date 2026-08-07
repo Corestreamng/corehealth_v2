@@ -25,7 +25,7 @@
             this.categoryCache = {};
 
             this.folderDefinitions = [
-                { id: 'clinical_data', title: 'Clinical Data', icon: 'fa-user-md', categories: ['vitals', 'clinical_notes', 'nursing_notes', 'care_plans'] },
+                { id: 'clinical_data', title: 'Clinical Data', icon: 'fa-user-md', categories: ['vitals', 'clinical_notes', 'nursing_notes', 'care_plans', 'treatment_plans'] },
                 { id: 'medications', title: 'Medications & Administration', icon: 'fa-medkit', categories: ['prescriptions', 'med_admin', 'injections'] },
                 { id: 'diagnostics', title: 'Diagnostics & Reports', icon: 'fa-flask', categories: ['labs', 'imaging'] },
                 { id: 'flowsheets', title: 'Flowsheets & Tracking', icon: 'fa-tint', categories: ['intake_output'] },
@@ -45,6 +45,7 @@
                 'imaging': { title: 'Imaging & Radiology', icon: 'fa-television', colorClass: 'bg-imaging' },
                 'prescriptions': { title: 'Prescriptions', icon: 'fa-pencil-square-o', colorClass: 'bg-prescriptions' },
                 'care_plans': { title: 'Care Plans', icon: 'fa-calendar-check-o', colorClass: 'bg-care' },
+                'treatment_plans': { title: 'Treatment Plans', icon: 'fa-clipboard-list', colorClass: 'bg-teal' },
                 'procedures': { title: 'Clinical Procedures', icon: 'fa-scissors', colorClass: 'bg-procedures' },
                 'admissions': { title: 'Admissions & Discharges', icon: 'fa-bed', colorClass: 'bg-admission' },
                 'referrals': { title: 'Referrals', icon: 'fa-arrow-circle-right', colorClass: 'bg-referrals' },
@@ -328,8 +329,8 @@
                 case 'med_admin':
                     preview = `${first.product_name || 'Drug'} (${first.dose || '-'})`;
                     break;
-                case 'labs': case 'imaging': case 'procedures':
-                    preview = `${first.name || 'Service'} - ${first.status || 'Pending'}`;
+                case 'labs': case 'imaging': case 'procedures': case 'treatment_plans':
+                    preview = `${first.name || 'Plan'} - ${first.status || 'Active'}`;
                     break;
                 case 'prescriptions':
                     preview = `${first.name || 'Drug'} ${first.dose || ''} (Qty: ${first.qty || '-'})`;
