@@ -3295,7 +3295,7 @@
             </div>
             <div class="queue-view-content" style="padding: 1.5rem;">
                 <!-- Filter Panel -->
-                <div class="reports-filter-panel card mb-4">
+                <div class="reports-filter-panel card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-filter"></i> Filters</h6>
                     </div>
@@ -5176,7 +5176,10 @@ function renderPendingSubtabContent(filter) {
 }
 
 function createRequestCard(request, section) {
-    const serviceName = request.service?.service_name || 'Unknown Service';
+    let serviceName = request.service?.service_name || request.service_name || request.name || 'Unknown Service';
+    if (request.treatment_plan_id && request.treatment_plan_name) {
+        serviceName += ` <br><a href="#" class="tp-view-link badge mt-1" style="background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;" onclick="ClinicalOrdersKit.viewTreatmentPlan(${request.treatment_plan_id}); event.stopPropagation(); return false;"><i class="fa fa-clipboard-list"></i> ${escapeHtml(request.treatment_plan_name)}</a>`;
+    }
     const doctorName = request.doctor ? (request.doctor.firstname + ' ' + request.doctor.surname) : 'N/A';
     const requestDate = formatDateTime(request.created_at);
     const note = request.note || '';
@@ -6172,11 +6175,16 @@ function renderBillingItems(items) {
     items.forEach(item => {
         // Use pre-formatted datetime or format it client-side
         const datetime = item.created_at_formatted || (item.created_at ? formatDateTime(item.created_at) : 'N/A');
+        let itemName = item.name;
+        if (item.treatment_plan_id && item.treatment_plan_name) {
+            itemName += ` <br><a href="#" class="tp-view-link badge mt-1" style="background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;" onclick="ClinicalOrdersKit.viewTreatmentPlan(${item.treatment_plan_id}); event.stopPropagation(); return false;"><i class="fa fa-clipboard-list"></i> ${escapeHtml(item.treatment_plan_name)}</a>`;
+        }
+
         const row = `
             <tr data-item-id="${item.id}" data-user-id="${item.user_id}">
                 <td><input type="checkbox" class="billing-item-checkbox" data-id="${item.id}"></td>
                 <td class="text-nowrap" style="font-size: 0.85rem;"><i class="mdi mdi-clock-outline text-muted"></i> ${datetime}</td>
-                <td>${item.name}</td>
+                <td>${itemName}</td>
                 <td>${item.category || 'N/A'}</td>
                 <td>₦${parseFloat(item.price).toLocaleString()}</td>
                 <td><input type="number" class="form-control item-qty-input" value="${item.qty}" min="1" data-id="${item.id}"></td>

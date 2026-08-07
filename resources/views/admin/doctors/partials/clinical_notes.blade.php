@@ -22,6 +22,13 @@
                     <i class="mdi mdi-plus-circle"></i> Enter New Notes
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link smooth-transition tp-tab-link-accent" type="button"
+                        onclick="switch_tab(event, 'treatment_plans_tab')">
+                    <i class="fa fa-clipboard-list"></i> Treatment Plans
+                    <i class="fa fa-external-link-alt ms-1" style="font-size: 0.65rem;"></i>
+                </button>
+            </li>
         </ul>
 
         {{-- Tab content --}}
@@ -53,6 +60,38 @@
                 @if (request()->get('admission_req_id') != '')
                     <input type="hidden" value="{{ request()->get('admission_req_id') }}" name="queue_id">
                 @endif
+
+                {{-- Treatment Plan Context Widget (Phase 8) --}}
+                <input type="hidden" name="treatment_plan_id" id="notes_treatment_plan_id" value="">
+                <div class="tp-notes-context-widget mt-1 mb-3" id="tp-notes-context-widget">
+                    <div class="d-flex align-items-center gap-3 p-2 rounded-3 border"
+                         style="background: linear-gradient(135deg, #e0f7fa 0%, #b2dfdb 100%); border-color: #00897b !important;">
+                        <i class="fa fa-clipboard-list" style="color: #00796b; font-size: 1.1rem;"></i>
+                        <div class="flex-grow-1">
+                            <select class="form-select form-select-sm rounded-pill tp-plan-selector"
+                                    id="tp-notes-plan-selector" style="max-width: 350px; border-color: #00897b; font-size: 0.82rem;"
+                                    onchange="ClinicalOrdersKit.onNotesPlanSelected(this)">
+                                <option value="">— No plan selected (notes independent) —</option>
+                                {{-- Populated by JS with patient's active plans --}}
+                            </select>
+                        </div>
+                        <div class="tp-mini-progress d-none" id="tp-notes-mini-progress">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress" style="width: 80px; height: 6px; background: rgba(0,121,107,0.15);">
+                                    <div class="progress-bar" id="tp-notes-progress-bar" style="width: 0%; background-color: #00897b;"></div>
+                                </div>
+                                <small class="fw-semibold" id="tp-notes-progress-text" style="color: #00796b; font-size: 0.72rem;">0%</small>
+                            </div>
+                        </div>
+                        <a href="#" class="btn btn-sm btn-outline-teal rounded-pill d-none"
+                           id="tp-notes-view-plan-link" onclick="switch_tab(event, 'treatment_plans_tab')" style="font-size: 0.72rem;">
+                            View Plan <i class="fa fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <small class="text-muted ms-2 d-none" id="tp-notes-helper-text">
+                        <i class="fa fa-info-circle"></i> Notes entered here will be associated with this plan
+                    </small>
+                </div>
 
                 {{-- Clinical Notes Input Box --}}
                 <div class="mb-4">
@@ -203,7 +242,7 @@
                     <input type="text" class="form-control form-control-lg" id="favorite_set_name" placeholder="e.g. Hypertension + Diabetes Workup" maxlength="100">
                     <div class="invalid-feedback">Please enter a name for this set.</div>
                 </div>
-                <div class="card bg-light border-0 mb-2">
+                <div class="card-modern bg-light border-0 mb-2">
                     <div class="card-body py-2 px-3">
                         <small class="fw-semibold text-muted d-block mb-1">Diagnoses to save:</small>
                         <div id="favorite_preview"></div>
@@ -581,6 +620,8 @@ function updateSelectedReasonsDisplay() {
                     <option value="QUERY" ${reason.comment_1 === 'QUERY' ? 'selected' : ''}>Query</option>
                     <option value="DIFFRENTIAL" ${reason.comment_1 === 'DIFFRENTIAL' ? 'selected' : ''}>Differential</option>
                     <option value="CONFIRMED" ${reason.comment_1 === 'CONFIRMED' ? 'selected' : ''}>Confirmed</option>
+                    <option value="ACTIVE" ${reason.comment_1 === 'ACTIVE' ? 'selected' : ''}>Active</option>
+                    <option value="RESOLVED" ${reason.comment_1 === 'RESOLVED' ? 'selected' : ''}>Resolved</option>
                 </select>
             </td>
             <td>
@@ -589,6 +630,9 @@ function updateSelectedReasonsDisplay() {
                     <option value="ACUTE" ${reason.comment_2 === 'ACUTE' ? 'selected' : ''}>Acute</option>
                     <option value="CHRONIC" ${reason.comment_2 === 'CHRONIC' ? 'selected' : ''}>Chronic</option>
                     <option value="RECURRENT" ${reason.comment_2 === 'RECURRENT' ? 'selected' : ''}>Recurrent</option>
+                    <option value="IMPROVING" ${reason.comment_2 === 'IMPROVING' ? 'selected' : ''}>Improving</option>
+                    <option value="STABLE" ${reason.comment_2 === 'STABLE' ? 'selected' : ''}>Stable</option>
+                    <option value="WORSENING" ${reason.comment_2 === 'WORSENING' ? 'selected' : ''}>Worsening</option>
                 </select>
             </td>
             <td>

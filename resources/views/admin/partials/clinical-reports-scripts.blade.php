@@ -129,7 +129,7 @@
         var html = '';
         kpis.forEach(function (k) {
             html += '<div class="col-md-3 col-6 mb-2">'
-                  + '<div class="card border-left-' + k.color + ' shadow-sm h-100 py-1">'
+                  + '<div class="card-modern border-left-' + k.color + ' shadow-sm h-100 py-1">'
                   + '<div class="card-body p-2">'
                   + '<div class="row no-gutters align-items-center">'
                   + '<div class="col mr-2"><div class="text-xs font-weight-bold text-' + k.color + ' text-uppercase mb-1">' + k.label + '</div>'
@@ -426,7 +426,7 @@
         ];
         var html = '';
         kpis.forEach(function (k) {
-            html += '<div class="col mb-1"><div class="card border-top border-' + k.color + ' shadow-sm"><div class="card-body p-2 text-center"><div class="small text-muted">' + k.label + '</div><div class="h5 mb-0 font-weight-bold">' + (k.value || 0) + '</div></div></div></div>';
+            html += '<div class="col mb-1"><div class="card-modern border-top border-' + k.color + ' shadow-sm"><div class="card-body p-2 text-center"><div class="small text-muted">' + k.label + '</div><div class="h5 mb-0 font-weight-bold">' + (k.value || 0) + '</div></div></div></div>';
         });
         $('#cr-maternity-kpis').html(html);
     }
@@ -445,9 +445,9 @@
                 var rip = rows.filter(function (r) { return r.death_type === 'RIP'; }).length;
                 var bid = rows.filter(function (r) { return r.death_type === 'BID'; }).length;
                 $('#cr-mortality-kpis').html(
-                    '<div class="col-md-3"><div class="card border-left-danger shadow-sm"><div class="card-body p-2"><div class="text-xs text-uppercase text-danger">Total Deaths</div><div class="h5 mb-0 font-weight-bold">' + rows.length + '</div></div></div></div>'
-                    + '<div class="col-md-3"><div class="card border-left-warning shadow-sm"><div class="card-body p-2"><div class="text-xs text-uppercase text-warning">In-Hospital (RIP)</div><div class="h5 mb-0 font-weight-bold">' + rip + '</div></div></div></div>'
-                    + '<div class="col-md-3"><div class="card border-left-dark shadow-sm"><div class="card-body p-2"><div class="text-xs text-uppercase">Brought in Dead (BID)</div><div class="h5 mb-0 font-weight-bold">' + bid + '</div></div></div></div>'
+                    '<div class="col-md-3"><div class="card-modern border-left-danger shadow-sm"><div class="card-body p-2"><div class="text-xs text-uppercase text-danger">Total Deaths</div><div class="h5 mb-0 font-weight-bold">' + rows.length + '</div></div></div></div>'
+                    + '<div class="col-md-3"><div class="card-modern border-left-warning shadow-sm"><div class="card-body p-2"><div class="text-xs text-uppercase text-warning">In-Hospital (RIP)</div><div class="h5 mb-0 font-weight-bold">' + rip + '</div></div></div></div>'
+                    + '<div class="col-md-3"><div class="card-modern border-left-dark shadow-sm"><div class="card-body p-2"><div class="text-xs text-uppercase">Brought in Dead (BID)</div><div class="h5 mb-0 font-weight-bold">' + bid + '</div></div></div></div>'
                 );
 
                 if (!rows.length) { crError('#cr-mortality-table tbody', 'No deaths recorded in this period'); return; }
@@ -545,12 +545,12 @@
 
                 // KPI cards
                 $('#cr-referrals-kpis').html(
-                    '<div class="col-md-2 col-4 mb-1"><div class="card border-left-primary shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Total</div><div class="h5 mb-0">' + (s.total || 0) + '</div></div></div></div>'
-                    + '<div class="col-md-2 col-4 mb-1"><div class="card border-left-info shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Internal</div><div class="h5 mb-0">' + (s.internal || 0) + '</div></div></div></div>'
-                    + '<div class="col-md-2 col-4 mb-1"><div class="card border-left-warning shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">External</div><div class="h5 mb-0">' + (s.external || 0) + '</div></div></div></div>'
-                    + '<div class="col-md-2 col-4 mb-1"><div class="card border-left-success shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Booked</div><div class="h5 mb-0">' + (s.booked || 0) + '</div></div></div></div>'
-                    + '<div class="col-md-2 col-4 mb-1"><div class="card border-left-success shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Completed</div><div class="h5 mb-0">' + (s.completed || 0) + '</div></div></div></div>'
-                    + '<div class="col-md-2 col-4 mb-1"><div class="card border-left-secondary shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Conversion Rate</div><div class="h5 mb-0">' + (s.conversion_rate || 0) + '%</div></div></div></div>'
+                    '<div class="col-md-2 col-4 mb-1"><div class="card-modern border-left-primary shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Total</div><div class="h5 mb-0">' + (s.total || 0) + '</div></div></div></div>'
+                    + '<div class="col-md-2 col-4 mb-1"><div class="card-modern border-left-info shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Internal</div><div class="h5 mb-0">' + (s.internal || 0) + '</div></div></div></div>'
+                    + '<div class="col-md-2 col-4 mb-1"><div class="card-modern border-left-warning shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">External</div><div class="h5 mb-0">' + (s.external || 0) + '</div></div></div></div>'
+                    + '<div class="col-md-2 col-4 mb-1"><div class="card-modern border-left-success shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Booked</div><div class="h5 mb-0">' + (s.booked || 0) + '</div></div></div></div>'
+                    + '<div class="col-md-2 col-4 mb-1"><div class="card-modern border-left-success shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Completed</div><div class="h5 mb-0">' + (s.completed || 0) + '</div></div></div></div>'
+                    + '<div class="col-md-2 col-4 mb-1"><div class="card-modern border-left-secondary shadow-sm"><div class="card-body p-2 text-center"><div class="text-xs text-muted">Conversion Rate</div><div class="h5 mb-0">' + (s.conversion_rate || 0) + '%</div></div></div></div>'
                 );
 
                 // Donut chart

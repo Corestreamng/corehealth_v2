@@ -264,11 +264,11 @@
 
     <!-- Top Level KPI Cards -->
     <div class="summary-cards">
-        <div class="card">
+        <div class="card-modern">
             <div class="card-label">Total Stock Valuation</div>
             <div class="card-val">₦{{ number_format($stock_valuation, 2) }}</div>
         </div>
-        <div class="card">
+        <div class="card-modern">
             <div class="card-label">Total Revenue Collected</div>
             @php
                 $totalVal = 0;
@@ -281,7 +281,7 @@
             <div class="card-val">₦{{ number_format($totalVal, 2) }}</div>
             <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">{{ number_format($totalItems) }} items dispensed</div>
         </div>
-        <div class="card">
+        <div class="card-modern">
             <div class="card-label">Patients Attended</div>
             @php
                 $totalPat = array_sum($patients_attended_to);

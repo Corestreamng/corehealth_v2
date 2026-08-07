@@ -18,7 +18,7 @@
                     </div>
                     <div class="tab-content flex-grow-1 p-4" id="v-pills-tabContent">
                         <div class="tab-pane fade show active" id="cp-procedures" role="tabpanel">
-                            <div class="card shadow-sm border-0 mb-4" style="border-radius: 10px;">
+                            <div class="card-modern shadow-sm border-0 mb-4" style="border-radius: 10px;">
                                 <div class="card-header bg-white border-bottom py-3">
                                     <h5 class="mb-0"><i class="mdi mdi-plus-circle text-primary"></i> Request New Procedure</h5>
                                 </div>

@@ -15,7 +15,7 @@
 </div>
 
 {{-- Date Range Filter --}}
-<div class="card border mb-3">
+<div class="card-modern border mb-3">
     <div class="card-header bg-light py-2">
         <h6 class="mb-0"><i class="mdi mdi-calendar-range me-1"></i>Date Range Filter</h6>
     </div>
@@ -247,7 +247,7 @@
                     + '<td>' + (r.nurse_name || 'N/A') + '</td>'
                     + '</tr>';
             }).join('') : '<tr><td colspan="6" class="text-center text-muted">No records in this period</td></tr>';
-            html += '<div class="card border mb-3">'
+            html += '<div class="card-modern border mb-3">'
                 + '<div class="card-header py-2 d-flex justify-content-between align-items-center">'
                 + '<span><i class="mdi mdi-timer-outline me-1"></i>' + startedAt + ' &rarr; ' + endedAt + '</span>'
                 + '<span class="ml-auto"><span class="badge badge-success mr-1">In: ' + (period.total_intake || 0) + ' mL</span> <span class="badge badge-danger">Out: ' + (period.total_output || 0) + ' mL</span></span>'

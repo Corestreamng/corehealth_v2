@@ -26,7 +26,7 @@
             </div>
         </div>
 
-        <div class="card shadow-sm border-0" style="border-radius:12px;">
+        <div class="card-modern shadow-sm border-0" style="border-radius:12px;">
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="damages-table" class="table table-sm table-hover w-100">

@@ -780,7 +780,7 @@
                 }
 
                 periods.forEach(function(p) {
-                    html += `<div class='card mb-2'>
+                    html += `<div class='card-modern mb-2'>
                         <div class='card-header'>Period: ${p.started_at} ${(p.ended_at ? ' - ' + p.ended_at : '')}`;
                     if (!p.ended_at) html += ` <button class='btn btn-sm btn-danger float-end end-period-btn' data-id='${p.id}' data-type='${type}'>End Period</button>`;
                     html += `</div>

@@ -230,7 +230,7 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6 mb-3">
-                            <div class="card h-100 bg-white border p-3">
+                            <div class="card-modern h-100 bg-white border p-3">
                                 <h6 class="text-dark font-weight-bold"><i class="mdi mdi-information-outline text-info"></i> Period Audit Status</h6>
                                 <div class="mt-2 text-muted small">
                                     Below are the applied stamps for the current period range:
@@ -251,7 +251,7 @@
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <div class="card h-100 bg-white border p-3">
+                            <div class="card-modern h-100 bg-white border p-3">
                                 <h6 class="text-dark font-weight-bold"><i class="mdi mdi-alert-circle-outline text-warning"></i> Key Audit Spotlights</h6>
                                 <ul class="list-unstyled mt-2 small text-muted d-flex flex-column gap-2">
                                     <li><i class="mdi mdi-circle-small text-warning"></i> Outstanding Staff bills total: <strong>₦{{ number_format($reconciliationKPIs['unpaid_staff_receivables'], 2) }}</strong>. Please check the Staff Bills Tab to settle.</li>
@@ -485,7 +485,7 @@
                 <div class="glass-panel d-flex flex-column gap-4">
 
                     {{-- Worksheet: cash_and_billing_audit --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-cash_and_billing_audit" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-cash_and_billing_audit" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-cash text-success"></i> Cash Book & Billing Reconciliations</h5>
                             <div class="d-flex gap-1">
@@ -500,7 +500,7 @@
                     </div>
 
                     {{-- Worksheet: bank_reconciliation --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-bank_reconciliation" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-bank_reconciliation" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-bank text-primary"></i> Bank Statements & POS Reconciliations</h5>
                             <div class="d-flex gap-1">
@@ -515,7 +515,7 @@
                     </div>
 
                     {{-- Worksheet: hmo_nhis_verification --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-hmo_nhis_verification" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-hmo_nhis_verification" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-hospital-building text-purple"></i> HMO/NHIS Claims & Capitation</h5>
                             <div class="d-flex gap-1">
@@ -530,7 +530,7 @@
                     </div>
 
                     {{-- Worksheet: discounts_refunds_debt --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-discounts_refunds_debt" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-discounts_refunds_debt" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-percent text-warning"></i> Discounts, Refunds & Debt Recovery</h5>
                             <div class="d-flex gap-1">
@@ -545,7 +545,7 @@
                     </div>
 
                     {{-- Worksheet: payroll_expenses_ledger --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-payroll_expenses_ledger" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-payroll_expenses_ledger" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-cash-multiple text-danger"></i> Payroll, Deductions & Expenses</h5>
                             <div class="d-flex gap-1">
@@ -567,7 +567,7 @@
                 <div class="glass-panel d-flex flex-column gap-4">
 
                     {{-- Worksheet: consulting_clinics_flow --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-consulting_clinics_flow" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-consulting_clinics_flow" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-human-male-female text-info"></i> Consulting Clinics & Patient Flow</h5>
                             <div class="d-flex gap-1">
@@ -582,7 +582,7 @@
                     </div>
 
                     {{-- Worksheet: inpatient_ward_income --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-inpatient_ward_income" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-inpatient_ward_income" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-bed text-warning"></i> Ward Income & Discharge Clearance</h5>
                             <div class="d-flex gap-1">
@@ -597,7 +597,7 @@
                     </div>
 
                     {{-- Worksheet: theatre_bundles_audit --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-theatre_bundles_audit" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-theatre_bundles_audit" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-scissors-cutting text-danger"></i> Theatre Bundles & Procedure Revenue</h5>
                             <div class="d-flex gap-1">
@@ -612,7 +612,7 @@
                     </div>
 
                     {{-- Worksheet: maternity_morgue_audit --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-maternity_morgue_audit" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-maternity_morgue_audit" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-baby-carriage text-pink"></i> Maternity Enrollments & Mortuary Register</h5>
                             <div class="d-flex gap-1">
@@ -634,7 +634,7 @@
                 <div class="glass-panel d-flex flex-column gap-4">
 
                     {{-- Worksheet: laboratory_register --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-laboratory_register" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-laboratory_register" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-microscope text-primary"></i> Laboratory Register & Reagent Usage</h5>
                             <div class="d-flex gap-1">
@@ -649,7 +649,7 @@
                     </div>
 
                     {{-- Worksheet: imaging_register --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-imaging_register" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-imaging_register" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-image-filter-black-white text-info"></i> Imaging Register & Consumables Usage</h5>
                             <div class="d-flex gap-1">
@@ -664,7 +664,7 @@
                     </div>
 
                     {{-- Worksheet: pharmacy_prescriptions --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-pharmacy_prescriptions" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-pharmacy_prescriptions" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-pill text-success"></i> Pharmacy Prescriptions, Returns & Damages</h5>
                             <div class="d-flex gap-1">
@@ -686,7 +686,7 @@
                 <div class="glass-panel d-flex flex-column gap-4">
 
                     {{-- Worksheet: central_store_stock_check --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-central_store_stock_check" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-central_store_stock_check" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-warehouse text-primary"></i> Central Store Stock & PO Price Variance</h5>
                             <div class="d-flex gap-1">
@@ -701,7 +701,7 @@
                     </div>
 
                     {{-- Worksheet: departmental_ward_stores --}}
-                    <div class="responsibility-section card bg-white p-3" id="sheet-departmental_ward_stores" style="border: 1px solid var(--audit-border);">
+                    <div class="responsibility-section card-modern bg-white p-3" id="sheet-departmental_ward_stores" style="border: 1px solid var(--audit-border);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-dark font-weight-bold mb-0"><i class="mdi mdi-store text-info"></i> Departmental/Ward Stock & Requisitions</h5>
                             <div class="d-flex gap-1">

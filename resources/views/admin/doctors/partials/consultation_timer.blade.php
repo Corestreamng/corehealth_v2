@@ -6,9 +6,9 @@
     .consultation-timer-widget {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 8px 16px;
-        min-width: 200px;
+        border-radius: 6px;
+        padding: 4px 10px;
+        min-width: 120px;
     }
     .consultation-timer-widget.timer-paused {
         background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
@@ -16,9 +16,9 @@
     }
     .timer-display {
         font-family: 'Courier New', Courier, monospace;
-        font-size: 1.4rem;
+        font-size: 0.85rem;
         font-weight: bold;
-        letter-spacing: 2px;
+        letter-spacing: 1px;
     }
     .timer-display.timer-paused-text {
         animation: timerPulse 1.5s ease-in-out infinite;
@@ -28,14 +28,14 @@
         50% { opacity: 0.3; }
     }
     .timer-meta {
-        font-size: 0.7rem;
+        font-size: 0.55rem;
         color: #6c757d;
     }
     .timer-status-label {
-        font-size: 0.65rem;
+        font-size: 0.55rem;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
     }
 </style>
 
@@ -43,7 +43,7 @@
     <div class="d-flex align-items-center gap-2">
         <div>
             <div class="d-flex align-items-center gap-1 mb-1">
-                <i class="mdi mdi-timer-outline text-primary" style="font-size: 1.1rem;"></i>
+                <i class="mdi mdi-timer-outline text-primary" style="font-size: 0.65rem;"></i>
                 <span class="timer-status-label text-primary" id="timer-status-label">RUNNING</span>
             </div>
             <div class="timer-display text-dark" id="timer-display">00:00:00</div>

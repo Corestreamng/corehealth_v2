@@ -46,7 +46,7 @@
         <div class="row g-2 mb-3">
             @foreach($roleColors as $role => $meta)
             <div class="col-6 col-sm-4 col-md-2">
-                <div class="card text-white text-center p-2 stat-role-card"
+                <div class="card-modern text-white text-center p-2 stat-role-card"
                      style="background:{{ $meta['bg'] }}; cursor:pointer" data-role="{{ $role }}">
                     <div class="fw-bold fs-4">{{ $roleCounts[$role] ?? 0 }}</div>
                     <div class="small">{{ $meta['label'] }}</div>

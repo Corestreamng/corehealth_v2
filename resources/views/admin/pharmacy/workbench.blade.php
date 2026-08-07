@@ -8380,6 +8380,12 @@ function renderPrescCardPharmacy(row, type) {
     let cardClass = 'presc-card';
     let cardStyle = '';
 
+    // Treatment plan badge
+    let tpBadge = '';
+    if (row.treatment_plan_id && row.treatment_plan_name) {
+        tpBadge = ` <br><a href="#" class="tp-view-link badge mt-1" style="background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;" onclick="ClinicalOrdersKit.viewTreatmentPlan(${row.treatment_plan_id}); event.stopPropagation(); return false;"><i class="fa fa-clipboard-list"></i> ${escapeHtml(row.treatment_plan_name)}</a>`;
+    }
+
     // Handle Free-Form items early - simplified card look
     if (row.is_free_form) {
         let metaInfoFree = `
@@ -8411,7 +8417,7 @@ function renderPrescCardPharmacy(row, type) {
                  style="border-left: 4px solid #6c757d; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: #fdfdfd;">
                  <div class="presc-card-header" style="display: flex; justify-content: space-between;">
                     <div>
-                        <div class="presc-card-title fw-bold" style="font-size: 1.1rem; color: #333;">${row.free_form_name || row.product_name || 'Free-Form Item'}</div>
+                        <div class="presc-card-title fw-bold" style="font-size: 1.1rem; color: #333;">${row.free_form_name || row.product_name || 'Free-Form Item'}${tpBadge}</div>
                         <small class="text-muted"><i class="mdi mdi-file-document-edit"></i> Unmapped External Request</small>
                     </div>
                     <div class="text-end">
@@ -8783,7 +8789,7 @@ function renderPrescCardPharmacy(row, type) {
              style="${cardStyle}">
              <div class="presc-card-header">
                 <div>
-                    <div class="presc-card-title">${row.product_name || 'Unknown Product'}</div>
+                    <div class="presc-card-title">${row.product_name || 'Unknown Product'}${tpBadge}</div>
                     <small class="text-muted">[${row.product_code || ''}]</small>
                     ${bundledBadge}
                 </div>
@@ -15039,7 +15045,7 @@ function renderHmoAccordion(containerSelector, dataObj, prefix) {
             schemesHtml += '<div class="ms-3 mt-2">';
             for (const [schemeName, schemeData] of Object.entries(categoryData.schemes)) {
                 schemesHtml += `
-                    <div class="card border-0 mb-1">
+                    <div class="card-modern border-0 mb-1">
                         <div class="d-flex justify-content-between p-2 bg-light rounded align-items-center">
                             <span class="fw-bold text-secondary"><i class="mdi mdi-shield-check-outline me-1"></i> ${escapeHtml(schemeName)}</span>
                             <span class="badge bg-secondary">${formatNumber(schemeData.count)}</span>
@@ -15104,7 +15110,7 @@ function renderDeepFinancials(containerSelector, collectionsData) {
             schemesHtml += '<div class="ms-3 mt-2">';
             for (const [schemeName, schemeData] of Object.entries(store.schemes)) {
                 schemesHtml += `
-                    <div class="card border-0 mb-2 shadow-sm">
+                    <div class="card-modern border-0 mb-2 shadow-sm">
                         <div class="d-flex justify-content-between p-2 bg-light rounded align-items-center border-start border-4 border-info">
                             <span class="fw-bold text-secondary"><i class="mdi mdi-shield-check-outline me-1"></i> ${escapeHtml(schemeName)}</span>
                             <div class="text-end">
@@ -18154,6 +18160,7 @@ $('#btn-close-stock-reports').on('click', function() { hidePharmacyStockReports(
 
 {{-- Clinical Context Modal --}}
 @include('admin.partials.clinical_context_modal')
+@include('admin.partials.treatment-plan-viewer-modal')
 
 {{-- Investigation Result View Modal --}}
 @include('admin.partials.invest_res_view_modal')
@@ -18478,4 +18485,6 @@ function showBundleRemove(btn) {
 @include('admin.partials.price_list_modal', ['products_only' => true])
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
+
+<script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
 @endsection

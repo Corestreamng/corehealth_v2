@@ -101,7 +101,7 @@
         </div>
     </div>
 
-    <div class="card shadow mb-4 border-0 rounded-lg">
+    <div class="card-modern shadow mb-4 border-0 rounded-lg">
         <div class="card-header bg-white py-3 d-flex flex-row align-items-center justify-content-between border-bottom">
             <h6 class="m-0 font-weight-bold text-dark"><i class="mdi mdi-flash text-warning mr-2"></i>Active Tariff Overrides</h6>
         </div>
@@ -152,7 +152,7 @@
                     <div class="row">
                         <div class="col-lg-8">
                             {{-- Step 1: Context Card --}}
-                            <div class="card border-0 shadow-sm rounded-lg mb-4">
+                            <div class="card-modern border-0 shadow-sm rounded-lg mb-4">
                                 <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
                                     <h6 class="font-weight-bold text-primary text-uppercase mb-0"><i class="mdi mdi-account-group mr-2"></i>1. Applicability Context</h6>
                                     <p class="text-muted small mt-1 mb-0">Who does this override apply to?</p>
@@ -178,7 +178,7 @@
                             </div>
 
                             {{-- Step 2: Target Scope Card --}}
-                            <div class="card border-0 shadow-sm rounded-lg mb-4">
+                            <div class="card-modern border-0 shadow-sm rounded-lg mb-4">
                                 <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
                                     <h6 class="font-weight-bold text-primary text-uppercase mb-0"><i class="mdi mdi-target mr-2"></i>2. Target Scope</h6>
                                     <p class="text-muted small mt-1 mb-0">What items or categories are affected?</p>
@@ -208,7 +208,7 @@
                             </div>
 
                             {{-- Step 3: Pricing Rule Card --}}
-                            <div class="card border-0 shadow-sm rounded-lg">
+                            <div class="card-modern border-0 shadow-sm rounded-lg">
                                 <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
                                     <h6 class="font-weight-bold text-primary text-uppercase mb-0"><i class="mdi mdi-cash-register mr-2"></i>3. Pricing Rule</h6>
                                     <p class="text-muted small mt-1 mb-0">How much should the patient pay?</p>
@@ -239,7 +239,7 @@
 
                         {{-- Live Preview Sidebar --}}
                         <div class="col-lg-4 mt-4 mt-lg-0">
-                            <div class="card border-0 shadow-sm rounded-lg h-100 bg-white" style="border: 2px solid #edf2f7 !important;">
+                            <div class="card-modern border-0 shadow-sm rounded-lg h-100 bg-white" style="border: 2px solid #edf2f7 !important;">
                                 <div class="card-body d-flex flex-column">
                                     <h6 class="font-weight-bold text-dark text-uppercase mb-3"><i class="mdi mdi-eye text-primary mr-2"></i>Live Preview</h6>
                                     

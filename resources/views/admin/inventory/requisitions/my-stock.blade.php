@@ -119,7 +119,7 @@
         </div>
         @else
         <!-- Store Context Details Banner -->
-        <div class="card store-selector-card shadow-sm mb-4">
+        <div class="card-modern store-selector-card shadow-sm mb-4">
             <div class="card-body py-3">
                 <div class="row align-items-center">
                     <div class="col-md-3">
@@ -144,7 +144,7 @@
         </div>
 
         <!-- Tabbed Interface -->
-        <div class="card shadow-sm mb-4">
+        <div class="card-modern shadow-sm mb-4">
             <div class="card-header bg-white pb-0">
                 <ul class="nav nav-tabs nav-tabs-premium border-0" id="myStockTabs" role="tablist">
                     <li class="nav-item">
@@ -553,7 +553,7 @@
 
                         const card = `
                         <div class="col-md-4 col-lg-3 mb-4">
-                            <div class="card stock-card h-100 shadow-sm bg-white">
+                            <div class="card-modern stock-card h-100 shadow-sm bg-white">
                                 <div class="card-body d-flex flex-column">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <span class="badge-status ${badgeClass}">${badgeLabel}</span>
@@ -985,7 +985,7 @@
             if (stats.mode === 'product') {
                 container.innerHTML = `
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="card bg-light border-0 shadow-sm h-100">
+                        <div class="card-modern bg-light border-0 shadow-sm h-100">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-muted mb-1"><i class="mdi mdi-ray-start"></i> Opening Balance</h6>
                                 <h3 class="mb-0 text-dark">${stats.opening_balance_formatted}</h3>
@@ -994,7 +994,7 @@
                         </div>
                     </div>
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="card shadow-sm h-100" style="background-color:#f0fdf4; border-left: 4px solid #22c55e;">
+                        <div class="card-modern shadow-sm h-100" style="background-color:#f0fdf4; border-left: 4px solid #22c55e;">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-success mb-1"><i class="mdi mdi-arrow-down-bold"></i> Total In</h6>
                                 <h3 class="mb-0 text-success">+${stats.total_in_formatted}</h3>
@@ -1003,7 +1003,7 @@
                         </div>
                     </div>
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="card shadow-sm h-100" style="background-color:#fef2f2; border-left: 4px solid #ef4444;">
+                        <div class="card-modern shadow-sm h-100" style="background-color:#fef2f2; border-left: 4px solid #ef4444;">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-danger mb-1"><i class="mdi mdi-arrow-up-bold"></i> Total Out</h6>
                                 <h3 class="mb-0 text-danger">-${stats.total_out_formatted}</h3>
@@ -1012,7 +1012,7 @@
                         </div>
                     </div>
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="card shadow-sm h-100" style="background-color:#eff6ff; border-left: 4px solid #3b82f6;">
+                        <div class="card-modern shadow-sm h-100" style="background-color:#eff6ff; border-left: 4px solid #3b82f6;">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-primary mb-1"><i class="mdi mdi-ray-end"></i> Closing Balance</h6>
                                 <h3 class="mb-0 text-primary">${stats.closing_balance_formatted}</h3>
@@ -1031,7 +1031,7 @@
             } else {
                 container.innerHTML = `
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="card bg-light border-0 shadow-sm h-100">
+                        <div class="card-modern bg-light border-0 shadow-sm h-100">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-muted mb-1"><i class="mdi mdi-tag-multiple"></i> Products Touched</h6>
                                 <h3 class="mb-0 text-dark">${stats.unique_products}</h3>
@@ -1039,7 +1039,7 @@
                         </div>
                     </div>
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="card shadow-sm h-100" style="background-color:#f0fdf4; border-left: 4px solid #22c55e;">
+                        <div class="card-modern shadow-sm h-100" style="background-color:#f0fdf4; border-left: 4px solid #22c55e;">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-success mb-1"><i class="mdi mdi-login"></i> Items Received</h6>
                                 <h3 class="mb-0 text-success">${stats.total_in}</h3>
@@ -1047,7 +1047,7 @@
                         </div>
                     </div>
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="card shadow-sm h-100" style="background-color:#fffbeb; border-left: 4px solid #f59e0b;">
+                        <div class="card-modern shadow-sm h-100" style="background-color:#fffbeb; border-left: 4px solid #f59e0b;">
                             <div class="card-body p-3 text-center">
                                 <h6 class="text-warning mb-1" style="color: #d97706 !important;"><i class="mdi mdi-logout"></i> Items Dispensed</h6>
                                 <h3 class="mb-0 text-warning" style="color: #d97706 !important;">${stats.total_out}</h3>
@@ -1055,7 +1055,7 @@
                         </div>
                     </div>
                     <div class="col-md-3 col-sm-6 mb-2">
-                        <div class="card shadow-sm h-100" style="${stats.total_damaged > 0 ? 'background-color:#fef2f2; border-left: 4px solid #ef4444;' : 'background-color:#f8fafc; border-left: 4px solid #94a3b8;'}">
+                        <div class="card-modern shadow-sm h-100" style="${stats.total_damaged > 0 ? 'background-color:#fef2f2; border-left: 4px solid #ef4444;' : 'background-color:#f8fafc; border-left: 4px solid #94a3b8;'}">
                             <div class="card-body p-3 text-center">
                                 <h6 class="${stats.total_damaged > 0 ? 'text-danger' : 'text-muted'} mb-1"><i class="mdi mdi-archive-remove"></i> Damaged / Expired</h6>
                                 <h3 class="mb-0 ${stats.total_damaged > 0 ? 'text-danger' : 'text-muted'}">${stats.total_damaged}</h3>
