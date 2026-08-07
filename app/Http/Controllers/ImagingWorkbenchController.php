@@ -389,6 +389,8 @@ class ImagingWorkbenchController extends Controller
                         'hmo_category' => $request->patient->hmo && $request->patient->hmo->scheme ? $request->patient->hmo->scheme->name : 'N/A',
                         'hmo_no' => $request->patient->hmo_no ?? 'N/A',
                         'service_name' => $request->service_name,
+                        'treatment_plan_id' => ($request->treatment_plan_id && $request->treatmentPlan && $request->treatmentPlan->isAccessibleBy(Auth::user(), 'imaging')) ? $request->treatment_plan_id : null,
+                        'treatment_plan_name' => ($request->treatment_plan_id && $request->treatmentPlan && $request->treatmentPlan->isAccessibleBy(Auth::user(), 'imaging')) ? $request->treatment_plan_name : null,
                         'status' => $request->status,
                         'note' => $request->note ?? null,
                         'result' => $request->result ?? null,
@@ -420,7 +422,7 @@ class ImagingWorkbenchController extends Controller
                         });
                     });
                 })
-                ->rawColumns(['card_data'])
+                ->rawColumns(['card_data', 'service_name'])
                 ->make(true);
         } catch (\Exception $e) {
             return response()->json([
@@ -1280,7 +1282,10 @@ class ImagingWorkbenchController extends Controller
                 return '
                     <div class="history-card p-3 mb-3 border rounded">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="mb-0"><span class="badge badge-primary">' . $serviceName . '</span></h6>
+                            <h6 class="mb-0">
+                                <span class="badge badge-primary">' . $serviceName . '</span>
+                                ' . ($req->treatment_plan_id && $req->treatmentPlan && $req->treatmentPlan->isAccessibleBy(Auth::user(), 'imaging') ? "<a href='#' class='tp-view-link badge ms-2' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$req->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$req->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($req->treatment_plan_name) . "</a>" : "") . '
+                            </h6>
                             <button class="btn btn-sm btn-success view-invest-result-btn" data-request-id="' . $req->id . '">
                                 <i class="fa fa-eye"></i> View Result
                             </button>

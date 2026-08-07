@@ -399,6 +399,8 @@ class LabWorkbenchController extends Controller
                         'hmo_category' => $request->patient->hmo && $request->patient->hmo->scheme ? $request->patient->hmo->scheme->name : 'N/A',
                         'hmo_no' => $request->patient->hmo_no ?? 'N/A',
                         'service_name' => $request->service_name,
+                        'treatment_plan_id' => ($request->treatment_plan_id && $request->treatmentPlan && $request->treatmentPlan->isAccessibleBy(Auth::user(), 'lab')) ? $request->treatment_plan_id : null,
+                        'treatment_plan_name' => ($request->treatment_plan_id && $request->treatmentPlan && $request->treatmentPlan->isAccessibleBy(Auth::user(), 'lab')) ? $request->treatment_plan_name : null,
                         'status' => $request->status,
                         'note' => $request->note ?? null,
                         'result' => $request->result ?? null,
@@ -433,7 +435,7 @@ class LabWorkbenchController extends Controller
                         })->orWhere('lab_number', 'like', "%{$keyword}%");
                     });
                 })
-                ->rawColumns(['card_data'])
+                ->rawColumns(['card_data', 'service_name'])
                 ->make(true);
         } catch (\Exception $e) {
             return response()->json([
@@ -1645,7 +1647,11 @@ class LabWorkbenchController extends Controller
                         : 'N/A';
                 })
                 ->addColumn('service_name', function ($row) {
-                    return $row->service_name;
+                    $html = htmlspecialchars($row->service_name ?? '');
+                    if ($row->treatment_plan_id && $row->treatmentPlan && $row->treatmentPlan->isAccessibleBy(Auth::user(), 'lab')) {
+                        $html .= "<br><a href='#' class='tp-view-link badge mt-1' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$row->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$row->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($row->treatment_plan_name) . "</a>";
+                    }
+                    return $html;
                 })
                 ->addColumn('doctor_name', function ($row) {
                     return $row->doctor ? $row->doctor->surname . ' ' . $row->doctor->firstname : 'N/A';
@@ -1678,7 +1684,7 @@ class LabWorkbenchController extends Controller
                         <i class="mdi mdi-eye"></i>
                     </button>';
                 })
-                ->rawColumns(['status_badge', 'actions'])
+                ->rawColumns(['status_badge', 'actions', 'service_name'])
                 ->make(true);
         } catch (\Exception $e) {
             return response()->json([
