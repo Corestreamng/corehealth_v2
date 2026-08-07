@@ -1063,6 +1063,35 @@
                                 <div class="mb-3">
                                     <div class="feature-toggle-row d-flex align-items-center justify-content-between">
                                         <div>
+                                            <label for="enable_treatment_plans_in_consult" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Enable Treatment Plans
+                                            </label>
+                                            <small class="text-muted d-block">Show Treatment Plans tab in consultations</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="enable_treatment_plans_in_consult" value="1" {{ $config->enable_treatment_plans_in_consult ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="require_treatment_plan_in_consult" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Require Treatment Plan
+                                            </label>
+                                            <small class="text-muted d-block">Block consultation until a plan is active</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="require_treatment_plan_in_consult" value="1" {{ $config->require_treatment_plan_in_consult ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
                                             <label for="requirediagnosis" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 Require Diagnosis
                                             </label>
