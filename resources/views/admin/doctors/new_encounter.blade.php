@@ -47,472 +47,311 @@
         </div>
     @endif
 
-    <!-- Sticky Consultation Header -->
+    <!-- Sticky Consultation Header Component -->
+    @include('admin.doctors.partials.sticky_header')
+
+    
+    @push('styles')
     <style>
-        .sticky-consultation-header {
+        .content-header {
+            display: none !important;
+        }
+
+        .encounter-workspace-layout {
+            --sidebar-width: 240px;
+            --sidebar-collapsed-width: 65px;
+            --hos-color-var: {{ appsettings('hos_color', '#007bff') }};
+            display: grid;
+            grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+            width: 100%;
+        }
+
+        .encounter-workspace-layout.sidebar-collapsed {
+            grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr);
+        }
+        
+        .encounter-sidebar-wrapper {
+            transition: all 0.3s ease;
             position: sticky;
-            top: 60px;
-            z-index: 1020;
-            background: rgba(255, 255, 255, 0.97);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid #dee2e6;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            margin-bottom: 1rem;
-            padding: 0;
+            top: 115px; /* navbar (~60px) + compact header bar (~55px) */
+            height: calc(100vh - 130px);
+            max-height: calc(100vh - 130px);
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            background: #fff;
             border-radius: 0.5rem;
-            overflow: hidden;
-        }
-
-        /* ─── ROW 1: Identity + Actions ─── */
-        .sch-row-identity {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem 1rem;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .sch-patient-name {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #0d6efd;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .sch-patient-name .file-no {
-            font-weight: 400;
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-        .sch-demographics {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        .sch-badge {
-            font-size: 0.72rem;
-            font-weight: 500;
-            padding: 2px 8px;
-            border-radius: 4px;
-            background: #f1f3f5;
-            border: 1px solid #e9ecef;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            white-space: nowrap;
-            line-height: 1.4;
-        }
-        .sch-badge i { font-size: 0.7rem; width: 12px; text-align: center; }
-        .sch-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-left: auto;
-        }
-        .sch-actions .btn { font-size: 0.72rem; padding: 3px 10px; white-space: nowrap; }
-
-        /* ─── ROW 2: Clinical strips ─── */
-        .sch-row-clinical {
-            display: flex;
-            gap: 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .sch-strip {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            padding: 4px 12px;
-            gap: 6px;
-            min-height: 32px;
-        }
-        .sch-strip + .sch-strip { border-left: 1px solid #e9ecef; }
-        .sch-strip-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .sch-strip-allergy { background: #fff5f5; }
-        .sch-strip-allergy .sch-strip-label { color: #dc3545; }
-        .sch-strip-vitals { background: #f0f7ff; }
-        .sch-strip-vitals .sch-strip-label { color: #0d6efd; }
-        .sch-strip-content {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 4px;
-            flex: 1;
-        }
-        .sch-vital-item {
-            font-size: 0.72rem;
-            color: #495057;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            padding: 1px 6px;
-            background: rgba(255,255,255,0.7);
-            border-radius: 3px;
-            white-space: nowrap;
-        }
-        .sch-vital-item i { font-size: 0.65rem; }
-        .sch-strip .btn-add-allergy {
-            font-size: 0.65rem;
-            padding: 0 4px;
-            line-height: 1.4;
-            margin-left: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             border: 1px solid #dee2e6;
-            background: white;
-            border-radius: 3px;
+            padding: 0.5rem 0;
+        }
+
+        .encounter-sidebar-wrapper::-webkit-scrollbar {
+            width: 4px;
+        }
+        .encounter-sidebar-wrapper::-webkit-scrollbar-thumb {
+            background-color: #ddd;
+            border-radius: 4px;
+        }
+
+        .encounter-sidebar {
+            padding: 0.35rem 0.5rem;
+            margin: 0;
+            list-style: none;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+        }
+
+        .encounter-sidebar .nav-item {
+            margin-bottom: 3px;
+        }
+
+        .encounter-sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            color: #495057;
+            padding: 0.65rem 1rem;
+            border-radius: 8px !important;
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            cursor: pointer !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            text-decoration: none !important;
+        }
+
+        /* Force pointer-events:none on all children so hover hit-testing sees ONLY the parent <a> element */
+        .encounter-sidebar .nav-link *,
+        .encounter-sidebar .nav-link .sidebar-text,
+        .encounter-sidebar .nav-link i,
+        .encounter-sidebar .nav-link .badge {
+            pointer-events: none !important;
+            cursor: pointer !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+        }
+
+        .encounter-sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
             color: #6c757d;
-            cursor: pointer;
+            transition: margin 0.3s ease;
         }
-        .sch-strip .btn-add-allergy:hover { background: #f8f9fa; color: #dc3545; }
 
-        /* ─── ROW 3: Alerts (injected by JS — only shows when active) ─── */
-        .sch-row-alerts { padding: 0 12px; }
-        .sch-row-alerts:empty { display: none; }
-
-        /* ─── Timer inline ─── */
-        .sch-actions .consultation-timer-widget {
-            padding: 3px 10px;
-            min-width: auto;
-            border-radius: 5px;
+        .encounter-sidebar .nav-link:hover {
+            background-color: #f1f3f5;
+            color: var(--hos-color-var);
         }
-        .sch-actions .timer-display { font-size: 0.95rem; }
-        .sch-actions .timer-meta { font-size: 0.6rem; }
-        .sch-actions .timer-status-label { font-size: 0.55rem; }
+
+        .encounter-sidebar .nav-link:hover i {
+            color: var(--hos-color-var);
+        }
+
+        .encounter-sidebar .nav-link.active {
+            background-color: var(--hos-color-var) !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+
+        .encounter-sidebar .nav-link.active i,
+        .encounter-sidebar .nav-link.active .sidebar-text {
+            color: #ffffff !important;
+        }
+
+        /* Collapsed state styles */
+        .encounter-workspace-layout.sidebar-collapsed .sidebar-text,
+        .encounter-workspace-layout.sidebar-collapsed .badge {
+            display: none !important;
+        }
+
+        .encounter-workspace-layout.sidebar-collapsed .nav-link {
+            padding: 0.75rem 0;
+            justify-content: center;
+        }
+
+        .encounter-workspace-layout.sidebar-collapsed .nav-link i {
+            margin: 0 !important;
+            font-size: 1.25rem;
+        }
+
+        /* Responsive behavior */
+        @media (max-width: 991.98px) {
+            .encounter-sidebar-wrapper {
+                top: 70px;
+                height: calc(100vh - 85px);
+                max-height: calc(100vh - 85px);
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            .encounter-workspace-layout.sidebar-collapsed .nav-link {
+                padding: 0.65rem 0;
+                justify-content: center;
+            }
+            .encounter-workspace-layout.sidebar-collapsed .nav-link i {
+                margin: 0 !important;
+            }
+        }
     </style>
+    @endpush
 
-    <div class="sticky-consultation-header">
-        {{-- ═══ ROW 1: Patient Identity + Demographics + Timer + Actions ═══ --}}
-        <div class="sch-row-identity">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="sch-patient-name">
-                    <i class="fa fa-user-circle"></i>
-                    {{ userfullname($patient->user->id) }}
-                    <span class="file-no">#{{ $patient->file_no }}</span>
-                </span>
-                <div class="sch-demographics">
-                    <span class="sch-badge" title="Age & Gender">
-                        <i class="fa fa-birthday-cake text-muted"></i>
-                        {{ \Carbon\Carbon::parse($patient->dob)->age }}yrs ({{ substr($patient->gender ?? 'N/A', 0, 1) }})
-                    </span>
-                    <span class="sch-badge" title="Blood Group / Genotype">
-                        <i class="fa fa-tint text-danger"></i>
-                        {{ $patient->blood_group ?? 'N/A' }} / {{ $patient->genotype ?? 'N/A' }}
-                    </span>
-                    <span class="sch-badge" title="HMO/Insurance">
-                        <i class="fa fa-shield-alt text-success"></i>
-                        {{ $patient->hmo->name ?? 'Private' }}
-                    </span>
-                </div>
-            </div>
+    @push('scripts')
+    <script>
+        function toggleSidebar() {
+            const layout = document.querySelector('.encounter-workspace-layout');
+            const icons = document.querySelectorAll('.toggle-sidebar-icon');
+            layout.classList.toggle('sidebar-collapsed');
+            
+            const isCollapsed = layout.classList.contains('sidebar-collapsed');
+            icons.forEach(function(icon) {
+                if (isCollapsed) {
+                    icon.classList.replace('fa-angle-double-left', 'fa-angle-double-right');
+                } else {
+                    icon.classList.replace('fa-angle-double-right', 'fa-angle-double-left');
+                }
+            });
+            localStorage.setItem('encounterSidebarCollapsed', isCollapsed ? 'true' : 'false');
+        }
 
-            <div class="sch-actions">
-                @include('admin.doctors.partials.consultation_timer')
+        // Initialize state on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedState = localStorage.getItem('encounterSidebarCollapsed');
+            // Default: collapsed on mobile unless explicitly expanded, or restore saved state
+            const isCollapsed = savedState !== null ? savedState === 'true' : window.innerWidth <= 991.98;
+            
+            const layout = document.querySelector('.encounter-workspace-layout');
+            if (isCollapsed && layout) {
+                layout.classList.add('sidebar-collapsed');
+                document.querySelectorAll('.toggle-sidebar-icon').forEach(function(icon) {
+                    icon.classList.replace('fa-angle-double-left', 'fa-angle-double-right');
+                });
+            }
+            
+            // Set title attributes for tooltips when sidebar is collapsed
+            document.querySelectorAll('.encounter-sidebar .nav-link').forEach(function(link) {
+                const sidebarText = link.querySelector('.sidebar-text');
+                if (sidebarText && !link.getAttribute('title')) {
+                    link.setAttribute('title', sidebarText.innerText.trim());
+                }
 
-                @if (isset($admission_request))
-                    {{-- Patient has admission request - show status and discharge button --}}
-                    <div class="d-flex align-items-center px-2 py-1 bg-light rounded border" style="gap: 5px;">
-                        <i class="fa fa-bed" style="color: {{ appsettings('hos_color', '#007bff') }}; font-size: 0.75rem;"></i>
-                        <div class="d-flex flex-column lh-1">
-                            @if($admission_request->admission_status === 'discharge_requested')
-                                <span class="fw-bold text-warning" style="font-size: 0.68rem;">Discharge Req</span>
-                                <small class="text-muted" style="font-size: 0.58rem;">Awaiting Nursing</small>
-                            @elseif($admission_request->admission_status === 'pending_checklist')
-                                <span class="fw-bold text-info" style="font-size: 0.68rem;">Admission Req</span>
-                                <small class="text-muted" style="font-size: 0.58rem;">Pending Checklist</small>
-                            @elseif($admission_request->discharged)
-                                <span class="fw-bold text-secondary" style="font-size: 0.68rem;">Discharged</span>
-                                <small class="text-muted" style="font-size: 0.58rem;">{{ $admission_request->discharge_date ? date('M j', strtotime($admission_request->discharge_date)) : '' }}</small>
-                            @else
-                                <span class="fw-bold text-dark" style="font-size: 0.68rem;">Admitted</span>
-                                <small class="text-muted" style="font-size: 0.58rem;">
-                                    {{ $admission_request->bed ? $admission_request->bed->name : 'Pending Bed' }}
-                                </small>
-                            @endif
-                        </div>
-                    </div>
-                    @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
-                    <button type="button" class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" onclick="openDischargeModal()">
-                        <i class="fa fa-sign-out-alt me-1"></i> Discharge
+                // Mobile touch fix: trigger $(link).click() on touchend (matching subtabs behavior)
+                link.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    $(link).click();
+                }, { passive: false });
+            });
+        });
+    </script>
+    @endpush
+
+    <div class="encounter-workspace-layout" style="gap: 15px;">
+        <!-- Sidebar Navigation -->
+        <div class="encounter-sidebar-wrapper">
+            <ul class="nav nav-pills flex-column encounter-sidebar" id="myTab" role="tablist">
+                {{-- Top Collapse Header Button --}}
+                <li class="nav-item mb-2 pb-2 border-bottom w-100 text-center toggle-sidebar-btn">
+                    <button type="button" class="btn btn-sm btn-light w-75 rounded-pill shadow-sm" onclick="toggleSidebar()" style="color: var(--hos-color-var);">
+                        <i class="fa fa-angle-double-left toggle-sidebar-icon"></i> <span class="sidebar-text ms-1 fw-bold">Collapse</span>
                     </button>
-                    @endif
-                @else
-                    {{-- Patient not admitted - show admit button --}}
-                    <button type="button" class="btn btn-info btn-sm text-white d-flex align-items-center shadow-sm" onclick="openAdmitModal()">
-                        <i class="fa fa-bed me-1"></i> Admit
-                    </button>
+                </li>
+
+                @php $plansEnabled = appsettings('enable_treatment_plans_in_consult', true); @endphp
+                @if($plansEnabled)
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link active" id="treatment_plans_tab" data-toggle="tab" href="#treatment_plans" data-target="#treatment_plans" data-bs-toggle="tab" data-bs-target="#treatment_plans" role="tab" aria-controls="treatment_plans" aria-selected="true">
+                        <i class="mdi mdi-clipboard-pulse me-3"></i><span class="sidebar-text">Treatment Plans</span>
+                        <span class="tp-tab-pulse" id="tp-tab-pulse" style="display:none;"></span>
+                        <span class="badge bg-teal rounded-pill ms-auto tp-plan-count-badge" id="tp-plan-count-badge" style="display:none;"></span>
+                    </a>
+                </li>
                 @endif
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link {{ !$plansEnabled ? 'active' : '' }}" id="clinical_story_tab" data-toggle="tab" href="#clinical_story" data-target="#clinical_story" data-bs-toggle="tab" data-bs-target="#clinical_story" role="tab" aria-controls="clinical_story" aria-selected="{{ !$plansEnabled ? 'true' : 'false' }}">
+                        <i class="mdi mdi-history me-3"></i><span class="sidebar-text">Clinical Story</span><span class="badge bg-success rounded-pill ms-auto" style="font-size: 0.65rem;">NEW</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="vitals_data_tab" data-toggle="tab" href="#vitals" data-target="#vitals" data-bs-toggle="tab" data-bs-target="#vitals" role="tab" aria-controls="vitals_data" aria-selected="false">
+                        <i class="mdi mdi-heart-pulse me-3"></i><span class="sidebar-text">Vitals / Allergies</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="nurse_charts_tab" data-toggle="tab" href="#nurse_charts" data-target="#nurse_charts" data-bs-toggle="tab" data-bs-target="#nurse_charts" role="tab" aria-controls="nurse_charts" aria-selected="false">
+                        <i class="mdi mdi-notebook me-3"></i><span class="sidebar-text">Nurse Charts</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="inj_imm_history_tab" data-toggle="tab" href="#inj_imm_history" data-target="#inj_imm_history" data-bs-toggle="tab" data-bs-target="#inj_imm_history" role="tab" aria-controls="inj_imm_history" aria-selected="false">
+                        <i class="mdi mdi-needle me-3"></i><span class="sidebar-text">Inj / Imm History</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="clinical_notes_tab" data-toggle="tab" href="#clinical_notes" data-target="#clinical_notes" data-bs-toggle="tab" data-bs-target="#clinical_notes" role="tab" aria-controls="clinical_notes" aria-selected="false">
+                        <i class="mdi mdi-note-text me-3"></i><span class="sidebar-text">Clinical Notes / Diagnosis</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="laboratory_services_tab" data-toggle="tab" href="#laboratory_services" data-target="#laboratory_services" data-bs-toggle="tab" data-bs-target="#laboratory_services" role="tab" aria-controls="laboratory_services" aria-selected="false">
+                        <i class="mdi mdi-flask me-3"></i><span class="sidebar-text">Laboratory Services</span>
+                        <span class="badge bg-danger rounded-pill ms-auto lab-unviewed-badge" id="lab-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="imaging_services_tab" data-toggle="tab" href="#imaging_services" data-target="#imaging_services" data-bs-toggle="tab" data-bs-target="#imaging_services" role="tab" aria-controls="imaging_services" aria-selected="false">
+                        <i class="mdi mdi-radioactive me-3"></i><span class="sidebar-text">Imaging Services</span>
+                        <span class="badge bg-danger rounded-pill ms-auto imaging-unviewed-badge" id="imaging-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="medications_tab" data-toggle="tab" href="#medications" data-target="#medications" data-bs-toggle="tab" data-bs-target="#medications" role="tab" aria-controls="medications" aria-selected="false">
+                        <i class="mdi mdi-pill me-3"></i><span class="sidebar-text">Medications</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="non_pharm_tab" data-toggle="tab" href="#non_pharm" data-target="#non_pharm" data-bs-toggle="tab" data-bs-target="#non_pharm" role="tab" aria-controls="non_pharm" aria-selected="false">
+                        <i class="mdi mdi-heart-pulse me-3"></i><span class="sidebar-text">Care Plan / Non-Pharm</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="procedures_tab" data-toggle="tab" href="#procedures" data-target="#procedures" data-bs-toggle="tab" data-bs-target="#procedures" role="tab" aria-controls="procedures" aria-selected="false">
+                        <i class="mdi mdi-medical-bag me-3"></i><span class="sidebar-text">Procedures</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="admissions_tab" data-toggle="tab" href="#admissions" data-target="#admissions" data-bs-toggle="tab" data-bs-target="#admissions" role="tab" aria-controls="admissions" aria-selected="false">
+                        <i class="mdi mdi-bed me-3"></i><span class="sidebar-text">Admission History</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="referrals_tab" data-toggle="tab" href="#referrals" data-target="#referrals" data-bs-toggle="tab" data-bs-target="#referrals" role="tab" aria-controls="referrals" aria-selected="false">
+                        <i class="mdi mdi-account-switch me-3"></i><span class="sidebar-text">Referrals</span><span class="badge bg-purple ms-auto" id="referral-count-badge" style="display:none;">0</span>
+                    </a>
+                </li>
 
-                <button type="button" class="btn btn-outline-danger btn-sm d-flex align-items-center btn-manage-alerts" data-patient-id="{{ $patient->id }}">
-                    <i class="mdi mdi-alert-octagon me-1"></i> Alerts
-                </button>
-
-                <button type="button" class="btn btn-outline-dark btn-sm d-flex align-items-center shadow-sm" onclick="openReportBuilder()">
-                    <i class="mdi mdi-file-document me-1"></i> Report
-                </button>
-
-                <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center shadow-sm" onclick="$('button[data-bs-target=\'#referrals\']').tab('show'); setTimeout(function(){ $('#toggle-referral-form-btn').click(); }, 300);">
-                    <i class="mdi mdi-account-switch me-1"></i> Refer
-                </button>
-
-                <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
-                    <i class="fa fa-check-circle me-1"></i> Conclude
-                </button>
-            </div>
-        </div>
-
-        {{-- ═══ ROW 2: Allergies + Vitals ═══ --}}
-        <div class="sch-row-clinical">
-            {{-- Allergies Strip --}}
-            <div class="sch-strip sch-strip-allergy">
-                <span class="sch-strip-label"><i class="fa fa-allergies"></i> Allergies:</span>
-                <div class="sch-strip-content" id="sticky-allergies-container">
-                    @php
-                        $allergies = [];
-                        if(!empty($patient->allergies)) {
-                            $allergies = is_string($patient->allergies) ? (json_decode($patient->allergies, true) ?? explode(',', $patient->allergies)) : $patient->allergies;
-                        }
-                    @endphp
-                    @if(count($allergies) > 0)
-                        @foreach($allergies as $allergy)
-                            <span class="badge bg-danger" style="font-size: 0.68rem;">{{ trim($allergy) }}</span>
-                        @endforeach
-                    @else
-                        <span class="text-muted" style="font-size: 0.7rem;">None known</span>
-                    @endif
-                </div>
-                <button class="btn-add-allergy" onclick="promptAddAllergy({{ $patient->id }})" title="Add Allergy">
-                    <i class="fa fa-plus"></i>
-                </button>
-            </div>
-
-            {{-- Vitals Strip --}}
-            <div class="sch-strip sch-strip-vitals">
-                <span class="sch-strip-label"><i class="fa fa-heartbeat"></i> Vitals:</span>
-                <div class="sch-strip-content" id="sticky-vitals-container">
-                    <span class="sch-vital-item" id="sticky-vital-temp" title="Temperature"><i class="fa fa-thermometer-half text-danger"></i> --</span>
-                    <span class="sch-vital-item" id="sticky-vital-bp" title="Blood Pressure"><i class="fa fa-heart text-danger"></i> --</span>
-                    <span class="sch-vital-item" id="sticky-vital-wt" title="Weight"><i class="fa fa-weight text-primary"></i> --</span>
-                    <span class="sch-vital-item" id="sticky-vital-hr" title="Heart Rate"><i class="fa fa-stethoscope text-success"></i> --</span>
-                </div>
-            </div>
-        </div>
-
-        {{-- ═══ ROW 3: Clinical Alerts Banner (JS injects here) ═══ --}}
-        <div class="sch-row-alerts sticky-header-alerts">
-            <!-- JS will inject alerts here -->
-        </div>
-    </div>
-
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="patient_data_tab" data-bs-toggle="tab" data-bs-target="#patient_data" type="button" role="tab" aria-controls="patient_data" aria-selected="true">
-                <i class="fa fa-user me-1"></i> Patient Data
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="clinical_story_tab" data-bs-toggle="tab" data-bs-target="#clinical_story" type="button" role="tab" aria-controls="clinical_story" aria-selected="false">
-                <i class="fa fa-history me-1"></i> Clinical Story <span class="badge bg-success rounded-pill ms-1" style="font-size: 0.65rem;">NEW</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="vitals_data_tab" data-bs-toggle="tab" data-bs-target="#vitals" type="button" role="tab" aria-controls="vitals_data" aria-selected="false">
-                <i class="fa fa-heartbeat me-1"></i> Vitals/ Allergies
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="nurse_charts_tab" data-bs-toggle="tab" data-bs-target="#nurse_charts" type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">
-                <i class="fa fa-notes-medical me-1"></i> Nurse Charts
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="inj_imm_history_tab" data-bs-toggle="tab" data-bs-target="#inj_imm_history" type="button" role="tab" aria-controls="inj_imm_history" aria-selected="false">
-                <i class="fa fa-syringe me-1"></i> Inj/Imm History
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="clinical_notes_tab" data-bs-toggle="tab" data-bs-target="#clinical_notes" type="button" role="tab" aria-controls="clinical_notes" aria-selected="false">
-                <i class="mdi mdi-note-text me-1"></i> Clinical Notes/Diagnosis
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="laboratory_services_tab" data-bs-toggle="tab" data-bs-target="#laboratory_services" type="button" role="tab" aria-controls="laboratory_services" aria-selected="false">
-                <i class="fa fa-flask me-1"></i> Laboratory Services
-                <span class="badge bg-danger rounded-pill ms-1 lab-unviewed-badge" id="lab-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="imaging_services_tab" data-bs-toggle="tab" data-bs-target="#imaging_services" type="button" role="tab" aria-controls="imaging_services" aria-selected="false">
-                <i class="fa fa-x-ray me-1"></i> Imaging Services
-                <span class="badge bg-danger rounded-pill ms-1 imaging-unviewed-badge" id="imaging-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="medications_tab" data-bs-toggle="tab" data-bs-target="#medications" type="button" role="tab" aria-controls="medications" aria-selected="false">
-                <i class="fa fa-pills me-1"></i> Medications
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="non_pharm_tab" data-bs-toggle="tab" data-bs-target="#non_pharm" type="button" role="tab" aria-controls="non_pharm" aria-selected="false">
-                <i class="fa fa-heartbeat me-1"></i> Care Plan / Non-Pharm
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="procedures_tab" data-bs-toggle="tab" data-bs-target="#procedures" type="button" role="tab" aria-controls="procedures" aria-selected="false">
-                <i class="fa fa-user-md me-1"></i> Procedures
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="admissions_tab" data-bs-toggle="tab" data-bs-target="#admissions" type="button" role="tab" aria-controls="admissions" aria-selected="false">
-                <i class="fa fa-bed me-1"></i> Admission History
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="referrals_tab" data-bs-toggle="tab" data-bs-target="#referrals" type="button" role="tab" aria-controls="referrals" aria-selected="false">
-                <i class="mdi mdi-account-switch me-1"></i> Referrals <span class="badge bg-purple ms-1" id="referral-count-badge" style="display:none;">0</span>
-            </button>
-        </li>
-    </ul>
-    <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="patient_data" role="tabpanel" aria-labelledby="patient_data">
-            <!-- Top Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <div>
-                    <span class="text-muted small"><i class="fa fa-info-circle me-1"></i> Patient Demographics</span>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 500;">
-                        Next (Clinical Story) <i class="fa fa-arrow-right ms-1"></i>
+                {{-- Bottom Collapse Footer Button --}}
+                <li class="nav-item mt-auto pt-3 border-top w-100 text-center toggle-sidebar-btn" style="margin-top: 1rem !important;">
+                    <button type="button" class="btn btn-sm btn-light w-75 rounded-pill shadow-sm" onclick="toggleSidebar()" style="color: var(--hos-color-var);">
+                        <i class="fa fa-angle-double-left toggle-sidebar-icon"></i> <span class="sidebar-text ms-1 fw-bold">Collapse</span>
                     </button>
-                </div>
-            </div>
-
-            <div class="card-modern mt-2">
-                <div class="card-body table-responsive">
-                    <div class="row">
-                        <div class="col-md-9">
-                            <h1>Patient Data Overview</h1>
-                            <p class="text-muted">Demographics, allergies, and vitals are now displayed in the sticky header for quick access during consultation.</p>
-                            
-                            @if ($patient->user->old_records)
-                                <div class="form-group mt-3">
-                                    <a href="{!! url('storage/image/user/old_records/' . $patient->user->old_records) !!}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                        <i class="fa fa-file"></i> View Old Records
-                                    </a>
-                                </div>
-                            @else
-                                <div class="form-group mt-3 text-muted">
-                                    <i class="fa fa-info-circle"></i> No Old Records Attached
-                                </div>
-                            @endif
-                            
-                            <div class="mt-4">
-                                <h6>Next of Kin Information:</h6>
-                                <p class="mb-1"><strong>Name:</strong> {{ $patient->next_of_kin_name ?? 'N/A' }}</p>
-                                <p class="mb-1"><strong>Phone:</strong> {{ $patient->next_of_kin_phone ?? 'N/A' }}</p>
-                                <p class="mb-0"><strong>Address:</strong> {{ $patient->next_of_kin_address ?? 'N/A' }}</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group text-center">
-                                <img src="{!! url('storage/image/user/' . $patient->user->filename) !!}" class="img-fluid rounded shadow-sm border" style="max-height: 150px; object-fit: cover;" alt="Patient Photo" />
-                            </div>
-                        </div>
-                    </div>
-                    @if (isset($admission_request))
-                        <hr>
-                        <h4>Admission Info
-                            @if($admission_request->admission_status === 'discharge_requested')
-                                <span class="badge bg-warning text-dark">Discharge Requested</span>
-                            @elseif($admission_request->discharged)
-                                <span class="badge bg-secondary">Discharged</span>
-                            @else
-                                <button type="button" class="btn btn-warning btn-sm" onclick="openDischargeModal()">
-                                    <i class="fa fa-sign-out-alt"></i> Request Discharge
-                                </button>
-                            @endif
-                        </h4>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <tr>
-                                    <th>Requested By</th>
-                                    <td>{{ userfullname($admission_request->doctor_id) }}</td>
-                                    <th>Requested On</th>
-                                    <td>{{ date('h:i a D M j, Y', strtotime($admission_request->created_at)) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Bed</th>
-                                    <td>{{ $admission_request->bed ? $admission_request->bed->name : 'Pending Assignment' }}</td>
-                                    <th>Ward</th>
-                                    <td>{{ $admission_request->bed ? $admission_request->bed->ward : 'N/A' }},
-                                        <b>Unit:</b>
-                                        {{ $admission_request->bed ? $admission_request->bed->unit : 'N/A' }}
-                                    </td>
-                                </tr>
-                                @if($admission_request->admission_status)
-                                <tr>
-                                    <th>Status</th>
-                                    <td colspan="3">
-                                        @switch($admission_request->admission_status)
-                                            @case('pending_checklist')
-                                                <span class="badge bg-info">Pending Admission Checklist</span>
-                                                @break
-                                            @case('checklist_complete')
-                                                <span class="badge bg-primary">Checklist Complete - Awaiting Bed</span>
-                                                @break
-                                            @case('admitted')
-                                                <span class="badge bg-success">Admitted</span>
-                                                @break
-                                            @case('discharge_requested')
-                                                <span class="badge bg-warning text-dark">Discharge Requested - Awaiting Nursing</span>
-                                                @break
-                                            @case('discharge_checklist')
-                                                <span class="badge bg-warning text-dark">Discharge Checklist In Progress</span>
-                                                @break
-                                            @case('discharged')
-                                                <span class="badge bg-secondary">Discharged</span>
-                                                @break
-                                            @default
-                                                <span class="badge bg-secondary">{{ ucfirst(str_replace('_', ' ', $admission_request->admission_status)) }}</span>
-                                        @endswitch
-                                    </td>
-                                </tr>
-                                @endif
-                            </table>
-
-                        </div>
-                        <hr>
-                    @endif
-                    <!-- Bottom Tab Navigation -->
-                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                        <div>
-                            <a href="{{ route('encounters.index') }}" onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')" class="btn btn-light" style="border-radius: 8px; font-weight: 600;">Exit</a>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 600;">
-                                Next (Clinical Story) <i class="fa fa-arrow-right ms-1"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                </li>
+            </ul>
         </div>
 
+        <!-- Main Content Area -->
+        <div class="encounter-main-content" style="min-width: 0;">
+    <div class="tab-content tp-context-borderable" id="myTabContent">
         {{-- Patient Clinical Story Tab --}}
         <div class="tab-pane fade" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
             <!-- Top Tab Navigation -->
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                 <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'patient_data_tab')" style="border-radius: 8px; font-weight: 500;">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'treatment_plans_tab')" style="border-radius: 8px; font-weight: 500;">
                         <i class="fa fa-arrow-left me-1"></i> Prev (Patient Data)
                     </button>
                 </div>
@@ -532,7 +371,7 @@
             <!-- Bottom Tab Navigation -->
             <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
                 <div>
-                    <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'patient_data_tab')" style="border-radius: 8px; font-weight: 600;">
+                    <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'treatment_plans_tab')" style="border-radius: 8px; font-weight: 600;">
                         <i class="fa fa-arrow-left me-1"></i> Previous (Patient Data)
                     </button>
                 </div>
@@ -631,8 +470,10 @@
                 </div>
             </div>
 
-            <div class="card-modern mt-2">
+            <div class="card-modern mt-2 tp-context-borderable">
                 <div class="card-body">
+                    {{-- Active Plan Context Bar (Phase 9) --}}
+
                     <div id="non-pharm-encounter-container"></div>
                 </div>
             </div>
@@ -673,8 +514,10 @@
                 </div>
             </div>
 
-            <div class="card-modern mt-2">
+            <div class="card-modern mt-2 tp-context-borderable">
                 <div class="card-body">
+                    {{-- Active Plan Context Bar (Phase 9) --}}
+
                     @include('admin.patients.partials.admissions')
                 </div>
             </div>
@@ -707,10 +550,12 @@
                 </div>
             </div>
 
-            <div class="card-modern mt-2">
+            <div class="card-modern mt-2 tp-context-borderable">
                 <div class="card-body">
+                    {{-- Active Plan Context Bar (Phase 9) --}}
+
                     {{-- Create / Edit Referral Section --}}
-                    <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-modern border-0 shadow-sm mb-3">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="mdi mdi-account-switch me-1 text-primary"></i> Specialist Referrals</h6>
                             <button type="button" class="btn btn-sm btn-primary" id="toggle-referral-form-btn">
@@ -933,6 +778,19 @@
         <div class="tab-pane fade" id="clinical_notes" role="tabpanel" aria-labelledby="clinical_notes_tab">
             @include('admin.doctors.partials.clinical_notes')
         </div>
+
+        {{-- Treatment Plans Tab --}}
+        @if($plansEnabled)
+        <div class="tab-pane fade show active" id="treatment_plans" role="tabpanel" aria-labelledby="treatment_plans_tab">
+            @include('admin.doctors.partials.treatment_plans_tab')
+        </div>
+        @endif
+
+        {{-- Clinical Story --}}
+        <div class="tab-pane fade {{ !$plansEnabled ? 'show active' : '' }}" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
+            @include('admin.partials.clinical_story')
+        </div>
+
         <div class="tab-pane fade" id="nurse_charts" role="tabpanel" aria-labelledby="nurse_charts_tab">
             <!-- Top Tab Navigation -->
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
@@ -1251,6 +1109,8 @@
         </form>
         
     </div>
+    </div> <!-- end encounter-main-content -->
+</div> <!-- end encounter-workspace-layout -->
 
     <!-- Medication Details Modal (Read-Only for Doctors) -->
     <div class="modal fade" id="medDetailsModal" tabindex="-1" aria-labelledby="medDetailsModalLabel" aria-hidden="true">
@@ -2253,7 +2113,11 @@
                         type: 'POST',
                         url: route,
                         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                        data: { service_id: comboId },
+                        data: { 
+                            service_id: comboId,
+                            treatment_plan_id: window._activeTreatmentPlan ? window._activeTreatmentPlan.id : null,
+                            treatment_plan_name: window._activeTreatmentPlan ? window._activeTreatmentPlan.name : null
+                        },
                         success: function(response) {
                             if (response.success) {
                                 toastr.success('Combo applied — all items added.', '', { timeOut: 5000 });
@@ -2700,6 +2564,8 @@
         var _PI_NR_SELF_LAB          = {{ appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }};
         var _PI_DR_SELF_IMG          = {{ appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }};
         var _PI_NR_SELF_IMG          = {{ appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }};
+        var _PI_TP_ENABLED           = {{ appsettings('enable_treatment_plans_in_consult', true) ? 'true' : 'false' }};
+        var _PI_TP_REQUIRED          = {{ appsettings('require_treatment_plan_in_consult', false) ? 'true' : 'false' }};
 
         function _autoApproveIfEnabled(requestId, type) {
             // Never auto-approve edits
@@ -4735,7 +4601,7 @@
                             var urgencyIcon = { 'emergency': 'mdi-alert-circle', 'urgent': 'mdi-alert', 'routine': 'mdi-check-circle' }[ref.urgency] || 'mdi-check-circle';
                             var canEdit = ref.can_edit;
 
-                            html += '<div class="card border-start border-4 mb-2" style="border-color: ' + (ref.urgency === 'emergency' ? '#dc3545' : ref.urgency === 'urgent' ? '#ffc107' : '#6c757d') + ' !important;">';
+                            html += '<div class="card-modern border-start border-4 mb-2" style="border-color: ' + (ref.urgency === 'emergency' ? '#dc3545' : ref.urgency === 'urgent' ? '#ffc107' : '#6c757d') + ' !important;">';
                             html += '<div class="card-body py-2 px-3">';
 
                             // Header row: badges + actions
@@ -4813,7 +4679,7 @@
                             var urgencyIcon = { 'emergency': 'mdi-alert-circle', 'urgent': 'mdi-alert', 'routine': 'mdi-check-circle' }[ref.urgency] || 'mdi-check-circle';
                             var borderColor = ref.urgency === 'emergency' ? '#dc3545' : ref.urgency === 'urgent' ? '#ffc107' : '#6c757d';
 
-                            html += '<div class="card border-start border-4 mb-2" style="border-color: ' + borderColor + ' !important;">';
+                            html += '<div class="card-modern border-start border-4 mb-2" style="border-color: ' + borderColor + ' !important;">';
                             html += '<div class="card-body py-2 px-3">';
 
                             // Header: badges + encounter source label + action buttons
@@ -4899,7 +4765,7 @@
                             var urgencyIcon = { 'emergency': 'mdi-alert-circle', 'urgent': 'mdi-alert', 'routine': 'mdi-check-circle' }[ref.urgency] || 'mdi-check-circle';
                             var borderColor = ref.urgency === 'emergency' ? '#dc3545' : ref.urgency === 'urgent' ? '#ffc107' : '#17a2b8';
 
-                            html += '<div class="card border-start border-4 mb-2" style="border-color: ' + borderColor + ' !important;">';
+                            html += '<div class="card-modern border-start border-4 mb-2" style="border-color: ' + borderColor + ' !important;">';
                             html += '<div class="card-body py-2 px-3">';
 
                             // Header
@@ -5107,7 +4973,8 @@
 
     @include('admin.doctors.partials.report_builder')
     @include('admin.doctors.partials.modals')
-    @include('admin.partials.treatment-plan-modal')
+    @include('admin.partials.treatment-plan-viewer-modal')
+
     @include('admin.partials.re-prescribe-encounter-modal')
     @include('admin.partials.bundle_view_modal')
     @include('admin.partials.bundle_remove_modal')
