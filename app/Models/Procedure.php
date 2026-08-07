@@ -58,6 +58,8 @@ class Procedure extends Model implements Auditable
         'consent_marked_by',
         'consent_marked_at',
         'consent_notes',
+        'treatment_plan_id',
+        'treatment_plan_name',
     ];
 
     protected $casts = [
@@ -131,6 +133,14 @@ class Procedure extends Model implements Auditable
         'waived'       => 'Waived',
         'not_required' => 'Not Required',
     ];
+
+    /**
+     * Get the treatment plan this procedure belongs to.
+     */
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(\App\Models\TreatmentPlan::class);
+    }
 
     /**
      * Get the service.

@@ -55,7 +55,9 @@ class AdmissionRequest extends Model implements Auditable
         'priority',
         'esi_level',
         'chief_complaint',
-        'preferred_ward_id'
+        'preferred_ward_id',
+        'treatment_plan_id',
+        'treatment_plan_name',
     ];
 
     public function deathRecord()
@@ -69,6 +71,11 @@ class AdmissionRequest extends Model implements Auditable
         'discharge_date' => 'datetime',
         'discharged' => 'boolean',
     ];
+
+    public function treatmentPlan()
+    {
+        return $this->belongsTo(\App\Models\TreatmentPlan::class);
+    }
 
     /**
      * Admission workflow status constants
