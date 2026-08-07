@@ -372,6 +372,15 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'update'])->name('treatmentPlans.update');
         Route::delete('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'destroy'])->name('treatmentPlans.destroy');
 
+        // Treatment Plans v2 — Patient-scoped + progress + linked items
+        Route::get('patients/{patient}/treatment-plans', [TreatmentPlanController::class, 'forPatient'])->name('patients.treatmentPlans');
+        Route::post('patients/{patient}/treatment-plans', [TreatmentPlanController::class, 'storeForPatient'])->name('patients.treatmentPlans.store');
+        Route::put('treatment-plans/{treatmentPlan}/progress', [TreatmentPlanController::class, 'updateProgress'])->name('treatmentPlans.updateProgress');
+        Route::get('treatment-plans/{treatmentPlan}/linked-items', [TreatmentPlanController::class, 'linkedItems'])->name('treatmentPlans.linkedItems');
+        Route::post('treatment-plans/{treatmentPlan}/attach-note', [TreatmentPlanController::class, 'attachNote'])->name('treatmentPlans.attachNote');
+        Route::post('treatment-plans/{treatmentPlan}/delink-item', [TreatmentPlanController::class, 'delinkItem'])->name('treatmentPlans.delinkItem');
+        Route::put('treatment-plans/{treatmentPlan}/retire', [TreatmentPlanController::class, 'retire'])->name('treatmentPlans.retire');
+
         // Delete endpoints for service requests
         Route::delete('encounters/{encounter}/labs/{lab}', [EncounterController::class, 'deleteLab'])->name('encounters.deleteLab');
         Route::delete('encounters/{encounter}/imaging/{imaging}', [EncounterController::class, 'deleteImaging'])->name('encounters.deleteImaging');

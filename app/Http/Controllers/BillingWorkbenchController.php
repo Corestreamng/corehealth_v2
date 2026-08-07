@@ -419,6 +419,9 @@ class BillingWorkbenchController extends Controller
                 'product.price',
                 'product.category',
                 'user',
+                'productRequest.treatmentPlan',
+                'labRequest.treatmentPlan',
+                'imagingRequest.treatmentPlan',
             ])
             ->whereIn('user_id', $patient->family_user_ids)
             ->whereNull('payment_id')
@@ -438,6 +441,16 @@ class BillingWorkbenchController extends Controller
                 $storedQty = $row->qty ?? 1;
                 $totalPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $storedQty);
                 $unitPrice = $storedQty > 0 ? $totalPayable / $storedQty : $totalPayable;
+                
+                // Get treatment plan from associated clinical requests
+                $tp = null;
+                if ($row->productRequest && $row->productRequest->treatmentPlan) {
+                    $tp = $row->productRequest->treatmentPlan;
+                } elseif ($row->labRequest && $row->labRequest->treatmentPlan) {
+                    $tp = $row->labRequest->treatmentPlan;
+                } elseif ($row->imagingRequest && $row->imagingRequest->treatmentPlan) {
+                    $tp = $row->imagingRequest->treatmentPlan;
+                }
 
                 return [
                     'id' => $row->id,
@@ -458,6 +471,8 @@ class BillingWorkbenchController extends Controller
                     'created_at_formatted' => $row->created_at ? $row->created_at->format('d/m/Y H:i') : 'N/A',
                     'user_id' => $row->user_id,
                     'patient_name' => optional($row->user)->firstname . ' ' . optional($row->user)->surname,
+                    'treatment_plan_id' => ($tp && $tp->isAccessibleBy(Auth::user(), 'billing')) ? $tp->id : null,
+                    'treatment_plan_name' => ($tp && $tp->isAccessibleBy(Auth::user(), 'billing')) ? $tp->name : null,
                 ];
             });
 

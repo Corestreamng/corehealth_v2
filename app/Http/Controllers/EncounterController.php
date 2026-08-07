@@ -496,6 +496,9 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
+                if ($his->treatment_plan_id && $his->treatmentPlan && $his->treatmentPlan->isAccessibleBy(Auth::user(), 'doctors')) {
+                    $str .= "&nbsp;<a href='#' class='tp-view-link badge' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$his->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$his->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($his->treatment_plan_name) . "</a>";
+                }
                 // Combo badge (our service combo system — distinct from procedure is_bundled)
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item) {
                     $str .= " <span class='badge bg-secondary ms-1'><i class='mdi mdi-link-variant'></i> Combo</span>";
@@ -911,6 +914,9 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
+                if ($his->treatment_plan_id && $his->treatmentPlan && $his->treatmentPlan->isAccessibleBy(Auth::user(), 'doctors')) {
+                    $str .= "&nbsp;<a href='#' class='tp-view-link badge' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$his->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$his->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($his->treatment_plan_name) . "</a>";
+                }
                 // Combo badge (our service combo system — distinct from procedure is_bundled)
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item) {
                     $str .= " <span class='badge bg-secondary ms-1'><i class='mdi mdi-link-variant'></i> Combo</span>";
@@ -2114,6 +2120,10 @@ class EncounterController extends Controller
                             $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-truck-delivery'></i> Dispensed by: {$dispensedBy} on {$dispensedAt}</div>";
                         }
                     }
+                }
+
+                if ($item->treatment_plan_id && $item->treatmentPlan && $item->treatmentPlan->isAccessibleBy(Auth::user(), 'doctors')) {
+                    $statusBadge .= "&nbsp;<a href='#' class='tp-view-link badge' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$item->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$item->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($item->treatment_plan_name) . "</a>";
                 }
 
                 // Render Adaptation Details if applicable
@@ -4084,6 +4094,10 @@ class EncounterController extends Controller
                     $str .= "<span class='badge bg-{$csColor}'><i class='fa fa-clipboard-check'></i> Consent " . ucfirst($proc->consent_status) . "</span>";
                 }
 
+                if ($proc->treatment_plan_id && $proc->treatmentPlan && $proc->treatmentPlan->isAccessibleBy(Auth::user(), 'doctors')) {
+                    $str .= "&nbsp;<a href='#' class='tp-view-link badge' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$proc->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$proc->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($proc->treatment_plan_name) . "</a>";
+                }
+
                 $str .= '</div>';
                 $str .= '</div>'; // End header
 
@@ -4703,7 +4717,13 @@ class EncounterController extends Controller
                 return response()->json(["success" => false, "message" => "Selected service is not a combo."]);
             }
 
-            $result = $this->applyServiceCombo($service, $encounter->patient_id, $encounter->id);
+            $extra = [];
+            if ($request->has('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
+
+            $result = $this->applyServiceCombo($service, $encounter->patient_id, $encounter->id, $extra);
 
             return response()->json([
                 "success" => true,
@@ -4798,11 +4818,17 @@ class EncounterController extends Controller
     {
         try {
             $request->validate(['service_id' => 'required|string']);
+            $extra = [];
+            if ($request->has('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
             $lab = $this->addSingleLab(
                 $request->input('service_id'),
                 $request->input('note'),
                 $encounter->patient_id,
-                $encounter->id
+                $encounter->id,
+                $extra
             );
             return response()->json([
                 'success' => true,
@@ -4824,11 +4850,17 @@ class EncounterController extends Controller
     {
         try {
             $request->validate(['service_id' => 'required|string']);
+            $extra = [];
+            if ($request->has('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
             $imaging = $this->addSingleImaging(
                 $request->input('service_id'),
                 $request->input('note'),
                 $encounter->patient_id,
-                $encounter->id
+                $encounter->id,
+                $extra
             );
             return response()->json([
                 'success' => true,
@@ -4850,11 +4882,17 @@ class EncounterController extends Controller
     {
         try {
             $request->validate(['product_id' => 'required|string']);
+            $extra = [];
+            if ($request->has('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
             $presc = $this->addSinglePrescription(
                 $request->input('product_id'),
                 $request->input('dose', ''),
                 $encounter->patient_id,
-                $encounter->id
+                $encounter->id,
+                $extra
             );
             return response()->json([
                 'success' => true,
@@ -4894,11 +4932,17 @@ class EncounterController extends Controller
     {
         try {
             $request->validate(['service_id' => 'required|string', 'priority' => 'required|string']);
+            $extra = [];
+            if ($request->has('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
             $procedure = $this->addSingleProcedure(
                 $request->only(['service_id', 'priority', 'scheduled_date', 'pre_notes']),
                 $encounter->patient_id,
                 $encounter->id,
-                $encounter->admission_request_id
+                $encounter->admission_request_id,
+                $extra
             );
             return response()->json([
                 'success' => true,
@@ -5052,13 +5096,13 @@ class EncounterController extends Controller
             $dateMap = [];
 
             // Helper: add date entries from a query with robust encounter filtering
-            $addDates = function ($model, $dateColumn, $category) use ($patientId, $dateFrom, $dateTo, $encounterFilter, $matchEncounter, &$dateMap) {
+            $addDates = function ($model, $dateColumn, $category, $ignoreEncounterFilter = false) use ($patientId, $dateFrom, $dateTo, $encounterFilter, $matchEncounter, &$dateMap) {
                 $query = $model::where('patient_id', $patientId);
                 if ($dateFrom) $query->where($dateColumn, '>=', $dateFrom);
                 if ($dateTo)   $query->where($dateColumn, '<=', $dateTo);
                 
                 $hasEncounterIdCol = in_array('encounter_id', (new $model)->getFillable() ?? []);
-                if ($encounterFilter && $hasEncounterIdCol) {
+                if ($encounterFilter && $hasEncounterIdCol && !$ignoreEncounterFilter) {
                     $query->where('encounter_id', $encounterFilter);
                 }
 
@@ -5069,7 +5113,7 @@ class EncounterController extends Controller
                     if (!$dateVal) continue;
                     $d = Carbon::parse($dateVal)->format('Y-m-d');
                     
-                    if ($encounterFilter && !$hasEncounterIdCol) {
+                    if ($encounterFilter && !$hasEncounterIdCol && !$ignoreEncounterFilter) {
                         $matchedId = $matchEncounter($dateVal);
                         if (intval($matchedId) !== intval($encounterFilter)) {
                             continue;
@@ -5147,6 +5191,10 @@ class EncounterController extends Controller
 
             // 10. Care Plans (NonPharmOrder)
             $addDates(\App\Models\NonPharmOrder::class, 'created_at', 'care_plans');
+
+            // 10b. Treatment Plans (indexed on creation date and retirement date, patient-wide)
+            $addDates(\App\Models\TreatmentPlan::class, 'created_at', 'treatment_plans', true);
+            $addDates(\App\Models\TreatmentPlan::class, 'retired_at', 'treatment_plans', true);
 
             // 11. Procedures
             $addDates(\App\Models\Procedure::class, 'created_at', 'procedures');
@@ -5274,13 +5322,13 @@ class EncounterController extends Controller
             $dateMap = [];
 
             // Helper: add date entries from a query with robust encounter filtering
-            $addDates = function ($model, $dateColumn, $category) use ($patientId, $dateFrom, $dateTo, $encounterFilter, $matchEncounter, &$dateMap) {
+            $addDates = function ($model, $dateColumn, $category, $ignoreEncounterFilter = false) use ($patientId, $dateFrom, $dateTo, $encounterFilter, $matchEncounter, &$dateMap) {
                 $query = $model::where('patient_id', $patientId);
                 if ($dateFrom) $query->where($dateColumn, '>=', $dateFrom);
                 if ($dateTo)   $query->where($dateColumn, '<=', $dateTo);
                 
                 $hasEncounterIdCol = in_array('encounter_id', (new $model)->getFillable() ?? []);
-                if ($encounterFilter && $hasEncounterIdCol) {
+                if ($encounterFilter && $hasEncounterIdCol && !$ignoreEncounterFilter) {
                     $query->where('encounter_id', $encounterFilter);
                 }
 
@@ -5291,7 +5339,7 @@ class EncounterController extends Controller
                     if (!$dateVal) continue;
                     $d = Carbon::parse($dateVal)->format('Y-m-d');
                     
-                    if ($encounterFilter && !$hasEncounterIdCol) {
+                    if ($encounterFilter && !$hasEncounterIdCol && !$ignoreEncounterFilter) {
                         $matchedId = $matchEncounter($dateVal);
                         if (intval($matchedId) !== intval($encounterFilter)) {
                             continue;
@@ -5369,6 +5417,10 @@ class EncounterController extends Controller
 
             // 10. Care Plans (NonPharmOrder)
             $addDates(\App\Models\NonPharmOrder::class, 'created_at', 'care_plans');
+
+            // 10b. Treatment Plans (indexed on creation date and retirement date, patient-wide)
+            $addDates(\App\Models\TreatmentPlan::class, 'created_at', 'treatment_plans', true);
+            $addDates(\App\Models\TreatmentPlan::class, 'retired_at', 'treatment_plans', true);
 
             // 11. Procedures
             $addDates(\App\Models\Procedure::class, 'created_at', 'procedures');
@@ -6190,10 +6242,102 @@ class EncounterController extends Controller
                         return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->visit_date), 'doctor_name' => $doctor, 'date' => $dt ? $dt->format('M d, Y') : null, 'timestamp' => $dt ? $dt->toIso8601String() : null, 'info_html' => $html];
                     });
                     break;
+
+                case 'treatment_plans':
+                    $query = \App\Models\TreatmentPlan::where('patient_id', $patientId)
+                        ->with(['creator', 'retirer']);
+
+                    if ($dateFrom || $dateTo) {
+                        $start = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : null;
+                        $end = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
+                        
+                        $query->where(function($q) use ($start, $end) {
+                            if ($start && $end) {
+                                $q->whereBetween('created_at', [$start, $end])
+                                  ->orWhereBetween('retired_at', [$start, $end]);
+                            } elseif ($start) {
+                                $q->where('created_at', '>=', $start)
+                                  ->orWhere('retired_at', '>=', $start);
+                            } elseif ($end) {
+                                $q->where('created_at', '<=', $end)
+                                  ->orWhere('retired_at', '<=', $end);
+                            }
+                        });
+                    }
+
+                    $items = $query->orderBy('created_at', 'desc')->get();
+
+                    $data = $items->map(function ($item) use ($matchEncounter) {
+                        $creatorName = $item->creator ? userfullname($item->creator->id) : 'N/A';
+                        $dt = $item->created_at;
+                        $statusUpper = strtoupper($item->status ?? 'ACTIVE');
+                        $badgeClass = ($item->status === 'completed') ? 'bg-success' : (($item->status === 'active') ? 'bg-teal' : 'bg-secondary');
+
+                        $html = '<div class="card-modern mb-2" style="border-left: 4px solid #00796b;">';
+                        $html .= '<div class="card-body p-3">';
+                        $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
+                        $html .= '<div><h6 class="mb-0 fw-bold"><i class="fa fa-clipboard-list text-teal me-1"></i> ' . e($item->name) . '</h6>';
+                        $html .= '<small class="text-muted">Priority: ' . ucfirst($item->priority ?? 'medium') . ' | Progress: ' . $item->progress_percent . '%</small></div>';
+                        $html .= '<span class="badge ' . $badgeClass . '">' . $statusUpper . '</span>';
+                        $html .= '</div>';
+
+                        if ($item->goal) {
+                            $html .= '<div class="alert alert-light mb-2 p-2"><small><b>Goal:</b> ' . e(strip_tags($item->goal)) . '</small></div>';
+                        }
+
+                        // Diagnosis / Problem List
+                        if (!empty($item->problem_text)) {
+                            $html .= '<div class="mb-2"><small><b><i class="mdi mdi-alert-circle-outline text-warning"></i> Problem/Reason:</b> ' . htmlspecialchars($item->problem_text) . '</small></div>';
+                        }
+                        if (!empty($item->diagnosis_data)) {
+                            $decodedDx = is_string($item->diagnosis_data) ? json_decode($item->diagnosis_data, true) : $item->diagnosis_data;
+                            if (is_array($decodedDx) && count($decodedDx) > 0) {
+                                $html .= '<div class="mb-2"><small><b><i class="mdi mdi-format-list-bulleted text-primary"></i> Linked Diagnoses (ICPC-2):</b></small><br>';
+                                $html .= '<table class="table table-sm table-bordered mb-0 mt-1" style="font-size:0.75rem;">';
+                                $html .= '<thead><tr class="bg-light"><th>Code</th><th>Diagnosis</th><th>Comment</th></tr></thead><tbody>';
+                                foreach ($decodedDx as $dx) {
+                                    $code = htmlspecialchars($dx['code'] ?? '');
+                                    $name = htmlspecialchars($dx['name'] ?? '');
+                                    $c1 = htmlspecialchars($dx['comment_1'] ?? '');
+                                    $c2 = htmlspecialchars($dx['comment_2'] ?? '');
+                                    $comment = trim($c1 . ' ' . $c2);
+                                    if (!$comment) $comment = '<span class="text-muted">-</span>';
+                                    $html .= "<tr><td><code>{$code}</code></td><td>{$name}</td><td>{$comment}</td></tr>";
+                                }
+                                $html .= '</tbody></table></div>';
+                            }
+                        }
+
+                        if ($item->status !== 'active' && $item->retired_at) {
+                            $retirerName = $item->retirer ? userfullname($item->retirer->id) : 'Physician';
+                            $reasonStr = $item->retirement_reason ? str_replace('_', ' ', ucfirst($item->retirement_reason)) : 'N/A';
+                            $html .= '<div class="small text-muted mb-2"><i class="fa fa-archive text-warning me-1"></i> <b>Retired / Completed:</b> ' . $item->retired_at->format('M j, Y H:i') . ' by ' . $retirerName . ' (Reason: ' . $reasonStr . ')</div>';
+                        }
+
+                        $html .= '<div class="d-flex justify-content-between align-items-center pt-2 border-top small text-muted">';
+                        $html .= '<span><i class="mdi mdi-account"></i> Created by ' . $creatorName . '</span>';
+                        $html .= '<button type="button" class="btn btn-xs btn-teal" onclick="TreatmentPlansTab.showPlanDetails(' . $item->id . ')"><i class="fa fa-eye me-1"></i> View Full Details & Actions</button>';
+                        $html .= '</div>';
+                        $html .= '</div></div>';
+
+                        $eventDate = ($item->status !== 'active' && $item->retired_at) ? $item->retired_at : $dt;
+
+                        return [
+                            'id' => $item->id,
+                            'name' => $item->name,
+                            'status' => strtoupper($item->status ?? 'ACTIVE'),
+                            'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at),
+                            'doctor_name' => $creatorName,
+                            'date' => $eventDate ? $eventDate->format('M d, Y') : null,
+                            'timestamp' => $eventDate ? $eventDate->toIso8601String() : null,
+                            'info_html' => $html
+                        ];
+                    });
+                    break;
             }
 
-            // Post-filtering by encounter if specified
-            if ($encounterFilter) {
+            // Post-filtering by encounter if specified (patient-scoped treatment plans are accessible across encounters)
+            if ($encounterFilter && $category !== 'treatment_plans') {
                 $data = collect($data)->filter(function ($item) use ($encounterFilter) {
                     if ($encounterFilter === 'unassociated') {
                         return is_null($item['encounter_id']);

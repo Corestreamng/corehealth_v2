@@ -104,6 +104,7 @@ class PatientContextService
         $context[] = $this->buildIntakeOutputChunk($patientId, $dateLimit, $maxEntries);
         $context[] = $this->buildInjectionsChunk($patientId, $dateLimit, $maxEntries);
         $context[] = $this->buildCarePlansChunk($patientId, $dateLimit, $maxEntries);
+        $context[] = $this->buildTreatmentPlansChunk($patientId);
         $context[] = $this->buildReferralsChunk($patientId, $dateLimit, $maxEntries);
         $context[] = $this->buildMaternityChunk($patientId);
 
@@ -530,6 +531,94 @@ class PatientContextService
         if ($deliveries->isNotEmpty()) {
             foreach ($deliveries as $del) {
                 $lines[] = "Delivery Date: " . ($del->delivery_date ? Carbon::parse($del->delivery_date)->format('Y-m-d H:i') : 'Unknown') . " | Method: " . ($del->delivery_method ?? 'Unknown');
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    protected function buildTreatmentPlansChunk(int $patientId): ?string
+    {
+        $plans = \App\Models\TreatmentPlan::where('patient_id', $patientId)
+            ->with([
+                'labRequests.service',
+                'imagingRequests.service',
+                'productRequests.product',
+                'procedures',
+                'nonPharmOrders',
+                'creator',
+                'retirer'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->take(15)
+            ->get();
+
+        if ($plans->isEmpty()) return null;
+
+        $lines = ["--- TREATMENT PLANS & GOALS ---"];
+        foreach ($plans as $plan) {
+            $createdDate = $plan->created_at ? $plan->created_at->format('Y-m-d') : 'Unknown';
+            $creator = $plan->creator ? trim(($plan->creator->surname ?? '') . ' ' . ($plan->creator->firstname ?? '')) : 'System';
+            $statusUpper = strtoupper($plan->status ?? 'ACTIVE');
+            $header = "[{$createdDate}] Plan: \"{$plan->name}\" (Priority: " . ucfirst($plan->priority ?? 'medium') . " | Status: {$statusUpper} | Progress: {$plan->progress_percent}%) by {$creator}";
+            
+            if ($plan->status !== 'active' && $plan->retired_at) {
+                $retireDate = $plan->retired_at->format('Y-m-d H:i');
+                $retirerName = $plan->retirer ? trim(($plan->retirer->surname ?? '') . ' ' . ($plan->retirer->firstname ?? '')) : 'Physician';
+                $reason = $plan->retirement_reason ? str_replace('_', ' ', ucfirst($plan->retirement_reason)) : 'N/A';
+                $header .= " [RETIRED/COMPLETED on {$retireDate} by {$retirerName} - Reason: {$reason}]";
+            }
+            $lines[] = $header;
+
+            if ($plan->goal) {
+                $lines[] = "  * Goal: " . strip_tags($plan->goal);
+            }
+
+            // Diagnoses
+            if (!empty($plan->diagnosis_data) && is_array($plan->diagnosis_data)) {
+                $diagList = [];
+                foreach ($plan->diagnosis_data as $d) {
+                    $code = $d['code'] ?? '';
+                    $name = $d['name'] ?? ($d['display'] ?? '');
+                    $status = $d['comment_1'] ?? 'NA';
+                    $course = $d['comment_2'] ?? 'NA';
+                    $diagList[] = "{$code} - {$name} (Status: {$status}, Course: {$course})";
+                }
+                if (!empty($diagList)) {
+                    $lines[] = "  * Diagnoses: " . implode('; ', $diagList);
+                }
+            }
+
+            // Linked Items & Statuses
+            $itemStrings = [];
+            foreach ($plan->labRequests as $l) {
+                $svc = $l->service_name ?? ($l->service ? $l->service->service_name : 'Lab Request');
+                $st = ($l->status == 4 || $l->status == 5) ? 'Completed' : (($l->status == 2 || $l->status == 3) ? 'Sample Received/Processing' : 'Ordered');
+                $itemStrings[] = "Lab: {$svc} ({$st})";
+            }
+            foreach ($plan->imagingRequests as $img) {
+                $svc = $img->service_name ?? ($img->service ? $img->service->service_name : 'Imaging Request');
+                $st = ($img->status == 4 || $img->status == 5) ? 'Completed' : 'Ordered';
+                $itemStrings[] = "Imaging: {$svc} ({$st})";
+            }
+            foreach ($plan->productRequests as $pr) {
+                $prod = $pr->product ? $pr->product->product_name : 'Prescription';
+                $st = ($pr->status == 'dispensed' || $pr->status == 4) ? 'Dispensed' : 'Ordered';
+                $itemStrings[] = "Medication: {$prod} ({$st})";
+            }
+            foreach ($plan->procedures as $proc) {
+                $procName = $proc->procedure_name ?? 'Procedure';
+                $st = strtolower($proc->procedure_status ?? '') === 'completed' ? 'Completed' : 'Scheduled';
+                $itemStrings[] = "Procedure: {$procName} ({$st})";
+            }
+            foreach ($plan->nonPharmOrders as $npo) {
+                $det = strip_tags($npo->order_details ?? 'Care Plan Item');
+                $st = strtolower($npo->status ?? '') === 'completed' ? 'Completed' : 'Active';
+                $itemStrings[] = "Care Plan: {$det} ({$st})";
+            }
+
+            if (!empty($itemStrings)) {
+                $lines[] = "  * Linked Orders: " . implode(' | ', $itemStrings);
             }
         }
 

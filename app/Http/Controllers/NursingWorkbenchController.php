@@ -2374,6 +2374,8 @@ class NursingWorkbenchController extends Controller{
                         'type' => 'lab',
                         'type_label' => 'Lab Test',
                         'name' => optional($req->service)->service_name ?? 'Unknown Service',
+                        'treatment_plan_id' => ($req->treatment_plan_id && $req->treatmentPlan && $req->treatmentPlan->isAccessibleBy(Auth::user(), 'nursing')) ? $req->treatment_plan_id : null,
+                        'treatment_plan_name' => ($req->treatment_plan_id && $req->treatmentPlan && $req->treatmentPlan->isAccessibleBy(Auth::user(), 'nursing')) ? $req->treatment_plan_name : null,
                         'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
                         'hmo_covers' => $posr->claims_amount ?? 0,
                         'payable' => $posr->payable_amount ?? $basePrice,
@@ -2409,6 +2411,8 @@ class NursingWorkbenchController extends Controller{
                         'type' => 'imaging',
                         'type_label' => 'Imaging',
                         'name' => optional($req->service)->service_name ?? 'Unknown Service',
+                        'treatment_plan_id' => ($req->treatment_plan_id && $req->treatmentPlan && $req->treatmentPlan->isAccessibleBy(Auth::user(), 'nursing')) ? $req->treatment_plan_id : null,
+                        'treatment_plan_name' => ($req->treatment_plan_id && $req->treatmentPlan && $req->treatmentPlan->isAccessibleBy(Auth::user(), 'nursing')) ? $req->treatment_plan_name : null,
                         'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
                         'hmo_covers' => $posr->claims_amount ?? 0,
                         'payable' => $posr->payable_amount ?? $basePrice,
@@ -2446,6 +2450,8 @@ class NursingWorkbenchController extends Controller{
                         'type' => 'product',
                         'type_label' => 'Product',
                         'name' => optional($req->product)->product_name ?? 'Unknown Product',
+                        'treatment_plan_id' => ($req->treatment_plan_id && $req->treatmentPlan && $req->treatmentPlan->isAccessibleBy(Auth::user(), 'nursing')) ? $req->treatment_plan_id : null,
+                        'treatment_plan_name' => ($req->treatment_plan_id && $req->treatmentPlan && $req->treatmentPlan->isAccessibleBy(Auth::user(), 'nursing')) ? $req->treatment_plan_name : null,
                         'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
                         'hmo_covers' => $posr->claims_amount ?? 0,
                         'payable' => $posr->payable_amount ?? $basePrice,
@@ -2623,7 +2629,7 @@ class NursingWorkbenchController extends Controller{
 
                 return $actions;
             })
-            ->rawColumns(['billing_badge', 'delivery_badge', 'type_badge', 'actions'])
+            ->rawColumns(['name', 'billing_badge', 'delivery_badge', 'type_badge', 'actions'])
             ->make(true);
     }
 
@@ -2837,6 +2843,7 @@ class NursingWorkbenchController extends Controller{
                 }
                 $html .= '<span class="badge ' . $badgeColor . ' me-2">' . htmlspecialchars($typeName) . '</span>';
                 $html .= '<small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $createdAt . '</small>';
+
                 $html .= '</div>';
                 $html .= '<div>';
                 $html .= '<small class="text-muted">By: <span class="fw-bold text-dark">' . htmlspecialchars($creatorName) . '</span></small>';
@@ -3809,6 +3816,7 @@ class NursingWorkbenchController extends Controller{
                 $html .= '<div>';
                 $html .= '<span class="badge bg-info me-2">Vitals</span>';
                 $html .= '<small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $createdAt . '</small>';
+
                 $html .= '</div>';
                 $html .= '<div>';
                 $html .= '<small class="text-muted">Taken By: <span class="fw-bold text-dark">' . htmlspecialchars($takenByName) . '</span></small>';
@@ -4248,6 +4256,9 @@ class NursingWorkbenchController extends Controller{
                 $html .= '</div>';
                 $html .= '<div>';
                 $html .= '<span class="badge ' . $priorityClass . ' me-2">' . $priority . '</span>';
+                if ($admission->treatment_plan_id && $admission->treatmentPlan && $admission->treatmentPlan->isAccessibleBy(Auth::user(), 'nursing')) {
+                    $html .= "<a href='#' class='tp-view-link badge me-2' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$admission->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$admission->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($admission->treatment_plan_name) . "</a>";
+                }
                 $html .= '<small class="text-muted">' . $time . '</small>';
                 $html .= '<button class="btn btn-sm btn-outline-danger ms-3" onclick="loadPatient('.$patientId.')">Open</button>';
                 $html .= '</div>';

@@ -65,6 +65,10 @@ trait ClinicalOrdersTrait
         if (isset($extra['billed_date'])) {
             $lab->billed_date = $extra['billed_date'];
         }
+        if (isset($extra['treatment_plan_id'])) {
+            $lab->treatment_plan_id = $extra['treatment_plan_id'];
+            $lab->treatment_plan_name = $extra['treatment_plan_name'] ?? null;
+        }
 
         $lab->save();
 
@@ -145,6 +149,10 @@ trait ClinicalOrdersTrait
         if (isset($extra['billed_date'])) {
             $imaging->billed_date = $extra['billed_date'];
         }
+        if (isset($extra['treatment_plan_id'])) {
+            $imaging->treatment_plan_id = $extra['treatment_plan_id'];
+            $imaging->treatment_plan_name = $extra['treatment_plan_name'] ?? null;
+        }
 
         $imaging->save();
 
@@ -224,6 +232,10 @@ trait ClinicalOrdersTrait
         }
         if (isset($extra['product_request_id'])) {
             $presc->product_request_id = $extra['product_request_id'];
+        }
+        if (isset($extra['treatment_plan_id'])) {
+            $presc->treatment_plan_id = $extra['treatment_plan_id'];
+            $presc->treatment_plan_name = $extra['treatment_plan_name'] ?? null;
         }
 
         $presc->save();
@@ -330,6 +342,11 @@ trait ClinicalOrdersTrait
 
         if ($service->procedureDefinition) {
             $procedure->procedure_definition_id = $service->procedureDefinition->id;
+        }
+
+        if (isset($extra['treatment_plan_id'])) {
+            $procedure->treatment_plan_id = $extra['treatment_plan_id'];
+            $procedure->treatment_plan_name = $extra['treatment_plan_name'] ?? null;
         }
 
         $procedure->save();
@@ -453,37 +470,183 @@ trait ClinicalOrdersTrait
         return ['allowed' => true];
     }
 
+    /* ═══════════════════════════════════════════
+       NON-PHARMACOLOGICAL (NonPharmOrder model)
+       ═══════════════════════════════════════════ */
+
     /**
-     * Apply a treatment plan.
+     * Create a single non-pharmacological order.
+     *
+     * @param array       $data         Order data (category, instructions, etc.)
+     * @param int         $patientId
+     * @param int|null    $encounterId
+     * @param array       $extra        Extra fields (treatment_plan_id, etc.)
+     * @return \App\Models\NonPharmOrder
+     */
+    protected function addSingleNonPharm(array $data, int $patientId, ?int $encounterId, array $extra = []): \App\Models\NonPharmOrder
+    {
+        $order = new \App\Models\NonPharmOrder();
+        $order->patient_id    = $patientId;
+        $order->encounter_id  = $encounterId;
+        $order->requested_by  = Auth::id();
+        $order->category      = $data['category'] ?? 'general';
+        $order->target_executor = $data['target_executor'] ?? 'nurse';
+        $order->instructions  = $data['instructions'] ?? null;
+        $order->frequency     = $data['frequency'] ?? null;
+        $order->duration      = $data['duration'] ?? null;
+        $order->status        = 'active';
+
+        if (isset($extra['treatment_plan_id'])) {
+            $order->treatment_plan_id = $extra['treatment_plan_id'];
+            $order->treatment_plan_name = $extra['treatment_plan_name'] ?? null;
+        }
+
+        $order->save();
+        return $order;
+    }
+
+    /* ═══════════════════════════════════════════
+       REFERRALS (SpecialistReferral model)
+       ═══════════════════════════════════════════ */
+
+    /**
+     * Create a single specialist referral.
+     *
+     * @param array       $data         Referral data
+     * @param int         $patientId
+     * @param int|null    $encounterId
+     * @param array       $extra        Extra fields (treatment_plan_id, etc.)
+     * @return \App\Models\SpecialistReferral
+     */
+    protected function addSingleReferral(array $data, int $patientId, ?int $encounterId, array $extra = []): \App\Models\SpecialistReferral
+    {
+        $referral = new \App\Models\SpecialistReferral();
+        $referral->patient_id           = $patientId;
+        $referral->encounter_id         = $encounterId;
+        $referral->referring_doctor_id   = Auth::id();
+        $referral->referral_type        = $data['referral_type'] ?? 'internal';
+        $referral->reason               = $data['reason'] ?? null;
+        $referral->clinical_summary     = $data['clinical_summary'] ?? null;
+        $referral->urgency              = $data['urgency'] ?? 'routine';
+        $referral->status               = 'pending';
+
+        if (isset($data['target_specialization_id'])) {
+            $referral->target_specialization_id = $data['target_specialization_id'];
+        }
+
+        if (isset($extra['treatment_plan_id'])) {
+            $referral->treatment_plan_id = $extra['treatment_plan_id'];
+            $referral->treatment_plan_name = $extra['treatment_plan_name'] ?? null;
+        }
+
+        $referral->save();
+        return $referral;
+    }
+
+    /* ═══════════════════════════════════════════
+       ADMISSIONS (AdmissionRequest model)
+       ═══════════════════════════════════════════ */
+
+    /**
+     * Create a single admission request.
+     *
+     * @param array       $data         Admission data
+     * @param int         $patientId
+     * @param int|null    $encounterId
+     * @param array       $extra        Extra fields (treatment_plan_id, etc.)
+     * @return \App\Models\AdmissionRequest
+     */
+    protected function addSingleAdmission(array $data, int $patientId, ?int $encounterId, array $extra = []): \App\Models\AdmissionRequest
+    {
+        $admission = new \App\Models\AdmissionRequest();
+        $admission->patient_id       = $patientId;
+        $admission->encounter_id     = $encounterId;
+        $admission->doctor_id        = Auth::id();
+        $admission->admission_reason = $data['admission_reason'] ?? null;
+        $admission->note             = $data['note'] ?? null;
+        $admission->priority         = $data['priority'] ?? 'routine';
+        $admission->admission_status = \App\Models\AdmissionRequest::STATUS_PENDING_CHECKLIST;
+
+        if (isset($extra['treatment_plan_id'])) {
+            $admission->treatment_plan_id = $extra['treatment_plan_id'];
+            $admission->treatment_plan_name = $extra['treatment_plan_name'] ?? null;
+        }
+
+        $admission->save();
+        return $admission;
+    }
+
+    /* ═══════════════════════════════════════════
+       TREATMENT PLAN APPLICATION
+       ═══════════════════════════════════════════ */
+
+    /**
+     * Apply a treatment plan — creates orders from the plan's items and stamps
+     * each created record with the plan's ID for traceability.
      */
     protected function applyTreatmentPlan(int $planId, int $patientId, ?int $encounterId): \Illuminate\Support\Collection
     {
         return DB::transaction(function () use ($planId, $patientId, $encounterId) {
             $plan = \App\Models\TreatmentPlan::with('items')->findOrFail($planId);
+            $planExtra = [
+                'treatment_plan_id'   => $plan->id,
+                'treatment_plan_name' => $plan->name,
+            ];
+
             $results = [
                 'labs'          => [],
                 'imaging'       => [],
                 'prescriptions' => [],
                 'procedures'    => [],
+                'non_pharm'     => [],
+                'referrals'     => [],
+                'admissions'    => [],
             ];
 
             foreach ($plan->items as $item) {
                 switch ($item->item_type) {
                     case 'lab':
-                        $results['labs'][] = $this->addSingleLab($item->reference_id, $item->note, $patientId, $encounterId);
+                        $results['labs'][] = $this->addSingleLab(
+                            $item->reference_id, $item->note, $patientId, $encounterId, $planExtra
+                        );
                         break;
                     case 'imaging':
-                        $results['imaging'][] = $this->addSingleImaging($item->reference_id, $item->note, $patientId, $encounterId);
+                        $results['imaging'][] = $this->addSingleImaging(
+                            $item->reference_id, $item->note, $patientId, $encounterId, $planExtra
+                        );
                         break;
+                    case 'medication':
                     case 'product':
-                        $results['prescriptions'][] = $this->addSinglePrescription($item->reference_id, $item->dose, $patientId, $encounterId);
+                        $results['prescriptions'][] = $this->addSinglePrescription(
+                            $item->reference_id, $item->dose, $patientId, $encounterId, $planExtra
+                        );
                         break;
                     case 'procedure':
                         $results['procedures'][] = $this->addSingleProcedure([
                             'service_id' => $item->reference_id,
                             'priority'   => $item->priority ?? 'routine',
                             'pre_notes'  => $item->note,
-                        ], $patientId, $encounterId);
+                        ], $patientId, $encounterId, null, $planExtra);
+                        break;
+                    case 'non_pharm':
+                        $results['non_pharm'][] = $this->addSingleNonPharm([
+                            'instructions' => $item->note,
+                            'category'     => 'general',
+                        ], $patientId, $encounterId, $planExtra);
+                        break;
+                    case 'referral':
+                        $results['referrals'][] = $this->addSingleReferral([
+                            'reason' => $item->note,
+                        ], $patientId, $encounterId, $planExtra);
+                        break;
+                    case 'admission':
+                        $results['admissions'][] = $this->addSingleAdmission([
+                            'admission_reason' => $item->note,
+                        ], $patientId, $encounterId, $planExtra);
+                        break;
+                    case 'encounter_note':
+                        // Notes are associated at save-time via the notes widget,
+                        // not created as new records.
                         break;
                 }
             }
@@ -519,9 +682,9 @@ trait ClinicalOrdersTrait
     /**
      * Apply a service combo.
      */
-    protected function applyServiceCombo(Service $combo, int $patientId, ?int $encounterId): array
+    protected function applyServiceCombo(Service $combo, int $patientId, ?int $encounterId, array $extra = []): array
     {
-        return DB::transaction(function () use ($combo, $patientId, $encounterId) {
+        return DB::transaction(function () use ($combo, $patientId, $encounterId, $extra) {
             $patient = Patient::findOrFail($patientId);
             $staffId = Auth::id();
 
@@ -575,29 +738,29 @@ trait ClinicalOrdersTrait
                     $childRequest->save();
 
                     if ($service->isLab()) {
-                        $clinicalRecord = $this->addSingleLab($service->id, $bundleItem->note, $patientId, $encounterId, [
+                        $clinicalRecord = $this->addSingleLab($service->id, $bundleItem->note, $patientId, $encounterId, array_merge([
                             'service_request_id' => $childRequest->id,
                             'status'             => 2,
                             'billed_by'          => $staffId,
                             'billed_date'        => now()
-                        ]);
+                        ], $extra));
                     } elseif ($service->isImaging()) {
-                        $clinicalRecord = $this->addSingleImaging($service->id, $bundleItem->note, $patientId, $encounterId, [
+                        $clinicalRecord = $this->addSingleImaging($service->id, $bundleItem->note, $patientId, $encounterId, array_merge([
                             'service_request_id' => $childRequest->id,
                             'status'             => 2,
                             'billed_by'          => $staffId,
                             'billed_date'        => now()
-                        ]);
+                        ], $extra));
                     } elseif ($service->isProcedure()) {
                         $clinicalRecord = $this->addSingleProcedure([
                             'service_id' => $service->id,
                             'priority'   => 'routine',
                             'pre_notes'  => $bundleItem->note,
-                        ], $patientId, $encounterId, null, [
+                        ], $patientId, $encounterId, null, array_merge([
                             'is_bundle_item' => true,
                             'parent_id'      => $parentRequest->id,
                             'coverage_mode'  => $parentRequest->coverage_mode
-                        ]);
+                        ], $extra));
                     }
                 } elseif ($bundleItem->item_type === 'product') {
                     $product = Product::find($bundleItem->item_id);
@@ -617,12 +780,12 @@ trait ClinicalOrdersTrait
                     $childRequest->is_bundle_item = true;
                     $childRequest->save();
 
-                    $clinicalRecord = $this->addSinglePrescription($product->id, $bundleItem->dose, $patientId, $encounterId, [
+                    $clinicalRecord = $this->addSinglePrescription($product->id, $bundleItem->dose, $patientId, $encounterId, array_merge([
                         'status'             => 2,
                         'billed_by'          => $staffId,
                         'billed_date'        => now(),
                         'product_request_id' => $childRequest->id
-                    ]);
+                    ], $extra));
                 }
 
                 $results['items'][] = ['billing' => $childRequest, 'clinical' => $clinicalRecord];

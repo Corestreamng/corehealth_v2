@@ -202,7 +202,11 @@ class PharmacyWorkbenchController extends Controller
                 return $item->product_id;
             })
             ->addColumn('product_name', function ($item) {
-                return $item->item_name;
+                $html = htmlspecialchars($item->item_name ?? '');
+                if ($item->treatment_plan_id && $item->treatmentPlan && $item->treatmentPlan->isAccessibleBy(Auth::user(), 'pharmacy')) {
+                    $html .= "<br><a href='#' class='tp-view-link badge mt-1' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$item->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$item->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($item->treatment_plan_name) . "</a>";
+                }
+                return $html;
             })
             ->addColumn('product_code', function ($item) {
                 return optional($item->product)->product_code ?? '';
@@ -369,6 +373,7 @@ class PharmacyWorkbenchController extends Controller
             ->addColumn('qty_adjusted_by_name', function ($item) {
                 return $item->qty_adjusted_by ? userfullname($item->qty_adjusted_by) : null;
             })
+            ->rawColumns(['product_name'])
             ->make(true);
     }
 
@@ -466,7 +471,11 @@ class PharmacyWorkbenchController extends Controller
                 return $str;
             })
             ->addColumn('product_name', function ($item) {
-                return $item->item_name;
+                $html = htmlspecialchars($item->item_name ?? '');
+                if ($item->treatment_plan_id && $item->treatmentPlan && $item->treatmentPlan->isAccessibleBy(Auth::user(), 'pharmacy')) {
+                    $html .= "<br><a href='#' class='tp-view-link badge mt-1' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$item->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$item->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($item->treatment_plan_name) . "</a>";
+                }
+                return $html;
             })
             ->addColumn('product_code', function ($item) {
                 return optional($item->product)->product_code ?? '';
@@ -558,7 +567,7 @@ class PharmacyWorkbenchController extends Controller
             ->addColumn('qty_adjusted_by_name', function ($item) {
                 return $item->qty_adjusted_by ? userfullname($item->qty_adjusted_by) : null;
             })
-            ->rawColumns(['select', 'dose', 'created_at'])
+            ->rawColumns(['select', 'dose', 'created_at', 'product_name'])
             ->make(true);
     }
 
@@ -585,7 +594,11 @@ class PharmacyWorkbenchController extends Controller
         return DataTables::of($items)
             ->addIndexColumn()
             ->addColumn('product_name', function($item) {
-                return $item->item_name;
+                $html = htmlspecialchars($item->item_name ?? '');
+                if ($item->treatment_plan_id && $item->treatmentPlan && $item->treatmentPlan->isAccessibleBy(Auth::user(), 'pharmacy')) {
+                    $html .= "<br><a href='#' class='tp-view-link badge mt-1' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$item->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$item->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($item->treatment_plan_name) . "</a>";
+                }
+                return $html;
             })
             ->addColumn('product_code', function($item) {
                 return optional($item->product)->product_code ?? '';
@@ -754,7 +767,7 @@ class PharmacyWorkbenchController extends Controller
             ->addColumn('qty_adjusted_by_name', function ($item) {
                 return $item->qty_adjusted_by ? userfullname($item->qty_adjusted_by) : null;
             })
-            ->rawColumns(['dose', 'created_at'])
+            ->rawColumns(['dose', 'created_at', 'product_name'])
             ->make(true);
     }
 
