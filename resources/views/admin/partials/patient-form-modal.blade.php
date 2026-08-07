@@ -4346,7 +4346,7 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                     <div class="col-md-8 pf-hide-emergency">
-                                        <div class="card bg-light border-0 shadow-sm rounded-3 h-100">
+                                        <div class="card-modern bg-light border-0 shadow-sm rounded-3 h-100">
                                             <div class="card-body p-3">
                                                 <h6 class="mb-3 text-primary d-flex align-items-center gap-2" style="font-size: 0.9rem; font-weight: 600;">
                                                     <i class="mdi mdi-account-group"></i> Family Folder Configuration
@@ -4636,7 +4636,7 @@ $(document).ready(function() {
                                     <div class="row">
                                         {{-- BID Toggle --}}
                                         <div class="col-12 mb-3">
-                                            <div class="card bg-light border-danger p-2">
+                                            <div class="card-modern bg-light border-danger p-2">
                                                 <div class="form-check form-switch">
                                                     <input class="form-check-input" type="checkbox" id="pf-is-bid" name="is_bid">
                                                     <label class="form-check-label fw-bold text-danger" for="pf-is-bid">

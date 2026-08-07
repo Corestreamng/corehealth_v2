@@ -2605,7 +2605,7 @@
                         pkgHint = ` <small class="text-muted">(${packs} ${p.name})</small>`;
                     }
 
-                    html += `<div class="card mb-3 fulfill-item-row" style="border-left:3px solid {{ $hosColor }};" data-index="${i}">
+                    html += `<div class="card-modern mb-3 fulfill-item-row" style="border-left:3px solid {{ $hosColor }};" data-index="${i}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <strong>${escHtml(item.product_name)}</strong>
@@ -2884,7 +2884,7 @@
                 $.each(items, function(i, item) {
                     var remaining = (item.ordered_qty || 0) - (item.received_qty || 0);
                     var productId = item.product_id;
-                    html += `<div class="card mb-3 receive-item-row" style="border-left:3px solid #8b5cf6;" data-index="${i}">
+                    html += `<div class="card-modern mb-3 receive-item-row" style="border-left:3px solid #8b5cf6;" data-index="${i}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <strong>${escHtml(item.product ? item.product.product_name : 'Product #' + item.product_id)}</strong>

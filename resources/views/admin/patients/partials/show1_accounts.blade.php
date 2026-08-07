@@ -18,7 +18,7 @@
 @if(null != $patient_acc)
     <div class="row mb-4">
         <div class="col-md-4">
-            <div class="card border-primary">
+            <div class="card-modern border-primary">
                 <div class="card-body text-center">
                     <div class="text-muted small mb-1"><i class="mdi mdi-identifier me-1"></i>Account ID</div>
                     <div class="h4 font-weight-bold text-primary">{{ $patient_acc->id }}</div>
@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-success">
+            <div class="card-modern border-success">
                 <div class="card-body text-center">
                     <div class="text-muted small mb-1"><i class="mdi mdi-wallet me-1"></i>Current Balance</div>
                     <div class="h4 font-weight-bold text-success">₦{{ number_format($patient_acc->balance, 2) }}</div>
@@ -34,7 +34,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-info">
+            <div class="card-modern border-info">
                 <div class="card-body text-center">
                     <div class="text-muted small mb-1"><i class="mdi mdi-clock-outline me-1"></i>Last Updated</div>
                     <div class="small text-info font-weight-bold">{{ date('d M Y, h:i a', strtotime($patient_acc->updated_at)) }}</div>

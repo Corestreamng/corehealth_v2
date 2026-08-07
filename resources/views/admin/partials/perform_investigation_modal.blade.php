@@ -24,7 +24,7 @@
                     A billing record will be created and you will then be prompted to enter the result.
                 </p>
 
-                <div class="card border-0 bg-light mb-3">
+                <div class="card-modern border-0 bg-light mb-3">
                     <div class="card-body py-2 px-3">
                         <strong id="pi_service_name" class="d-block mb-2 text-dark fs-6"></strong>
                         <table class="table table-sm mb-0">

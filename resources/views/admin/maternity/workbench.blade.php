@@ -1653,7 +1653,7 @@ $sett = appsettings();
                     <div class="tab-pane fade" id="mat-ward-content" role="tabpanel">
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <div class="card shadow-sm border-info h-100">
+                                <div class="card-modern shadow-sm border-info h-100">
                                     <div class="card-body text-center">
                                         <h6 class="text-muted text-uppercase mb-2">Total Admissions</h6>
                                         <h2 class="text-info fw-bold" id="admissions-total-kpi">0</h2>
@@ -1661,7 +1661,7 @@ $sett = appsettings();
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card shadow-sm border-primary h-100">
+                                <div class="card-modern shadow-sm border-primary h-100">
                                     <div class="card-body text-center">
                                         <h6 class="text-muted text-uppercase mb-2">Average Length of Stay (ALOS)</h6>
                                         <h2 class="text-primary fw-bold" id="admissions-alos-kpi">0 Days</h2>
@@ -1671,7 +1671,7 @@ $sett = appsettings();
                         </div>
                         <div class="row">
                             <div class="col-md-6 mx-auto">
-                                <div class="card shadow-sm">
+                                <div class="card-modern shadow-sm">
                                     <div class="card-header bg-white py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-chart-pie"></i> Admissions by Class (Entry Point)</h6>
                                     </div>
@@ -2602,9 +2602,10 @@ $sett = appsettings();
 
 @include('admin.partials.admit_discharge_modal')
 @include('admin.partials.patient-form-modal')
-@include('admin.partials.treatment-plan-modal')
+
 @include('admin.partials.re-prescribe-encounter-modal')
 @include('admin.partials.clinical_context_modal')
+@include('admin.partials.treatment-plan-viewer-modal')
 @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
 @include('admin.partials.invest_res_view_imaging_modal')
 @include('admin.partials.invest_res_view_imaging_js')
@@ -5241,9 +5242,7 @@ $sett = appsettings();
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                                    <i class="fa fa-clipboard-list"></i> Treatment Plans
-                                </button>
+
                                 <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                     <i class="fa fa-save"></i> Save as Template
                                 </button>
@@ -5305,9 +5304,7 @@ $sett = appsettings();
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                                    <i class="fa fa-clipboard-list"></i> Treatment Plans
-                                </button>
+
                                 <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                     <i class="fa fa-save"></i> Save as Template
                                 </button>
@@ -5351,9 +5348,7 @@ $sett = appsettings();
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                                    <i class="fa fa-clipboard-list"></i> Treatment Plans
-                                </button>
+
                                 <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                     <i class="fa fa-save"></i> Save as Template
                                 </button>
@@ -5397,9 +5392,7 @@ $sett = appsettings();
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                                    <i class="fa fa-clipboard-list"></i> Treatment Plans
-                                </button>
+
                                 <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                                     <i class="fa fa-save"></i> Save as Template
                                 </button>
@@ -7805,7 +7798,7 @@ $sett = appsettings();
         const qs = new URLSearchParams(params).toString();
 
         $('#reports-summary-cards').html('<div class="col-12 text-center p-4"><i class="mdi mdi-loading mdi-spin mdi-24px"></i> Loading...</div>');
-        $('#reports-clinical-cards').html('<div class="col-lg-6 mb-3"><div class="card shadow-sm h-100"><div class="card-header bg-white py-2"><h6 class="mb-0">Immunization Coverage</h6></div><div class="card-body" id="imm-coverage-body"></div></div></div><div class="col-lg-6 mb-3"><div class="card shadow-sm h-100"><div class="card-header bg-white py-2"><h6 class="mb-0">ANC Defaulters</h6></div><div class="card-body" id="defaulters-body"></div></div></div><div class="col-12 mt-3"><div class="card shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0">High Risk Register</h6></div><div class="card-body" id="high-risk-body"></div></div></div>');
+        $('#reports-clinical-cards').html('<div class="col-lg-6 mb-3"><div class="card-modern shadow-sm h-100"><div class="card-header bg-white py-2"><h6 class="mb-0">Immunization Coverage</h6></div><div class="card-body" id="imm-coverage-body"></div></div></div><div class="col-lg-6 mb-3"><div class="card-modern shadow-sm h-100"><div class="card-header bg-white py-2"><h6 class="mb-0">ANC Defaulters</h6></div><div class="card-body" id="defaulters-body"></div></div></div><div class="col-12 mt-3"><div class="card-modern shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0">High Risk Register</h6></div><div class="card-body" id="high-risk-body"></div></div></div>');
         
         $('#admissions-total-kpi').text('Loading...');
         $('#admissions-alos-kpi').text('Loading...');
@@ -7825,7 +7818,7 @@ $sett = appsettings();
                 html += `<div class="col-lg-3 col-md-6 mb-3"><div class="mat-stat-card ${s.cls}"><div class="mat-stat-icon"><i class="mdi ${s.icon}" style="font-size:1.5rem;"></i></div><div><div class="mat-stat-value">${s.value}</div><div class="mat-stat-label">${s.label}</div></div></div></div>`;
             });
             html += '</div>';
-            html += '<div class="row"><div class="col-12 mb-3"><div class="card shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0">Delivery Stats</h6></div><div class="card-body" id="delivery-stats-body"><p class="text-muted">Loading...</p></div></div></div></div>';
+            html += '<div class="row"><div class="col-12 mb-3"><div class="card-modern shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0">Delivery Stats</h6></div><div class="card-body" id="delivery-stats-body"><p class="text-muted">Loading...</p></div></div></div></div>';
             $('#reports-summary-cards').html(html);
 
             // Load Deliveries Chart

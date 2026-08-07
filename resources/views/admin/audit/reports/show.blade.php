@@ -15,7 +15,7 @@
     <div class="container-fluid">
         
         {{-- Stamping Period Header Card --}}
-        <div class="card mb-4 bg-white shadow-sm border-0">
+        <div class="card-modern mb-4 bg-white shadow-sm border-0">
             <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div>
                     <h4 class="mb-1 text-dark">{{ $reportLabel }}</h4>
@@ -45,7 +45,7 @@
         <div class="row">
             {{-- Left Sidebar: Advanced Filters --}}
             <div class="col-lg-3 mb-4">
-                <div class="card bg-white shadow-sm border-0 p-3 sticky-top" style="top: 20px; z-index: 100;">
+                <div class="card-modern bg-white shadow-sm border-0 p-3 sticky-top" style="top: 20px; z-index: 100;">
                     <h6 class="text-dark font-weight-bold mb-3"><i class="mdi mdi-filter-variant"></i> Advanced Filters</h6>
                     <form method="GET" id="filterForm" action="{{ route('audit.reports.show', $responsibility_key) }}" class="d-flex flex-column gap-2">
                         <div>
@@ -92,7 +92,7 @@
                 <div class="row mb-4">
                     @foreach($kpis as $kpi)
                         <div class="col-md-3 col-sm-6 mb-3">
-                            <div class="card h-100 bg-white shadow-sm border-0 p-3 d-flex flex-column justify-content-between">
+                            <div class="card-modern h-100 bg-white shadow-sm border-0 p-3 d-flex flex-column justify-content-between">
                                 <span class="text-muted small text-uppercase font-weight-bold">{{ $kpi['label'] }}</span>
                                 <h3 class="font-weight-bold my-2 {{ $kpi['class'] ?? 'text-dark' }}">{{ $kpi['value'] }}</h3>
                                 <span class="text-muted small">Validated period metric</span>
@@ -102,7 +102,7 @@
                 </div>
 
                 {{-- Graphical Analytics Panel --}}
-                <div class="card bg-white shadow-sm border-0 mb-4">
+                <div class="card-modern bg-white shadow-sm border-0 mb-4">
                     <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 text-dark font-weight-bold"><i class="mdi mdi-chart-line text-indigo"></i> Graphical Analysis & Daily Trends</h5>
                         <span class="badge bg-light text-muted">Chart.js Visualization</span>
@@ -115,7 +115,7 @@
                 </div>
 
                 {{-- Real DataTable Section --}}
-                <div class="card bg-white shadow-sm border-0 mb-4">
+                <div class="card-modern bg-white shadow-sm border-0 mb-4">
                     <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 text-dark font-weight-bold"><i class="mdi mdi-database-outline"></i> Detailed Transaction Ledger</h5>
                         <div class="d-flex gap-2">

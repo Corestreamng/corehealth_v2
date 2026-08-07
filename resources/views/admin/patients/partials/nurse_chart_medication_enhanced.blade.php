@@ -667,7 +667,7 @@
             <!-- Status summary cards -->
             <div class="row mb-3" id="rx-status-summary">
                 <div class="col-md-3 col-6 mb-2">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card-modern border-0 shadow-sm h-100">
                         <div class="card-body text-center py-2">
                             <div class="fs-4 fw-bold text-success" id="rx-count-dispensed">0</div>
                             <small class="text-muted">Dispensed</small>
@@ -675,7 +675,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-2">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card-modern border-0 shadow-sm h-100">
                         <div class="card-body text-center py-2">
                             <div class="fs-4 fw-bold text-info" id="rx-count-billed">0</div>
                             <small class="text-muted">Billed / Awaiting Pharmacy</small>
@@ -683,7 +683,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-2">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card-modern border-0 shadow-sm h-100">
                         <div class="card-body text-center py-2">
                             <div class="fs-4 fw-bold text-warning" id="rx-count-requested">0</div>
                             <small class="text-muted">Requested / Awaiting Billing</small>
@@ -691,7 +691,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-2">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card-modern border-0 shadow-sm h-100">
                         <div class="card-body text-center py-2">
                             <div class="fs-4 fw-bold text-secondary" id="rx-count-total">0</div>
                             <small class="text-muted">Total Active</small>
@@ -1371,7 +1371,7 @@
                         </div>
 
                         {{-- Selected product info card --}}
-                        <div id="ws_product_info" class="card border-primary mb-3" style="display: none;">
+                        <div id="ws_product_info" class="card-modern border-primary mb-3" style="display: none;">
                             <div class="card-body py-2">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>

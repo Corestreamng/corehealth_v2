@@ -354,7 +354,7 @@
 
                     <!-- View Audit History -->
                     <div id="imaging_view_history_section" style="margin: 0 20px 20px 20px; display: none;">
-                        <div class="card border border-lightshadow shadow-sm mb-0">
+                        <div class="card-modern border border-lightshadow shadow-sm mb-0">
                             <div class="card-header bg-light py-2 px-3">
                                 <h6 class="mb-0 text-muted" style="font-size: 0.85rem; font-weight: 700;">
                                     <i class="mdi mdi-history me-1"></i> Result Access Audit Log

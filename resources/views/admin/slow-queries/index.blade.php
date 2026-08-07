@@ -20,7 +20,7 @@
 <div class="container-fluid py-4">
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card card-stat bg-white h-100">
+            <div class="card-modern card-stat bg-white h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon bg-soft-primary text-primary mr-3">
                         <i class="mdi mdi-database-search"></i>
@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card card-stat bg-white h-100">
+            <div class="card-modern card-stat bg-white h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon bg-soft-warning text-warning mr-3">
                         <i class="mdi mdi-timer-outline"></i>
@@ -46,7 +46,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card card-stat bg-white h-100">
+            <div class="card-modern card-stat bg-white h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon bg-soft-danger text-danger mr-3">
                         <i class="mdi mdi-alert-circle-outline"></i>
@@ -59,7 +59,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card card-stat bg-white h-100">
+            <div class="card-modern card-stat bg-white h-100">
                 <div class="card-body d-flex align-items-center">
                     <div class="stat-icon bg-soft-success text-success mr-3">
                         <i class="mdi mdi-xml"></i>

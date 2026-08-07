@@ -3934,7 +3934,7 @@
 
                                         <!-- Schedule Fields (hidden by default) -->
                                         <div id="schedule-fields" style="display:none;">
-                                            <div class="card border-purple mb-3 p-3">
+                                            <div class="card-modern border-purple mb-3 p-3">
                                                 <div class="row">
                                                     <div class="col-md-6 mb-2">
                                                         <label><i class="mdi mdi-calendar"></i> Date <span class="text-danger">*</span></label>

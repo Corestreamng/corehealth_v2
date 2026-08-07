@@ -43,14 +43,15 @@
     .status-cancelled { background-color: #f8d7da; color: #721c24; }
 </style>
 
-<div class="card-modern mt-2">
+<div class="card-modern mt-2 tp-context-borderable">
     <div class="card-body">
+        {{-- Active Plan Context Bar (Phase 9) --}}
+        @include('admin.partials.active_plan_context_bar')
+
         {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
         <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
             <div class="btn-group">
-                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
-                    <i class="fa fa-clipboard-list"></i> Treatment Plans
-                </button>
+
                 <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                     <i class="fa fa-save"></i> Save as Template
                 </button>

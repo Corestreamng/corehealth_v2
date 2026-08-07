@@ -5,7 +5,7 @@
 @section('content')
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="mdi mdi-receipt"></i> Outstanding Bills for {{ $organization->name }}</h5>
                     <div>
@@ -73,7 +73,7 @@
                         </div>
 
                         @if($bills->isNotEmpty())
-                            <div class="card bg-light">
+                            <div class="card-modern bg-light">
                                 <div class="card-body">
                                     <h5 class="card-title mb-3">Settlement Details</h5>
                                     <div class="row">

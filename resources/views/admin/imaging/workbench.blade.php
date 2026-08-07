@@ -2909,7 +2909,7 @@
             </div>
             <div class="queue-view-content" style="padding: 1.5rem;">
                 <!-- Filter Panel -->
-                <div class="reports-filter-panel card mb-4">
+                <div class="reports-filter-panel card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-filter"></i> Filters</h6>
                     </div>
@@ -3451,6 +3451,7 @@
 @endif
 
 @include('admin.partials.clinical_context_modal')
+@include('admin.partials.treatment-plan-viewer-modal')
 
 <!-- Delete Reason Modal -->
 <div class="modal fade" id="deleteReasonModal" tabindex="-1" role="dialog">
@@ -4697,7 +4698,10 @@ function renderPendingSubtabContent(filter) {
 }
 
 function createRequestCard(request, section) {
-    const serviceName = request.service_name || request.service?.service_name || 'Unknown Service';
+    let serviceName = request.service_name || request.service?.service_name || 'Unknown Service';
+    if (request.treatment_plan_id && request.treatment_plan_name) {
+        serviceName += ` <br><a href="#" class="tp-view-link badge mt-1" style="background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;" onclick="ClinicalOrdersKit.viewTreatmentPlan(${request.treatment_plan_id}); event.stopPropagation(); return false;"><i class="fa fa-clipboard-list"></i> ${escapeHtml(request.treatment_plan_name)}</a>`;
+    }
     const doctorName = request.doctor ? (request.doctor.firstname + ' ' + request.doctor.surname) : 'N/A';
     const requestDate = formatDateTime(request.created_at);
     const note = request.note || '';
@@ -6139,20 +6143,24 @@ function initializeQueueDataTable(filter) {
 
                     // Format Date
                     const dateStr = row.created_at ? new Date(row.created_at).toLocaleString() : '';
-                    const serviceName = row.service_name || (row.service ? row.service.service_name : 'Imaging Request');
-                    const hmoText = card.hmo && card.hmo !== 'N/A' ? `<br><small><i class="mdi mdi-hospital-building"></i> ${card.hmo}</small>` : '';
+                    const serviceName = card.service_name || row.service_name || (row.service ? row.service.service_name : 'Imaging Request');
+                    let tpBadge = '';
+                    if (card.treatment_plan_id && card.treatment_plan_name) {
+                        tpBadge = ` <br><a href="#" class="tp-view-link badge mt-1" style="background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;" onclick="ClinicalOrdersKit.viewTreatmentPlan(${card.treatment_plan_id}); event.stopPropagation(); return false;"><i class="fa fa-clipboard-list"></i> ${escapeHtml(card.treatment_plan_name)}</a>`;
+                    }
+                    const hmoText = card.hmo && card.hmo !== 'N/A' ? `<br><small><i class="mdi mdi-hospital-building"></i> ${escapeHtml(card.hmo)}</small>` : '';
 
                     return `
                         <div class="queue-patient-item" data-patient-id="${card.patient_id}" style="cursor: pointer; padding: 1rem; border-bottom: 1px solid #e9ecef;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="font-weight: 600; font-size: 1rem; color: #212529;">${card.patient_name}</div>
+                                <div style="font-weight: 600; font-size: 1rem; color: #212529;">${escapeHtml(card.patient_name)}</div>
                                 <span class="badge badge-primary">${card.file_no}</span>
                                 ${statusBadge}
                                 ${reverseBtn}
                             </div>
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
-                                <i class="mdi mdi-radioactive"></i> ${serviceName}
-                                <br><small class="text-muted"><i class="mdi mdi-account-clock"></i> Req: ${card.requested_by} on ${card.requested_at}</small>
+                                <i class="mdi mdi-radioactive"></i> ${escapeHtml(serviceName)}${tpBadge}
+                                <br><small class="text-muted"><i class="mdi mdi-account-clock"></i> Req: ${escapeHtml(card.requested_by)} on ${card.requested_at}</small>
                                 ${card.approved_at ? `<br><small class="text-muted"><i class="mdi mdi-clock-check-outline"></i> Approved: ${card.approved_at}</small>` : ''}
                                 ${hmoText}
                             </div>
@@ -7523,4 +7531,6 @@ function showBundleRemove(btn) {
 @include('admin.partials.clinical_alerts_modal')
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
+
+<script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
 @endsection

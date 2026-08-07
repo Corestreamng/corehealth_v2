@@ -770,7 +770,7 @@ function loadPreviousReports() {
                     ? '<span class="badge bg-success">Finalized</span>'
                     : '<span class="badge bg-warning">Draft</span>';
                 html += `
-                    <div class="card mb-2 border">
+                    <div class="card-modern mb-2 border">
                         <div class="card-body p-2">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>

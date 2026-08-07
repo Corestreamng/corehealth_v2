@@ -290,7 +290,7 @@
         </div>
         <div class="col-md-2">
         <a href="{{ route('hr.promotions.index') }}" class="text-decoration-none">
-        <div class="card border-left border-warning shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+        <div class="card-modern border-left border-warning shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
             <div class="card-body py-2 text-center">
                 <small class="text-muted">Promotion Due</small>
                 <h4 class="text-warning mb-0 font-weight-bold">{{ $stats['promotion_due'] ?? 0 }}</h4>
@@ -299,7 +299,7 @@
         </a>
     </div>
     <div class="col-md-2">
-        <div class="card border-left border-info shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+        <div class="card-modern border-left border-info shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
             <div class="card-body py-2 text-center">
                 <small class="text-muted">Confirmation Due</small>
                 <h4 class="text-info mb-0 font-weight-bold">{{ $stats['confirmation_due'] ?? 0 }}</h4>
@@ -308,7 +308,7 @@
     </div>
     <div class="col-md-2">
         <a href="{{ route('hr.qualifications.index') }}" class="text-decoration-none">
-        <div class="card border-left border-danger shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+        <div class="card-modern border-left border-danger shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
             <div class="card-body py-2 text-center">
                 <small class="text-muted">License Expiring</small>
                 <h4 class="text-danger mb-0 font-weight-bold">{{ $stats['license_expiring'] ?? 0 }}</h4>
@@ -318,7 +318,7 @@
     </div>
     <div class="col-md-2">
         <a href="{{ route('hr.medical-exams.index') }}" class="text-decoration-none">
-        <div class="card border-left border-secondary shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+        <div class="card-modern border-left border-secondary shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
             <div class="card-body py-2 text-center">
                 <small class="text-muted">Medical Exam Due</small>
                 <h4 class="text-secondary mb-0 font-weight-bold">{{ $stats['medical_exam_due'] ?? 0 }}</h4>
@@ -327,7 +327,7 @@
         </a>
     </div>
     <div class="col-md-2">
-        <div class="card border-left border-dark shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+        <div class="card-modern border-left border-dark shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
             <div class="card-body py-2 text-center">
                 <small class="text-muted">Retiring Soon</small>
                 <h4 class="text-dark mb-0 font-weight-bold">{{ $stats['retiring_soon'] ?? 0 }}</h4>
@@ -336,7 +336,7 @@
     </div>
     <div class="col-md-2">
         <a href="{{ route('hr.follow-ups.index') }}" class="text-decoration-none">
-        <div class="card border-left border-primary shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
+        <div class="card-modern border-left border-primary shadow-sm" style="border-left-width:4px !important; border-radius:8px;">
             <div class="card-body py-2 text-center">
                 <small class="text-muted">Open Follow-ups</small>
                 <h4 class="text-primary mb-0 font-weight-bold">{{ $stats['open_follow_ups'] ?? 0 }}</h4>

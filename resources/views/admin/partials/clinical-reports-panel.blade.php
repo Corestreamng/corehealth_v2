@@ -1,7 +1,7 @@
 {{-- Clinical Reports Panel Partial --}}
 {{-- Included inside #reports-tab-content in the reception workbench --}}
 <div class="tab-pane fade" id="clinical-reports-content" role="tabpanel" aria-labelledby="clinical-reports-tab">
-    <div class="card border-0 mt-1">
+    <div class="card-modern border-0 mt-1">
         <div class="card-body p-2">
 
             {{-- ================================================================

@@ -153,7 +153,7 @@
 
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card req-header-card shadow-sm">
+        <div class="card-modern req-header-card shadow-sm">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="mb-0">Requisition <span class="text-primary">{{ $requisition->requisition_number }}</span></h3>
@@ -213,7 +213,7 @@
     </div>
 </div>
 
-<div class="card shadow-sm">
+<div class="card-modern shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
         <h5 class="mb-0 font-weight-bold">Requested Items</h5>
         @if($requisition->canEditItems())

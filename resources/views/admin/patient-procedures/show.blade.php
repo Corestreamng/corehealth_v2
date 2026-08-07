@@ -1806,7 +1806,7 @@
                         <div class="col-md-5 h-100 d-flex flex-column bg-light" style="overflow-y: auto;">
                             <div class="p-4 flex-1">
                                 <!-- Step 1: Signee Details -->
-                                <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px;">
+                                <div class="card-modern border-0 shadow-sm mb-4" style="border-radius: 8px;">
                                     <div class="card-body">
                                         <h6 class="mb-3" style="font-weight: 700; color: #333;"><i class="fa fa-user-check mr-2 text-primary"></i> 1. Signee Identification</h6>
                                         <div class="form-group mb-3">
@@ -1829,7 +1829,7 @@
                                 </div>
                                 
                                 <!-- Step 2: Signature Drawing Pad -->
-                                <div class="card border-0 shadow-sm mb-4" style="border-radius: 8px;">
+                                <div class="card-modern border-0 shadow-sm mb-4" style="border-radius: 8px;">
                                     <div class="card-body">
                                         <h6 class="mb-3" style="font-weight: 700; color: #333; display: flex; justify-content: space-between; align-items: center;">
                                             <span><i class="fa fa-signature mr-2 text-primary"></i> 2. Digital Signature</span>
@@ -1859,7 +1859,7 @@
                                 </div>
                                 
                                 <!-- Step 3: Consent Notes -->
-                                <div class="card border-0 shadow-sm" style="border-radius: 8px;">
+                                <div class="card-modern border-0 shadow-sm" style="border-radius: 8px;">
                                     <div class="card-body">
                                         <h6 class="mb-3" style="font-weight: 700; color: #333;"><i class="fa fa-sticky-note mr-2 text-primary"></i> 3. Clinical Consent Notes <small class="text-muted">(Optional)</small></h6>
                                         <textarea class="form-control" id="signature_notes" rows="3" placeholder="Enter any specific notes, witnesses, verbal agreement statements, or extenuating conditions..." style="border-radius: 6px;"></textarea>
@@ -1950,6 +1950,7 @@ window.BILLING_KIT_CONFIG = {
 @include('admin.shared.modals.request_details')
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 <script src="{{ asset('js/request-details.js') }}"></script>
+@include('admin.partials.treatment-plan-viewer-modal')
 <script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
 @endhasanyrole
 

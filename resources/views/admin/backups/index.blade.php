@@ -17,7 +17,7 @@
 
     <div class="row mb-4">
         <div class="col-md-4 grid-margin stretch-card">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">
                     <h4 class="card-title">Database Size</h4>
                     <h2 class="mb-0 text-primary" id="stat-db-size">Loading...</h2>
@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="col-md-4 grid-margin stretch-card">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">
                     <h4 class="card-title">Local Backups</h4>
                     <h2 class="mb-0 text-info" id="stat-local-count">0</h2>
@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="col-md-4 grid-margin stretch-card">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">
                     <h4 class="card-title">Compression Status</h4>
                     <h2 class="mb-0" id="stat-compression">
@@ -46,7 +46,7 @@
 
     <div class="row">
         <div class="col-12 grid-margin stretch-card">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">
                     <ul class="nav nav-tabs" role="tablist">
                         <li class="nav-item">

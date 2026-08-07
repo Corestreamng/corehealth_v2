@@ -9,7 +9,7 @@
 @section('content')
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="mdi mdi-office-building"></i> Billing Organizations</h5>
                     <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#organizationModal" onclick="resetForm()">

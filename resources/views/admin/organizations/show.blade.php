@@ -5,7 +5,7 @@
 @section('content')
     <div class="row">
         <div class="col-md-4">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="mdi mdi-office-building"></i> {{ $organization->name }}</h5>
                 </div>
@@ -30,7 +30,7 @@
         </div>
         
         <div class="col-md-8">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="mdi mdi-receipt"></i> Recent Bills</h5>
                     <a href="{{ route('organizations.bills', $organization->id) }}" class="btn btn-sm btn-light">View All Bills</a>

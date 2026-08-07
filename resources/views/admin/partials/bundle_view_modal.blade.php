@@ -37,7 +37,7 @@ window.BundleViewModal = (function() {
         });
         
         let html = `
-            <div class="card border-0">
+            <div class="card-modern border-0">
                 <div class="card-body">
                     <h6 class="card-title text-primary fw-bold mb-1">
                         ${bundleData.name || bundleData.service_name || 'Combo'}

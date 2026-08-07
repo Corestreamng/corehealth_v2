@@ -1667,7 +1667,7 @@
                 var html = '';
 
                 // Patient info
-                html += '<div class="card border-0 bg-light mb-3">';
+                html += '<div class="card-modern border-0 bg-light mb-3">';
                 html += '<div class="card-body py-2">';
                 html += '<div class="row">';
                 html += '<div class="col-md-6"><small class="text-muted">Patient</small><br><strong><i class="mdi mdi-account me-1"></i>' + (ref.patient_name || 'N/A') + '</strong></div>';
@@ -1687,13 +1687,13 @@
                 // Referral info
                 html += '<div class="row mb-3">';
                 html += '<div class="col-md-6">';
-                html += '<div class="card border h-100"><div class="card-header bg-light py-1"><small class="fw-bold"><i class="mdi mdi-arrow-up-bold text-danger me-1"></i>Referred From</small></div>';
+                html += '<div class="card-modern border h-100"><div class="card-header bg-light py-1"><small class="fw-bold"><i class="mdi mdi-arrow-up-bold text-danger me-1"></i>Referred From</small></div>';
                 html += '<div class="card-body py-2"><small>' + (ref.referring_doctor || 'N/A') + '</small>';
                 if (ref.referring_clinic) html += '<br><small class="text-muted">' + ref.referring_clinic + '</small>';
                 html += '</div></div>';
                 html += '</div>';
                 html += '<div class="col-md-6">';
-                html += '<div class="card border h-100"><div class="card-header bg-light py-1"><small class="fw-bold"><i class="mdi mdi-arrow-down-bold text-success me-1"></i>Referred To</small></div>';
+                html += '<div class="card-modern border h-100"><div class="card-header bg-light py-1"><small class="fw-bold"><i class="mdi mdi-arrow-down-bold text-success me-1"></i>Referred To</small></div>';
                 html += '<div class="card-body py-2">';
                 if (ref.referral_type === 'internal') {
                     html += '<small>' + (ref.target_clinic || 'Any Clinic') + '</small>';
@@ -1707,7 +1707,7 @@
                 html += '</div>';
 
                 // Clinical info
-                html += '<div class="card border mb-3"><div class="card-header bg-light py-1"><small class="fw-bold"><i class="mdi mdi-clipboard-pulse me-1 text-primary"></i>Clinical Information</small></div>';
+                html += '<div class="card-modern border mb-3"><div class="card-header bg-light py-1"><small class="fw-bold"><i class="mdi mdi-clipboard-pulse me-1 text-primary"></i>Clinical Information</small></div>';
                 html += '<div class="card-body py-2">';
                 if (ref.provisional_diagnosis) html += '<p class="mb-1"><small><strong>Diagnosis:</strong> ' + ref.provisional_diagnosis + '</small></p>';
                 if (ref.clinical_summary) html += '<p class="mb-1"><small><strong>Summary:</strong> ' + ref.clinical_summary + '</small></p>';
