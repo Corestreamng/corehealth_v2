@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use \App\Traits\WorkbenchAuditable;
+use App\Traits\IsAuditable;
+
 
 class OrganizationBill extends Model
 {
+    use IsAuditable;
+
     use HasFactory;
-    use WorkbenchAuditable;
 
     protected $table = 'organization_bills';
 

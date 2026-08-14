@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use \App\Traits\WorkbenchAuditable;
+use App\Traits\IsAuditable;
 
 
 use OwenIt\Auditing\Contracts\Auditable;
@@ -29,7 +29,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class AdmissionRequest extends Model implements Auditable
 {
     use HasFactory;
-    use WorkbenchAuditable;
+    use IsAuditable;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
