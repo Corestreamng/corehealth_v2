@@ -10,6 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class MaternityEnrollment extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
+    use \App\Traits\IsAuditable;
     use \OwenIt\Auditing\Auditable;
 
     const STATUS_ACTIVE = 'active';

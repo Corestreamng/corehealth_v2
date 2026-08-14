@@ -7,8 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
+use App\Traits\IsAuditable;
+
 class Encounter extends Model implements Auditable
 {
+    use IsAuditable;
+
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 

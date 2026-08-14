@@ -26,6 +26,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class Expense extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
+    use \App\Traits\IsAuditable;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [

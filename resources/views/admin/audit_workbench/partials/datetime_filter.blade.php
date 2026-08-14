@@ -1,51 +1,136 @@
-<div class="card shadow-sm border-0 mb-4 bg-white">
-    <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <div class="d-flex align-items-center gap-3 flex-wrap">
-            <h6 class="mb-0 text-muted font-weight-bold mr-3"><i class="mdi mdi-filter-variant"></i> Period Filter</h6>
+<div class="card shadow-sm border-0 mb-4 bg-white rounded-3">
+    <div class="card-body p-4">
+        <form id="audit_period_form" method="GET" action="{{ url()->current() }}" class="m-0">
             
-            <div class="d-flex align-items-center gap-2">
-                <span class="small text-muted font-weight-bold">Quick Shift:</span>
-                <select id="quick_shift_selector" class="form-select form-select-sm border-secondary text-dark" style="min-width: 200px;">
-                    <option value="">-- Custom Range --</option>
-                    <option value="morning">Today Morning (08:00 - 15:59)</option>
-                    <option value="evening">Today Evening (16:00 - 23:59)</option>
-                    <option value="night_yesterday">Yesterday Night (00:00 - 07:59)</option>
-                    <option value="night_today">Today Night (00:00 - 07:59)</option>
-                    <option value="today">Entire Today (00:00 - 23:59)</option>
-                    <option value="yesterday">Entire Yesterday (00:00 - 23:59)</option>
-                </select>
-            </div>
+            <div class="row g-3 mb-3">
+                {{-- Quick Shift Selector --}}
+                <div class="col-md-3">
+                    <label class="form-label small mb-1 text-muted font-weight-bold"><i class="mdi mdi-clock-outline"></i> Shift / Preset</label>
+                    <select id="quick_shift_selector" class="form-select form-select-sm form-control-modern border-secondary text-dark">
+                        <option value="">-- Custom Range --</option>
+                        <option value="morning">Today Morning (08:00 - 15:59)</option>
+                        <option value="evening">Today Evening (16:00 - 23:59)</option>
+                        <option value="night_yesterday">Yesterday Night (00:00 - 07:59)</option>
+                        <option value="night_today">Today Night (00:00 - 07:59)</option>
+                        <option value="today">Entire Today (00:00 - 23:59)</option>
+                        <option value="yesterday">Entire Yesterday (00:00 - 23:59)</option>
+                    </select>
+                </div>
 
-            <form id="audit_period_form" class="d-flex align-items-center gap-2 m-0" method="GET" action="{{ url()->current() }}">
-                <div class="d-flex align-items-center gap-1">
-                    <span class="small text-muted font-weight-bold">From:</span>
-                    <input type="datetime-local" name="start_date" id="filter_start_date" class="form-control form-control-sm border-secondary" value="{{ request('start_date', now()->startOfDay()->format('Y-m-d\TH:i')) }}">
+                {{-- From Date & Time --}}
+                <div class="col-md-3">
+                    <label class="form-label small mb-1 text-muted font-weight-bold">From</label>
+                    <input type="datetime-local" name="start_date" id="filter_start_date" class="form-control form-control-sm form-control-modern border-secondary" value="{{ request('start_date', isset($startDate) ? $startDate->format('Y-m-d\TH:i') : now()->startOfDay()->format('Y-m-d\TH:i')) }}">
                 </div>
-                <div class="d-flex align-items-center gap-1">
-                    <span class="small text-muted font-weight-bold">To:</span>
-                    <input type="datetime-local" name="end_date" id="filter_end_date" class="form-control form-control-sm border-secondary" value="{{ request('end_date', now()->endOfDay()->format('Y-m-d\TH:i')) }}">
+
+                {{-- To Date & Time --}}
+                <div class="col-md-3">
+                    <label class="form-label small mb-1 text-muted font-weight-bold">To</label>
+                    <input type="datetime-local" name="end_date" id="filter_end_date" class="form-control form-control-sm form-control-modern border-secondary" value="{{ request('end_date', isset($endDate) ? $endDate->format('Y-m-d\TH:i') : now()->endOfDay()->format('Y-m-d\TH:i')) }}">
                 </div>
-                <div class="d-flex align-items-center gap-1">
-                    <span class="small text-muted font-weight-bold">Status:</span>
-                    <select name="audit_status" id="filter_audit_status" class="form-select form-select-sm border-secondary" onchange="this.form.submit()">
-                        <option value="all" {{ request('audit_status') == 'all' ? 'selected' : '' }}>All</option>
+
+                {{-- Audit Status --}}
+                <div class="col-md-3">
+                    <label class="form-label small mb-1 text-muted font-weight-bold"><i class="mdi mdi-list-status"></i> Audit Status</label>
+                    <select name="audit_status" id="filter_audit_status" class="form-select form-select-sm form-control-modern border-secondary" onchange="this.form.submit()">
+                        <option value="all" {{ request('audit_status') == 'all' ? 'selected' : '' }}>All Records</option>
                         <option value="not_audited" {{ request('audit_status') == 'not_audited' ? 'selected' : '' }}>Not Audited</option>
                         <option value="audited" {{ request('audit_status') == 'audited' ? 'selected' : '' }}>Audited</option>
                         <option value="queried" {{ request('audit_status') == 'queried' ? 'selected' : '' }}>Queried</option>
-                        <option value="resolved_audited" {{ request('audit_status') == 'resolved_audited' ? 'selected' : '' }}>Resolved then Audited</option>
+                        <option value="resolved_audited" {{ request('audit_status') == 'resolved_audited' ? 'selected' : '' }}>Resolved</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-sm btn-outline-primary shadow-sm"><i class="mdi mdi-refresh"></i> Update View</button>
-            </form>
-        </div>
+            </div>
 
-        <div>
-            @if(isset($zoneKey) && $zoneKey !== '')
-                <button type="button" class="btn btn-indigo shadow-sm font-weight-bold" onclick="openBulkStampModal('{{ $zoneKey }}', '{{ $zoneLabel ?? 'Selected Zone' }}')">
-                    <i class="mdi mdi-stamper"></i> Stamp Filtered Period
-                </button>
-            @endif
-        </div>
+            <div class="row g-3">
+                {{-- HMO Scheme Filter --}}
+                <div class="col-md-3">
+                    <label class="form-label small mb-1 text-muted font-weight-bold"><i class="mdi mdi-layers-outline"></i> HMO Scheme</label>
+                    <select name="hmo_scheme_id" id="filter_hmo_scheme_id" class="form-select form-select-sm form-control-modern border-secondary">
+                        <option value="">All Schemes</option>
+                        @if(isset($hmoSchemes))
+                            @foreach($hmoSchemes as $scheme)
+                                <option value="{{ $scheme->id }}" {{ request('hmo_scheme_id') == $scheme->id ? 'selected' : '' }}>
+                                    {{ $scheme->name }} ({{ $scheme->code }})
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+
+                {{-- HMO Provider Filter with optgroups by Scheme --}}
+                <div class="col-md-3">
+                    <label class="form-label small mb-1 text-muted font-weight-bold"><i class="mdi mdi-hospital-building"></i> HMO Provider</label>
+                    <select name="hmo_id" id="filter_hmo_id" class="form-select form-select-sm form-control-modern border-secondary">
+                        <option value="">All HMOs</option>
+                        @if(isset($hmoSchemes) && $hmoSchemes->count() > 0)
+                            @foreach($hmoSchemes as $scheme)
+                                @if($scheme->hmos && $scheme->hmos->count() > 0)
+                                    <optgroup label="{{ $scheme->name }} ({{ $scheme->code }})">
+                                        @foreach($scheme->hmos as $hmoItem)
+                                            <option value="{{ $hmoItem->id }}" {{ request('hmo_id') == $hmoItem->id ? 'selected' : '' }}>
+                                                {{ $hmoItem->name }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endif
+                            @endforeach
+                        @endif
+                        @if(isset($unassignedHmos) && $unassignedHmos->count() > 0)
+                            <optgroup label="General / Unassigned">
+                                @foreach($unassignedHmos as $unHmo)
+                                    <option value="{{ $unHmo->id }}" {{ request('hmo_id') == $unHmo->id ? 'selected' : '' }}>
+                                        {{ $unHmo->name }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @elseif(isset($hmos) && (!isset($hmoSchemes) || $hmoSchemes->count() == 0))
+                            @foreach($hmos as $hmoItem)
+                                <option value="{{ $hmoItem->id }}" {{ request('hmo_id') == $hmoItem->id ? 'selected' : '' }}>
+                                    {{ $hmoItem->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+
+                {{-- Gender Filter --}}
+                <div class="col-md-3">
+                    <label class="form-label small mb-1 text-muted font-weight-bold"><i class="mdi mdi-gender-male-female"></i> Gender</label>
+                    <select name="gender" id="filter_gender" class="form-select form-select-sm form-control-modern border-secondary">
+                        <option value="">All</option>
+                        <option value="Male" {{ request('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                        <option value="Female" {{ request('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                    </select>
+                </div>
+
+                {{-- Age Range Filter --}}
+                <div class="col-md-3">
+                    <label class="form-label small mb-1 text-muted font-weight-bold"><i class="mdi mdi-account-clock-outline"></i> Age Range</label>
+                    <select name="age_range" id="filter_age_range" class="form-select form-select-sm form-control-modern border-secondary">
+                        <option value="">All</option>
+                        <option value="pediatric" {{ request('age_range') == 'pediatric' ? 'selected' : '' }}>Pediatric</option>
+                        <option value="adult" {{ request('age_range') == 'adult' ? 'selected' : '' }}>Adult</option>
+                        <option value="senior" {{ request('age_range') == 'senior' ? 'selected' : '' }}>Senior</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- Filter Action Buttons & Bulk Stamp --}}
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                <div class="d-flex align-items-center gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary shadow-sm px-3"><i class="mdi mdi-filter"></i> Apply Filters</button>
+                    <a href="{{ url()->current() }}" class="btn btn-sm btn-outline-secondary px-3"><i class="mdi mdi-refresh"></i> Reset</a>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-success btn-sm shadow-sm px-3" onclick="openUniversalStampModal('bulk')" id="btnBulkStamp" title="Mark all filtered items on this page as audited">
+                        <i class="mdi mdi-check-all"></i> Stamp View
+                    </button>
+                </div>
+            </div>
+
+        </form>
     </div>
 </div>
 
@@ -90,7 +175,6 @@
                 break;
         }
 
-        // Format to YYYY-MM-DDThh:mm
         const formatDt = (dt) => {
             const pad = (n) => n < 10 ? '0' + n : n;
             return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
@@ -98,32 +182,35 @@
 
         document.getElementById('filter_start_date').value = formatDt(start);
         document.getElementById('filter_end_date').value = formatDt(end);
-        
-        // Auto submit form to refresh data
         document.getElementById('audit_period_form').submit();
     });
 
-    // Bulk Stamp Modal Open function
-    function openBulkStampModal(zoneKey, zoneLabel) {
-        let sd = document.getElementById('filter_start_date').value;
-        let ed = document.getElementById('filter_end_date').value;
 
-        if (!sd || !ed) {
-            alert('Please select a valid start and end date for the period stamp.');
-            return;
-        }
-
-        document.getElementById('stamp_zone_key').value = zoneKey;
-        document.getElementById('stamp_zone_label').textContent = zoneLabel;
-        document.getElementById('stamp_start_date').value = sd;
-        document.getElementById('stamp_end_date').value = ed;
-
-        // Display pretty dates
-        document.getElementById('stamp_display_start').textContent = sd.replace('T', ' ');
-        document.getElementById('stamp_display_end').textContent = ed.replace('T', ' ');
-
-        var myModal = new bootstrap.Modal(document.getElementById('bulkStampModal'));
-        myModal.show();
-    }
 </script>
+@endpush
+
+@push('audit_styles')
+<style>
+    .form-control-modern {
+        height: 45px !important;
+        border-radius: 8px !important;
+        border: 1px solid #E2E8F0 !important;
+        background-color: #F9FAFB !important;
+        font-size: 14px !important;
+        color: #1F2937 !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    .form-control-modern:focus {
+        background-color: #ffffff !important;
+        border-color: var(--primary-color, #0d6efd) !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15) !important;
+        outline: none !important;
+    }
+    
+    /* Ensure select arrow remains visible and properly aligned */
+    select.form-control-modern {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+    }
+</style>
 @endpush
