@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use \App\Traits\WorkbenchAuditable;
+use App\Traits\IsAuditable;
 use OwenIt\Auditing\Contracts\Auditable;
 use Carbon\Carbon;
 
@@ -27,10 +27,12 @@ use Carbon\Carbon;
  * @property string|null $critical_notes
  * @property int|null $incoming_nurse_id
  */
+
 class NursingShift extends Model implements Auditable
 {
+    use IsAuditable;
+
     use HasFactory;
-    use WorkbenchAuditable;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [

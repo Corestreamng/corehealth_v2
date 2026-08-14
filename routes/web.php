@@ -18,6 +18,7 @@ use App\Http\Controllers\HmoWorkbenchController;
 use App\Http\Controllers\ClinicalContextController;
 use App\Http\Controllers\HmoReportsController;
 use App\Http\Controllers\Admin\TariffManagementController;
+use App\Http\Controllers\AuditWorkbenchController;
 use App\Http\Controllers\HospitalConfigController;
 use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\LabServiceRequestController;
@@ -409,10 +410,10 @@ Route::group(['middleware' => ['auth']], function () {
 
             if ($request->has("search")) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where("firstname", "LIKE", "%{$search}%")
-                      ->orWhere("surname", "LIKE", "%{$search}%")
-                      ->orWhere("othername", "LIKE", "%{$search}%");
+                        ->orWhere("surname", "LIKE", "%{$search}%")
+                        ->orWhere("othername", "LIKE", "%{$search}%");
                 });
             }
 
@@ -768,12 +769,12 @@ Route::group(['middleware' => ['auth']], function () {
                 ->where('service_name', 'LIKE', "%{$term}%")
                 ->get()
                 ->map(function ($combo) {
-                    $items = $combo->bundleItems->map(function($i) {
-                        return $i->item_type === 'service' 
+                    $items = $combo->bundleItems->map(function ($i) {
+                        return $i->item_type === 'service'
                             ? (optional($i->service)->service_name ?? 'Service')
                             : (optional($i->product)->product_name ?? 'Product');
                     })->implode(', ');
-                    
+
                     return [
                         'id' => $combo->id,
                         'service_name' => $combo->service_name,
@@ -1179,32 +1180,53 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::post('/physical-stock/save', [\App\Http\Controllers\AuditWorkbenchController::class, 'savePhysicalCount'])->name('physical-stock.save');
     Route::get('/reports/{responsibility_key}', [\App\Http\Controllers\AuditWorkbenchController::class, 'showReport'])->name('reports.show');
     Route::get('/reports/{responsibility_key}/print', [\App\Http\Controllers\AuditWorkbenchController::class, 'printReport'])->name('reports.print');
-    
-    // New Audit Zone Routes
-    Route::get('/prescriptions', [\App\Http\Controllers\AuditWorkbenchController::class, 'prescriptionAudit'])->name('prescriptions');
-    Route::get('/lab-verification', [\App\Http\Controllers\AuditWorkbenchController::class, 'labPriceVerification'])->name('lab-verification');
-    Route::get('/imaging-verification', [\App\Http\Controllers\AuditWorkbenchController::class, 'imagingPriceVerification'])->name('imaging-verification');
-    Route::get('/procedures', [\App\Http\Controllers\AuditWorkbenchController::class, 'procedureAudit'])->name('procedures');
-    Route::get('/stock-utilization', [\App\Http\Controllers\AuditWorkbenchController::class, 'stockUtilizationAudit'])->name('stock-utilization');
-    Route::get('/stock-utilization/data', [\App\Http\Controllers\AuditWorkbenchController::class, 'stockUtilizationData'])->name('stock-utilization.data');
-    Route::get('/receivables', [\App\Http\Controllers\AuditWorkbenchController::class, 'receivablesAudit'])->name('receivables');
-    Route::get('/ward-discharge', [\App\Http\Controllers\AuditWorkbenchController::class, 'wardDischargeAudit'])->name('ward-discharge');
-    
-    // New Harmonized Zones
-    Route::get('/cash-and-billing', [\App\Http\Controllers\AuditWorkbenchController::class, 'cashAndBillingAudit'])->name('cash-and-billing');
-    Route::get('/hmo-claims', [\App\Http\Controllers\AuditWorkbenchController::class, 'hmoClaimsAudit'])->name('hmo-claims');
-    Route::get('/expenses-payroll', [\App\Http\Controllers\AuditWorkbenchController::class, 'expensesPayrollAudit'])->name('expenses-payroll');
-    Route::get('/clinics-flow', [\App\Http\Controllers\AuditWorkbenchController::class, 'clinicsFlowAudit'])->name('clinics-flow');
-    Route::get('/maternity-morgue', [\App\Http\Controllers\AuditWorkbenchController::class, 'maternityMorgueAudit'])->name('maternity-morgue');
-    
-    Route::get('/custom-report', [\App\Http\Controllers\AuditWorkbenchController::class, 'customReport'])->name('custom-report');
-    Route::get('/overall-report', [\App\Http\Controllers\AuditWorkbenchController::class, 'overallReport'])->name('overall-report');
-    Route::get('/shift-audit', [\App\Http\Controllers\AuditWorkbenchController::class, 'shiftAudit'])->name('shift-audit');
-    Route::get('/staff-deductions', [\App\Http\Controllers\AuditWorkbenchController::class, 'staffDeductions'])->name('staff-deductions');
-    
+    // Redesigned Audit Modules
+    Route::get('/receivables-debtors', [\App\Http\Controllers\AuditWorkbenchController::class, 'receivablesDebtorsAudit'])->name('receivables-debtors');
+    Route::match(['get', 'post'], '/data/receivables-debtors/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'receivablesDebtorsData'])->name('receivables-debtors.data');
+
+    Route::get('/cashbook-accounting', [\App\Http\Controllers\AuditWorkbenchController::class, 'cashbookAccountingAudit'])->name('cashbook-accounting');
+    Route::match(['get', 'post'], '/data/cashbook-accounting/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'cashbookAccountingData'])->name('cashbook-accounting.data');
+    Route::get('/data/cashbook-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'cashbookStoryData'])->name('cashbook-stories.data');
+    Route::get('/data/receivables-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'receivablesStoryData'])->name('receivables-stories.data');
+    Route::get('/data/story-details/{zone}/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'storyRowDetails'])->name('story-details.data');
+
+    Route::get('/consultations-clinics', [\App\Http\Controllers\AuditWorkbenchController::class, 'consultationsClinicsAudit'])->name('consultations-clinics');
+    Route::match(['get', 'post'], '/data/consultations-clinics/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'consultationsClinicsData'])->name('consultations-clinics.data');
+
+    Route::get('/admissions-discharges', [\App\Http\Controllers\AuditWorkbenchController::class, 'admissionsDischargesAudit'])->name('admissions-discharges');
+    Route::match(['get', 'post'], '/data/admissions-discharges/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'admissionsDischargesData'])->name('admissions-discharges.data');
+
+    Route::get('/main-store-stock', [\App\Http\Controllers\AuditWorkbenchController::class, 'mainStoreStockAudit'])->name('main-store-stock');
+    Route::match(['get', 'post'], '/data/main-store-stock/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'mainStoreStockData'])->name('main-store-stock.data');
+
+    Route::get('/ward-dept-stores', [\App\Http\Controllers\AuditWorkbenchController::class, 'wardDeptStoresAudit'])->name('ward-dept-stores');
+    Route::match(['get', 'post'], '/data/ward-dept-stores/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'wardDeptStoresData'])->name('ward-dept-stores.data');
+
+    Route::get('/store-utilization-revenue', [\App\Http\Controllers\AuditWorkbenchController::class, 'storeUtilizationRevenueAudit'])->name('store-utilization-revenue');
+    Route::match(['get', 'post'], '/data/store-utilization-revenue/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'storeUtilizationRevenueData'])->name('store-utilization-revenue.data');
+
+    Route::get('/hmo-nhis-audit', [\App\Http\Controllers\AuditWorkbenchController::class, 'hmoNhisAudit'])->name('hmo-nhis-audit');
+    Route::match(['get', 'post'], '/data/hmo-nhis/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'hmoNhisData'])->name('hmo-nhis.data');
+
+    Route::get('/service-registers-billing', [\App\Http\Controllers\AuditWorkbenchController::class, 'serviceRegistersBillingAudit'])->name('service-registers-billing');
+    Route::match(['get', 'post'], '/data/service-registers-billing/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'serviceRegistersBillingData'])->name('service-registers-billing.data');
+
+    Route::get('/pharmacy-mortuary', [\App\Http\Controllers\AuditWorkbenchController::class, 'pharmacyMortuaryAudit'])->name('pharmacy-mortuary');
+    Route::match(['get', 'post'], '/data/pharmacy-mortuary/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'pharmacyMortuaryData'])->name('pharmacy-mortuary.data');
+
+    // Unified Query Dashboard
+    Route::get('/queries-dashboard', [\App\Http\Controllers\AuditWorkbenchController::class, 'queriesDashboard'])->name('queries-dashboard');
+    Route::match(['get', 'post'], '/data/queries-dashboard/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'queriesDashboardData'])->name('queries-dashboard.data');
+
     // Audit actions
-    Route::post('/mark-audited', [\App\Http\Controllers\AuditWorkbenchController::class, 'markAudited'])->name('mark-audited');
-    Route::post('/bulk-stamp', [\App\Http\Controllers\AuditWorkbenchController::class, 'bulkStampPeriod'])->name('bulk-stamp');
+    // Audit Mark Polymorphic Endpoints
+    Route::post('/audit/mark/stamp', [\App\Http\Controllers\AuditMarkController::class, 'stamp'])->name('mark.stamp');
+    Route::post('/audit/mark/raise-query', [\App\Http\Controllers\AuditMarkController::class, 'raiseQuery'])->name('mark.raise-query');
+    Route::post('/audit/mark/resolve-query', [\App\Http\Controllers\AuditMarkController::class, 'resolveQuery'])->name('mark.resolve-query');
+    Route::post('/audit/mark/bulk-stamp', [\App\Http\Controllers\AuditMarkController::class, 'bulkStamp'])->name('mark.bulk-stamp');
+
+    // Legacy Audit Endpoints to be deprecated or re-routed
+    Route::post('/audit-workbench/mark-audited', [AuditWorkbenchController::class, 'markAudited'])->name('audit.mark-audited');
     Route::post('/raise-query', [\App\Http\Controllers\AuditWorkbenchController::class, 'raiseQuery'])->name('raise-query');
     Route::post('/resolve-query', [\App\Http\Controllers\AuditWorkbenchController::class, 'resolveQuery'])->name('resolve-query');
 });
@@ -1223,4 +1245,3 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/workbench/price-list/services', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getServices'])->name('workbench.price-list.services');
     Route::get('/workbench/price-list/tariffs', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getTariffs'])->name('workbench.price-list.tariffs');
 });
-

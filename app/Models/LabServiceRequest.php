@@ -4,13 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use \App\Traits\WorkbenchAuditable;
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 use OwenIt\Auditing\Contracts\Auditable;
+
 class LabServiceRequest extends Model implements Auditable
 {
+    use IsAuditable;
+
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 protected $fillable = [
