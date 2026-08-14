@@ -1190,6 +1190,14 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::get('/data/receivables-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'receivablesStoryData'])->name('receivables-stories.data');
     Route::get('/data/story-details/{zone}/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'storyRowDetails'])->name('story-details.data');
 
+    // Zone Story Data Endpoints (Pages 5–10)
+    Route::get('/data/main-store-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'mainStoreStoryData'])->name('main-store-stories.data');
+    Route::get('/data/ward-dept-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'wardDeptStoryData'])->name('ward-dept-stories.data');
+    Route::get('/data/store-utilization-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'storeUtilizationStoryData'])->name('store-utilization-stories.data');
+    Route::get('/data/hmo-nhis-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'hmoNhisStoryData'])->name('hmo-nhis-stories.data');
+    Route::get('/data/service-registers-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'serviceRegistersStoryData'])->name('service-registers-stories.data');
+    Route::get('/data/pharmacy-mortuary-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'pharmacyMortuaryStoryData'])->name('pharmacy-mortuary-stories.data');
+
     Route::get('/consultations-clinics', [\App\Http\Controllers\AuditWorkbenchController::class, 'consultationsClinicsAudit'])->name('consultations-clinics');
     Route::match(['get', 'post'], '/data/consultations-clinics/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'consultationsClinicsData'])->name('consultations-clinics.data');
 

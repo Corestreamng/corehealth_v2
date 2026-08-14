@@ -7,6 +7,24 @@
 
 @include('admin.audit_workbench.partials.datetime_filter', ['zoneKey' => 'store-utilization-revenue', 'zoneLabel' => 'Store Utilization vs Revenue Zone'])
 
+{{-- PARENT-LEVEL NAV --}}
+<ul class="nav nav-pills mb-3" id="su-parent-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active font-weight-bold px-4" id="su-audit-register-tab" data-bs-toggle="pill" data-bs-target="#su-audit-register" type="button" role="tab">
+            <i class="mdi mdi-clipboard-check-outline"></i> Audit Register
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link font-weight-bold px-4" id="su-stories-tab" data-bs-toggle="pill" data-bs-target="#su-stories" type="button" role="tab">
+            <i class="mdi mdi-chart-timeline-variant"></i> Utilization Stories
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="su-parent-content">
+
+{{-- TAB 1: AUDIT REGISTER --}}
+<div class="tab-pane fade show active" id="su-audit-register" role="tabpanel">
 <div class="card shadow-sm border-0 mb-4 rounded-3 overflow-hidden" style="width: 100%;">
     <div class="card-header bg-white border-bottom p-0">
         <ul class="nav nav-tabs nav-fill audit-tabs" id="utilizationTabs" role="tablist">
@@ -179,26 +197,70 @@
         </div>
     </div>
 </div>
+</div>{{-- /su-audit-register --}}
+
+{{-- TAB 2: UTILIZATION STORIES --}}
+<div class="tab-pane fade" id="su-stories" role="tabpanel">
+<div class="card shadow-sm border-0 mb-4 rounded-3 overflow-hidden" style="width: 100%;">
+    <div class="card-header bg-white border-bottom p-0">
+        <ul class="nav nav-tabs nav-fill audit-tabs" id="suStoryTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active py-3 font-weight-bold" id="st-disp-rev-tab" data-bs-toggle="tab" data-bs-target="#st-disp-rev" type="button">
+                    <i class="mdi mdi-cash-multiple text-primary"></i> 11. Dispensing Revenue & Margins
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link py-3 font-weight-bold" id="st-store-contrib-tab" data-bs-toggle="tab" data-bs-target="#st-store-contrib" type="button">
+                    <i class="mdi mdi-store-cog text-success"></i> 12. Store Dispensing Contribution
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link py-3 font-weight-bold" id="st-gap-recon-tab" data-bs-toggle="tab" data-bs-target="#st-gap-recon" type="button">
+                    <i class="mdi mdi-beaker-question-outline text-info"></i> 13. Consumption vs Billing Gap
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link py-3 font-weight-bold" id="st-daily-trend-tab" data-bs-toggle="tab" data-bs-target="#st-daily-trend" type="button">
+                    <i class="mdi mdi-chart-bell-curve-cumulative text-warning"></i> 14. Daily Movement Trends
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link py-3 font-weight-bold" id="st-turnover-tab" data-bs-toggle="tab" data-bs-target="#st-turnover" type="button">
+                    <i class="mdi mdi-rotate-3d-variant text-danger"></i> 15. Product Turnover & Idle Stock
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-4 bg-light">
+        <div class="tab-content" id="suStoryContent">
+            @foreach(['dispensing-revenue-attribution' => 'st-disp-rev', 'store-dispensing-contribution' => 'st-store-contrib', 'consumption-vs-billing-gap' => 'st-gap-recon', 'daily-stock-movement-trend' => 'st-daily-trend', 'product-turnover-rate' => 'st-turnover'] as $storySlug => $paneId)
+            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $paneId }}" role="tabpanel" data-story="{{ $storySlug }}">
+                <div class="row g-3 mb-4 story-cards"></div>
+                <div class="card shadow-sm border-0"><div class="card-body p-3"><div class="table-responsive">
+                    <table class="table table-hover align-middle w-100 story-table" id="table-{{ $paneId }}">
+                        <thead class="bg-light"><tr></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div></div></div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+</div>{{-- /su-stories --}}
+
+</div>{{-- /su-parent-content --}}
 @endsection
 
-@push('scripts')
+@push('audit_scripts')
 <script>
 $(document).ready(function() {
-    let startDate = $('#filter_start_date').val();
-    let endDate = $('#filter_end_date').val();
-    let hmoId = $('#filter_hmo_id').val();
-    let gender = $('#filter_gender').val();
-    let ageRange = $('#filter_age_range').val();
-
     let commonDtConfig = {
         dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex gap-2"B><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
         iDisplayLength: 25,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         buttons: ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
-        processing: true,
-        serverSide: true,
-        responsive: true,
-        order: [[0, 'desc']]
+        processing: true, serverSide: true, responsive: true, order: [[0, 'desc']]
     };
 
     function appendMultidimData(d) {
@@ -212,10 +274,7 @@ $(document).ready(function() {
     }
 
     $('#table-utilization-txns').DataTable($.extend({}, commonDtConfig, {
-        ajax: {
-            url: "{{ route('audit.store-utilization-revenue.data', 'transactions') }}",
-            data: appendMultidimData
-        },
+        ajax: { url: "{{ route('audit.store-utilization-revenue.data', 'transactions') }}", data: appendMultidimData },
         columns: [
             { data: 'created_at', name: 'created_at' },
             { data: 'product', name: 'stockBatch.product.product_name' },
@@ -223,15 +282,12 @@ $(document).ready(function() {
             { data: 'type', name: 'type' },
             { data: 'qty_formatted', name: 'qty' },
             { data: 'reference', name: 'notes' },
-            { data: 'performer', name: 'performer.name' }
+            { data: 'performer', name: 'performer.firstname' }
         ]
     }));
 
     $('#table-revenue').DataTable($.extend({}, commonDtConfig, {
-        ajax: {
-            url: "{{ route('audit.store-utilization-revenue.data', 'revenue') }}",
-            data: appendMultidimData
-        },
+        ajax: { url: "{{ route('audit.store-utilization-revenue.data', 'revenue') }}", data: appendMultidimData },
         columns: [
             { data: 'created_at', name: 'created_at' },
             { data: 'product_name', name: 'product.product_name' },
@@ -241,6 +297,81 @@ $(document).ready(function() {
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ]
     }));
+
+    // Story Data Loader
+    var storyDataUrl = "{{ route('audit.store-utilization-stories.data', '__STORY__') }}";
+
+    function loadSuStory(paneEl) {
+        var $pane = $(paneEl);
+        var story = $pane.data('story');
+        if ($pane.data('loaded') == 1) return;
+
+        var url = storyDataUrl.replace('__STORY__', story);
+        var params = {
+            start_date: $('#filter_start_date').val(),
+            end_date: $('#filter_end_date').val(),
+            hmo_scheme_id: $('#filter_hmo_scheme_id').val(),
+            hmo_id: $('#filter_hmo_id').val(),
+            gender: $('#filter_gender').val(),
+            age_range: $('#filter_age_range').val(),
+            audit_status: $('#filter_audit_status').val(),
+        };
+
+        $pane.find('.story-cards').html('<div class="col-12 text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
+
+        $.get(url, params, function(data) {
+            var cardsHtml = '';
+            if (data.cards) {
+                var colSize = data.cards.length <= 3 ? 4 : (data.cards.length <= 4 ? 3 : 2);
+                data.cards.forEach(function(card) {
+                    cardsHtml += '<div class="col-md-' + colSize + ' col-6 mb-2"><div class="card shadow-sm border-0 h-100 ' + card.class + '"><div class="card-body py-3 px-3"><h6 class="mb-1" style="font-size:0.8rem;">' + card.label + '</h6><h4 class="mb-0 font-weight-bold">' + card.value + '</h4></div></div></div>';
+                });
+            }
+            $pane.find('.story-cards').html(cardsHtml);
+
+            var $table = $pane.find('.story-table');
+            var tableId = $table.attr('id');
+            if (tableId && $.fn.DataTable.isDataTable('#' + tableId)) {
+                $('#' + tableId).DataTable().clear().destroy();
+            }
+            $table.empty().append('<thead class="bg-light"><tr></tr></thead><tbody></tbody>');
+
+            var $tr = $table.find('thead tr');
+            if (data.headers) {
+                data.headers.forEach(function(h) { $tr.append('<th>' + h + '</th>'); });
+            }
+            var $tbody = $table.find('tbody');
+            if (data.rows) {
+                data.rows.forEach(function(row) {
+                    var trHtml = '<tr>';
+                    Object.values(row).forEach(function(val) { trHtml += '<td>' + val + '</td>'; });
+                    trHtml += '</tr>';
+                    $tbody.append(trHtml);
+                });
+            }
+
+            $table.DataTable({
+                dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex gap-2"B><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
+                buttons: ['copy', 'excel', 'pdf', 'print'],
+                paging: true, pageLength: 25, order: [], responsive: true, destroy: true
+            });
+            $pane.data('loaded', 1);
+        });
+    }
+
+    $('#su-stories-tab').on('shown.bs.tab', function() {
+        var $activePane = $('#suStoryContent .tab-pane.active');
+        if ($activePane.length) loadSuStory($activePane[0]);
+    });
+    $('#suStoryTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+        var target = $(e.target).data('bs-target');
+        loadSuStory($(target)[0]);
+    });
+    $('#apply_filters_btn').on('click', function() {
+        $('#suStoryContent .tab-pane').data('loaded', 0);
+        var $activePane = $('#suStoryContent .tab-pane.active');
+        if ($('#su-stories-tab').hasClass('active') && $activePane.length) loadSuStory($activePane[0]);
+    });
 });
 </script>
 @endpush
